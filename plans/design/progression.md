@@ -1,7 +1,7 @@
 # Meadow — Skill Tree, Colony Adaptations and Progression Plan
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only after progression is selected -->
-Status: active -- Phase A finished with step 4, landed 7 Sep 2026 | Owner: Dave / Claude Code | Next: Phase B step 7 -- `plans/now/brood-spine.md`, BS-6 follows BS-4 in the Claude lane | Dependency: none blocking -- the skill-gating question is settled in section 11, step 6 (Dave, 17 Sep 2026). Two skill definitions still open (section 5.9) | Verified: 2026-10-01
+Status: active -- Phase A finished with step 4, landed 7 Sep 2026 | Owner: Dave / Claude Code | Next: Phase B step 8 and Shiver Cluster (`plans/now/colony-run.md` decision 9) -- a design session with Dave is the next planning pass (Dave, 5 Oct 2026); step 7 (`plans/now/brood-spine.md`) is built, its developer-table follow-ups BS-12 onwards in the Claude lane | Dependency: none blocking -- the skill-gating question is settled in section 11, step 6 (Dave, 17 Sep 2026). Two skill definitions still open (section 5.9) | Verified: 2026-10-05
 
 Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Rewritten 1 Sep 2026 against Dave's revised skill catalogue — six sectors, four resource-gated tiers, a hexagonal wedge grid and a HUD Skills button. It supersedes the 26 Aug catalogue outright: the sectors, tier meaning, costs and node list below are the design, and the earlier ones are not.
 

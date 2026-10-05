@@ -62,7 +62,7 @@ Asked in the session that wrote `docs/product-review-2026-09-30.md`.
 
 ## Decisions (Dave, 1 Oct 2026, feedback-build readiness review)
 
-Asked in the session that wrote `plans/now/feedback-build.md`.
+Asked in the session that wrote `plans/archive/feedback-build_2026-10-05.md`.
 
 7. **The queen nurses without the Nurses skill; workers still need it.** An
    exception to BS-3's rule that a row of a role the colony has not bought is

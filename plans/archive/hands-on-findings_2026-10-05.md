@@ -1,7 +1,7 @@
 # Hands-on findings -- what the 2 Oct 2026 pass turned up beside its checks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HO-8 -- the HUD splits nectar and pollen Foragers and counts miners (HO-6 is built on branch claude/HO-6; HO-5 is built on branch claude/HO-5; hands-on check C-105 filed) | Dependency: HO-2 is built on branch claude/HO-2 (hands-on check C-101 filed, replaces C-88); HO-1 closed 2 Oct 2026 without a code change (not reproducible headlessly; re-test check C-100 filed); HO-3 is built on branch claude/HO-3 (hands-on check filed), HO-4 is built on branch claude/HO-4 (hands-on check filed) and HO-5/HO-6 follow SC-4 (`plans/archive/settings-and-corner_2026-10-03.md`); HO-7 is built on branch claude/HO-7 (option (b), Dave 2 Oct 2026; hands-on check filed); HO-8 is built on branch claude/HO-8 (Dave's decision of 2 Oct 2026; re-run check C-84); HO-9 is built on branch claude/HO-9 (hands-on check filed), HO-10 is built on branch claude/HO-10 (hands-on check C-96 filed), HO-11 is built on branch claude/HO-11 (popups take the theme font on open; hands-on check on text scale 2 not filed), HO-12 landed 2 Oct 2026 (hands-on check C-99 filed); HO-13 is built on branch claude/HO-13 (a queenless save ends at once, Dave 2 Oct 2026; no hands-on check, headless test covers it) | Verified: 2026-10-02
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete (HO-1 to HO-13 landed 2-3 Oct 2026, one record each in plans/archive, listed at the foot of this file); follow-ups are hands-on checks C-84, C-100, C-101, C-105, C-106 and C-107 in `checks/ready/`, and a failed one starts a new plan | Dependency: none | Verified: 2026-10-05
 
 **Objective.** The defects a computer-use pass over C-60 to C-92 found on
 2 Oct 2026 that no open plan already owns are fixed. Presentation and
@@ -70,10 +70,24 @@ HO-1 shipped 2026-10-02; its specification is `plans/archive/HO-1_2026-10-02.md`
 
 HO-2 shipped 2026-10-02; its specification is `plans/archive/HO-2_2026-10-02.md`.
 
+HO-3 shipped 2026-10-02; its specification is `plans/archive/HO-3_2026-10-02.md`.
+
+HO-4 shipped 2026-10-02; its specification is `plans/archive/HO-4_2026-10-02.md`.
+
 HO-5 shipped 2026-10-03; its specification is `plans/archive/HO-5_2026-10-03.md`.
 
 HO-6 shipped 2026-10-03; its specification is `plans/archive/HO-6_2026-10-03.md`.
 
+HO-7 shipped 2026-10-02; its specification is `plans/archive/HO-7_2026-10-02.md`.
+
 HO-8 shipped 2026-10-03; its specification is `plans/archive/HO-8_2026-10-03.md`.
 
+HO-9 shipped 2026-10-02; its specification is `plans/archive/HO-9_2026-10-02.md`.
+
+HO-10 shipped 2026-10-02; its specification is `plans/archive/HO-10_2026-10-02.md`.
+
 HO-11 shipped 2026-10-03; its specification is `plans/archive/HO-11_2026-10-03.md`.
+
+HO-12 shipped 2026-10-02; its specification is `plans/archive/HO-12_2026-10-02.md`.
+
+HO-13 shipped 2026-10-02; its specification is `plans/archive/HO-13_2026-10-02.md`.

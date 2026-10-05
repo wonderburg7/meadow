@@ -4,7 +4,7 @@ Status: current | Owner: Dave | Verified: 2026-10-01
 
 How to sit one tester down at Dave's own machine, watch them play and keep
 what they say. Written for the first session (Saturday 3 or Sunday 4 October
-2026; its route and decisions are in `plans/now/feedback-build.md`); the steps
+2026; its route and decisions are in `plans/archive/feedback-build_2026-10-05.md`); the steps
 hold for the next one. Every command below is Windows PowerShell 5.1.
 
 ## The route

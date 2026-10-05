@@ -1,6 +1,6 @@
 # Colony Run -- the flagship run's definition and first slices
 
-Status: active | Owner: Dave / Claude Code | Next: COL-4 -- one editable year: thirty playable days, then winter, Codex lane; COL-6 is specified and gated on it (decision 11, Dave 5 Oct 2026) (COL-5 landed: level rows no longer carry the unread unlocks and win_conditions keys; COL-3 landed: game_over.gd offers the latest checkpoint of a Colony Run through saves_panel.gd::reload_from; COL-2 landed: colony_milestones.check_victory records a victory day and opens the win screen with Colony Run wording; COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4, decisions 5-10) is queued in the Codex lane after GC-3, which shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` (Dave, 4 Oct 2026) | Verified: 2026-10-05
+Status: active | Owner: Dave / Claude Code | Next: COL-4 -- one editable year: thirty playable days, then winter, Codex lane; COL-6 is specified and gated on it (decision 11, Dave 5 Oct 2026); COL-9 -- an unmated queen's eggs become drones, Claude lane, then COL-10 and COL-11 (decision 12, Dave 5 Oct 2026) (COL-5 landed: level rows no longer carry the unread unlocks and win_conditions keys; COL-3 landed: game_over.gd offers the latest checkpoint of a Colony Run through saves_panel.gd::reload_from; COL-2 landed: colony_milestones.check_victory records a victory day and opens the win screen with Colony Run wording; COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4, decisions 5-10) is queued in the Codex lane after GC-3, which shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` (Dave, 4 Oct 2026) | Verified: 2026-10-05
 
 This is the design pass that `plans/design/product-scope.md` §6.2 put next
 (Dave, 30 Sep 2026): run policy for the flagship Colony Run. It ran on 3 Oct
@@ -42,8 +42,7 @@ existing stage gates, with no grants or bans.
 - §7's short-term goals (the Dr Gallerin guidance pass owns them) and urgent
   problems (today's problem strip and signal catalogue already cover them).
 - Difficulty presets for the Colony Run.
-- A gyne taking over from a dead queen (§11's "no gynes" half of doomed):
-  not built in any run; COL-3 treats the queen's death as doom until it is.
+- A gyne taking over from a dead queen -- settled 5 Oct 2026; see decision 12.
 - COL-6's open question (how a skipped winter is charged, and who dies,
   before Shiver Cluster exists) -- settled 5 Oct 2026; see decision 11.
 - CR-2's readings, accepted by Dave on 3 Oct 2026 and shown by COL-1:
@@ -93,12 +92,30 @@ lived, one starved on day 32; no honey was ever made). These supersede the
     cover even her share, and that is doom (COL-3). Until Shiver Cluster
     exists this is the whole of winter's cost.
 
+12. **A gyne takes over from a dead queen** (Dave, 5 Oct 2026). When the
+    queen dies and an adult gyne is in the hive, that gyne becomes the
+    colony's queen and the run carries on. She has not mated, so she can lay
+    only drones until she does. A window explains what happened and offers
+    two modes: she lays drones in the hive, or she goes on nuptial flights --
+    each day she leaves the colony for part of the day, with a chance of
+    finding a mate that follows decision 7's curve (none outside late spring
+    to early autumn, highest in mid summer). A flight never loses her. Once
+    mated she lays as any queen does. Drones come first, as a minimal caste:
+    an unfertilised egg becomes a drone, who eats, stays in the hive, does no
+    work and ages out like a worker. The tier-4 Drones skill
+    (`plans/design/progression.md` section 11, step 15) keeps deliberate
+    drone rearing, and genetic points stay with COL-7. Decision 3's doom
+    becomes the queen dead with no adult gyne to follow her.
+
 **Order.** COL-4 (the calendar) first. Then, each specified when the one
 before it lands: COL-6 winter is skipped and resolved in one step
 (specified 5 Oct 2026 from decision 11, gated on COL-4);
 COL-7 the mating window, genetic points and COL-2's narrower win; COL-8
 winter die-back and spring regrowth; Shiver Cluster through the progression
-plan. Every one of them changes balance, so each is simulated first with
+plan. Succession (decision 12) runs beside them in the Claude lane: COL-9
+the drone caste, then COL-10 a gyne takes over, then COL-11 nuptial
+flights once COL-4's calendar exists. COL-11 builds the mating curve and
+COL-7 reads the same one for genetic credit. Every one of them changes balance, so each is simulated first with
 PE-2's arc (`tools/pacing_gates.py`).
 
 ## Open slices at a glance
@@ -109,11 +126,16 @@ PE-2's arc (`tools/pacing_gates.py`).
 | --- | --- | --- | --- | --- |
 | COL-4 | one editable year: thirty playable days, then winter | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/season.gd`, `scripts/world_building.gd`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | yes, Codex lane after GC-3 (`plans/now/gameplay-consistency.md`; shares `game_config.gd` and `settings_catalogue.gd`) | high |
 | COL-6 | winter is skipped and resolved in one step | `scripts/season.gd`, `scripts/year_winter.gd`, `tests/test_col6_winter_skip.py`, `test_scenarios/col6_winter_skip_test.json`, `tools/verify.ps1` | no -- after COL-4 (shares `season.gd`; needs its year clock) | high |
+| COL-9 | an unmated queen's eggs become drones | `scripts/bee.gd`, `scripts/bee_egg_laying.gd`, `scripts/hive_cell.gd`, `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_save_migrations.py`, `tests/test_col9_drones.py`, `tests/col9_drones_test.gd`, `tools/verify.ps1` | yes, Claude lane | high |
+| COL-10 | a gyne takes over from a dead queen | `scripts/main.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_over.gd`, `tests/test_col10_succession.py`, `tests/col10_succession_test.gd`, `tools/verify.ps1` | no -- after COL-9, whose drones she lays | high |
+| COL-11 | nuptial flights: an unmated queen can leave each day to find a mate | `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd`, `tools/verify.ps1` | no -- after COL-4 (the year its curve reads) and COL-10 | high |
 
-**Dependencies.** CR-1 then CR-2, one after the other in the Claude lane:
-both edit `scripts/save_game.gd` and `tests/test_save_migrations.py`. PE-2
-plays CR-1's start state. `plans/now/brood-spine.md`'s BS-6 also edits
-`scripts/main.gd`; whichever lands second rebases.
+**Dependencies.** COL-4 then COL-6: both edit `scripts/season.gd`, and
+COL-6 needs COL-4's year clock. COL-4 runs in the Codex lane after GC-3
+(`plans/now/gameplay-consistency.md`), which shares `scripts/game_config.gd`
+and `scripts/settings_catalogue.gd`. COL-9 then COL-10 then COL-11, one after
+the other in the Claude lane: each needs the one before, and COL-11 also
+waits for COL-4.
 
 **Ids.** This plan reuses the ids CR-1 and CR-2 from two slices archived on
 8-9 Sep 2026 under an earlier plan: the queue had claimed CR-1 before the
@@ -243,5 +265,154 @@ cannot be finished safely by the skip.
 - Files: `scripts/season.gd`, `scripts/year_winter.gd`, `tests/test_col6_winter_skip.py`, `test_scenarios/col6_winter_skip_test.json`, `tools/verify.ps1`
 - Check: `python -m unittest tests.test_col6_winter_skip` passes (a stocked colony crosses winter in one tick with nobody lost and the day advanced by winter's length; an under-stocked one loses its oldest workers first and keeps its queen); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
 - Proof: `absent: scripts/season.gd :: winter_bill`
+- Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
+```
+
+## COL-9 -- an unmated queen's eggs become drones
+
+<!-- LAYER: immediate-task -->
+
+Level: high (a new caste through laying, hatching, role assignment and
+saves). Specified 5 Oct 2026 from decision 12.
+
+**True now** (verified 5 Oct 2026 on master `f19c964`). No drone exists in
+`scripts/` (only the Drones node in `skills.gd`). Every queen is mated by
+assumption: `bee_egg_laying.gd::queen_lay` starts worker or gyne brood
+(`hive_cell.gd::start_brood(as_gyne)`), and `main.gd`'s emergence loop
+hatches each ready cell through `world_building.gd::_spawn_hatched_bee(role,
+cell, as_gyne, focus)` into the role the cell names, a nectar forager by
+default. Gynes are the precedent: `is_gyne` on the bee and `brood_is_gyne`
+on the cell, both saved (`save_game.gd`, `saving.gd`).
+
+**True afterwards.**
+- A queen carries `is_mated`, true by default, so every existing run and
+  save is unchanged. An unmated queen's `queen_lay` starts drone brood
+  (`brood_is_drone` on the cell; a drone cell is never a gyne cell) and
+  never worker or gyne brood.
+- Drone brood develops and is fed like worker brood
+  (`GameConfig.brood_develop_time`). `GameConfig` gains nothing here: its
+  file is the Codex lane's until COL-4 lands, and a drone uses a worker's
+  values.
+- A drone hatches as an Idle bee (`Roles.IDLE`), with `is_drone` set in
+  `main.gd`'s emergence loop after the spawn, not inside
+  `world_building.gd`, which COL-4 owns. `bee.gd::set_role` refuses any
+  other role for a drone, so recruitment and the Job menu never move him.
+  He eats from stores and ages out like a worker, and counts as a living
+  bee wherever living bees are counted (the winter forecast today, COL-6's
+  bill when it lands).
+- A drone is recognisable at a glance (his own body colour, a size between
+  a worker's and a gyne's), and a drone brood cell's label reads "drone" as
+  a gyne cell's reads "gyne".
+- `is_mated`, `is_drone` and `brood_is_drone` are saved as additive fields,
+  with no `FORMAT_VERSION` bump: a save without them loads every queen mated
+  and nothing a drone.
+- Nothing in ordinary play makes a queen unmated yet; COL-10 does. The test
+  sets it directly.
+
+**Must not change.** Worker and gyne brood; the founding queen (mated);
+`world_building.gd`; `game_config.gd`; how existing saves load.
+
+**Runtime policy.** Every addition rides a path that already runs per bee or
+per cell (`queen_lay`, the emergence loop, `set_role`, drawing); no new tick.
+
+**Closeout.** Open COL-10's fence (```queue-gated to ```queue) and
+remove its line under `NEXTSTEPS.md`'s `## Not in the queue, and why`.
+
+```queue
+**[Claude] COL-9 -- an unmated queen's eggs become drones**
+- Plan: `plans/now/colony-run.md` -- "COL-9 -- an unmated queen's eggs become drones"
+- Files: `scripts/bee.gd`, `scripts/bee_egg_laying.gd`, `scripts/hive_cell.gd`, `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_save_migrations.py`, `tests/test_col9_drones.py`, `tests/col9_drones_test.gd`, `tools/verify.ps1`
+- Check: `python -m unittest tests.test_col9_drones tests.test_save_migrations` passes (an unmated queen lays drone brood that hatches an Idle drone who refuses a job change; a save round-trips all three fields; a save without them loads every queen mated); a Godot boot is clean; `tools/verify.ps1` is green
+- Proof: `absent: scripts/bee.gd :: is_drone`
+- Next after: COL-10 -- a gyne takes over from a dead queen
+```
+
+## COL-10 -- a gyne takes over from a dead queen
+
+<!-- LAYER: immediate-task -->
+
+Level: high (event ordering at the queen's death, and the run's doom).
+Specified 5 Oct 2026 from decision 12; startable once COL-9 lands.
+
+**True now** (verified 5 Oct 2026). `main.gd::_check_for_loss` ends the run
+as soon as the queen's reference is no longer valid: it sets `colony_lost`
+and opens `game_over.gd` (or ends a scenario run "collapsed"). Its comment
+and `game_over.gd`'s header both say there is no succession. COL-3 offers
+the latest checkpoint from that screen. `saving.gd` already rebuilds
+`main.queen` from whichever bee was saved with `is_queen`.
+
+**True afterwards.**
+- When the queen's reference goes invalid and an adult gyne is alive in the
+  hive (not brood, not one who has left), the oldest such gyne becomes the
+  queen: `is_queen` set, `is_gyne` cleared, `is_mated` false (COL-9), the
+  egg-layer role, and `main.queen` pointing at her. The run carries on.
+  With no adult gyne the run ends exactly as today.
+- The promotion happens inside `_check_for_loss`, before `colony_lost` is
+  set, in the frame the old queen's reference goes invalid, so the run never
+  shows the game-over screen and then carries on.
+- She lays drones (COL-9) into the cells any queen uses.
+- A window explains it once, when she takes over: the queen died, this gyne
+  has taken her place, and because she has not mated she can lay only
+  drones. Its one action now is "Lay drones in the hive"; COL-11 adds
+  nuptial flights. It extends `GamePanel`, the shared base for HUD windows,
+  rather than adding a window mechanism; if it must pause the colony it
+  follows `challenge_complete.gd`'s pause beat instead.
+- The queen's own readout (her tooltip or panel line) says "Unmated: lays
+  drones".
+- The comments in `_check_for_loss` and `game_over.gd`'s header no longer say
+  there is no succession.
+
+**Must not change.** Doom with no adult gyne; HO-10's `queen_seen_alive`
+rule; a scenario run's "collapsed" ending when no gyne exists; COL-3's
+checkpoint restore.
+
+```queue-gated
+**[Claude] COL-10 -- a gyne takes over from a dead queen**
+- Plan: `plans/now/colony-run.md` -- "COL-10 -- a gyne takes over from a dead queen"
+- Files: `scripts/main.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_over.gd`, `tests/test_col10_succession.py`, `tests/col10_succession_test.gd`, `tools/verify.ps1`
+- Check: `python -m unittest tests.test_col10_succession` passes (the queen dies with an adult gyne alive: the gyne is queen and unmated, the run is not lost, and the window opened once; with no adult gyne the run ends as before); a Godot boot is clean; `tools/verify.ps1` is green
+- Proof: `present: scripts/main.gd :: and there is no succession, so`
+- Next after: COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate
+```
+
+## COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate
+
+<!-- LAYER: immediate-task -->
+
+Level: high (a new balance value and the year's mating curve, simulated
+first). Specified 5 Oct 2026 from decision 12; startable once COL-4 and
+COL-10 have landed.
+
+**True now** (verified 5 Oct 2026). No mating exists.
+`season.gd::_gyne_season` gates gyne release on the old 60-day flower year
+(`Flower.season_fraction() >= GameConfig.gyne_release_day`), which COL-4
+replaces with decisions 5 and 6's year. Decision 7's curve is not built.
+
+**True afterwards.**
+- `season.gd`, which owns the calendar once COL-4 lands, answers one mating
+  curve: 0 outside late spring to early autumn, rising to 1 at mid summer.
+  This slice builds it; COL-7 reads the same function for genetic credit
+  rather than writing a second (`plans/README.md` rule 4), and says so when
+  it is specified.
+- COL-10's window gains "Nuptial flights", and the queen's readout can
+  switch between the two modes at any time while she is unmated.
+- In flight mode she leaves through the entrance once a day, is away for part
+  of the day (laying nothing meanwhile) and comes back. Each return rolls
+  once: chance = `nuptial_flight_peak_chance` x the curve that day. Success
+  sets `is_mated`; she then lays as any queen does and the modes go. A flight
+  never loses her.
+- `nuptial_flight_peak_chance` is a `GameConfig` value with a settings row,
+  starting at an unsimulated 0.5. The slice runs `tools/pacing_gates.py`
+  before and after and records both here.
+
+**Must not change.** Gyne release (`_release_ready_gynes`); COL-6's winter
+bill; a mated queen's laying.
+
+```queue-gated
+**[Claude] COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate**
+- Plan: `plans/now/colony-run.md` -- "COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate"
+- Files: `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd`, `tools/verify.ps1`
+- Check: `python -m unittest tests.test_col11_nuptial_flight` passes (no mating where the curve is 0; a queen flying in mid summer mates within the test's days and then lays worker brood); `python tools/pacing_gates.py` before and after is recorded in this plan; a Godot boot is clean; `tools/verify.ps1` is green
+- Proof: `absent: scripts/game_config.gd :: nuptial_flight_peak_chance`
 - Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
 ```

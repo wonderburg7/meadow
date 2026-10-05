@@ -1,7 +1,7 @@
 # First feedback build -- what the 3-4 Oct 2026 session needs
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: nothing further -- FBB-1 landed and C-92 passed 2 Oct 2026; archive after the 3-4 Oct session, which `docs/feedback-session-runbook.md` routes here | Dependency: none | Verified: 2026-10-02
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete (FBB-1 landed and C-92 passed 2 Oct 2026; the 3-4 Oct 2026 tester session took place, Dave 5 Oct 2026; `docs/feedback-session-runbook.md` keeps the steps for the next one) | Dependency: none | Verified: 2026-10-05
 
 **Objective.** On Saturday 3 or Sunday 4 October 2026 Dave sits one tester at
 his own machine and collects their feedback: the first friends-and-family
