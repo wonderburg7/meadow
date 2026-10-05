@@ -120,7 +120,6 @@ Asked in the session that wrote `plans/archive/feedback-build_2026-10-05.md`.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-12 | the Run availability button no longer calls the table read-only | `scripts/debug_panel.gd` | yes | low |
 | BS-13 | the Run availability table names the Challenge stage that introduces and frees each skill | `scripts/run_availability.gd`, `scripts/run_availability_panel.gd`, `tests/test_bs13_stage_columns.py`, `tests/bs13_stage_columns_test.gd`, `tools/verify.ps1` | yes | medium |
 | BS-14 | a save keeps its run's skill grants and bans, and says when developer edits made them | `scripts/save_game.gd`, `scripts/session.gd`, `scripts/main.gd`, `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `tests/test_save_migrations.py`, `tests/test_bs14_saved_skill_policy.py`, `tests/bs14_saved_skill_policy_test.gd`, `tools/verify.ps1` | yes | high |
 
@@ -149,40 +148,7 @@ BS-9 shipped 2026-10-02; its specification is `plans/archive/BS-9_2026-10-02.md`
 
 BS-6 shipped 2026-10-04; its specification is `plans/archive/BS-6_2026-10-04.md`.
 
-## BS-12 -- the Run availability button no longer calls the table read-only
-
-<!-- LAYER: immediate-task -->
-
-Level: low (one file, two strings). Specified 4 Oct 2026 from BS-6's
-closeout, which named it as an unfiled follow-up.
-
-**True now** (verified 4 Oct 2026 on branch claude/BS-6). BS-6 made the
-Run availability table editable: a skill row's source is a button, and
-"Reset to the game's data" deletes the edits. `debug_panel.gd` still
-describes it as read-only in two places: the comment above `developer_row`
-("the read-only Run availability table they open") and the action row's
-hover text in `_refresh_developer_row` ("Developer mode: a read-only table
-of this run's skills, ...").
-
-**True afterwards.** Both describe the table as BS-6 left it: it shows what
-a run of this level starts owning, leaves to the skill tree or does not
-offer, and why, and a click on a skill's source changes what the next run
-of this level starts with, on this machine only. The wording follows the
-table's own intro line in `run_availability_panel.gd`; nothing else
-changes.
-
-**Must not change.** The table, `developer_overrides.gd`, or when the
-button is built.
-
-```queue
-**[Claude] BS-12 -- the Run availability button no longer calls the table read-only**
-- Plan: `plans/now/brood-spine.md` -- "BS-12 -- the Run availability button no longer calls the table read-only"
-- Files: `scripts/debug_panel.gd`
-- Check: `grep -n "read-only" scripts/debug_panel.gd` finds nothing; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `present: scripts/debug_panel.gd :: a read-only table of this run's skills`
-- Next after: BS-13 -- the Run availability table names the Challenge stage that introduces and frees each skill
-```
-
+BS-12 shipped 2026-10-05; its specification is `plans/archive/BS-12_2026-10-05.md`.
 
 ## BS-13 -- the Run availability table names the Challenge stage that introduces and frees each skill
 
