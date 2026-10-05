@@ -70,6 +70,29 @@ var run_name: String = "My colony"
 ## stage you last chose.
 var starting_level: int = 0
 
+# --- the run's skill policy (BS-14) -------------------------------
+## The skill_grants and skill_bans this run's availability sheet was built
+## from (what Progression.begin_run was given), recorded by main.gd's
+## run_definition at the run's start and written into every save of the run
+## by save_game.gd.
+var run_skill_grants: Array = []
+var run_skill_bans: Array = []
+## True when developer edits (developer_overrides.gd) changed this run's
+## level policy at its start. A load carries it over, so every later save
+## of the run says so too.
+var run_developer_changes: bool = false
+## A loaded save's policy, put back by SaveGame.apply_skill_policy before the
+## reload: {"level", "grants", "bans", "developer_changes"}, or empty.
+## main.gd's run_definition uses it instead of the overrides file and clears
+## it, so the next new run reads that file again.
+var pending_skill_policy: Dictionary = {}
+
+## Called once per run start by main.gd's run_definition.
+func record_run_skill_policy(grants: Array, bans: Array, developer_changes: bool) -> void:
+	run_skill_grants = grants.duplicate()
+	run_skill_bans = bans.duplicate()
+	run_developer_changes = developer_changes
+
 # --- winter -------------------------------------------------------
 ## Whether a winter has been scheduled and when it lands. State of the
 ## run rather than a setting -- how long a winter lasts is the setting,
@@ -290,6 +313,9 @@ func reset_run_state() -> void:
 	crab_spider_preferred_species = ""
 	rain_intensity = 0.0
 	control_groups.clear()
+	# A new run never inherits a load's policy (BS-14); a load itself does
+	# not come through here.
+	pending_skill_policy = {}
 	if progression != null:
 		progression.end_run()
 		progression = null

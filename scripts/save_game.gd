@@ -122,7 +122,17 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 		"fog": world.fog_of_war.explored_list(),
 		"skills": _skills_data(),
 		"colony_milestones": world.colony_milestones.save_data(),
+		# BS-14: the grants and bans this run's availability sheet was built
+		# from, so a load does not re-read today's developer edits.
+		"skill_policy": {
+			"grants": Session.run_skill_grants.duplicate(),
+			"bans": Session.run_skill_bans.duplicate(),
+		},
 	}
+	# BS-14: says, at the top of the file, that developer edits changed this
+	# run's level policy at its start. Absent otherwise.
+	if Session.run_developer_changes:
+		data["developer_changes"] = true
 
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
@@ -407,3 +417,39 @@ static func apply_starting_level(data: Dictionary) -> void:
 	if int(saved) in CHALLENGE_LEVELS:
 		return
 	Session.starting_level = int(saved)
+
+## BS-14 (plans/now/brood-spine.md): puts back the skill grants and bans the
+## saved run's availability sheet was built from, and whether developer edits
+## made them, for main.gd's run_definition to use instead of the overrides
+## file as it stands at load time. Called next to apply_starting_level,
+## before the world is rebuilt. An additive field, with no FORMAT_VERSION bump
+## and no migration, like CR-1's starting_level: a save without it -- or with
+## something other than a dictionary there -- leaves nothing pending, so the
+## run starts exactly as before the field. The saved level rides along, so a
+## Challenge save, which keeps the current level, never hands its policy to
+## a different level.
+static func apply_skill_policy(data: Dictionary) -> void:
+	Session.pending_skill_policy = {}
+	var policy = data.get("skill_policy")
+	var saved_level = data.get("starting_level")
+	if typeof(policy) != TYPE_DICTIONARY:
+		return
+	if typeof(saved_level) != TYPE_INT and typeof(saved_level) != TYPE_FLOAT:
+		return
+	var changes = data.get("developer_changes")
+	Session.pending_skill_policy = {
+		"level": int(saved_level),
+		"grants": _skill_ids(policy.get("grants")),
+		"bans": _skill_ids(policy.get("bans")),
+		"developer_changes": typeof(changes) == TYPE_BOOL and changes,
+	}
+
+## Skill id strings out of whatever a save's list held.
+static func _skill_ids(value) -> Array:
+	var ids: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return ids
+	for item in value:
+		if typeof(item) == TYPE_STRING and not ids.has(item):
+			ids.append(item)
+	return ids

@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them (Dave, 5 Oct 2026; BS-13 landed 5 Oct 2026: the Run availability table names the stage that introduces and frees each skill; BS-12 landed 5 Oct 2026; BS-6 landed 4 Oct 2026: the developer table's edits to skill_grants/skill_bans live in `user://developer_start_overrides.json` and change the next run's start outside scenario and headless runs, hands-on check C-112, `checks/ready/C-112.md`) | Dependency: none | Verified: 2026-10-05
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete; no follow-up filed (BS-14 landed 5 Oct 2026: a save records its run's skill grants and bans as `skill_policy`, and a top-level `developer_changes: true` when developer edits changed that run's start; a load puts them back instead of re-reading `user://developer_start_overrides.json`; BS-13 landed 5 Oct 2026: the Run availability table names the stage that introduces and frees each skill; BS-12 landed 5 Oct 2026; BS-6 landed 4 Oct 2026: the developer table's edits to skill_grants/skill_bans live in `user://developer_start_overrides.json` and change the next run's start outside scenario and headless runs, hands-on check C-112, `checks/ready/C-112.md`) | Dependency: none | Verified: 2026-10-05
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -120,7 +120,6 @@ Asked in the session that wrote `plans/archive/feedback-build_2026-10-05.md`.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-14 | a save keeps its run's skill grants and bans, and says when developer edits made them | `scripts/save_game.gd`, `scripts/session.gd`, `scripts/main.gd`, `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `tests/test_save_migrations.py`, `tests/test_bs14_saved_skill_policy.py`, `tests/bs14_saved_skill_policy_test.gd`, `tools/verify.ps1` | yes | high |
 
 BS-11 went before BS-6 (reordered 2 Oct 2026): the two share
 `run_availability_panel.gd`. Every later slice names
@@ -151,50 +150,7 @@ BS-12 shipped 2026-10-05; its specification is `plans/archive/BS-12_2026-10-05.m
 
 BS-13 shipped 2026-10-05; its specification is `plans/archive/BS-13_2026-10-05.md`.
 
-## BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them
-
-<!-- LAYER: immediate-task -->
-
-Level: high (save compatibility, and the order of run start and load).
-Specified 5 Oct 2026 from Dave's decision above.
-
-**True now** (verified 5 Oct 2026 on master). `main.gd::_ready` builds the
-run's availability sheet from `Levels.get_level(Session.starting_level)`,
-passed through `DeveloperOverrides.apply` outside scenario and headless
-runs, before `saving.gd::_restore` puts back the owned skills. A save
-records `starting_level` (CR-1, put back by `SaveGame.apply_starting_level`
-from `saves_panel.gd` and `debug_panel.gd` before the world is rebuilt) but
-not the run's `skill_grants`/`skill_bans`, so a load re-reads
-`user://developer_start_overrides.json` as it stands at load time: a save
-made under one set of developer edits loads under another.
-
-**True afterwards.**
-- `save_game.gd` writes the run's effective `skill_grants` and `skill_bans`
-  (what `begin_run` was given) as one additive field, and a top-level
-  `developer_changes: true` when developer edits changed that run's level
-  policy at its start. No `FORMAT_VERSION` bump and no migration, like
-  CR-1's `starting_level`: a save without the field loads exactly as today.
-- A load puts the saved policy back before the world is rebuilt, from the
-  same two call sites as `apply_starting_level`, through `Session`, which
-  owns run state. `main.gd`'s run start uses it instead of
-  `DeveloperOverrides.apply`, then clears it, so the next new run reads the
-  overrides file again.
-- The tag survives a re-save: a run started under developer edits keeps
-  `developer_changes` through every later save of that run.
-- `developer_overrides.gd` stays the only reader of the overrides file.
-
-**Must not change.** How a save without the field loads; a Challenge save
-keeping the current level (`apply_starting_level`); scenario and headless
-runs never reading the overrides file; `developer_overrides.gd`.
-
-```queue
-**[Claude] BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them**
-- Plan: `plans/now/brood-spine.md` -- "BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them"
-- Files: `scripts/save_game.gd`, `scripts/session.gd`, `scripts/main.gd`, `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `tests/test_save_migrations.py`, `tests/test_bs14_saved_skill_policy.py`, `tests/bs14_saved_skill_policy_test.gd`, `tools/verify.ps1`
-- Check: `python -m unittest tests.test_save_migrations tests.test_bs14_saved_skill_policy` passes (a save without the field loads as before; a run under a developer ban, saved, then loaded after the overrides file changed, keeps the saved ban and its file carries `developer_changes`); a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `absent: scripts/save_game.gd :: developer_changes`
-- Next after: none -- plans/now/brood-spine.md is complete
-```
+BS-14 shipped 2026-10-05; its specification is `plans/archive/BS-14_2026-10-05.md`.
 
 ## Read on demand
 

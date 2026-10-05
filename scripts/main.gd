@@ -343,6 +343,34 @@ var pending_forage_bees: Array = []
 var pending_preference_bees: Array = []
 
 # --- _ready and construction --------------------------------------
+## BS-14 (plans/now/brood-spine.md): the level definition this run's
+## availability sheet is built from. A loaded save's policy
+## (Session.pending_skill_policy, put back by SaveGame.apply_skill_policy)
+## replaces the level's own skill_grants and skill_bans when it belongs to
+## this level; it is cleared either way, so the next new run reads the
+## overrides file again. Otherwise BS-6's developer edits apply when
+## `developer_edits_allowed`, and the run is tagged when they changed its
+## lists. Session records what was chosen, for every save of the run.
+## `overrides_path` is for tests.
+static func run_definition(level_id: int, developer_edits_allowed: bool, overrides_path: String = DeveloperOverrides.PATH) -> Dictionary:
+	var level: Dictionary = Levels.get_level(level_id)
+	var saved: Dictionary = Session.pending_skill_policy
+	Session.pending_skill_policy = {}
+	if not saved.is_empty() and int(saved.get("level", -1)) == level_id:
+		var restored: Dictionary = level.duplicate(true)
+		restored["skill_grants"] = saved.get("grants", []).duplicate()
+		restored["skill_bans"] = saved.get("bans", []).duplicate()
+		Session.record_run_skill_policy(restored["skill_grants"], restored["skill_bans"], saved.get("developer_changes", false) == true)
+		return restored
+	var edited: Dictionary = level
+	if developer_edits_allowed:
+		edited = DeveloperOverrides.apply(level_id, level, overrides_path)
+	var grants: Array = edited.get("skill_grants", [])
+	var bans: Array = edited.get("skill_bans", [])
+	var changed: bool = str(grants) != str(level.get("skill_grants", [])) or str(bans) != str(level.get("skill_bans", []))
+	Session.record_run_skill_policy(grants, bans, changed)
+	return edited
+
 func _ready() -> void:
 	add_to_group("world")   # so the settings window can find us to save
 	process_mode = PROCESS_MODE_ALWAYS   # keep input and camera alive while paused
@@ -431,13 +459,13 @@ func _ready() -> void:
 	# resolver takes its skill policy and starting skills from it. A loaded
 	# save replaces the starting skills with the ones it recorded
 	# (saving.gd::_restore, after this).
-	var level: Dictionary = Levels.get_level(Session.starting_level)
 	# BS-6: the developer table's user:// edits to skill_grants/skill_bans.
 	# Never in a scenario run (a Challenge fixture keeps level 1 or 2, so
 	# the level id alone is not enough) or a headless one, so every fixture
-	# and verify.ps1 start exactly as levels.gd and their JSON say.
-	if not scenario_active and Session.starting_level != Levels.SCENARIO_LEVEL_ID and DisplayServer.get_name() != "headless":
-		level = DeveloperOverrides.apply(Session.starting_level, level)
+	# and verify.ps1 start exactly as levels.gd and their JSON say. BS-14: a
+	# loaded save's own grants and bans win over the file (run_definition).
+	var developer_edits_allowed: bool = not scenario_active and Session.starting_level != Levels.SCENARIO_LEVEL_ID and DisplayServer.get_name() != "headless"
+	var level: Dictionary = run_definition(Session.starting_level, developer_edits_allowed)
 	Session.ensure_progression(stage_gate).begin_run(RunAvailability.sheet_for(level))
 	Availability.invalidate()
 	challenge_runner = ChallengeRunner.new()

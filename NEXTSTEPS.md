@@ -23,28 +23,21 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them**
-   - Plan: `plans/now/brood-spine.md` -- "BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them"
-   - Files: `scripts/save_game.gd`, `scripts/session.gd`, `scripts/main.gd`, `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `tests/test_save_migrations.py`, `tests/test_bs14_saved_skill_policy.py`, `tests/bs14_saved_skill_policy_test.gd`, `tools/verify.ps1`
-   - Check: `python -m unittest tests.test_save_migrations tests.test_bs14_saved_skill_policy` passes (a save without the field loads as before; a run under a developer ban, saved, then loaded after the overrides file changed, keeps the saved ban and its file carries `developer_changes`); a Godot boot is clean; `tools/verify.ps1` is green
-   - Proof: `absent: scripts/save_game.gd :: developer_changes`
-   - Next after: none -- plans/now/brood-spine.md is complete
-
-2. **[Claude] COL-9 -- an unmated queen's eggs become drones**
+1. **[Claude] COL-9 -- an unmated queen's eggs become drones**
    - Plan: `plans/now/colony-run.md` -- "COL-9 -- an unmated queen's eggs become drones"
    - Files: `scripts/bee.gd`, `scripts/bee_egg_laying.gd`, `scripts/hive_cell.gd`, `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_save_migrations.py`, `tests/test_col9_drones.py`, `tests/col9_drones_test.gd`, `tools/verify.ps1`
    - Check: `python -m unittest tests.test_col9_drones tests.test_save_migrations` passes (an unmated queen lays drone brood that hatches an Idle drone who refuses a job change; a save round-trips all three fields; a save without them loads every queen mated); a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `absent: scripts/bee.gd :: is_drone`
    - Next after: COL-10 -- a gyne takes over from a dead queen
 
-3. **[Claude] L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures**
+2. **[Claude] L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures"
    - Files: `tools/session_cost.py`, `tests/test_session_cost_scope.py`
    - Check: `python -m unittest tests.test_session_cost_scope` passes with three cases built in a temporary `home` (a worktree directory's session is counted; a coordinator session with a worker subagent for the slice reports the worker's model; a skipped stage is a skip, not a failure); `python tools/session_cost.py --days 7` prints a non-zero `sessions`; `tools/verify.ps1` is green
    - Proof: `absent: tools/session_cost.py :: def _transcript_files`
    - Next after: L-23 -- a hands-on check pass runs each check in a check-runner subagent
 
-4. **[Claude] L-22 -- a verify stop names the stage that failed**
+3. **[Claude] L-22 -- a verify stop names the stage that failed**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-22 -- a verify stop names the stage that failed"
    - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
    - Check: `python -m unittest tests.test_slice_lifecycle` passes with a new case modelled on `test_mock_slice_can_claim_commit_and_close` whose mock `verify.ps1` prints `unit tests: FAILED` and exits 1, and whose `finish` output and stop-ledger cause contain `failed: unit tests`; `tools/verify.ps1` is green

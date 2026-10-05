@@ -485,7 +485,7 @@ behaviour.
 1431 static func deposit_everything_remotely(bee: Node2D) -> void
 ```
 
-## main.gd (1,267 lines)
+## main.gd (1,295 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
@@ -496,41 +496,42 @@ Per-frame entry point, everything not yet split out of main.
 129  # --- world and meadow constants -----------------------------------
 190  # --- state --------------------------------------------------------
 345  # --- _ready and construction --------------------------------------
-346  func _ready() -> void
-625  # --- public surface other scripts call directly -------------------
-632  func is_on_screen(node: Node2D) -> bool
-635  func hive_entrance_inside() -> Vector2
-638  func entrance_wait_point(side: int) -> Vector2
-641  func move_bee_into_hive(bee: Node2D) -> void
-644  func move_bee_out_of_hive(bee: Node2D) -> void
-647  func mark_death(bee: Node2D) -> void
-655  func _on_bee_died(bee: Node2D) -> void
-659  func finish_mining(block: Node2D) -> void
-662  func save_run() -> void
-665  func begin_winter_countdown() -> void
-668  # --- per-frame ----------------------------------------------------
-678  func _process(delta: float) -> void
-765  # --- the frame rate readout ----------------------------------------
-784  func _sample_fps() -> void
-807  func _reseed_meadow(delta: float) -> void
-822  func _hatch_ready_brood() -> void
-851  func _sample_day_stores() -> void
-868  func _advance_weather(delta: float) -> void
-899  func _apply_rain_overlay() -> void
-921  func _check_for_loss() -> void
-946  func _check_colony_energy(delta: float) -> void
-977  func invalidate_population() -> void
-988  func _role_counts(bees = null) -> Dictionary
-1005 func _update_population_readout(bees = null) -> void
-1019 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-1025 func _prune_selection() -> void
-1038 func _on_restart_after_loss() -> void
-1044 func _on_level_chosen(level: int) -> void
-1057 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-1075 func _apply_scenario_boot_arg() -> void
-1200 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
-1240 func _is_whole_number(value: Variant) -> bool
-1254 func _end_scenario_run(outcome: String) -> void
+355  static func run_definition(level_id: int, developer_edits_allowed: bool, overrides_path: String = DeveloperOverrides.PATH) -> Dictionary
+374  func _ready() -> void
+653  # --- public surface other scripts call directly -------------------
+660  func is_on_screen(node: Node2D) -> bool
+663  func hive_entrance_inside() -> Vector2
+666  func entrance_wait_point(side: int) -> Vector2
+669  func move_bee_into_hive(bee: Node2D) -> void
+672  func move_bee_out_of_hive(bee: Node2D) -> void
+675  func mark_death(bee: Node2D) -> void
+683  func _on_bee_died(bee: Node2D) -> void
+687  func finish_mining(block: Node2D) -> void
+690  func save_run() -> void
+693  func begin_winter_countdown() -> void
+696  # --- per-frame ----------------------------------------------------
+706  func _process(delta: float) -> void
+793  # --- the frame rate readout ----------------------------------------
+812  func _sample_fps() -> void
+835  func _reseed_meadow(delta: float) -> void
+850  func _hatch_ready_brood() -> void
+879  func _sample_day_stores() -> void
+896  func _advance_weather(delta: float) -> void
+927  func _apply_rain_overlay() -> void
+949  func _check_for_loss() -> void
+974  func _check_colony_energy(delta: float) -> void
+1005 func invalidate_population() -> void
+1016 func _role_counts(bees = null) -> Dictionary
+1033 func _update_population_readout(bees = null) -> void
+1047 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+1053 func _prune_selection() -> void
+1066 func _on_restart_after_loss() -> void
+1072 func _on_level_chosen(level: int) -> void
+1085 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+1103 func _apply_scenario_boot_arg() -> void
+1228 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
+1268 func _is_whole_number(value: Variant) -> bool
+1282 func _end_scenario_run(outcome: String) -> void
 ```
 
 ## challenge_runner.gd (1,249 lines)
@@ -794,7 +795,7 @@ One cell: contents, brood, honey ripening, how it draws.
 1177 func development_percent() -> float
 ```
 
-## debug_panel.gd (1,156 lines)
+## debug_panel.gd (1,157 lines)
 
 The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
@@ -839,29 +840,29 @@ restart.
 755  func set_toggle(key: String, value: bool) -> void
 760  func _on_save_pressed() -> void
 771  func _on_load_pressed() -> void
-803  # --- showing and hiding the panel ---------------------------------
-804  func _toggle_panel() -> void
-818  func _apply_layer_for_context() -> void
-823  # --- building a settings row --------------------------------------
-824  func _make_row(entry: Dictionary) -> Control
-867  func _make_control_slot() -> HBoxContainer
-876  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
-906  func _make_toggle_row(entry: Dictionary) -> Control
-979  func _make_options_row(entry: Dictionary) -> Control
-1012 func _option_display(entry: Dictionary, value) -> String
-1016 func _cycle_option(entry: Dictionary, direction: int) -> void
-1027 # --- prerequisite cascades ----------------------------------------
-1031 func _cascade_prerequisites_on(key: String) -> void
-1045 func _cascade_dependents_off(key: String) -> void
-1053 func _cascade_mutual_exclusion(key: String) -> void
-1058 # --- star rows and value editing ----------------------------------
-1063 func _make_star_row(entry: Dictionary) -> Control
-1104 func _adjust(entry: Dictionary, delta: float) -> void
-1121 func _format_value(v) -> String
-1128 # --- restart and main menu ----------------------------------------
-1129 func _on_restart_pressed() -> void
-1134 func _on_main_menu_pressed() -> void
-1142 func _restart() -> void
+804  # --- showing and hiding the panel ---------------------------------
+805  func _toggle_panel() -> void
+819  func _apply_layer_for_context() -> void
+824  # --- building a settings row --------------------------------------
+825  func _make_row(entry: Dictionary) -> Control
+868  func _make_control_slot() -> HBoxContainer
+877  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
+907  func _make_toggle_row(entry: Dictionary) -> Control
+980  func _make_options_row(entry: Dictionary) -> Control
+1013 func _option_display(entry: Dictionary, value) -> String
+1017 func _cycle_option(entry: Dictionary, direction: int) -> void
+1028 # --- prerequisite cascades ----------------------------------------
+1032 func _cascade_prerequisites_on(key: String) -> void
+1046 func _cascade_dependents_off(key: String) -> void
+1054 func _cascade_mutual_exclusion(key: String) -> void
+1059 # --- star rows and value editing ----------------------------------
+1064 func _make_star_row(entry: Dictionary) -> Control
+1105 func _adjust(entry: Dictionary, delta: float) -> void
+1122 func _format_value(v) -> String
+1129 # --- restart and main menu ----------------------------------------
+1130 func _on_restart_pressed() -> void
+1135 func _on_main_menu_pressed() -> void
+1143 func _restart() -> void
 ```
 
 ## hive.gd (1,049 lines)
