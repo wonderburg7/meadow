@@ -165,8 +165,8 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | PE-1 -- the headless pacing gates timed to the hour | `plans/archive/pacing-evidence_2026-10-01.md` |
 | WO-1 -- winter's countdown opens by itself on a set day | `plans/archive/winter-onset_2026-10-01.md` |
 | UI-F-1, UI-F-2, UI-F-3 -- the game-over screen's theme, warning severity, comb label scale | `plans/archive/ui-feedback_2026-10-01.md` |
-| FBB-1 -- the skill tree hides the cut skills and says which are not built | `plans/now/feedback-build.md` |
-| HO-1 to HO-8 -- the 2 Oct 2026 hands-on findings: Escape and names in the skill tree, Triggers behind Developer mode, the Saves window, text overflow, Challenge 2 stage pacing and 2.9's readout | `plans/now/hands-on-findings.md` |
+| FBB-1 -- the skill tree hides the cut skills and says which are not built | `plans/archive/feedback-build_2026-10-05.md` |
+| HO-1 to HO-8 -- the 2 Oct 2026 hands-on findings: Escape and names in the skill tree, Triggers behind Developer mode, the Saves window, text overflow, Challenge 2 stage pacing and 2.9's readout | `plans/archive/hands-on-findings_2026-10-05.md` |
 | BS-10, BS-11 -- C-81 rewritten for Challenge 2; the developer table's cut-skill and feature rows | `plans/now/brood-spine.md` |
 | GC-4 -- a nurse's brood food survives a job change | `plans/now/gameplay-consistency.md` |
 | SR-1 to SR-5 -- the four red scenarios and the red SF-1 test from the 30 Sep verification review | `plans/archive/scenario-reds_2026-10-04.md` |
