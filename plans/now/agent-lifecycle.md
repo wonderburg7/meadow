@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-18 -- the claim warns when it takes a lane's last item into a dry backlog, then L-19 -- queue writes wait for a running finish, and finish re-applies its own queue edit over a sibling's (Dave, 5 Oct 2026, from the 4-5 Oct run-queue run), then L-21, L-20, L-22 and L-23 from `docs/agent-workflow-review-2026-10-05.md` (L-23 gated on L-18; until L-20 lands `session_cost.py --days` reads 1 of every 70 sessions, so the gate below is unreadable locally too; L-16 and L-17 shipped; the canaries still to be seen are one slice per lane closed out while origin is ahead, and one whose queue title carries an em dash closed out from a `chcp 1252` console with `git log -1 --format=%s master` showing the dash intact); the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) is measured on Dave's machine with `python tools/session_cost.py --stops`, `--phases` and `--events` from 6 Oct 2026 (not met on 5 Oct 2026: the seven-day window opens 6 Oct, so the earliest reading is 13 Oct 2026) and pasted into the next agent-workflow review, which cannot read those files from a cloud session (`docs/agent-workflow-review-2026-09-30.md`, Dave's actions) | Dependency: none | Verified: 2026-10-05
+Status: active | Owner: Dave / Claude | Next: L-18 -- the claim warns when it takes a lane's last item into a dry backlog, then L-19 -- queue writes wait for a running finish, and finish re-applies its own queue edit over a sibling's (Dave, 5 Oct 2026, from the 4-5 Oct run-queue run), then L-22, L-21, L-23 and L-24 from `docs/agent-workflow-review-2026-10-05.md` (L-24 gated on L-18; until L-21 lands `session_cost.py --days` reads 1 of every 70 sessions, so the gate below is unreadable locally too; L-16 and L-17 shipped; the canaries still to be seen are one slice per lane closed out while origin is ahead, and one whose queue title carries an em dash closed out from a `chcp 1252` console with `git log -1 --format=%s master` showing the dash intact); the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) is measured on Dave's machine with `python tools/session_cost.py --stops`, `--phases` and `--events` from 6 Oct 2026 (not met on 5 Oct 2026: the seven-day window opens 6 Oct, so the earliest reading is 13 Oct 2026) and pasted into the next agent-workflow review, which cannot read those files from a cloud session (`docs/agent-workflow-review-2026-09-30.md`, Dave's actions) | Dependency: none | Verified: 2026-10-05
 
 ## Objective
 
@@ -52,13 +52,13 @@ slice until the next measurement says what those sessions were doing.
 | --- | --- | --- | --- |
 | L-18 | the claim warns when it takes a lane's last item into a dry backlog | `tools/slice.ps1`, `tools/refill_lane.py`, `tests/test_slice_lifecycle.py` | medium |
 | L-19 | queue writes wait for a running finish, and finish re-applies its own queue edit over a sibling's | `tools/refill_lane.py`, `tools/slice.ps1`, `tests/test_two_lane_closeout.py` | high |
-| L-20 | session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures | `tools/session_cost.py`, `tests/test_session_cost_scope.py` | medium |
-| L-21 | a verify stop names the stage that failed | `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | medium |
-| L-22 | a hands-on check pass runs each check in a check-runner subagent | `.claude/agents/check-runner.md`, `plans/reference/check-runner.md` | medium |
-| L-23 | the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims | `tools/check_docs.py`, `tests/test_queue_lookahead.py`, `.claude/rules/documentation.md`, `.claude/skills/run-queue/SKILL.md` | medium |
+| L-21 | session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures | `tools/session_cost.py`, `tests/test_session_cost_scope.py` | medium |
+| L-22 | a verify stop names the stage that failed | `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | medium |
+| L-23 | a hands-on check pass runs each check in a check-runner subagent | `.claude/agents/check-runner.md`, `plans/reference/check-runner.md` | medium |
+| L-24 | the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims | `tools/check_docs.py`, `tests/test_queue_lookahead.py`, `.claude/rules/documentation.md`, `.claude/skills/run-queue/SKILL.md` | medium |
 
-L-20 to L-23 come from `docs/agent-workflow-review-2026-10-05.md` (F1 to F5);
-L-22 and L-23 are Dave's 5 Oct 2026 choices. L-21 follows L-19 and L-23
+L-21 to L-24 come from `docs/agent-workflow-review-2026-10-05.md` (F1 to F5);
+L-23 and L-24 are Dave's 5 Oct 2026 choices. L-22 follows L-19 and L-24
 follows L-18 (shared `tools/slice.ps1`; L-18's machine-readable dry run).
 
 L-15 shipped 2026-09-29; its specification is `plans/archive/L-15_2026-09-29.md`.
@@ -145,10 +145,10 @@ merged by hand.
 - Files: `tools/refill_lane.py`, `tools/slice.ps1`, `tests/test_two_lane_closeout.py`
 - Check: `python -m unittest tests.test_two_lane_closeout` passes with two new cases (a hand `--top-up` while the lock is held waits, then writes; a finish whose master moved a lane item meanwhile merges with both edits kept); `tools/verify.ps1` is green
 - Proof: `absent: tools/refill_lane.py :: meadow-slice-lifecycle.lock`
-- Next after: L-21 -- a verify stop names the stage that failed
+- Next after: L-22 -- a verify stop names the stage that failed
 ```
 
-## L-20 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures
+## L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures
 
 <!-- LAYER: immediate-task -->
 
@@ -183,7 +183,7 @@ Level: medium (one script and a new test module, deterministic fixtures).
   `skipped`, and a separate `verify skips` line.
 - `_session_totals`' docstring and this plan's "Standing rules" sentence on
   `--days`/`--classify`/`--phases` say the scope is every worktree's
-  transcripts since L-20.
+  transcripts since L-21.
 
 **Must not change.** `--stops`; the event log's format; `OUTCOME_CLASSES`;
 any report's column layout.
@@ -192,15 +192,15 @@ any report's column layout.
 the dispatch prompt (the id join then needs another key).
 
 ```queue
-**[Claude] L-20 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-20 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures"
+**[Claude] L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures**
+- Plan: `plans/now/agent-lifecycle.md` -- "L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures"
 - Files: `tools/session_cost.py`, `tests/test_session_cost_scope.py`
 - Check: `python -m unittest tests.test_session_cost_scope` passes with three cases built in a temporary `home` (a worktree directory's session is counted; a coordinator session with a worker subagent for the slice reports the worker's model; a skipped stage is a skip, not a failure); `python tools/session_cost.py --days 7` prints a non-zero `sessions`; `tools/verify.ps1` is green
 - Proof: `absent: tools/session_cost.py :: def _transcript_files`
-- Next after: L-22 -- a hands-on check pass runs each check in a check-runner subagent
+- Next after: L-23 -- a hands-on check pass runs each check in a check-runner subagent
 ```
 
-## L-21 -- a verify stop names the stage that failed
+## L-22 -- a verify stop names the stage that failed
 
 <!-- LAYER: immediate-task -->
 
@@ -224,15 +224,15 @@ stage.
 fields.
 
 ```queue
-**[Claude] L-21 -- a verify stop names the stage that failed**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-21 -- a verify stop names the stage that failed"
+**[Claude] L-22 -- a verify stop names the stage that failed**
+- Plan: `plans/now/agent-lifecycle.md` -- "L-22 -- a verify stop names the stage that failed"
 - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
 - Check: `python -m unittest tests.test_slice_lifecycle` passes with a new case modelled on `test_mock_slice_can_claim_commit_and_close` whose mock `verify.ps1` prints `unit tests: FAILED` and exits 1, and whose `finish` output and stop-ledger cause contain `failed: unit tests`; `tools/verify.ps1` is green
 - Proof: `absent: tools/slice.ps1 :: function Get-VerifyFailureSummary`
-- Next after: L-20 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures
+- Next after: L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures
 ```
 
-## L-22 -- a hands-on check pass runs each check in a check-runner subagent
+## L-23 -- a hands-on check pass runs each check in a check-runner subagent
 
 <!-- LAYER: immediate-task -->
 
@@ -267,15 +267,15 @@ and 256 screenshots, its context rising from 64K to 486K per request.
 **Must not change.** `checks/` records and their format; who confirms a check.
 
 ```queue
-**[Claude] L-22 -- a hands-on check pass runs each check in a check-runner subagent**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-22 -- a hands-on check pass runs each check in a check-runner subagent"
+**[Claude] L-23 -- a hands-on check pass runs each check in a check-runner subagent**
+- Plan: `plans/now/agent-lifecycle.md` -- "L-23 -- a hands-on check pass runs each check in a check-runner subagent"
 - Files: `.claude/agents/check-runner.md`, `plans/reference/check-runner.md`
 - Check: `python tools/check_docs.py` passes; `grep -c "name: check-runner" .claude/agents/check-runner.md` prints 1; `grep -c "cannot-run" plans/reference/check-runner.md` prints at least 2
 - Proof: `absent: .claude/agents/check-runner.md :: name: check-runner`
-- Next after: L-23 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims
+- Next after: L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims
 ```
 
-## L-23 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims
+## L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims
 
 <!-- LAYER: immediate-task -->
 
@@ -309,12 +309,12 @@ gate stopped twice). L-18 adds `advice.dry_after` at claim, a warning only.
 **Stop and escalate** if L-18 exposed no importable function for its dry run.
 
 ```queue-gated
-**[Claude] L-23 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-23 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims"
+**[Claude] L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims**
+- Plan: `plans/now/agent-lifecycle.md` -- "L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims"
 - Files: `tools/check_docs.py`, `tests/test_queue_lookahead.py`, `.claude/rules/documentation.md`, `.claude/skills/run-queue/SKILL.md`
 - Check: `python -m unittest tests.test_queue_lookahead` passes with two cases (a one-item lane over a dry backlog warns; the same lane with an admissible block behind it does not); `python tools/check_docs.py` still exits 0 on today's queue; `tools/verify.ps1` is green
 - Proof: `absent: tools/check_docs.py :: def check_queue_lookahead`
-- Next after: none -- plans/now/agent-lifecycle.md is complete once L-23 lands; its completion gate is a measurement, not a slice
+- Next after: none -- plans/now/agent-lifecycle.md is complete once L-24 lands; its completion gate is a measurement, not a slice
 ```
 
 ## Standing rules

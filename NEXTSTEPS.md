@@ -42,7 +42,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Files: `tools/refill_lane.py`, `tools/slice.ps1`, `tests/test_two_lane_closeout.py`
    - Check: `python -m unittest tests.test_two_lane_closeout` passes with two new cases (a hand `--top-up` while the lock is held waits, then writes; a finish whose master moved a lane item meanwhile merges with both edits kept); `tools/verify.ps1` is green
    - Proof: `absent: tools/refill_lane.py :: meadow-slice-lifecycle.lock`
-   - Next after: L-21 -- a verify stop names the stage that failed
+   - Next after: L-22 -- a verify stop names the stage that failed
 
 4. **[Claude] BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them**
    - Plan: `plans/now/brood-spine.md` -- "BS-14 -- a save keeps its run's skill grants and bans, and says when developer edits made them"
@@ -81,7 +81,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **L-23** (`plans/now/agent-lifecycle.md`) -- the lookahead warning imports the machine-readable dry run L-18 adds to `tools/refill_lane.py`; waits for L-18.
+- **L-24** (`plans/now/agent-lifecycle.md`) -- the lookahead warning imports the machine-readable dry run L-18 adds to `tools/refill_lane.py`; waits for L-18.
 - **COL-6** (`plans/now/colony-run.md`) -- specified from Dave's 5 Oct 2026 winter decision; waits for COL-4 (Codex lane), whose year clock it needs and whose `scripts/season.gd` it edits.
 - **COL-7** (`plans/now/colony-run.md`) -- the mating window, genetic points and COL-2's narrower win wait for COL-6, and are specified once it lands.
 - **COL-10** (`plans/now/colony-run.md`) -- a gyne takes over from a dead queen (decision 12, Dave 5 Oct 2026); waits for COL-9, whose drones she lays.
