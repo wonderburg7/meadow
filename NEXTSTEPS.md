@@ -28,7 +28,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Files: `scripts/debug_panel.gd`
    - Check: `grep -n "read-only" scripts/debug_panel.gd` finds nothing; a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `present: scripts/debug_panel.gd :: a read-only table of this run's skills`
-   - Next after: none -- plans/now/brood-spine.md is complete
+   - Next after: BS-13 -- the Run availability table names the Challenge stage that introduces and frees each skill
 
 ### Codex lane
 
