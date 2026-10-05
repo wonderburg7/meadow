@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-19 -- queue writes wait for a running finish, and finish re-applies its own queue edit over a sibling's (Dave, 5 Oct 2026, from the 4-5 Oct run-queue run), then L-22, L-21, L-23 and L-24 from `docs/agent-workflow-review-2026-10-05.md` (L-24 gated on L-18; until L-21 lands `session_cost.py --days` reads 1 of every 70 sessions, so the gate below is unreadable locally too; L-16 and L-17 shipped; the canaries still to be seen are one slice per lane closed out while origin is ahead, and one whose queue title carries an em dash closed out from a `chcp 1252` console with `git log -1 --format=%s master` showing the dash intact); the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) is measured on Dave's machine with `python tools/session_cost.py --stops`, `--phases` and `--events` from 6 Oct 2026 (not met on 5 Oct 2026: the seven-day window opens 6 Oct, so the earliest reading is 13 Oct 2026) and pasted into the next agent-workflow review, which cannot read those files from a cloud session (`docs/agent-workflow-review-2026-09-30.md`, Dave's actions) | Dependency: none | Verified: 2026-10-05
+Status: active | Owner: Dave / Claude | Next: L-22 -- a verify stop names the stage that failed, then L-21, L-23 and L-24 from `docs/agent-workflow-review-2026-10-05.md` (L-24 gated on L-18; until L-21 lands `session_cost.py --days` reads 1 of every 70 sessions, so the gate below is unreadable locally too; L-16 and L-17 shipped; the canaries still to be seen are one slice per lane closed out while origin is ahead, and one whose queue title carries an em dash closed out from a `chcp 1252` console with `git log -1 --format=%s master` showing the dash intact); the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) is measured on Dave's machine with `python tools/session_cost.py --stops`, `--phases` and `--events` from 6 Oct 2026 (not met on 5 Oct 2026: the seven-day window opens 6 Oct, so the earliest reading is 13 Oct 2026) and pasted into the next agent-workflow review, which cannot read those files from a cloud session (`docs/agent-workflow-review-2026-09-30.md`, Dave's actions) | Dependency: none | Verified: 2026-10-05
 
 ## Objective
 
@@ -50,7 +50,6 @@ slice until the next measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-19 | queue writes wait for a running finish, and finish re-applies its own queue edit over a sibling's | `tools/refill_lane.py`, `tools/slice.ps1`, `tests/test_two_lane_closeout.py` | high |
 | L-21 | session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures | `tools/session_cost.py`, `tests/test_session_cost_scope.py` | medium |
 | L-22 | a verify stop names the stage that failed | `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | medium |
 | L-23 | a hands-on check pass runs each check in a check-runner subagent | `.claude/agents/check-runner.md`, `plans/reference/check-runner.md` | medium |
@@ -73,44 +72,7 @@ L-17 shipped 2026-10-02; its specification is `plans/archive/L-17_2026-10-02.md`
 
 L-18 shipped 2026-10-05; its specification is `plans/archive/L-18_2026-10-05.md`.
 
-## L-19 -- queue writes wait for a running finish, and finish re-applies its own queue edit over a sibling's
-
-<!-- LAYER: immediate-task -->
-
-Level: high (lock ordering between two processes, and a merge path).
-Specified 5 Oct 2026 with L-18.
-
-**True now** (verified 5 Oct 2026). `finish` holds
-`<git common dir>/meadow-slice-lifecycle.lock` (`Invoke-WithLifecycleLock`)
-and edits `NEXTSTEPS.md` through `refill_lane.py --delete` and `--top-up`.
-`refill_lane.py`, run by hand or by another session, takes no lock. On 4-5
-Oct a sibling session moved COL-4 between lanes and pushed while a `finish`
-was running; the finish's merge then conflicted in `NEXTSTEPS.md` and was
-merged by hand.
-
-**True afterwards.**
-- `refill_lane.py`'s writing modes wait for the lifecycle lock with
-  `Invoke-WithLifecycleLock`'s bounded wait and message (L-15), except when
-  `slice.ps1` runs them while it holds the lock (an environment variable it
-  sets for the child, never a flag a person types).
-- When `finish`'s merge into master conflicts in `NEXTSTEPS.md` and nowhere
-  else, it takes master's copy, re-runs its own `--delete <id>` and
-  `--top-up` on it, runs `check_docs.py`, and carries on. A conflict in any
-  other file stops as today.
-- The re-apply is journaled like the other closing phases, so an
-  interrupted finish re-runs safely (L-13).
-
-**Must not change.** The floor; a conflict outside `NEXTSTEPS.md` stopping
-`finish`; `NEXTSTEPS.md`'s format ("Standing rules" below).
-
-```queue
-**[Claude] L-19 -- queue writes wait for a running finish, and finish re-applies its own queue edit over a sibling's**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-19 -- queue writes wait for a running finish, and finish re-applies its own queue edit over a sibling's"
-- Files: `tools/refill_lane.py`, `tools/slice.ps1`, `tests/test_two_lane_closeout.py`
-- Check: `python -m unittest tests.test_two_lane_closeout` passes with two new cases (a hand `--top-up` while the lock is held waits, then writes; a finish whose master moved a lane item meanwhile merges with both edits kept); `tools/verify.ps1` is green
-- Proof: `absent: tools/refill_lane.py :: meadow-slice-lifecycle.lock`
-- Next after: L-22 -- a verify stop names the stage that failed
-```
+L-19 shipped 2026-10-05; its specification is `plans/archive/L-19_2026-10-05.md`.
 
 ## L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures
 

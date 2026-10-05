@@ -610,6 +610,122 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         self.assertEqual(0, resumed.returncode, resumed.stdout + resumed.stderr)
         self.assert_a1_closed_out()
 
+    # --- L-19: queue writes and a sibling's queue edit during a finish ---
+
+    # The backlog is read from plans/now/ (check_docs.current_plans).
+    THIRD_PLAN = (
+        "# Third fixture plan\n\n### A-3 -- claude third\n\nAdd new_function to third.gd.\nLevel: low\n\n"
+        "```queue\n"
+        "**[Claude] A-3 -- claude third**\n"
+        "- Plan: `plans/now/third.md` -- \"A-3 -- claude third\"\n"
+        "- Files: `scripts/third.gd`\n"
+        "- Check: deterministic, claude third\n"
+        "- Proof: `absent: scripts/third.gd :: new_function`\n"
+        "- Next after: none -- the claude third plan is complete.\n"
+        "```\n"
+    )
+
+    def run_refill(self, *arguments):
+        """tools/refill_lane.py run by hand, as a session outside slice.ps1
+        would: without the variable slice.ps1 sets for its own children."""
+        env = {k: v for k, v in os.environ.items() if k != "MEADOW_LIFECYCLE_LOCK_HELD"}
+        return subprocess.run(
+            [sys.executable, str(self.root / "tools" / "refill_lane.py"), *arguments, "--root", str(self.root)],
+            cwd=self.root, capture_output=True, text=True, encoding="utf-8", errors="replace",
+            env=env, timeout=60,
+        )
+
+    def test_a_hand_top_up_waits_for_a_running_finish_then_writes(self):
+        self.use_real_closeout_tools()
+        (self.root / "scripts" / "third.gd").write_text("func existing():\n\tpass\n", encoding="utf-8")
+        (self.root / "plans" / "now").mkdir(parents=True, exist_ok=True)
+        (self.root / "plans" / "now" / "third.md").write_text(self.THIRD_PLAN, encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-m", "queue block for A-3"], cwd=self.root, capture_output=True, check=True)
+        queue_path = self.root / "NEXTSTEPS.md"
+        before = queue_path.read_text(encoding="utf-8")
+
+        holder = self.hold_lifecycle_lock(seconds=6)
+        try:
+            refused = self.run_refill("--top-up", "--lane", "Claude", "--lock-wait-seconds", "1")
+            started = time.monotonic()
+            waited = self.run_refill("--top-up", "--lane", "Claude")
+            waited_for = time.monotonic() - started
+        finally:
+            holder.wait(timeout=30)
+
+        self.assertNotEqual(0, refused.returncode, refused.stdout + refused.stderr)
+        self.assertIn("slice lifecycle is busy after waiting 1 s", refused.stderr)
+        self.assertIn(f"`slice.ps1 finish` on B-1 (PID {holder.pid}", refused.stderr)
+        self.assertEqual(0, waited.returncode, waited.stdout + waited.stderr)
+        self.assertEqual(1, waited.stderr.count("slice lifecycle is busy: waiting for"), waited.stderr)
+        self.assertIn(f"`slice.ps1 finish` on B-1 (PID {holder.pid}", waited.stderr)
+        self.assertGreater(waited_for, 1.5)
+        after = queue_path.read_text(encoding="utf-8")
+        self.assertNotEqual(before, after)
+        self.assertIn("4. **[Claude] A-3 -- claude third**", after)
+        # Released: a lifecycle command takes the lock at once afterwards.
+        retry = self.run_slice("start", "-Lane", "Claude", "-LockWaitSeconds", "0")
+        self.assertEqual(0, retry.returncode, retry.stdout + retry.stderr)
+
+    def add_blocked_checks_file(self):
+        """The re-apply runs the whole of tools/check_docs.py on the merge, so
+        the fixture carries the one file it needs that the others do not."""
+        (self.root / "checks" / "blocked.md").write_text("# Blocked hands-on checks\n", encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-m", "blocked checks file"], cwd=self.root, capture_output=True, check=True)
+        subprocess.run(["git", "push", "origin", "master"], cwd=self.root, capture_output=True, check=True)
+
+    def move_z9_to_the_codex_lane_on_master(self):
+        """The 4-5 Oct case: a sibling session moves a lane item and pushes
+        while this lane's finish is running."""
+        moved = (
+            "# Next steps\n\n## Next up\n\n### Claude lane\n\n"
+            + self.real_item(1, "Claude", "A-1", "claude fixture", "sample.gd") + "\n"
+            + self.real_item(2, "Claude", "A-2", "claude second", "second.gd") + "\n"
+            + "### Codex lane\n\n"
+            + self.real_item(1, "Codex", "B-1", "codex fixture", "other.gd") + "\n"
+            + self.real_item(2, "Codex", "Z-9", "filler", "filler.gd") + "\n"
+            + "## Not in the queue, and why\n\n- Nothing is held back in this fixture.\n"
+        )
+        self.push_remote_commit("NEXTSTEPS.md", moved, "move Z-9 to the Codex lane")
+
+    def assert_both_queue_edits_kept(self):
+        self.assert_a1_closed_out()
+        queue = (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8")
+        claude_lane, codex_lane = queue.split("### Codex lane", 1)
+        self.assertNotIn("Z-9", claude_lane)
+        self.assertIn("2. **[Codex] Z-9 -- filler**", codex_lane)
+        self.assertEqual("", self.git_out("status", "--porcelain", "--untracked-files=no"))
+        self.assertIn("move Z-9 to the Codex lane", self.git_out("log", "--format=%s", "master"))
+
+    def test_a_sibling_queue_edit_on_master_merges_with_both_edits_kept(self):
+        self.use_real_closeout_tools()
+        self.add_blocked_checks_file()
+        worktree = self.claim_and_code_a1()
+        self.move_z9_to_the_codex_lane_on_master()
+
+        finished = self.run_finish(worktree)
+
+        self.assertEqual(0, finished.returncode, finished.stdout + finished.stderr)
+        self.assertIn("re-applying A-1's queue edit to master's copy", finished.stdout)
+        self.assert_both_queue_edits_kept()
+
+    def test_an_interrupted_queue_reapply_reruns_to_a_clean_merge(self):
+        self.use_real_closeout_tools()
+        self.add_blocked_checks_file()
+        worktree = self.claim_and_code_a1()
+        self.move_z9_to_the_codex_lane_on_master()
+
+        failed = self.run_finish(worktree, env={"MEADOW_SLICE_FAIL_AFTER": "queue-reapplying"})
+        self.assertNotEqual(0, failed.returncode)
+        self.assertTrue((self.root / ".git" / "MERGE_HEAD").exists())
+
+        resumed = self.run_slice("resume", "-Lane", "Claude")
+        self.assertEqual(0, resumed.returncode, resumed.stdout + resumed.stderr)
+        self.assertIn("aborted the half-done merge", resumed.stdout)
+        self.assert_both_queue_edits_kept()
+
 
 if __name__ == "__main__":
     unittest.main()
