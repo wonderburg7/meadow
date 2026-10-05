@@ -33,14 +33,31 @@ finds a free slot it queues that item and deletes its bullet, rather than
 leaving a sentence that went false with the last closeout to fail
 check_docs (2 Oct 2026: GC-4, UT-3 and HO-7 each needed a hand edit). A
 bullet that gives another reason as well stays, and the log says to reword it.
+
+Every writing mode holds the slice lifecycle lock
+(`<git common dir>/meadow-slice-lifecycle.lock`, the one `tools/slice.ps1`
+holds through `start`, `finish`, `resume` and `abort`) while it reads and
+rewrites NEXTSTEPS.md (L-19). On 4-5 Oct 2026 a sibling session moved an item
+between lanes while a `finish` was mid-closeout, and the finish's merge
+conflicted. A run that finds the lock held waits for it the way slice.ps1
+does -- one line naming the holder, a check every 5 s, a refusal past
+`--lock-wait-seconds` (default 600) -- and then reads the queue fresh.
+slice.ps1's own calls skip the wait: it sets MEADOW_LIFECYCLE_LOCK_HELD to the
+lock's path for the child while it holds that lock, so its refill does not
+wait on itself. `--dry-run` and `--json` write nothing and take no lock.
 """
 
 from __future__ import annotations
 
 import argparse
+import contextlib
+import datetime
 import json
+import os
 import re
+import subprocess
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -375,6 +392,136 @@ def dry_after_report(text: str, lane: str, slice_id: str, root: Path,
             "dry_after": bool(short and not added)}
 
 
+# --- the lifecycle lock (L-19) ---
+
+LOCK_NAME = "meadow-slice-lifecycle.lock"
+LOCK_HELD_ENV = "MEADOW_LIFECYCLE_LOCK_HELD"
+LOCK_WAIT_DEFAULT = 600
+LOCK_POLL_SECONDS = 5
+
+
+class LockBusy(Exception):
+    """The lifecycle lock stayed held past the wait bound."""
+
+
+def lifecycle_lock_path(root: Path) -> Path | None:
+    """The lock `slice.ps1` holds, or None when `root` is not in a Git checkout
+    (a test fixture, say): no checkout, no lifecycle to wait for."""
+    try:
+        result = subprocess.run(["git", "-C", str(root), "rev-parse", "--git-common-dir"],
+                                capture_output=True, text=True)
+    except OSError:
+        return None
+    common = result.stdout.strip()
+    if result.returncode != 0 or not common:
+        return None
+    common_path = Path(common)
+    if not common_path.is_absolute():
+        common_path = root / common_path
+    return common_path / LOCK_NAME
+
+
+def _same_path(a: str, b: Path) -> bool:
+    def norm(path: str) -> str:
+        return os.path.normcase(os.path.normpath(os.path.abspath(path)))
+    return norm(a) == norm(str(b))
+
+
+def _holder_label(lock_path: Path) -> str:
+    """Who holds the lock, worded as slice.ps1's Get-LifecycleHolderLabel."""
+    try:
+        holder = json.loads(lock_path.read_bytes().decode("utf-8-sig"))
+    except (OSError, ValueError):
+        return "another lifecycle command (its holder note is not readable)"
+    if not isinstance(holder, dict):
+        return "another lifecycle command (its holder note is not readable)"
+    if holder.get("tool"):
+        what = f"`{holder['tool']}`"
+    else:
+        what = f"`slice.ps1 {holder.get('command', '')}`"
+    if holder.get("id"):
+        what += f" on {holder['id']}"
+    elif holder.get("lane"):
+        what += f" ({holder['lane']} lane)"
+    return (f"{what} (PID {holder.get('pid')}, run from {holder.get('cwd')}), "
+            f"which took it at {holder.get('started')}")
+
+
+def _open_exclusive(lock_path: Path):
+    """The lock file opened for writing with others limited to reading, as
+    slice.ps1's [System.IO.File]::Open(..., Write, FileShare.Read) opens it;
+    None while another process holds it. Python's own open() shares writes,
+    so on Windows the share mode has to be asked for through CreateFileW."""
+    if os.name == "nt":
+        import ctypes
+        import msvcrt
+        from ctypes import wintypes
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                                         wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD,
+                                         wintypes.HANDLE]
+        kernel32.CreateFileW.restype = wintypes.HANDLE
+        generic_write, file_share_read, open_always, normal = 0x40000000, 0x1, 4, 0x80
+        handle = kernel32.CreateFileW(str(lock_path), generic_write, file_share_read, None,
+                                      open_always, normal, None)
+        if handle in (None, wintypes.HANDLE(-1).value):
+            error = ctypes.get_last_error()
+            if error in (5, 32, 33):  # access denied (pending delete), sharing, lock violation
+                return None
+            raise ctypes.WinError(error)
+        return os.fdopen(msvcrt.open_osfhandle(handle, os.O_WRONLY), "wb")
+    import fcntl
+    stream = open(lock_path, "ab")
+    try:
+        fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        stream.close()
+        return None
+    return stream
+
+
+@contextlib.contextmanager
+def lifecycle_lock(root: Path, wait_seconds: int, tool: str):
+    """Hold the lifecycle lock for the body, waiting for it like slice.ps1."""
+    lock_path = lifecycle_lock_path(root)
+    held_by_parent = os.environ.get(LOCK_HELD_ENV, "")
+    if lock_path is None or (held_by_parent and _same_path(held_by_parent, lock_path)):
+        yield
+        return
+    started_wait = time.monotonic()
+    announced = False
+    while True:
+        stream = _open_exclusive(lock_path)
+        if stream:
+            break
+        remaining = wait_seconds - (time.monotonic() - started_wait)
+        if remaining <= 0:
+            waited = f" after waiting {wait_seconds} s (--lock-wait-seconds)" if wait_seconds > 0 else ""
+            raise LockBusy(f"slice lifecycle is busy{waited}: {_holder_label(lock_path)}; "
+                           "NEXTSTEPS.md is unchanged -- retry once it ends")
+        if not announced:
+            bound = f"{wait_seconds // 60} min" if wait_seconds >= 120 else f"{wait_seconds} s"
+            print(f"slice lifecycle is busy: waiting for {_holder_label(lock_path)} -- this "
+                  f"command continues when it ends (checking every {LOCK_POLL_SECONDS} s, "
+                  f"for up to {bound})", file=sys.stderr, flush=True)
+            announced = True
+        time.sleep(min(LOCK_POLL_SECONDS, remaining))
+    try:
+        note = {"command": tool, "tool": tool, "id": "", "lane": "", "pid": os.getpid(),
+                "cwd": os.getcwd(),
+                "started": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}
+        stream.write(json.dumps(note, separators=(",", ":")).encode("utf-8"))
+        stream.truncate()
+        stream.flush()
+        yield
+    finally:
+        stream.close()
+        # slice.ps1 removes its lock file on release too; a holder that took
+        # it in between keeps it (no delete sharing), which is what we want.
+        with contextlib.suppress(OSError):
+            lock_path.unlink()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--delete", metavar="ID",
@@ -392,6 +539,9 @@ def main() -> int:
                              "leave as one JSON object (implies --dry-run)")
     parser.add_argument("--root", default=str(Path(__file__).resolve().parent.parent),
                         help="repository root (default: this checkout)")
+    parser.add_argument("--lock-wait-seconds", type=int, default=LOCK_WAIT_DEFAULT,
+                        help="how long a writing run waits for a running slice.ps1 "
+                             "lifecycle command to release the lock (default 600)")
     args = parser.parse_args()
     if not (args.delete or args.add or args.top_up):
         parser.error("give at least one of --delete, --add or --top-up")
@@ -400,15 +550,29 @@ def main() -> int:
     # cp1252, so ask for UTF-8 the way tools/heading.py does.
     for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8", errors="replace")
-    queue_path = root / "NEXTSTEPS.md"
-
-    original = queue_path.read_text(encoding="utf-8")
     if args.json:
         if not (args.delete and args.top_up and args.lane):
             parser.error("--json needs --delete ID, --top-up and --lane")
+        original = (root / "NEXTSTEPS.md").read_text(encoding="utf-8")
         print(json.dumps(dry_after_report(original, args.lane, args.delete, root,
                                           load_backlog(root))))
         return 0
+    if args.dry_run:
+        return refill(args, root)
+    # The read and the write both sit inside the lock: a queue read before
+    # a running finish merged would be written back over its edit.
+    try:
+        with lifecycle_lock(root, args.lock_wait_seconds, "tools/refill_lane.py"):
+            return refill(args, root)
+    except LockBusy as busy:
+        print(busy, file=sys.stderr)
+        return 1
+
+
+def refill(args: argparse.Namespace, root: Path) -> int:
+    """--delete, --add and --top-up over NEXTSTEPS.md, written unless --dry-run."""
+    queue_path = root / "NEXTSTEPS.md"
+    original = queue_path.read_text(encoding="utf-8")
     candidate = original
     log: list[str] = []
     successor: list[str] = []
