@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/GC-3` (`codex/GC-3`) | Codex | honey stops creating energy | Codex | in progress | none | `plans/now/gameplay-consistency.md` GC-3 — honey stops creating energy |
-| `.worktrees/BS-13` (`claude/BS-13`) | Claude | the Run availability table names the Challenge stage that introduces and frees each skill | Claude | in progress | none | `plans/now/brood-spine.md` BS-13 -- the Run availability table names the Challenge stage that introduces and frees each skill |
