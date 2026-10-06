@@ -50,7 +50,6 @@ slice until the next measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-23 | a hands-on check pass runs each check in a check-runner subagent | `.claude/agents/check-runner.md`, `plans/reference/check-runner.md`, `plans/reference/check-loop.md` | medium |
 | L-24 | the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims | `tools/check_docs.py`, `tests/test_queue_lookahead.py`, `.claude/rules/documentation.md`, `.claude/skills/run-queue/SKILL.md` | medium |
 
 L-21 to L-24 come from `docs/agent-workflow-review-2026-10-05.md` (F1 to F5);
@@ -76,54 +75,7 @@ L-21 shipped 2026-10-06; its specification is `plans/archive/L-21_2026-10-06.md`
 
 L-22 shipped 2026-10-06; its specification is `plans/archive/L-22_2026-10-06.md`.
 
-## L-23 -- a hands-on check pass runs each check in a check-runner subagent
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (two new instruction files; no code).
-
-**True now** (verified 5 Oct 2026, the review's F2; Dave chose this on 5 Oct
-2026). A check pass runs every check in its own context: 9 such sessions
-were 486M of the week's 1,412M context tokens, and one reached 630 requests
-and 256 screenshots, its context rising from 64K to 486K per request.
-
-**True afterwards.**
-- `.claude/agents/check-runner.md`: frontmatter `name: check-runner`, a
-  description saying it runs one filed check from `checks/ready/` with
-  computer use and returns a verdict, dispatched by a check pass and not for
-  direct use; `model: opus`, `effort: medium`, and no `tools:` line (it
-  needs the computer-use tools). Its body tells it to read
-  `git -C <ROOT> show HEAD:plans/reference/check-runner.md` and follow it,
-  and that its final message is only that brief's JSON.
-- `plans/reference/check-runner.md` (under 80 lines, the reference Status
-  line): inputs `ROOT` and one check id; read only the check's own file under `checks/ready/`;
-  launch and act as its "What this checks" says, with Git Bash
-  `"/c/Program Files/Godot/Godot.exe" --path .` from `ROOT` as the launch
-  fallback; the computer-use access name is `Godot.exe`; never press "Back
-  to the run" on a fresh boot; a 1-2 s capture lag and a few pixels of click
-  offset are tool artefacts, not findings; a synthetic Escape is no evidence,
-  so a check that needs a real key returns `cannot-run`; close the game
-  before returning. Result:
-  `{"id": "C-<n>", "verdict": "pass|fail|cannot-run", "evidence": "<one sentence of what was on screen>", "needs_dave": "<what only Dave's keyboard or eye can confirm, or empty>"}`.
-- The runner never edits `checks/`, never runs `tools/new_check.py`, and
-  never asks Dave anything: the pass does those.
-
-- `plans/reference/check-loop.md` § "Read on demand" gains one bullet: a
-  hands-on check pass dispatches each check to the `check-runner` subagent,
-  whose brief is `plans/reference/check-runner.md`. (Added 6 Oct 2026 so
-  the slice's Proof names a file that exists before it lands; CLAUDE.md
-  routes "how checks work" to that file.)
-
-**Must not change.** `checks/` records and their format; who confirms a check.
-
-```queue
-**[Claude] L-23 -- a hands-on check pass runs each check in a check-runner subagent**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-23 -- a hands-on check pass runs each check in a check-runner subagent"
-- Files: `.claude/agents/check-runner.md`, `plans/reference/check-runner.md`, `plans/reference/check-loop.md`
-- Check: `python tools/check_docs.py` passes; `grep -c "name: check-runner" .claude/agents/check-runner.md` prints 1; `grep -c "cannot-run" plans/reference/check-runner.md` prints at least 2; `grep -c "check-runner" plans/reference/check-loop.md` prints at least 1
-- Proof: `absent: plans/reference/check-loop.md :: check-runner`
-- Next after: L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims
-```
+L-23 shipped 2026-10-06; its specification is `plans/archive/L-23_2026-10-06.md`.
 
 ## L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims
 
