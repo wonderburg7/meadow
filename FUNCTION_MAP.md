@@ -944,7 +944,7 @@ The comb as a whole: cells, navigation, finding a cell.
 1048 func announce() -> void
 ```
 
-## game_config.gd (893 lines)
+## game_config.gd (894 lines)
 
 The balance fields.
 
@@ -961,15 +961,15 @@ The balance fields.
 573  # --- weather ---
 591  # --- warnings ---
 600  # --- honey ---
-616  # --- comb building ---
-636  # --- hive geometry ---
-665  # --- bee life ---
-670  # --- bee individuality ---
-749  # --- the rival colony ---
-798  # --- seasons ---
-830  # --- disease ---
-858  # --- gynes leaving ---
-865  # --- winter ---
+617  # --- comb building ---
+637  # --- hive geometry ---
+666  # --- bee life ---
+671  # --- bee individuality ---
+750  # --- the rival colony ---
+799  # --- seasons ---
+831  # --- disease ---
+859  # --- gynes leaving ---
+866  # --- winter ---
 ```
 
 ## main_menu.gd (728 lines)
