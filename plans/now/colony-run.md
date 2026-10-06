@@ -84,7 +84,9 @@ lived, one starved on day 32; no honey was ever made). These supersede the
    thread. Its tree, cost and numbers belong to `plans/design/progression.md`.
    **Superseded in part (Dave, 6 Oct 2026):** without the skill a colony
    pays decision 11's bill times a multiplier rather than failing outright
-   -- `plans/design/progression.md` section 5.6, "Shiver Cluster".
+   -- `plans/design/progression.md` section 5.6, "Shiver Cluster". It is
+   built as T2-8 in `plans/now/tier-two.md` after COL-6, and T2-4b there
+   turns the winter bill's dead into bodies at spring through COL-6's hook.
 10. **Genetic points** are counted and saved now, and spent later.
 11. **A skipped winter is one bill** (Dave, 5 Oct 2026, for COL-6). At
     winter's start the colony pays, at once, what played winter would have
