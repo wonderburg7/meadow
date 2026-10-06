@@ -42,6 +42,6 @@ instructions. Stop and escalate if `tools/slice.ps1 finish` no longer matches
 - Plan: `plans/now/codex-guidance.md` -- "L-20 -- make Codex's closeout directions agree with what `finish` does"
 - Files: `CHATGPT.md`
 - Check: `python tools/check_docs.py` passes, and `CHATGPT.md` says `finish` performs archive and refill rather than ordering them before `finish`
-- Proof: `present: CHATGPT.md :: run both, for your own lane only, **before** running finish`
+- Proof: `present: CHATGPT.md :: run both, for your own lane only, **before** running`
 - Next after: none -- L-20 completes this plan
 ```

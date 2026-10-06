@@ -42,6 +42,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `present: scripts/game_config.gd :: var season_length_days: float = 60.0`
    - Next after: COL-6 -- winter is skipped and resolved in one step
 
+2. **[Codex] L-20 -- make Codex's closeout directions agree with what `finish` does**
+   - Plan: `plans/now/codex-guidance.md` -- "L-20 -- make Codex's closeout directions agree with what `finish` does"
+   - Files: `CHATGPT.md`
+   - Check: `python tools/check_docs.py` passes, and `CHATGPT.md` says `finish` performs archive and refill rather than ordering them before `finish`
+   - Proof: `present: CHATGPT.md :: run both, for your own lane only, **before** running`
+   - Next after: none -- L-20 completes this plan
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
