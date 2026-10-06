@@ -201,7 +201,7 @@ PASS: 2.3 and Dr Gallerin's reminder stay on screen until you reserve a cell, an
 
 If it fails, say which way: clearing before you reserve anything means 2.3's condition in `scripts/challenge_stages.gd` has lost `"explicit": true` (`tests/source_checks.py::check_designation_goals_explicit` guards it); not clearing after you reserve means the Reserve for row is not reaching `scripts/orders_zones.gd::_designate_one`. Either becomes this plan's next slice. Found by `docs/gameplay-review-2026-09-30.md` F1.
 
-Owner: `plans/now/gameplay-consistency.md`
+Owner: `plans/archive/gameplay-consistency_2026-10-06.md`
 
 Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
 
@@ -228,7 +228,7 @@ If it fails, Idle still walks a bee out into the meadow where she cannot
 eat and starves; GC-1 (`scripts/bee.gd::_apply_role`,
 `scripts/bee_survival.gd::after_feeding`) reopens.
 
-Owner: `plans/now/gameplay-consistency.md`
+Owner: `plans/archive/gameplay-consistency_2026-10-06.md`
 
 Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
 
@@ -241,9 +241,9 @@ with nectar or pollen), and in her panel change her job to Miner.
 PASS: once back in the hive she walks to a cell, her "Carrying" line drops to nothing, and she then starts mining.
 
 If it fails, the colony still loses a load whenever a forager is moved to
-an indoor job, and GC-2 (`plans/now/gameplay-consistency.md`) reopens.
+an indoor job, and GC-2 (`plans/archive/gameplay-consistency_2026-10-06.md`) reopens.
 
-Owner: `plans/now/gameplay-consistency.md`
+Owner: `plans/archive/gameplay-consistency_2026-10-06.md`
 
 Confirmed 2 Oct 2026: First pass by Claude computer use, 2 Oct 2026; confirmed by Dave.
 

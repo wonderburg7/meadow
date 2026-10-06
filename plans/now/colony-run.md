@@ -124,13 +124,13 @@ PE-2's arc (`tools/pacing_gates.py`).
 
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| COL-4 | one editable year: thirty playable days, then winter | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/season.gd`, `scripts/world_building.gd`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | yes, Codex lane after GC-3 (`plans/now/gameplay-consistency.md`; shares `game_config.gd` and `settings_catalogue.gd`) | high |
+| COL-4 | one editable year: thirty playable days, then winter | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/season.gd`, `scripts/world_building.gd`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | yes, Codex lane after GC-3 (`plans/archive/gameplay-consistency_2026-10-06.md`; shares `game_config.gd` and `settings_catalogue.gd`) | high |
 | COL-6 | winter is skipped and resolved in one step | `scripts/season.gd`, `scripts/year_winter.gd`, `tests/test_col6_winter_skip.py`, `test_scenarios/col6_winter_skip_test.json`, `tools/verify.ps1` | no -- after COL-4 (shares `season.gd`; needs its year clock) | high |
 | COL-11 | nuptial flights: an unmated queen can leave each day to find a mate | `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd`, `tools/verify.ps1` | no -- after COL-4 (the year its curve reads); COL-10 has landed | high |
 
 **Dependencies.** COL-4 then COL-6: both edit `scripts/season.gd`, and
 COL-6 needs COL-4's year clock. COL-4 runs in the Codex lane after GC-3
-(`plans/now/gameplay-consistency.md`), which shares `scripts/game_config.gd`
+(`plans/archive/gameplay-consistency_2026-10-06.md`), which shares `scripts/game_config.gd`
 and `scripts/settings_catalogue.gd`. COL-9 then COL-10 then COL-11, one after
 the other in the Claude lane: each needs the one before, and COL-11 also
 waits for COL-4.
