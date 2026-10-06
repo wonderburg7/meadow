@@ -30,6 +30,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/hive_cell.gd :: nectar_since`
    - Next after: NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers
 
+2. **[Claude] SPR-2 -- the windowed render baseline at 500 and 1,000 bees**
+   - Plan: `plans/now/render-scale.md` -- "SPR-2 -- the windowed render baseline at 500 and 1,000 bees"
+   - Files: `test_scenarios/spr2_render_500.json`, `test_scenarios/spr2_render_1000.json`, `docs/performance.md`
+   - Check: `python tools/run_scenario.py test_scenarios/spr2_render_1000.json --windowed --report full` exits 0 with a draw-call mean above 0; `docs/performance.md` holds the table for 200, 500 and 1,000 bees; `python tools/check_docs.py` passes
+   - Proof: `absent: docs/performance.md :: SPR-2`
+   - Next after: none -- plans/now/render-scale.md is complete once SPR-2 lands; whether a sprite or batching pass follows is decided with Dave from the table
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
