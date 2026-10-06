@@ -1,7 +1,7 @@
 # Nectar fermentation -- unprocessed nectar ferments, and tipsy bees pay for it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: NF-1 -- headless runs report how long raw nectar sits in the comb; NF-2 is specified and gated on COL-4 (Codex lane, `plans/now/colony-run.md`), which holds `scripts/game_config.gd` and `scripts/settings_catalogue.gd` | Dependency: COL-4 for NF-2 onwards | Verified: 2026-10-06
+Status: active | Owner: Dave / Claude Code | Next: NF-1 is built (nectar age is measured); NF-2 is specified and gated on COL-4 (Codex lane, `plans/now/colony-run.md`), which holds `scripts/game_config.gd` and `scripts/settings_catalogue.gd` | Dependency: COL-4 for NF-2 onwards | Verified: 2026-10-06
 
 ## Objective
 
@@ -119,6 +119,23 @@ recorded measurement, with a test).
 
 **Must not change.** Any gameplay: no cell ferments, eating and honey
 making are untouched, and there is no new save field.
+
+**Evidence (6 Oct 2026, built).** `test_scenarios/nf1_nectar_age.json` is
+20 cells, 6 nectar and 2 pollen foragers, 2 nurses, 1 builder, 2 honey
+makers, seed 5101, 20 s days, 10 days. Ages are in in-game hours, taken
+at each day change over nectar cells holding stock. The summary reports
+the worst day for each figure plus a `daily` list. The colony is small, so
+only one or two cells hold nectar at a time, and p50 and p95 are close.
+With honey makers: days 5, 7, 8, 9 had one nectar cell each, aged 1.2,
+16.8, 40.8 and 64.8 h; the share of stock older than a day went 0, 0, 1,
+1. Without honey makers (`honey_makers: 0`): days 4 to 9 had 1 or 2 cells,
+p95 4.8, 28.8, 52.8, 76.8, 100.8 and 124.8 h; older than a day went 0,
+0.25, then 1.0. In both runs a cell that keeps its nectar ages
+linearly with no ceiling, so any threshold up to a few days is reached;
+honey makers did not clear the old cell here (it was the same cell on
+days 7 to 9), so they do not by themselves keep nectar younger than
+about 1 to 3 in-game days at this colony size. NF-2 should pick its
+threshold knowing this is a one-colony, one-seed reading.
 
 ```queue
 **[Claude] NF-1 -- headless runs report how long raw nectar sits in the comb**
