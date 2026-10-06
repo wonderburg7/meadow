@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] L-22 -- a verify stop names the stage that failed**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-22 -- a verify stop names the stage that failed"
-   - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
-   - Check: `python -m unittest tests.test_slice_lifecycle` passes with a new case modelled on `test_mock_slice_can_claim_commit_and_close` whose mock `verify.ps1` prints `unit tests: FAILED` and exits 1, and whose `finish` output and stop-ledger cause contain `failed: unit tests`; `tools/verify.ps1` is green
-   - Proof: `absent: tools/slice.ps1 :: function Get-VerifyFailureSummary`
-   - Next after: L-23 -- a hands-on check pass runs each check in a check-runner subagent
-
-2. **[Claude] COL-10 -- a gyne takes over from a dead queen**
+1. **[Claude] COL-10 -- a gyne takes over from a dead queen**
    - Plan: `plans/now/colony-run.md` -- "COL-10 -- a gyne takes over from a dead queen"
    - Files: `scripts/main.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_over.gd`, `tests/test_col10_succession.py`, `tests/col10_succession_test.gd`, `tools/verify.ps1`
    - Check: `python -m unittest tests.test_col10_succession` passes (the queen dies with an adult gyne alive: the gyne is queen and unmated, the run is not lost, and the window opened once; with no adult gyne the run ends as before); a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `present: scripts/main.gd :: and there is no succession, so`
    - Next after: COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate
 
-3. **[Claude] L-23 -- a hands-on check pass runs each check in a check-runner subagent**
+2. **[Claude] L-23 -- a hands-on check pass runs each check in a check-runner subagent**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-23 -- a hands-on check pass runs each check in a check-runner subagent"
    - Files: `.claude/agents/check-runner.md`, `plans/reference/check-runner.md`, `plans/reference/check-loop.md`
    - Check: `python tools/check_docs.py` passes; `grep -c "name: check-runner" .claude/agents/check-runner.md` prints 1; `grep -c "cannot-run" plans/reference/check-runner.md` prints at least 2; `grep -c "check-runner" plans/reference/check-loop.md` prints at least 1
