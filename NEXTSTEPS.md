@@ -23,14 +23,7 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] SPR-1 -- a windowed render baseline for the procedural bees**
-   - Plan: `plans/now/sprites.md` -- "SPR-1 -- a windowed render baseline for the procedural bees"
-   - Files: `tools/run_scenario.py`, `scripts/perf.gd`, `tests/test_run_scenario_launch.py`, `test_scenarios/spr1_render_baseline.json`
-   - Check: `python -m unittest tests.test_run_scenario_launch` passes with a new case asserting that `--windowed` drops `--headless` and adds `--disable-vsync`, and that the default command line is unchanged; `python tools/run_scenario.py test_scenarios/spr1_render_baseline.json --windowed` exits 0 and its capture shows a draw-call mean above 0; `tools/verify.ps1` is green
-   - Proof: `absent: tools/run_scenario.py :: --windowed`
-   - Next after: none -- plans/now/sprites.md is complete once SPR-1 lands; whether a sprite path behind a simple-graphics fallback follows is decided with Dave from its numbers
-
-2. **[Claude] NF-1 -- headless runs report how long raw nectar sits in the comb**
+1. **[Claude] NF-1 -- headless runs report how long raw nectar sits in the comb**
    - Plan: `plans/now/nectar-fermentation.md` -- "NF-1 -- headless runs report how long raw nectar sits in the comb"
    - Files: `scripts/hive_cell.gd`, `scripts/diagnostic_log.gd`, `tests/test_nf1_nectar_age.py`, `test_scenarios/nf1_nectar_age.json`, `tools/verify.ps1`
    - Check: `python -m unittest tests.test_nf1_nectar_age` passes (the summary carries `nectar_age` with p95 >= p50 and max > 0); the plan's NF-1 "Evidence" paragraph records both runs; `tools/verify.ps1` is green
