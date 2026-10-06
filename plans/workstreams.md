@@ -59,5 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.claude/worktrees/run-queue-4-eb1d5a` (`claude/run-queue-4-eb1d5a`) | Claude (docs only) | open L-24's queue fence (gate L-18 shipped) | Claude | in progress | none | `plans/now/agent-lifecycle.md` L-24 |
 | `.worktrees/GC-3` (`codex/GC-3`) | Codex | honey stops creating energy | Codex | in progress | none | `plans/now/gameplay-consistency.md` GC-3 — honey stops creating energy |
