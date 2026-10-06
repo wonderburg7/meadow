@@ -81,6 +81,42 @@ class RunOncePreparesLaunchTest(unittest.TestCase):
         self.assertEqual(2, stderr.count("error: not launching Godot -- " + refusal))
 
 
+class WindowedLaunchTest(unittest.TestCase):
+    """SPR-1: --windowed swaps --headless for --disable-vsync, nothing else."""
+
+    def test_default_prefix_is_unchanged(self):
+        self.assertEqual(["g", "--headless", "--disable-crash-handler"],
+                         run_scenario.launch_prefix("g"))
+
+    def test_windowed_drops_headless_and_adds_disable_vsync(self):
+        cmd = run_scenario.launch_prefix("g", windowed=True)
+        self.assertNotIn("--headless", cmd)
+        self.assertIn("--disable-vsync", cmd)
+        self.assertIn("--disable-crash-handler", cmd)
+
+    def test_run_once_passes_the_flag_through_with_fixed_fps_kept(self):
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        godot = str(Path(folder.name) / "Godot.exe")
+        Path(godot).write_bytes(b"")
+        launch = mock.Mock(return_value=mock.Mock(returncode=0, stdout="", stderr=""))
+        commands = {}
+        for windowed in (False, True):
+            with mock.patch.dict(run_scenario._prepared, clear=True), \
+                 mock.patch.object(run_scenario, "ensure_writable_user_dir"), \
+                 mock.patch.object(run_scenario.godot_cache, "ensure_cache", return_value=(True, "")), \
+                 mock.patch.object(run_scenario, "session_file_for_run_id", return_value=SESSION), \
+                 mock.patch.object(run_scenario.subprocess, "run", launch), \
+                 contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                run_scenario.run_once(Path("s.json"), godot, 1, fixed_fps=60, windowed=windowed)
+            commands[windowed] = launch.call_args[0][0]
+        self.assertEqual("--headless", commands[False][1])
+        self.assertNotIn("--disable-vsync", commands[False])
+        self.assertNotIn("--headless", commands[True])
+        self.assertIn("--disable-vsync", commands[True])
+        self.assertIn("--fixed-fps", commands[True])
+
+
 class DeveloperOverridesOnlyOutsideScenariosTest(unittest.TestCase):
     """BS-6: the run start applies the developer table's edits, guarded.
 

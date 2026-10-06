@@ -201,8 +201,18 @@ def prepare_launch(godot_path: str) -> str | None:
     return refusal
 
 
+def launch_prefix(godot_path: str, windowed: bool = False) -> list[str]:
+    """The start of every scenario command line. Headless by default; with
+    windowed (SPR-1) the run opens a real window and drops vsync so frame time
+    is not pinned to the refresh rate, which is what a render baseline needs."""
+    if windowed:
+        return [godot_path, "--disable-vsync", "--disable-crash-handler"]
+    return [godot_path, "--headless", "--disable-crash-handler"]
+
+
 def run_once(scenario_path: Path, godot_path: str, timeout: int,
-             fixed_fps: int | None = None, seed_override: int | None = None) -> Path | None:
+             fixed_fps: int | None = None, seed_override: int | None = None,
+             windowed: bool = False) -> Path | None:
     """Launch one headless run and return the session_*.jsonl it wrote,
     or None (with an error already printed to stderr) if it didn't
     produce one. A launch prepare_launch refuses never starts.
@@ -212,7 +222,7 @@ def run_once(scenario_path: Path, godot_path: str, timeout: int,
         print("error: not launching Godot -- %s" % refusal, file=sys.stderr)
         return None
     run_id = uuid.uuid4().hex[:12]
-    cmd = [godot_path, "--headless", "--disable-crash-handler"]
+    cmd = launch_prefix(godot_path, windowed)
     if fixed_fps is not None:
         # Godot's own built-in engine flag (CHATGPT_INSIGHTS_PLAN.md's A3),
         # not one of our own -- forces every frame to advance the engine by
@@ -414,7 +424,8 @@ def _report_compile_failure(error_line: str, script: str | None, process_log: Pa
 
 def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
                          fixed_fps: int | None, result_root: Path,
-                         seed_override: int | None = None, emit: bool = True) -> int:
+                         seed_override: int | None = None, emit: bool = True,
+                         windowed: bool = False) -> int:
     """Launch one scenario into its own artefact directory and print one verdict."""
     run_id = uuid.uuid4().hex[:12]
     run_dir = result_root / ("run-%d-%s" % (int(time.time() * 1000), run_id))
@@ -492,7 +503,7 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
     # An unattended check must fail through its captured exit status rather
     # than leave Godot's native crash UI open on the desktop.  The process log
     # remains the diagnostic artefact when an engine crash occurs.
-    cmd = [godot_path, "--headless", "--disable-crash-handler"]
+    cmd = launch_prefix(godot_path, windowed)
     if fixed_fps is not None:
         cmd += ["--fixed-fps", str(fixed_fps)]
     cmd += ["--path", str(ROOT), "--", "--scenario=%s" % scenario_path,
@@ -781,7 +792,7 @@ def _warn_on_action_problems(analysis: dict) -> None:
 
 def run_scenario(scenario_path: Path, godot_path: str, timeout: int, repeat: int,
                   profile: str, fixed_fps: int | None = None,
-                  seeds: list[int] | None = None) -> int:
+                  seeds: list[int] | None = None, windowed: bool = False) -> int:
     if not scenario_path.is_file():
         print("error: scenario file not found: %s" % scenario_path, file=sys.stderr)
         return 1
@@ -793,7 +804,7 @@ def run_scenario(scenario_path: Path, godot_path: str, timeout: int, repeat: int
         if run_count > 1:
             print("--- run %d/%d ---" % (i + 1, run_count))
         seed_override = seeds[i] if seeds is not None else None
-        session_file = run_once(scenario_path, godot_path, timeout, fixed_fps, seed_override)
+        session_file = run_once(scenario_path, godot_path, timeout, fixed_fps, seed_override, windowed)
         if session_file is None:
             return 1
 
@@ -887,6 +898,9 @@ def main() -> int:
                         help="managed temporary root for --background job state (default: %(default)s)")
     parser.add_argument("--full", action="store_true",
                          help="shorthand for --report full")
+    parser.add_argument("--windowed", action="store_true",
+                         help="launch with a real window instead of --headless, and with Godot's "
+                              "--disable-vsync, so a capture can read render counters (SPR-1)")
     parser.add_argument("--fixed-fps", type=int, default=DEFAULT_FIXED_FPS,
                          help="advance the engine by a fixed 1/N seconds per frame instead of "
                               "measuring real wall-clock time (Godot's own --fixed-fps flag) -- "
@@ -926,6 +940,9 @@ def main() -> int:
 
     fixed_fps = args.fixed_fps if args.fixed_fps != 0 else None
     if args.experiment is not None:
+        if args.windowed:
+            print("error: --windowed applies to a single scenario, not --experiment", file=sys.stderr)
+            return 1
         if args.repeat != 1 or args.seeds is not None or args.report is not None or args.full:
             print("error: --experiment controls seeds and report through its manifest", file=sys.stderr)
             return 1
@@ -937,9 +954,9 @@ def main() -> int:
             print("error: verdict accepts one run; use --report brief for repeats", file=sys.stderr)
             return 1
         return run_verdict_scenario(args.scenario, args.godot_path, args.timeout,
-                                    fixed_fps, args.result_root)
+                                    fixed_fps, args.result_root, windowed=args.windowed)
     return run_scenario(args.scenario, args.godot_path, args.timeout, args.repeat, profile,
-                         fixed_fps, args.seeds)
+                         fixed_fps, args.seeds, args.windowed)
 
 
 if __name__ == "__main__":

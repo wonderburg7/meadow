@@ -1,7 +1,7 @@
 # Sprites -- measure the procedural rendering before any sprite pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SPR-1 -- a windowed render baseline for the procedural bees | Dependency: none -- no other live plan owns the files below | Verified: 2026-10-06
+Status: complete | Owner: Dave / Claude Code | Next: None -- plan complete; whether a sprite path behind a simple-graphics fallback follows is decided with Dave from the Evidence numbers in SPR-1 | Dependency: none -- no other live plan owns the files below | Verified: 2026-10-06
 
 ## Objective
 
@@ -80,6 +80,12 @@ measurement, with a unit test).
 **Stop and escalate** if the windowed run cannot finish on its own. That
 would mean a scenario that needs a window has a different stop path, which
 changes `main.gd` and this slice's file list.
+
+**Evidence** (6 Oct 2026, `test_scenarios/spr1_render_baseline.json`, 200 bees
+indoors, `--fixed-fps 30`, 480 measured frames). Headless: frame time mean
+16.5 ms, p95 33.7 ms; draw calls and objects 0 (dummy renderer); node count
+15292. `--windowed`: frame time mean 14.8 ms, p95 18.2 ms; draw calls 406
+(mean and p95); objects 564; node count 15292.
 
 ```queue
 **[Claude] SPR-1 -- a windowed render baseline for the procedural bees**
