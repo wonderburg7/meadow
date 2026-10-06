@@ -70,6 +70,23 @@ explicit request from Dave.
 - Disposition: untriaged
 -->
 
+### 2026-10-07 — every test-adding slice owns `tools/verify.ps1`, so the lanes cannot both hold one
+
+- Source: plan-ahead session (claude/plan-ahead-80424a)
+- Area: tooling
+- Signal: a slice that adds a test module must add it to `verify.ps1`'s
+  `$unitModules` list, so `verify.ps1` appears in its `Files:`. No file may
+  sit in both lanes, so only one lane at a time can hold such a slice.
+- Evidence: NF-1, COL-6, COL-11, NF-2 and the planned T2-1 to T2-4
+  (`plans/now/tier-two.md`) all list `tools/verify.ps1` for that one line;
+  `tests/source_checks.py::TESTS_NOT_IN_VERIFY` enforces the listing.
+- Consequence: after COL-4 lands, COL-6 (Codex) and the tier-two chain
+  (Claude) collide on `verify.ps1` alone, and one lane runs dry.
+- Candidate direction: Hypothesis — `verify.ps1` discovers
+  `tests/test_*.py` itself and keeps only the lifecycle list and an
+  exemption list explicit, so a new test module edits no shared file.
+- Disposition: untriaged
+
 ### 2026-09-30 — `tests/source_checks.py` misses an inner class's own signal and engine calls
 
 - Source: SK-1 (Claude)
