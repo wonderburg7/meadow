@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-23 and L-24 from `docs/agent-workflow-review-2026-10-05.md` (L-24 gated on L-18; L-21 and L-22 shipped, so `session_cost.py --days` now reads every worktree's transcripts; L-16 and L-17 shipped; the canaries still to be seen are one slice per lane closed out while origin is ahead, and one whose queue title carries an em dash closed out from a `chcp 1252` console with `git log -1 --format=%s master` showing the dash intact); the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) is measured on Dave's machine with `python tools/session_cost.py --stops`, `--phases` and `--events` from 6 Oct 2026 (not met on 5 Oct 2026: the seven-day window opens 6 Oct, so the earliest reading is 13 Oct 2026) and pasted into the next agent-workflow review, which cannot read those files from a cloud session (`docs/agent-workflow-review-2026-09-30.md`, Dave's actions) | Dependency: none | Verified: 2026-10-06
+Status: active | Owner: Dave / Claude | Next: L-24 from `docs/agent-workflow-review-2026-10-05.md` (L-24 queued 6 Oct 2026, its gate L-18 having shipped 5 Oct; L-21, L-22 and L-23 shipped, so `session_cost.py --days` now reads every worktree's transcripts; L-16 and L-17 shipped; the canaries still to be seen are one slice per lane closed out while origin is ahead, and one whose queue title carries an em dash closed out from a `chcp 1252` console with `git log -1 --format=%s master` showing the dash intact); the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) is measured on Dave's machine with `python tools/session_cost.py --stops`, `--phases` and `--events` from 6 Oct 2026 (not met on 5 Oct 2026: the seven-day window opens 6 Oct, so the earliest reading is 13 Oct 2026) and pasted into the next agent-workflow review, which cannot read those files from a cloud session (`docs/agent-workflow-review-2026-09-30.md`, Dave's actions) | Dependency: none | Verified: 2026-10-06
 
 ## Objective
 
@@ -50,7 +50,6 @@ slice until the next measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-23 | a hands-on check pass runs each check in a check-runner subagent | `.claude/agents/check-runner.md`, `plans/reference/check-runner.md`, `plans/reference/check-loop.md` | medium |
 | L-24 | the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims | `tools/check_docs.py`, `tests/test_queue_lookahead.py`, `.claude/rules/documentation.md`, `.claude/skills/run-queue/SKILL.md` | medium |
 
 L-21 to L-24 come from `docs/agent-workflow-review-2026-10-05.md` (F1 to F5);
@@ -76,54 +75,7 @@ L-21 shipped 2026-10-06; its specification is `plans/archive/L-21_2026-10-06.md`
 
 L-22 shipped 2026-10-06; its specification is `plans/archive/L-22_2026-10-06.md`.
 
-## L-23 -- a hands-on check pass runs each check in a check-runner subagent
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (two new instruction files; no code).
-
-**True now** (verified 5 Oct 2026, the review's F2; Dave chose this on 5 Oct
-2026). A check pass runs every check in its own context: 9 such sessions
-were 486M of the week's 1,412M context tokens, and one reached 630 requests
-and 256 screenshots, its context rising from 64K to 486K per request.
-
-**True afterwards.**
-- `.claude/agents/check-runner.md`: frontmatter `name: check-runner`, a
-  description saying it runs one filed check from `checks/ready/` with
-  computer use and returns a verdict, dispatched by a check pass and not for
-  direct use; `model: opus`, `effort: medium`, and no `tools:` line (it
-  needs the computer-use tools). Its body tells it to read
-  `git -C <ROOT> show HEAD:plans/reference/check-runner.md` and follow it,
-  and that its final message is only that brief's JSON.
-- `plans/reference/check-runner.md` (under 80 lines, the reference Status
-  line): inputs `ROOT` and one check id; read only the check's own file under `checks/ready/`;
-  launch and act as its "What this checks" says, with Git Bash
-  `"/c/Program Files/Godot/Godot.exe" --path .` from `ROOT` as the launch
-  fallback; the computer-use access name is `Godot.exe`; never press "Back
-  to the run" on a fresh boot; a 1-2 s capture lag and a few pixels of click
-  offset are tool artefacts, not findings; a synthetic Escape is no evidence,
-  so a check that needs a real key returns `cannot-run`; close the game
-  before returning. Result:
-  `{"id": "C-<n>", "verdict": "pass|fail|cannot-run", "evidence": "<one sentence of what was on screen>", "needs_dave": "<what only Dave's keyboard or eye can confirm, or empty>"}`.
-- The runner never edits `checks/`, never runs `tools/new_check.py`, and
-  never asks Dave anything: the pass does those.
-
-- `plans/reference/check-loop.md` § "Read on demand" gains one bullet: a
-  hands-on check pass dispatches each check to the `check-runner` subagent,
-  whose brief is `plans/reference/check-runner.md`. (Added 6 Oct 2026 so
-  the slice's Proof names a file that exists before it lands; CLAUDE.md
-  routes "how checks work" to that file.)
-
-**Must not change.** `checks/` records and their format; who confirms a check.
-
-```queue
-**[Claude] L-23 -- a hands-on check pass runs each check in a check-runner subagent**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-23 -- a hands-on check pass runs each check in a check-runner subagent"
-- Files: `.claude/agents/check-runner.md`, `plans/reference/check-runner.md`, `plans/reference/check-loop.md`
-- Check: `python tools/check_docs.py` passes; `grep -c "name: check-runner" .claude/agents/check-runner.md` prints 1; `grep -c "cannot-run" plans/reference/check-runner.md` prints at least 2; `grep -c "check-runner" plans/reference/check-loop.md` prints at least 1
-- Proof: `absent: plans/reference/check-loop.md :: check-runner`
-- Next after: L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims
-```
+L-23 shipped 2026-10-06; its specification is `plans/archive/L-23_2026-10-06.md`.
 
 ## L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims
 
@@ -158,7 +110,7 @@ gate stopped twice). L-18 adds `advice.dry_after` at claim, a warning only.
 
 **Stop and escalate** if L-18 exposed no importable function for its dry run.
 
-```queue-gated
+```queue
 **[Claude] L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims**
 - Plan: `plans/now/agent-lifecycle.md` -- "L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims"
 - Files: `tools/check_docs.py`, `tests/test_queue_lookahead.py`, `.claude/rules/documentation.md`, `.claude/skills/run-queue/SKILL.md`
