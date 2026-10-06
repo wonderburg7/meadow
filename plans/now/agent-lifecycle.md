@@ -50,7 +50,6 @@ slice until the next measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-21 | session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures | `tools/session_cost.py`, `tests/test_session_cost_scope.py` | medium |
 | L-22 | a verify stop names the stage that failed | `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | medium |
 | L-23 | a hands-on check pass runs each check in a check-runner subagent | `.claude/agents/check-runner.md`, `plans/reference/check-runner.md` | medium |
 | L-24 | the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims | `tools/check_docs.py`, `tests/test_queue_lookahead.py`, `.claude/rules/documentation.md`, `.claude/skills/run-queue/SKILL.md` | medium |
@@ -74,57 +73,7 @@ L-18 shipped 2026-10-05; its specification is `plans/archive/L-18_2026-10-05.md`
 
 L-19 shipped 2026-10-05; its specification is `plans/archive/L-19_2026-10-05.md`.
 
-## L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one script and a new test module, deterministic fixtures).
-
-**True now** (verified 5 Oct 2026, `docs/agent-workflow-review-2026-10-05.md` F1).
-- `tools/session_cost.py::main` builds `files` from the primary directory
-  `C--Users-dl13860-Documents-Meadow-meadow` alone, so `--days`,
-  `--classify`, `--phases` and `--no-edit-reasons` see 1 of the 70
-  sessions of 28 Sep to 5 Oct: desktop sessions write to
-  `C--Users-dl13860-Documents-Meadow-meadow--claude-worktrees-<name>`.
-  `python tools/session_cost.py --days 7` prints `sessions 0`.
-- `_session_totals` globs `<dir>/*.jsonl` only; a /run-queue worker's
-  transcript is `<dir>/<session>/subagents/agent-*.jsonl`, so
-  `_print_level_drift` judges every slice on the coordinator's Opus rows.
-  All 36 claims since 28 Sep were coordinated; the workers ran Sonnet for
-  low/medium and Opus for high, as `.claude/agents/slice-worker-*.md` says.
-- `run_events` counts a `verify_stage` event with `skipped: true` as a
-  failure (`not e.get("ok")`): "lifecycle tests=82" is skips, not failures.
-
-**True afterwards.**
-- New `_transcript_files(days, home=None)` returns the top-level `*.jsonl`
-  of every `C--Users-dl13860-Documents-Meadow-meadow*` directory under
-  `home` (default `Path.home() / ".claude" / "projects"`) whose first
-  timestamp is inside the window; `main` uses it for all four modes and
-  prints first `transcripts  <n> sessions (<p> primary, <w> worktree directories)`.
-- `_print_level_drift`: when the claim's session has subagent transcripts,
-  it judges only those whose first `user` message text matches
-  `"id"\s*:\s*"<slice id>"` and labels the models `worker:`; with none it
-  judges the session as today.
-- `run_events` prints `verify failures` from events with neither `ok` nor
-  `skipped`, and a separate `verify skips` line.
-- `_session_totals`' docstring and this plan's "Standing rules" sentence on
-  `--days`/`--classify`/`--phases` say the scope is every worktree's
-  transcripts since L-21.
-
-**Must not change.** `--stops`; the event log's format; `OUTCOME_CLASSES`;
-any report's column layout.
-
-**Stop and escalate** if a subagent transcript's first user message is not
-the dispatch prompt (the id join then needs another key).
-
-```queue
-**[Claude] L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures"
-- Files: `tools/session_cost.py`, `tests/test_session_cost_scope.py`
-- Check: `python -m unittest tests.test_session_cost_scope` passes with three cases built in a temporary `home` (a worktree directory's session is counted; a coordinator session with a worker subagent for the slice reports the worker's model; a skipped stage is a skip, not a failure); `python tools/session_cost.py --days 7` prints a non-zero `sessions`; `tools/verify.ps1` is green
-- Proof: `absent: tools/session_cost.py :: def _transcript_files`
-- Next after: L-23 -- a hands-on check pass runs each check in a check-runner subagent
-```
+L-21 shipped 2026-10-06; its specification is `plans/archive/L-21_2026-10-06.md`.
 
 ## L-22 -- a verify stop names the stage that failed
 
