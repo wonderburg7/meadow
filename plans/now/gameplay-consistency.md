@@ -1,7 +1,7 @@
 # Gameplay consistency — a job change keeps the bee and her load, and honey stores energy without creating it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: GC-3 -- honey stops creating energy (Codex lane, after SR-5; Dave, 4 Oct 2026); GC-4 delivered 2 Oct 2026 (a nurse's brood food goes back into the comb on a job change); C-89 and C-90 passed 2 Oct 2026 | Dependency: none -- PE-2's arc landed 3 Oct 2026; COL-4 (Claude lane, `plans/now/colony-run.md`) shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, and follows GC-3 in the Codex lane | Verified: 2026-10-04
+Status: complete | Owner: Dave / Claude Code | Next: None -- plan complete; GC-3 delivered 6 Oct 2026 (nectar_per_honey 4.0, so honey stores energy without creating it), GC-4 delivered 2 Oct 2026, C-89 and C-90 passed 2 Oct 2026; follow-ups: none -- COL-4 (Codex lane, `plans/now/colony-run.md`) next edits the same two script files | Dependency: none | Verified: 2026-10-06
 
 **Objective.** Three rules that the code breaks today hold again: an Idle bee
 does what the Idle tooltip says, a change of job never loses what the bee is
@@ -82,6 +82,19 @@ all three runs (`food_stores`, the ripe-honey measure, remained zero); this
 matches PE-2's recorded observation that its reference player makes no
 honey. `python tools/run_scenario.py test_scenarios/bs4_honey_gate_test.json`
 passed at 4.0 and bought Comb worker at 39.75 simulated seconds (day 1).
+
+Before-and-after (review, 6 Oct 2026: the bs4 baseline was rerun at 2.0 on
+master `216862f`):
+
+| Gate | 2.0 | 4.0 |
+| --- | --- | --- |
+| PE-2 winter survival (seeds 20260923/24/25) | survived/survived/died | survived/survived/died |
+| Ripe honey at winter's start | 0 on all three | 0 on all three |
+| bs4 honey gate buys Comb worker | 39.75 s (day 1), passed | 39.75 s (day 1), passed |
+
+No gate moved, so nothing went to Dave. PE-2's reference player makes no
+honey, so the arc cannot show the change's cost; the source check is what
+holds the rule.
 
 ```queue
 **[Codex] GC-3 -- honey stops creating energy**
