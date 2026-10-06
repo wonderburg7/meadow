@@ -337,6 +337,25 @@ Adult outcome is fixed at emergence and saved with the bee:
 The exact pollen/honey recipe, cell capacity, larval ration and UI forecast are
 balance decisions requiring the scenario harness; they are not guessed here.
 
+**Decisions (Dave, 6-7 Oct 2026, plan-ahead session).** Sliced in
+`plans/now/bee-bread.md`.
+
+- **The adult outcomes above stand as written, in every run**, Challenges
+  included: a worker raised without Bee Bread lives 15 days at 95% speed and
+  capacity, which is below today's 25 days at 100% (`bee_lifespan_days`).
+  Challenges 1 and 2 and the Colony Run's pacing are re-simulated, and their
+  affected hands-on checks rerun, when the outcome lands.
+- **A save made before the rule** loads its adult bees as today's workers
+  (25 days, 100%) for the rest of their lives; only larvae raised after
+  loading follow the rule.
+- **Fermenting takes about two game-days**, not seven: the year is 30
+  playable days (`plans/now/colony-run.md` decision 6), and a colony should
+  turn Bee Bread over several times before winter. A `GameConfig` value,
+  confirmed by simulation. This supersedes "seven game-days" above.
+- **Fermenter is a Honey worker mode the player turns on** (`roles.gd`'s
+  `modes`, as the Miner's "Dig on its own"), gated by the Bee bread skill;
+  honey workers never ferment on their own.
+
 ## 10. Pollination and ecology
 
 A bee earns one Pollinator Point when it moves from one flower individual to a
