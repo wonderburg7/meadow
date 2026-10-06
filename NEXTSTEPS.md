@@ -37,6 +37,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `present: scripts/main.gd :: and there is no succession, so`
    - Next after: COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate
 
+3. **[Claude] L-23 -- a hands-on check pass runs each check in a check-runner subagent**
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-23 -- a hands-on check pass runs each check in a check-runner subagent"
+   - Files: `.claude/agents/check-runner.md`, `plans/reference/check-runner.md`, `plans/reference/check-loop.md`
+   - Check: `python tools/check_docs.py` passes; `grep -c "name: check-runner" .claude/agents/check-runner.md` prints 1; `grep -c "cannot-run" plans/reference/check-runner.md` prints at least 2; `grep -c "check-runner" plans/reference/check-loop.md` prints at least 1
+   - Proof: `absent: plans/reference/check-loop.md :: check-runner`
+   - Next after: L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
