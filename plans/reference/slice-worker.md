@@ -1,10 +1,11 @@
 # Slice worker — one claimed slice, implemented by a subagent
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: by a slice-worker subagent only -->
-Status: reference | Owner: Dave / Claude Code | Next: nothing further -- tuned 2 Oct from the FBB-1, BS-9, L-16 and L-17 runs; tune again from the next trial note | Dependency: none | Verified: 2026-10-02
+Status: reference | Owner: Dave / Claude Code | Next: nothing further -- tuned 2 Oct from the FBB-1, BS-9, L-16 and L-17 runs; tune again from the next trial note | Dependency: none | Verified: 2026-10-06
 
 You are a `slice-worker-*` subagent. A coordinator session (the
-`/run-queue` skill) has already claimed one slice with
+`/run-queue` skill, or the Codex `run-queue` skill in
+`.agents/skills/`) has already claimed one slice with
 `tools/slice.ps1 start` and handed you its JSON. You implement that one
 slice on its branch and return a short result. You never claim, finish,
 merge, abort or start another slice, and you never talk to Dave: the
@@ -37,6 +38,12 @@ Read/Write/Edit and PowerShell file cmdlets are denied there; use Bash.
 - Run every command in a subshell, `(cd <wt> && ...)`, so no tool's shell is
   left sitting in the worktree: Windows then refuses to delete it at
   `finish`.
+
+**Codex workers:** the tool notes above are Claude Code's. In Codex, read
+and search with the shell, edit with `apply_patch` on the worktree's paths,
+and run each command with the shell's working directory set to the
+worktree rather than a lingering `cd`. The CRLF rule still holds: a diff
+that rewrites every line of a file means an edit dropped the `\r`.
 
 ## Routine
 

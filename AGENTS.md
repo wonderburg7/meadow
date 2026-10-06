@@ -11,6 +11,11 @@ starting, and read it then with
 implementing, follow its "Session routing" -- `tools/slice.ps1 start -Lane
 Codex` -- and never read `NEXTSTEPS.md` whole.
 
+To work through several Codex-lane slices in a row, Dave invokes the
+`run-queue` skill (`.agents/skills/run-queue/SKILL.md`). A worker subagent
+that skill starts skips `CHATGPT.md`: its whole brief is
+`plans/reference/slice-worker.md` and the claimed slice it was handed.
+
 Codex has the same rights as Claude Code to read and edit Meadow's game and
 source files, including the primary worktree, for an assigned task. Like
 Claude, Codex commits on a work branch (a `codex/...` branch, or a dedicated
