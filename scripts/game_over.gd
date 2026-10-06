@@ -1,9 +1,10 @@
 extends CanvasLayer
-## Shown when the queen dies.
+## Shown when the queen dies with no adult gyne to take her place.
 ##
-## She is the only bee that can lay, and there is no succession yet, so
-## losing her ends the colony -- everything still alive will age out
-## without replacement. The run is stopped rather than left to wind down
+## She is the only bee that can lay. Since COL-10 the oldest adult gyne
+## succeeds her (main.gd::_promote_gyne_to_queen) and this screen never
+## opens; with no gyne, losing her ends the colony -- everything still
+## alive will age out without replacement. The run is stopped rather than left to wind down
 ## on its own, because watching a doomed colony starve for ten minutes
 ## isn't a game state worth sitting in.
 

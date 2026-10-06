@@ -75,6 +75,7 @@ const SpatialGrid = preload("res://scripts/spatial_grid.gd")
 const Season = preload("res://scripts/season.gd")
 const WinterPanel = preload("res://scripts/winter_panel.gd")
 const GallerinPanel = preload("res://scripts/gallerin_panel.gd")
+const SuccessionPanel = preload("res://scripts/succession_panel.gd")
 const ClickMarker = preload("res://scripts/click_marker.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
 const Shapes = preload("res://scripts/shapes.gd")
@@ -204,6 +205,8 @@ var nursery_panel: CanvasLayer
 var foraging_panel: CanvasLayer
 var winter_panel: CanvasLayer
 var gallerin_panel: CanvasLayer
+## COL-10: explains a gyne's takeover from a dead queen.
+var succession_panel: CanvasLayer
 var rival: Node2D = null
 ## The year: seasons, disease, winter and gynes leaving.
 var season: Node2D = null
@@ -596,6 +599,9 @@ func _ready() -> void:
 	gallerin_panel = GallerinPanel.new()
 	add_child(gallerin_panel)
 
+	succession_panel = SuccessionPanel.new()
+	add_child(succession_panel)
+
 	season = Season.new()
 	season.world = self
 	season.winter_started.connect(year_winter._on_winter_started)
@@ -942,10 +948,15 @@ func _apply_rain_overlay() -> void:
 	if rain_effect != null:
 		rain_effect.visible = showing
 
-## The queen is the only bee that can lay and there is no succession, so
-## losing her ends the run. Checked here rather than from the bee itself
-## because a dying bee frees itself, and main.gd is what holds the
-## reference worth watching.
+## The queen is the only bee that can lay. When she dies the oldest adult
+## gyne takes her place (COL-10, _promote_gyne_to_queen); only with no
+## gyne to succeed her does losing her end the run. Checked here rather
+## than from the bee itself because a dying bee frees itself, and main.gd
+## is what holds the reference worth watching.
+##
+## The promotion comes before colony_lost is set, in the same frame the
+## old queen's reference goes invalid, so a run with a gyne never shows
+## the game-over screen and then carries on.
 ##
 ## HO-10: this used to open with `queen == null`, meant to skip a run with
 ## no queen yet. But a freed Object compares equal to null in Godot 4, so
@@ -961,6 +972,8 @@ func _check_for_loss() -> void:
 		return
 	if not queen_seen_alive:
 		return
+	if _promote_gyne_to_queen():
+		return
 	colony_lost = true
 	if scenario_active:
 		_end_scenario_run("collapsed")
@@ -972,6 +985,28 @@ func _check_for_loss() -> void:
 		hive.total("nectar"),
 		hive.total_honey(),
 	)
+
+## COL-10. The oldest adult gyne still with the colony becomes its queen:
+## hatched (brood is a cell, not a bee) and not leaving or dying, which
+## is_dying covers -- a gyne who flew off to found a colony is still a
+## valid node until the end of that frame. She takes over unmated, so
+## she lays drones (COL-9) until she mates, and the succession window
+## says so once. Returns false when there is no gyne to promote.
+func _promote_gyne_to_queen() -> bool:
+	var heir: Node2D = null
+	for bee in get_tree().get_nodes_in_group("bees"):
+		if not is_instance_valid(bee) or not bee.is_gyne or bee.is_dying:
+			continue
+		if heir == null or bee.age_seconds > heir.age_seconds:
+			heir = bee
+	if heir == null:
+		return false
+	heir.become_queen()
+	queen = heir
+	_update_population_readout()
+	year_winter._close_other_left_windows(succession_panel)
+	succession_panel.open_for(heir)
+	return true
 
 ## Warns when the colony as a whole is running on empty. Deliberately
 ## doesn't pause: it's information, and stopping the game every time
