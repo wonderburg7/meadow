@@ -60,3 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/COL-4` (`codex/COL-4`) | Codex | one editable year: thirty playable days, then winter | Codex | in progress | none | `plans/now/colony-run.md` COL-4 -- one editable year: thirty playable days, then winter |
+| `.worktrees/SPR-1` (`claude/SPR-1`) | Claude | a windowed render baseline for the procedural bees | Claude | in progress | none | `plans/now/sprites.md` SPR-1 -- a windowed render baseline for the procedural bees |
