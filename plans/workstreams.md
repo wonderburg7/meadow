@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/GC-3` (`codex/GC-3`) | Codex | honey stops creating energy | Codex | in progress | none | `plans/now/gameplay-consistency.md` GC-3 — honey stops creating energy |
-| `.worktrees/L-24` (`claude/L-24`) | Claude | the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims | Claude | in progress | none | `plans/now/agent-lifecycle.md` L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims |
