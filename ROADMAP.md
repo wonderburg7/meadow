@@ -32,8 +32,7 @@ it can become one.
 
 - winter, sprites, Challenge-aware save/load and the wider ecology systems:
   `DESIGN_BACKLOG.md`'s "Deferred product decisions" holds the decision on each.
-- second-hive-site progression;
-- player-managed stocking routes and nectar-spoilage economy work.
+- second-hive-site progression.
 
 Choose a playable, independently testable slice from one row. Do not promote a
 later idea into the queue until it has a named owner, data boundary, validation
