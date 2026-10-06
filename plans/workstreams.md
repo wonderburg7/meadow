@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/GC-3` (`codex/GC-3`) | Codex | honey stops creating energy | Codex | in progress | none | `plans/now/gameplay-consistency.md` GC-3 — honey stops creating energy |
-| `.worktrees/COL-10` (`claude/COL-10`) | Claude | a gyne takes over from a dead queen | Claude | in progress | none | `plans/now/colony-run.md` COL-10 -- a gyne takes over from a dead queen |
