@@ -1,6 +1,6 @@
 # Colony Run -- the flagship run's definition and first slices
 
-Status: active | Owner: Dave / Claude Code | Next: COL-4 -- one editable year: thirty playable days, then winter, Codex lane; COL-6 is specified and gated on it (decision 11, Dave 5 Oct 2026); COL-9 -- an unmated queen's eggs become drones, Claude lane, then COL-10 and COL-11 (decision 12, Dave 5 Oct 2026) (COL-5 landed: level rows no longer carry the unread unlocks and win_conditions keys; COL-3 landed: game_over.gd offers the latest checkpoint of a Colony Run through saves_panel.gd::reload_from; COL-2 landed: colony_milestones.check_victory records a victory day and opens the win screen with Colony Run wording; COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4, decisions 5-10) is queued in the Codex lane after GC-3, which shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` (Dave, 4 Oct 2026) | Verified: 2026-10-05
+Status: active | Owner: Dave / Claude Code | Next: COL-4 -- one editable year: thirty playable days, then winter, Codex lane; COL-6 is specified and gated on it (decision 11, Dave 5 Oct 2026); COL-10 -- a gyne takes over from a dead queen, Claude lane, then COL-11 (decision 12, Dave 5 Oct 2026) (COL-9 landed: an unmated queen (bee.gd::is_mated, saved, true by default) lays drone brood that hatches an Idle drone through main.gd's emergence loop, and set_role refuses him any other job; COL-5 landed: level rows no longer carry the unread unlocks and win_conditions keys; COL-3 landed: game_over.gd offers the latest checkpoint of a Colony Run through saves_panel.gd::reload_from; COL-2 landed: colony_milestones.check_victory records a victory day and opens the win screen with Colony Run wording; COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4, decisions 5-10) is queued in the Codex lane after GC-3, which shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` (Dave, 4 Oct 2026) | Verified: 2026-10-06
 
 This is the design pass that `plans/design/product-scope.md` §6.2 put next
 (Dave, 30 Sep 2026): run policy for the flagship Colony Run. It ran on 3 Oct
@@ -366,7 +366,7 @@ the latest checkpoint from that screen. `saving.gd` already rebuilds
 rule; a scenario run's "collapsed" ending when no gyne exists; COL-3's
 checkpoint restore.
 
-```queue-gated
+```queue
 **[Claude] COL-10 -- a gyne takes over from a dead queen**
 - Plan: `plans/now/colony-run.md` -- "COL-10 -- a gyne takes over from a dead queen"
 - Files: `scripts/main.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_over.gd`, `tests/test_col10_succession.py`, `tests/col10_succession_test.gd`, `tools/verify.ps1`

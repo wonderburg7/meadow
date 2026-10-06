@@ -416,5 +416,65 @@ class ColonyMilestoneDaysTest(unittest.TestCase):
         self.assertNotIn("colony_milestones", migrations)
 
 
+
+def restore_bee_caste(entry):
+    """Mirrors scripts/saving.gd::_restore_bees's COL-9 reads."""
+    return {"drone": bool(entry.get("drone", False)), "mated": bool(entry.get("mated", True))}
+
+
+def restore_cell_brood(entry):
+    """Mirrors scripts/saving.gd::_restore_cells's gyne and drone reads."""
+    gyne = bool(entry.get("gyne", False))
+    return {"gyne": gyne, "drone": bool(entry.get("drone", False)) and not gyne}
+
+
+class DroneFieldsTest(unittest.TestCase):
+    """COL-9 (plans/now/colony-run.md): is_mated, is_drone and
+    brood_is_drone are additive save fields, with no FORMAT_VERSION bump."""
+
+    def test_all_three_fields_survive_a_save_and_load(self):
+        written = json.loads(json.dumps({
+            "version": FORMAT_VERSION,
+            "bees": [{"queen": True, "drone": False, "mated": False},
+                     {"queen": False, "drone": True, "mated": True}],
+            "cells": [{"gyne": False, "drone": True}]}))
+        data = upgrade(written)
+        self.assertEqual({"drone": False, "mated": False}, restore_bee_caste(data["bees"][0]))
+        self.assertEqual({"drone": True, "mated": True}, restore_bee_caste(data["bees"][1]))
+        self.assertEqual({"gyne": False, "drone": True}, restore_cell_brood(data["cells"][0]))
+
+    def test_a_save_without_them_loads_every_queen_mated_and_nothing_a_drone(self):
+        for data in (upgrade({"version": FORMAT_VERSION, "bees": [{"queen": True}, {"gyne": True}],
+                              "cells": [{"gyne": True}, {}]}),
+                     upgrade(load_fixture("save_v1.json")),
+                     upgrade(load_fixture("save_v2.json"))):
+            for bee in data.get("bees", []):
+                self.assertEqual({"drone": False, "mated": True}, restore_bee_caste(bee))
+            for cell in data.get("cells", []):
+                self.assertFalse(restore_cell_brood(cell)["drone"])
+
+    def test_a_cell_is_never_both_gyne_and_drone(self):
+        self.assertEqual({"gyne": True, "drone": False}, restore_cell_brood({"gyne": True, "drone": True}))
+
+    def test_gdscript_writes_and_restores_the_fields(self):
+        save_game = (SCRIPTS / "save_game.gd").read_text(encoding="utf-8")
+        self.assertIn('"drone": cell.brood_is_drone,', save_game)
+        self.assertIn('"drone": b.is_drone,', save_game)
+        self.assertIn('"mated": b.is_mated,', save_game)
+        saving = (SCRIPTS / "saving.gd").read_text(encoding="utf-8")
+        self.assertIn('cell.brood_is_drone = bool(entry.get("drone", false)) and not cell.brood_is_gyne', saving)
+        self.assertIn('bee.is_drone = bool(entry.get("drone", false))', saving)
+        self.assertIn('bee.is_mated = bool(entry.get("mated", true))', saving)
+        restore_bees = saving.split("func _restore_bees(", 1)[1]
+        # Before the bee enters the tree, so _ready() draws a drone's size.
+        self.assertLess(restore_bees.index("bee.is_drone = "), restore_bees.index("add_child(bee)"))
+
+    def test_no_migration_and_no_version_bump(self):
+        migrations = (SCRIPTS / "save_migrations.gd").read_text(encoding="utf-8")
+        for field in ("drone", "mated"):
+            self.assertNotIn(field, migrations)
+        self.assertEqual(6, FORMAT_VERSION)
+
+
 if __name__ == "__main__":
     unittest.main()

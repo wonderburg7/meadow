@@ -166,6 +166,9 @@ func _restore_cells(cells: Array) -> void:
 		cell.brood_fed_seconds = float(entry.get("brood_fed", 0.0))
 		cell.unfed_seconds = float(entry.get("unfed", 0.0))
 		cell.brood_is_gyne = bool(entry.get("gyne", false))
+		# COL-9, additive: a save from before drones has none, and a cell
+		# is never both.
+		cell.brood_is_drone = bool(entry.get("drone", false)) and not cell.brood_is_gyne
 		cell.clean_progress = float(entry.get("clean", 0.0))
 		cell.ripen_progress = float(entry.get("ripen", 0.0))
 		cell.hatch_role = int(entry.get("hatch_role", -1))
@@ -260,6 +263,11 @@ func _restore_bees(bees: Array) -> Array:
 		var bee = main.Bee.new()
 		bee.is_queen = bool(entry.get("queen", false))
 		bee.is_gyne = bool(entry.get("gyne", false))
+		# COL-9, additive: a save from before them loads every queen mated
+		# and nothing a drone. Set before the bee enters the tree, so
+		# _ready() draws a drone at his own size.
+		bee.is_drone = bool(entry.get("drone", false))
+		bee.is_mated = bool(entry.get("mated", true))
 		bee.position = Vector2(float(entry.x), float(entry.y))
 		if bool(entry.get("indoors", false)):
 			main.hive_root.add_child(bee)
