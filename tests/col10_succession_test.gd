@@ -6,7 +6,8 @@ extends SceneTree
 ## kills the queen. Checks that:
 ## - the older staying gyne becomes the queen: is_queen set, is_gyne
 ##   cleared, unmated, on Egg layer, main.queen pointing at her, her
-##   readout saying "Unmated: lays drones";
+##   readout saying "Unmated: lays drones", and the Forager backup she
+##   had as a gyne replaced by a founding queen's default;
 ## - the run is not lost and the game-over panel never shows;
 ## - the succession window opened once and stays at one;
 ## - she lays drone brood;
@@ -81,6 +82,8 @@ func _kill_queen_with_gynes() -> void:
 	_younger = _spawn_gyne(1.0)
 	if leaving == null or _heir == null or _younger == null:
 		return
+	# A backup that would take a queen out of the hive.
+	_heir.secondary_role = _main.Bee.Role.FORAGER
 	# The oldest flies off this frame: still a valid node until it ends.
 	leaving.leave_to_found_colony()
 	load("res://scripts/bee_survival.gd").die(_old_queen, "debug")
@@ -113,6 +116,8 @@ func _watch_takeover() -> void:
 	_check(not current.is_gyne, "the new queen is still a gyne")
 	_check(not current.is_mated, "the new queen is mated")
 	_check(current.role == _main.Bee.Role.EGG_LAYER, "the new queen is role %d, not Egg layer" % current.role)
+	_check(current.secondary_role == _founding_backup(),
+		"the new queen's backup is role %d, not a founding queen's %d" % [current.secondary_role, _founding_backup()])
 	_check(current.role_name_text().contains("Unmated: lays drones"),
 		"the new queen's readout is \"%s\"" % current.role_name_text())
 	_check(is_instance_valid(_younger) and _younger.is_gyne and not _younger.is_queen,
@@ -124,6 +129,15 @@ func _watch_takeover() -> void:
 	_check_lays_drones(current)
 	_phase = "after_takeover"
 	_phase_frame = _frame
+
+
+## A founding queen's backup: the level's queen_laying_backup, else Nurse.
+func _founding_backup() -> int:
+	var level: Dictionary = _main.Levels.get_level(LEVEL)
+	var key: String = str(level.get("queen_laying_backup", ""))
+	if key != "":
+		return _main.Roles.id_for_key(key)
+	return _main.Bee.Role.NURSERY
 
 
 ## She lays straight into an empty cell, the call her LAYING state makes.

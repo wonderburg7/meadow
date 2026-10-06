@@ -823,8 +823,11 @@ func become_drone() -> void:
 ## drones (COL-9) until she mates; she is redrawn at a queen's size and
 ## colour, given a queen's speed, and put straight onto Egg layer --
 ## past "finish current task first", since the colony has no layer
-## until she starts. A Nurse backup, as setup() gives every queen, when
-## the run names none.
+## until she starts. The backup she had as a gyne is dropped, so she
+## gets a founding queen's: the run's queen_laying_backup (_apply_role),
+## or a Nurse backup, as setup() gives every queen, when it names none.
+## Kept, a Forager backup would walk her out of the hive whenever laying
+## was blocked.
 func become_queen() -> void:
 	is_queen = true
 	is_gyne = false
@@ -835,6 +838,7 @@ func become_queen() -> void:
 		remove_child(visual_root)
 		visual_root.queue_free()
 	_build_visuals()
+	secondary_role = -1
 	_apply_role(Role.EGG_LAYER)
 	if secondary_role == -1:
 		secondary_role = Role.NURSERY
