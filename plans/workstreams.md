@@ -60,4 +60,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/GC-3` (`codex/GC-3`) | Codex | honey stops creating energy | Codex | in progress | none | `plans/now/gameplay-consistency.md` GC-3 — honey stops creating energy |
-| `.worktrees/L-23` (`claude/L-23`) | Claude | a hands-on check pass runs each check in a check-runner subagent | Claude | in progress | none | `plans/now/agent-lifecycle.md` L-23 -- a hands-on check pass runs each check in a check-runner subagent |
