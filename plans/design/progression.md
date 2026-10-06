@@ -198,9 +198,18 @@ Colony-level automation and standing policy. New sector.
 | `skill.hive_mind.backup_roles` | 1 | Existing (was `skill.colony.backup_roles`) | — | Secondary-role assignment. |
 | `skill.hive_mind.automation` | 2 | Existing (was `automatic_building` + `automatic_mining`) | Comb worker **and** Miner (cross-sector) | One node covering **Auto-mining and Auto-building**: autonomous outward comb construction and autonomous mining beyond player-designated orders. |
 | `skill.hive_mind.cleaning` | 2 | Existing foundation | — | Unlocks cleaning of debris and corpses as a directed colony activity. |
+| `skill.hive_mind.shiver_cluster` | 2 | New (not yet in `skills.gd`) | — | Bees surround the queen and shiver to keep her warm through winter. Without it, winter's bill is multiplied. See "Shiver Cluster" below. |
 | `skill.hive_mind.adjustment_panel` | 3 | New | Backup roles | A panel for setting the colony's standing responses — combat behaviour, rain actions, drought actions. Depends on the corresponding behaviours existing: combat (Defence T2), rain recall (Ecology T2), drought (not yet a feature). |
 | `skill.hive_mind.extended_backup_roles` | 3 | New | Backup roles | Order backup-role priorities rather than naming a single fallback. |
 | `skill.hive_mind.chemical_cascade` | 4 | **Open** | — | See section 5.9. |
+
+**Shiver Cluster (Dave, 6 Oct 2026, plan-ahead session).** Colony Run decision 9 (`plans/now/colony-run.md`) created the skill and left its tree, cost and numbers here. Decided:
+
+- **Slot: Hive Mind tier 2**, beside Automation and Cleaning, reached through Backup roles. It costs honey like every tier-2 node. Nothing live sits above it (Hive Mind tier 3 holds only cut nodes), so it blocks nothing; a later thermoregulation thread (section 5.8's Thermal comb) grows above it.
+- **Without it, winter's bill is multiplied.** Decision 11's one-off bill (living bees x `energy_burn_rate` x `winter_burn_factor` x winter's length) is what a colony *with* the cluster pays. A colony without it pays that bill times a `GameConfig` multiplier, and the same rule settles the shortfall: workers die oldest first until the survivors' bill fits, and the queen dies only if the stores cannot cover her share. Intent: surviving without the skill is nearly impossible, not impossible -- the multiplier is set by simulation (PE-2's arc) so that only a store far beyond what the forecast asks of a clustered colony carries one through. Working value 2. **This supersedes decision 9's "without it a colony does not survive winter."**
+- **Runs other than the Colony Run start owning it.** Scenario levels 3-7 have winter on by default; a run whose level row has no `"run_type": "colony"` owns Shiver Cluster from the start, applied once at run start like the brood spine's "seeding implies owning" (`plans/archive/brood-spine_2026-10-05.md` decision 2). No level lists it by hand, and Scenarios play as today.
+- **Warning: the forecast and the urgent strip.** While the colony does not own it, the winter forecast says so and shows the multiplied bill from the moment the countdown opens, and the problem strip raises it as urgent during the countdown's last days. Both reuse what exists (the winter forecast; `signal_catalogue.gd`), adding no new window.
+- **Build order.** After COL-6 (`plans/now/colony-run.md`), whose one-step winter the multiplier applies to, and after the step 8 gating slices (`plans/now/tier-two.md`), which establish how a Hive Mind tier-2 purchase is gated.
 
 ### 5.7 Baseline capabilities — available from the start, not nodes
 
