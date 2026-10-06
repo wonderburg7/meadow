@@ -34,9 +34,8 @@ sitting in a `.worktrees/` directory:
    the whole section), go to 5 with that level, and count it toward the
    maximum. Any other held state stops the run. If the lane is empty,
    refill it (below), then rerun `doctor`.
-2. **Claim.** If the lane holds only the item you are about to claim, first
-   run `python tools/refill_lane.py --top-up --lane Claude --dry-run`. If it
-   would add nothing, refill the lane (below) or ask Dave before you claim:
+2. **Claim.** Read `advice.dry_after` from `doctor`. When it is true, run
+   "Refilling the lane" (below) or ask Dave *before* `start`, never after:
    a slice built with nothing admissible behind it is stranded at `finish`'s
    refill gate (BS-12, 4 Oct 2026). Then run `start`. Keep its JSON, and note
    `advice.level`.

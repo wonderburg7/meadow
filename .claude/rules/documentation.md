@@ -21,6 +21,9 @@ session edits only its own lane's subsection. The whole queue never drops
 below three (Dave, D-2, 8 Sep 2026). A `Next after:` line must name the slice
 that follows -- the only accepted alternative is `none -- <plan> is complete`
 -- which is what makes a lane refill itself by lookup.
+A lane item is not claimed while `advice.dry_after` is true: specify its
+successor first, so planning happens before the build, not inside `finish`
+(Dave, 5 Oct 2026).
 
 **The lookup is the backlog.** An open slice section in a live plan may carry
 one fenced `queue` block holding the exact item that slice would be queued as:

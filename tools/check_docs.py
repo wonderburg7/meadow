@@ -430,6 +430,35 @@ def check_queue_successors(errors: list[str], text: str | None = None) -> None:
         )
 
 
+def check_queue_lookahead(warnings: list[str], text: str | None = None,
+                          root: Path | None = None, entries: list | None = None) -> None:
+    """Warn when closing a lane's first item would strand the next slice (L-24).
+
+    Reuses the function behind `refill_lane.py --top-up --dry-run --json`
+    (L-18's `dry_after_report`): when deleting the lane's first item would
+    empty the lane or take the queue under QUEUE_SIZE_MIN and the top-up adds
+    nothing, `finish` would stop at the refill gate. Say so while the slice
+    can still be specified before it is built. A warning, never an error."""
+    import refill_lane  # imported here: refill_lane imports this module
+
+    root = root or ROOT
+    if text is None:
+        text = (root / "NEXTSTEPS.md").read_text(encoding="utf-8")
+    if entries is None:
+        entries = refill_lane.load_backlog(root)
+    queued = refill_lane.queued_ids(text)
+    for lane in LANES:
+        first = next((slice_id for item_lane, slice_id in queued if item_lane == lane), None)
+        if first is None:
+            continue
+        report = refill_lane.dry_after_report(text, lane, first, root, entries)
+        if report["dry_after"]:
+            warnings.append(
+                f"lookahead: closing {first} would leave the {lane} lane short with "
+                "nothing admissible behind it; specify the owning plan's next slice"
+            )
+
+
 def check_queue_items_state_a_level(warnings: list[str]) -> None:
     """Every queued item's plan states the reasoning level for that slice.
 
@@ -1219,6 +1248,7 @@ def main() -> int:
     check_queue_items_state_a_level(warnings)
     check_queue_ids_are_unused(warnings)
     check_queue_successors(errors)
+    check_queue_lookahead(warnings)
     check_queue_section_agreement(errors)
     check_not_in_queue_reasons(errors)
     check_plan_queue_blocks(errors, warnings)
