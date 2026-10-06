@@ -355,6 +355,11 @@ balance decisions requiring the scenario harness; they are not guessed here.
 - **Fermenter is a Honey worker mode the player turns on** (`roles.gd`'s
   `modes`, as the Miner's "Dig on its own"), gated by the Bee bread skill;
   honey workers never ferment on their own.
+- **A Bee Bread cell works like any store cell** (7 Oct 2026): `bee_bread`
+  becomes a `hive_cell.gd` designation type. Fermenters use a cell the
+  player has designated for it, otherwise the nearest empty cell, which
+  their first deposit marks, exactly as nectar, pollen and honey cells
+  work today. This reads "designated cell" above.
 
 ## 10. Pollination and ecology
 
