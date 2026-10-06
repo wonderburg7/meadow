@@ -124,6 +124,12 @@ var _blocks_mined: int = 0
 var _honey_batches_deposited: int = 0
 var _cells_ripened: int = 0
 
+## NF-1: once per day change, how long raw nectar has sat in the comb (in
+## in-game hours). One entry per day: p50, p95, max over nectar cells
+## holding stock, and the share of stored nectar older than one in-game day.
+var _nectar_age_days: Array = []
+var _nectar_age_last_day: int = 0
+
 
 # --- _ready and the session lifecycle -----------------------------
 func _ready() -> void:
@@ -188,6 +194,8 @@ func start_session() -> void:
 	_blocks_mined = 0
 	_honey_batches_deposited = 0
 	_cells_ripened = 0
+	_nectar_age_days.clear()
+	_nectar_age_last_day = 0
 	_queen_alive = true
 	comb_build_sites = {"max_builders_per_site": 0, "max_slots_held": 0,
 		"max_distinct_slots": 0, "building_without_slot": 0,
@@ -751,6 +759,7 @@ func event_count(type: String, subtype: String = "") -> int:
 func tick(delta: float, world: Node2D) -> void:
 	if _file == null:
 		return
+	_sample_nectar_age_on_day_change(world)
 	if not bool(_diagnostics.get("legacy_standard", true)) and _diagnostics.snapshots.is_empty():
 		return
 	_hour_accum += delta
@@ -780,6 +789,50 @@ func tick(delta: float, world: Node2D) -> void:
 			return
 		_diagnostic_last_snapshot = comparable
 	_write(snapshot)
+
+
+## Reads the comb once when the day number moves on, never per frame.
+func _sample_nectar_age_on_day_change(world: Node2D) -> void:
+	var day := _current_day()
+	if day == _nectar_age_last_day:
+		return
+	_nectar_age_last_day = day
+	if world == null or world.hive == null:
+		return
+	var hour: float = max(0.001, GameConfig.seconds_per_day / 24.0)
+	var ages: Array = []
+	var stock_total := 0.0
+	var stock_old := 0.0
+	for cell in world.hive.cells:
+		if not is_instance_valid(cell) or cell.content_type != "nectar" or cell.amount <= 0.0:
+			continue
+		var age_hours: float = cell.nectar_age() / hour
+		ages.append(age_hours)
+		stock_total += cell.amount
+		if age_hours > 24.0:
+			stock_old += cell.amount
+	if ages.is_empty():
+		return
+	ages.sort()
+	_nectar_age_days.append({
+		"day": day,
+		"cells": ages.size(),
+		"p50": snappedf(ages[int(ceil(0.5 * ages.size())) - 1], 0.01),
+		"p95": snappedf(ages[int(ceil(0.95 * ages.size())) - 1], 0.01),
+		"max": snappedf(ages[ages.size() - 1], 0.01),
+		"share_older_than_a_day": snappedf(stock_old / stock_total, 0.001),
+	})
+
+
+## The run's worst day for each figure, plus every day's sample.
+func _nectar_age_summary() -> Dictionary:
+	var out := {"unit": "in-game hours", "samples": _nectar_age_days.size(),
+		"p50": 0.0, "p95": 0.0, "max": 0.0, "share_older_than_a_day": 0.0,
+		"daily": _nectar_age_days}
+	for d in _nectar_age_days:
+		for key in ["p50", "p95", "max", "share_older_than_a_day"]:
+			out[key] = max(float(out[key]), float(d[key]))
+	return out
 
 
 func end_session(outcome: String) -> void:
@@ -829,6 +882,7 @@ func end_session(outcome: String) -> void:
 		"blocks_mined": _blocks_mined,
 		"honey_batches_deposited": _honey_batches_deposited,
 		"cells_ripened": _cells_ripened,
+		"nectar_age": _nectar_age_summary(),
 		"comb_build_sites": comb_build_sites,
 	}
 	if not _performance_capture_config.is_empty():

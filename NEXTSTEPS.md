@@ -23,14 +23,7 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] NF-1 -- headless runs report how long raw nectar sits in the comb**
-   - Plan: `plans/now/nectar-fermentation.md` -- "NF-1 -- headless runs report how long raw nectar sits in the comb"
-   - Files: `scripts/hive_cell.gd`, `scripts/diagnostic_log.gd`, `tests/test_nf1_nectar_age.py`, `test_scenarios/nf1_nectar_age.json`, `tools/verify.ps1`
-   - Check: `python -m unittest tests.test_nf1_nectar_age` passes (the summary carries `nectar_age` with p95 >= p50 and max > 0); the plan's NF-1 "Evidence" paragraph records both runs; `tools/verify.ps1` is green
-   - Proof: `absent: scripts/hive_cell.gd :: nectar_since`
-   - Next after: NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers
-
-2. **[Claude] SPR-2 -- the windowed render baseline at 500 and 1,000 bees**
+1. **[Claude] SPR-2 -- the windowed render baseline at 500 and 1,000 bees**
    - Plan: `plans/now/render-scale.md` -- "SPR-2 -- the windowed render baseline at 500 and 1,000 bees"
    - Files: `test_scenarios/spr2_render_500.json`, `test_scenarios/spr2_render_1000.json`, `docs/performance.md`
    - Check: `python tools/run_scenario.py test_scenarios/spr2_render_1000.json --windowed --report full` exits 0 with a draw-call mean above 0; `docs/performance.md` holds the table for 200, 500 and 1,000 bees; `python tools/check_docs.py` passes
@@ -80,3 +73,5 @@ Claude, after a hands-on pass: `I've done a hands-on pass. Here's what I found: 
 Claude, when a gate has cleared: `<what happened, e.g. "UI-F-2 has landed">. Move whatever it unblocks into its lane: clear its line under "Not in the queue, and why" (or open its fence from queue-gated to queue), then run python tools/refill_lane.py --top-up.`
 
 Claude, when a lane is short and the backlog is dry (high reasoning): `The <Codex|Claude> lane is short and the backlog has nothing it can take. Plan the next <Codex|Claude> slices: write a queue block in the live plans for each one (it must touch no file in the other lane), put anything not ready yet under "Not in the queue, and why", then run python tools/refill_lane.py --top-up --lane <Codex|Claude>.`
+
+Claude, looking ahead (high reasoning): `/plan-ahead [optional focus area]` -- surveys what needs a plan or slicing, ranks it, asks Dave the design questions and stores the answers in the plans.

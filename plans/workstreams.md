@@ -60,5 +60,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/COL-4` (`codex/COL-4`) | Codex | one editable year: thirty playable days, then winter | Codex | in progress | none | `plans/now/colony-run.md` COL-4 -- one editable year: thirty playable days, then winter |
-| `.worktrees/NF-1` (`claude/NF-1`) | Claude | headless runs report how long raw nectar sits in the comb | Claude | in progress | none | `plans/now/nectar-fermentation.md` NF-1 -- headless runs report how long raw nectar sits in the comb |
 | `.claude/worktrees/plan-ahead-80424a` (`claude/plan-ahead-80424a`) | Claude (docs only) | plan-ahead: progression step 8 and Shiver Cluster, nectar fermentation open questions, Bee Bread | Claude | in progress | none | `plans/design/progression.md` step 8; `plans/now/nectar-fermentation.md`; new `plans/now/` plans |
