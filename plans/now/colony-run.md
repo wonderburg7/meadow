@@ -82,6 +82,9 @@ lived, one starved on day 32; no honey was ever made). These supersede the
    colony's main winter energy cost and what the player gathers for; without
    it a colony does not survive winter. It starts a future thermoregulation
    thread. Its tree, cost and numbers belong to `plans/design/progression.md`.
+   **Superseded in part (Dave, 6 Oct 2026):** without the skill a colony
+   pays decision 11's bill times a multiplier rather than failing outright
+   -- `plans/design/progression.md` section 5.6, "Shiver Cluster".
 10. **Genetic points** are counted and saved now, and spent later.
 11. **A skipped winter is one bill** (Dave, 5 Oct 2026, for COL-6). At
     winter's start the colony pays, at once, what played winter would have
