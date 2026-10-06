@@ -739,6 +739,40 @@ class SliceDoctorTest(unittest.TestCase):
             (self.root / "scripts" / "sample.gd").read_text(encoding="utf-8"),
         )
 
+    def test_a_verify_stop_names_the_stage_that_failed(self):
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath; exit 0 }\n"
+            "Write-Output 'unit tests: FAILED'\n"
+            "exit 1\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-m", "use failing verifier"], cwd=self.root, capture_output=True, check=True)
+        start = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, start.returncode, start.stderr)
+        worktree = self.root / ".worktrees" / "T-1"
+        with (worktree / "scripts" / "sample.gd").open("a", encoding="utf-8") as source:
+            source.write("\nfunc new_function():\n\tpass\n")
+        self.write_refill(worktree)
+        finish = subprocess.run(
+            [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
+                str(worktree).replace("'", "''"), str(worktree / "tools" / "slice.ps1").replace("'", "''")
+            )],
+            cwd=self.root, capture_output=True, text=True, timeout=90,
+        )
+        self.assertNotEqual(0, finish.returncode)
+        self.assertIn("failed: unit tests", finish.stdout + finish.stderr)
+        common_dir = Path(subprocess.run(
+            ["git", "rev-parse", "--absolute-git-dir"], cwd=self.root, capture_output=True, text=True, check=True
+        ).stdout.strip())
+        records = (common_dir / "meadow-slice-stops.jsonl").read_text(encoding="utf-8")
+        self.assertIn("failed: unit tests", records)
+
     def test_finish_stops_on_an_uncommitted_edit_to_a_lifecycle_product(self):
         """The dirty-coordination guard hands git an array of pathspecs; a
         helper that joined it into one argument matched nothing and let the
