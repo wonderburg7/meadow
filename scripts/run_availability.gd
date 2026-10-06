@@ -26,8 +26,9 @@ extends RefCounted
 ## off in this run is "unavailable", and each feature a skill depends on gets
 ## a row -- both through progression.gd's feature_valid(), since only the
 ## resolver reads features.gd (BS-5). Never changes what a run starts owning.
-## Columns still to come: "introduced at stage" and "free at stage", from
-## challenge_stages.gd; the developer table names them as not yet available.
+## The developer table's "introduced at stage" and "free at stage" columns
+## are answered here too, by introduced_stage() and free_stages(), read from
+## challenge_stages.gd's two stage lists.
 ##
 ## Sheet shape:
 ##   "skills":   skill id -> {"source": SOURCE_*, "reason": REASON_*}
@@ -41,6 +42,7 @@ extends RefCounted
 
 const Skills = preload("res://scripts/skills.gd")
 const Roles = preload("res://scripts/roles.gd")
+const Stages = preload("res://scripts/challenge_stages.gd")
 
 const SOURCE_START := "start"
 const SOURCE_TREE := "tree"
@@ -90,6 +92,29 @@ static func sheet_for(run_definition: Dictionary, progression = null) -> Diction
 		"bans": bans,
 		"delays": run_definition.get("skill_delays", {}),
 	}
+
+
+## The id of the first Challenge stage whose cumulative `unlocked_keys` name
+## this skill ("2.5" for Nurses), or "" when no stage does.
+static func introduced_stage(skill_id: String) -> String:
+	for stages in [Stages.STAGES_1, Stages.STAGES_2]:
+		for stage in stages:
+			for entry in stage.get("unlocked_keys", []):
+				var key: String = str(entry.get("key", "")) if entry is Dictionary else str(entry)
+				if key == skill_id:
+					return str(stage.id)
+	return ""
+
+
+## The ids of the Challenge stages whose `free_skills` name this skill, in
+## order; empty when none does.
+static func free_stages(skill_id: String) -> Array:
+	var found := []
+	for stages in [Stages.STAGES_1, Stages.STAGES_2]:
+		for stage in stages:
+			if stage.get("free_skills", []).has(skill_id):
+				found.append(str(stage.id))
+	return found
 
 
 ## A skill's display name, for the developer table, which may not read

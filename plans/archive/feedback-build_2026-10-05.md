@@ -1,7 +1,7 @@
 # First feedback build -- what the 3-4 Oct 2026 session needs
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: nothing further -- FBB-1 landed and C-92 passed 2 Oct 2026; archive after the 3-4 Oct session, which `docs/feedback-session-runbook.md` routes here | Dependency: none | Verified: 2026-10-02
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete (FBB-1 landed and C-92 passed 2 Oct 2026; the 3-4 Oct 2026 tester session took place, Dave 5 Oct 2026; `docs/feedback-session-runbook.md` keeps the steps for the next one) | Dependency: none | Verified: 2026-10-05
 
 **Objective.** On Saturday 3 or Sunday 4 October 2026 Dave sits one tester at
 his own machine and collects their feedback: the first friends-and-family
@@ -36,7 +36,7 @@ which §14's release stream says are hidden before the first feedback build.
    nodes are hidden and refused.
 4. **Challenge 2's stage 2.2 (raise a pollen Forager) is fixed after the
    weekend** by letting the queen nurse without the Nurses skill: BS-9, recorded as decision 7 of
-   `plans/now/brood-spine.md`. Challenge 2 is not on this session's route.
+   `plans/archive/brood-spine_2026-10-05.md`. Challenge 2 is not on this session's route.
 5. **Order in the Claude lane:** FBB-1, then BS-9, ahead of L-16 and L-17
    (`plans/now/agent-lifecycle.md`). UI-F-2 (`plans/archive/ui-feedback_2026-10-01.md`) runs
    in parallel in the Codex lane (Dave, 1 Oct 2026, so that lane had a

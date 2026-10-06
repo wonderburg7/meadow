@@ -1,13 +1,16 @@
 # Meadow — Colony Diagnostics
 
 <!-- CONTEXT: plan | LAYER: reference -->
-Status: reference | Owner: Dave / Claude Code | Next: consult section 5's naming rule and section 6's non-goals before adding a new fact or a second consumer -- there is no open slice | Dependency: none | Verified: 2026-09-04
+Status: reference | Owner: Dave / Claude Code | Next: consult section 5's naming rule and section 6's non-goals before adding a new fact or a second consumer -- there is no open slice | Dependency: none | Verified: 2026-10-05
 
 Scoped 3 Sep 2026 as the first of `plans/design/product-scope.md` §6.2's five
 undesigned "shared foundations" to get its own design pass (Dave's pick —
 the other four are goal model, event director, job catalogue/dispatcher and
-run policy; none of them is designed yet, and this file does not define
-them). Its one slice shipped as CD-1 on 4 Sep 2026; this file now stands as
+run policy, and this file does not define them). As of 5 Oct 2026 run
+policy is designed for the Colony Run (`plans/now/colony-run.md`), the goal
+model and job catalogue are built through the architecture review's chains
+(`plans/design/product-scope.md` §6.2), and the event director's
+selection logic is the one still without a design pass. Its one slice shipped as CD-1 on 4 Sep 2026; this file now stands as
 the durable shape/naming contract for anyone adding a fact to
 `colony_diagnostics.gd` or reading its `Dictionary`, not as a source of
 further ready slices.
@@ -34,7 +37,7 @@ before they can consume it for anything beyond what's in section 4.
 | Bucketed cell lookups | `hive.gd::_content_index()` — cells bucketed by `content_type` (`nectar`/`pollen`/`honey`/`jelly`/`brood`/`corpse`/`unbuilt`/`ripe_honey`), invalidated by the cell mutator, read by `cells_holding()` | Colony Diagnostics reads these buckets (`cells_holding("brood")`, `cells_holding("")`); it does not add a second cell index. |
 | The one place these facts are already computed today | `year_winter.gd::_refresh_signals` (per-bee loop for `starving`/`hungry`/`foragers`/`nurses`/`comb_workers`, plus `hungry_brood`/`free_cells` from the cell buckets) and `_refresh_panels` (recomputes `hungry_brood`/`free_cells` a second time), both reached from the same 1&nbsp;Hz `main.signal_timer` gate; `_winter_forecast` (reached via `_refresh_panels` → `_refresh_winter`) re-fetches `get_tree().get_nodes_in_group("bees")` a third time in the same call tree | This was the file changed first (section 4) — `plans/reference/technical-audit.md` item B already named this exact duplication as a measured-not-yet candidate. |
 | Warning/toast copy and throttling | `problem_messages.gd` — the existing catalogue of message text/keys, read by `hud.show_warning` | Unchanged. Colony Diagnostics feeds facts to callers that decide whether to show a message; it is not a second warning system. |
-| Dev/telemetry facts | `diagnostic_log.gd` and `docs/headless-run-contract.md`'s diagnostic snapshot allowlist (`population.total`, `resources.food_stores`, `environment.winter_here`, `role_outcomes.cells_completed_total`, `performance.fps`, `performance.top_sections_ms`) | A separate system for a separate audience (headless scenario verdicts), kept separate — see section 5's naming rule for why it still matters here. |
+| Dev/telemetry facts | `diagnostic_log.gd` and `docs/headless-run-contract.md`'s diagnostic snapshot allowlist (`population.total`, `resources.food_stores`, `resources.stored_nectar`, `resources.stored_pollen`, `environment.winter_here`, `environment.flowers_by_species`, `role_outcomes.cells_completed_total`, `performance.fps`, `performance.top_sections_ms`) | A separate system for a separate audience (headless scenario verdicts), kept separate — see section 5's naming rule for why it still matters here. |
 
 Net effect: this was a consolidation of facts already being computed, not a
 new computation.
@@ -46,9 +49,11 @@ new computation.
   already runs at 1&nbsp;Hz. Do not add a second timer.
 - **No new cache/epoch mechanism.** The computed `Dictionary` is threaded as
   a plain function argument through the same call chain that already
-  threads `bees: Array` (`_refresh_signals` → `_refresh_panels(bees, facts)`
+  threads `bees: Array` (`_refresh_signals` → `_refresh_panels(bees, facts, counts)`
   → `_refresh_winter(bees_count)` → `_winter_forecast(bees_count)`), the
-  same way `bees` itself is already threaded. Nothing is *stored*.
+  same way `bees` itself is already threaded. `counts` is
+  `main._role_counts()`, passed in since A2 (12 Sep 2026) so the role tally
+  is not walked twice. Nothing is *stored*.
 - **A later slice may add a retained copy** (e.g. `main.colony_facts`,
   written once at the end of the signal-tick, same pattern as
   `main.hud.corner_texts`) once a consumer genuinely needs to read a fact
@@ -68,8 +73,8 @@ new computation.
 ## 4. First vertical slice — shipped as CD-1, 2026-09-04
 
 Consolidated `year_winter.gd`'s triplicated computation into one call via
-new file `colony_diagnostics.gd::compute(main, bees) -> Dictionary`. No
-behaviour change. Full execution record:
+new file `colony_diagnostics.gd::compute(main, bees) -> Dictionary` (since A2,
+`compute(main, bees, counts)`). No behaviour change. Full execution record:
 `plans/archive/COLONY_DIAGNOSTICS_CD1_2026-09-04.md`.
 
 ## 5. Naming rule for facts added later

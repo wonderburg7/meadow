@@ -206,6 +206,7 @@ static func reload_from(tree: SceneTree, path: String, display_name: String) -> 
 		return false
 	SaveGame.apply_settings(data)
 	SaveGame.apply_starting_level(data)
+	SaveGame.apply_skill_policy(data)
 	Session.run_name = display_name
 	Session.load_path = path
 	Session.load_pending = true

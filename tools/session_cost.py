@@ -315,7 +315,73 @@ def run_phases(files):
         print(f"{PHASE_LABELS[phase]:58s}{requests[phase]:>7d}{context[phase]:>14d}{share:>7.1f}%")
 
 
-def _session_totals():
+def _transcript_files(days, home=None):
+    """Top-level session transcripts of every worktree directory in the window.
+
+    Since L-21 this is the scope of --days, --classify, --phases and
+    --no-edit-reasons: desktop sessions write to
+    C--Users-dl13860-Documents-Meadow-meadow--claude-worktrees-<name>, so the
+    primary directory alone saw 1 session in 70. Returns (files, primary
+    directory count, worktree directory count), the counts being the
+    directories that contributed a file. Subagent transcripts live below
+    <session>/subagents and are not top-level, so they are not counted here.
+    """
+    home = Path(home) if home else Path.home() / ".claude" / "projects"
+    cutoff = time.time() - days * 86400
+    files = []
+    primary = worktree = 0
+    if not home.exists():
+        return files, primary, worktree
+    for project_dir in sorted(home.glob(PROJECT_SLUG + "*")):
+        found = [f for f in project_dir.glob("*.jsonl") if (_first_timestamp(f) or 0) >= cutoff]
+        if not found:
+            continue
+        files.extend(found)
+        if project_dir.name == PROJECT_SLUG:
+            primary += 1
+        else:
+            worktree += 1
+    return files, primary, worktree
+
+
+def _subagent_models(session, slice_id, home=None):
+    """Models of the session's subagent transcripts dispatched for `slice_id`.
+
+    A subagent's first user message is the coordinator's dispatch prompt, which
+    carries the claim JSON, so it is matched on `"id": "<slice id>"`.
+    """
+    home = Path(home) if home else Path.home() / ".claude" / "projects"
+    pattern = re.compile(r'"id"\s*:\s*"' + re.escape(slice_id) + '"')
+    models = Counter()
+    if not home.exists():
+        return models
+    for project_dir in home.glob(PROJECT_SLUG + "*"):
+        for f in (project_dir / session / "subagents").glob("agent-*.jsonl"):
+            first_user = ""
+            file_models = Counter()
+            try:
+                with f.open("r", encoding="utf-8") as fh:
+                    for line in fh:
+                        if not line.strip():
+                            continue
+                        try:
+                            row = json.loads(line)
+                        except Exception:
+                            continue
+                        if row.get("type") == "user" and not first_user:
+                            first_user = _extract_text(row.get("message", {}).get("content"))
+                        elif row.get("type") == "assistant":
+                            model = row.get("message", {}).get("model")
+                            if model:
+                                file_models[model] += 1
+            except Exception:
+                continue
+            if pattern.search(first_user):
+                models.update(file_models)
+    return models
+
+
+def _session_totals(home=None):
     """session id -> (requests, context tokens, output tokens, models), across worktrees.
 
     `models` is a Counter of each assistant row's message.model, which is
@@ -323,15 +389,16 @@ def _session_totals():
 
     A worktree session's transcript lands in its own ~/.claude/projects
     directory, keyed by the worktree path, so the join globs every directory
-    whose name starts with this project's slug. The other report modes keep
-    reading the primary directory alone: their published baselines (L-9) were
-    measured that way, and widening them silently would move the numbers.
+    whose name starts with this project's slug. Since L-21 the --days,
+    --classify, --phases and --no-edit-reasons modes read the same scope
+    through _transcript_files; figures published before then (L-9) were
+    measured on the primary directory alone.
     """
     totals = {}
-    home = Path.home() / ".claude" / "projects"
+    home = Path(home) if home else Path.home() / ".claude" / "projects"
     if not home.exists():
         return totals
-    for project_dir in home.glob("C--Users-dl13860-Documents-Meadow-meadow*"):
+    for project_dir in home.glob(PROJECT_SLUG + "*"):
         for f in project_dir.glob("*.jsonl"):
             requests = context = output = 0
             models = Counter()
@@ -395,13 +462,18 @@ def run_events(days: int):
 
     stages = [e for e in events if e["kind"] == "verify_stage"]
     if stages:
-        failures = Counter(e.get("stage", "?") for e in stages if not e.get("ok"))
+        failures = Counter(
+            e.get("stage", "?") for e in stages if not e.get("ok") and not e.get("skipped")
+        )
+        skips = Counter(e.get("stage", "?") for e in stages if e.get("skipped"))
         runs = Counter(e.get("stage", "?") for e in stages)
         print(f"verify stages run            {len(stages)}")
         if failures:
             print(f"verify failures              {', '.join(f'{k}={v}' for k, v in failures.most_common())}")
         else:
             print("verify failures              none")
+        if skips:
+            print(f"verify skips                 {', '.join(f'{k}={v}' for k, v in skips.most_common())}")
         durations = {}
         for e in stages:
             if e.get("ms"):
@@ -461,11 +533,14 @@ def _print_bash_calls(events):
         print(f"  failing commands           {', '.join(f'{c}={n}' for c, n in top)}")
 
 
+PROJECT_SLUG = "C--Users-dl13860-Documents-Meadow-meadow"
+
+
 def _level_allows(level: str, model: str) -> bool:
     return any(model.startswith(prefix) for prefix in LEVEL_MODELS[level])
 
 
-def _print_level_drift(claimed, events, totals):
+def _print_level_drift(claimed, events, totals, home=None):
     """WD-3: each claimed slice's plan level against the models its sessions
     actually ran at. A slice with no stated level, no session join key, or no
     transcript is counted rather than guessed at."""
@@ -489,14 +564,17 @@ def _print_level_drift(claimed, events, totals):
         if level not in LEVEL_MODELS:
             not_assessable += 1
             continue
-        models = Counter()
-        hit = totals.get(session)
-        if hit:
-            models.update(hit[3])
+        models = _subagent_models(session, e.get("id", ""), home) if e.get("id") else Counter()
+        if models:
+            models = Counter({"worker:" + m: n for m, n in models.items()})
+        else:
+            hit = totals.get(session)
+            if hit:
+                models.update(hit[3])
         if not models:
             not_assessable += 1
             continue
-        if any(not _level_allows(level, model) for model in models):
+        if any(not _level_allows(level, model.removeprefix("worker:")) for model in models):
             drift.append((e.get("id", "?"), level, models))
 
     print()
@@ -716,13 +794,13 @@ def main():
         run_events(args.days)
         return 0
 
-    project_dir = Path.home() / ".claude" / "projects" / "C--Users-dl13860-Documents-Meadow-meadow"
-    if not project_dir.exists():
-        print(f"session directory not found: {project_dir}")
+    projects = Path.home() / ".claude" / "projects"
+    if not projects.exists():
+        print(f"session directory not found: {projects}")
         return 0
 
-    cutoff = time.time() - args.days * 86400
-    files = [f for f in project_dir.glob("*.jsonl") if (_first_timestamp(f) or 0) >= cutoff]
+    files, primary_dirs, worktree_dirs = _transcript_files(args.days)
+    print(f"transcripts  {len(files)} sessions ({primary_dirs} primary, {worktree_dirs} worktree directories)")
 
     if args.classify:
         run_classify(files)

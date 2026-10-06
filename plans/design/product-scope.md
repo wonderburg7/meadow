@@ -210,7 +210,7 @@ matches §2's Colony Run, and the pacing arc stands in for it with an
 unplayed queen. It settles:
 
 - the start state: a lone queen who backs up as a Nurse
-  (`plans/now/brood-spine.md` decision 5), with or without starting comb;
+  (`plans/archive/brood-spine_2026-10-05.md` decision 5), with or without starting comb;
 - winter: onset is decided (a fixed day, `plans/archive/winter-onset_2026-10-01.md` WO-1);
   how many winters a run holds is not;
 - victory, failure and continue (§7's long-term goal, §11's doomed state);
@@ -691,7 +691,7 @@ Extended backup roles, Chemical cascade) are unavailable and hidden, and
 every other tree node either does what it says or is marked not built. On
 30 Sep 2026 only four of the 34 non-baseline nodes changed anything when
 bought: Tarsal secretions, Orientation flight, Nurses and Honey worker
-(`docs/product-review-2026-09-30.md`). FBB-1 (`plans/now/feedback-build.md`)
+(`docs/product-review-2026-09-30.md`). FBB-1 (`plans/archive/feedback-build_2026-10-05.md`)
 hides the nine and marks the other unbuilt nodes without blocking them
 (Dave, 1 Oct 2026).
 

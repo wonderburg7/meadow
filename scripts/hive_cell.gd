@@ -125,6 +125,11 @@ var clean_progress: float = 0.0
 ## moment the egg goes in.
 var brood_is_gyne: bool = false
 
+## COL-9. Is the larva in here a drone -- from an unmated queen's egg? A
+## drone develops and is fed exactly like a worker; only what hatches
+## differs. Never true together with brood_is_gyne.
+var brood_is_drone: bool = false
+
 ## Honey drying. A honey maker fans its wings over the cell to drive the
 ## water off; `ripen_progress` counts bee-seconds of fanning, and the
 ## contents only count as real honey once it reaches honey_ripen_time.
@@ -593,6 +598,7 @@ func _larva_dies() -> void:
 	unfed_seconds = 0.0
 	clean_progress = 0.0
 	brood_is_gyne = false
+	brood_is_drone = false
 	DiagnosticLog.count_larval_death()
 	_invalidate_hive_index()
 	_invalidate_stock()
@@ -898,16 +904,25 @@ func ripen_fraction() -> float:
 
 # --- brood ---------------------------------------------------------
 
-func start_brood(as_gyne: bool = false) -> void:
+func start_brood(as_gyne: bool = false, as_drone: bool = false) -> void:
 	content_type = "brood"
 	amount = 0.0
 	brood_progress = 0.0
 	brood_fed_seconds = 0.0
 	unfed_seconds = 0.0
 	fed_on_honey = false
-	brood_is_gyne = as_gyne
+	brood_is_drone = as_drone
+	brood_is_gyne = as_gyne and not as_drone
 	_invalidate_hive_index()
 	_invalidate_stock()
+
+## What the brood label calls this larva: "gyne", "drone" or a plain "egg".
+func brood_kind_label() -> String:
+	if brood_is_gyne:
+		return "gyne"
+	if brood_is_drone:
+		return "drone"
+	return "egg"
 
 ## How long this larva needs in total. A gyne takes several times as long
 ## as a worker, which is what makes raising one a commitment rather than
@@ -962,6 +977,7 @@ func clear_cell() -> void:
 	unfed_seconds = 0.0
 	clean_progress = 0.0
 	brood_is_gyne = false
+	brood_is_drone = false
 	ripen_progress = 0.0
 	evict_requested = false
 	evict_mode = "move"
@@ -1065,7 +1081,7 @@ func _refresh() -> void:
 				info_label.text = "h%d %d%%" % [int(round(amount)), int(ripen_fraction() * 100.0)]
 		"brood":
 			color = GYNE_BROOD_COLOR if brood_is_gyne else BROOD_COLOR
-			info_label.text = "%s %d%%" % ["gyne" if brood_is_gyne else "egg", int(development_percent())]
+			info_label.text = "%s %d%%" % [brood_kind_label(), int(development_percent())]
 			if brood_fed_seconds <= 0.0:
 				# a starving larva reddens as it runs out of time, so a
 				# neglected nursery is obvious without opening any panels

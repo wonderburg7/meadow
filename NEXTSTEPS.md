@@ -23,12 +23,12 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] BS-6 -- developer edits to the table change what a run starts with**
-   - Plan: `plans/now/brood-spine.md` -- "BS-6 — developer edits to the table change what a run starts with"
-   - Files: `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/test_run_scenario_launch.py`
-   - Check: `tools/verify.ps1` is green, a source-reading test in `tests/test_run_scenario_launch.py` proves `main.gd` applies `DeveloperOverrides` only outside scenario runs, and Dave confirms in the Run availability table that an edited row changes the next run's start and "Reset" restores it
-   - Proof: `absent: scripts/run_availability_panel.gd :: DeveloperOverrides`
-   - Next after: none -- the last slice in this plan
+1. **[Claude] L-23 -- a hands-on check pass runs each check in a check-runner subagent**
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-23 -- a hands-on check pass runs each check in a check-runner subagent"
+   - Files: `.claude/agents/check-runner.md`, `plans/reference/check-runner.md`, `plans/reference/check-loop.md`
+   - Check: `python tools/check_docs.py` passes; `grep -c "name: check-runner" .claude/agents/check-runner.md` prints 1; `grep -c "cannot-run" plans/reference/check-runner.md` prints at least 2; `grep -c "check-runner" plans/reference/check-loop.md` prints at least 1
+   - Proof: `absent: plans/reference/check-loop.md :: check-runner`
+   - Next after: L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims
 
 ### Codex lane
 
@@ -53,9 +53,12 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **COL-6** (`plans/now/colony-run.md`) -- skipping winter waits for COL-4's year clock, and is specified once it lands (Dave's year decisions, 4 Oct 2026).
-- **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 7 is `plans/now/brood-spine.md`; step 8 waits for the Colony Run's slices (`plans/now/colony-run.md`, defined 3 Oct 2026), which Dave put first (30 Sep 2026); BS-4 proved a tier-2 purchase in a run on 1 Oct 2026.
-- **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/now/colony-run.md`).
+- **L-24** (`plans/now/agent-lifecycle.md`) -- the lookahead warning imports the machine-readable dry run L-18 adds to `tools/refill_lane.py`; waits for L-18.
+- **COL-6** (`plans/now/colony-run.md`) -- specified from Dave's 5 Oct 2026 winter decision; waits for COL-4 (Codex lane), whose year clock it needs and whose `scripts/season.gd` it edits.
+- **COL-7** (`plans/now/colony-run.md`) -- the mating window, genetic points and COL-2's narrower win wait for COL-6, and are specified once it lands.
+- **COL-11** (`plans/now/colony-run.md`) -- nuptial flights; waits for COL-4 (Codex lane), whose year its mating curve reads, and for COL-10.
+- **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 8 and Shiver Cluster (`plans/now/colony-run.md` decision 9) wait for a design session with Dave, booked as the next planning pass (Dave, 5 Oct 2026): only Nurses and Honey worker are skill-gated today, gating Comb worker meets colony-run decision 2's queen building the first cell, and decisions 9 and 11 disagree on whether a colony can survive winter without Shiver Cluster. Shiver Cluster's build also waits for COL-6.
+- **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Gallerin guidance is booked after step 8's pass (Dave, 5 Oct 2026); the event director waits for the Colony Run's year and difficulty (COL-4, COL-6). The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/now/colony-run.md`).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
 

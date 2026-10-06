@@ -50,7 +50,7 @@ $script:SliceStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 #   --- queue parsing ---       Get-NextUpItems(FromText), Assert-CandidateDefinition, Test-Proof
 #   --- briefing ---            Get-SliceReadCommand, Get-SliceAdvice, Get-SlicePreflight
 #   --- environment ---         Get-GodotCapability, Get-DoctorEnvironmentFailures
-#   --- commands ---            Invoke-SliceDoctor/Start/Status/Resume/Abort/Finish, Invoke-SliceArchiveAndRefill
+#   --- commands ---            Invoke-SliceDoctor/Start/Status/Resume/Abort/Finish, Invoke-SliceArchiveAndRefill, Invoke-SliceQueueReapply
 #   --- post-merge ---          Invoke-SlicePostMergeCleanup
 # A failing command prints one "slice <command> stopped" block naming the
 # step, cause, fix and how to retry. That block is the diagnosis.
@@ -218,9 +218,12 @@ function Get-LifecycleHolder {
 function Get-LifecycleHolderLabel {
     # "`slice.ps1 finish` on L-15 (PID 1234, run from C:\...)": the holder's
     # command, and its slice once that command has resolved one.
+    # A holder note with `tool` is a repository tool holding it by hand
+    # (tools/refill_lane.py's writing modes, L-19), not a slice.ps1 command.
     param($Holder)
     $slice = if ($Holder.id) { " on $($Holder.id)" } elseif ($Holder.lane) { " ($($Holder.lane) lane)" } else { "" }
-    return "``slice.ps1 $($Holder.command)``$slice (PID $($Holder.pid), run from $($Holder.cwd))"
+    $what = if ($Holder.tool) { "``$($Holder.tool)``" } else { "``slice.ps1 $($Holder.command)``" }
+    return "$what$slice (PID $($Holder.pid), run from $($Holder.cwd))"
 }
 
 function Get-LifecycleBusyCause {
@@ -309,6 +312,22 @@ function Save-VerifyLog {
     }
 }
 
+function Get-VerifyFailureSummary {
+    # L-22: the stage a failed verify named, for the stop ledger's cause.
+    param([string[]]$Output)
+    $lines = @($Output | ForEach-Object { "$_" -split "\r?\n" } | ForEach-Object { $_.TrimEnd() })
+    $stages = @()
+    foreach ($line in $lines) {
+        if ($line -match '^(.+): FAILED$') { $stages += $Matches[1] }
+    }
+    if ($stages.Count -gt 0) { return "failed: " + ($stages -join ", ") }
+    $last = @($lines | Where-Object { $_.Trim() } | Select-Object -Last 1)
+    if ($last.Count -eq 0) { return "last line: (no output)" }
+    $text = $last[0].Trim()
+    if ($text.Length -gt 120) { $text = $text.Substring(0, 120) }
+    return "last line: $text"
+}
+
 function Invoke-WithLifecycleLock {
     param([string]$Root, [scriptblock]$Action)
 
@@ -345,6 +364,7 @@ function Invoke-WithLifecycleLock {
         }
         $started = Get-Date
         $script:LifecycleLockStream = $stream
+        $script:LifecycleLockPath = $lockPath
         $script:LifecycleLockStarted = $started
         $script:LifecycleLockCwd = (Get-Location).Path
         Write-LifecycleHolderNote
@@ -367,6 +387,7 @@ function Invoke-WithLifecycleLock {
     }
     finally {
         $script:LifecycleLockStream = $null
+        $script:LifecycleLockPath = $null
         if ($stream) { $stream.Dispose(); Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue }
     }
 }
@@ -388,7 +409,14 @@ function Invoke-WithLifecycleLock {
 # would change an in-flight journal's meaning. A name this order does not
 # know (a journal from a newer slice.ps1) resolves to "nothing done", which
 # redoes work rather than skipping it.
-$script:ClosingPhaseOrder = @("verified", "branch-committed", "actions-committed", "archived", "refilled", "merged")
+#
+# "queue-reapplying" (L-19) was inserted between "refilled" and "merged" by
+# the same rule. It is written when the merge into master has conflicted in
+# NEXTSTEPS.md and nowhere else, before finish re-applies its own queue edit
+# on master's copy; it means "the half-done merge in the primary checkout is
+# finish's own". A re-run that finds it, with this branch's head as
+# MERGE_HEAD, aborts that merge and merges again, which redoes the re-apply.
+$script:ClosingPhaseOrder = @("verified", "branch-committed", "actions-committed", "archived", "refilled", "queue-reapplying", "merged")
 
 function Get-ClosingJournalPath {
     param([string]$Root)
@@ -803,6 +831,25 @@ function Get-SliceLevel {
     return "unstated"
 }
 
+function Get-SliceDryAfter {
+    # L-18: would closing this item leave its lane empty, or the whole queue
+    # under the floor, with nothing admissible to refill from? Asks
+    # tools/refill_lane.py --json, so the answer is the one `finish`'s refill
+    # gate will reach. Advice only: any failure here reads as "not dry".
+    param([string]$Root, [object]$Candidate, [string]$Lane, [string]$PythonPath)
+    $none = [ordered]@{ dry_after = $false; gated_waiting = @() }
+    $tool = Join-Path $Root "tools\refill_lane.py"
+    if (-not $Candidate.Id -or -not (Test-Path -LiteralPath $tool -PathType Leaf)) { return $none }
+    try {
+        $run = Invoke-SlicePythonTool -Root $Root -PythonPath $PythonPath -Arguments @($tool, "--json", "--delete", $Candidate.Id, "--top-up", "--lane", $Lane, "--root", $Root)
+        $line = @($run.Output | Where-Object { $_ -like '{*' }) | Select-Object -Last 1
+        if ($run.Exit -ne 0 -or -not $line) { return $none }
+        $report = $line | ConvertFrom-Json
+        return [ordered]@{ dry_after = [bool]$report.dry_after; gated_waiting = @($report.gated) }
+    }
+    catch { return $none }
+}
+
 function Get-SliceAdvice {
     # Which model and which connectors a slice needs, derived from facts the
     # queue and plan already hold so every briefing and report agrees.
@@ -812,7 +859,7 @@ function Get-SliceAdvice {
     # enabled connector's tool listing is re-sent on every request, so the
     # default is all off; the Godot connector is worth its cost only when a
     # slice edits scenes or on-screen UI, where a live boot shows the result.
-    param([string]$Root, [object]$Candidate, [string]$Lane)
+    param([string]$Root, [object]$Candidate, [string]$Lane, [string]$PythonPath = $script:PythonPath, [switch]$NoDry)
     $level = Get-SliceLevel -Root $Root -Candidate $Candidate
     if ($Lane -eq "Codex") {
         $model = if ($level -eq "unstated") { "Codex default model; the plan states no level -- use medium reasoning" } else { "Codex default model at $level reasoning" }
@@ -827,10 +874,13 @@ function Get-SliceAdvice {
     }
     $uiFile = @($Candidate.Files | Where-Object { $_ -match '\.(tscn|tres)$' -or $_ -match '^scripts/(hud|ui_[a-z_]+|[a-z_]+_panel|debug_panel|main)\.gd$' })
     $connectorsOn = if ($uiFile.Count -gt 0) { @("godot") } else { @() }
+    $dry = if ($NoDry) { [ordered]@{ dry_after = $false; gated_waiting = @() } } else { Get-SliceDryAfter -Root $Root -Candidate $Candidate -Lane $Lane -PythonPath $PythonPath }
     return [ordered]@{
         level          = $level
         model          = $model
         connectors_on  = @($connectorsOn)
+        dry_after      = $dry.dry_after
+        gated_waiting  = @($dry.gated_waiting)
         connectors_off = "every other MCP connector (Notion, computer-use, GitKraken, Claude Docs, scheduled tasks, MCP registry, music, design data)"
     }
 }
@@ -1387,6 +1437,11 @@ function Invoke-SliceStart {
         ok     = $true
         ms     = [int]$script:SliceStopwatch.ElapsedMilliseconds
     }
+    if ($result.advice.dry_after) {
+        # Stderr, so stdout stays the claim's JSON alone; never blocks.
+        $waiting = if (@($result.advice.gated_waiting).Count -gt 0) { "gated blocks waiting: $(@($result.advice.gated_waiting) -join ', ')" } else { "no gated block is waiting either" }
+        [Console]::Error.WriteLine("warning: $id is the $Lane lane's last admissible item and the backlog is dry behind it; finish will stop at the refill gate unless a slice is specified first ($waiting)")
+    }
     $result | ConvertTo-Json -Compress
 }
 
@@ -1835,8 +1890,20 @@ function Invoke-SlicePythonTool {
     if (-not $python -or -not (Test-Path -LiteralPath $python -PathType Leaf)) {
         throw "could not resolve Python for $($Arguments[0]); pass -PythonPath"
     }
-    $output = @(& $python @Arguments 2>&1 | ForEach-Object { $_.ToString() })
-    return [pscustomobject]@{ Exit = $LASTEXITCODE; Output = $output }
+    # L-19: refill_lane.py's writing modes wait for the lifecycle lock. While
+    # this command holds it, the child is told so through the environment (its
+    # path, so a fixture repository's lock is never mistaken for this one) --
+    # never a flag a person could type -- and does not wait on its own parent.
+    $heldBefore = $env:MEADOW_LIFECYCLE_LOCK_HELD
+    if ($script:LifecycleLockStream -and $script:LifecycleLockPath) { $env:MEADOW_LIFECYCLE_LOCK_HELD = $script:LifecycleLockPath }
+    try {
+        $output = @(& $python @Arguments 2>&1 | ForEach-Object { $_.ToString() })
+        $exit = $LASTEXITCODE
+    }
+    finally {
+        $env:MEADOW_LIFECYCLE_LOCK_HELD = $heldBefore
+    }
+    return [pscustomobject]@{ Exit = $exit; Output = $output }
 }
 
 function Get-SliceArchiveState {
@@ -1923,6 +1990,42 @@ function Invoke-SliceArchiveAndRefill {
     }
 }
 
+function Invoke-SliceQueueReapply {
+    # L-19: the merge into master conflicted in NEXTSTEPS.md and nowhere else
+    # -- a sibling session edited the queue (moved an item between lanes,
+    # say) while this finish ran. The branch's queue edit is a function of
+    # the queue it started from: delete this slice's item, top its lane up
+    # from the plans. So take master's copy, which holds the sibling's edit,
+    # and run the same edit on it against the merged plans, rather than
+    # stopping for a hand merge. Leaves NEXTSTEPS.md staged; anything that
+    # refuses aborts the merge, so master is as it was before the merge.
+    param([string]$Root, [string]$Id, [string]$Lane, [string]$PythonPath)
+    $abort = {
+        param([string]$Cause, [string]$Fix)
+        git -C $Root merge --abort | Out-Null
+        Stop-Slice -Cause $Cause -Fix $Fix
+    }
+    Write-Output "merge: NEXTSTEPS.md conflicted with master's copy and nothing else did; re-applying $Id's queue edit to master's copy"
+    git -C $Root checkout --ours -- NEXTSTEPS.md
+    if ($LASTEXITCODE -ne 0) { & $abort "$Id -- could not take master's NEXTSTEPS.md during the merge" "master is unchanged; resolve the NEXTSTEPS.md conflict by hand (git merge --no-ff <branch> in the primary checkout), then run tools/slice.ps1 resume -Lane $Lane" }
+    $refillTool = Join-Path $Root "tools\refill_lane.py"
+    $refillArgs = @($refillTool)
+    if (Get-NextUpItems -Root $Root | Where-Object { $_.Id -eq $Id }) { $refillArgs += @("--delete", $Id) }
+    $refillArgs += @("--top-up", "--lane", $Lane, "--root", $Root)
+    $run = Invoke-SlicePythonTool -Root $Root -PythonPath $PythonPath -Arguments $refillArgs
+    $run.Output | ForEach-Object { Write-Output $_ }
+    if ($run.Exit -ne 0) {
+        & $abort "$Id -- re-applying its queue edit to master's NEXTSTEPS.md failed: tools/refill_lane.py refused (exit $($run.Exit)); its reason is printed above" "master is unchanged and the merge is aborted. Merge master into this branch (git merge master in the worktree), resolve NEXTSTEPS.md there, run python tools/check_docs.py, commit, and retry finish"
+    }
+    $run = Invoke-SlicePythonTool -Root $Root -PythonPath $PythonPath -Arguments @((Join-Path $Root "tools\check_docs.py"))
+    if ($run.Exit -ne 0) {
+        $run.Output | ForEach-Object { Write-Output $_ }
+        & $abort "$Id -- tools/check_docs.py failed on the merge after re-applying its queue edit; its errors are printed above" "master is unchanged and the merge is aborted. Merge master into this branch (git merge master in the worktree), fix what check_docs.py names there, commit, and retry finish"
+    }
+    git -C $Root add -- NEXTSTEPS.md
+    if ($LASTEXITCODE -ne 0) { & $abort "$Id -- git add NEXTSTEPS.md failed during the merge" "master is unchanged; retry finish" }
+}
+
 # Releases the file locks a Godot run holds on the worktree about to be
 # deleted. Only processes whose command line names that worktree are
 # stopped: killing every Godot.exe on the machine ended other sessions'
@@ -2004,7 +2107,7 @@ function Invoke-SliceFinish {
         $verifyOutput | ForEach-Object { Write-Output $_ }
         if ($verifyExit -ne 0) {
             $verifyLog = Save-VerifyLog -Root $worktreeRoot -Output $verifyOutput
-            Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched" -Fix "the failing check is printed above this block and saved to $verifyLog. Fix it on the branch, commit, and retry. If the only failure is the Godot compile check with 'Could not preload resource', the worktree's .godot import cache is stale and the automatic refresh could not fix it -- run python tools/godot_cache.py --force in the worktree; it is not a code fault"
+            Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched ($(Get-VerifyFailureSummary -Output @($verifyOutput | ForEach-Object { "$_" })))" -Fix "the failing check is printed above this block and saved to $verifyLog. Fix it on the branch, commit, and retry. If the only failure is the Godot compile check with 'Could not preload resource', the worktree's .godot import cache is stale and the automatic refresh could not fix it -- run python tools/godot_cache.py --force in the worktree; it is not a code fault"
         }
         Invoke-InjectedLifecycleFailure -Phase "verified"
         Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "verified"
@@ -2113,6 +2216,20 @@ function Invoke-SliceFinish {
         Stop-Slice -Cause "primary checkout is on '$primaryBranch', not master" -Fix "in the primary checkout run git switch master (commit or stash-by-WIP-commit anything there first), then retry"
     }
 
+    # L-19: an earlier run stopped part-way through re-applying its queue
+    # edit, leaving its own merge half done. The journal says the merge is
+    # finish's, MERGE_HEAD says it is this branch's: abort it and merge again
+    # below. A half-done merge the journal does not claim is a person's.
+    if ($journal -and [string]$journal.phase -eq "queue-reapplying") {
+        $mergeHead = (Invoke-GitText -C $root rev-parse -q --verify MERGE_HEAD).Text.Trim()
+        $branchHead = (Invoke-GitText -C $root rev-parse -q --verify "refs/heads/$branch").Text.Trim()
+        if ($mergeHead -and $mergeHead -eq $branchHead) {
+            git -C $root merge --abort | Out-Null
+            if ($LASTEXITCODE -ne 0) { Stop-Slice -Cause "$id -- could not abort the half-done merge an interrupted finish left in the primary checkout" -Fix "in the primary checkout run git merge --abort, then retry" }
+            Write-Output "merge: aborted the half-done merge of $branch an interrupted finish left; merging again"
+        }
+    }
+
     # plans/workstreams.md and checks/ready.md are written by the lifecycle
     # itself (Get-LifecycleProducts), from the primary checkout, never from a
     # branch. An uncommitted edit already sitting there -- a stray hand edit,
@@ -2148,7 +2265,7 @@ function Invoke-SliceFinish {
     $primaryVerifyOutput | ForEach-Object { Write-Output $_ }
     if ($primaryVerifyExit -ne 0) {
         $verifyLog = Save-VerifyLog -Root $root -Output $primaryVerifyOutput
-        Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope primary) failed; branch left untouched" -Fix "the failing check is printed above and saved to $verifyLog; it ran against the primary checkout, so a failure the branch did not show usually means master moved -- fix it on master or the branch, commit, and retry"
+        Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope primary) failed; branch left untouched ($(Get-VerifyFailureSummary -Output @($primaryVerifyOutput | ForEach-Object { "$_" })))" -Fix "the failing check is printed above and saved to $verifyLog; it ran against the primary checkout, so a failure the branch did not show usually means master moved -- fix it on master or the branch, commit, and retry"
     }
 
     Set-SliceStep "merging into master"
@@ -2170,7 +2287,18 @@ function Invoke-SliceFinish {
             # the file directly instead.
             [System.IO.File]::WriteAllText($mergeMessageFile, $mergeMessage, (New-Object System.Text.UTF8Encoding $false))
             git merge --no-ff $branch -F $mergeMessageFile
-            if ($LASTEXITCODE -ne 0) { throw "git merge failed" }
+            if ($LASTEXITCODE -ne 0) {
+                # L-19: a conflict in NEXTSTEPS.md alone is a sibling's queue
+                # edit meeting this branch's, and finish redoes its own edit
+                # on master's copy. Any other conflicted file stops as before.
+                $conflicts = @(Split-GitText (Invoke-GitText -C $root diff --name-only --diff-filter=U).Text)
+                if (-not $item -or $conflicts.Count -ne 1 -or $conflicts[0] -ne "NEXTSTEPS.md") { throw "git merge failed" }
+                Write-ClosingJournal -Root $root -Id $id -Branch $branch -Lane $lane -Phase "queue-reapplying"
+                Invoke-SliceQueueReapply -Root $root -Id $id -Lane $lane -PythonPath $PythonPath
+                Invoke-InjectedLifecycleFailure -Phase "queue-reapplying"
+                git -C $root commit -F $mergeMessageFile
+                if ($LASTEXITCODE -ne 0) { throw "git commit of the merge failed after re-applying the queue edit" }
+            }
         }
         finally {
             Remove-Item -LiteralPath $mergeMessageFile -ErrorAction SilentlyContinue
@@ -2229,7 +2357,7 @@ function Invoke-SliceFinish {
     $adviceLine = "none -- the $lane lane is empty"
     $connectorLine = "none needed"
     if ($laneLead) {
-        $advice = Get-SliceAdvice -Root $root -Candidate $laneLead -Lane $lane
+        $advice = Get-SliceAdvice -Root $root -Candidate $laneLead -Lane $lane -NoDry
         $adviceLine = "$($advice.model) (plan level: $($advice.level))"
         $connectorLine = if ($advice.connectors_on.Count -gt 0) { "on: $($advice.connectors_on -join ', '); off: $($advice.connectors_off)" } else { "on: none; off: $($advice.connectors_off)" }
     }

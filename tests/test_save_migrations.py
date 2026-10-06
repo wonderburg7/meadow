@@ -108,6 +108,40 @@ def apply_starting_level(data, current):
     return int(saved)
 
 
+def apply_skill_policy(data):
+    """Mirrors save_game.gd::apply_skill_policy (BS-14): the pending policy a
+    load hands main.gd's run start, or {} for a save without the field (or
+    without a level to tie it to). Lists keep their strings only."""
+    policy = data.get("skill_policy")
+    saved = data.get("starting_level")
+    if not isinstance(policy, dict):
+        return {}
+    if isinstance(saved, bool) or not isinstance(saved, (int, float)):
+        return {}
+
+    def ids(value):
+        out = []
+        for item in value if isinstance(value, list) else []:
+            if isinstance(item, str) and item not in out:
+                out.append(item)
+        return out
+
+    return {
+        "level": int(saved),
+        "grants": ids(policy.get("grants")),
+        "bans": ids(policy.get("bans")),
+        "developer_changes": data.get("developer_changes") is True,
+    }
+
+
+def run_bans(pending, level_id, file_bans):
+    """Mirrors main.gd::run_definition's choice: a pending policy for this
+    level wins over the overrides file; any other run reads the file."""
+    if pending and pending["level"] == level_id:
+        return pending["bans"]
+    return file_bans
+
+
 MILESTONE_IDS = ("first_worker", "first_automation", "stable_income",
                  "winter_ready", "winter_recovery", "first_gyne")
 
@@ -269,6 +303,73 @@ class StartingLevelTest(unittest.TestCase):
         self.assertEqual(1, levels.count('"run_type"'))
 
 
+class SavedSkillPolicyTest(unittest.TestCase):
+    """BS-14 (plans/now/brood-spine.md): a save keeps its run's skill grants
+    and bans, and says when developer edits made them, as an additive field
+    that changes nothing for a save without it."""
+
+    def test_a_saved_ban_wins_over_a_changed_overrides_file(self):
+        written = json.loads(json.dumps({
+            "version": FORMAT_VERSION, "starting_level": 8.0,
+            "skill_policy": {"grants": [], "bans": ["skill.brood.gyne_rearing"]},
+            "developer_changes": True}))
+        pending = apply_skill_policy(upgrade(written))
+        self.assertTrue(pending["developer_changes"])
+        self.assertEqual(["skill.brood.gyne_rearing"],
+                         run_bans(pending, 8, ["skill.brood.drones"]))
+
+    def test_a_save_without_the_field_loads_as_before(self):
+        for data in (upgrade({"version": FORMAT_VERSION, "starting_level": 8}),
+                     {"starting_level": 8, "skill_policy": ["skill.brood.drones"]},
+                     upgrade(load_fixture("save_v1.json")),
+                     upgrade(load_fixture("save_v2.json"))):
+            pending = apply_skill_policy(data)
+            self.assertEqual({}, pending)
+            self.assertEqual(["skill.brood.drones"], run_bans(pending, 8, ["skill.brood.drones"]))
+
+    def test_an_untagged_save_reads_as_no_developer_changes(self):
+        for tag in (None, False, "true", 1):
+            data = {"starting_level": 3, "skill_policy": {"grants": [], "bans": []}}
+            if tag is not None:
+                data["developer_changes"] = tag
+            self.assertFalse(apply_skill_policy(data)["developer_changes"])
+
+    def test_a_challenge_save_keeps_its_policy_out_of_another_level(self):
+        data = {"starting_level": 1, "skill_policy": {"grants": [], "bans": ["skill.brood.drones"]}}
+        current = apply_starting_level(data, 3)
+        self.assertEqual(3, current)
+        self.assertEqual([], run_bans(apply_skill_policy(data), current, []))
+
+    def test_no_migration_invents_a_skill_policy(self):
+        migrations = (SCRIPTS / "save_migrations.gd").read_text(encoding="utf-8")
+        self.assertNotIn("skill_policy", migrations)
+        self.assertNotIn("developer_changes", migrations)
+
+    def test_gdscript_writes_and_applies_the_policy(self):
+        save_game = (SCRIPTS / "save_game.gd").read_text(encoding="utf-8")
+        self.assertIn('"grants": Session.run_skill_grants.duplicate()', save_game)
+        self.assertIn('"bans": Session.run_skill_bans.duplicate()', save_game)
+        self.assertIn('data["developer_changes"] = true', save_game)
+        self.assertIn("static func apply_skill_policy(data: Dictionary)", save_game)
+        for name in ("saves_panel.gd", "debug_panel.gd"):
+            source = (SCRIPTS / name).read_text(encoding="utf-8")
+            level = source.find("SaveGame.apply_starting_level(data)")
+            applied = source.find("SaveGame.apply_skill_policy(data)")
+            self.assertNotEqual(-1, applied, name)
+            # After the level is settled, before the world is rebuilt.
+            self.assertLess(level, applied, name)
+            self.assertLess(applied, source.find("reload_current_scene()", applied), name)
+        main = (SCRIPTS / "main.gd").read_text(encoding="utf-8")
+        ready = main.split("func _ready() -> void:", 1)[1]
+        self.assertIn("run_definition(Session.starting_level, developer_edits_allowed)", ready)
+        self.assertNotIn("DeveloperOverrides.apply", ready)
+        definition = main.split("static func run_definition(", 1)[1].split("\nfunc ", 1)[0]
+        # The pending policy is cleared before either branch, so the next
+        # new run reads the overrides file again.
+        self.assertLess(definition.index("Session.pending_skill_policy = {}"),
+                        definition.index("DeveloperOverrides.apply"))
+
+
 class ColonyMilestoneDaysTest(unittest.TestCase):
     """CR-2 (plans/now/colony-run.md): the day each Colony Run milestone was
     first met survives a save and load, as an additive field."""
@@ -313,6 +414,66 @@ class ColonyMilestoneDaysTest(unittest.TestCase):
     def test_no_migration_invents_milestone_days(self):
         migrations = (SCRIPTS / "save_migrations.gd").read_text(encoding="utf-8")
         self.assertNotIn("colony_milestones", migrations)
+
+
+
+def restore_bee_caste(entry):
+    """Mirrors scripts/saving.gd::_restore_bees's COL-9 reads."""
+    return {"drone": bool(entry.get("drone", False)), "mated": bool(entry.get("mated", True))}
+
+
+def restore_cell_brood(entry):
+    """Mirrors scripts/saving.gd::_restore_cells's gyne and drone reads."""
+    gyne = bool(entry.get("gyne", False))
+    return {"gyne": gyne, "drone": bool(entry.get("drone", False)) and not gyne}
+
+
+class DroneFieldsTest(unittest.TestCase):
+    """COL-9 (plans/now/colony-run.md): is_mated, is_drone and
+    brood_is_drone are additive save fields, with no FORMAT_VERSION bump."""
+
+    def test_all_three_fields_survive_a_save_and_load(self):
+        written = json.loads(json.dumps({
+            "version": FORMAT_VERSION,
+            "bees": [{"queen": True, "drone": False, "mated": False},
+                     {"queen": False, "drone": True, "mated": True}],
+            "cells": [{"gyne": False, "drone": True}]}))
+        data = upgrade(written)
+        self.assertEqual({"drone": False, "mated": False}, restore_bee_caste(data["bees"][0]))
+        self.assertEqual({"drone": True, "mated": True}, restore_bee_caste(data["bees"][1]))
+        self.assertEqual({"gyne": False, "drone": True}, restore_cell_brood(data["cells"][0]))
+
+    def test_a_save_without_them_loads_every_queen_mated_and_nothing_a_drone(self):
+        for data in (upgrade({"version": FORMAT_VERSION, "bees": [{"queen": True}, {"gyne": True}],
+                              "cells": [{"gyne": True}, {}]}),
+                     upgrade(load_fixture("save_v1.json")),
+                     upgrade(load_fixture("save_v2.json"))):
+            for bee in data.get("bees", []):
+                self.assertEqual({"drone": False, "mated": True}, restore_bee_caste(bee))
+            for cell in data.get("cells", []):
+                self.assertFalse(restore_cell_brood(cell)["drone"])
+
+    def test_a_cell_is_never_both_gyne_and_drone(self):
+        self.assertEqual({"gyne": True, "drone": False}, restore_cell_brood({"gyne": True, "drone": True}))
+
+    def test_gdscript_writes_and_restores_the_fields(self):
+        save_game = (SCRIPTS / "save_game.gd").read_text(encoding="utf-8")
+        self.assertIn('"drone": cell.brood_is_drone,', save_game)
+        self.assertIn('"drone": b.is_drone,', save_game)
+        self.assertIn('"mated": b.is_mated,', save_game)
+        saving = (SCRIPTS / "saving.gd").read_text(encoding="utf-8")
+        self.assertIn('cell.brood_is_drone = bool(entry.get("drone", false)) and not cell.brood_is_gyne', saving)
+        self.assertIn('bee.is_drone = bool(entry.get("drone", false))', saving)
+        self.assertIn('bee.is_mated = bool(entry.get("mated", true))', saving)
+        restore_bees = saving.split("func _restore_bees(", 1)[1]
+        # Before the bee enters the tree, so _ready() draws a drone's size.
+        self.assertLess(restore_bees.index("bee.is_drone = "), restore_bees.index("add_child(bee)"))
+
+    def test_no_migration_and_no_version_bump(self):
+        migrations = (SCRIPTS / "save_migrations.gd").read_text(encoding="utf-8")
+        for field in ("drone", "mated"):
+            self.assertNotIn(field, migrations)
+        self.assertEqual(6, FORMAT_VERSION)
 
 
 if __name__ == "__main__":

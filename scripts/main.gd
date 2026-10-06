@@ -75,11 +75,13 @@ const SpatialGrid = preload("res://scripts/spatial_grid.gd")
 const Season = preload("res://scripts/season.gd")
 const WinterPanel = preload("res://scripts/winter_panel.gd")
 const GallerinPanel = preload("res://scripts/gallerin_panel.gd")
+const SuccessionPanel = preload("res://scripts/succession_panel.gd")
 const ClickMarker = preload("res://scripts/click_marker.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 const Levels = preload("res://scripts/levels.gd")
 const RunAvailability = preload("res://scripts/run_availability.gd")
+const DeveloperOverrides = preload("res://scripts/developer_overrides.gd")
 const Availability = preload("res://scripts/availability.gd")
 const TutorialCheckpoint = preload("res://scripts/tutorial_checkpoint.gd")
 const ScenarioActions = preload("res://scripts/scenario_actions.gd")
@@ -203,6 +205,8 @@ var nursery_panel: CanvasLayer
 var foraging_panel: CanvasLayer
 var winter_panel: CanvasLayer
 var gallerin_panel: CanvasLayer
+## COL-10: explains a gyne's takeover from a dead queen.
+var succession_panel: CanvasLayer
 var rival: Node2D = null
 ## The year: seasons, disease, winter and gynes leaving.
 var season: Node2D = null
@@ -342,6 +346,34 @@ var pending_forage_bees: Array = []
 var pending_preference_bees: Array = []
 
 # --- _ready and construction --------------------------------------
+## BS-14 (plans/now/brood-spine.md): the level definition this run's
+## availability sheet is built from. A loaded save's policy
+## (Session.pending_skill_policy, put back by SaveGame.apply_skill_policy)
+## replaces the level's own skill_grants and skill_bans when it belongs to
+## this level; it is cleared either way, so the next new run reads the
+## overrides file again. Otherwise BS-6's developer edits apply when
+## `developer_edits_allowed`, and the run is tagged when they changed its
+## lists. Session records what was chosen, for every save of the run.
+## `overrides_path` is for tests.
+static func run_definition(level_id: int, developer_edits_allowed: bool, overrides_path: String = DeveloperOverrides.PATH) -> Dictionary:
+	var level: Dictionary = Levels.get_level(level_id)
+	var saved: Dictionary = Session.pending_skill_policy
+	Session.pending_skill_policy = {}
+	if not saved.is_empty() and int(saved.get("level", -1)) == level_id:
+		var restored: Dictionary = level.duplicate(true)
+		restored["skill_grants"] = saved.get("grants", []).duplicate()
+		restored["skill_bans"] = saved.get("bans", []).duplicate()
+		Session.record_run_skill_policy(restored["skill_grants"], restored["skill_bans"], saved.get("developer_changes", false) == true)
+		return restored
+	var edited: Dictionary = level
+	if developer_edits_allowed:
+		edited = DeveloperOverrides.apply(level_id, level, overrides_path)
+	var grants: Array = edited.get("skill_grants", [])
+	var bans: Array = edited.get("skill_bans", [])
+	var changed: bool = str(grants) != str(level.get("skill_grants", [])) or str(bans) != str(level.get("skill_bans", []))
+	Session.record_run_skill_policy(grants, bans, changed)
+	return edited
+
 func _ready() -> void:
 	add_to_group("world")   # so the settings window can find us to save
 	process_mode = PROCESS_MODE_ALWAYS   # keep input and camera alive while paused
@@ -430,7 +462,13 @@ func _ready() -> void:
 	# resolver takes its skill policy and starting skills from it. A loaded
 	# save replaces the starting skills with the ones it recorded
 	# (saving.gd::_restore, after this).
-	var level: Dictionary = Levels.get_level(Session.starting_level)
+	# BS-6: the developer table's user:// edits to skill_grants/skill_bans.
+	# Never in a scenario run (a Challenge fixture keeps level 1 or 2, so
+	# the level id alone is not enough) or a headless one, so every fixture
+	# and verify.ps1 start exactly as levels.gd and their JSON say. BS-14: a
+	# loaded save's own grants and bans win over the file (run_definition).
+	var developer_edits_allowed: bool = not scenario_active and Session.starting_level != Levels.SCENARIO_LEVEL_ID and DisplayServer.get_name() != "headless"
+	var level: Dictionary = run_definition(Session.starting_level, developer_edits_allowed)
 	Session.ensure_progression(stage_gate).begin_run(RunAvailability.sheet_for(level))
 	Availability.invalidate()
 	challenge_runner = ChallengeRunner.new()
@@ -560,6 +598,9 @@ func _ready() -> void:
 
 	gallerin_panel = GallerinPanel.new()
 	add_child(gallerin_panel)
+
+	succession_panel = SuccessionPanel.new()
+	add_child(succession_panel)
 
 	season = Season.new()
 	season.world = self
@@ -823,9 +864,16 @@ func _hatch_ready_brood() -> void:
 		var role: int = cell.hatch_role if cell.hatch_role >= 0 else Bee.Role.FORAGER
 		var focus: String = cell.hatch_focus if cell.hatch_role >= 0 else "nectar"
 		var as_gyne: bool = cell.brood_is_gyne
+		# COL-9: a drone ignores the cell's role and hatches Idle, and is
+		# made a drone here rather than inside world_building.gd's spawn.
+		var as_drone: bool = cell.brood_is_drone
+		if as_drone:
+			role = Bee.Role.IDLE
 		_record_emergence(role, focus, as_gyne)
 		cell.clear_cell()
 		var hatched: Node2D = world_building._spawn_hatched_bee(role, cell, as_gyne, focus)
+		if as_drone:
+			hatched.become_drone()
 		challenge_runner.on_worker_hatched(hatched)
 		# Unless the player pinned it, a role set on a cell applies to that
 		# one bee and then clears, so a one-off choice doesn't quietly
@@ -900,10 +948,15 @@ func _apply_rain_overlay() -> void:
 	if rain_effect != null:
 		rain_effect.visible = showing
 
-## The queen is the only bee that can lay and there is no succession, so
-## losing her ends the run. Checked here rather than from the bee itself
-## because a dying bee frees itself, and main.gd is what holds the
-## reference worth watching.
+## The queen is the only bee that can lay. When she dies the oldest adult
+## gyne takes her place (COL-10, _promote_gyne_to_queen); only with no
+## gyne to succeed her does losing her end the run. Checked here rather
+## than from the bee itself because a dying bee frees itself, and main.gd
+## is what holds the reference worth watching.
+##
+## The promotion comes before colony_lost is set, in the same frame the
+## old queen's reference goes invalid, so a run with a gyne never shows
+## the game-over screen and then carries on.
 ##
 ## HO-10: this used to open with `queen == null`, meant to skip a run with
 ## no queen yet. But a freed Object compares equal to null in Godot 4, so
@@ -919,6 +972,8 @@ func _check_for_loss() -> void:
 		return
 	if not queen_seen_alive:
 		return
+	if _promote_gyne_to_queen():
+		return
 	colony_lost = true
 	if scenario_active:
 		_end_scenario_run("collapsed")
@@ -930,6 +985,28 @@ func _check_for_loss() -> void:
 		hive.total("nectar"),
 		hive.total_honey(),
 	)
+
+## COL-10. The oldest adult gyne still with the colony becomes its queen:
+## hatched (brood is a cell, not a bee) and not leaving or dying, which
+## is_dying covers -- a gyne who flew off to found a colony is still a
+## valid node until the end of that frame. She takes over unmated, so
+## she lays drones (COL-9) until she mates, and the succession window
+## says so once. Returns false when there is no gyne to promote.
+func _promote_gyne_to_queen() -> bool:
+	var heir: Node2D = null
+	for bee in get_tree().get_nodes_in_group("bees"):
+		if not is_instance_valid(bee) or not bee.is_gyne or bee.is_dying:
+			continue
+		if heir == null or bee.age_seconds > heir.age_seconds:
+			heir = bee
+	if heir == null:
+		return false
+	heir.become_queen()
+	queen = heir
+	_update_population_readout()
+	year_winter._close_other_left_windows(succession_panel)
+	succession_panel.open_for(heir)
+	return true
 
 ## Warns when the colony as a whole is running on empty. Deliberately
 ## doesn't pause: it's information, and stopping the game every time

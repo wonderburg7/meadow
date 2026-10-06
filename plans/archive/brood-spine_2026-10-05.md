@@ -1,7 +1,7 @@
 # Brood spine — Nurses and Honey worker are bought, and each run has one availability sheet
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BS-6 -- developer edits to the table change what a run starts with (BS-9, BS-10 and BS-11 landed 2 Oct 2026; queued 4 Oct 2026 with its scope check moved to `tests/test_run_scenario_launch.py`, so it no longer waits for SR-5) | Dependency: none -- AP-8 landed 24 Sep 2026, so progression step 7 is no longer waiting | Verified: 2026-10-04
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete; no follow-up filed (BS-14 landed 5 Oct 2026: a save records its run's skill grants and bans as `skill_policy`, and a top-level `developer_changes: true` when developer edits changed that run's start; a load puts them back instead of re-reading `user://developer_start_overrides.json`; BS-13 landed 5 Oct 2026: the Run availability table names the stage that introduces and frees each skill; BS-12 landed 5 Oct 2026; BS-6 landed 4 Oct 2026: the developer table's edits to skill_grants/skill_bans live in `user://developer_start_overrides.json` and change the next run's start outside scenario and headless runs, hands-on check C-112, `checks/ready/C-112.md`) | Dependency: none | Verified: 2026-10-05
 
 **Objective.** Execute Phase B step 7 of `plans/design/progression.md`: Honey
 worker and Nurses become skills a run buys, so a tier-2 purchase becomes
@@ -62,7 +62,7 @@ Asked in the session that wrote `docs/product-review-2026-09-30.md`.
 
 ## Decisions (Dave, 1 Oct 2026, feedback-build readiness review)
 
-Asked in the session that wrote `plans/now/feedback-build.md`.
+Asked in the session that wrote `plans/archive/feedback-build_2026-10-05.md`.
 
 7. **The queen nurses without the Nurses skill; workers still need it.** An
    exception to BS-3's rule that a row of a role the colony has not bought is
@@ -76,6 +76,23 @@ Asked in the session that wrote `plans/now/feedback-build.md`.
    stage 2.2 to ask for a reassignment, and naming a queen backup for
    Challenge 2, which would make the run own Nurses and take stage 2.5's
    purchase away. BS-9 builds it.
+
+## Decisions (Dave, 5 Oct 2026, run-queue follow-up)
+
+<!-- LAYER: design -->
+
+- **The stage columns read Challenge data.** "Introduced at stage" is the
+  first Challenge stage whose `unlocked_keys` name the skill; "Free at stage"
+  is every stage whose `free_skills` name it (`scripts/challenge_stages.gd`).
+  `skills.gd`'s `introduced_by` is a different thing -- the run that
+  discovers a skill in the campaign meta tree, post-alpha
+  (`plans/design/progression.md` section 11, step 9) -- and stays empty.
+  This supersedes the 4 Oct Status line's "no slice can fill them yet".
+- **A save keeps its run's skill policy.** BS-6 left a loaded save re-reading
+  the developer's current start overrides, because a run's
+  `skill_grants`/`skill_bans` were not saved. A save now records them, a load
+  uses them, and a save from a run whose policy developer edits changed says
+  so in a top-level tag that anyone reading the file can see.
 
 ## Ownership taken by this plan
 
@@ -103,7 +120,6 @@ Asked in the session that wrote `plans/now/feedback-build.md`.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BS-6 | developer edits to the table change what a run starts with | `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/test_run_scenario_launch.py` | yes -- BS-11 landed 2 Oct 2026; its check left `tests/source_checks.py` (SR-5's) on 4 Oct 2026 | high |
 
 BS-11 went before BS-6 (reordered 2 Oct 2026): the two share
 `run_availability_panel.gd`. Every later slice names
@@ -128,53 +144,13 @@ Nothing is outlined here now: BS-9 and BS-6 are specified in full below.
 
 BS-9 shipped 2026-10-02; its specification is `plans/archive/BS-9_2026-10-02.md`.
 
-## BS-6 — developer edits to the table change what a run starts with
+BS-6 shipped 2026-10-04; its specification is `plans/archive/BS-6_2026-10-04.md`.
 
-Level: high (a persisted store and a run-start hook). Specified 1 Oct 2026 in
-BS-4's closeout, from decision 6 (option (a): a `user://` override, private to
-one machine, never a fixture). It was gated on BS-8, which shared
-`run_availability.gd` across the lanes; BS-8 landed 1 Oct 2026. It now
-waited for SR-5 (Codex lane), which also edits `tests/source_checks.py`; on
-4 Oct 2026 (Dave) its scope check moved to `tests/test_run_scenario_launch.py`,
-a module `tools/verify.ps1` already runs and no other lane owns, so it is
-queued.
+BS-12 shipped 2026-10-05; its specification is `plans/archive/BS-12_2026-10-05.md`.
 
-- **Scope.** The Run availability table (`run_availability_panel.gd`, opened
-  from the debug panel) is read-only today. Each skill row gains a control
-  cycling start / tree / unavailable for the level being viewed. An edit
-  changes that level's run definition only through `skill_grants` and
-  `skill_bans`, the two keys `sheet_for` already honours; it never edits a
-  starting count, since "seeding implies owning" derives from counts.
-- **Store.** New `scripts/developer_overrides.gd`: one small JSON file,
-  `user://developer_start_overrides.json`, mapping level id to
-  `{"grants": [...], "bans": [...]}`. `apply(level_id, definition)` returns a
-  copy of the definition with the lists merged (a ban still wins over a
-  grant, as in `run_availability.gd`). Missing or unparseable file reads as
-  no overrides.
-- **Hook.** `main.gd` line ~417, where `RunAvailability.sheet_for(level)` runs,
-  passes the level through `apply` first. Scenario runs (level 999 /
-  `SCENARIO_LEVEL_ID`) and headless runs are never overridden, so every
-  fixture and `tools/verify.ps1` behave exactly as before.
-- **Reset.** A "Reset to the game's data" button on the panel deletes the
-  file and rebuilds the table. Edited rows are marked so a developer can see
-  they differ from `levels.gd`.
-- **Must not change:** `levels.gd`, any scenario JSON, save files, or
-  `progression.gd`'s ownership answers.
-- **Escalate** if a run started with an override and one without differ in
-  anything beyond starting ownership.
+BS-13 shipped 2026-10-05; its specification is `plans/archive/BS-13_2026-10-05.md`.
 
-```queue
-**[Claude] BS-6 -- developer edits to the table change what a run starts with**
-- Plan: `plans/now/brood-spine.md` -- "BS-6 — developer edits to the table change what a run starts with"
-- Files: `scripts/developer_overrides.gd`, `scripts/run_availability_panel.gd`, `scripts/main.gd`, `tests/test_run_scenario_launch.py`
-- Check: `tools/verify.ps1` is green, a source-reading test in `tests/test_run_scenario_launch.py` proves `main.gd` applies `DeveloperOverrides` only outside scenario runs, and Dave confirms in the Run availability table that an edited row changes the next run's start and "Reset" restores it
-- Proof: `absent: scripts/run_availability_panel.gd :: DeveloperOverrides`
-- Next after: none -- the last slice in this plan
-```
-
-BS-10 shipped 2026-10-02; its specification is `plans/archive/BS-10_2026-10-02.md`.
-
-BS-11 shipped 2026-10-02; its specification is `plans/archive/BS-11_2026-10-02.md`.
+BS-14 shipped 2026-10-05; its specification is `plans/archive/BS-14_2026-10-05.md`.
 
 ## Read on demand
 

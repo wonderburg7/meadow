@@ -94,6 +94,22 @@ var is_queen: bool = false
 ## but she is bigger, slower and hungrier than one.
 var is_gyne: bool = false
 
+## COL-9. A drone: a male, hatched from an egg an unmated queen laid. He
+## does no work -- he hatches Idle and set_role() refuses him any other job
+## -- but he eats from the stores and ages out like a worker. Set by
+## main.gd's emergence loop (become_drone) or by a save restore.
+var is_drone: bool = false
+## A drone sits between a worker (1.0) and a gyne in size. Here rather than
+## in GameConfig: a drone otherwise uses a worker's values.
+const DRONE_SIZE_FACTOR := 1.18
+const DRONE_COLOUR := Color(0.62, 0.52, 0.78)   # dusky violet, apart from every other caste
+
+## COL-9. Has this queen mated? Every queen is, unless something has made
+## her otherwise (COL-10): an unmated queen's eggs only ever become drones.
+## Meaningless on a worker; true by default so every run and save is as
+## before.
+var is_mated: bool = true
+
 ## Nursery sub-mode: "feed" tends and feeds brood, "jelly" makes royal
 ## jelly for gyne larvae, "both" does either as it comes up.
 var nurse_mode: String = "feed"
@@ -660,18 +676,22 @@ func _ready() -> void:
 	size_jitter = randf_range(1.0 - GameConfig.visual_size_jitter_range, 1.0 + GameConfig.visual_size_jitter_range)
 	scale = Vector2.ONE * size_jitter
 
-	# A gyne sits visibly between a worker and the queen, so you can pick
-	# one out of a crowd without selecting it.
-	var size_factor: float = 1.0
-	if is_queen:
-		size_factor = 1.55
-	elif is_gyne:
-		size_factor = GameConfig.gyne_size_factor
+	wander_phase = randf() * TAU
+
+	_build_visuals()
+	_update_role_marker()
+
+## The body, its outline and every ring and marker drawn on it, sized for
+## this bee's caste. Built once by _ready(), and once more by become_drone()
+## for a bee who turns out to be a drone after _ready() has run.
+func _build_visuals() -> void:
+	# A gyne sits visibly between a worker and the queen, and a drone
+	# between a worker and a gyne, so you can pick either out of a crowd
+	# without selecting it.
+	var size_factor: float = _caste_size_factor()
 	var body_radius: float = 6.5 * size_factor
 	var outline_radius: float = 9.0 * size_factor
 	click_radius = (outline_radius + 5.0) * size_jitter
-
-	wander_phase = randf() * TAU
 
 	visual_root = Node2D.new()
 	add_child(visual_root)
@@ -770,7 +790,60 @@ func _ready() -> void:
 	label.add_theme_font_size_override("font_size", 12)
 	visual_root.add_child(label)
 
+## How much bigger than a worker this bee is drawn.
+func _caste_size_factor() -> float:
+	if is_queen:
+		return 1.55
+	if is_gyne:
+		return GameConfig.gyne_size_factor
+	if is_drone:
+		return DRONE_SIZE_FACTOR
+	return 1.0
+
+## COL-9. Called by main.gd's emergence loop on a bee hatched from drone
+## brood, after world_building.gd has spawned him (so that file stays as it
+## is). He is Idle from then on, and redrawn at a drone's size and colour.
+## A save restore sets is_drone before the bee enters the tree instead, so
+## _ready() draws him as a drone from the start.
+func become_drone() -> void:
+	is_drone = true
+	pending_role = -1
+	secondary_role = -1
+	if role != Role.IDLE:
+		_apply_role(Role.IDLE)
+	if visual_root != null and is_instance_valid(visual_root):
+		remove_child(visual_root)
+		visual_root.queue_free()
+	_build_visuals()
 	_update_role_marker()
+	_update_label()
+
+## COL-10. Called by main.gd::_check_for_loss on the oldest adult gyne
+## when the queen has died. She takes over unmated, so her eggs are
+## drones (COL-9) until she mates; she is redrawn at a queen's size and
+## colour, given a queen's speed, and put straight onto Egg layer --
+## past "finish current task first", since the colony has no layer
+## until she starts. The backup she had as a gyne is dropped, so she
+## gets a founding queen's: the run's queen_laying_backup (_apply_role),
+## or a Nurse backup, as setup() gives every queen, when it names none.
+## Kept, a Forager backup would walk her out of the hive whenever laying
+## was blocked.
+func become_queen() -> void:
+	is_queen = true
+	is_gyne = false
+	is_mated = false
+	pending_role = -1
+	_apply_stats()
+	if visual_root != null and is_instance_valid(visual_root):
+		remove_child(visual_root)
+		visual_root.queue_free()
+	_build_visuals()
+	secondary_role = -1
+	_apply_role(Role.EGG_LAYER)
+	if secondary_role == -1:
+		secondary_role = Role.NURSERY
+	_update_role_marker()
+	_update_label()
 
 # --- setup, stats and appearance ----------------------------------
 func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGER, world_node: Node2D = null) -> void:
@@ -856,6 +929,8 @@ func _base_colour() -> Color:
 		return Color(0.95, 0.45, 0.75)
 	if is_gyne:
 		return Color(1.0, 0.62, 0.35)   # between a worker's yellow and the queen's pink
+	if is_drone:
+		return DRONE_COLOUR
 	return Color(1.0, 0.85, 0.1)
 
 ## The role colour with this bee's individual brightness jitter applied
@@ -1831,9 +1906,16 @@ func _has_deliverable_target() -> bool:
 	)
 
 func set_secondary_role(new_role: int) -> void:
+	if is_drone:
+		secondary_role = -1   # a drone has no backup job either
+		return
 	secondary_role = -1 if new_role == role else new_role
 
+## A drone is Idle and stays Idle (COL-9): recruitment and the Job menu both
+## come through set_role(), which asks here first.
 func can_take_role(new_role: int) -> bool:
+	if is_drone:
+		return new_role == Role.IDLE
 	return is_queen if new_role == Role.EGG_LAYER else true
 
 ## Changing a bee's job used to reparent it between the meadow and the
@@ -2207,6 +2289,9 @@ func role_name_text() -> String:
 				base += " -- waiting to recruit a struggling forager"
 			elif state == State.DANCING:
 				base += " -- dancing to recruit a struggling forager" if dance_role == "mentor" else " -- being danced at"
+	# COL-10: a queen who took over from a dead one has not mated.
+	if is_queen and not is_mated:
+		base += " -- Unmated: lays drones"
 	if secondary_role != -1 and secondary_role != role:
 		base += " -- when idle: %s" % Roles.label_for(secondary_role)
 	return base

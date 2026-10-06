@@ -50,7 +50,7 @@ var value_labels: Dictionary = {}
 var toggle_boxes: Dictionary = {}
 var panel: PanelContainer
 ## BS-5: the developer-only rows, rebuilt whenever Developer mode changes,
-## and the read-only Run availability table they open (built on first use).
+## and the editable Run availability table they open (built on first use).
 var developer_row: VBoxContainer
 ## HO-3: the Triggers group, built only while Developer mode is on.
 var triggers_box: VBoxContainer
@@ -621,7 +621,7 @@ func _refresh_developer_row() -> void:
 		child.queue_free()
 	var button := _make_run_availability_button()
 	if button != null:
-		_add_action_row(developer_row, button, "Developer mode: a read-only table of this run's skills, the roles they unlock and the features they need -- which the run starts owning, leaves to the skill tree or does not offer, and why.")
+		_add_action_row(developer_row, button, "Developer mode: an editable table of this run's skills, the roles they unlock and the features they need -- which the run starts owning, leaves to the skill tree or does not offer, and why. Click a skill's source to change what the next run of this level starts with (this machine only).")
 	elif run_availability_panel != null:
 		run_availability_panel.hide()
 
@@ -792,6 +792,7 @@ func _on_load_pressed() -> void:
 		return
 	SaveGame.apply_settings(data)
 	SaveGame.apply_starting_level(data)
+	SaveGame.apply_skill_policy(data)
 	Session.run_name = str(slot["name"])
 	Session.load_path = path
 	Session.load_pending = true

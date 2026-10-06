@@ -34,7 +34,12 @@ sitting in a `.worktrees/` directory:
    the whole section), go to 5 with that level, and count it toward the
    maximum. Any other held state stops the run. If the lane is empty,
    refill it (below), then rerun `doctor`.
-2. **Claim.** Run `start`. Keep its JSON, and note `advice.level`.
+2. **Claim.** If the lane holds only the item you are about to claim, first
+   run `python tools/refill_lane.py --top-up --lane Claude --dry-run`. If it
+   would add nothing, refill the lane (below) or ask Dave before you claim:
+   a slice built with nothing admissible behind it is stranded at `finish`'s
+   refill gate (BS-12, 4 Oct 2026). Then run `start`. Keep its JSON, and note
+   `advice.level`.
 3. **Dispatch.** Spawn the worker in the foreground
    (`run_in_background: false`). Its `subagent_type` comes from the level:
    `slice-worker-low`, `-medium` or `-high`. If the level is `unstated`, use
@@ -74,6 +79,9 @@ sitting in a `.worktrees/` directory:
    call: `(cd <ROOT>/.worktrees/<id> && powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 finish)`.
    Never pipe it through `2>&1 |`. Wait for the notification. It has ended
    only when it prints `Slice landed:` or a `slice finish stopped` block.
+   - Never run `verify.ps1` yourself, to diagnose a stop or otherwise:
+     the stop block names the saved `meadow-slice-verify.log`, and
+     `finish` reruns verify itself (20 coordinator runs, 28 Sep-5 Oct).
    - On a stop, read only the stop block. A verify failure inside the
      slice's files goes back to the worker once, then rerun `finish`. A
      stale branch: merge master into it, regenerate `FUNCTION_MAP.md`,
@@ -117,8 +125,12 @@ plan history or `plans/archive/`.
    level and a deterministic `Check:` where one exists. Write a `Proof:`
    that holds on master today. Fence a slice that can't start yet as
    `queue-gated`, with its one line under `## Not in the queue, and why`.
-3. **Queue it.** Outside a slice worktree, use a work branch with its own
-   worktree, registered in `plans/workstreams.md` first. Run
+3. **Queue it.** Inside a slice worktree at a `finish` stop, edit there
+   (step 6 above). Otherwise -- including while the lane's one slice branch
+   is open -- a docs-only refill goes on this coordinator session's own
+   worktree branch, not a second lane branch: add its row to
+   `plans/workstreams.md` (lane "Claude (docs only)") before editing, and
+   remove the row once the merge is pushed. Run
    `python tools/refill_lane.py --top-up --lane Claude`, then
    `python tools/check_docs.py`. Commit, merge to master and push, then
    go back to Preflight.
@@ -127,8 +139,9 @@ Stop the run and ask Dave with AskUserQuestion (give the options and their
 costs, and recommend one) only if either of these is true:
 - No live plan in `plans/now/` has work left to specify. In that case,
   propose which `ROADMAP.md` or `DESIGN_BACKLOG.md` item should become a
-  new plan. Read those two files through `ROOT`, because the file tools
-  are blocked on them.
+  new plan. Read those two files with `git -C <ROOT> show master:ROADMAP.md`
+  and `git -C <ROOT> show master:DESIGN_BACKLOG.md`: every file tool, and
+  Bash on their paths, is denied.
 - Specifying the slice would change an ownership boundary, save
   compatibility, a gameplay outcome, or more than one later slice, and
   the plan leaves that open (CLAUDE.md rule 5).

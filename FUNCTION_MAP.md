@@ -183,7 +183,7 @@ Challenge goal readout.
 3544 func _is_gate_open(control_name: String) -> bool
 ```
 
-## bee.gd (2,453 lines)
+## bee.gd (2,538 lines)
 
 A bee's dispatch loop, player commands, display text, vars.
 
@@ -192,116 +192,120 @@ A bee's dispatch loop, player commands, display text, vars.
 56   # --- the role action catalogue ------------------------------------
 75   # --- stats copied from GameConfig ---------------------------------
 86   # --- role, state and identity -------------------------------------
-266  func current_working_role() -> int
-269  # --- floral constancy and the search pattern ----------------------
-341  # --- patch memory and species experience --------------------------
-368  # --- scouting -----------------------------------------------------
-392  # --- trip rates and scoring ---------------------------------------
-456  # --- recruitment and dancing --------------------------------------
-496  # --- build and mine queues ----------------------------------------
-520  # --- flower cooldowns and predator memory -------------------------
-567  # --- pathfinding inside the hive ----------------------------------
-573  # --- the visual nodes ---------------------------------------------
-626  # --- _ready and construction --------------------------------------
-627  func _ready() -> void
-775  # --- setup, stats and appearance ----------------------------------
-776  func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGER, world_node: Node2D = null) -> void
-818  func _roll_fact() -> void
-832  func _default_state_for_role() -> int
-854  func _base_colour() -> Color
-865  func _tinted(c: Color) -> Color
-880  func _apply_stats() -> void
-906  func trait_text() -> String
-915  func _update_role_marker() -> void
-934  # --- how often a bee thinks ---------------------------------------
-966  func _process(delta: float) -> void
-1239 # --- life support -------------------------------------------------
-1241 # --- eating -------------------------------------------------------
-1243 # --- stall watchdog -----------------------------------------------
-1249 func _reset_stall_watch() -> void
-1252 # --- foraging -----------------------------------------------------
-1254 # --- entering and leaving the hive --------------------------------
-1256 # --- nursery work -------------------------------------------------
-1258 # --- royal jelly ---------------------------------------------------
-1260 # --- idle work dispatch --------------------------------------------
-1274 func _apply_pending_role() -> bool
-1291 func _deliver_held_load() -> bool
-1312 func _return_nurse_food() -> void
-1333 func _is_busy() -> bool
-1339 func _idle_dispatch() -> void
-1367 func _maybe_break_off_secondary() -> void
-1391 func _try_role_work(r: int) -> bool
-1416 static func _build_actions_by_role() -> Dictionary
-1431 func _action_available(action_id: String) -> bool
-1441 func _action_mode_for_role(r: int) -> String
-1450 # --- building -----------------------------------------------------
-1452 # --- keeping cells topped up ---------------------------------------
-1481 func set_restock_targets(cells: Array, resource: String) -> void
-1484 func set_restock_sources(cells: Array, allowed: bool) -> void
-1487 func clear_restock() -> void
-1490 func has_restock_orders() -> bool
-1492 # --- mining -------------------------------------------------------
-1494 # --- honey making -------------------------------------------------
-1496 # --- egg laying (queen only) --------------------------------------
-1498 # --- player commands ----------------------------------------------
-1508 func command_move_to(world_point: Vector2) -> void
-1528 func command_move_through_entrance(world_point: Vector2, target_in_hive: bool) -> void
-1540 func command_exit_hive() -> void
-1550 func set_forage_start_point(meadow_point: Vector2, source: String = "manual") -> Vector2
-1558 func has_forage_start_point() -> bool
-1561 func set_preferred_species(species: String) -> void
-1574 func set_manual_build_target(hex: Vector2i) -> void
-1582 func queue_build_target(hex: Vector2i) -> void
-1589 func clear_build_queue() -> void
-1595 func _take_next_build_target() -> bool
-1608 func set_mine_target(block: Node2D) -> void
-1615 func queue_mine_target(block: Node2D) -> void
-1623 func clear_mine_queue() -> void
-1630 func _next_queued_block() -> Node2D
-1638 func set_home_hex(hex: Vector2i) -> void
-1647 func set_mine_home_hex(hex: Vector2i) -> void
-1653 func _mine_reference_point() -> Vector2
-1668 func command_collect_from(flower: Node2D) -> void
-1684 func command_collect_from_after_exit(flower: Node2D) -> void
-1697 func command_return_and_deposit() -> void
-1707 func command_return_only() -> void
-1713 func command_deposit_at(cell: Node2D) -> void
-1726 func command_empty_cell(cell: Node2D) -> void
-1738 func command_deposit_at_after_enter(cell: Node2D) -> void
-1746 func resume_pending_zone_command() -> bool
-1765 func _clear_pending_zone_command() -> void
-1770 func set_focus(type: String) -> void
-1827 func _has_deliverable_target() -> bool
-1833 func set_secondary_role(new_role: int) -> void
-1836 func can_take_role(new_role: int) -> bool
-1846 func set_role(new_role: int) -> void
-1863 func _apply_role(new_role: int) -> void
-1903 func _release_everything() -> void
-1920 func release_flower_reference(flower: Node2D) -> void
-1926 func set_selected(value: bool) -> void
-1930 # --- display ------------------------------------------------------
-1932 func role_letter() -> String
-1961 func challenge_vocabulary_limited() -> bool
-1974 func idle_reason() -> String
-2027 func task_description() -> String
-2178 func _idle_backup_note() -> String
-2188 func role_name_text() -> String
-2214 func architect_mode_name() -> String
-2220 func carrying_text() -> String
-2241 func age_days() -> float
-2249 func leave_to_found_colony() -> void
-2262 func days_remaining() -> float
-2274 func _update_label() -> void
-2294 func _update_alarm_ring() -> void
-2305 func _update_heading_marker() -> void
-2319 func _update_search_ring() -> void
-2342 func _update_dance_ring() -> void
-2375 func _update_wander_flight(delta: float) -> void
-2406 func _update_dance_circle(delta: float) -> void
-2420 func _terrain_speed_factor() -> float
-2429 func _is_inside_hive() -> bool
-2432 # --- getting round things in the meadow ---------------------------
-2452 func clear_navigation_state() -> void
+282  func current_working_role() -> int
+285  # --- floral constancy and the search pattern ----------------------
+357  # --- patch memory and species experience --------------------------
+384  # --- scouting -----------------------------------------------------
+408  # --- trip rates and scoring ---------------------------------------
+472  # --- recruitment and dancing --------------------------------------
+512  # --- build and mine queues ----------------------------------------
+536  # --- flower cooldowns and predator memory -------------------------
+583  # --- pathfinding inside the hive ----------------------------------
+589  # --- the visual nodes ---------------------------------------------
+642  # --- _ready and construction --------------------------------------
+643  func _ready() -> void
+687  func _build_visuals() -> void
+794  func _caste_size_factor() -> float
+808  func become_drone() -> void
+831  func become_queen() -> void
+848  # --- setup, stats and appearance ----------------------------------
+849  func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGER, world_node: Node2D = null) -> void
+891  func _roll_fact() -> void
+905  func _default_state_for_role() -> int
+927  func _base_colour() -> Color
+940  func _tinted(c: Color) -> Color
+955  func _apply_stats() -> void
+981  func trait_text() -> String
+990  func _update_role_marker() -> void
+1009 # --- how often a bee thinks ---------------------------------------
+1041 func _process(delta: float) -> void
+1314 # --- life support -------------------------------------------------
+1316 # --- eating -------------------------------------------------------
+1318 # --- stall watchdog -----------------------------------------------
+1324 func _reset_stall_watch() -> void
+1327 # --- foraging -----------------------------------------------------
+1329 # --- entering and leaving the hive --------------------------------
+1331 # --- nursery work -------------------------------------------------
+1333 # --- royal jelly ---------------------------------------------------
+1335 # --- idle work dispatch --------------------------------------------
+1349 func _apply_pending_role() -> bool
+1366 func _deliver_held_load() -> bool
+1387 func _return_nurse_food() -> void
+1408 func _is_busy() -> bool
+1414 func _idle_dispatch() -> void
+1442 func _maybe_break_off_secondary() -> void
+1466 func _try_role_work(r: int) -> bool
+1491 static func _build_actions_by_role() -> Dictionary
+1506 func _action_available(action_id: String) -> bool
+1516 func _action_mode_for_role(r: int) -> String
+1525 # --- building -----------------------------------------------------
+1527 # --- keeping cells topped up ---------------------------------------
+1556 func set_restock_targets(cells: Array, resource: String) -> void
+1559 func set_restock_sources(cells: Array, allowed: bool) -> void
+1562 func clear_restock() -> void
+1565 func has_restock_orders() -> bool
+1567 # --- mining -------------------------------------------------------
+1569 # --- honey making -------------------------------------------------
+1571 # --- egg laying (queen only) --------------------------------------
+1573 # --- player commands ----------------------------------------------
+1583 func command_move_to(world_point: Vector2) -> void
+1603 func command_move_through_entrance(world_point: Vector2, target_in_hive: bool) -> void
+1615 func command_exit_hive() -> void
+1625 func set_forage_start_point(meadow_point: Vector2, source: String = "manual") -> Vector2
+1633 func has_forage_start_point() -> bool
+1636 func set_preferred_species(species: String) -> void
+1649 func set_manual_build_target(hex: Vector2i) -> void
+1657 func queue_build_target(hex: Vector2i) -> void
+1664 func clear_build_queue() -> void
+1670 func _take_next_build_target() -> bool
+1683 func set_mine_target(block: Node2D) -> void
+1690 func queue_mine_target(block: Node2D) -> void
+1698 func clear_mine_queue() -> void
+1705 func _next_queued_block() -> Node2D
+1713 func set_home_hex(hex: Vector2i) -> void
+1722 func set_mine_home_hex(hex: Vector2i) -> void
+1728 func _mine_reference_point() -> Vector2
+1743 func command_collect_from(flower: Node2D) -> void
+1759 func command_collect_from_after_exit(flower: Node2D) -> void
+1772 func command_return_and_deposit() -> void
+1782 func command_return_only() -> void
+1788 func command_deposit_at(cell: Node2D) -> void
+1801 func command_empty_cell(cell: Node2D) -> void
+1813 func command_deposit_at_after_enter(cell: Node2D) -> void
+1821 func resume_pending_zone_command() -> bool
+1840 func _clear_pending_zone_command() -> void
+1845 func set_focus(type: String) -> void
+1902 func _has_deliverable_target() -> bool
+1908 func set_secondary_role(new_role: int) -> void
+1916 func can_take_role(new_role: int) -> bool
+1928 func set_role(new_role: int) -> void
+1945 func _apply_role(new_role: int) -> void
+1985 func _release_everything() -> void
+2002 func release_flower_reference(flower: Node2D) -> void
+2008 func set_selected(value: bool) -> void
+2012 # --- display ------------------------------------------------------
+2014 func role_letter() -> String
+2043 func challenge_vocabulary_limited() -> bool
+2056 func idle_reason() -> String
+2109 func task_description() -> String
+2260 func _idle_backup_note() -> String
+2270 func role_name_text() -> String
+2299 func architect_mode_name() -> String
+2305 func carrying_text() -> String
+2326 func age_days() -> float
+2334 func leave_to_found_colony() -> void
+2347 func days_remaining() -> float
+2359 func _update_label() -> void
+2379 func _update_alarm_ring() -> void
+2390 func _update_heading_marker() -> void
+2404 func _update_search_ring() -> void
+2427 func _update_dance_ring() -> void
+2460 func _update_wander_flight(delta: float) -> void
+2491 func _update_dance_circle(delta: float) -> void
+2505 func _terrain_speed_factor() -> float
+2514 func _is_inside_hive() -> bool
+2517 # --- getting round things in the meadow ---------------------------
+2537 func clear_navigation_state() -> void
 ```
 
 ## scenario_actions.gd (1,641 lines)
@@ -485,52 +489,54 @@ behaviour.
 1431 static func deposit_everything_remotely(bee: Node2D) -> void
 ```
 
-## main.gd (1,260 lines)
+## main.gd (1,337 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
 ```
 37   # --- signals ------------------------------------------------------
 51   # --- preloads and boot constants ----------------------------------
-95   # --- delegate systems ---------------------------------------------
-128  # --- world and meadow constants -----------------------------------
-189  # --- state --------------------------------------------------------
-344  # --- _ready and construction --------------------------------------
-345  func _ready() -> void
-618  # --- public surface other scripts call directly -------------------
-625  func is_on_screen(node: Node2D) -> bool
-628  func hive_entrance_inside() -> Vector2
-631  func entrance_wait_point(side: int) -> Vector2
-634  func move_bee_into_hive(bee: Node2D) -> void
-637  func move_bee_out_of_hive(bee: Node2D) -> void
-640  func mark_death(bee: Node2D) -> void
-648  func _on_bee_died(bee: Node2D) -> void
-652  func finish_mining(block: Node2D) -> void
-655  func save_run() -> void
-658  func begin_winter_countdown() -> void
-661  # --- per-frame ----------------------------------------------------
-671  func _process(delta: float) -> void
-758  # --- the frame rate readout ----------------------------------------
-777  func _sample_fps() -> void
-800  func _reseed_meadow(delta: float) -> void
-815  func _hatch_ready_brood() -> void
-844  func _sample_day_stores() -> void
-861  func _advance_weather(delta: float) -> void
-892  func _apply_rain_overlay() -> void
-914  func _check_for_loss() -> void
-939  func _check_colony_energy(delta: float) -> void
-970  func invalidate_population() -> void
-981  func _role_counts(bees = null) -> Dictionary
-998  func _update_population_readout(bees = null) -> void
-1012 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-1018 func _prune_selection() -> void
-1031 func _on_restart_after_loss() -> void
-1037 func _on_level_chosen(level: int) -> void
-1050 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-1068 func _apply_scenario_boot_arg() -> void
-1193 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
-1233 func _is_whole_number(value: Variant) -> bool
-1247 func _end_scenario_run(outcome: String) -> void
+97   # --- delegate systems ---------------------------------------------
+130  # --- world and meadow constants -----------------------------------
+191  # --- state --------------------------------------------------------
+348  # --- _ready and construction --------------------------------------
+358  static func run_definition(level_id: int, developer_edits_allowed: bool, overrides_path: String = DeveloperOverrides.PATH) -> Dictionary
+377  func _ready() -> void
+659  # --- public surface other scripts call directly -------------------
+666  func is_on_screen(node: Node2D) -> bool
+669  func hive_entrance_inside() -> Vector2
+672  func entrance_wait_point(side: int) -> Vector2
+675  func move_bee_into_hive(bee: Node2D) -> void
+678  func move_bee_out_of_hive(bee: Node2D) -> void
+681  func mark_death(bee: Node2D) -> void
+689  func _on_bee_died(bee: Node2D) -> void
+693  func finish_mining(block: Node2D) -> void
+696  func save_run() -> void
+699  func begin_winter_countdown() -> void
+702  # --- per-frame ----------------------------------------------------
+712  func _process(delta: float) -> void
+799  # --- the frame rate readout ----------------------------------------
+818  func _sample_fps() -> void
+841  func _reseed_meadow(delta: float) -> void
+856  func _hatch_ready_brood() -> void
+892  func _sample_day_stores() -> void
+909  func _advance_weather(delta: float) -> void
+940  func _apply_rain_overlay() -> void
+967  func _check_for_loss() -> void
+995  func _promote_gyne_to_queen() -> bool
+1016 func _check_colony_energy(delta: float) -> void
+1047 func invalidate_population() -> void
+1058 func _role_counts(bees = null) -> Dictionary
+1075 func _update_population_readout(bees = null) -> void
+1089 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+1095 func _prune_selection() -> void
+1108 func _on_restart_after_loss() -> void
+1114 func _on_level_chosen(level: int) -> void
+1127 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+1145 func _apply_scenario_boot_arg() -> void
+1270 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
+1310 func _is_whole_number(value: Variant) -> bool
+1324 func _end_scenario_run(outcome: String) -> void
 ```
 
 ## challenge_runner.gd (1,249 lines)
@@ -626,6 +632,93 @@ The stage machine, goal checks and stage effects.
 1239 func _custom_goal_progress(method: String) -> Dictionary
 ```
 
+## hive_cell.gd (1,196 lines)
+
+One cell: contents, brood, honey ripening, how it draws.
+
+```
+25   # --- constants and colours ----------------------------------------
+99   # --- cell state ---------------------------------------------------
+138  # --- building state -----------------------------------------------
+162  func effective_build_time() -> float
+165  # --- designation and orders ---------------------------------------
+207  # --- hatch settings -----------------------------------------------
+225  # --- layout and display nodes -------------------------------------
+266  # --- slots --------------------------------------------------------
+280  # --- setup --------------------------------------------------------
+282  func _ready() -> void
+396  # --- overlay, selection and rings ---------------------------------
+403  func set_overlay(mode: String) -> void
+409  func _overlay_colour() -> Array
+447  func set_selected(value: bool) -> void
+459  func set_zone_glow(value: bool, glow_colour: Color = Color.WHITE, tag: String = "") -> void
+470  func _set_outline_points(line: Line2D, size: float) -> void
+481  func _silhouette_point_to_local(p: Vector2) -> Vector2
+493  func _set_outline_points_cup(line: Line2D, size: float) -> void
+509  func _apply_outline_points(line: Line2D, size: float) -> void
+517  func _set_selection_ring_points() -> void
+520  # --- per-frame update ---------------------------------------------
+538  func _process(delta: float) -> void
+559  # --- brood development --------------------------------------------
+564  func _develop_brood(delta: float) -> void
+585  func _health_factor() -> float
+593  func _larva_dies() -> void
+606  # --- index and display epochs -------------------------------------
+612  func _invalidate_hive_index() -> void
+622  func _invalidate_stock() -> void
+636  func bump_display_epoch() -> void
+639  # --- working positions --------------------------------------------
+644  func claim_slot(bee: Node2D) -> int
+655  func release_slot(bee: Node2D) -> void
+662  func has_free_slot() -> bool
+671  func slot_position(index: int) -> Vector2
+683  # --- building -----------------------------------------------------
+685  func start_as_site() -> void
+690  func claim_builder(bee: Node2D) -> void
+694  func release_builder(bee: Node2D) -> void
+700  func add_build_progress(delta: float) -> void
+711  func build_fraction() -> float
+714  # --- contents -----------------------------------------------------
+716  func is_empty() -> bool
+721  func capacity_for(resource_type: String) -> float
+729  func accepts(resource_type: String) -> bool
+748  func is_nursery_cell() -> bool
+751  func space_for(resource_type: String) -> float
+767  func needs_eviction() -> bool
+785  func add_resource(resource_type: String, requested: float) -> float
+817  func take_resource(resource_type: String, requested: float) -> float
+845  func can_withdraw() -> bool
+850  func set_closed(value: bool) -> void
+857  func set_fill_then_close(value: bool) -> void
+866  func fill_fraction() -> float
+873  func set_designation(resource_type: String, explicit: bool = true) -> void
+881  # --- honey ---------------------------------------------------------
+883  func is_ripe_honey() -> bool
+887  func needs_fanning() -> bool
+892  func add_fanning_progress(delta: float) -> void
+902  func ripen_fraction() -> float
+905  # --- brood ---------------------------------------------------------
+907  func start_brood(as_gyne: bool = false, as_drone: bool = false) -> void
+920  func brood_kind_label() -> String
+930  func develop_time() -> float
+938  func feed_brood(seconds: float, on_honey: bool) -> void
+943  func needs_feeding() -> bool
+947  func seconds_until_death() -> float
+952  # --- clearing a dead larva ------------------------------------------
+954  func needs_cleaning() -> bool
+960  func add_clean_progress(delta: float) -> bool
+966  func clean_fraction() -> float
+969  func brood_ready() -> bool
+972  func clear_cell() -> void
+987  # --- display ------------------------------------------------------
+992  func _resource_outline_colour(resource_type: String) -> Color
+1006 func _refresh() -> void
+1147 func _designation_tag() -> String
+1169 func _priority_mark() -> String
+1182 func _apply_fill_shading() -> void
+1193 func development_percent() -> float
+```
+
 ## diagnostic_log.gd (1,185 lines)
 
 The session JSONL writer, counters and capture profiles.
@@ -708,93 +801,7 @@ The session JSONL writer, counters and capture profiles.
 1165 func _capture_entry(entry: Dictionary) -> bool
 ```
 
-## hive_cell.gd (1,180 lines)
-
-One cell: contents, brood, honey ripening, how it draws.
-
-```
-25   # --- constants and colours ----------------------------------------
-99   # --- cell state ---------------------------------------------------
-133  # --- building state -----------------------------------------------
-157  func effective_build_time() -> float
-160  # --- designation and orders ---------------------------------------
-202  # --- hatch settings -----------------------------------------------
-220  # --- layout and display nodes -------------------------------------
-261  # --- slots --------------------------------------------------------
-275  # --- setup --------------------------------------------------------
-277  func _ready() -> void
-391  # --- overlay, selection and rings ---------------------------------
-398  func set_overlay(mode: String) -> void
-404  func _overlay_colour() -> Array
-442  func set_selected(value: bool) -> void
-454  func set_zone_glow(value: bool, glow_colour: Color = Color.WHITE, tag: String = "") -> void
-465  func _set_outline_points(line: Line2D, size: float) -> void
-476  func _silhouette_point_to_local(p: Vector2) -> Vector2
-488  func _set_outline_points_cup(line: Line2D, size: float) -> void
-504  func _apply_outline_points(line: Line2D, size: float) -> void
-512  func _set_selection_ring_points() -> void
-515  # --- per-frame update ---------------------------------------------
-533  func _process(delta: float) -> void
-554  # --- brood development --------------------------------------------
-559  func _develop_brood(delta: float) -> void
-580  func _health_factor() -> float
-588  func _larva_dies() -> void
-600  # --- index and display epochs -------------------------------------
-606  func _invalidate_hive_index() -> void
-616  func _invalidate_stock() -> void
-630  func bump_display_epoch() -> void
-633  # --- working positions --------------------------------------------
-638  func claim_slot(bee: Node2D) -> int
-649  func release_slot(bee: Node2D) -> void
-656  func has_free_slot() -> bool
-665  func slot_position(index: int) -> Vector2
-677  # --- building -----------------------------------------------------
-679  func start_as_site() -> void
-684  func claim_builder(bee: Node2D) -> void
-688  func release_builder(bee: Node2D) -> void
-694  func add_build_progress(delta: float) -> void
-705  func build_fraction() -> float
-708  # --- contents -----------------------------------------------------
-710  func is_empty() -> bool
-715  func capacity_for(resource_type: String) -> float
-723  func accepts(resource_type: String) -> bool
-742  func is_nursery_cell() -> bool
-745  func space_for(resource_type: String) -> float
-761  func needs_eviction() -> bool
-779  func add_resource(resource_type: String, requested: float) -> float
-811  func take_resource(resource_type: String, requested: float) -> float
-839  func can_withdraw() -> bool
-844  func set_closed(value: bool) -> void
-851  func set_fill_then_close(value: bool) -> void
-860  func fill_fraction() -> float
-867  func set_designation(resource_type: String, explicit: bool = true) -> void
-875  # --- honey ---------------------------------------------------------
-877  func is_ripe_honey() -> bool
-881  func needs_fanning() -> bool
-886  func add_fanning_progress(delta: float) -> void
-896  func ripen_fraction() -> float
-899  # --- brood ---------------------------------------------------------
-901  func start_brood(as_gyne: bool = false) -> void
-915  func develop_time() -> float
-923  func feed_brood(seconds: float, on_honey: bool) -> void
-928  func needs_feeding() -> bool
-932  func seconds_until_death() -> float
-937  # --- clearing a dead larva ------------------------------------------
-939  func needs_cleaning() -> bool
-945  func add_clean_progress(delta: float) -> bool
-951  func clean_fraction() -> float
-954  func brood_ready() -> bool
-957  func clear_cell() -> void
-971  # --- display ------------------------------------------------------
-976  func _resource_outline_colour(resource_type: String) -> Color
-990  func _refresh() -> void
-1131 func _designation_tag() -> String
-1153 func _priority_mark() -> String
-1166 func _apply_fill_shading() -> void
-1177 func development_percent() -> float
-```
-
-## debug_panel.gd (1,156 lines)
+## debug_panel.gd (1,157 lines)
 
 The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
@@ -839,29 +846,29 @@ restart.
 755  func set_toggle(key: String, value: bool) -> void
 760  func _on_save_pressed() -> void
 771  func _on_load_pressed() -> void
-803  # --- showing and hiding the panel ---------------------------------
-804  func _toggle_panel() -> void
-818  func _apply_layer_for_context() -> void
-823  # --- building a settings row --------------------------------------
-824  func _make_row(entry: Dictionary) -> Control
-867  func _make_control_slot() -> HBoxContainer
-876  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
-906  func _make_toggle_row(entry: Dictionary) -> Control
-979  func _make_options_row(entry: Dictionary) -> Control
-1012 func _option_display(entry: Dictionary, value) -> String
-1016 func _cycle_option(entry: Dictionary, direction: int) -> void
-1027 # --- prerequisite cascades ----------------------------------------
-1031 func _cascade_prerequisites_on(key: String) -> void
-1045 func _cascade_dependents_off(key: String) -> void
-1053 func _cascade_mutual_exclusion(key: String) -> void
-1058 # --- star rows and value editing ----------------------------------
-1063 func _make_star_row(entry: Dictionary) -> Control
-1104 func _adjust(entry: Dictionary, delta: float) -> void
-1121 func _format_value(v) -> String
-1128 # --- restart and main menu ----------------------------------------
-1129 func _on_restart_pressed() -> void
-1134 func _on_main_menu_pressed() -> void
-1142 func _restart() -> void
+804  # --- showing and hiding the panel ---------------------------------
+805  func _toggle_panel() -> void
+819  func _apply_layer_for_context() -> void
+824  # --- building a settings row --------------------------------------
+825  func _make_row(entry: Dictionary) -> Control
+868  func _make_control_slot() -> HBoxContainer
+877  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
+907  func _make_toggle_row(entry: Dictionary) -> Control
+980  func _make_options_row(entry: Dictionary) -> Control
+1013 func _option_display(entry: Dictionary, value) -> String
+1017 func _cycle_option(entry: Dictionary, direction: int) -> void
+1028 # --- prerequisite cascades ----------------------------------------
+1032 func _cascade_prerequisites_on(key: String) -> void
+1046 func _cascade_dependents_off(key: String) -> void
+1054 func _cascade_mutual_exclusion(key: String) -> void
+1059 # --- star rows and value editing ----------------------------------
+1064 func _make_star_row(entry: Dictionary) -> Control
+1105 func _adjust(entry: Dictionary, delta: float) -> void
+1122 func _format_value(v) -> String
+1129 # --- restart and main menu ----------------------------------------
+1130 func _on_restart_pressed() -> void
+1135 func _on_main_menu_pressed() -> void
+1143 func _restart() -> void
 ```
 
 ## hive.gd (1,049 lines)
