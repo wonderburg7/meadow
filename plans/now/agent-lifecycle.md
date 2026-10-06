@@ -104,7 +104,7 @@ fields.
 - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
 - Check: `python -m unittest tests.test_slice_lifecycle` passes with a new case modelled on `test_mock_slice_can_claim_commit_and_close` whose mock `verify.ps1` prints `unit tests: FAILED` and exits 1, and whose `finish` output and stop-ledger cause contain `failed: unit tests`; `tools/verify.ps1` is green
 - Proof: `absent: tools/slice.ps1 :: function Get-VerifyFailureSummary`
-- Next after: L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures
+- Next after: L-23 -- a hands-on check pass runs each check in a check-runner subagent
 ```
 
 ## L-23 -- a hands-on check pass runs each check in a check-runner subagent
