@@ -115,6 +115,9 @@ disagree.
   group, `debug_panel.gd`'s "Triggers" section.
 - `plans/archive/CHECK_LOOP_P2_2026-09-04.md` -- P-2's full execution
   record.
+- `plans/reference/check-runner.md` -- a hands-on check pass dispatches each
+  check to the `check-runner` subagent (`.claude/agents/check-runner.md`),
+  whose brief this is.
 
 8. **A check states one condition.** C-7 bundled five behaviours behind one
    `PASS:` line -- multi-flower foraging, pollen starting, pollen depositing,
