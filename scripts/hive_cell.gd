@@ -135,6 +135,12 @@ var brood_is_drone: bool = false
 ## contents only count as real honey once it reaches honey_ripen_time.
 var ripen_progress: float = 0.0
 
+## Session.sim_time at which this cell first took nectar (the age of its
+## oldest nectar; topping up keeps it). -1.0 means "not stamped yet", which
+## is what a restored or script-filled cell holds until it is first asked.
+## Transient: not saved. See nectar_age().
+var nectar_since: float = -1.0
+
 # --- building state -----------------------------------------------
 
 ## Building state. Cells the hive starts with are already finished.
@@ -797,6 +803,8 @@ func add_resource(resource_type: String, requested: float) -> float:
 			ripen_progress *= GameConfig.honey_rewet_factor
 		else:
 			ripen_progress = 0.0
+	if resource_type == "nectar" and was_content_type != "nectar":
+		nectar_since = Session.sim_time
 	content_type = resource_type
 	capacity = capacity_for(resource_type)
 	amount += added
@@ -812,6 +820,16 @@ func add_resource(resource_type: String, requested: float) -> float:
 	if was_content_type != content_type or was_ripe != is_ripe_honey():
 		_invalidate_hive_index()
 	return added
+
+## Sim-seconds the oldest nectar here has sat in the cell; 0 when it holds
+## none. A cell never stamped (restored, or filled by a scenario action)
+## is stamped now, so its age counts from the first time it is asked.
+func nectar_age() -> float:
+	if content_type != "nectar" or amount <= 0.0:
+		return 0.0
+	if nectar_since < 0.0:
+		nectar_since = Session.sim_time
+	return Session.sim_time - nectar_since
 
 ## Removes up to `requested`, returns how much came out.
 func take_resource(resource_type: String, requested: float) -> float:
@@ -829,6 +847,7 @@ func take_resource(resource_type: String, requested: float) -> float:
 		content_type = ""
 		amount = 0.0
 		ripen_progress = 0.0
+		nectar_since = -1.0
 		if not designation_is_explicit:
 			designated_type = ""
 		if evict_requested:

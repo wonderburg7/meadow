@@ -1,0 +1,19 @@
+{
+  "cells": 20, "nectar_foragers": 6, "pollen_foragers": 2,
+  "nurses": 2, "builders": 1, "miners": 0, "honey_makers": 2,
+  "weather": false, "disease": false, "rival_hive": false, "winter": false,
+  "random_seed": 5101,
+  "config_overrides": {
+    "seconds_per_day": 20
+  },
+  "diagnostics": {
+    "profile": "custom",
+    "events": [],
+    "snapshots": {
+      "every_sim_seconds": 20,
+      "fields": ["resources.stored_nectar"],
+      "only_when_changed": false
+    }
+  },
+  "stop": {"max_days": 10}
+}

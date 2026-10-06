@@ -23,12 +23,12 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] SPR-1 -- a windowed render baseline for the procedural bees**
-   - Plan: `plans/now/sprites.md` -- "SPR-1 -- a windowed render baseline for the procedural bees"
-   - Files: `tools/run_scenario.py`, `scripts/perf.gd`, `tests/test_run_scenario_launch.py`, `test_scenarios/spr1_render_baseline.json`
-   - Check: `python -m unittest tests.test_run_scenario_launch` passes with a new case asserting that `--windowed` drops `--headless` and adds `--disable-vsync`, and that the default command line is unchanged; `python tools/run_scenario.py test_scenarios/spr1_render_baseline.json --windowed` exits 0 and its capture shows a draw-call mean above 0; `tools/verify.ps1` is green
-   - Proof: `absent: tools/run_scenario.py :: --windowed`
-   - Next after: none -- plans/now/sprites.md is complete once SPR-1 lands; whether a sprite path behind a simple-graphics fallback follows is decided with Dave from its numbers
+1. **[Claude] SPR-2 -- the windowed render baseline at 500 and 1,000 bees**
+   - Plan: `plans/now/render-scale.md` -- "SPR-2 -- the windowed render baseline at 500 and 1,000 bees"
+   - Files: `test_scenarios/spr2_render_500.json`, `test_scenarios/spr2_render_1000.json`, `docs/performance.md`
+   - Check: `python tools/run_scenario.py test_scenarios/spr2_render_1000.json --windowed --report full` exits 0 with a draw-call mean above 0; `docs/performance.md` holds the table for 200, 500 and 1,000 bees; `python tools/check_docs.py` passes
+   - Proof: `absent: docs/performance.md :: SPR-2`
+   - Next after: none -- plans/now/render-scale.md is complete once SPR-2 lands; whether a sprite or batching pass follows is decided with Dave from the table
 
 ### Codex lane
 
@@ -55,6 +55,7 @@ One line each: the id, its plan, and the single thing it waits for.
 
 - **COL-6** (`plans/now/colony-run.md`) -- specified from Dave's 5 Oct 2026 winter decision; waits for COL-4 (Codex lane), whose year clock it needs and whose `scripts/season.gd` it edits.
 - **COL-7** (`plans/now/colony-run.md`) -- the mating window, genetic points and COL-2's narrower win wait for COL-6, and are specified once it lands.
+- **NF-2** (`plans/now/nectar-fermentation.md`) -- nectar ferments past an age; waits for COL-4 (Codex lane), which edits `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, and for NF-1's evidence.
 - **COL-11** (`plans/now/colony-run.md`) -- nuptial flights; waits for COL-4 (Codex lane), whose year its mating curve reads, and for COL-10.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 8 and Shiver Cluster (`plans/now/colony-run.md` decision 9) wait for a design session with Dave, booked as the next planning pass (Dave, 5 Oct 2026): only Nurses and Honey worker are skill-gated today, gating Comb worker meets colony-run decision 2's queen building the first cell, and decisions 9 and 11 disagree on whether a colony can survive winter without Shiver Cluster. Shiver Cluster's build also waits for COL-6.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Gallerin guidance is booked after step 8's pass (Dave, 5 Oct 2026); the event director waits for the Colony Run's year and difficulty (COL-4, COL-6). The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/now/colony-run.md`).
@@ -72,3 +73,5 @@ Claude, after a hands-on pass: `I've done a hands-on pass. Here's what I found: 
 Claude, when a gate has cleared: `<what happened, e.g. "UI-F-2 has landed">. Move whatever it unblocks into its lane: clear its line under "Not in the queue, and why" (or open its fence from queue-gated to queue), then run python tools/refill_lane.py --top-up.`
 
 Claude, when a lane is short and the backlog is dry (high reasoning): `The <Codex|Claude> lane is short and the backlog has nothing it can take. Plan the next <Codex|Claude> slices: write a queue block in the live plans for each one (it must touch no file in the other lane), put anything not ready yet under "Not in the queue, and why", then run python tools/refill_lane.py --top-up --lane <Codex|Claude>.`
+
+Claude, looking ahead (high reasoning): `/plan-ahead [optional focus area]` -- surveys what needs a plan or slicing, ranks it, asks Dave the design questions and stores the answers in the plans.

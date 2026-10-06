@@ -68,6 +68,9 @@ var _capture_frame_times: Array = []
 var _capture_sections: Array = []
 var _capture_section_samples: Dictionary = {}
 var _capture_complete: bool = false
+## SPR-1: render counters, sampled once per measured frame inside a capture.
+var _capture_draw_calls: Array = []
+var _capture_objects: Array = []
 
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
@@ -135,6 +138,8 @@ func start_capture(warmup_frames: int, measurement_frames: int, sections: Array)
 	_capture_frame_times.clear()
 	_capture_sections = sections.duplicate()
 	_capture_section_samples.clear()
+	_capture_draw_calls.clear()
+	_capture_objects.clear()
 	for section in _capture_sections:
 		_capture_section_samples[section] = []
 	_capture_complete = false
@@ -155,6 +160,12 @@ func capture_summary() -> Dictionary:
 		"measurement_frames": _capture_frame_times.size(),
 		"frame_time_ms": _capture_metric(_capture_frame_times),
 		"sections_ms": sections,
+		# Zeros under --headless: the dummy renderer counts nothing.
+		"render": {
+			"draw_calls": _capture_metric(_capture_draw_calls),
+			"objects": _capture_metric(_capture_objects),
+			"node_count": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)),
+		},
 		"section_totals_are_overlapping": true,
 	}
 
@@ -181,6 +192,8 @@ func _capture_frame(frame_ms: float) -> void:
 		_capture_complete = true
 		return
 	_capture_frame_times.append(frame_ms)
+	_capture_draw_calls.append(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
+	_capture_objects.append(Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME))
 	for section in _capture_sections:
 		_capture_section_samples[section].append(float(_totals.get(section, 0)) / 1000.0)
 	_capture_frames_remaining -= 1

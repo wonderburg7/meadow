@@ -29,6 +29,8 @@ home per fact: read the plan.
 | How the flowering year feels at the start of a run | `plans/archive/season-feel_2026-09-30.md` |
 | The headless smoke scenario | `plans/archive/SMOKE_SCENARIO_2026-09-19.md` |
 | Agent lifecycle and closeout | `plans/now/agent-lifecycle.md` |
+| Nectar fermentation and stocking | plans/now/nectar-fermentation.md |
+| Render cost by colony size (sprites) | plans/now/render-scale.md |
 | When winter comes in a run | `plans/archive/winter-onset_2026-10-01.md` |
 
 ## Areas whose plan is complete
