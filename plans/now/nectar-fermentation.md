@@ -69,7 +69,6 @@ Verified 6 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| NF-1 | headless runs report how long raw nectar sits in the comb | `scripts/hive_cell.gd`, `scripts/diagnostic_log.gd`, `tests/test_nf1_nectar_age.py`, `test_scenarios/nf1_nectar_age.json`, `tools/verify.ps1` | yes | medium |
 | NF-2 | nectar ferments past an age, changes colour, and is lost to honey makers | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf2_fermentation.py`, `test_scenarios/nf2_fermentation.json`, `tools/verify.ps1` | no -- after COL-4 (shares `game_config.gd`, `settings_catalogue.gd`) and NF-1 (its threshold comes from NF-1's numbers) | high |
 | NF-3 | a bee that drinks fermented nectar goes tipsy (decision 3) | specified after NF-2 | no -- after NF-2 | high |
 | NF-4 | the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; without it, closest first (decisions 4-5) | specified after NF-3 | no -- after NF-3 | high |
@@ -82,69 +81,7 @@ COL-11 (`plans/now/colony-run.md`) also edit `tools/verify.ps1`, and are
 gated on COL-4 too. Whichever is queued second waits for the other's merge,
 as the one-branch lane already ensures.
 
-## NF-1 -- headless runs report how long raw nectar sits in the comb
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one transient cell field, a diagnostic summary and one
-recorded measurement, with a test).
-
-**True now.** See "Current state": no nectar age exists anywhere.
-
-**True afterwards.**
-
-- `hive_cell.gd` records `nectar_since: float`, the `Session.sim_time` at
-  which an empty (or non-nectar) cell first took nectar, set in
-  `add_resource`. Topping up keeps the stamp, so the age is the age of the
-  oldest nectar in the cell. Emptying the cell resets it. Age is computed
-  on demand as `Session.sim_time - nectar_since`. **Runtime policy:** an
-  event stamp (on deposit), no per-frame work.
-- **Not saved in this slice.** On restore the stamp is the restore time.
-  NF-2 adds the save field with its migration, because only the rule
-  needs it to survive a reload.
-- `diagnostic_log.gd`'s run summary gains `nectar_age`: at each day
-  change, the p50, p95 and max age (in in-game hours) over nectar cells
-  holding stock, and the share of stored nectar older than one in-game day.
-  It is read once per day change, never per frame.
-- `test_scenarios/nf1_nectar_age.json` runs an ordinary colony for at
-  least five days with foragers and honey makers, following an existing
-  forager scenario's shape. `tests/test_nf1_nectar_age.py` (registered in
-  `tools/verify.ps1`'s `$unitModules`) runs it and asserts that the
-  summary carries `nectar_age` with a p95 at or above its p50, and a max
-  above 0.
-- This section gains an "Evidence" paragraph giving the numbers from that
-  scenario and from one with honey makers removed (`honey_makers: 0`, or
-  the scenario's equivalent). That paragraph is what NF-2's threshold is
-  chosen from.
-
-**Must not change.** Any gameplay: no cell ferments, eating and honey
-making are untouched, and there is no new save field.
-
-**Evidence (6 Oct 2026, built).** `test_scenarios/nf1_nectar_age.json` is
-20 cells, 6 nectar and 2 pollen foragers, 2 nurses, 1 builder, 2 honey
-makers, seed 5101, 20 s days, 10 days. Ages are in in-game hours, taken
-at each day change over nectar cells holding stock. The summary reports
-the worst day for each figure plus a `daily` list. The colony is small, so
-only one or two cells hold nectar at a time, and p50 and p95 are close.
-With honey makers: days 5, 7, 8, 9 had one nectar cell each, aged 1.2,
-16.8, 40.8 and 64.8 h; the share of stock older than a day went 0, 0, 1,
-1. Without honey makers (`honey_makers: 0`): days 4 to 9 had 1 or 2 cells,
-p95 4.8, 28.8, 52.8, 76.8, 100.8 and 124.8 h; older than a day went 0,
-0.25, then 1.0. In both runs a cell that keeps its nectar ages
-linearly with no ceiling, so any threshold up to a few days is reached;
-honey makers did not clear the old cell here (it was the same cell on
-days 7 to 9), so they do not by themselves keep nectar younger than
-about 1 to 3 in-game days at this colony size. NF-2 should pick its
-threshold knowing this is a one-colony, one-seed reading.
-
-```queue
-**[Claude] NF-1 -- headless runs report how long raw nectar sits in the comb**
-- Plan: `plans/now/nectar-fermentation.md` -- "NF-1 -- headless runs report how long raw nectar sits in the comb"
-- Files: `scripts/hive_cell.gd`, `scripts/diagnostic_log.gd`, `tests/test_nf1_nectar_age.py`, `test_scenarios/nf1_nectar_age.json`, `tools/verify.ps1`
-- Check: `python -m unittest tests.test_nf1_nectar_age` passes (the summary carries `nectar_age` with p95 >= p50 and max > 0); the plan's NF-1 "Evidence" paragraph records both runs; `tools/verify.ps1` is green
-- Proof: `absent: scripts/hive_cell.gd :: nectar_since`
-- Next after: NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers
-```
+NF-1 shipped 2026-10-06; its specification is `plans/archive/NF-1_2026-10-06.md`.
 
 ## NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers
 
