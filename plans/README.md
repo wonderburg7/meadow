@@ -172,7 +172,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | SR-1 to SR-5 -- the four red scenarios and the red SF-1 test from the 30 Sep verification review | `plans/archive/scenario-reds_2026-10-04.md` |
 | CR-1, CR-2, PE-2, COL-1 to COL-8 -- the Colony Run: started from the menu and remembered by a save, its milestones, the played arc, the milestone shelf, victory, restore, the year and the unread level keys | `plans/now/colony-run.md` |
 | L-16, L-17 -- the slice lifecycle in `tools/slice.ps1` (L-1 to L-15 are archived) | `plans/now/agent-lifecycle.md` |
-| SPR-1 -- a windowed render baseline for the procedural bees, before any sprite pass | `plans/now/sprites.md` |
+| SPR-1 -- a windowed render baseline for the procedural bees, before any sprite pass | `plans/archive/sprites_2026-10-06.md` |
 | NF-1, NF-2 -- unprocessed nectar ferments, and tipsy bees pay for it | `plans/now/nectar-fermentation.md` |
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates (the Colony Run definition itself is `plans/now/colony-run.md`) | `plans/design/product-scope.md` |
