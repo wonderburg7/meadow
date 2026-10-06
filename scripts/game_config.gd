@@ -605,7 +605,8 @@ var low_energy_gap: float = 180.0
 ## nectar it came from.
 var honey_cell_capacity: float = 200.0
 var honey_energy_factor: float = 4.0    # one unit of honey is worth this much nectar
-var nectar_per_honey: float = 2.0       # nectar consumed to make one unit of mix
+## Equal to honey_energy_factor: honey stores energy densely without creating it.
+var nectar_per_honey: float = 4.0       # nectar consumed to make one unit of mix
 var honey_chew_time: float = 10.0        # seconds spent adding enzymes before depositing
 var honey_ripen_time: float = 30.0      # bee-seconds of fanning to dry one cell out
 ## Adding a fresh batch of wet mix to a part-dried cell sets the drying

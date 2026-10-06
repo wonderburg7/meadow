@@ -35,14 +35,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] GC-3 -- honey stops creating energy**
-   - Plan: `plans/now/gameplay-consistency.md` -- "GC-3 — honey stops creating energy"
-   - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/source_checks.py`
-   - Check: `python tests/source_checks.py` passes with the new check, PE-2's arc and `test_scenarios/bs4_honey_gate_test.json` pass at 4.0 with the comparison recorded, and `tools/verify.ps1` is green
-   - Proof: `present: scripts/game_config.gd :: var nectar_per_honey: float = 2.0`
-   - Next after: none -- plans/now/gameplay-consistency.md is complete
-
-2. **[Codex] COL-4 -- one editable year: thirty playable days, then winter**
+1. **[Codex] COL-4 -- one editable year: thirty playable days, then winter**
    - Plan: `plans/now/colony-run.md` -- "COL-4 -- one editable year: thirty playable days, then winter"
    - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/season.gd`, `scripts/world_building.gd`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
    - Check: `python -m unittest tests.test_pacing_gates` passes; `python tools/pacing_gates.py` before and after shows winter on days 31 to 41 and the plan records both; a Godot boot is clean; `tools/verify.ps1` is green

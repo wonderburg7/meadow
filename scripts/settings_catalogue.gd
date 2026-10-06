@@ -560,7 +560,7 @@ const TUNABLES := [
 		"persist": "run",
 		"key": "nectar_per_honey", "label": "Nectar per honey", "step": 0.5, "min": 1.0,
 		"category": "Honey",
-		"tip": "Units of nectar consumed to make one unit of honey mix. Above 1 this is a concentration step -- thin nectar in, dense store out.",
+		"tip": "Units of nectar consumed to make one unit of honey mix. At the honey energy multiplier, conversion makes honey denser without gaining or losing energy.",
 	},
 	{
 		"persist": "run",
