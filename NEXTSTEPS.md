@@ -23,14 +23,7 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims"
-   - Files: `tools/check_docs.py`, `tests/test_queue_lookahead.py`, `.claude/rules/documentation.md`, `.claude/skills/run-queue/SKILL.md`
-   - Check: `python -m unittest tests.test_queue_lookahead` passes with two cases (a one-item lane over a dry backlog warns; the same lane with an admissible block behind it does not); `python tools/check_docs.py` still exits 0 on today's queue; `tools/verify.ps1` is green
-   - Proof: `absent: tools/check_docs.py :: def check_queue_lookahead`
-   - Next after: none -- plans/now/agent-lifecycle.md is complete once L-24 lands; its completion gate is a measurement, not a slice
-
-2. **[Claude] SPR-1 -- a windowed render baseline for the procedural bees**
+1. **[Claude] SPR-1 -- a windowed render baseline for the procedural bees**
    - Plan: `plans/now/sprites.md` -- "SPR-1 -- a windowed render baseline for the procedural bees"
    - Files: `tools/run_scenario.py`, `scripts/perf.gd`, `tests/test_run_scenario_launch.py`, `test_scenarios/spr1_render_baseline.json`
    - Check: `python -m unittest tests.test_run_scenario_launch` passes with a new case asserting that `--windowed` drops `--headless` and adds `--disable-vsync`, and that the default command line is unchanged; `python tools/run_scenario.py test_scenarios/spr1_render_baseline.json --windowed` exits 0 and its capture shows a draw-call mean above 0; `tools/verify.ps1` is green

@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-24 from `docs/agent-workflow-review-2026-10-05.md` (L-24 queued 6 Oct 2026, its gate L-18 having shipped 5 Oct; L-21, L-22 and L-23 shipped, so `session_cost.py --days` now reads every worktree's transcripts; L-16 and L-17 shipped; the canaries still to be seen are one slice per lane closed out while origin is ahead, and one whose queue title carries an em dash closed out from a `chcp 1252` console with `git log -1 --format=%s master` showing the dash intact); the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) is measured on Dave's machine with `python tools/session_cost.py --stops`, `--phases` and `--events` from 6 Oct 2026 (not met on 5 Oct 2026: the seven-day window opens 6 Oct, so the earliest reading is 13 Oct 2026) and pasted into the next agent-workflow review, which cannot read those files from a cloud session (`docs/agent-workflow-review-2026-09-30.md`, Dave's actions) | Dependency: none | Verified: 2026-10-06
+Status: active | Owner: Dave / Claude | Next: the completion-gate measurement only (L-24 shipped 6 Oct 2026 -- check_queue_lookahead warns before a lane runs dry; L-18 shipped 5 Oct; L-21, L-22 and L-23 shipped, so `session_cost.py --days` now reads every worktree's transcripts; L-16 and L-17 shipped; the canaries still to be seen are one slice per lane closed out while origin is ahead, and one whose queue title carries an em dash closed out from a `chcp 1252` console with `git log -1 --format=%s master` showing the dash intact); the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) is measured on Dave's machine with `python tools/session_cost.py --stops`, `--phases` and `--events` from 6 Oct 2026 (not met on 5 Oct 2026: the seven-day window opens 6 Oct, so the earliest reading is 13 Oct 2026) and pasted into the next agent-workflow review, which cannot read those files from a cloud session (`docs/agent-workflow-review-2026-09-30.md`, Dave's actions) | Dependency: none | Verified: 2026-10-06
 
 ## Objective
 
@@ -50,7 +50,6 @@ slice until the next measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-24 | the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims | `tools/check_docs.py`, `tests/test_queue_lookahead.py`, `.claude/rules/documentation.md`, `.claude/skills/run-queue/SKILL.md` | medium |
 
 L-21 to L-24 come from `docs/agent-workflow-review-2026-10-05.md` (F1 to F5);
 L-23 and L-24 are Dave's 5 Oct 2026 choices. L-22 follows L-19 and L-24
@@ -77,47 +76,7 @@ L-22 shipped 2026-10-06; its specification is `plans/archive/L-22_2026-10-06.md`
 
 L-23 shipped 2026-10-06; its specification is `plans/archive/L-23_2026-10-06.md`.
 
-## L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one check function reusing L-18's dry run, two rule texts).
-
-**True now** (verified 5 Oct 2026, the review's F3; Dave chose this on 5 Oct
-2026). 15 of about 40 Claude slices since 30 Sep wrote their successor's
-specification mid-`finish` (`refill_lane.py` refused 13 times, the refill
-gate stopped twice). L-18 adds `advice.dry_after` at claim, a warning only.
-
-**True afterwards.**
-- New `check_queue_lookahead(warnings)` in `tools/check_docs.py`, called from
-  `main` after `check_queue_successors`: for each lane, it calls the
-  function behind L-18's machine-readable `refill_lane.py --top-up
-  --dry-run` (imported, not re-implemented) and warns `lookahead: closing
-  <id> would leave the <Lane> lane short with nothing admissible behind
-  it; specify the owning plan's next slice` when deleting the lane's first
-  item would empty the lane or take the queue under `QUEUE_SIZE_MIN` and
-  the dry run would add nothing. It never adds an error.
-- `.claude/rules/documentation.md`, after the paragraph ending "is what
-  makes a lane refill itself by lookup.", gains: "A lane item is not
-  claimed while `advice.dry_after` is true: specify its successor first, so
-  planning happens before the build, not inside `finish` (Dave, 5 Oct
-  2026)."
-- `.claude/skills/run-queue/SKILL.md` step 2: the dry-run test becomes
-  `advice.dry_after` from `doctor`; when true, run "Refilling the lane" before
-  `start`, never after.
-
-**Must not change.** `QUEUE_SIZE_MIN`; the refill gate; any existing error.
-
-**Stop and escalate** if L-18 exposed no importable function for its dry run.
-
-```queue
-**[Claude] L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-24 -- the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims"
-- Files: `tools/check_docs.py`, `tests/test_queue_lookahead.py`, `.claude/rules/documentation.md`, `.claude/skills/run-queue/SKILL.md`
-- Check: `python -m unittest tests.test_queue_lookahead` passes with two cases (a one-item lane over a dry backlog warns; the same lane with an admissible block behind it does not); `python tools/check_docs.py` still exits 0 on today's queue; `tools/verify.ps1` is green
-- Proof: `absent: tools/check_docs.py :: def check_queue_lookahead`
-- Next after: none -- plans/now/agent-lifecycle.md is complete once L-24 lands; its completion gate is a measurement, not a slice
-```
+L-24 shipped 2026-10-06; its specification is `plans/archive/L-24_2026-10-06.md`.
 
 ## Standing rules
 
