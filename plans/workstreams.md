@@ -61,4 +61,3 @@ end-of-slice report states what was merged and what is next.
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/GC-3` (`codex/GC-3`) | Codex | honey stops creating energy | Codex | in progress | none | `plans/now/gameplay-consistency.md` GC-3 — honey stops creating energy |
 | `.worktrees/L-22` (`claude/L-22`) | Claude | a verify stop names the stage that failed | Claude | in progress | none | `plans/now/agent-lifecycle.md` L-22 -- a verify stop names the stage that failed |
-| `.claude/worktrees/run-queue-4-74ed63` (`claude/run-queue-4-5d1b0b`) | Claude (docs only) | L-22 queue entry names L-23 as successor | Claude | in progress | none | `NEXTSTEPS.md` L-22 |
