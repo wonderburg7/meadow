@@ -1,7 +1,7 @@
 # Sprites -- measure the procedural rendering before any sprite pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SPR-1 -- a windowed render baseline for the procedural bees | Dependency: none -- no other live plan owns the files below | Verified: 2026-10-06
+Status: complete | Owner: Dave / Claude Code | Next: None -- plan complete; whether a sprite path behind a simple-graphics fallback follows is decided with Dave from the Evidence numbers in SPR-1 | Dependency: none -- no other live plan owns the files below | Verified: 2026-10-06
 
 ## Objective
 
@@ -37,55 +37,5 @@ Verified 6 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SPR-1 | a windowed render baseline for the procedural bees | `tools/run_scenario.py`, `scripts/perf.gd`, `tests/test_run_scenario_launch.py`, `test_scenarios/spr1_render_baseline.json` | yes | medium |
 
-## SPR-1 -- a windowed render baseline for the procedural bees
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (a launcher flag, capture-only counters and one recorded
-measurement, with a unit test).
-
-**True now.** See "Current state": captures run only headless, and
-`capture_summary()` has no render counters.
-
-**True afterwards.**
-
-- `python tools/run_scenario.py <scenario> --windowed` launches the same run
-  without `--headless` and with `--disable-vsync` (Godot's own flag, listed
-  by `Godot.exe --help`), so frame time is not pinned to the refresh rate.
-  Everything else about the launch is unchanged, `--fixed-fps` included.
-  Without `--windowed` the command line is byte-for-byte what it is today.
-- `Perf.capture_summary()` gains a `render` entry: mean and p95 of
-  `Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME` and
-  `RENDER_TOTAL_OBJECTS_IN_FRAME` over the measured frames, plus
-  `OBJECT_NODE_COUNT` at the end of the capture. **Runtime policy:** sampled
-  once per measured frame, only while a scenario capture is running, in the
-  existing `_capture_frame`. Normal play never captures, so the per-frame
-  path outside a capture is unchanged. Headless runs report zeros. That
-  marks the dummy renderer, and is not a bug.
-- `test_scenarios/spr1_render_baseline.json` copies
-  `perf2_hungry_indoor.json`'s shape (indoor, `time_scale` 1, a
-  `performance_capture` block), with a calm colony (no `hunger_threshold`
-  override) and 200 bees, so the bees are on screen in the hive view.
-- This section gains a short "Evidence" paragraph: one headless run and one
-  `--windowed` run of that scenario on Dave's machine, giving frame time
-  mean/p95, draw calls and node count for each. The windowed run briefly
-  opens a game window. That is expected, and it closes itself at the
-  scenario's stop.
-
-**Must not change.** Any rendering, any `Polygon2D` construction in
-`bee.gd`, the HUD's rolling perf instrumentation, the scenario keys that
-`main.gd` accepts for `performance_capture`, and the headless command line.
-**Stop and escalate** if the windowed run cannot finish on its own. That
-would mean a scenario that needs a window has a different stop path, which
-changes `main.gd` and this slice's file list.
-
-```queue
-**[Claude] SPR-1 -- a windowed render baseline for the procedural bees**
-- Plan: `plans/now/sprites.md` -- "SPR-1 -- a windowed render baseline for the procedural bees"
-- Files: `tools/run_scenario.py`, `scripts/perf.gd`, `tests/test_run_scenario_launch.py`, `test_scenarios/spr1_render_baseline.json`
-- Check: `python -m unittest tests.test_run_scenario_launch` passes with a new case asserting that `--windowed` drops `--headless` and adds `--disable-vsync`, and that the default command line is unchanged; `python tools/run_scenario.py test_scenarios/spr1_render_baseline.json --windowed` exits 0 and its capture shows a draw-call mean above 0; `tools/verify.ps1` is green
-- Proof: `absent: tools/run_scenario.py :: --windowed`
-- Next after: none -- plans/now/sprites.md is complete once SPR-1 lands; whether a sprite path behind a simple-graphics fallback follows is decided with Dave from its numbers
-```
+SPR-1 shipped 2026-10-06; its specification is `plans/archive/SPR-1_2026-10-06.md`.
