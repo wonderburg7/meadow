@@ -858,9 +858,16 @@ func _hatch_ready_brood() -> void:
 		var role: int = cell.hatch_role if cell.hatch_role >= 0 else Bee.Role.FORAGER
 		var focus: String = cell.hatch_focus if cell.hatch_role >= 0 else "nectar"
 		var as_gyne: bool = cell.brood_is_gyne
+		# COL-9: a drone ignores the cell's role and hatches Idle, and is
+		# made a drone here rather than inside world_building.gd's spawn.
+		var as_drone: bool = cell.brood_is_drone
+		if as_drone:
+			role = Bee.Role.IDLE
 		_record_emergence(role, focus, as_gyne)
 		cell.clear_cell()
 		var hatched: Node2D = world_building._spawn_hatched_bee(role, cell, as_gyne, focus)
+		if as_drone:
+			hatched.become_drone()
 		challenge_runner.on_worker_hatched(hatched)
 		# Unless the player pinned it, a role set on a cell applies to that
 		# one bee and then clears, so a one-off choice doesn't quietly

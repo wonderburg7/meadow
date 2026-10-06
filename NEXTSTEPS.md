@@ -23,26 +23,26 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] COL-9 -- an unmated queen's eggs become drones**
-   - Plan: `plans/now/colony-run.md` -- "COL-9 -- an unmated queen's eggs become drones"
-   - Files: `scripts/bee.gd`, `scripts/bee_egg_laying.gd`, `scripts/hive_cell.gd`, `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_save_migrations.py`, `tests/test_col9_drones.py`, `tests/col9_drones_test.gd`, `tools/verify.ps1`
-   - Check: `python -m unittest tests.test_col9_drones tests.test_save_migrations` passes (an unmated queen lays drone brood that hatches an Idle drone who refuses a job change; a save round-trips all three fields; a save without them loads every queen mated); a Godot boot is clean; `tools/verify.ps1` is green
-   - Proof: `absent: scripts/bee.gd :: is_drone`
-   - Next after: COL-10 -- a gyne takes over from a dead queen
-
-2. **[Claude] L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures**
+1. **[Claude] L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures"
    - Files: `tools/session_cost.py`, `tests/test_session_cost_scope.py`
    - Check: `python -m unittest tests.test_session_cost_scope` passes with three cases built in a temporary `home` (a worktree directory's session is counted; a coordinator session with a worker subagent for the slice reports the worker's model; a skipped stage is a skip, not a failure); `python tools/session_cost.py --days 7` prints a non-zero `sessions`; `tools/verify.ps1` is green
    - Proof: `absent: tools/session_cost.py :: def _transcript_files`
    - Next after: L-23 -- a hands-on check pass runs each check in a check-runner subagent
 
-3. **[Claude] L-22 -- a verify stop names the stage that failed**
+2. **[Claude] L-22 -- a verify stop names the stage that failed**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-22 -- a verify stop names the stage that failed"
    - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
    - Check: `python -m unittest tests.test_slice_lifecycle` passes with a new case modelled on `test_mock_slice_can_claim_commit_and_close` whose mock `verify.ps1` prints `unit tests: FAILED` and exits 1, and whose `finish` output and stop-ledger cause contain `failed: unit tests`; `tools/verify.ps1` is green
    - Proof: `absent: tools/slice.ps1 :: function Get-VerifyFailureSummary`
    - Next after: L-21 -- session_cost reads every worktree's transcripts, judges level drift on the worker, and stops counting skipped stages as failures
+
+3. **[Claude] COL-10 -- a gyne takes over from a dead queen**
+   - Plan: `plans/now/colony-run.md` -- "COL-10 -- a gyne takes over from a dead queen"
+   - Files: `scripts/main.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_over.gd`, `tests/test_col10_succession.py`, `tests/col10_succession_test.gd`, `tools/verify.ps1`
+   - Check: `python -m unittest tests.test_col10_succession` passes (the queen dies with an adult gyne alive: the gyne is queen and unmated, the run is not lost, and the window opened once; with no adult gyne the run ends as before); a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `present: scripts/main.gd :: and there is no succession, so`
+   - Next after: COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate
 
 ### Codex lane
 
@@ -70,7 +70,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **L-24** (`plans/now/agent-lifecycle.md`) -- the lookahead warning imports the machine-readable dry run L-18 adds to `tools/refill_lane.py`; waits for L-18.
 - **COL-6** (`plans/now/colony-run.md`) -- specified from Dave's 5 Oct 2026 winter decision; waits for COL-4 (Codex lane), whose year clock it needs and whose `scripts/season.gd` it edits.
 - **COL-7** (`plans/now/colony-run.md`) -- the mating window, genetic points and COL-2's narrower win wait for COL-6, and are specified once it lands.
-- **COL-10** (`plans/now/colony-run.md`) -- a gyne takes over from a dead queen (decision 12, Dave 5 Oct 2026); waits for COL-9, whose drones she lays.
 - **COL-11** (`plans/now/colony-run.md`) -- nuptial flights; waits for COL-4 (Codex lane), whose year its mating curve reads, and for COL-10.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 8 and Shiver Cluster (`plans/now/colony-run.md` decision 9) wait for a design session with Dave, booked as the next planning pass (Dave, 5 Oct 2026): only Nurses and Honey worker are skill-gated today, gating Comb worker meets colony-run decision 2's queen building the first cell, and decisions 9 and 11 disagree on whether a colony can survive winter without Shiver Cluster. Shiver Cluster's build also waits for COL-6.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Gallerin guidance is booked after step 8's pass (Dave, 5 Oct 2026); the event director waits for the Colony Run's year and difficulty (COL-4, COL-6). The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/now/colony-run.md`).
