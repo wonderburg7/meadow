@@ -30,6 +30,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: tools/run_scenario.py :: --windowed`
    - Next after: none -- plans/now/sprites.md is complete once SPR-1 lands; whether a sprite path behind a simple-graphics fallback follows is decided with Dave from its numbers
 
+2. **[Claude] NF-1 -- headless runs report how long raw nectar sits in the comb**
+   - Plan: `plans/now/nectar-fermentation.md` -- "NF-1 -- headless runs report how long raw nectar sits in the comb"
+   - Files: `scripts/hive_cell.gd`, `scripts/diagnostic_log.gd`, `tests/test_nf1_nectar_age.py`, `test_scenarios/nf1_nectar_age.json`, `tools/verify.ps1`
+   - Check: `python -m unittest tests.test_nf1_nectar_age` passes (the summary carries `nectar_age` with p95 >= p50 and max > 0); the plan's NF-1 "Evidence" paragraph records both runs; `tools/verify.ps1` is green
+   - Proof: `absent: scripts/hive_cell.gd :: nectar_since`
+   - Next after: NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -55,6 +62,7 @@ One line each: the id, its plan, and the single thing it waits for.
 
 - **COL-6** (`plans/now/colony-run.md`) -- specified from Dave's 5 Oct 2026 winter decision; waits for COL-4 (Codex lane), whose year clock it needs and whose `scripts/season.gd` it edits.
 - **COL-7** (`plans/now/colony-run.md`) -- the mating window, genetic points and COL-2's narrower win wait for COL-6, and are specified once it lands.
+- **NF-2** (`plans/now/nectar-fermentation.md`) -- nectar ferments past an age; waits for COL-4 (Codex lane), which edits `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, and for NF-1's evidence.
 - **COL-11** (`plans/now/colony-run.md`) -- nuptial flights; waits for COL-4 (Codex lane), whose year its mating curve reads, and for COL-10.
 - **Progression Phase B step 8 onwards, and Phase C** (`plans/design/progression.md`) -- step 8 and Shiver Cluster (`plans/now/colony-run.md` decision 9) wait for a design session with Dave, booked as the next planning pass (Dave, 5 Oct 2026): only Nurses and Honey worker are skill-gated today, gating Comb worker meets colony-run decision 2's queen building the first cell, and decisions 9 and 11 disagree on whether a colony can survive winter without Shiver Cluster. Shiver Cluster's build also waits for COL-6.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Gallerin guidance is booked after step 8's pass (Dave, 5 Oct 2026); the event director waits for the Colony Run's year and difficulty (COL-4, COL-6). The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/now/colony-run.md`).

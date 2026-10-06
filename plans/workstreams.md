@@ -59,4 +59,5 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.claude/worktrees/run-queue-4-eb1d5a` (`claude/run-queue-4-eb1d5a`) | Claude (docs only) | new plan plans/now/nectar-fermentation.md, queue NF-1 | Claude | in progress | none | `plans/now/nectar-fermentation.md` NF-1 |
 | `.worktrees/COL-4` (`codex/COL-4`) | Codex | one editable year: thirty playable days, then winter | Codex | in progress | none | `plans/now/colony-run.md` COL-4 -- one editable year: thirty playable days, then winter |
