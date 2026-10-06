@@ -64,6 +64,9 @@ that rewrites every line of a file means an edit dropped the `\r`.
    - Clear a GDScript warning by changing the code, never with
      `@warning_ignore`: `tests/source_checks.py` reads an annotation as a
      call to an undefined function and fails `verify.ps1`.
+   - Register any new test module in `tools/verify.ps1`'s `$unitModules`,
+     even when `verify.ps1` is not in `files`. An unregistered module fails
+     `tests/source_checks.py` at `finish` (L-24, 6 Oct 2026).
 4. Prove it: run the slice's `check` (or the one test it names), and nothing
    broader. Do not run `verify.ps1`; `finish` does that. If a test fails,
    run only that test and read only its function. A check about GDScript
