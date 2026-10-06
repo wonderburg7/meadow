@@ -818,6 +818,33 @@ func become_drone() -> void:
 	_update_role_marker()
 	_update_label()
 
+## COL-10. Called by main.gd::_check_for_loss on the oldest adult gyne
+## when the queen has died. She takes over unmated, so her eggs are
+## drones (COL-9) until she mates; she is redrawn at a queen's size and
+## colour, given a queen's speed, and put straight onto Egg layer --
+## past "finish current task first", since the colony has no layer
+## until she starts. The backup she had as a gyne is dropped, so she
+## gets a founding queen's: the run's queen_laying_backup (_apply_role),
+## or a Nurse backup, as setup() gives every queen, when it names none.
+## Kept, a Forager backup would walk her out of the hive whenever laying
+## was blocked.
+func become_queen() -> void:
+	is_queen = true
+	is_gyne = false
+	is_mated = false
+	pending_role = -1
+	_apply_stats()
+	if visual_root != null and is_instance_valid(visual_root):
+		remove_child(visual_root)
+		visual_root.queue_free()
+	_build_visuals()
+	secondary_role = -1
+	_apply_role(Role.EGG_LAYER)
+	if secondary_role == -1:
+		secondary_role = Role.NURSERY
+	_update_role_marker()
+	_update_label()
+
 # --- setup, stats and appearance ----------------------------------
 func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGER, world_node: Node2D = null) -> void:
 	hive = hive_node
@@ -2262,6 +2289,9 @@ func role_name_text() -> String:
 				base += " -- waiting to recruit a struggling forager"
 			elif state == State.DANCING:
 				base += " -- dancing to recruit a struggling forager" if dance_role == "mentor" else " -- being danced at"
+	# COL-10: a queen who took over from a dead one has not mated.
+	if is_queen and not is_mated:
+		base += " -- Unmated: lays drones"
 	if secondary_role != -1 and secondary_role != role:
 		base += " -- when idle: %s" % Roles.label_for(secondary_role)
 	return base

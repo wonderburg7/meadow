@@ -1,6 +1,6 @@
 # Colony Run -- the flagship run's definition and first slices
 
-Status: active | Owner: Dave / Claude Code | Next: COL-4 -- one editable year: thirty playable days, then winter, Codex lane; COL-6 is specified and gated on it (decision 11, Dave 5 Oct 2026); COL-10 -- a gyne takes over from a dead queen, Claude lane, then COL-11 (decision 12, Dave 5 Oct 2026) (COL-9 landed: an unmated queen (bee.gd::is_mated, saved, true by default) lays drone brood that hatches an Idle drone through main.gd's emergence loop, and set_role refuses him any other job; COL-5 landed: level rows no longer carry the unread unlocks and win_conditions keys; COL-3 landed: game_over.gd offers the latest checkpoint of a Colony Run through saves_panel.gd::reload_from; COL-2 landed: colony_milestones.check_victory records a victory day and opens the win screen with Colony Run wording; COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4, decisions 5-10) is queued in the Codex lane after GC-3, which shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` (Dave, 4 Oct 2026) | Verified: 2026-10-06
+Status: active | Owner: Dave / Claude Code | Next: COL-4 -- one editable year: thirty playable days, then winter, Codex lane; COL-6 is specified and gated on it (decision 11, Dave 5 Oct 2026); COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate, Claude lane, gated on COL-4 (decision 12, Dave 5 Oct 2026) (COL-10 landed: when the queen dies the oldest adult gyne becomes an unmated queen on Egg layer through main.gd::_promote_gyne_to_queen, before colony_lost is set, and succession_panel.gd explains it once; with no gyne the run ends as before; COL-9 landed: an unmated queen (bee.gd::is_mated, saved, true by default) lays drone brood that hatches an Idle drone through main.gd's emergence loop, and set_role refuses him any other job; COL-5 landed: level rows no longer carry the unread unlocks and win_conditions keys; COL-3 landed: game_over.gd offers the latest checkpoint of a Colony Run through saves_panel.gd::reload_from; COL-2 landed: colony_milestones.check_victory records a victory day and opens the win screen with Colony Run wording; COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4, decisions 5-10) is queued in the Codex lane after GC-3, which shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` (Dave, 4 Oct 2026) | Verified: 2026-10-06
 
 This is the design pass that `plans/design/product-scope.md` §6.2 put next
 (Dave, 30 Sep 2026): run policy for the flagship Colony Run. It ran on 3 Oct
@@ -126,8 +126,7 @@ PE-2's arc (`tools/pacing_gates.py`).
 | --- | --- | --- | --- | --- |
 | COL-4 | one editable year: thirty playable days, then winter | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/season.gd`, `scripts/world_building.gd`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | yes, Codex lane after GC-3 (`plans/now/gameplay-consistency.md`; shares `game_config.gd` and `settings_catalogue.gd`) | high |
 | COL-6 | winter is skipped and resolved in one step | `scripts/season.gd`, `scripts/year_winter.gd`, `tests/test_col6_winter_skip.py`, `test_scenarios/col6_winter_skip_test.json`, `tools/verify.ps1` | no -- after COL-4 (shares `season.gd`; needs its year clock) | high |
-| COL-10 | a gyne takes over from a dead queen | `scripts/main.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_over.gd`, `tests/test_col10_succession.py`, `tests/col10_succession_test.gd`, `tools/verify.ps1` | no -- after COL-9, whose drones she lays | high |
-| COL-11 | nuptial flights: an unmated queen can leave each day to find a mate | `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd`, `tools/verify.ps1` | no -- after COL-4 (the year its curve reads) and COL-10 | high |
+| COL-11 | nuptial flights: an unmated queen can leave each day to find a mate | `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd`, `tools/verify.ps1` | no -- after COL-4 (the year its curve reads); COL-10 has landed | high |
 
 **Dependencies.** COL-4 then COL-6: both edit `scripts/season.gd`, and
 COL-6 needs COL-4's year clock. COL-4 runs in the Codex lane after GC-3
@@ -269,53 +268,7 @@ cannot be finished safely by the skip.
 
 COL-9 shipped 2026-10-06; its specification is `plans/archive/COL-9_2026-10-06.md`.
 
-## COL-10 -- a gyne takes over from a dead queen
-
-<!-- LAYER: immediate-task -->
-
-Level: high (event ordering at the queen's death, and the run's doom).
-Specified 5 Oct 2026 from decision 12; startable once COL-9 lands.
-
-**True now** (verified 5 Oct 2026). `main.gd::_check_for_loss` ends the run
-as soon as the queen's reference is no longer valid: it sets `colony_lost`
-and opens `game_over.gd` (or ends a scenario run "collapsed"). Its comment
-and `game_over.gd`'s header both say there is no succession. COL-3 offers
-the latest checkpoint from that screen. `saving.gd` already rebuilds
-`main.queen` from whichever bee was saved with `is_queen`.
-
-**True afterwards.**
-- When the queen's reference goes invalid and an adult gyne is alive in the
-  hive (not brood, not one who has left), the oldest such gyne becomes the
-  queen: `is_queen` set, `is_gyne` cleared, `is_mated` false (COL-9), the
-  egg-layer role, and `main.queen` pointing at her. The run carries on.
-  With no adult gyne the run ends exactly as today.
-- The promotion happens inside `_check_for_loss`, before `colony_lost` is
-  set, in the frame the old queen's reference goes invalid, so the run never
-  shows the game-over screen and then carries on.
-- She lays drones (COL-9) into the cells any queen uses.
-- A window explains it once, when she takes over: the queen died, this gyne
-  has taken her place, and because she has not mated she can lay only
-  drones. Its one action now is "Lay drones in the hive"; COL-11 adds
-  nuptial flights. It extends `GamePanel`, the shared base for HUD windows,
-  rather than adding a window mechanism; if it must pause the colony it
-  follows `challenge_complete.gd`'s pause beat instead.
-- The queen's own readout (her tooltip or panel line) says "Unmated: lays
-  drones".
-- The comments in `_check_for_loss` and `game_over.gd`'s header no longer say
-  there is no succession.
-
-**Must not change.** Doom with no adult gyne; HO-10's `queen_seen_alive`
-rule; a scenario run's "collapsed" ending when no gyne exists; COL-3's
-checkpoint restore.
-
-```queue
-**[Claude] COL-10 -- a gyne takes over from a dead queen**
-- Plan: `plans/now/colony-run.md` -- "COL-10 -- a gyne takes over from a dead queen"
-- Files: `scripts/main.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_over.gd`, `tests/test_col10_succession.py`, `tests/col10_succession_test.gd`, `tools/verify.ps1`
-- Check: `python -m unittest tests.test_col10_succession` passes (the queen dies with an adult gyne alive: the gyne is queen and unmated, the run is not lost, and the window opened once; with no adult gyne the run ends as before); a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `present: scripts/main.gd :: and there is no succession, so`
-- Next after: COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate
-```
+COL-10 shipped 2026-10-06; its specification is `plans/archive/COL-10_2026-10-06.md`.
 
 ## COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate
 
