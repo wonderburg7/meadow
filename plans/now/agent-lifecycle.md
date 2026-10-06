@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-22 -- a verify stop names the stage that failed, then L-23 and L-24 from `docs/agent-workflow-review-2026-10-05.md` (L-24 gated on L-18; L-21 shipped, so `session_cost.py --days` now reads every worktree's transcripts; L-16 and L-17 shipped; the canaries still to be seen are one slice per lane closed out while origin is ahead, and one whose queue title carries an em dash closed out from a `chcp 1252` console with `git log -1 --format=%s master` showing the dash intact); the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) is measured on Dave's machine with `python tools/session_cost.py --stops`, `--phases` and `--events` from 6 Oct 2026 (not met on 5 Oct 2026: the seven-day window opens 6 Oct, so the earliest reading is 13 Oct 2026) and pasted into the next agent-workflow review, which cannot read those files from a cloud session (`docs/agent-workflow-review-2026-09-30.md`, Dave's actions) | Dependency: none | Verified: 2026-10-05
+Status: active | Owner: Dave / Claude | Next: L-23 and L-24 from `docs/agent-workflow-review-2026-10-05.md` (L-24 gated on L-18; L-21 and L-22 shipped, so `session_cost.py --days` now reads every worktree's transcripts; L-16 and L-17 shipped; the canaries still to be seen are one slice per lane closed out while origin is ahead, and one whose queue title carries an em dash closed out from a `chcp 1252` console with `git log -1 --format=%s master` showing the dash intact); the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) is measured on Dave's machine with `python tools/session_cost.py --stops`, `--phases` and `--events` from 6 Oct 2026 (not met on 5 Oct 2026: the seven-day window opens 6 Oct, so the earliest reading is 13 Oct 2026) and pasted into the next agent-workflow review, which cannot read those files from a cloud session (`docs/agent-workflow-review-2026-09-30.md`, Dave's actions) | Dependency: none | Verified: 2026-10-06
 
 ## Objective
 
@@ -50,7 +50,6 @@ slice until the next measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-22 | a verify stop names the stage that failed | `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | medium |
 | L-23 | a hands-on check pass runs each check in a check-runner subagent | `.claude/agents/check-runner.md`, `plans/reference/check-runner.md`, `plans/reference/check-loop.md` | medium |
 | L-24 | the queue warns before a lane's backlog runs dry, and /run-queue specifies the successor before it claims | `tools/check_docs.py`, `tests/test_queue_lookahead.py`, `.claude/rules/documentation.md`, `.claude/skills/run-queue/SKILL.md` | medium |
 
@@ -75,37 +74,7 @@ L-19 shipped 2026-10-05; its specification is `plans/archive/L-19_2026-10-05.md`
 
 L-21 shipped 2026-10-06; its specification is `plans/archive/L-21_2026-10-06.md`.
 
-## L-22 -- a verify stop names the stage that failed
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one function and two call sites in a script with a suite).
-
-**True now** (verified 5 Oct 2026, the review's F4). `Invoke-SliceFinish`'s
-two verify stops in `tools/slice.ps1` record the cause `<id> --
-tools/verify.ps1 (-Scope branch|primary) failed; branch left untouched`.
-`verify.ps1` prints `<stage>: FAILED` for the failing stage, but the stop
-ledger keeps only the cause, and `Save-VerifyLog` overwrites
-`meadow-slice-verify.log` each time. 17 of the 67 stops from 30 Sep to 5 Oct
-were verify stops whose stage nobody can now name.
-
-**True afterwards.** New `Get-VerifyFailureSummary -Output <string[]>`
-returns `failed: <stage>, <stage>` from lines matching `^(.+): FAILED$`, or
-`last line: <last non-empty line, cut to 120 characters>` when none match.
-Both stops append ` (<summary>)` to `-Cause`, so `--stops` groups them by
-stage.
-
-**Must not change.** The `-Fix` texts; `Save-VerifyLog`; the stop ledger's
-fields.
-
-```queue
-**[Claude] L-22 -- a verify stop names the stage that failed**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-22 -- a verify stop names the stage that failed"
-- Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
-- Check: `python -m unittest tests.test_slice_lifecycle` passes with a new case modelled on `test_mock_slice_can_claim_commit_and_close` whose mock `verify.ps1` prints `unit tests: FAILED` and exits 1, and whose `finish` output and stop-ledger cause contain `failed: unit tests`; `tools/verify.ps1` is green
-- Proof: `absent: tools/slice.ps1 :: function Get-VerifyFailureSummary`
-- Next after: L-23 -- a hands-on check pass runs each check in a check-runner subagent
-```
+L-22 shipped 2026-10-06; its specification is `plans/archive/L-22_2026-10-06.md`.
 
 ## L-23 -- a hands-on check pass runs each check in a check-runner subagent
 

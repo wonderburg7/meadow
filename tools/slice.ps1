@@ -312,6 +312,22 @@ function Save-VerifyLog {
     }
 }
 
+function Get-VerifyFailureSummary {
+    # L-22: the stage a failed verify named, for the stop ledger's cause.
+    param([string[]]$Output)
+    $lines = @($Output | ForEach-Object { "$_" -split "\r?\n" } | ForEach-Object { $_.TrimEnd() })
+    $stages = @()
+    foreach ($line in $lines) {
+        if ($line -match '^(.+): FAILED$') { $stages += $Matches[1] }
+    }
+    if ($stages.Count -gt 0) { return "failed: " + ($stages -join ", ") }
+    $last = @($lines | Where-Object { $_.Trim() } | Select-Object -Last 1)
+    if ($last.Count -eq 0) { return "last line: (no output)" }
+    $text = $last[0].Trim()
+    if ($text.Length -gt 120) { $text = $text.Substring(0, 120) }
+    return "last line: $text"
+}
+
 function Invoke-WithLifecycleLock {
     param([string]$Root, [scriptblock]$Action)
 
@@ -2091,7 +2107,7 @@ function Invoke-SliceFinish {
         $verifyOutput | ForEach-Object { Write-Output $_ }
         if ($verifyExit -ne 0) {
             $verifyLog = Save-VerifyLog -Root $worktreeRoot -Output $verifyOutput
-            Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched" -Fix "the failing check is printed above this block and saved to $verifyLog. Fix it on the branch, commit, and retry. If the only failure is the Godot compile check with 'Could not preload resource', the worktree's .godot import cache is stale and the automatic refresh could not fix it -- run python tools/godot_cache.py --force in the worktree; it is not a code fault"
+            Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched ($(Get-VerifyFailureSummary -Output @($verifyOutput | ForEach-Object { "$_" })))" -Fix "the failing check is printed above this block and saved to $verifyLog. Fix it on the branch, commit, and retry. If the only failure is the Godot compile check with 'Could not preload resource', the worktree's .godot import cache is stale and the automatic refresh could not fix it -- run python tools/godot_cache.py --force in the worktree; it is not a code fault"
         }
         Invoke-InjectedLifecycleFailure -Phase "verified"
         Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "verified"
@@ -2249,7 +2265,7 @@ function Invoke-SliceFinish {
     $primaryVerifyOutput | ForEach-Object { Write-Output $_ }
     if ($primaryVerifyExit -ne 0) {
         $verifyLog = Save-VerifyLog -Root $root -Output $primaryVerifyOutput
-        Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope primary) failed; branch left untouched" -Fix "the failing check is printed above and saved to $verifyLog; it ran against the primary checkout, so a failure the branch did not show usually means master moved -- fix it on master or the branch, commit, and retry"
+        Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope primary) failed; branch left untouched ($(Get-VerifyFailureSummary -Output @($primaryVerifyOutput | ForEach-Object { "$_" })))" -Fix "the failing check is printed above and saved to $verifyLog; it ran against the primary checkout, so a failure the branch did not show usually means master moved -- fix it on master or the branch, commit, and retry"
     }
 
     Set-SliceStep "merging into master"
