@@ -35,15 +35,24 @@ happening.
    `GameConfig` value (CLAUDE.md rule 2: balance values live in
    `GameConfig`, and balance changes are simulated first).
 
+## Decisions (Dave, 7 Oct 2026, plan-ahead session)
+
+8. **Topping up spoils the fresh nectar.** A fermented cell still takes
+   fresh nectar, and the whole cell stays fermented: topping up keeps the
+   cell's oldest stamp (NF-1), so nothing new is needed to make it so.
+   Without the detection skill, foragers waste loads into spoilt cells.
+   This replaces the plan's earlier reading that a fermented cell refuses
+   fresh nectar.
+9. **The detection skill is Colony tier 2**, beside Comb worker and Miner,
+   costing honey; Colony tier 3's Restocking then follows it. Its row and
+   any later numbers live in `plans/design/progression.md` section 5.3.
+
 ## Still open -- decide before the slice that needs it is unfenced
 
-- **Topping up a fermented cell** (NF-2): this plan's reading is that a
-  fermented cell takes no fresh nectar until it is emptied, so fresh
-  deposits aren't spoilt by mixing. Dave to confirm before NF-2 is opened.
 - **How long tipsiness lasts, and how strong it is** (NF-3): set from a
   headless sweep in NF-3, not guessed.
-- **Where the detection skill sits in the tree, and what it costs** (NF-4):
-  `plans/design/progression.md` owns the tree.
+- **What the detection skill costs** (NF-4): set by simulation when NF-4
+  is specified; its slot is decision 9.
 
 ## Current state
 
@@ -146,8 +155,8 @@ ferments.
   fermentation, and below the age reached without them.
 - `hive_cell.is_fermented()` is derived: nectar content older than that
   threshold. It changes no state of its own, so it costs nothing per frame.
-  A fermented cell draws its nectar in a distinct colour, and takes no
-  fresh nectar until emptied ("Still open", to be confirmed).
+  A fermented cell draws its nectar in a distinct colour. It still takes
+  fresh nectar, and stays fermented (decision 8).
 - `hive.find_cell_with("nectar")`, for honey makers, skips fermented
   cells. `find_food_cell` still offers them: bees cannot tell (decision 4),
   and the debuff is NF-3's.
@@ -157,7 +166,8 @@ ferments.
 - `test_scenarios/nf2_fermentation.json` uses a short threshold through
   `config_overrides`, with no honey makers. `tests/test_nf2_fermentation.py`
   asserts that a nectar cell ferments, a honey maker never takes from it,
-  and its stamp survives a save and restore.
+  fresh nectar added to it leaves it fermented, and its stamp survives a
+  save and restore.
 
 **Must not change.** Ripe-honey ripening, eating order, and every other
 cell content type.
@@ -166,7 +176,7 @@ cell content type.
 **[Claude] NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers**
 - Plan: `plans/now/nectar-fermentation.md` -- "NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers"
 - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf2_fermentation.py`, `test_scenarios/nf2_fermentation.json`, `tools/verify.ps1`
-- Check: `python -m unittest tests.test_nf2_fermentation` passes (a cell ferments, honey makers skip it, its stamp survives save and restore); `tools/verify.ps1` is green
+- Check: `python -m unittest tests.test_nf2_fermentation` passes (a cell ferments, honey makers skip it, a top-up leaves it fermented, its stamp survives save and restore); `tools/verify.ps1` is green
 - Proof: `absent: scripts/hive_cell.gd :: func is_fermented`
 - Next after: NF-3 -- a bee that drinks fermented nectar goes tipsy
 ```

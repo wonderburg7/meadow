@@ -162,6 +162,7 @@ Comb, cells and stores. Absorbs the old Hive sector minus honey (now Brood) and 
 | `skill.colony.cell_capacity` | 1 | New | — | Raises how much a single comb cell holds. The one numeric node in the catalogue — see section 5.10. |
 | `skill.colony.comb_worker` | 2 | Existing (was `skill.hive.comb_working`) | — | Unlocks the Comb worker role, manual building, clearing and the essential controls. |
 | `skill.colony.miner` | 2 | Existing (was `skill.hive.excavation`) | — | Unlocks the Miner role and manual dig orders. |
+| `skill.colony.fermentation_sense` (working id) | 2 | New (not yet in `skills.gd`) | — | Bees tell fermented nectar from fresh and avoid it; honey makers take the oldest nectar first instead of the closest. Slot decided by Dave, 7 Oct 2026; behaviour and order in `plans/now/nectar-fermentation.md` decisions 4, 5 and 9 (NF-4). |
 | `skill.colony.restocking` | 3 | Existing (was `skill.hive.store_management`) | Comb worker | Restocking behaviour, storage orders, keep-empty controls and the related Comb worker mode. |
 | — | 4 | — | — | **Empty.** Dave to fill; candidates in section 5.8. |
 
