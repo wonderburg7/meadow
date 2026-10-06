@@ -439,7 +439,10 @@ def check_queue_lookahead(warnings: list[str], text: str | None = None,
     empty the lane or take the queue under QUEUE_SIZE_MIN and the top-up adds
     nothing, `finish` would stop at the refill gate. Say so while the slice
     can still be specified before it is built. A warning, never an error."""
-    import refill_lane  # imported here: refill_lane imports this module
+    try:
+        import refill_lane  # imported here: refill_lane imports this module
+    except ModuleNotFoundError:
+        return   # a partial tools/ copy: the lookahead is advice, so skip it
 
     root = root or ROOT
     if text is None:
