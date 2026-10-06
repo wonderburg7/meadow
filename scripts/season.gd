@@ -116,11 +116,10 @@ func disease_text() -> String:
 ## the game. That is the whole argument for doing it this way.
 func _advance_winter() -> void:
 	if not Session.winter_coming:
-		# The countdown opens by itself once a run reaches its day. A
-		# winter_starts_day above 0 means one has already opened (and
-		# perhaps been survived), so this is once per run. A level with
-		# winter off is turned away inside begin_winter_countdown.
-		if Session.winter_starts_day <= 0.0 and world.day >= GameConfig.winter_countdown_start_day:
+		# The countdown opens before every winter, relative to this year's
+		# playable season. Its dates stay in Session so a save made during the
+		# countdown carries that particular winter through unchanged.
+		if world.day >= _winter_countdown_day():
 			world.begin_winter_countdown()
 		return
 
@@ -141,6 +140,15 @@ func _advance_winter() -> void:
 	Session.winter_coming = false
 	var survivors: int = world.get_tree().get_nodes_in_group("bees").size()
 	winter_survived.emit(max(0, bees_at_winter_start - survivors))
+
+## The first day on which this year's countdown may open. A short playable
+## season opens immediately when its configured notice would otherwise reach
+## into the previous winter; that keeps the countdown inside its own year.
+func _winter_countdown_day() -> float:
+	var season_days: float = maxf(1.0, GameConfig.season_length_days)
+	var year_days: float = season_days + maxf(1.0, GameConfig.winter_length_days)
+	var year_start: float = floor((world.day - 1.0) / year_days) * year_days + 1.0
+	return year_start + maxf(0.0, season_days - GameConfig.winter_countdown_days)
 
 ## True while foragers should stay in. Read by bee.gd alongside the rain
 ## check, so there's one place that decides whether it's worth going out.

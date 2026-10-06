@@ -210,9 +210,11 @@ func _seed_flower(founding: bool = false) -> void:
 		# the nominal lifetime; setup still gives every flower its normal
 		# independently varied lifespan.
 		starting_age = randf() * GameConfig.flower_lifespan_days * GameConfig.seconds_per_day
-		var year_days: float = maxf(1.0, GameConfig.season_length_days)
+		var season_days: float = maxf(1.0, GameConfig.season_length_days)
+		var year_days: float = season_days + maxf(1.0, GameConfig.winter_length_days)
 		var birth_day: float = 1.0 + (Session.sim_time - starting_age) / maxf(1.0, GameConfig.seconds_per_day)
-		birth_fraction = fposmod(birth_day, year_days) / year_days
+		var day_in_year: float = fposmod(birth_day - 1.0, year_days) + 1.0
+		birth_fraction = clampf((day_in_year - 1.0) / season_days, 0.0, 1.0)
 	var species_index = main.FlowerSpecies.pick_species_index(excluded_species, birth_fraction)
 	var species: Dictionary = main.FlowerSpecies.SPECIES[species_index]
 	var species_name: String = species.name

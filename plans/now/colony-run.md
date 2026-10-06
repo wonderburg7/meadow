@@ -186,6 +186,13 @@ read by `flower_species.gd` and `world_building.gd`, and is a saved setting.
 - `pacing_gates.py` reads winter's days from the year instead of constants.
   PE-2's arc is run before and after, and the plan records both.
 
+**Pacing evidence (6 Oct 2026).** Before COL-4, PE-2's three seeded runs
+had two colonies live and one starve on day 32; its fixed WO-1 winter was
+days 21 to 41. After COL-4, the same seeds again had two live and one die,
+while the logged settings derived winter on days 31 to 41: entered on day
+30.01 in every run and survived on day 40.05 in the two that lived. The
+survival result therefore did not drop against PE-2's two-of-three record.
+
 **Must not change.** How winter is simulated while it lasts; CR-2's
 milestones and COL-2's win (both read winter through `Session`); any
 Challenge (`seasons_on` and its own levels).

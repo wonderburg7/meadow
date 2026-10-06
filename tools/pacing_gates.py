@@ -31,11 +31,6 @@ DEFAULT_REPEAT = 3
 # The first is the scenario's own pinned seed.
 DEFAULT_SEEDS = (20260923, 20260924, 20260925)
 BAND_FRACTION = 0.25
-# WO-1's schedule (plans/archive/winter-onset_2026-10-01.md): the countdown
-# opens by itself and winter falls on days 21 to 41. A winter row is judged
-# against these days, within a day either side, not against 1x minutes.
-WINTER_ENTERED_DAY = 21
-WINTER_ENDED_DAY = 41
 WINTER_BAND_DAYS = 1
 SCENARIO = ROOT / "test_scenarios" / "alpha_arc_test.json"
 
@@ -45,8 +40,6 @@ class Gate:
     label: str
     metric: str
     target_minutes: int
-    # A gate with a fixed day is judged against that day, not target_minutes.
-    schedule_day: int | None = None
 
 
 # These are the observable counterparts of product-scope.md section 3. The
@@ -55,8 +48,8 @@ class Gate:
 GATES = (
     Gate("first worker", "first_worker_day", 5),
     Gate("food secure", "food_secure_day", 10),
-    Gate("winter entered", "winter_entered_day", 60, WINTER_ENTERED_DAY),
-    Gate("winter survived", "winter_survived_day", 90, WINTER_ENDED_DAY),
+    Gate("winter entered", "winter_entered_day", 60),
+    Gate("winter survived", "winter_survived_day", 90),
 )
 
 
@@ -75,15 +68,35 @@ def in_days(day: float | None, target: float, days: float = WINTER_BAND_DAYS) ->
     return day is not None and abs(day - target) <= days
 
 
+def winter_schedule(analyses: list[dict[str, Any]]) -> tuple[float, float]:
+    """Return winter's first and first-following-spring days from logged settings."""
+    schedules = set()
+    for analysis in analyses:
+        settings = analysis.get("settings", {})
+        season_days = settings.get("season_length_days")
+        winter_days = settings.get("winter_length_days")
+        if (isinstance(season_days, bool) or not isinstance(season_days, (int, float)) or season_days <= 0
+                or isinstance(winter_days, bool) or not isinstance(winter_days, (int, float)) or winter_days <= 0):
+            raise ValueError("run did not record positive season_length_days and winter_length_days")
+        schedules.add((float(season_days) + 1.0, float(season_days) + float(winter_days) + 1.0))
+    if len(schedules) != 1:
+        raise ValueError("alpha arc runs recorded different winter schedules")
+    return schedules.pop()
+
+
 def build_rows(analyses: list[dict[str, Any]], day_length_seconds: float) -> list[dict[str, Any]]:
     """Return one display-ready row for each measurable pacing gate."""
     rows = []
+    winter_entered_day, winter_ended_day = winter_schedule(analyses)
     for gate in GATES:
         values = [analysis.get("milestone_times", {}).get(gate.metric) for analysis in analyses]
         complete = all(isinstance(value, (int, float)) and not isinstance(value, bool) for value in values)
         median_day = statistics.median(values) if complete else None
-        if gate.schedule_day is not None:
-            target = float(gate.schedule_day)
+        if gate.metric == "winter_entered_day":
+            target = winter_entered_day
+            inside = in_days(median_day, target)
+        elif gate.metric == "winter_survived_day":
+            target = winter_ended_day
             inside = in_days(median_day, target)
         else:
             target = target_day(gate.target_minutes, day_length_seconds)
@@ -115,10 +128,12 @@ def seed_rows(analyses: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return rows
 
 
-def render_seed_rows(rows: list[dict[str, Any]]) -> str:
+def render_seed_rows(rows: list[dict[str, Any]], winter_entered_day: float,
+                     winter_ended_day: float) -> str:
     """The per-seed evidence block: every seed's days and whether it lived."""
     lines = [
-        "Per seed (day each gate was met; winter %d-%d, WO-1)" % (WINTER_ENTERED_DAY, WINTER_ENDED_DAY),
+        "Per seed (day each gate was met; winter %.0f-%.0f, from run settings)"
+        % (winter_entered_day, winter_ended_day),
         "seed        " + "  ".join("%10s" % name for name in SEED_COLUMNS) + "  colony",
     ]
     for row in rows:
@@ -131,7 +146,7 @@ def render_seed_rows(rows: list[dict[str, Any]]) -> str:
 def render_table(rows: list[dict[str, Any]], day_length_seconds: float, repeat: int) -> str:
     """Render the compact, human-readable pacing report."""
     lines = [
-        "Pacing gates (%d runs, %.0fs/day, +/-%.0f%%; winter rows +/-%d day of WO-1's schedule)" % (
+        "Pacing gates (%d runs, %.0fs/day, +/-%.0f%%; winter rows +/-%d day of the recorded schedule)" % (
             repeat, day_length_seconds, BAND_FRACTION * 100, WINTER_BAND_DAYS),
         "milestone        median day  target day  in band",
         "---------------  ----------  ----------  -------",
@@ -220,8 +235,9 @@ def main() -> int:
     except (RuntimeError, ValueError) as error:
         print("error: %s" % error, file=sys.stderr)
         return 1
-    print(render_table(build_rows(analyses, day_length_seconds), day_length_seconds, args.repeat))
-    print(render_seed_rows(seed_rows(analyses)))
+    rows = build_rows(analyses, day_length_seconds)
+    print(render_table(rows, day_length_seconds, args.repeat))
+    print(render_seed_rows(seed_rows(analyses), rows[2]["target_day"], rows[3]["target_day"]))
     return 0
 
 

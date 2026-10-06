@@ -276,14 +276,16 @@ func _process(delta: float) -> void:
 	_update_crab_spider_marker()
 	Perf.end("flowers")
 
-## Where we are in the year, 0 to 1. Winter is not part of the season:
-## a season runs from day 1 to the day winter starts.
+## Where we are in the playable season, 0 to 1. Winter is outside this
+## curve: it holds at autumn until its end, then the next spring restarts.
 static func season_fraction() -> float:
 	if not GameConfig.seasons_on:
 		return 0.5     # permanently mid-season
 	var day: float = 1.0 + Session.sim_time / max(1.0, GameConfig.seconds_per_day)
-	var length: float = max(1.0, GameConfig.season_length_days)
-	return clampf(fmod(day, length) / length, 0.0, 1.0)
+	var season_days: float = max(1.0, GameConfig.season_length_days)
+	var year_days: float = season_days + max(1.0, GameConfig.winter_length_days)
+	var day_in_year: float = fposmod(day - 1.0, year_days) + 1.0
+	return clampf((day_in_year - 1.0) / season_days, 0.0, 1.0)
 
 ## Is this species in flower now? Out of season a plant is still there --
 ## it just isn't producing, which reads better than flowers vanishing and

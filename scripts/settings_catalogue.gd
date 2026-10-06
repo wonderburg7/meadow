@@ -708,9 +708,9 @@ const TUNABLES := [
 	},
 	{
 		"persist": "run",
-		"key": "season_length_days", "label": "Season days", "step": 5.0, "min": 5.0,
+		"key": "season_length_days", "label": "Playable season days", "step": 5.0, "min": 15.0,
 		"category": "Seasons & health",
-		"tip": "How long a full year is. Shorter means the flowering windows come round faster and the colony has less time in each.",
+		"tip": "How long spring through autumn last before winter. Shorter means the flowering windows come round faster and the colony has less time in each.",
 	},
 	{
 		"persist": "none",
@@ -769,16 +769,10 @@ const TUNABLES := [
 
 	# --- Winter ---
 	{
-		"persist": "none",
-		"key": "winter_countdown_start_day", "label": "Winter countdown opens on day", "step": 1.0, "min": 0.0,
-		"category": "Winter",
-		"tip": "The day the winter countdown opens by itself. Winter then arrives \"Winter in days\" later. Day six gives a new colony its first week to find its feet before it has to start thinking about stores.",
-	},
-	{
 		"persist": "run",
-		"key": "winter_countdown_days", "label": "Winter in days", "step": 1.0, "min": 1.0,
+		"key": "winter_countdown_days", "label": "Winter in days", "step": 1.0, "min": 1.0, "max": 15.0,
 		"category": "Winter",
-		"tip": "How many in-game days after the countdown opens winter arrives. Fifteen is enough to change what you are doing without being so far off that it stops mattering.",
+		"tip": "How many in-game days before each winter its countdown opens. Fifteen is enough to change what you are doing without being so far off that it stops mattering.",
 	},
 	{
 		"persist": "run",

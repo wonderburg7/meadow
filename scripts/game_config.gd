@@ -804,9 +804,9 @@ var rival_flower_take: float = 4.0
 ## the good patch moves, and the pollen supply has a real gap in it,
 ## which is what makes storing ahead worth doing.
 var seasons_on: bool = true
-## How long a full year is. Winter is scheduled separately and does not
-## come out of this.
-var season_length_days: float = 60.0
+## How long the playable part of a year lasts. Every year then has its
+## separate winter, so this is also the span of the flowering curve.
+var season_length_days: float = 30.0
 ## A flower outside its species' window still recharges at this multiple of
 ## its nominal rate. Dave, 17 Sep 2026 (C-24): the lean spell is 75% of the
 ## nominal rate and full season 125%, so a 0.1/s flower gives 0.075/s out of
@@ -864,13 +864,11 @@ var gyne_release_day: float = 0.75   # fraction of the season, earliest
 var gyne_release_energy: float = 0.8 # share of a full crop she needs first
 
 # --- winter ---
-## How long a winter is and what it costs, and the day a run's countdown
-## opens. The schedule that opening produces (Session.winter_starts_day
-## and friends) is state of the run rather than a setting, so it lives in
-## Session.
-var winter_countdown_start_day: float = 6.0 # the day a run's countdown opens by itself (season.gd)
+## How long a winter is and what it costs. Its countdown opens relative to
+## each playable season; the resulting dates (Session.winter_starts_day and
+## friends) are state of the run rather than settings.
 var winter_countdown_days: float = 15.0
-var winter_length_days: float = 20.0
+var winter_length_days: float = 10.0
 ## What a bee burns through winter, as a multiple of its ordinary rate.
 ## Well below 1 because a clustered colony is nearly dormant, and because
 ## anything higher makes the target impossible: at 0.55 a fifty-bee
