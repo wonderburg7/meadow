@@ -63,21 +63,14 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] AR-1 -- headless snapshots carry the Colony Run milestone record**
-   - Plan: `plans/now/alpha-route-evidence.md` -- "AR-1 -- headless snapshots carry the Colony Run milestone record"
-   - Files: `scripts/headless/diagnostic_probes.gd`, `test_scenarios/alpha_arc_test.json`, `tests/test_headless_profiles.py`
-   - Check: `python -m unittest tests.test_headless_profiles` passes, and `test_scenarios/alpha_arc_test.json` requests the allowlisted Colony Run milestone field
-   - Proof: `absent: scripts/headless/diagnostic_probes.gd :: colony.milestone_days`
-   - Next after: AR-2 -- analysis turns that record into named alpha-gate facts
-
-2. **[Codex] AR-2 -- analysis turns that record into named alpha-gate facts**
+1. **[Codex] AR-2 -- analysis turns that record into named alpha-gate facts**
    - Plan: `plans/now/alpha-route-evidence.md` -- "AR-2 -- analysis turns that record into named alpha-gate facts"
    - Files: `tools/analyze_session.py`, `tests/test_headless_verdicts.py`
    - Check: `python -m unittest tests.test_headless_verdicts` passes with a copied milestone record reporting first automation and first gyne by recorded day, and without changing existing pacing milestones
    - Proof: `absent: tools/analyze_session.py :: alpha_route`
    - Next after: AR-3 -- the pacing report presents every alpha gate and its evidence boundary
 
-3. **[Codex] AR-3 -- the pacing report presents every alpha gate and its evidence boundary**
+2. **[Codex] AR-3 -- the pacing report presents every alpha gate and its evidence boundary**
    - Plan: `plans/now/alpha-route-evidence.md` -- "AR-3 -- the pacing report presents every alpha gate and its evidence boundary"
    - Files: `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
    - Check: `python -m unittest tests.test_pacing_gates` passes with five named alpha-gate rows, and missing crisis or gyne facts render as unavailable rather than in-band
