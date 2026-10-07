@@ -22,6 +22,8 @@ class_name ChallengeStages
 ## skills.gd's NURSES id, spelled out because only progression.gd may read the
 ## skill catalogue (source_checks.py); a Nurses rename fails the 2.5 fixture.
 const NURSES_SKILL := "skill.brood.nurses"
+const COMB_SKILL := "skill.colony.comb_worker"
+const MINER_SKILL := "skill.colony.miner"
 
 ## Challenge 1's wax cells hold this much nectar. The 1.11 lesson completes
 ## when one reaches that capacity, so the goal and storage rule cannot drift.
@@ -423,7 +425,8 @@ const STAGES_2 := [
 	},
 	{
 		"id": "2.7", "goal": "comb_worker_building", "condition": {"custom": "_goal_check_comb_worker_building"},
-		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation", "skills_window", NURSES_SKILL, "nurse", "nurse_feed", "nurse_both", "hatch_lock", "comb_worker", "comb_worker_build", "comb_worker_maintain"],
+		"free_skills": [COMB_SKILL],
+		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation", "skills_window", NURSES_SKILL, "nurse", "nurse_feed", "nurse_both", "hatch_lock", COMB_SKILL, "comb_worker", "comb_worker_build", "comb_worker_maintain"],
 		"goal_text": "Goal: raise a Comb worker and build more comb.",
 		"prompts": [
 			{"id": "2.7_welcome", "trigger": "welcome", "delay": 0.0, "text": "The colony is starting to outgrow its first furniture. Raise a comb worker and give the hive more comb."},
@@ -432,7 +435,8 @@ const STAGES_2 := [
 	},
 	{
 		"id": "2.8", "goal": "miner_expansion", "condition": {"custom": "_goal_check_miner_expansion"},
-		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation", "skills_window", NURSES_SKILL, "nurse", "nurse_feed", "nurse_both", "hatch_lock", "comb_worker", "comb_worker_build", "comb_worker_maintain", "miner", "miner_automine"],
+		"free_skills": [COMB_SKILL, MINER_SKILL],
+		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation", "skills_window", NURSES_SKILL, "nurse", "nurse_feed", "nurse_both", "hatch_lock", COMB_SKILL, "comb_worker", "comb_worker_build", "comb_worker_maintain", MINER_SKILL, "miner", "miner_automine"],
 		"goal_text": "Goal: raise a miner, dig new space, and build a cell in it.",
 		"prompts": [
 			{"id": "2.8_welcome", "trigger": "welcome", "delay": 0.0, "text": "Comb needs somewhere to exist. For that, the colony requires miners: the underground department."},
@@ -441,7 +445,7 @@ const STAGES_2 := [
 	},
 	{
 		"id": "2.9", "goal": "c2_complete", "condition": {"all_of": [{"hive_total": {"resource": "nectar", "at_least": C2_COMPLETE_NECTAR}}, {"hive_total": {"resource": "pollen", "at_least": C2_COMPLETE_POLLEN}}, {"role_count": {"role": "forager", "focus": "nectar", "at_least": C2_COMPLETE_NECTAR_FORAGERS}}, {"role_count": {"role": "forager", "focus": "pollen", "at_least": C2_COMPLETE_POLLEN_FORAGERS}}, {"role_count": {"role": "nurse", "at_least": C2_COMPLETE_NURSES}}, {"role_count": {"role": "comb_worker", "at_least": C2_COMPLETE_BUILDERS}}, {"role_count": {"role": "miner", "at_least": C2_COMPLETE_MINERS}}]},
-		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation", "skills_window", NURSES_SKILL, "nurse", "nurse_feed", "nurse_both", "hatch_lock", "comb_worker", "comb_worker_build", "comb_worker_maintain", "miner", "miner_automine"],
+		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation", "skills_window", NURSES_SKILL, "nurse", "nurse_feed", "nurse_both", "hatch_lock", COMB_SKILL, "comb_worker", "comb_worker_build", "comb_worker_maintain", MINER_SKILL, "miner", "miner_automine"],
 		"goal_text": "Goal: 300 nectar, 150 pollen, 10 nectar Foragers, 4 pollen Foragers, 2 nurses, 2 Comb workers, 2 miners.",
 		"prompts": [],
 	},

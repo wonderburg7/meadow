@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-1 -- Comb worker and Miner become bought roles, and the queen builds without the skill | Dependency: none for T2-1 to T2-3; COL-4 for T2-4b, T2-5, T2-6 and T2-7; COL-6 for Shiver Cluster (T2-8) and T2-4b's winter bodies | Verified: 2026-10-07
+Status: active | Owner: Dave / Claude Code | Next: T2-2 -- Automation gates working outward | Dependency: none for T2-1 to T2-3; COL-4 for T2-4b, T2-5, T2-6 and T2-7; COL-6 for Shiver Cluster (T2-8) and T2-4b's winter bodies | Verified: 2026-10-07
 
 ## Objective
 
@@ -52,7 +52,6 @@ Verified 7 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-1 | Comb worker and Miner become bought roles; the queen builds without the skill; Challenge 2 frees them | `scripts/roles.gd`, `scripts/availability.gd`, `scripts/orders_zones.gd`, `scripts/hud.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_1_comb_miner_gate.py`, `test_scenarios/t2_1_queen_builds.json` | yes | medium |
 | T2-2 | Automation gates working outward: "Dig on its own" and outward building | `scripts/roles.gd`, `scripts/availability.gd`, `scripts/actions.gd`, `scripts/hive.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_2_automation_gate.py` | yes, after T2-1 in the same lane (shared files) | medium |
 | T2-3 | Adaptive constancy becomes a bought behaviour | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `tests/test_t2_3_adaptive_constancy.py`, `test_scenarios/t2_3_bought_constancy_test.json` | yes, after T2-2 in the same lane | low |
 | T2-4a | Cleaning gates taking out the dead larvae | specified when T2-3 lands | no -- after T2-2 (`actions.gd`, `challenge_stages.gd`) | medium |
@@ -78,52 +77,7 @@ test puts no shared file in either lane.
 `plans/design/progression.md` (`python tools/heading.py
 plans/design/progression.md "11. Implementation sequence"`, step 8 only).
 
-## T2-1 -- Comb worker and Miner become bought roles, and the queen builds without the skill
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (extends BS-9's queen exemption and the brood spine's role
-gating to two more roles; no save change).
-
-**True now.** Any colony may put a worker on Comb worker or Miner. The
-queen's exemption covers Nurse only, inside `action_query`.
-
-**True afterwards.**
-
-- `roles.gd`: Comb worker carries `"skill": "skill.colony.comb_worker"`,
-  Miner `"skill": "skill.colony.miner"`.
-- `availability.gd`: one list of roles the queen may take without their
-  skill -- Nurse and Comb worker (progression step 8 decision, Dave 6 Oct
-  2026) -- replaces the inline `Roles.NURSE` check. `role_query` takes the
-  asking bee (optional, null for a colony-wide answer) and applies the same
-  list, so the HUD's Job row offers the queen Comb worker and
-  `orders_zones.gd` lets her take it. Workers still need the skill.
-- `challenge_stages.gd`: stage 2.7 adds `skill.colony.comb_worker` to
-  `free_skills` and `unlocked_keys`; 2.8 adds `skill.colony.miner` (step 8
-  decision, Dave 7 Oct 2026). Later stages keep the keys cumulatively.
-  Backup roles, Cleaning and Automation are added by the slices that gate
-  them (T2-2, T2-4a), not here.
-- `test_scenarios/t2_1_queen_builds.json` starts from the Colony Run's
-  start (level row with `"run_type": "colony"`) and asserts the queen
-  draws a cell with no skill owned and no worker can be made a Comb worker
-  or Miner. `tests/test_t2_1_comb_miner_gate.py` runs it and checks the
-  Challenge 2 stage data.
-
-**Must not change.** Levels 4-6 and every fixture that seeds builders or
-miners play as today (seeding implies owning). Challenge 2's stage order
-and goals. The cost amounts (T2-7 sets them).
-
-**Hands-on.** Challenge 2 at 2.7 and 2.8: the tree offers Comb worker, then
-Miner, as free buys, and the Job menu offers the role only once bought.
-
-```queue
-**[Claude] T2-1 -- Comb worker and Miner become bought roles, and the queen builds without the skill**
-- Plan: `plans/now/tier-two.md` -- "T2-1 -- Comb worker and Miner become bought roles, and the queen builds without the skill"
-- Files: `scripts/roles.gd`, `scripts/availability.gd`, `scripts/orders_zones.gd`, `scripts/hud.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_1_comb_miner_gate.py`, `test_scenarios/t2_1_queen_builds.json`
-- Check: `python -m unittest tests.test_t2_1_comb_miner_gate` passes (the Colony Run queen draws a cell with no skill owned; no worker becomes a Comb worker or Miner unbought; Challenge 2's 2.7 and 2.8 free them); `python -m unittest tests.test_challenge2_checks` passes; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `absent: scripts/roles.gd :: "skill": "skill.colony.comb_worker"`
-- Next after: T2-2 -- Automation gates working outward
-```
+T2-1 shipped 2026-10-07; its specification is `plans/archive/T2-1_2026-10-07.md`.
 
 ## T2-2 -- Automation gates working outward
 
