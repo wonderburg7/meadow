@@ -129,7 +129,6 @@ PE-2's arc (`tools/pacing_gates.py`).
 
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| COL-6 | winter is skipped and resolved in one step | `scripts/season.gd`, `scripts/year_winter.gd`, `tests/test_col6_winter_skip.py`, `test_scenarios/col6_winter_skip_test.json` | yes -- COL-4 has landed | high |
 | COL-12 | the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns | `scripts/main.gd`, `scripts/world_building.gd`, `tests/test_sf1_founding_flower_mix.py`, `test_scenarios/sf1_founding_flower_mix_test.json` | yes | medium |
 | COL-11 | nuptial flights: an unmated queen can leave each day to find a mate | `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd` | yes -- COL-4, COL-6 and COL-10 have landed | high |
 | COL-13 | the pacing arc sees a skipped winter | `tools/analyze_session.py`, `tests/test_col13_skipped_winter_arc.py` | yes -- ahead of COL-12 and COL-11, whose checks read the arc | medium |
@@ -163,102 +162,7 @@ COL-5 shipped 2026-10-04; its specification is `plans/archive/COL-5_2026-10-04.m
 
 COL-4 shipped 2026-10-07; its specification is `plans/archive/COL-4_2026-10-07.md`.
 
-## COL-6 -- winter is skipped and resolved in one step
-
-<!-- LAYER: immediate-task -->
-
-Level: high (event ordering at the year's turn, a balance change, and who
-dies). Specified 5 Oct 2026 from decisions 5 and 11. Gated on COL-4: it
-needs COL-4's year clock and edits `season.gd` after it.
-
-**True now** (verified 5 Oct 2026, before COL-4). Winter is played:
-`season.gd::_advance_winter` opens the countdown, sets `Session.winter_here`
-for `winter_length_days`, and on its last day emits `winter_survived(losses)`
-(bees at winter's start minus survivors). While `winter_here` is true,
-foragers stay in, `bee_survival.gd::age_and_burn` burns at
-`energy_burn_rate x winter_burn_factor`, and lifespans stretch by
-`winter_lifespan_factor`; a bee that finds the comb empty starves.
-`year_winter.gd::_winter_forecast` already computes what winter will cost
-(bees x `energy_burn_rate` x `winter_burn_factor` x winter's seconds) and
-what the comb holds (nectar plus honey x `honey_energy_factor`), for the
-forecast panel only. `winter_bill` appears nowhere.
-
-**True afterwards.**
-- When winter arrives (the day COL-4's year clock puts it on), the run
-  resolves it at once instead of playing it, and the next tick is the first
-  day of spring: the day counter jumps by winter's length, and
-  `Session.winter_here`/`winter_coming` end as they do after a winter
-  survived today. Nobody ages, eats or forages through the skipped days.
-- The bill is decision 11's formula, computed once by `season.gd`
-  (simulation owns it): `season.gd::winter_bill(bees)` returns the energy,
-  and `year_winter.gd::_winter_forecast` reads it instead of keeping its
-  own copy, so the forecast and the charge can never disagree.
-- The bill comes out of the comb's stores in the forecast's energy units
-  (`honey_energy_factor`, as GC-3 leaves it). If they cover it, everyone
-  lives. If not, workers are removed oldest first (by `age_seconds`) until
-  the survivors' bill fits what is held; the stores end at what is left. The
-  queen goes only if the stores cannot cover her share alone, through the
-  existing queen-death path, so COL-3 offers the checkpoint. Brood is left
-  as it is, outside the bill.
-- `winter_survived(losses)` still fires once, with the bees the bill took,
-  so CR-2's milestones (post-winter recovery) and COL-2's win hear winter
-  exactly as before, and the player sees the existing post-winter notice.
-- A level with winter off is unaffected. No Challenge changes.
-- PE-2's arc is run before and after (`python tools/pacing_gates.py`), and
-  this section records both.
-
-**Must not change.** How a bee eats outside winter; CR-2's milestones and
-COL-2's win (both read winter through `Session` and `winter_survived`); the
-forecast panel's wording; any Challenge; saves (a save made mid-winter
-before this slice still loads: the skip finishes that winter at once on the
-next tick).
-
-**Escalate** if the arc's survival drops sharply against COL-4's record (two
-seeds of three), if no existing field tells a worker from a gyne or the
-queen (gynes are not workers and are never billed away), or if a save made during a played winter
-cannot be finished safely by the skip.
-
-**PE-2's arc, before and after** (`python tools/pacing_gates.py`, 7 Oct
-2026, seeds 20260923-5, 200 s days, winter days 31-41).
-
-| | first worker | food secure | winter entered | winter survived | colonies (tool's verdict) |
-| --- | --- | --- | --- | --- | --- |
-| before | 22.18 | missing | 30.01 | 40.05 | lived (8 bees), died, lived (9 bees) |
-| after | 22.18 | missing | missing | missing | died, died, died |
-
-The after row's winter columns and verdicts are the instrument, not the
-colony: `tools/analyze_session.py::_milestone_states` dates winter only from
-a snapshot with `environment.winter_here` true, and a skipped winter is true
-for less than one season tick, so no snapshot (every 8.3 s) sees it, and
-`pacing_gates.py::colony_lived` needs that date. Read from the three after
-logs directly: every run met its `winter_over` stop on day 43 with the queen
-alive; seeds 1 and 3 lost no bee to the bill (7 bees at winter, 9 and 8 at the
-end), seed 2 lost 3 of its 6 to it (3 at the end). Survival has not dropped:
-three queens of three came through, against two colonies of three before.
-COL-13 teaches the arc a skipped winter.
-
-Who winter takes first is Dave's decision (7 Oct 2026), replacing the
-section's "gynes are never billed away": drones, then workers, then gynes,
-the oldest first within each group, and the queen last, only if the stores
-cannot cover even her own share. The reading taken where the section was
-silent: the bill draws from sealed cells after open ones (the forecast
-counts them), a save
-made during a played winter is charged only the days it had left, and
-`winter_started` still fires, so the winter notice and then the spring
-notice show as before.
-
-```queue
-**[Claude] COL-6 -- winter is skipped and resolved in one step**
-- Plan: `plans/now/colony-run.md` -- "COL-6 -- winter is skipped and resolved in one step"
-- Files: `scripts/season.gd`, `scripts/year_winter.gd`, `tests/test_col6_winter_skip.py`, `test_scenarios/col6_winter_skip_test.json`
-- Check: `python -m unittest tests.test_col6_winter_skip` passes (a stocked colony crosses winter in one tick with nobody lost and the day advanced by winter's length; an under-stocked one loses its oldest workers first and keeps its queen); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `absent: scripts/season.gd :: winter_bill`
-- Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
-```
-
-COL-9 shipped 2026-10-06; its specification is `plans/archive/COL-9_2026-10-06.md`.
-
-COL-10 shipped 2026-10-06; its specification is `plans/archive/COL-10_2026-10-06.md`.
+COL-6 shipped 2026-10-07; its specification is `plans/archive/COL-6_2026-10-07.md`.
 
 ## COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate
 
