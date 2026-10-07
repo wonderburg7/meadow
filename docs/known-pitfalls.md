@@ -335,8 +335,14 @@ never said why, and its session twice retried into its own running `finish`.
   failed only under Codex -- and the lifecycle suite then ran in every
   primary verify. A probe that reports must wrap every statement touching the path.
   To reproduce a sandbox-only failure without Codex, run the command under
-  `codex sandbox -P meadow -C <dir> -- <command>` (the CLI is in
-  `%LOCALAPPDATA%\OpenAI\Codex\bin\<hash>\codex.exe`); a deny ACE
+  `codex sandbox -c 'windows.sandbox="unelevated"' -P meadow -C <dir> --
+  <command>` (the CLI is in
+  `%LOCALAPPDATA%\OpenAI\Codex\bin\<hash>\codex.exe`). Without the `-c`,
+  the elevated mode set in `~/.codex/config.toml` refuses to start anything
+  under `%LOCALAPPDATA%`, Python included (`CreateProcessAsUserW failed: 5`),
+  although Codex's own sessions start it. With it, `tools/godot_compile_check.py`
+  boots the project in the sandbox (7 Oct 2026, codex-cli 0.159.2; Dave
+  chose this over changing the sandbox setting). A deny ACE
   (`icacls <dir> /deny "%USERNAME%:(RD,RA,REA,X)"`) reproduces this
   particular one, as `test_doctor_survives_an_excludes_folder_it_may_not_list`
   does.
@@ -358,7 +364,8 @@ never said why, and its session twice retried into its own running `finish`.
   shell call came back after ~4 minutes while `finish` ran for eight more,
   holding the lifecycle lock. `finish` has ended only when it prints
   `Slice landed:` or `slice finish stopped`; otherwise run
-  `tools/slice.ps1 status` -- `running` names the lock's holder and PID,
+  `tools/slice.ps1 status` -- a slice whose state reads "finish verifying
+  the branch" is still in its verify, `running` names the lock's holder and PID,
   `last_run` how the last command ended -- and a busy message now names the
   holder too. Closeout's timing rule is in `plans/reference/closeout.md`.
 

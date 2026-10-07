@@ -82,9 +82,13 @@ past the 10-minute cap on a foreground Bash call, so always run it with
 `run_in_background` and wait for the notification. It has ended only when it prints `Slice landed:` or a `slice finish stopped` block; a
 shell that returns without either left it running, so never start a second
 lifecycle command on top of it (27 Sep 2026: a Codex session did, twice, and
-was told only "busy" by its own run). `tools/slice.ps1 status` shows
-`running` (the command holding the lifecycle lock, with its PID) and
-`last_run` (how the last one ended: `outcome`, `step`, `cause`). A failed
+was told only "busy" by its own run). `finish` verifies the branch before
+it takes the lifecycle lock, so the other lane is not held up meanwhile;
+a second `finish` in the same worktree during that verify is refused.
+`tools/slice.ps1 status` shows the slice's state as "finish verifying the
+branch" then, `running` (the command holding the lifecycle lock, with its
+PID) after it, and `last_run` (how the last one ended: `outcome`, `step`,
+`cause`). A failed
 verify's full output is also saved to `meadow-slice-verify.log` in the
 primary checkout's `.git` directory; the stop block names the path.
 
