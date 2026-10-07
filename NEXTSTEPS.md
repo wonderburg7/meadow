@@ -30,6 +30,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/season.gd :: func send_gyne`
    - Next after: COL-8 -- winter die-back and spring regrowth
 
+2. **[Claude] COL-8 -- winter die-back and spring regrowth**
+   - Plan: `plans/now/colony-run.md` -- "COL-8 -- winter die-back and spring regrowth"
+   - Files: `scripts/flower.gd`, `scripts/season.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col8_winter_dieback.py`, `tests/col8_winter_dieback_test.gd`
+   - Check: `python -m unittest tests.test_col8_winter_dieback` passes (an in-season flower holding nectar before the skip holds none just after it; on spring's first day its `season_strength()` is below the same date's value in a year with no winter behind it, and equal again by day 1 + `spring_regrowth_days`; the flower count is unchanged by the die-back; the run's first spring is unchanged); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `absent: scripts/game_config.gd :: spring_regrowth_days`
+   - Next after: T2-8 -- Shiver Cluster: the skill, the multiplied bill without it, the warning
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -67,11 +74,10 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **COL-8** (`plans/now/colony-run.md`) -- winter die-back and spring regrowth (decision 8); specified when COL-7 lands.
 - **SI-2** (`plans/now/save-integrity.md`) -- a checkpoint restore puts back soil dug since the checkpoint; waits for SI-1, which moved to the Codex lane (Dave, 7 Oct 2026) and shares `scripts/saving.gd`.
 - **SI-3** (`plans/now/save-integrity.md`) -- save, checkpoint and index writes are all-or-nothing; waits for SI-2.
 - **NF-2** (`plans/now/nectar-fermentation.md`) -- nectar ferments past an age; waits for COL-4 (Codex lane), which edits `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, and for NF-1's evidence.
-- **T2-4b to T2-8** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-4a is in the Codex lane (Dave, 7 Oct 2026); T2-4b (bodies) for T2-4a (COL-6 landed 7 Oct 2026); T2-5 (rain) and T2-7 (tier-2 prices) for COL-4's year; T2-6 (Associative learning) for COL-4 (`game_config.gd`); T2-8 (Shiver Cluster) waits only to be specified (COL-6 and T2-2 have landed).
+- **T2-4b to T2-8** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-4a is in the Codex lane (Dave, 7 Oct 2026); T2-4b (bodies) for T2-4a (COL-6 landed 7 Oct 2026); T2-5 (rain) and T2-7 (tier-2 prices) for COL-4's year; T2-6 (Associative learning) for COL-4 (`game_config.gd`); T2-8 (Shiver Cluster) is to be specified; COL-6 and T2-2 have landed, and its skill goes in `scripts/skills.gd`, which the Codex lane's T2-4a holds.
 - **BB-1 to BB-4** (`plans/now/bee-bread.md`) -- Bee Bread; BB-1 waits for COL-4 and NF-2 (`game_config.gd`, `hive_cell.gd`, `hive.gd`, the save files); the rest follow BB-1.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Gallerin guidance is the next design pass, now that step 8's ran on 6-7 Oct 2026 (booked by Dave, 5 Oct 2026); the event director's wait on the Colony Run's year (COL-4, COL-6) has cleared; it still needs its design pass. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/now/colony-run.md`).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).

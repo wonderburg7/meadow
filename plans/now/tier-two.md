@@ -57,7 +57,7 @@ Verified 7 Oct 2026 against master:
 | T2-5 | Weather sensing's rain half, Rain recall, and rain on in the Colony Run | specified when T2-3 lands | no -- its PE-2 arc rerun reads COL-4's year | medium |
 | T2-6 | Associative learning: per-bee, per-species familiarity, saved | specified when T2-5 lands | no -- after COL-4 (`game_config.gd`, `settings_catalogue.gd`) | high |
 | T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | specified when T2-1 to T2-3 and COL-4 have landed | no -- needs COL-4's year and the gates | medium |
-| T2-8 | Shiver Cluster: the skill, the multiplied bill without it, the warning | to be specified now COL-6 has landed | yes -- COL-6 and T2-2 have landed | high |
+| T2-8 | Shiver Cluster: the skill, the multiplied bill without it, the warning | to be specified now COL-6 has landed | after T2-4a (Codex lane, `skills.gd`); COL-6 and T2-2 have landed | high |
 
 **Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
 T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
