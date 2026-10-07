@@ -30,19 +30,33 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: docs/performance.md :: SPR-2`
    - Next after: none -- plans/now/render-scale.md is complete once SPR-2 lands; whether a sprite or batching pass follows is decided with Dave from the table
 
+2. **[Claude] COL-6 -- winter is skipped and resolved in one step**
+   - Plan: `plans/now/colony-run.md` -- "COL-6 -- winter is skipped and resolved in one step"
+   - Files: `scripts/season.gd`, `scripts/year_winter.gd`, `tests/test_col6_winter_skip.py`, `test_scenarios/col6_winter_skip_test.json`, `tools/verify.ps1`
+   - Check: `python -m unittest tests.test_col6_winter_skip` passes (a stocked colony crosses winter in one tick with nobody lost and the day advanced by winter's length; an under-stocked one loses its oldest workers first and keeps its queen); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `absent: scripts/season.gd :: winter_bill`
+   - Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
+
+3. **[Claude] COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate**
+   - Plan: `plans/now/colony-run.md` -- "COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate"
+   - Files: `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd`, `tools/verify.ps1`
+   - Check: `python -m unittest tests.test_col11_nuptial_flight` passes (no mating where the curve is 0; a queen flying in mid summer mates within the test's days and then lays worker brood); `python tools/pacing_gates.py` before and after is recorded in this plan; a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `absent: scripts/game_config.gd :: nuptial_flight_peak_chance`
+   - Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
+
+4. **[Claude] COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns**
+   - Plan: `plans/now/colony-run.md` -- "COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns"
+   - Files: `scripts/main.gd`, `scripts/world_building.gd`, `tests/test_sf1_founding_flower_mix.py`, `test_scenarios/sf1_founding_flower_mix_test.json`
+   - Check: `python -m unittest tests.test_sf1_founding_flower_mix` passes at 0.05 on the pinned seed and three others; `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `present: tests/test_sf1_founding_flower_mix.py :: assertLessEqual(abs(initial_share - final_share), 0.20)`
+   - Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] COL-4 -- one editable year: thirty playable days, then winter**
-   - Plan: `plans/now/colony-run.md` -- "COL-4 -- one editable year: thirty playable days, then winter"
-   - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/season.gd`, `scripts/world_building.gd`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
-   - Check: `python -m unittest tests.test_pacing_gates` passes; `python tools/pacing_gates.py` before and after shows winter on days 31 to 41 and the plan records both; a Godot boot is clean; `tools/verify.ps1` is green
-   - Proof: `present: scripts/game_config.gd :: var season_length_days: float = 60.0`
-   - Next after: COL-6 -- winter is skipped and resolved in one step
-
-2. **[Codex] L-20 -- make Codex's closeout directions agree with what `finish` does**
+1. **[Codex] L-20 -- make Codex's closeout directions agree with what `finish` does**
    - Plan: `plans/now/codex-guidance.md` -- "L-20 -- make Codex's closeout directions agree with what `finish` does"
    - Files: `CHATGPT.md`
    - Check: `python tools/check_docs.py` passes, and `CHATGPT.md` says `finish` performs archive and refill rather than ordering them before `finish`
