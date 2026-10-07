@@ -130,7 +130,6 @@ PE-2's arc (`tools/pacing_gates.py`).
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
 | COL-12 | the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns | `scripts/main.gd`, `scripts/world_building.gd`, `tests/test_sf1_founding_flower_mix.py`, `test_scenarios/sf1_founding_flower_mix_test.json` | yes -- Codex lane (Dave, 7 Oct 2026); COL-13 has landed | medium |
-| COL-11 | nuptial flights: an unmated queen can leave each day to find a mate | `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/hud.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd` | yes -- COL-4, COL-6 and COL-10 have landed | high |
 | COL-7 | the mating window, genetic points and COL-2's narrower win | `scripts/season.gd`, `scripts/hud.gd`, `scripts/year_winter.gd`, `scripts/colony_milestones.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col7_gyne_window.py`, `tests/col7_gyne_window_test.gd` | after COL-11 (its mating curve) | high |
 
 **Dependencies.** COL-4 then COL-6: both edit `scripts/season.gd`, and
@@ -164,79 +163,7 @@ COL-4 shipped 2026-10-07; its specification is `plans/archive/COL-4_2026-10-07.m
 
 COL-6 shipped 2026-10-07; its specification is `plans/archive/COL-6_2026-10-07.md`.
 
-## COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate
-
-<!-- LAYER: immediate-task -->
-
-Level: high (a new balance value and the year's mating curve, simulated
-first). Specified 5 Oct 2026 from decision 12; startable once COL-4 and
-COL-10 have landed.
-
-**True now** (verified 5 Oct 2026). No mating exists.
-`season.gd::_gyne_season` gates gyne release on the old 60-day flower year
-(`Flower.season_fraction() >= GameConfig.gyne_release_day`), which COL-4
-replaces with decisions 5 and 6's year. Decision 7's curve is not built.
-
-**True afterwards.**
-- `season.gd`, which owns the calendar once COL-4 lands, answers one mating
-  curve: 0 outside late spring to early autumn, rising to 1 at mid summer.
-  This slice builds it; COL-7 reads the same function for genetic credit
-  rather than writing a second (`plans/README.md` rule 4), and says so when
-  it is specified.
-- COL-10's window gains "Nuptial flights", and the queen's readout can
-  switch between the two modes at any time while she is unmated.
-- In flight mode she leaves through the entrance once a day, is away for part
-  of the day (laying nothing meanwhile) and comes back. Each return rolls
-  once: chance = `nuptial_flight_peak_chance` x the curve that day. Success
-  sets `is_mated`; she then lays as any queen does and the modes go. A flight
-  never loses her.
-- `nuptial_flight_peak_chance` is a `GameConfig` value with a settings row,
-  starting at an unsimulated 0.5. The slice runs `tools/pacing_gates.py`
-  before and after and records both here.
-
-**Must not change.** Gyne release (`_release_ready_gynes`); COL-6's winter
-bill; a mated queen's laying.
-
-**Pacing arc, before and after** (`python tools/pacing_gates.py`, three
-seeds, 7 Oct 2026). Identical, as expected: the alpha arc's queen never
-dies, so no queen is unmated and nobody flies. Before and after alike: first
-worker median day 22.18 (target 1.50, out of band); food secure missing
-(target 3.00); winter entered 30.01 and survived 40.01 (both in band). Per
-seed, first worker 22.18 / 16.92 / 22.99, and all three colonies lived (9, 3
-and 8 bees). `nuptial_flight_peak_chance` therefore stays at its unsimulated
-0.5 until an arc loses its queen.
-
-**As built** (7 Oct 2026, so far). `season.gd::mating_curve` measures the
-playable season's fraction: 0 at or before 0.2 (late spring, in the thirds
-`year_winter.gd` names) and at or after 0.8 (early autumn), a sine arch
-between, 1 at 0.5; 0 through winter, and 1 with seasons off (the year holds
-at mid season). `season.gd::nuptial_mating_chance` is the peak chance times
-the curve, clamped to 0-1. The flight runs on states the bee already has
-(`bee.gd::_nuptial_flight_step`): out through the entrance to a meadow point
-260 px from the hive, a quarter of a day waiting there, home on `TO_HIVE`;
-the roll is on arriving home. She sets out only above `hunger_threshold`
-of her energy. A player's order that takes her off the site or off the way
-home ends that flight without a roll, and once the order has run its
-course she comes home by herself (review, 7 Oct 2026).
-
-**The readout switch** (Dave's decision, 7 Oct 2026: `scripts/hud.gd` joins
-COL-11). With one unmated queen selected, the selected-bee panel's Doing
-column shows a "Mating" row -- "Lay drones in the hive" / "Nuptial flights",
-the choice in force lit -- and each calls `bee.gd::set_nuptial_flights`
-(`hud.gd::_build_mating_row`). It is built with the panel and a press
-rebuilds it, never per frame; once she has mated it goes at the next
-rebuild. The flight mode is not saved yet (SI-1, the Codex lane, holds the
-save files), so a load puts her back to laying drones, and this switch is
-how the player puts her back on flights after a load.
-
-```queue
-**[Claude] COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate**
-- Plan: `plans/now/colony-run.md` -- "COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate"
-- Files: `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/hud.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd`
-- Check: `python -m unittest tests.test_col11_nuptial_flight` passes (no mating where the curve is 0; a queen flying in mid summer mates within the test's days and then lays worker brood); `python tools/pacing_gates.py` before and after is recorded in this plan; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `absent: scripts/game_config.gd :: nuptial_flight_peak_chance`
-- Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
-```
+COL-11 shipped 2026-10-07; its specification is `plans/archive/COL-11_2026-10-07.md`.
 
 ## COL-7 -- the mating window, genetic points and COL-2's narrower win
 
