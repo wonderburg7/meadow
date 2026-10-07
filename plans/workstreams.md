@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/AR-3` (`codex/AR-3`) | Codex | the pacing report presents every alpha gate and its evidence boundary | Codex | in progress | none | `plans/now/alpha-route-evidence.md` AR-3 -- the pacing report presents every alpha gate and its evidence boundary |
+| `.claude/worktrees/run-queue-4-2e1f93` (`claude/run-queue-4-2e1f93`) | Claude (docs only) | move COL-12, SI-1 and T2-4a to the Codex lane (Dave, 7 Oct 2026); COL-13 first; clear COL-6 gates | Claude | in progress | none | `plans/now/colony-run.md` COL-12, COL-13; `plans/now/save-integrity.md` SI-1; `plans/now/tier-two.md` T2-4a |
