@@ -879,7 +879,7 @@ func _apply_stage_gate_to_ui() -> void:
 	var mode_keys: Array = []
 	for role in Roles.ROLES:
 		for mode in role.modes:
-			if Availability.mode_query(role.id, mode.key, main.stage_gate).available:
+			if Availability.mode_query(role.id, mode.key, main.stage_gate, Session.progression).available:
 				mode_keys.append(Availability.mode_gate_key(role.id, mode.key))
 	main.hud.set_allowed_mode_keys(mode_keys)
 	main.hud.set_command_locked_bees([main.queen] if queen_command_locked and is_instance_valid(main.queen) else [])

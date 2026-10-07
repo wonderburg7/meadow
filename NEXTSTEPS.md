@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] T2-2 -- Automation gates working outward**
-   - Plan: `plans/now/tier-two.md` -- "T2-2 -- Automation gates working outward"
-   - Files: `scripts/roles.gd`, `scripts/availability.gd`, `scripts/actions.gd`, `scripts/hive.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_2_automation_gate.py`
-   - Check: `python -m unittest tests.test_t2_2_automation_gate` passes (automine and outward building refused without Automation, allowed with it; marked work unaffected; Challenge 2's 2.8 frees Backup roles and Automation); `python -m unittest tests.test_challenge2_checks` passes; a Godot boot is clean; `tools/verify.ps1` is green
-   - Proof: `absent: scripts/actions.gd :: skill.hive_mind.automation`
-   - Next after: T2-3 -- Adaptive constancy becomes a bought behaviour
-
-2. **[Claude] T2-3 -- Adaptive constancy becomes a bought behaviour**
+1. **[Claude] T2-3 -- Adaptive constancy becomes a bought behaviour**
    - Plan: `plans/now/tier-two.md` -- "T2-3 -- Adaptive constancy becomes a bought behaviour"
    - Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `tests/test_t2_3_adaptive_constancy.py`, `test_scenarios/t2_3_bought_constancy_test.json`
    - Check: `python -m unittest tests.test_t2_3_adaptive_constancy` passes (bought with the setting off, a forager re-evaluates its species; unbought, none does); `tools/verify.ps1` is green
    - Proof: `absent: scripts/bee_foraging.gd :: static func adaptive_constancy_on`
    - Next after: T2-4a -- Cleaning gates taking out the dead larvae
 
-3. **[Claude] COL-6 -- winter is skipped and resolved in one step**
+2. **[Claude] COL-6 -- winter is skipped and resolved in one step**
    - Plan: `plans/now/colony-run.md` -- "COL-6 -- winter is skipped and resolved in one step"
    - Files: `scripts/season.gd`, `scripts/year_winter.gd`, `tests/test_col6_winter_skip.py`, `test_scenarios/col6_winter_skip_test.json`
    - Check: `python -m unittest tests.test_col6_winter_skip` passes (a stocked colony crosses winter in one tick with nobody lost and the day advanced by winter's length; an under-stocked one loses its oldest workers first and keeps its queen); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `absent: scripts/season.gd :: winter_bill`
    - Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
 
-4. **[Claude] COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate**
+3. **[Claude] COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate**
    - Plan: `plans/now/colony-run.md` -- "COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate"
    - Files: `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd`
    - Check: `python -m unittest tests.test_col11_nuptial_flight` passes (no mating where the curve is 0; a queen flying in mid summer mates within the test's days and then lays worker brood); `python tools/pacing_gates.py` before and after is recorded in this plan; a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `absent: scripts/game_config.gd :: nuptial_flight_peak_chance`
    - Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
 
-5. **[Claude] COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns**
+4. **[Claude] COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns**
    - Plan: `plans/now/colony-run.md` -- "COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns"
    - Files: `scripts/main.gd`, `scripts/world_building.gd`, `tests/test_sf1_founding_flower_mix.py`, `test_scenarios/sf1_founding_flower_mix_test.json`
    - Check: `python -m unittest tests.test_sf1_founding_flower_mix` passes at 0.05 on the pinned seed and three others; `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `present: tests/test_sf1_founding_flower_mix.py :: assertLessEqual(abs(initial_share - final_share), 0.20)`
    - Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
+
+5. **[Claude] SI-1 -- disease, crab-spider species and the rival colony survive a load**
+   - Plan: `plans/now/save-integrity.md` -- "SI-1 -- disease, crab-spider species and the rival colony survive a load"
+   - Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/rival_hive.gd`, `scripts/main.gd`, `tests/si1_run_state_test.gd`, `tests/test_si1_run_state.py`
+   - Check: `python -m unittest tests.test_si1_run_state` passes with `SI1 PASS`; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/save_game.gd :: crab_spider_species`
+   - Next after: SI-2 -- a checkpoint restore puts back soil dug since the checkpoint
 
 ### Codex lane
 

@@ -24,6 +24,8 @@ class_name ChallengeStages
 const NURSES_SKILL := "skill.brood.nurses"
 const COMB_SKILL := "skill.colony.comb_worker"
 const MINER_SKILL := "skill.colony.miner"
+const BACKUP_ROLES_SKILL := "skill.hive_mind.backup_roles"
+const AUTOMATION_SKILL := "skill.hive_mind.automation"
 
 ## Challenge 1's wax cells hold this much nectar. The 1.11 lesson completes
 ## when one reaches that capacity, so the goal and storage rule cannot drift.
@@ -430,13 +432,13 @@ const STAGES_2 := [
 		"goal_text": "Goal: raise a Comb worker and build more comb.",
 		"prompts": [
 			{"id": "2.7_welcome", "trigger": "welcome", "delay": 0.0, "text": "The colony is starting to outgrow its first furniture. Raise a comb worker and give the hive more comb."},
-			{"id": "2.7_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Choose where the next cell should go, then let a comb worker take on some building automatically once the pattern is obvious."},
+			{"id": "2.7_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Select your comb worker and press \"Build here\", then click where the next cells should go. The comb worker builds each one you mark."},
 		],
 	},
 	{
 		"id": "2.8", "goal": "miner_expansion", "condition": {"custom": "_goal_check_miner_expansion"},
-		"free_skills": [COMB_SKILL, MINER_SKILL],
-		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation", "skills_window", NURSES_SKILL, "nurse", "nurse_feed", "nurse_both", "hatch_lock", COMB_SKILL, "comb_worker", "comb_worker_build", "comb_worker_maintain", MINER_SKILL, "miner", "miner_automine"],
+		"free_skills": [COMB_SKILL, MINER_SKILL, BACKUP_ROLES_SKILL, AUTOMATION_SKILL],
+		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation", "skills_window", NURSES_SKILL, "nurse", "nurse_feed", "nurse_both", "hatch_lock", COMB_SKILL, "comb_worker", "comb_worker_build", "comb_worker_maintain", MINER_SKILL, "miner", "miner_automine", BACKUP_ROLES_SKILL, AUTOMATION_SKILL],
 		"goal_text": "Goal: raise a miner, dig new space, and build a cell in it.",
 		"prompts": [
 			{"id": "2.8_welcome", "trigger": "welcome", "delay": 0.0, "text": "Comb needs somewhere to exist. For that, the colony requires miners: the underground department."},
