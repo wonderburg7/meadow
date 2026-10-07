@@ -11,7 +11,8 @@ paths:
 
 # Simulation rules
 
-Full bug catalogue: `docs/known-pitfalls.md`.
+Bug catalogue: `docs/known-pitfalls.md`, "Simulation and behaviour" (read
+that section with `python tools/heading.py`).
 
 **Presentation may be skipped; simulation may not.**
 `main.gd.is_on_screen(node)` gates label and colour updates only. Never

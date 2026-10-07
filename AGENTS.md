@@ -3,8 +3,9 @@
 This file is the entry point for ChatGPT and Codex sessions in this
 repository.
 
-**Before reading or acting on any other project file, read `CHATGPT.md` and
-follow its file-editing and hand-off conventions.** Its "Risk-proportional
+**Before reading or acting on any other project file, read
+`docs/agent-rules.md` (the rules Claude and Codex share) and `CHATGPT.md`,
+and follow `CHATGPT.md`'s file-editing and hand-off conventions.** Its "Risk-proportional
 closeout" section is needed only once the code is green: skip it when
 starting, and read it then with
 `python tools/heading.py CHATGPT.md "Risk-proportional closeout"`. To start
@@ -21,8 +22,8 @@ source files, including the primary worktree, for an assigned task. Like
 Claude, Codex commits on a work branch (a `codex/...` branch, or a dedicated
 worktree if one is already set up) rather than directly on `master`, and it
 has the same commit, merge and push rights as Claude for that branch: it
-closes its own slice out with `tools/slice.ps1 finish`, then refills the
-`[Codex]` lane and archives the shipped slice's specification. The exception
+closes its own slice out with `tools/slice.ps1 finish`, which also archives
+the shipped slice's specification and refills the `[Codex]` lane. The exception
 is a high-risk slice, which Codex commits and pushes but hands to Claude to
 review and integrate -- see `CHATGPT.md`, "Risk-proportional closeout", for
 the triggers.

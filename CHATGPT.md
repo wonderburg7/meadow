@@ -43,9 +43,11 @@ check outstanding is never a reason to hold a branch open -- file it in
 `checks/ready.md` and finish.
 
 Before running `finish`, update the owning plan's Status and `Next:` and
-promote the item's `Next after:` into the `[Codex]` lane (pulling one ready
-slice from an owning plan if that leaves it short). Never edit the `[Claude]`
-lane's entries. `finish` performs the archive and refill: its `archived` and
+make sure the item's `Next after:` successor has a fenced `queue` block in its
+plan section, or a line under "Not in the queue, and why" if it is not
+startable (`plans/reference/closeout.md`, "Closeout order" step 2). Do not
+promote it into the lane by hand. Never edit the `[Claude]` lane's entries.
+`finish` performs the archive and refill: its `archived` and
 `refilled` phases move the shipped specification into `plans/archive/`, remove
 the delivered item from `## Next up`, and put both commits inside the merge.
 There is no separate archive or queue-refresh step before or after `finish`,
@@ -64,10 +66,11 @@ integration path.
 Canonical coordination files describe the state of the integrated `master`
 branch, so their ownership is stricter:
 
-- `NEXTSTEPS.md` is the canonical integrated-project queue. Update it on the
-  slice's own branch, before running `finish`: the refill travels into
-  `master` inside the merge commit that `finish` makes, so there is no
-  separate step on `master` afterwards and no window where the two disagree.
+- `NEXTSTEPS.md` is the canonical integrated-project queue. `finish` edits
+  it on the slice's own branch (deleting the item and topping the lane up),
+  so the refill travels into `master` inside the merge commit it makes, with
+  no separate step on `master` afterwards and no window where the two
+  disagree.
 - `NEXTSTEPS.md` and `plans/` are shared with Claude. They state the
   integrated project priority.
 - `CLAUDE.md`, `CHATGPT.md` and `AGENTS.md` are tool-policy and orientation
@@ -157,8 +160,8 @@ Next in my lane: <id> -- <one line on what it does>
 Ready to merge: yes -- Claude reviews the full diff, then runs 'finish'
 ```
 
-"Ready to merge" is a statement that the three conditions in
-`plans/workstreams.md` ("When to merge") are met, not an action taken. Push
+"Ready to merge" is a statement that the conditions in
+`plans/reference/closeout.md` ("When to merge") are met, not an action taken. Push
 the branch before handing it over, so the diff is reviewable without the
 worktree.
 
@@ -221,7 +224,7 @@ commits distinct.
 - Before implementation, record the current branch, baseline commit, and the
   task scope. Before finishing, run relevant checks, review the diff and
   commit on the work branch. Then close out per "Risk-proportional closeout":
-  low or medium risk, update the plan and `[Codex]` lane successor, then run
+  low or medium risk, update the plan and give the successor its `queue` block, then run
   `tools/slice.ps1 finish` (which archives the slice and refills the lane),
   and post the end-of-slice report;
   high risk, push the branch and post the hand-off block instead.

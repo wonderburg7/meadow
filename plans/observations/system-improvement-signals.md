@@ -70,6 +70,91 @@ explicit request from Dave.
 - Disposition: untriaged
 -->
 
+### 2026-10-07 — sessions still try to read the four denied paths, and a hint hook would widen the deny list
+
+- Source: context review (`docs/context-review-2026-10-07.md`, Hand-offs)
+- Area: instructions / process
+- Signal: from 23 Sep to 7 Oct, 21 of the 47 refused shell calls named
+  `ROADMAP.md`, `DESIGN_BACKLOG.md`, `plans/archive/` or `docs/archive/`, and
+  32 of the 47 began with a `cd … &&` prefix, despite the
+  `docs/known-pitfalls.md` "Agent cost" entries. Two routes sent sessions
+  there (`CLAUDE.md`'s UI row and its "grep `plans/archive/`" row); the
+  review fixed both.
+- Evidence: a transcript scan of `~/.claude/projects/*meadow*` filtered by
+  call timestamp. A PreToolUse hook that refused those reads with the
+  `git show` route was prototyped and replayed: it caught 12 refusals and
+  would newly refuse 4 commands that run today, so it was not shipped.
+- Consequence: about ten wasted turns a week, concentrated in review and
+  planning sessions.
+- Candidate direction: Hypothesis — the agent workflow review checks whether
+  the remaining cases come from review prompts that name those files, and
+  if so has the prompts say `git show HEAD:` up front.
+- Disposition: untriaged
+
+### 2026-10-07 — a queue id with a space still breaks `slice.ps1 start`
+
+- Source: context review (`docs/context-review-2026-10-07.md`, Hand-offs)
+- Area: tooling
+- Signal: an 11 Sep fix widened `Get-NextUpItems` to parse a multi-word id
+  ("Hive comb Slice 5"), but claiming one would still build
+  `git branch <lane>/<id>` and `.worktrees/<id>` with spaces. Task
+  `task_743a9dd5` was spawned for it and nothing landed; `tools/check_docs.py`
+  does not reject a spaced id.
+- Evidence: `tools/slice.ps1` comment at `Get-NextUpItems` ("Id used to
+  require a single bare token"); `grep -n "space" tools/check_docs.py`
+  finds no such check.
+- Consequence: latent; the first spaced id that leads a lane fails `start`.
+- Candidate direction: Hypothesis — `check_docs.py` fails a queue or
+  `queue` block id that contains whitespace.
+- Disposition: untriaged
+
+### 2026-10-07 — the panel-rectangle rule has a home again, and three plan files still restate or bypass it
+
+- Source: context review (`docs/context-review-2026-10-07.md`, Hand-offs)
+- Area: organisation
+- Signal: the UI plan's durable rules were archived with the plan on
+  20 Sep, behind the Read deny, while `CLAUDE.md` still routed UI work
+  there. The review moved them to `plans/reference/ui-rules.md`.
+  `plans/README.md` guardrail 11 and `plans/reference/check-loop.md` rule 6
+  still restate the rule; `plans/README.md`'s routing table has no row for
+  the new file; `plans/design/progression.md` and `DESIGN_BACKLOG.md` still
+  point at the archived plan.
+- Evidence: `git grep -n "ui_2026-09-20" HEAD -- . ':!plans/archive'`.
+- Consequence: the rule drifts between copies; a planning session follows a
+  pointer into a denied file.
+- Candidate direction: Hypothesis — the plan and queue review replaces the
+  two restatements with pointers and repoints the three references.
+- Disposition: untriaged
+
+### 2026-10-07 — `session_cost.py` keeps a second copy of the level-to-model rule with no parity test
+
+- Source: context review (`docs/context-review-2026-10-07.md`, follow-through of baseline B-3)
+- Area: tooling
+- Signal: `tools/session_cost.py::LEVEL_MODELS` mirrors the `switch` in
+  `tools/slice.ps1::Get-SliceAdvice` by hand, as the 18 Sep codebase review
+  warned. They agree today; nothing fails when one changes.
+- Evidence: `grep -rn LEVEL_MODELS tests tools` finds only the definition and
+  its two uses.
+- Consequence: the next model rename makes the drift report wrong silently.
+- Candidate direction: Hypothesis — read the `switch` out of `slice.ps1` with
+  a regex, or add one test that compares the two.
+- Disposition: untriaged
+
+### 2026-10-07 — `.codex/hooks.json` calls `$CLAUDE_PROJECT_DIR`, which Codex may not set
+
+- Source: context review (`docs/context-review-2026-10-07.md`, Hand-offs)
+- Area: tooling / environment
+- Signal: every Codex hook command is
+  `python "$CLAUDE_PROJECT_DIR/tools/hook_log.py" …`, copied from
+  `.claude/settings.json`. Inference, not verified: if Codex does not export
+  that variable the path becomes `/tools/hook_log.py` and Codex sessions log
+  no events.
+- Evidence: `.codex/hooks.json`.
+- Consequence: `session_cost.py --events` would undercount Codex sessions.
+- Candidate direction: Hypothesis — check the event log for Codex
+  `session_start` events; if absent, use a path Codex resolves.
+- Disposition: untriaged
+
 ### 2026-10-07 — `finish` still verifies inside the lifecycle lock, so one lane's closeout stalls the other's
 
 - Source: verification review (`docs/verification-review-2026-10-07.md`, Hand-offs)
