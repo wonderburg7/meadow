@@ -70,10 +70,39 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `present: tools/pacing_gates.py :: Not instrumented: 20m forage/weather crisis; 90m gyne release.`
    - Next after: AR-4 -- a scripted Colony Run reaches and records all five gates
 
+2. **[Codex] WC-1 -- a deferral whose gate has cleared is flagged**
+   - Plan: `plans/now/workflow-checks.md` -- "WC-1 -- a deferral whose gate has cleared is flagged"
+   - Files: `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py`
+   - Check: `python -m unittest tests.test_wc1_stale_deferrals` passes (a stale gate warns, an unshipped gate and a "landed" clause do not); `python tools/check_docs.py` on master prints the warning for NF-2's COL-4 and NF-1; `tools/verify.ps1` is green
+   - Proof: `absent: tools/check_docs.py :: waits for an archived slice`
+   - Next after: WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane
+
+3. **[Codex] WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane**
+   - Plan: `plans/now/workflow-checks.md` -- "WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane"
+   - Files: `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_wc2_dry_lane_report.py`
+   - Check: `python -m unittest tests.test_wc2_dry_lane_report` passes (an undeferred successor is named; a file-disjoint low/medium other-lane block is listed as borrowable; a high-level, gated, colliding or already-queued one is not; the existing keys are unchanged); `python -m unittest tests.test_slice_lifecycle` passes; `tools/verify.ps1` is green
+   - Proof: `absent: tools/refill_lane.py :: borrowable`
+   - Next after: WC-3 -- Codex's hooks log its sessions
+
+4. **[Codex] WC-3 -- Codex's hooks log its sessions**
+   - Plan: `plans/now/workflow-checks.md` -- "WC-3 -- Codex's hooks log its sessions"
+   - Files: `.codex/hooks.json`, `tests/test_wc3_codex_hooks.py`
+   - Check: `python -m unittest tests.test_wc3_codex_hooks` passes with `CLAUDE_PROJECT_DIR` unset; `tools/verify.ps1` is green
+   - Proof: `present: .codex/hooks.json :: $CLAUDE_PROJECT_DIR/tools/hook_log.py`
+   - Next after: WC-4 -- a queue id with whitespace fails the documentation check
+
+5. **[Codex] WC-4 -- a queue id with whitespace fails the documentation check**
+   - Plan: `plans/now/workflow-checks.md` -- "WC-4 -- a queue id with whitespace fails the documentation check"
+   - Files: `tools/check_docs.py`, `tests/test_wc4_spaced_ids.py`
+   - Check: `python -m unittest tests.test_wc4_spaced_ids` passes; `python tools/check_docs.py` passes on master; `tools/verify.ps1` is green
+   - Proof: `absent: tools/check_docs.py :: id contains whitespace`
+   - Next after: WC-5 -- the two level-to-model tables are tested against each other
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
 
+- **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation, Bee Bread and the gyne route, so it cannot be an honest acceptance run yet.
 - **COL-7** (`plans/now/colony-run.md`) -- the mating window, genetic points and COL-2's narrower win wait for COL-6, and are specified once it lands.
 - **NF-2** (`plans/now/nectar-fermentation.md`) -- nectar ferments past an age; waits for COL-4 (Codex lane), which edits `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, and for NF-1's evidence.
 - **T2-4a to T2-8** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-4a is specified and waits only for room in the lane (T2-2 landed 7 Oct 2026); T2-4b (bodies) for T2-4a, COL-4 and COL-6; T2-5 (rain) and T2-7 (tier-2 prices) for COL-4's year; T2-6 (Associative learning) for COL-4 (`game_config.gd`); T2-8 (Shiver Cluster) for COL-6.

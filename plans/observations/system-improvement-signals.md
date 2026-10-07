@@ -126,7 +126,7 @@ explicit request from Dave.
 - Consequence: latent; the first spaced id that leads a lane fails `start`.
 - Candidate direction: Hypothesis — `check_docs.py` fails a queue or
   `queue` block id that contains whitespace.
-- Disposition: untriaged
+- Disposition: promoted 7 Oct 2026 as WC-4 (`plans/now/workflow-checks.md`)
 
 ### 2026-10-07 — the panel-rectangle rule has a home again, and three plan files still restate or bypass it
 
@@ -158,7 +158,7 @@ explicit request from Dave.
 - Consequence: the next model rename makes the drift report wrong silently.
 - Candidate direction: Hypothesis — read the `switch` out of `slice.ps1` with
   a regex, or add one test that compares the two.
-- Disposition: untriaged
+- Disposition: promoted 7 Oct 2026 as WC-5 (`plans/now/workflow-checks.md`)
 
 ### 2026-10-07 — `.codex/hooks.json` calls `$CLAUDE_PROJECT_DIR`, which Codex may not set
 
@@ -173,7 +173,8 @@ explicit request from Dave.
 - Consequence: `session_cost.py --events` would undercount Codex sessions.
 - Candidate direction: Hypothesis — check the event log for Codex
   `session_start` events; if absent, use a path Codex resolves.
-- Disposition: untriaged
+- Disposition: promoted 7 Oct 2026 as WC-3 (`plans/now/workflow-checks.md`);
+  checked first: 168 events on `codex/*` branches, none from a hook
 
 ### 2026-10-07 — `finish` still verifies inside the lifecycle lock, so one lane's closeout stalls the other's
 
