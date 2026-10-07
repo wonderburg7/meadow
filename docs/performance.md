@@ -75,3 +75,20 @@ reaffirmed by the Aug 2026 technical audit (`plans/reference/technical-audit.md`
 - Don't introduce object pooling, MultiMesh rendering, or reduce
   off-screen simulation fidelity without a specific measured bottleneck
   pointing at exactly that.
+
+## Canvas cost by colony size (SPR-1, SPR-2)
+
+Measured 7 Oct 2026 with `python tools/run_scenario.py <file> [--windowed] --report full`
+(480 frames after 120 warm-up, one run each). Frame times are ms, mean / p95.
+SPR-2 scenarios use 100 cells (500 bees) and 150 cells (1,000 bees).
+
+| Bees | Draw calls (mean) | Render objects (mean) | Nodes | Windowed frame | Headless frame |
+| --- | --- | --- | --- | --- | --- |
+| 200 | 253 | 409 | 15,812 | 9.8 / 11.0 | 7.5 / 8.7 |
+| 500 | 253 | 409 | 20,112 | 17.1 / 19.4 | 33.2 / 62.0 |
+| 1,000 | 1,181 | 1,337 | 27,112 | 32.1 / 39.4 | 26.4 / 33.5 |
+
+The 500-bee headless run was disturbed by something else on the machine, so its
+headless figure is not a clean drawing-share baseline; 500-bee draw calls equal
+the 200-bee figure, which suggests the visible view still shows only part of
+the colony. The windowed p95 first passes 16.7 ms at 500 bees.

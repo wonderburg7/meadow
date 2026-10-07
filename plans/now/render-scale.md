@@ -1,7 +1,7 @@
 # Render scale -- where drawing the procedural bees stops fitting a frame
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SPR-2 -- the windowed render baseline at 500 and 1,000 bees | Dependency: none | Verified: 2026-10-06
+Status: complete | Owner: Dave / Claude Code | Next: nothing further -- SPR-2 landed; a sprite or batching pass is decided with Dave from the table in docs/performance.md | Dependency: none | Verified: 2026-10-06
 
 ## Objective
 
