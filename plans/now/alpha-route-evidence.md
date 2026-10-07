@@ -1,7 +1,7 @@
 # Alpha Route Evidence -- measure the promised five gates without inventing player understanding
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: AR-2 -- analysis turns that record into named alpha-gate facts | Dependency: AR-1 → AR-2 → AR-3; the playable end-to-end route remains gated on Tier 2, Bee Bread and Colony Run work | Verified: 2026-10-07
+Status: active | Owner: Dave / Codex | Next: AR-3 -- the pacing report presents every alpha gate and its evidence boundary | Dependency: AR-1 → AR-2 → AR-3; the playable end-to-end route remains gated on Tier 2, Bee Bread and Colony Run work | Verified: 2026-10-07
 
 ## Objective
 

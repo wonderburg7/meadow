@@ -44,6 +44,7 @@ def analyze(entries: list[dict[str, Any]]) -> dict[str, Any]:
         "flower_mix_by_day": _flower_mix_by_day(snapshots),
         "milestones": _milestones(snapshots, settings),
         "milestone_times": _milestone_times(snapshots, settings),
+        "alpha_route": _alpha_route(snapshots),
         "mechanic_firing": _mechanic_firing(settings, summary, actions),
         "actions": _action_summary(actions),
         "summary": summary,
@@ -224,6 +225,32 @@ def _milestone_times(snapshots: list[dict[str, Any]], settings: dict[str, Any]) 
             if reached:
                 milestone_times.setdefault(name, game_time / seconds_per_day)
     return milestone_times
+
+
+def _alpha_route(snapshots: list[dict[str, Any]]) -> dict[str, int]:
+    """Return the Colony Run gate days copied into diagnostic snapshots.
+
+    Unlike pacing milestones, these are the game's recorded milestone days.
+    A selected snapshot can arrive after the fact it records, so its own day
+    is not evidence for the gate; only the copied integer record is used.
+    """
+    facts: dict[str, int] = {}
+    record_names = {
+        "first_worker": "first_worker_day",
+        "first_automation": "first_automation_day",
+        "first_gyne": "first_gyne_day",
+        "victory": "victory_day",
+    }
+    for snapshot in snapshots:
+        colony = snapshot.get("colony")
+        milestone_days = colony.get("milestone_days") if isinstance(colony, dict) else None
+        if not isinstance(milestone_days, dict):
+            continue
+        for record_name, fact_name in record_names.items():
+            day = milestone_days.get(record_name)
+            if isinstance(day, int) and not isinstance(day, bool):
+                facts.setdefault(fact_name, day)
+    return facts
 
 
 def _winter_food_requirement(settings: dict[str, Any], population: Any) -> float | None:

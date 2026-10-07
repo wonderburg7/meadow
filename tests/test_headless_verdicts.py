@@ -107,6 +107,29 @@ class HeadlessVerdictTest(unittest.TestCase):
         self.assertEqual({}, analysis["milestones"])
         self.assertEqual({}, analysis["milestone_times"])
 
+    def test_analysis_reports_copied_colony_route_days_separately(self):
+        entries = [
+            {"type": "config", "settings": {}},
+            {"type": "snapshot", "day": 3, "population": {"total": 2},
+             "resources": {"food_stores": 0}, "environment": {"winter_here": False}},
+            {"type": "snapshot", "day": 20, "colony": {"milestone_days": {
+                "first_worker": 3, "first_automation": 9, "first_gyne": 18, "victory": 19,
+            }}},
+        ]
+
+        analysis = analyze(entries)
+        self.assertEqual({"first_worker_day": 3, "first_automation_day": 9,
+                          "first_gyne_day": 18, "victory_day": 19}, analysis["alpha_route"])
+        self.assertEqual({"first_worker_day": 3}, analysis["milestones"])
+
+    def test_analysis_omits_missing_colony_route_days(self):
+        analysis = analyze([
+            {"type": "snapshot", "day": 8, "colony": {"milestone_days": {
+                "first_automation": 7, "first_gyne": "later", "victory": True,
+            }}},
+        ])
+        self.assertEqual({"first_automation_day": 7}, analysis["alpha_route"])
+
     def test_missing_milestone_has_consistent_expectation_results(self):
         analysis = dict(ANALYSIS, milestones={})
         expectations = validate_expectations([
