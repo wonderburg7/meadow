@@ -52,7 +52,6 @@ Verified 7 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-2 | Automation gates working outward: "Dig on its own" and outward building | `scripts/roles.gd`, `scripts/availability.gd`, `scripts/actions.gd`, `scripts/hive.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_2_automation_gate.py` | yes, after T2-1 in the same lane (shared files) | medium |
 | T2-3 | Adaptive constancy becomes a bought behaviour | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `tests/test_t2_3_adaptive_constancy.py`, `test_scenarios/t2_3_bought_constancy_test.json` | yes, after T2-2 in the same lane | low |
 | T2-4a | Cleaning gates taking out the dead larvae | specified when T2-3 lands | no -- after T2-2 (`actions.gd`, `challenge_stages.gd`) | medium |
 | T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | specified after T2-4a | no -- after T2-4a, COL-4 (`game_config.gd`) and COL-6 (the winter bill) | high |
@@ -79,42 +78,7 @@ plans/design/progression.md "11. Implementation sequence"`, step 8 only).
 
 T2-1 shipped 2026-10-07; its specification is `plans/archive/T2-1_2026-10-07.md`.
 
-## T2-2 -- Automation gates working outward
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (a new skill check in `mode_query`, and the outward half of
-building split from the marked half).
-
-**True now.** "Dig on its own" and outward building need no skill.
-
-**True afterwards.**
-
-- A role mode may name a skill: `roles.gd`'s Miner `automine` mode names
-  `skill.hive_mind.automation`, and `mode_query` refuses it unowned (one
-  check, beside the stage-gate check). The `mine_automine_block` row in
-  `actions.gd` carries the same skill.
-- Comb workers build sites the player marked ("Build here") without the
-  skill; extending the outward hex spiral past them needs Automation. If
-  `comb_build` serves both today, the slice splits it into two rows rather
-  than adding a branch inside the finder.
-- `challenge_stages.gd`: stage 2.8 adds `skill.hive_mind.backup_roles` and
-  `skill.hive_mind.automation` to `free_skills` and `unlocked_keys` (Dave,
-  7 Oct 2026). Backup roles is free only so Hive Mind tier 2 opens; it
-  changes no queen backup.
-- `tests/test_t2_2_automation_gate.py` asserts both halves refused unowned
-  and allowed owned, and Challenge 2's 2.8 data.
-
-**Must not change.** Marked digging and queued blocks; dispatch bands.
-
-```queue
-**[Claude] T2-2 -- Automation gates working outward**
-- Plan: `plans/now/tier-two.md` -- "T2-2 -- Automation gates working outward"
-- Files: `scripts/roles.gd`, `scripts/availability.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `tests/test_t2_2_automation_gate.py`, `tests/t2_2_automation_gate_test.gd`
-- Check: `python -m unittest tests.test_t2_2_automation_gate` passes (automine and outward building refused without Automation, allowed with it; marked work unaffected; Challenge 2's 2.8 frees Backup roles and Automation); `python -m unittest tests.test_challenge2_checks` passes; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `absent: scripts/actions.gd :: skill.hive_mind.automation`
-- Next after: T2-3 -- Adaptive constancy becomes a bought behaviour
-```
+T2-2 shipped 2026-10-07; its specification is `plans/archive/T2-2_2026-10-07.md`.
 
 ## T2-3 -- Adaptive constancy becomes a bought behaviour
 
