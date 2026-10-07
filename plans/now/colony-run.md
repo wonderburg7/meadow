@@ -197,6 +197,26 @@ replaces with decisions 5 and 6's year. Decision 7's curve is not built.
 **Must not change.** Gyne release (`_release_ready_gynes`); COL-6's winter
 bill; a mated queen's laying.
 
+**Pacing arc, before and after** (`python tools/pacing_gates.py`, three
+seeds, 7 Oct 2026). Identical, as expected: the alpha arc's queen never
+dies, so no queen is unmated and nobody flies. Before and after alike: first
+worker median day 22.18 (target 1.50, out of band); food secure missing
+(target 3.00); winter entered 30.01 and survived 40.01 (both in band). Per
+seed, first worker 22.18 / 16.92 / 22.99, and all three colonies lived (9, 3
+and 8 bees). `nuptial_flight_peak_chance` therefore stays at its unsimulated
+0.5 until an arc loses its queen.
+
+**As built** (7 Oct 2026, so far). `season.gd::mating_curve` measures the
+playable season's fraction: 0 at or before 0.2 (late spring, in the thirds
+`year_winter.gd` names) and at or after 0.8 (early autumn), a sine arch
+between, 1 at 0.5; 0 through winter, and 1 with seasons off (the year holds
+at mid season). `season.gd::nuptial_mating_chance` is the peak chance times
+the curve, clamped to 0-1. The flight runs on states the bee already has
+(`bee.gd::_nuptial_flight_step`): out through the entrance to a meadow point
+260 px from the hive, a quarter of a day waiting there, home on `TO_HIVE`;
+the roll is on arriving home. Only the succession window sets the mode so
+far, and the mode is not saved (the save files are the Codex lane's SI-1's).
+
 ```queue
 **[Claude] COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate**
 - Plan: `plans/now/colony-run.md` -- "COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate"
