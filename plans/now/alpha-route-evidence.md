@@ -32,43 +32,13 @@ hands-on feedback questions, not diagnostics.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| AR-3 | the pacing report presents every alpha gate and its evidence boundary | `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | after AR-2 | low |
 | AR-4 | a scripted Colony Run reaches and records all five gates | the alpha scenario and its new evidence test | no -- after Tier 2 automation, Bee Bread and the gyne route are playable | high |
 
 AR-1 shipped 2026-10-07; its specification is `plans/archive/AR-1_2026-10-07.md`.
 
 AR-2 shipped 2026-10-07; its specification is `plans/archive/AR-2_2026-10-07.md`.
 
-## AR-3 -- the pacing report presents every alpha gate and its evidence boundary
-
-<!-- LAYER: immediate-task -->
-
-Level: low (report wording and pure-Python table tests).
-
-**True now.** `pacing_gates.py` labels food security as the 10-minute gate and
-ends with one undifferentiated “Not instrumented” line for crisis and gyne
-release.
-
-**True afterwards.** Its table has one row for each product-scope gate: first
-worker, first automation, crisis response, winter survival and gyne/victory.
-Each row identifies whether the result is a measured fact, unavailable because
-the scripted route has not reached it, or a hands-on question. First automation
-and gyne/victory consume AR-2's recorded facts; food security stays in the
-diagnostic detail but is no longer presented as the automation outcome. The
-tests prove missing facts remain visibly missing.
-
-**Must not change.** Target timing bands, season schedule derivation, scenario
-execution, or balance. A diagnostic scorecard is not permission to claim the
-route is playable.
-
-```queue
-**[Codex] AR-3 -- the pacing report presents every alpha gate and its evidence boundary**
-- Plan: `plans/now/alpha-route-evidence.md` -- "AR-3 -- the pacing report presents every alpha gate and its evidence boundary"
-- Files: `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
-- Check: `python -m unittest tests.test_pacing_gates` passes with five named alpha-gate rows, and missing crisis or gyne facts render as unavailable rather than in-band
-- Proof: `present: tools/pacing_gates.py :: Not instrumented: 20m forage/weather crisis; 90m gyne release.`
-- Next after: AR-4 -- a scripted Colony Run reaches and records all five gates
-```
+AR-3 shipped 2026-10-07; its specification is `plans/archive/AR-3_2026-10-07.md`.
 
 ## Not in the queue, and why
 
