@@ -16,9 +16,19 @@ and `plans/archive/AUDIT_PLAN_AUG_2026.md` Bundles A and B.
 changes nothing, or succeeds and leaves every collection, index,
 cross-reference and UI readout mutually consistent. `SaveGame.read()`
 rejects (returns `{}`, `push_error`, no world mutation) a save whose
-`version` is newer than `FORMAT_VERSION` — don't weaken that check, and
-don't build a migration framework for older versions beyond the existing
-defensive-restore behaviour without a concrete second format to bridge.
+`version` is newer than `FORMAT_VERSION` — don't weaken that check.
+Older versions are bridged one step at a time in `save_migrations.gd`.
+
+**A new field is additive unless an old save would load wrong without it**
+(Dave, 7 Oct 2026, save review). Add it with a `.get()` default that matches
+how an old save behaved, with no `FORMAT_VERSION` bump and no migration, as
+CR-1's `starting_level` and BS-14's `skill_policy` did. Bump and add a
+`_migrate_N_to_N+1` step only when a field's meaning or shape changes.
+
+**A checkpoint restore is exact** (Dave, 7 Oct 2026, save review). An
+in-place `_restore` (Challenge 2's rollback, the `restore_slot` scenario
+action) must leave the world as the checkpoint recorded it, soil included,
+not merely remove what the checkpoint lacks.
 
 **`queue_free()` is deferred, not immediate.** Godot doesn't remove a
 freed node from the tree or its groups until end of frame, so a

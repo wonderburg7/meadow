@@ -163,6 +163,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | BS-4, BS-6, BS-7, BS-8, BS-9 -- the Brood spine: bought Nurses and Honey worker, one availability sheet per run, the queen's own nursing | `plans/archive/brood-spine_2026-10-05.md` |
 | GC-1, GC-2, GC-3 -- an Idle bee stays put, a job change delivers the load, honey conserves energy | `plans/archive/gameplay-consistency_2026-10-06.md` |
 | PE-1 -- the headless pacing gates timed to the hour | `plans/archive/pacing-evidence_2026-10-01.md` |
+| AR-1 to AR-4 -- alpha-route evidence: recorded gates, their diagnostic boundary, then an end-to-end scripted route | `plans/now/alpha-route-evidence.md` |
 | WO-1 -- winter's countdown opens by itself on a set day | `plans/archive/winter-onset_2026-10-01.md` |
 | UI-F-1, UI-F-2, UI-F-3 -- the game-over screen's theme, warning severity, comb label scale | `plans/archive/ui-feedback_2026-10-01.md` |
 | FBB-1 -- the skill tree hides the cut skills and says which are not built | `plans/archive/feedback-build_2026-10-05.md` |
@@ -175,6 +176,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | SPR-1 -- a windowed render baseline for the procedural bees, before any sprite pass | `plans/archive/sprites_2026-10-06.md` |
 | NF-1, NF-2 -- unprocessed nectar ferments, and tipsy bees pay for it | `plans/now/nectar-fermentation.md` |
 | SPR-2 -- the windowed render baseline at 500 and 1,000 bees | `plans/now/render-scale.md` |
+| SI-1 to SI-3 -- save integrity: run state a load misses, exact Challenge rollback, all-or-nothing writes | `plans/now/save-integrity.md` |
 | T2-1 to T2-8 -- progression step 8: tier-2 skills gated and built, bodies, rain in the Colony Run, Shiver Cluster | `plans/now/tier-two.md` |
 | BB-1 to BB-4 -- Bee Bread: Fermenters, larval feeding, the tier-3 currency, re-pacing | `plans/now/bee-bread.md` |
 | Progression/skills design | `plans/design/progression.md` |

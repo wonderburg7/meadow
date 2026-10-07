@@ -53,7 +53,6 @@ func _restore(data: Dictionary) -> void:
 	main.day = int(clock.get("day", 1))
 	main.next_bee_id = int(clock.get("next_bee_id", 1))
 	main.first_gyne_seen = bool(clock.get("first_gyne_seen", false))
-	main.hud.update_day(main.day, main.year_winter._season_text())
 
 	var weather: Dictionary = data.get("weather", {})
 	Session.rain_intensity = float(weather.get("intensity", 0.0))
@@ -72,6 +71,9 @@ func _restore(data: Dictionary) -> void:
 	Session.winter_ends_day = float(session_state.get("winter_ends_day", 0.0))
 	Session.gynes_released = int(session_state.get("gynes_released", 0))
 	main.hud.set_winter_button_visible(Session.winter_coming)
+	# After the winter fields and gynes_released: the season text reads them,
+	# and a scene-reload load still holds the previous run's values until here.
+	main.hud.update_day(main.day, main.year_winter._season_text())
 
 	_restore_soil(data.get("soil", {}))
 	_restore_cells(data.get("cells", []))

@@ -91,7 +91,9 @@ shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` with NF-2.
 Whichever of NF-2 and COL-11 is queued second waits for the other's merge,
 as the one-branch lane already ensures. Bee Bread's BB-1
 (`plans/now/bee-bread.md`) waits for NF-2: it shares `hive_cell.gd`,
-`hive.gd` and the save files. NF-4's node joins Colony tier 2, which
+`hive.gd` and the save files. SI-1 to SI-3 (`plans/now/save-integrity.md`)
+also edit `save_game.gd` and `saving.gd`, so NF-2 is never in the other
+lane while one of them is queued. NF-4's node joins Colony tier 2, which
 `plans/now/tier-two.md` T2-7 prices if NF-4 has landed by then.
 
 NF-1 shipped 2026-10-06; its specification is `plans/archive/NF-1_2026-10-06.md`.
