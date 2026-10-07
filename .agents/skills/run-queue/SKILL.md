@@ -130,6 +130,14 @@ while one is active.
      Anything else stops the run.
 7. **Record.** Keep only the `Slice landed:` block and the worker's
    one-line summary. Drop everything else from your working notes.
+8. **Clear stale gates.** If the `Next slice:` line says an id `is
+   deferred`, and the gate it names is a slice landed in this run, that
+   gate has cleared. Update the id's line under `## Not in the queue, and
+   why` and the plan's slice-table row to say what it waits for now. Do
+   the same for any other line naming a slice landed in this run. This is
+   a docs-only edit, as in "Refilling the lane". Do it even after the last
+   slice of the run: `finish` never rewrites those lines (T2-4a, 7 Oct
+   2026).
 
 An empty or short lane is not a reason to stop: refill it. Stop only when
 the maximum is reached, a `start` refuses for any reason but an empty lane,
