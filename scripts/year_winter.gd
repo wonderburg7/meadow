@@ -15,14 +15,11 @@ const ColonyDiagnostics = preload("res://scripts/colony_diagnostics.gd")
 
 var main: Node2D
 
+## COL-6: the bill and the stores are season.gd's, the figures the skipped
+## winter is charged with, so the window shows exactly what winter will take.
 func _winter_forecast(bees_count: int) -> Dictionary:
-	var seconds_of_winter: float = GameConfig.winter_length_days * GameConfig.seconds_per_day
-	var required: float = (
-		bees_count * GameConfig.energy_burn_rate * GameConfig.winter_burn_factor * seconds_of_winter
-	)
-	var held: float = (
-		main.hive.total("nectar") + main.hive.total_honey() * GameConfig.honey_energy_factor
-	)
+	var required: float = main.season.winter_bill(bees_count)
+	var held: float = main.season.winter_stores()
 	var days_left: float = max(0.0, Session.winter_starts_day - main.day)
 	return {
 		"bees": bees_count,
