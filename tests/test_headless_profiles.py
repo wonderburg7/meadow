@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -77,6 +78,9 @@ class HeadlessProfileTest(unittest.TestCase):
         self.assertIn('"colony.milestone_days"', probes)
         self.assertIn("is_instance_valid(world.colony_milestones) and world.colony_milestones.applies()", probes)
         self.assertIn("milestone_days = world.colony_milestones.met_days.duplicate()", probes)
+        scenario = json.loads((Path(__file__).resolve().parent.parent / "test_scenarios" / "alpha_arc_test.json").read_text(encoding="utf-8"))
+        self.assertEqual("colony", scenario["run_type"])
+        self.assertIn("colony.milestone_days", scenario["diagnostics"]["snapshots"]["fields"])
 
     def test_legacy_analysis_accepts_a_partial_selected_snapshot(self):
         analysis = analyze([
