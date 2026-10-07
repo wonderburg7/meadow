@@ -1,6 +1,6 @@
 # Colony Run -- the flagship run's definition and first slices
 
-Status: active | Owner: Dave / Claude Code | Next: COL-13 -- the pacing arc sees a skipped winter, Claude lane, ahead of COL-12 and COL-11 because both compare the arc's survival record, which reads every seed as died until it lands (a COL-6 finding, 7 Oct 2026); COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns, Claude lane (a COL-4 integration finding, Dave 7 Oct 2026); COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate, Claude lane, startable now COL-6 has landed (decision 12, Dave 5 Oct 2026) (COL-6 landed: winter is no longer played -- the day it arrives season.gd::_resolve_winter charges season.gd::winter_bill (bees x energy_burn_rate x winter_burn_factor x winter's seconds) out of the stores, sealed cells included, removes bees until the survivors' bill fits -- drones, then workers, then gynes, oldest first within each, Dave's decision 7 Oct 2026 -- and the queen last, only if the stores cannot cover her share, moves Session.sim_time on by winter's length and fires winter_survived once with the bees it took; year_winter.gd's forecast reads winter_bill and winter_stores; COL-4 landed: a year is `season_length_days` (30) playable days then `winter_length_days` (10) of winter, both saved run settings; the flower fraction restarts after every winter, and winter recurs each year with its countdown derived by season.gd::_winter_countdown_day, so `winter_countdown_start_day` is gone; a level with winter off has a year of only its playable season (Session.year_has_winter, Session.year_days); SF-1's tolerance is 0.20 until COL-12; COL-10 landed: when the queen dies the oldest adult gyne becomes an unmated queen on Egg layer through main.gd::_promote_gyne_to_queen, before colony_lost is set, and succession_panel.gd explains it once; with no gyne the run ends as before; COL-9 landed: an unmated queen (bee.gd::is_mated, saved, true by default) lays drone brood that hatches an Idle drone through main.gd's emergence loop, and set_role refuses him any other job; COL-5 landed: level rows no longer carry the unread unlocks and win_conditions keys; COL-3 landed: game_over.gd offers the latest checkpoint of a Colony Run through saves_panel.gd::reload_from; COL-2 landed: colony_milestones.check_victory records a victory day and opens the win screen with Colony Run wording; COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4, decisions 5-10) is queued in the Codex lane after GC-3, which shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` (Dave, 4 Oct 2026) | Verified: 2026-10-07
+Status: active | Owner: Dave / Claude Code | Next: COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns, Codex lane (a COL-4 integration finding, Dave 7 Oct 2026); COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate, Claude lane, startable now COL-6 has landed (decision 12, Dave 5 Oct 2026) (COL-13 landed: tools/analyze_session.py dates a skipped winter from the game_time jump of winter's length, so the pacing arc shows both winter rows in band and every seed lived; COL-6 landed: winter is no longer played -- the day it arrives season.gd::_resolve_winter charges season.gd::winter_bill (bees x energy_burn_rate x winter_burn_factor x winter's seconds) out of the stores, sealed cells included, removes bees until the survivors' bill fits -- drones, then workers, then gynes, oldest first within each, Dave's decision 7 Oct 2026 -- and the queen last, only if the stores cannot cover her share, moves Session.sim_time on by winter's length and fires winter_survived once with the bees it took; year_winter.gd's forecast reads winter_bill and winter_stores; COL-4 landed: a year is `season_length_days` (30) playable days then `winter_length_days` (10) of winter, both saved run settings; the flower fraction restarts after every winter, and winter recurs each year with its countdown derived by season.gd::_winter_countdown_day, so `winter_countdown_start_day` is gone; a level with winter off has a year of only its playable season (Session.year_has_winter, Session.year_days); SF-1's tolerance is 0.20 until COL-12; COL-10 landed: when the queen dies the oldest adult gyne becomes an unmated queen on Egg layer through main.gd::_promote_gyne_to_queen, before colony_lost is set, and succession_panel.gd explains it once; with no gyne the run ends as before; COL-9 landed: an unmated queen (bee.gd::is_mated, saved, true by default) lays drone brood that hatches an Idle drone through main.gd's emergence loop, and set_role refuses him any other job; COL-5 landed: level rows no longer carry the unread unlocks and win_conditions keys; COL-3 landed: game_over.gd offers the latest checkpoint of a Colony Run through saves_panel.gd::reload_from; COL-2 landed: colony_milestones.check_victory records a victory day and opens the win screen with Colony Run wording; COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4, decisions 5-10) is queued in the Codex lane after GC-3, which shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` (Dave, 4 Oct 2026) | Verified: 2026-10-07
 
 This is the design pass that `plans/design/product-scope.md` §6.2 put next
 (Dave, 30 Sep 2026): run policy for the flagship Colony Run. It ran on 3 Oct
@@ -131,7 +131,6 @@ PE-2's arc (`tools/pacing_gates.py`).
 | --- | --- | --- | --- | --- |
 | COL-12 | the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns | `scripts/main.gd`, `scripts/world_building.gd`, `tests/test_sf1_founding_flower_mix.py`, `test_scenarios/sf1_founding_flower_mix_test.json` | yes -- Codex lane (Dave, 7 Oct 2026), after COL-13 | medium |
 | COL-11 | nuptial flights: an unmated queen can leave each day to find a mate | `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd` | yes -- COL-4, COL-6 and COL-10 have landed | high |
-| COL-13 | the pacing arc sees a skipped winter | `tools/analyze_session.py`, `tests/test_col13_skipped_winter_arc.py` | yes -- ahead of COL-12 and COL-11, whose checks read the arc | medium |
 
 **Dependencies.** COL-4 then COL-6: both edit `scripts/season.gd`, and
 COL-6 needs COL-4's year clock. COL-4 runs in the Codex lane after GC-3
@@ -256,41 +255,4 @@ as settings.
 - Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
 ```
 
-## COL-13 -- the pacing arc sees a skipped winter
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one tool's reading of the log, with fixture tests; no game
-change).
-
-**True now** (found landing COL-6, 7 Oct 2026). Winter is resolved in one
-season tick, so `Session.winter_here` is never true in a diagnostic snapshot.
-`tools/analyze_session.py::_milestone_states` dates `winter_entered_day` and
-`winter_survived_day` only from snapshots with `environment.winter_here`
-true, so the pacing arc reports both as missing, and
-`tools/pacing_gates.py::colony_lived`, which needs `winter_survived_day`,
-calls every seed died (COL-6's record above: three queens of three alive
-at day 43). COL-12's and COL-11's checks compare that record before and
-after, so they would both read a false collapse.
-
-**True afterwards.** `analyze_session.py` recognises a skipped winter in the
-log it already has: two consecutive snapshots whose `game_time` grows by at
-least the run's `winter_length_days` x `seconds_per_day` (the jump season.gd
-makes) date `winter_entered_day` at the earlier snapshot and
-`winter_survived_day` at the later one when the colony is alive there, by the
-same predicate for both the day and the elapsed-time milestone views. A
-played-winter log (the existing `tests/fixtures/headless` files) reads
-exactly as before. `python tools/pacing_gates.py` then shows both winter rows
-inside their band and a lived verdict for a colony that came through.
-
-**Must not change.** `tools/pacing_gates.py` and `tests/test_pacing_gates.py`
-(AR-3's, Codex lane); any game script; the meaning of the other milestones.
-
-```queue
-**[Claude] COL-13 -- the pacing arc sees a skipped winter**
-- Plan: `plans/now/colony-run.md` -- "COL-13 -- the pacing arc sees a skipped winter"
-- Files: `tools/analyze_session.py`, `tests/test_col13_skipped_winter_arc.py`
-- Check: `python -m unittest tests.test_col13_skipped_winter_arc` passes (a log whose clock jumps by winter's length dates winter entered and survived either side of the jump; a played-winter fixture reads as before); `python tools/pacing_gates.py` shows both winter rows in band; `tools/verify.ps1` is green
-- Proof: `absent: tools/analyze_session.py :: skipped winter`
-- Next after: COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns
-```
+COL-13 shipped 2026-10-07; its specification is `plans/archive/COL-13_2026-10-07.md`.
