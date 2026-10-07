@@ -5,7 +5,8 @@ paths:
 
 # GDScript conventions for Meadow
 
-Full bug catalogue: `docs/known-pitfalls.md`. Run the combined check before
+Bug catalogue: `docs/known-pitfalls.md`, "GDScript language and editing" and
+"UI layout and theme" (`python tools/heading.py`). Run the combined check before
 calling a change done:
 
 ```powershell
@@ -34,7 +35,8 @@ and check the diff before trusting a rename across files.
 `scale` on Node2D — four separate occurrences so far. Check what a new
 local/field name already means on the node type it's declared on.
 
-**Section headers, not top-to-bottom reads.** Every long script is
-divided by `# --- section name ---` headers — grep for those (or check
-`FUNCTION_MAP.md` for every script over 700 lines) rather than reading a
-1,000+ line file start to finish.
+**Section headers, not top-to-bottom reads.** Most long scripts are
+divided by `# --- section name ---` headers — grep for those, check
+`FUNCTION_MAP.md` (every script over 700 lines), or read one function with
+`python tools/func.py`. Some (`input_selection.gd`, `fog_of_war.gd`,
+`world_building.gd`) have no headers yet, so `func.py` is the way in.

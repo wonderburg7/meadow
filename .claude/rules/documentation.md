@@ -1,7 +1,6 @@
 ---
 paths:
-  - "*.md"
-  - "docs/**/*.md"
+  - "NEXTSTEPS.md"
   - "plans/**/*.md"
   - "checks/**/*.md"
 ---
@@ -74,9 +73,9 @@ level, the dependencies between them stated explicitly, and what a slice must
 read. Follow `plans/README.md`'s layers and tags.
 
 On a completed slice, update the owning plan, queue, player-check list when a
-real player check remains, and any changed durable contract. **Then move the
-delivered slice's specification to `plans/archive/` in the same pass**,
-leaving a one-line pointer. `tools/check_docs.py` fails a `plans/now/` file
+real player check remains, and any changed durable contract. `finish` then
+moves the delivered slice's specification to `plans/archive/` and leaves a
+one-line pointer (`tools/archive_slice.py`). `tools/check_docs.py` fails a `plans/now/` file
 holding a heading marked DONE, shipped, delivered, landed or superseded, and
 warns past 260 lines. A shipped slice left in a live plan does not merely
 cost context -- it reads as ready work, which is how X3 was queued three days

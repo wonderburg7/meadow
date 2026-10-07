@@ -33,22 +33,9 @@ per lane, cannot conflict by construction.
 
 ## When to merge
 
-**One slice, one branch, one merge, merged as soon as it is green.** There is
-never a reason to hold a finished branch open or to batch two slices into a
-single merge.
-
-A branch is ready to merge when all three are true:
-
-1. `tools/verify.ps1` passes on the branch.
-2. Any hands-on check it produced is written into `checks/ready.md` -- filing
-   the check is what closes the branch. **A branch is never held open waiting
-   for Dave to play-test it.**
-3. Its row here is ready to delete.
-
-Merge order between the two lanes does not matter: whichever finishes first
-merges first, and the other merges on top with no rebase, because the lanes
-share no file. If `git merge` reports a conflict anyway, that is evidence the
-queue's `Files:` lines were wrong -- fix them in the same pass.
+When a branch is ready to merge, and why it is never held for a hands-on
+check: `plans/reference/closeout.md`, "When to merge". Its row here is
+deleted by `finish`.
 
 Both agents merge, push and close out their own lane's branch with
 `tools/slice.ps1 finish`, and neither touches the other lane's. The one

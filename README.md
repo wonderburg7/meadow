@@ -124,7 +124,9 @@ scripts/              all game code
   game_config.gd      balance numbers (autoload)
   session.gd          run state and interface preferences (autoload)
   bee.gd              behaviour, state machine, movement
-  main.gd             world, selection, save/restore, input
+  main.gd             world setup, frame loop, run lifecycle
+  saving.gd           save and restore (with save_game.gd)
+  input_selection.gd  input, selection, placement modes
   hive.gd             comb, soil, indoor navigation
   hive_cell.gd        one cell: contents, brood, designation
   season.gd           the year: seasons, disease, winter, gynes

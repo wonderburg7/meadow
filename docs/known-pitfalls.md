@@ -6,6 +6,8 @@ Moved out of root `CLAUDE.md` in the Aug 2026 context restructure
 automatically when a `.gd` file is touched. Worth knowing, because each
 of these has bitten more than once:
 
+## UI layout and theme
+
 - **A wrapping Label in an HBox with no expand flag reads one letter per
   line.** An autowrap Label's minimum width is about zero, so unless the
   HBox it sits in (and any `UI.with_info()` wrapper round that HBox) has
@@ -15,17 +17,6 @@ of these has bitten more than once:
   (C-49, 12 and 17 Sep 2026). `no_collapsed_controls` in
   `scripts/scenario_actions.gd` now fails on any visible wrapping label
   under 24px wide, and `tests/fixtures/settings_stage_row.json` drives it.
-- **Bulk renames hitting identifiers.** "Architect" → "Comb worker"
-  produced `var comb workers := 0`. Blank screen, because a parse error
-  in `main.gd` means the only scene won't load. `source_checks.py` now
-  catches it. Prefer word-boundary replacements and check the diff.
-- **JSON numbers come back as floats, and `Array.has()` is type-strict.**
-  `JSON.parse_string` turns `[1]` into `[1.0]`; `1 == 1.0` is true, but
-  `[1.0].has(1)` is false. `player_profile.gd::mark_challenge_complete`
-  appended another `1.0` on every Challenge win (Dave's profile reached
-  eight by 1 Oct 2026) and the main menu's completion tick never showed.
-  `completed_challenges()` now returns unique ints; convert any number read
-  from JSON with `int()` before a `has()`, `find()` or dictionary-key lookup.
 - **`Control.set_size()` destroys the anchor you set.** It recomputes all
   four offsets from the control's cached position, so `panel.size.x = w`,
   `panel.size.y = h` and `panel.reset_size()` all silently turn a
@@ -52,20 +43,6 @@ of these has bitten more than once:
   `normal` stylebox no matter how many overrides you add -- "Change to…" drew
   as floating text. When you put a control in a container, assert the
   rectangle it ends up with.
-- **A restriction that lives in the comment and not in the predicate.** Three
-  times now, on the same shape. `challenge_runner.gd::discards_overflow` is
-  the clearest: the comment above its one caller says "Challenge 1 only: by
-  the pollen stage both built cells hold nectar", and the function tests the
-  Challenge, the bee, the resource and nothing about the stage -- so a rule
-  meant for one stage destroyed the queen's nectar at every stage, and Dave
-  found it by watching a load vanish (10 Sep 2026,
-  `plans/archive/CHALLENGE1_2026-09-15.md` Slice 25). Challenge 1's stage 1.13 goal was the
-  same mistake a month earlier: `cell_designated` was documented as "the
-  second cell is set aside for pollen" and implemented as "any cell is
-  designated at all" (Slice 20). When a comment names a narrower case than
-  the code tests, the comment is the specification and the code is the bug.
-  Put the narrowing in the predicate, from a named constant, so a reader
-  cannot find one without the other.
 - **A rectangle with two owners, one of which is dead code.**
   `ui_layout.gd::gallerin_rect()` computes Dr Gallerin's bubble's outer
   rectangle and carries the comment "Not yet wired to a caller --
@@ -93,99 +70,6 @@ of these has bitten more than once:
   it, and the difference was visible to Dave immediately (10 Sep 2026).
   Adding a control to an existing row means giving it that row's variation;
   omitting it is a choice, not a default.
-- **A bee on `State.IDLING` never dispatches again.** `bee.gd` handles that
-  state with `pass   # waits for orders and nothing else`. Assigning a *role*
-  wakes her, because `_apply_role()` ends by setting
-  `_default_state_for_role()`; changing her *focus* does not, because
-  `set_focus()` deliberately leaves the state alone inside the hive and relies
-  on `_go_to_exit()` to pick the change up -- which a parked bee never
-  reaches. Challenge 1's `freeze_bee:queen` effect is what parks her, so a
-  stage that freezes a bee has to say how she starts again.
-- **Variable shadowing built-in properties.** `offset` on Polygon2D,
-  `scale` on Node2D. Four separate occurrences so far.
-- **Coordinate spaces.** `hive_root` and `meadow_root` sit at different
-  world offsets, so local `position` matches a global point only by
-  coincidence in the meadow. Convert once, deliberately.
-- **Nearest-thing searches picking the thing you're standing on.**
-  A flower recharges every frame, so the one a bee just drained keeps
-  winning at distance zero. Any "find the nearest X" needs an exclusion.
-- **Optimising a set too small to need it.** The spatial grid was
-  applied to the 14 obstacles as well as the 250 flowers, and made
-  steering slower: the query touched 25 to 121 buckets and allocated an
-  Array per bee per frame, against a scan of 14 items that allocated
-  nothing. Before adding an index, check the count *and* the call rate.
-  Flowers: 250 objects, 8 queries a second. Obstacles: 14 objects, 60 a
-  second. Only the first is worth indexing.
-- **Allocation churn reads as jitter, not as slowness.** Movement is
-  `speed * delta`, so anything that makes frame times uneven shows up as
-  bees moving in little lurches rather than as a lower FPS number. If
-  something looks twitchy, suspect per-frame allocation before you
-  suspect the steering maths.
-- **Commitments dropped on a single frame.** `skirt_obstacle` is held so
-  a bee doesn't re-pick which way round an obstacle to go and flip at
-  the halfway angle. Clearing it the first frame the way looks clear
-  defeats that, because the check can momentarily miss part-way past.
-- **A refactor leaves a function calling itself.** `_grounded()`'s doc
-  comment said "rain and winter both stop trips", but the rain half
-  had been replaced with `if _grounded(): return true` — the function
-  calling itself, unconditionally, presumably where a real rain check
-  used to be before something got renamed or moved out from under it.
-  (The function is `bee_status.gd::grounded()` since the bee.gd split;
-  this bug predates that move.)
-   This was the entire cause of a 4fps drop (see `plans/archive/PERF_PLAN.md`):
-  GDScript's call stack recursed until it errored out, every single
-  call. Nothing crashed and nothing looked obviously wrong from
-  outside the function, which is what made it worth `perf.gd` finding
-  rather than a read-through. Worth a beat of suspicion any time a doc
-  comment describes two things a function does but only one appears
-  to happen in the body.
-  Any hysteresis needs to survive one bad frame.
-- **A navigable-area loop one ring wider than the area actually built.**
-  `hive.gd::build_navigation` scanned hex rings `0..reach` inclusive;
-  `world_building.gd`'s own dig loops stop at `reach - 1`. Ring `reach`
-  never got a floor, soil or rock tile, so nothing was registered
-  there -- and the walkability check (`_is_solid`) reads "no node
-  registered" as "open floor" by default, not as "doesn't exist yet".
-  The two numbers only had to agree by convention, not by any shared
-  constant, and they'd drifted apart. Found 19 Aug because Challenge
-  1's queen could path onto that phantom ring and wander the empty
-  space outside the rock wall instead of reaching the entrance. Worth
-  a beat of suspicion any time two different loops are meant to cover
-  "the same" range but each computes its own bound.
-- **A leftover line surviving a multi-step edit.** Fixing a comment
-  during one `Edit` call, then fixing the code again in a second call
-  a few turns later, left a stray line from the first version sitting
-  in a function that never used it (`hud.gd`, 19 Aug — see "Verifying
-  without Godot" in `CLAUDE.md`). Passed both check suites; failed to
-  load in Godot. Worth rereading the *whole* function after more than
-  one edit touches it, not just the specific lines each edit changed.
-- **A typed `Array[T]` property can't take a bare `[]` from outside its
-  class.** `bee.known_patches` is declared `Array[Vector2]`; resetting it
-  from another script via `some_dynamically_typed_ref.known_patches = []`
-  throws "Invalid assignment of property or key" at runtime, because an
-  untyped literal isn't coerced into a typed array outside the declaring
-  class's own static context — and it's data-independent, so it throws
-  on the very first call, not just on bad input. Build the typed array in
-  a local var first (`var x: Array[T] = []`, populate, then assign) or
-  return one from a helper, rather than assigning a literal through a
-  reference whose static type doesn't carry the property's declared type.
-  Bit `saving.gd::_restore_bees()` 31 Aug (see
-  `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slice A1) — worth a beat of
-  suspicion for any other `Array[T]`/`Dictionary[K,V]`-typed field a
-  restore/deserialize path resets wholesale from outside its class.
-- **A rule enforced by remembering to check a flag gets forgotten, once
-  per call site.** "During Challenge 1's manual stages the player drives
-  the queen" has been broken and re-fixed six times (9a, 10a, 10b, 10f,
-  10g, and Slice 11), always the same way: a state transition somewhere in
-  `bee_foraging.gd` that nobody thought to guard. The rule was spread over
-  five booleans on `bee.gd`, each named after the symptom that prompted it
-  (`manual_deposit_pending`, `role_change_locked`, `flower_switch_locked`
-  …), written in three places and read in nine, with nothing anywhere
-  listing the transitions that needed guarding. If a rule has to hold at
-  every one of N call sites, give it one name, one choke point, and a
-  `source_checks.py` rule that fails the build when a new call site
-  bypasses it — otherwise the only test is playing the game until it goes
-  wrong. See `plans/archive/CHALLENGE1_2026-09-15.md` Slices 11-12.
 - **Centring a control on the viewport when its two reserves differ.** The
   command tray reserves 390px on the left and 544px on the right, then
   anchors `PRESET_CENTER_BOTTOM` — so it renders 77px right of the band it
@@ -242,6 +126,147 @@ of these has bitten more than once:
   is meant to reach must be reachable from the theme's base type, not only
   from a variation someone remembered to name. See
   `plans/archive/HUD_CONTROLS_2026-09-11.md` HC-9.
+- **A script `_draw` on a `StyleBoxFlat` subclass never runs (28 Sep 2026).**
+  `StyleBoxFlat`, `StyleBoxTexture` and `StyleBoxLine` draw in C++ and do not
+  call a script's `_draw` override, so `PanelBox extends StyleBoxFlat` drew
+  plain flat panels whatever texture was chosen (C-60 failed on this). A
+  headless probe printed from a `StyleBox` subclass's `_draw` and not from a
+  `StyleBoxFlat` one. Extend `StyleBox`, keep the flat box as a member
+  (`PanelBox.flat`) and call its `draw()` first. `tests/source_checks.py`
+  fails any such subclass that defines `_draw`.
+
+## GDScript language and editing
+
+- **Bulk renames hitting identifiers.** "Architect" → "Comb worker"
+  produced `var comb workers := 0`. Blank screen, because a parse error
+  in `main.gd` means the only scene won't load. `source_checks.py` now
+  catches it. Prefer word-boundary replacements and check the diff.
+- **JSON numbers come back as floats, and `Array.has()` is type-strict.**
+  `JSON.parse_string` turns `[1]` into `[1.0]`; `1 == 1.0` is true, but
+  `[1.0].has(1)` is false. `player_profile.gd::mark_challenge_complete`
+  appended another `1.0` on every Challenge win (Dave's profile reached
+  eight by 1 Oct 2026) and the main menu's completion tick never showed.
+  `completed_challenges()` now returns unique ints; convert any number read
+  from JSON with `int()` before a `has()`, `find()` or dictionary-key lookup.
+- **Variable shadowing built-in properties.** `offset` on Polygon2D,
+  `scale` on Node2D. Four separate occurrences so far.
+- **A typed `Array[T]` property can't take a bare `[]` from outside its
+  class.** `bee.known_patches` is declared `Array[Vector2]`; resetting it
+  from another script via `some_dynamically_typed_ref.known_patches = []`
+  throws "Invalid assignment of property or key" at runtime, because an
+  untyped literal isn't coerced into a typed array outside the declaring
+  class's own static context — and it's data-independent, so it throws
+  on the very first call, not just on bad input. Build the typed array in
+  a local var first (`var x: Array[T] = []`, populate, then assign) or
+  return one from a helper, rather than assigning a literal through a
+  reference whose static type doesn't carry the property's declared type.
+  Bit `saving.gd::_restore_bees()` 31 Aug (see
+  `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slice A1) — worth a beat of
+  suspicion for any other `Array[T]`/`Dictionary[K,V]`-typed field a
+  restore/deserialize path resets wholesale from outside its class.
+- **A leftover line surviving a multi-step edit.** Fixing a comment
+  during one `Edit` call, then fixing the code again in a second call
+  a few turns later, left a stray line from the first version sitting
+  in a function that never used it (`hud.gd`, 19 Aug — see "Verifying
+  without Godot" in `CLAUDE.md`). Passed both check suites; failed to
+  load in Godot. Worth rereading the *whole* function after more than
+  one edit touches it, not just the specific lines each edit changed.
+
+## Simulation and behaviour
+
+- **A bee on `State.IDLING` never dispatches again.** `bee.gd` handles that
+  state with `pass   # waits for orders and nothing else`. Assigning a *role*
+  wakes her, because `_apply_role()` ends by setting
+  `_default_state_for_role()`; changing her *focus* does not, because
+  `set_focus()` deliberately leaves the state alone inside the hive and relies
+  on `_go_to_exit()` to pick the change up -- which a parked bee never
+  reaches. Challenge 1's `freeze_bee:queen` effect is what parks her, so a
+  stage that freezes a bee has to say how she starts again.
+- **Coordinate spaces.** `hive_root` and `meadow_root` sit at different
+  world offsets, so local `position` matches a global point only by
+  coincidence in the meadow. Convert once, deliberately.
+- **Nearest-thing searches picking the thing you're standing on.**
+  A flower recharges every frame, so the one a bee just drained keeps
+  winning at distance zero. Any "find the nearest X" needs an exclusion.
+- **Commitments dropped on a single frame.** `skirt_obstacle` is held so
+  a bee doesn't re-pick which way round an obstacle to go and flip at
+  the halfway angle. Clearing it the first frame the way looks clear
+  defeats that, because the check can momentarily miss part-way past.
+- **A refactor leaves a function calling itself.** `_grounded()`'s doc
+  comment said "rain and winter both stop trips", but the rain half
+  had been replaced with `if _grounded(): return true` — the function
+  calling itself, unconditionally, presumably where a real rain check
+  used to be before something got renamed or moved out from under it.
+  (The function is `bee_status.gd::grounded()` since the bee.gd split;
+  this bug predates that move.)
+   This was the entire cause of a 4fps drop (see `plans/archive/PERF_PLAN.md`):
+  GDScript's call stack recursed until it errored out, every single
+  call. Nothing crashed and nothing looked obviously wrong from
+  outside the function, which is what made it worth `perf.gd` finding
+  rather than a read-through. Worth a beat of suspicion any time a doc
+  comment describes two things a function does but only one appears
+  to happen in the body.
+  Any hysteresis needs to survive one bad frame.
+- **A navigable-area loop one ring wider than the area actually built.**
+  `hive.gd::build_navigation` scanned hex rings `0..reach` inclusive;
+  `world_building.gd`'s own dig loops stop at `reach - 1`. Ring `reach`
+  never got a floor, soil or rock tile, so nothing was registered
+  there -- and the walkability check (`_is_solid`) reads "no node
+  registered" as "open floor" by default, not as "doesn't exist yet".
+  The two numbers only had to agree by convention, not by any shared
+  constant, and they'd drifted apart. Found 19 Aug because Challenge
+  1's queen could path onto that phantom ring and wander the empty
+  space outside the rock wall instead of reaching the entrance. Worth
+  a beat of suspicion any time two different loops are meant to cover
+  "the same" range but each computes its own bound.
+- **A marker reparented by some branches and not others ends up in the wrong
+  world.** `challenge_runner.gd::_update_marker` reparents the shared stage
+  marker in two of its four branches. The branch covering stages 1.2, 1.5,
+  1.12 and 1.15 sets a hive-local position and shows the marker without
+  reparenting, so after the meadow tour at 1.7/1.10 the marker stays in the
+  meadow and a yellow dot appears in open ground. If several branches share
+  one node, the parent belongs in one place that always runs, not in each
+  branch that remembers. See `plans/archive/CHALLENGE1_2026-09-15.md` Slice 24.
+- **A bee under `hive_root` is in hive-local coordinates; a flower is not
+  (19 Sep 2026).** Parenting decides the space `bee.position` is in. A
+  Forager idling indoors was dispatched to flower-seeking where she stood,
+  compared her hive-local position with meadow flower positions, and flew to,
+  and drank from, points inside the hive where no flower was -- C-7's pollen
+  half failed on this through three passes while each fix looked elsewhere.
+  Any behaviour that compares a bee's position with a meadow thing must first
+  put her in the meadow; for flowers that rule lives in
+  `bee_foraging.gd::_walk_out_if_indoors`, and `bee.gd::set_focus` says the
+  same for focus changes.
+
+## Checks and rules that pass without proving anything
+
+- **A restriction that lives in the comment and not in the predicate.** Three
+  times now, on the same shape. `challenge_runner.gd::discards_overflow` is
+  the clearest: the comment above its one caller says "Challenge 1 only: by
+  the pollen stage both built cells hold nectar", and the function tests the
+  Challenge, the bee, the resource and nothing about the stage -- so a rule
+  meant for one stage destroyed the queen's nectar at every stage, and Dave
+  found it by watching a load vanish (10 Sep 2026,
+  `plans/archive/CHALLENGE1_2026-09-15.md` Slice 25). Challenge 1's stage 1.13 goal was the
+  same mistake a month earlier: `cell_designated` was documented as "the
+  second cell is set aside for pollen" and implemented as "any cell is
+  designated at all" (Slice 20). When a comment names a narrower case than
+  the code tests, the comment is the specification and the code is the bug.
+  Put the narrowing in the predicate, from a named constant, so a reader
+  cannot find one without the other.
+- **A rule enforced by remembering to check a flag gets forgotten, once
+  per call site.** "During Challenge 1's manual stages the player drives
+  the queen" has been broken and re-fixed six times (9a, 10a, 10b, 10f,
+  10g, and Slice 11), always the same way: a state transition somewhere in
+  `bee_foraging.gd` that nobody thought to guard. The rule was spread over
+  five booleans on `bee.gd`, each named after the symptom that prompted it
+  (`manual_deposit_pending`, `role_change_locked`, `flower_switch_locked`
+  …), written in three places and read in nine, with nothing anywhere
+  listing the transitions that needed guarding. If a rule has to hold at
+  every one of N call sites, give it one name, one choke point, and a
+  `source_checks.py` rule that fails the build when a new call site
+  bypasses it — otherwise the only test is playing the game until it goes
+  wrong. See `plans/archive/CHALLENGE1_2026-09-15.md` Slices 11-12.
 - **A goal that asks "is any of them X" passes on the one that was always
   X.** Challenge 1's stage 1.13 asks the player to set the *second* cell
   aside for pollen; its goal check returned true for any cell with any
@@ -253,14 +278,21 @@ of these has bitten more than once:
   a player's choice must distinguish the choice from the automatic default;
   `designation_is_explicit` was already there to do it. See
   `plans/archive/CHALLENGE1_2026-09-15.md` Slice 20.
-- **A marker reparented by some branches and not others ends up in the wrong
-  world.** `challenge_runner.gd::_update_marker` reparents the shared stage
-  marker in two of its four branches. The branch covering stages 1.2, 1.5,
-  1.12 and 1.15 sets a hive-local position and shows the marker without
-  reparenting, so after the meadow tour at 1.7/1.10 the marker stays in the
-  meadow and a yellow dot appears in open ground. If several branches share
-  one node, the parent belongs in one place that always runs, not in each
-  branch that remembers. See `plans/archive/CHALLENGE1_2026-09-15.md` Slice 24.
+
+## Performance
+
+- **Optimising a set too small to need it.** The spatial grid was
+  applied to the 14 obstacles as well as the 250 flowers, and made
+  steering slower: the query touched 25 to 121 buckets and allocated an
+  Array per bee per frame, against a scan of 14 items that allocated
+  nothing. Before adding an index, check the count *and* the call rate.
+  Flowers: 250 objects, 8 queries a second. Obstacles: 14 objects, 60 a
+  second. Only the first is worth indexing.
+- **Allocation churn reads as jitter, not as slowness.** Movement is
+  `speed * delta`, so anything that makes frame times uneven shows up as
+  bees moving in little lurches rather than as a lower FPS number. If
+  something looks twitchy, suspect per-frame allocation before you
+  suspect the steering maths.
 
 ## PowerShell tooling: three ways `slice.ps1 finish` broke at once
 
@@ -510,26 +542,6 @@ refuse only the part that should be refused.
 The read-only inspection commands this project actually uses are allow-listed
 in `.claude/settings.json`; if a plain `sed -n`/`grep`/`git show` is refused,
 the path it names is denied on purpose — do not reach for a workaround.
-
-**A script `_draw` on a `StyleBoxFlat` subclass never runs (28 Sep 2026).**
-`StyleBoxFlat`, `StyleBoxTexture` and `StyleBoxLine` draw in C++ and do not
-call a script's `_draw` override, so `PanelBox extends StyleBoxFlat` drew
-plain flat panels whatever texture was chosen (C-60 failed on this). A
-headless probe printed from a `StyleBox` subclass's `_draw` and not from a
-`StyleBoxFlat` one. Extend `StyleBox`, keep the flat box as a member
-(`PanelBox.flat`) and call its `draw()` first. `tests/source_checks.py`
-fails any such subclass that defines `_draw`.
-
-**A bee under `hive_root` is in hive-local coordinates; a flower is not
-(19 Sep 2026).** Parenting decides the space `bee.position` is in. A
-Forager idling indoors was dispatched to flower-seeking where she stood,
-compared her hive-local position with meadow flower positions, and flew to,
-and drank from, points inside the hive where no flower was -- C-7's pollen
-half failed on this through three passes while each fix looked elsewhere.
-Any behaviour that compares a bee's position with a meadow thing must first
-put her in the meadow; for flowers that rule lives in
-`bee_foraging.gd::_walk_out_if_indoors`, and `bee.gd::set_focus` says the
-same for focus changes.
 
 **Why four paths are denied to the `Read` tool, and the one sanctioned way
 round it (Dave, 18 Sep 2026).** `ROADMAP.md`, `DESIGN_BACKLOG.md`,

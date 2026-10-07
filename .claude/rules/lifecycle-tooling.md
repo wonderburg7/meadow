@@ -5,13 +5,17 @@ paths:
   - "tools/verify.ps1"
   - "tools/archive_slice.py"
   - "tools/refill_lane.py"
-  - "tests/test_*.py"
+  - "tests/test_source_checks.py"
+  - "tests/test_slice_lifecycle.py"
+  - "tests/test_two_lane_closeout.py"
+  - "tests/test_codex_environment.py"
+  - "tests/test_review_tools.py"
   - "tests/workflow_test_support.py"
 ---
 
 # Lifecycle tooling: read a function, not a file
 
-`tools/slice.ps1` is ~1,400 lines and was read whole 44 times in six days.
+`tools/slice.ps1` is ~2,400 lines and was read whole 44 times in six days.
 Its top comment indexes its sections; find a function with
 `grep -n "^function <Name>" tools/slice.ps1` and read only that range. A
 failing lifecycle command prints a "slice <command> stopped" block with the
