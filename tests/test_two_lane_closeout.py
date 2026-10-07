@@ -257,6 +257,68 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         self.assertEqual(0, retry.returncode, retry.stderr)
         self.assertTrue((self.root / ".worktrees" / "A-1").exists())
 
+    def slow_verifier(self, worktree, signals):
+        """Replace the worktree's verify.ps1 with one whose branch scope
+        announces itself in `signals` and blocks until `release` appears."""
+        signal_dir = str(signals).replace("'", "''")
+        (worktree / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet, [string]$Scope)\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath; exit 0 }\n"
+            "if ($Scope -eq 'branch') {\n"
+            f"    Set-Content -LiteralPath '{signal_dir}\\verifying' -Value $PID\n"
+            f"    while (-not (Test-Path -LiteralPath '{signal_dir}\\release')) {{ Start-Sleep -Milliseconds 200 }}\n"
+            "}\nexit 0\n",
+            encoding="utf-8",
+        )
+
+    def wait_for(self, path, process, seconds=60):
+        deadline = time.time() + seconds
+        while time.time() < deadline and not path.exists():
+            if process.poll() is not None:
+                self.fail(f"finish exited before {path.name} appeared: {process.communicate()}")
+            time.sleep(0.2)
+        self.assertTrue(path.exists(), f"{path.name} never appeared")
+
+    def test_branch_verification_does_not_hold_the_lifecycle_lock(self):
+        # 7 Oct 2026: finish verified the branch under the lock, so the other
+        # lane's start or finish queued behind every 5-7 minute verify.
+        self.write_two_lane_queue()
+        start_a = self.run_slice("start", "-Lane", "Claude")
+        self.assertEqual(0, start_a.returncode, start_a.stderr)
+        worktree_a = self.root / ".worktrees" / "A-1"
+        signals = Path(self.remote_dir.name) / "signals"
+        signals.mkdir()
+        self.slow_verifier(worktree_a, signals)
+        self.deliver(worktree_a, "sample.gd", "A-1", self.ANCHOR_ITEM + "\n" + self.CODEX_ITEM)
+
+        finishing = subprocess.Popen(
+            [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
+                str(worktree_a).replace("'", "''"), str(worktree_a / "tools" / "slice.ps1").replace("'", "''")
+            )],
+            cwd=self.root, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+        )
+        try:
+            self.wait_for(signals / "verifying", finishing)
+            # The other lane claims at once: no wait, no refusal.
+            start_b = self.run_slice("start", "-Lane", "Codex", "-LockWaitSeconds", "0")
+            self.assertEqual(0, start_b.returncode, start_b.stderr)
+            self.assertNotIn("slice lifecycle is busy", start_b.stderr)
+            # A retried finish of the same worktree refuses rather than
+            # verifying it a second time alongside the first.
+            retry = self.run_finish(worktree_a)
+            self.assertNotEqual(0, retry.returncode)
+            self.assertIn("another finish is already verifying this worktree", retry.stdout + retry.stderr)
+            status = self.run_slice("status", "-Lane", "Claude")
+            self.assertIn("finish verifying the branch", status.stdout, status.stderr)
+        finally:
+            (signals / "release").write_text("go", encoding="utf-8")
+            out, err = finishing.communicate(timeout=120)
+
+        self.assertEqual(0, finishing.returncode, out + err)
+        self.assertFalse(worktree_a.exists())
+        self.assertFalse(self.branch_exists("claude/A-1"))
+        self.assertTrue((self.root / ".worktrees" / "B-1").exists())
+
     def test_one_lane_finishing_leaves_the_other_untouched(self):
         self.write_two_lane_queue()
         self.assertEqual(0, self.run_slice("start", "-Lane", "Claude").returncode)

@@ -194,7 +194,13 @@ explicit request from Dave.
   touch shared state (merge, archive, refill, ledger). Run branch
   verification before taking it, and have the merge step refuse if master
   moved while verify ran.
-- Disposition: untriaged
+- Disposition: fixed 7 Oct 2026 (ad-hoc, Dave's go-ahead in session):
+  `finish` runs branch verification before taking the lock and records the
+  pass in the worktree's own git directory; a guard file refuses a second
+  verify of the same worktree. Primary-scope verify is only
+  `check_docs.py`, so it stays under the lock, and no "master moved" check
+  was needed: branch verify never tested the merge result.
+  `test_branch_verification_does_not_hold_the_lifecycle_lock` holds it.
 
 ### 2026-10-07 — the Codex sandbox question was "Rejected" pending a decision nobody has asked Dave for
 
@@ -212,7 +218,12 @@ explicit request from Dave.
 - Candidate direction: Hypothesis — the agent workflow review puts the
   sandbox-home options and their costs to Dave in session, and records the
   answer in `plans/now/codex-guidance.md`.
-- Disposition: untriaged
+- Disposition: decided 7 Oct 2026. The probe now launches (codex-cli
+  0.159.2); elevated mode refuses Python under `%LOCALAPPDATA%`, and with
+  `-c 'windows.sandbox="unelevated"'` the Godot compile check passes in the
+  sandbox. Dave chose to record that recipe rather than change the sandbox
+  setting or move Python (`plans/now/codex-guidance.md`,
+  `docs/known-pitfalls.md`).
 
 ### 2026-10-07 — every test-adding slice owns `tools/verify.ps1`, so the lanes cannot both hold one
 

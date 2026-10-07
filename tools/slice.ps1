@@ -51,6 +51,7 @@ $script:SliceStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 #   --- briefing ---            Get-SliceReadCommand, Get-SliceAdvice, Get-SlicePreflight
 #   --- environment ---         Get-GodotCapability, Get-DoctorEnvironmentFailures
 #   --- commands ---            Invoke-SliceDoctor/Start/Status/Resume/Abort/Finish, Invoke-SliceArchiveAndRefill, Invoke-SliceQueueReapply
+#                               Invoke-SliceFinishVerify/BranchVerify (finish's branch verify, before the lock)
 #   --- post-merge ---          Invoke-SlicePostMergeCleanup
 # A failing command prints one "slice <command> stopped" block naming the
 # step, cause, fix and how to retry. That block is the diagnosis.
@@ -1753,6 +1754,8 @@ function Invoke-SliceStatus {
         git -C $root show-ref --verify --quiet "refs/heads/$branch"
         $branchExists = $LASTEXITCODE -eq 0
         $phase = if ($branchExists -and (Test-SliceBranchMerged -Root $root -Branch $branch)) { "merged; cleanup pending" } elseif ($worktreeExists) { "working" } elseif ($branchExists) { "worktree missing; resumable" } else { "ledger-only; repair required" }
+        # A finish verifying outside the lifecycle lock shows here, not as `running`.
+        if ($phase -eq "working" -and (Get-LifecycleHolder -LockPath (Get-BranchVerifyFilePath -WorktreeRoot (Join-Path $root $worktreeRelative) -Name "meadow-slice-verify.lock"))) { $phase = "finish verifying the branch (outside the lifecycle lock)" }
         [PSCustomObject]@{ id=$id; lane=$row.Lane; branch=$branch; worktree=$worktreeRelative; state=$phase }
     }
     if (-not $states) { $states = @([PSCustomObject]@{ state="idle" }) }
@@ -2034,14 +2037,18 @@ function Invoke-SliceQueueReapply {
 function Stop-WorktreeGodot {
     param([string]$Root)
     $needle = ([System.IO.Path]::GetFullPath($Root)).TrimEnd('\').Replace('\', '/').ToLowerInvariant()
+    # The path must end where the needle does: a bare substring match let
+    # finishing COL-1 kill a Godot that COL-11's verify is running.
+    $pattern = [regex]::Escape($needle) + '(?=$|[/"''\s])'
     Get-CimInstance Win32_Process -Filter "Name LIKE 'Godot%'" -ErrorAction SilentlyContinue |
-        Where-Object { $_.CommandLine -and $_.CommandLine.Replace('\', '/').ToLowerInvariant().Contains($needle) } |
+        Where-Object { $_.CommandLine -and [regex]::IsMatch($_.CommandLine.Replace('\', '/').ToLowerInvariant(), $pattern) } |
         ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 }
 
-function Invoke-SliceFinish {
-    param([string]$PythonPath)
-
+function Get-SliceFinishTarget {
+    # The slice a `finish` run from the current directory closes. Both halves
+    # of finish resolve it: the branch verification before the lifecycle lock
+    # and the closeout under it.
     $worktreeRoot = (Get-Location).Path
     $root = Get-PrimaryRoot
 
@@ -2062,16 +2069,65 @@ function Invoke-SliceFinish {
     $lane = if ($branchMatch.Groups["prefix"].Value -eq "claude") { "Claude" } else { "Codex" }
     $script:SliceContext.Id = $id
     $script:SliceContext.Lane = $lane
-    Write-LifecycleHolderNote
-    $otherLane = if ($lane -eq "Claude") { "Codex" } else { "Claude" }
-    $trailer = Get-LaneTrailer -Lane $lane
-    $worktreeRelative = ".worktrees/$id"
+    return [PSCustomObject]@{ WorktreeRoot = $worktreeRoot; Root = $root; Branch = $branch; Id = $id; Lane = $lane }
+}
 
-    $journal = Get-ClosingJournal -Root $worktreeRoot -Branch $branch
+# Branch verification runs before finish takes the lifecycle lock. It was
+# most of a closeout and touches only the slice's own worktree, yet while it
+# ran under the lock the other lane's start or finish queued behind it for
+# 5-7 minutes (51 "busy" stops by 5 Oct 2026). Its pass is recorded in the
+# worktree's own git directory, not in the closing journal: that journal is
+# one file both lanes share, so only a lock holder writes it, and the locked
+# half copies the record across. A guard file beside the record stops a
+# retried finish verifying the same worktree twice at once -- the retry
+# 27 Sep's lost console produced. `resume` calls Invoke-SliceFinish under
+# the lock directly, so a branch with no record is verified there instead.
+function Get-BranchVerifyFilePath {
+    param([string]$WorktreeRoot, [string]$Name)
+    $gitDir = (git -C $WorktreeRoot rev-parse --git-dir).Trim()
+    if (-not [System.IO.Path]::IsPathRooted($gitDir)) { $gitDir = Join-Path $WorktreeRoot $gitDir }
+    return Join-Path $gitDir $Name
+}
 
-    $verifyScript = Join-Path $worktreeRoot "tools\verify.ps1"
+function Test-BranchVerified {
+    param($Target)
+    $journal = Get-ClosingJournal -Root $Target.WorktreeRoot -Branch $Target.Branch
+    if (Test-ClosingPhaseDone -Journal $journal -Phase "verified") { return $true }
+    $recordPath = Get-BranchVerifyFilePath -WorktreeRoot $Target.WorktreeRoot -Name "meadow-slice-verified.json"
+    if (-not (Test-Path -LiteralPath $recordPath)) { return $false }
+    try { $record = Get-Content -Raw -LiteralPath $recordPath | ConvertFrom-Json } catch { return $false }
+    return ([string]$record.branch -eq $Target.Branch)
+}
+
+function Invoke-SliceBranchVerify {
+    param($Target, [string]$PythonPath)
+    $id = $Target.Id
+    $worktreeRoot = $Target.WorktreeRoot
     Set-SliceStep "branch verification (tools/verify.ps1 -Scope branch)"
-    if (-not (Test-ClosingPhaseDone -Journal $journal -Phase "verified")) {
+    if (Test-BranchVerified -Target $Target) {
+        Write-Output "$id -- tools/verify.ps1 (-Scope branch) already passed this closeout; skipping"
+        return
+    }
+
+    $guardPath = Get-BranchVerifyFilePath -WorktreeRoot $worktreeRoot -Name "meadow-slice-verify.lock"
+    $guard = $null
+    try {
+        try {
+            $guard = [System.IO.File]::Open($guardPath, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::Write, [System.IO.FileShare]::Read)
+        }
+        catch [System.IO.IOException] {
+            $holder = Get-LifecycleHolder -LockPath $guardPath
+            $who = if ($holder) { "PID $($holder.pid), since $($holder.started)" } else { "its holder note is not readable" }
+            $wait = if ($holder) { "PowerShell: Wait-Process -Id $($holder.pid)" } else { "check tools/slice.ps1 status" }
+            Stop-Slice -Cause "$id -- another finish is already verifying this worktree ($who)" -Fix "if that is your own earlier call, it has not stopped -- wait for it ($wait) instead of starting another; it carries on into the closeout by itself"
+        }
+        $note = [ordered]@{ command = "finish"; id = $id; lane = $Target.Lane; pid = $PID; cwd = $worktreeRoot; started = (Get-Date).ToString("s") }
+        $noteBytes = (New-Object System.Text.UTF8Encoding $false).GetBytes(($note | ConvertTo-Json -Compress))
+        $guard.SetLength(0)
+        $guard.Write($noteBytes, 0, $noteBytes.Length)
+        $guard.Flush()
+
+        $verifyScript = Join-Path $worktreeRoot "tools\verify.ps1"
         $verifyCmd = Get-Command $verifyScript
         # A hashtable splat, not an array: array splatting passes its elements as
         # positional arguments, so "-Quiet" bound to verify.ps1's $PythonPath and
@@ -2110,10 +2166,51 @@ function Invoke-SliceFinish {
             Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched ($(Get-VerifyFailureSummary -Output @($verifyOutput | ForEach-Object { "$_" })))" -Fix "the failing check is printed above this block and saved to $verifyLog. Fix it on the branch, commit, and retry. If the only failure is the Godot compile check with 'Could not preload resource', the worktree's .godot import cache is stale and the automatic refresh could not fix it -- run python tools/godot_cache.py --force in the worktree; it is not a code fault"
         }
         Invoke-InjectedLifecycleFailure -Phase "verified"
-        Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "verified"
+        $head = (Invoke-GitText -C $worktreeRoot rev-parse HEAD).Text.Trim()
+        $recordPath = Get-BranchVerifyFilePath -WorktreeRoot $worktreeRoot -Name "meadow-slice-verified.json"
+        [System.IO.File]::WriteAllText($recordPath, ([ordered]@{ branch = $Target.Branch; head = $head; at = (Get-Date).ToString("s") } | ConvertTo-Json -Compress), (New-Object System.Text.UTF8Encoding $false))
     }
-    else {
-        Write-Output "$id -- tools/verify.ps1 (-Scope branch) already passed this closeout; skipping"
+    finally {
+        if ($guard) { $guard.Dispose(); Remove-Item -LiteralPath $guardPath -Force -ErrorAction SilentlyContinue }
+    }
+}
+
+function Invoke-SliceFinishVerify {
+    # finish's half before the lock. A stop here never reaches
+    # Invoke-WithLifecycleLock's outcome record, so it writes its own and
+    # `status` can still say how the finish ended.
+    param([string]$Root, [string]$PythonPath)
+    $started = Get-Date
+    try {
+        Invoke-SliceBranchVerify -Target (Get-SliceFinishTarget) -PythonPath $PythonPath
+    }
+    catch {
+        Write-LifecycleOutcome -Root $Root -Started $started -Outcome "stopped" -Cause $_.Exception.Message
+        throw
+    }
+}
+
+function Invoke-SliceFinish {
+    param([string]$PythonPath)
+
+    $target = Get-SliceFinishTarget
+    $worktreeRoot = $target.WorktreeRoot
+    $root = $target.Root
+    $branch = $target.Branch
+    $id = $target.Id
+    $lane = $target.Lane
+    Write-LifecycleHolderNote
+    $otherLane = if ($lane -eq "Claude") { "Codex" } else { "Claude" }
+    $trailer = Get-LaneTrailer -Lane $lane
+    $worktreeRelative = ".worktrees/$id"
+
+    $journal = Get-ClosingJournal -Root $worktreeRoot -Branch $branch
+
+    # Normally a no-op: `finish` verified before taking the lock. `resume`
+    # reaches here without that, and verifies under the lock as before.
+    Invoke-SliceBranchVerify -Target $target -PythonPath $PythonPath
+    if (-not (Test-ClosingPhaseDone -Journal $journal -Phase "verified")) {
+        Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "verified"
     }
 
     # The delivered item's own metadata (Title, Check, Plan, Heading, Next
@@ -2396,7 +2493,7 @@ function Invoke-SliceFinish {
 try {
 switch ($Command) {
     "start"  { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Invoke-WithLifecycleLock -Root $root { Invoke-SliceStart -Lane $Lane } }
-    "finish" { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Invoke-WithLifecycleLock -Root $root { Invoke-SliceFinish -PythonPath $PythonPath } }
+    "finish" { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Invoke-SliceFinishVerify -Root $root -PythonPath $PythonPath; Invoke-WithLifecycleLock -Root $root { Invoke-SliceFinish -PythonPath $PythonPath } }
     "doctor" { Invoke-SliceDoctor -Lane $Lane -PythonPath $PythonPath }
     "status" { Invoke-SliceStatus -Lane $Lane }
     "resume" { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Invoke-WithLifecycleLock -Root $root { Invoke-SliceResume -Lane $Lane -PythonPath $PythonPath } }
