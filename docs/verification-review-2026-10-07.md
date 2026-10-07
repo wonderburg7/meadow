@@ -51,7 +51,10 @@ Reviewed: b9854e5 | Since: 9ec0faf | Scope: verify.ps1 stage timings and failure
 
 - The 12 long scenarios outside the sweep.
 - Whether C-81 (Nurse locked until bought) can be proved headlessly: the role menu has no scenario query today.
-- A real-template alpha boot: it needs F6's install.
+- A real-template alpha boot: it needs F6's install. Done later on 7 Oct, once
+  Dave installed the templates: the archive built (39 MB) and booted headless
+  with no errors. The export also packed 350 editor-only addon files, which
+  `exclude_filter` now leaves out (`test_alpha_build.py` guards it).
 
 ## Patterns deliberately not applied
 

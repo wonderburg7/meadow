@@ -54,6 +54,7 @@ and a newer save is refused. All versions the game has written are covered.
   `history_samples`, `emergence_log`, `day_store_totals`) starts empty after a
   load. Whether the player should see it continue is a presentation call; if
   so, it comes back here as a schema question.
+  Signal log: "2026-10-07 — readout history starts empty after every load".
 
 ## Noted, not pursued
 

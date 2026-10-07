@@ -1,1 +1,4 @@
 * text=auto
+# Godot rewrites .import files with LF on every import; checking them out as
+# CRLF made every worktree read dirty with an empty diff (7 Oct 2026).
+*.import text eol=lf
