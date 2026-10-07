@@ -863,6 +863,14 @@ var disease_lifespan_penalty: float = 0.4
 var gyne_release_day: float = 0.75   # fraction of the season, earliest
 var gyne_release_energy: float = 0.8 # share of a full crop she needs first
 
+# --- nuptial flights ---
+## COL-11. An unmated queen on nuptial flights rolls once each time she
+## comes home: this chance, times the season's mating curve
+## (season.gd::mating_curve -- 0 outside late spring to early autumn, 1 at
+## mid summer). A starting figure, not yet simulated against a run that
+## loses its queen.
+var nuptial_flight_peak_chance: float = 0.5
+
 # --- winter ---
 ## How long a winter is and what it costs. Its countdown opens relative to
 ## each playable season; the resulting dates (Session.winter_starts_day and

@@ -766,6 +766,12 @@ const TUNABLES := [
 		"category": "Seasons & health",
 		"tip": "How full a gyne's crop has to be before she will leave, as a share of capacity. She is founding a colony on what she carries.",
 	},
+	{
+		"persist": "none",
+		"key": "nuptial_flight_peak_chance", "label": "Mating chance", "step": 0.05, "min": 0.0, "max": 1.0,
+		"category": "Seasons & health",
+		"tip": "The chance an unmated queen finds a mate on one nuptial flight in mid summer. It falls away either side and is nothing outside late spring to early autumn. Each flight takes her out of the hive for part of a day, so a lower chance means more days without new workers.",
+	},
 
 	# --- Winter ---
 	{
