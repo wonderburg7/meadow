@@ -85,10 +85,10 @@ SPR-2 scenarios use 100 cells (500 bees) and 150 cells (1,000 bees).
 | Bees | Draw calls (mean) | Render objects (mean) | Nodes | Windowed frame | Headless frame |
 | --- | --- | --- | --- | --- | --- |
 | 200 | 253 | 409 | 15,812 | 9.8 / 11.0 | 7.5 / 8.7 |
-| 500 | 253 | 409 | 20,112 | 17.1 / 19.4 | 33.2 / 62.0 |
+| 500 | 253 | 409 | 20,112 | 17.1 / 19.4 | 33.2-39.4 / 62.0-69.7 |
 | 1,000 | 1,181 | 1,337 | 27,112 | 32.1 / 39.4 | 26.4 / 33.5 |
 
-The 500-bee headless run was disturbed by something else on the machine, so its
-headless figure is not a clean drawing-share baseline; 500-bee draw calls equal
-the 200-bee figure, which suggests the visible view still shows only part of
-the colony. The windowed p95 first passes 16.7 ms at 500 bees.
+The slow 500-bee headless frame reproduced in two runs (33.2 and 39.4 ms mean) and is slower than the
+1,000-bee headless frame, so it is not noise. The cause is not yet known; one candidate is cell
+density (500 bees in 100 cells, 1,000 bees in 150). Separately, the 500-bee draw calls equal the
+200-bee figure, which is an observation only. The windowed p95 first passes 16.7 ms at 500 bees.
