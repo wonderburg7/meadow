@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/COL-6` (`claude/COL-6`) | Claude | winter is skipped and resolved in one step | Claude | in progress | none | `plans/now/colony-run.md` COL-6 -- winter is skipped and resolved in one step |
+| `.worktrees/AR-3` (`codex/AR-3`) | Codex | the pacing report presents every alpha gate and its evidence boundary | Codex | in progress | none | `plans/now/alpha-route-evidence.md` AR-3 -- the pacing report presents every alpha gate and its evidence boundary |
