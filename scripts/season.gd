@@ -181,23 +181,28 @@ func winter_bill(bees: int, days: float = -1.0) -> float:
 func winter_stores() -> float:
 	return world.hive.total("nectar") + world.hive.total_honey() * GameConfig.honey_energy_factor
 
-## Who the stores cannot carry through `days` of winter. Workers go oldest
-## first (by age_seconds) until the survivors' bill fits what is held. A
-## drone goes with the workers -- he does no work -- but a gyne is never
-## billed away. The queen goes only if the stores cannot cover even her own
-## share. Brood is a cell, not a bee, so it stays outside the bill.
+## Who the stores cannot carry through `days` of winter. While the
+## survivors' bill is more than is held, bees go in this order (Dave's
+## decision, 7 Oct 2026): drones, then workers, then gynes, the oldest first
+## (by age_seconds) within each group. The queen goes last, and only if the
+## stores cannot cover even her own share. Brood is a cell, not a bee, so it
+## stays outside the bill. Reads only is_queen, is_gyne, is_drone and
+## age_seconds, so tests/test_col6_winter_skip.py can hand it stand-ins.
 func _winter_losses(bees: Array, held: float, days: float) -> Array:
 	var lost: Array = []
 	if held >= winter_bill(bees.size(), days):
 		return lost
-	var billable: Array = bees.filter(func(bee): return not bee.is_queen and not bee.is_gyne)
-	billable.sort_custom(func(a, b): return a.age_seconds > b.age_seconds)
+	var drones: Array = bees.filter(func(bee): return bee.is_drone and not bee.is_queen)
+	var workers: Array = bees.filter(func(bee): return not bee.is_drone and not bee.is_gyne and not bee.is_queen)
+	var gynes: Array = bees.filter(func(bee): return bee.is_gyne and not bee.is_queen)
 	var survivors: int = bees.size()
-	for bee in billable:
-		if held >= winter_bill(survivors, days):
-			break
-		lost.append(bee)
-		survivors -= 1
+	for group in [drones, workers, gynes]:
+		group.sort_custom(func(a, b): return a.age_seconds > b.age_seconds)
+		for bee in group:
+			if held >= winter_bill(survivors, days):
+				return lost
+			lost.append(bee)
+			survivors -= 1
 	if held < winter_bill(1, days):
 		for bee in bees:
 			if bee.is_queen:
