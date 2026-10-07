@@ -23,9 +23,9 @@ the live world instead. Writes go straight to the target path with
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SI-1 | disease, crab-spider species and the rival colony survive a load | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/rival_hive.gd`, `scripts/main.gd`, `tests/si1_run_state_test.gd`, `tests/test_si1_run_state.py`, `tools/verify.ps1` | yes | medium |
-| SI-2 | a checkpoint restore puts back soil dug since the checkpoint | `scripts/saving.gd`, `tests/si2_exact_rollback_test.gd`, `tests/test_si2_exact_rollback.py`, `tools/verify.ps1` | after SI-1 | medium |
-| SI-3 | save, checkpoint and index writes are all-or-nothing | `scripts/save_slots.gd`, `scripts/save_game.gd`, `tests/si3_atomic_write_test.gd`, `tests/test_si3_atomic_write.py`, `tools/verify.ps1` | after SI-2 | medium |
+| SI-1 | disease, crab-spider species and the rival colony survive a load | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/rival_hive.gd`, `scripts/main.gd`, `tests/si1_run_state_test.gd`, `tests/test_si1_run_state.py` | yes | medium |
+| SI-2 | a checkpoint restore puts back soil dug since the checkpoint | `scripts/saving.gd`, `tests/si2_exact_rollback_test.gd`, `tests/test_si2_exact_rollback.py` | after SI-1 | medium |
+| SI-3 | save, checkpoint and index writes are all-or-nothing | `scripts/save_slots.gd`, `scripts/save_game.gd`, `tests/si3_atomic_write_test.gd`, `tests/test_si3_atomic_write.py` | after SI-2 | medium |
 
 Dependencies: SI-1, SI-2 and SI-3 share `saving.gd`/`save_game.gd`, so they
 run one after another in that order (most player-visible first). Each slice
@@ -90,8 +90,8 @@ all of them, sets `Session.control_groups[1] = [1]`, reads the file back with
 the saved one. A second save with the rival collapsed (`_collapse()`) must
 restore `alive == false` and `population == 0`. A third read of a save with
 the three keys erased must leave disease 0, species `""` and the rival as
-`_ready()` built it. Delete the test save at the end. Register
-`tests.test_si1_run_state` in `tools/verify.ps1`'s `$unitModules`.
+`_ready()` built it. Delete the test save at the end. `tools/verify.ps1` finds the new module
+itself.
 `python -m unittest tests.test_si1_run_state` passes and prints
 `SI1 PASS`.
 
@@ -102,7 +102,7 @@ anything beyond `_collapse()`.
 ```queue
 **[Claude] SI-1 -- disease, crab-spider species and the rival colony survive a load**
 - Plan: `plans/now/save-integrity.md` -- "SI-1 -- disease, crab-spider species and the rival colony survive a load"
-- Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/rival_hive.gd`, `scripts/main.gd`, `tests/si1_run_state_test.gd`, `tests/test_si1_run_state.py`, `tools/verify.ps1`
+- Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/rival_hive.gd`, `scripts/main.gd`, `tests/si1_run_state_test.gd`, `tests/test_si1_run_state.py`
 - Check: `python -m unittest tests.test_si1_run_state` passes with `SI1 PASS`; `.\tools\verify.ps1` is green
 - Proof: `absent: scripts/save_game.gd :: crab_spider_species`
 - Next after: SI-2 -- a checkpoint restore puts back soil dug since the checkpoint
@@ -157,7 +157,7 @@ and `refresh_edge_flags()`.
 ```queue
 **[Claude] SI-2 -- a checkpoint restore puts back soil dug since the checkpoint**
 - Plan: `plans/now/save-integrity.md` -- "SI-2 -- a checkpoint restore puts back soil dug since the checkpoint"
-- Files: `scripts/saving.gd`, `tests/si2_exact_rollback_test.gd`, `tests/test_si2_exact_rollback.py`, `tools/verify.ps1`
+- Files: `scripts/saving.gd`, `tests/si2_exact_rollback_test.gd`, `tests/test_si2_exact_rollback.py`
 - Check: `python -m unittest tests.test_si2_exact_rollback` passes with `SI2 PASS`; `python tools/run_scenario.py test_scenarios/sv1_named_saves_test.json` passes; `.\tools\verify.ps1` is green
 - Proof: `absent: scripts/saving.gd :: _add_soil_block`
 - Next after: SI-3 -- save, checkpoint and index writes are all-or-nothing
@@ -216,7 +216,7 @@ file is Dave's).
 ```queue
 **[Claude] SI-3 -- save, checkpoint and index writes are all-or-nothing**
 - Plan: `plans/now/save-integrity.md` -- "SI-3 -- save, checkpoint and index writes are all-or-nothing"
-- Files: `scripts/save_slots.gd`, `scripts/save_game.gd`, `tests/si3_atomic_write_test.gd`, `tests/test_si3_atomic_write.py`, `tools/verify.ps1`
+- Files: `scripts/save_slots.gd`, `scripts/save_game.gd`, `tests/si3_atomic_write_test.gd`, `tests/test_si3_atomic_write.py`
 - Check: `python -m unittest tests.test_si3_atomic_write` passes with `SI3 PASS`; `python tools/run_scenario.py test_scenarios/sv1_named_saves_test.json` passes; `.\tools\verify.ps1` is green
 - Proof: `absent: scripts/save_slots.gd :: write_atomic`
 - Next after: none -- plans/now/save-integrity.md is complete once SI-3 lands
