@@ -17,7 +17,7 @@ Reviewed: b9854e5 | Since: 9ec0faf | Scope: verify.ps1 stage timings and failure
 | Hand-off: sf1 red | Shipped -- c4cbb6a (SR-5) fixed it; it runs in verify |
 | Hand-off: g3, h5 red | Shipped -- d040a58, 6f5e863 |
 | Hand-off: forage_radius_wide, uiw3 red | Shipped -- both pass under `scenario_sweep.py --only` today |
-| Hand-off: headless-run-contract pointer to the sweep | Rejected -- still absent and still the plan review's; repeated under Hand-offs |
+| Hand-off: headless-run-contract pointer to the sweep | Shipped -- added this session (see Hand-offs) |
 
 ## Findings
 
@@ -33,9 +33,10 @@ Reviewed: b9854e5 | Since: 9ec0faf | Scope: verify.ps1 stage timings and failure
 
 ## Hand-offs
 
-- **Plan review.** `docs/headless-run-contract.md` still has no pointer to `tools/scenario_sweep.py`. PE-1 merged, so nothing is now waiting on it.
-- **Agent workflow review.** `finish` still holds the lifecycle lock through branch verification. F2 cuts how long it holds it, but not the coupling.
-- **Agent workflow review.** The Codex sandbox probe fails resolving its home directory before Godot launches (Codex feedback, 7 Oct). It is an environment decision.
+- **Plan review.** `docs/headless-run-contract.md` had no pointer to `tools/scenario_sweep.py`. Fixed on the spot: "Choosing a run" now names it.
+- **Agent workflow review.** `finish` still holds the lifecycle lock through branch verification. F2 shortens the hold but does not remove it. Signal log: "2026-10-07 — `finish` still verifies inside the lifecycle lock".
+- **Agent workflow review.** The Codex sandbox-home question was disposed "Rejected" pending a decision nobody has asked Dave for. Signal log: "2026-10-07 — the Codex sandbox question was "Rejected" pending a decision".
+- Hand-offs now go to the signal log or get fixed (`plans/reference/review-contract.md` rule 4, Dave, 7 Oct 2026).
 
 ## Noted, not pursued
 

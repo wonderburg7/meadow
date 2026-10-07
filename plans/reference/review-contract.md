@@ -1,7 +1,7 @@
 # Review contract -- how a Meadow review runs
 
 <!-- CONTEXT: plan | LAYER: reference | LOAD: only when running a review from Dave's prompt library -->
-Status: reference | Owner: Dave / Claude Code | Next: nothing -- revise a rule when a review shows it is wrong | Dependency: none | Verified: 2026-09-28
+Status: reference | Owner: Dave / Claude Code | Next: nothing -- revise a rule when a review shows it is wrong | Dependency: none | Verified: 2026-10-07
 
 Dave's review prompts live in Notion ("Meadow review prompt library"). Each
 prompt names its record key, what it owns, what it hands off, and its own
@@ -41,7 +41,13 @@ rule 5 on every record that carries the rule 8 header.
    bar gets one line under "Noted, not pursued" and no investigation.
 4. **Stay in your lane.** Investigate only what the prompt's **Owns** line
    lists. Anything else gets one line under "Hand-offs" naming the review
-   that owns it.
+   that owns it, and the line must not be the only place it lives. Either
+   fix it on the spot, if it is trivial and `slice.ps1 owner` reports it
+   clear, or append an untriaged entry to
+   `plans/observations/system-improvement-signals.md` and name that entry on
+   the line. No review reads another review's record, so a hand-off kept
+   only in a record is lost: the 30 Sep 2026 sweep-pointer hand-off sat
+   untouched for a week (Dave, 7 Oct 2026).
 5. **Every finding ends in exactly one disposition.** No finding may be left
    as prose.
    - **Fixed**: trivial, within your authority and verified; say how.
