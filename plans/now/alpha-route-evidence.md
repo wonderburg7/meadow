@@ -32,41 +32,12 @@ hands-on feedback questions, not diagnostics.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| AR-2 | analysis turns that record into named alpha-gate facts | `tools/analyze_session.py`, `tests/test_headless_verdicts.py` | after AR-1 | medium |
 | AR-3 | the pacing report presents every alpha gate and its evidence boundary | `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | after AR-2 | low |
 | AR-4 | a scripted Colony Run reaches and records all five gates | the alpha scenario and its new evidence test | no -- after Tier 2 automation, Bee Bread and the gyne route are playable | high |
 
 AR-1 shipped 2026-10-07; its specification is `plans/archive/AR-1_2026-10-07.md`.
 
-## AR-2 -- analysis turns that record into named alpha-gate facts
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (pure analysis of AR-1's snapshots, with fixture coverage).
-
-**True now.** `analyze_session.py` derives pacing milestones only from
-population, stores and winter snapshots. It cannot report first automation or
-first gyne from the Colony Run record.
-
-**True afterwards.** Analysis exposes first-worker, first-automation,
-first-gyne and victory days from the copied record as named alpha facts. It
-uses the record's integer day rather than fabricating sub-day precision, omits
-absent facts, and preserves the existing food-security and winter calculations.
-The fixture test covers a record arriving after prior snapshots and a missing
-record.
-
-**Must not change.** Existing `milestones`/`milestone_times` meanings, food
-security, winter survival, or report profiles. The new facts are a separate
-alpha-route record until AR-3 consumes them.
-
-```queue
-**[Codex] AR-2 -- analysis turns that record into named alpha-gate facts**
-- Plan: `plans/now/alpha-route-evidence.md` -- "AR-2 -- analysis turns that record into named alpha-gate facts"
-- Files: `tools/analyze_session.py`, `tests/test_headless_verdicts.py`
-- Check: `python -m unittest tests.test_headless_verdicts` passes with a copied milestone record reporting first automation and first gyne by recorded day, and without changing existing pacing milestones
-- Proof: `absent: tools/analyze_session.py :: alpha_route`
-- Next after: AR-3 -- the pacing report presents every alpha gate and its evidence boundary
-```
+AR-2 shipped 2026-10-07; its specification is `plans/archive/AR-2_2026-10-07.md`.
 
 ## AR-3 -- the pacing report presents every alpha gate and its evidence boundary
 
