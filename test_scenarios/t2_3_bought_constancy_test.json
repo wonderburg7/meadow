@@ -1,0 +1,273 @@
+{
+  "cells": 30,
+  "nectar_foragers": 8,
+  "pollen_foragers": 3,
+  "nurses": 2,
+  "builders": 2,
+  "miners": 0,
+  "weather": false,
+  "disease": false,
+  "rival_hive": false,
+  "winter": false,
+  "random_seed": 4242,
+  "config_overrides": {
+    "seconds_per_day": 20,
+    "adaptive_constancy_on": false,
+    "tarsal_markers_on": false,
+    "orientation_flight_on": false,
+    "honey_ripen_time": 0
+  },
+  "snapshot_seconds": 20,
+  "actions": [
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 0
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 1
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 2
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 3
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 4
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 5
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 6
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 7
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 8
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 9
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 10
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 11
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 12
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 13
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 14
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 15
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 16
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 17
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 18
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 19
+      },
+      "resource": "nectar",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 20
+      },
+      "resource": "pollen",
+      "amount": 150
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 21
+      },
+      "resource": "pollen",
+      "amount": 150
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 22
+      },
+      "resource": "pollen",
+      "amount": 150
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 23
+      },
+      "resource": "pollen",
+      "amount": 150
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 24
+      },
+      "resource": "pollen",
+      "amount": 150
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 25
+      },
+      "resource": "honey",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 26
+      },
+      "resource": "honey",
+      "amount": 60
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 27
+      },
+      "resource": "honey",
+      "amount": 60
+    },
+    {
+      "do": "settle",
+      "ticks": 2
+    },
+    {
+      "do": "buy_skill",
+      "skill": "skill.foraging.tarsal_secretions"
+    },
+    {
+      "do": "buy_skill",
+      "skill": "skill.foraging.orientation_flight"
+    },
+    {
+      "do": "buy_skill",
+      "skill": "skill.foraging.adaptive_constancy"
+    },
+    {
+      "do": "assert",
+      "condition": {
+        "skill_owned": "skill.foraging.adaptive_constancy",
+        "owned": true
+      }
+    }
+  ],
+  "stop": {
+    "max_days": 6
+  }
+}
