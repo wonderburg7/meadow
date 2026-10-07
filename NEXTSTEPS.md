@@ -23,14 +23,7 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] COL-13 -- the pacing arc sees a skipped winter**
-   - Plan: `plans/now/colony-run.md` -- "COL-13 -- the pacing arc sees a skipped winter"
-   - Files: `tools/analyze_session.py`, `tests/test_col13_skipped_winter_arc.py`
-   - Check: `python -m unittest tests.test_col13_skipped_winter_arc` passes (a log whose clock jumps by winter's length dates winter entered and survived either side of the jump; a played-winter fixture reads as before); `python tools/pacing_gates.py` shows both winter rows in band; `tools/verify.ps1` is green
-   - Proof: `absent: tools/analyze_session.py :: skipped winter`
-   - Next after: COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns
-
-2. **[Claude] COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate**
+1. **[Claude] COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate**
    - Plan: `plans/now/colony-run.md` -- "COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate"
    - Files: `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd`
    - Check: `python -m unittest tests.test_col11_nuptial_flight` passes (no mating where the curve is 0; a queen flying in mid summer mates within the test's days and then lays worker brood); `python tools/pacing_gates.py` before and after is recorded in this plan; a Godot boot is clean; `tools/verify.ps1` is green
