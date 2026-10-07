@@ -15,6 +15,18 @@ const ColonyDiagnostics = preload("res://scripts/colony_diagnostics.gd")
 
 var main: Node2D
 
+## COL-7: season.gd's gyne_lost drives _on_gyne_lost's notice. main.gd wires
+## season's other signals as it builds it, after this node, so this one is
+## connected once main._ready has finished.
+func _ready() -> void:
+	_connect_season.call_deferred()
+
+func _connect_season() -> void:
+	if main == null or main.season == null:
+		return
+	if not main.season.gyne_lost.is_connected(_on_gyne_lost):
+		main.season.gyne_lost.connect(_on_gyne_lost)
+
 ## COL-6: the bill and the stores are season.gd's, the figures the skipped
 ## winter is charged with, so the window shows exactly what winter will take.
 func _winter_forecast(bees_count: int) -> Dictionary:
@@ -84,10 +96,23 @@ func _on_winter_survived(losses: int) -> void:
 	else:
 		main.hud.show_warning("Spring, and not a bee lost. Foraging can start again.")
 
+## COL-7: in a Colony Run the notice names the genetic points she earned,
+## today's (season.gd::send_gyne added them just before this fired), and
+## the run's total.
 func _on_gyne_released(total: int) -> void:
+	var text: String = "A gyne has left to found a colony of her own. That is %d away this run — the only thing a season is really measured in." % total
+	var milestones = main.colony_milestones
+	if milestones != null and milestones.applies():
+		text += " She earned %d genetic points, %d this run." % [
+			main.season.genetic_points_today(), milestones.genetic_points,
+		]
+	main.hud.show_warning(text)
+	main._update_population_readout()
+
+## COL-7: a gyne sent outside the mating window.
+func _on_gyne_lost() -> void:
 	main.hud.show_warning(
-		"A gyne has left to found a colony of her own. That is %d away this run — the only thing a season is really measured in."
-		% total
+		"A gyne has left, but outside the mating season, which runs from late spring to early autumn, she found no mate. She does not count as sent out, and earns no genetic points."
 	)
 	main._update_population_readout()
 

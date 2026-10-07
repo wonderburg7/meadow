@@ -458,6 +458,10 @@ var empty_by_bee_btn: Button
 var hatch_lock_box: CheckBox
 var gyne_box: CheckBox
 var gyne_row: HBoxContainer
+## COL-7: a single selected gyne's "Send her to found a colony" button, built
+## by _build_gyne_send_row and kept current by _refresh_selection_text.
+## Null whenever no gyne is shown.
+var gyne_send_button: Button = null
 ## The "Keep for every bee" row, so the "hatch_lock" gate can hide it as
 ## a whole rather than reaching into its children.
 var lock_row: HBoxContainer
@@ -2715,6 +2719,7 @@ func _rebuild_role_controls(bees: Array) -> void:
 	_detach_and_free_children(focus_column)
 	_detach_and_free_children(orders_column)
 	_detach_and_free_children(more_panel)
+	gyne_send_button = null
 
 	var common_role: int = _common_role(bees)
 	var common_working_role: int = _common_working_role(bees)
@@ -2732,6 +2737,7 @@ func _rebuild_role_controls(bees: Array) -> void:
 		_build_queen_build_row(job_column)
 	_build_doing_row(common_working_role, first)
 	_build_mating_row(bees, first)
+	_build_gyne_send_row(bees, first)
 	# Skipped while the queen's own "Build cell" button is showing --
 	# that button is the one build control Challenge 1 wants here, not
 	# also the ordinary placement/home-cell controls this row offers.
@@ -2883,6 +2889,42 @@ func _set_nuptial_flights(queen, on: bool) -> void:
 		queen.set_nuptial_flights(on)
 	if not shown_bees.is_empty():
 		_rebuild_role_controls(shown_bees)
+
+## COL-7: no gyne leaves by herself; a single selected gyne is sent from
+## here. The button is greyed out until she is ready, and her readout says
+## why, as an idle bee's does -- _refresh_selection_text keeps both current
+## on its own cadence while the panel is visible, never per frame. The
+## press is the only thing that sends her (season.gd::send_gyne).
+func _build_gyne_send_row(bees: Array, first) -> void:
+	if bees.size() != 1 or first == null or not first.is_gyne or first.is_queen:
+		return
+	var row := _column_row(focus_column)
+	row.name = "gyne_send_row"
+	var button := Button.new()
+	_style_button(button)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.text = "Send her to found a colony"
+	button.theme_type_variation = "Small"
+	button.pressed.connect(func(): _send_gyne(first))
+	gyne_send_button = button
+	_refresh_gyne_send_button(first)
+	row.add_child(_with_info(button, "She leaves the hive for good to found a colony of her own. Sent between late spring and early autumn she finds a mate, counts as sent out and earns genetic points, the most in mid summer. Sent outside that window she finds no mate and is lost, and does not count."))
+
+func _send_gyne(gyne) -> void:
+	if main != null and main.season != null:
+		main.season.send_gyne(gyne)
+
+## Why the shown gyne can't be sent yet, or "" if she can: season.gd's
+## answer, the same one send_gyne checks.
+func _gyne_not_ready_reason(gyne) -> String:
+	if main == null or main.season == null:
+		return "Only a gyne can be sent to found a colony."
+	return main.season.gyne_not_ready_reason(gyne)
+
+func _refresh_gyne_send_button(gyne) -> void:
+	if gyne_send_button == null or not is_instance_valid(gyne_send_button):
+		return
+	gyne_send_button.disabled = _gyne_not_ready_reason(gyne) != ""
 
 ## Is `bee` currently on this sub-mode?
 func _mode_is_active(role_id: int, bee, mode_key: String) -> bool:
@@ -3240,6 +3282,13 @@ func _refresh_selection_text() -> void:
 			activity += "\nPollen eaten: %d / %d needed for an egg" % [
 				int(b.pollen_eaten), int(GameConfig.egg_pollen_cost),
 			]
+		# COL-7: a gyne who can't be sent yet says why, and her send button
+		# follows.
+		if b.is_gyne and not b.is_queen and not b.is_dying:
+			var not_ready: String = _gyne_not_ready_reason(b)
+			if not_ready != "":
+				activity += "\n%s" % not_ready
+			_refresh_gyne_send_button(b)
 		activity_label.text = activity
 
 		# "trait" is a reserved GDScript word (used for the language's own

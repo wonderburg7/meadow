@@ -756,15 +756,15 @@ const TUNABLES := [
 	},
 	{
 		"persist": "none",
-		"key": "gyne_release_day", "label": "Gynes leave after", "step": 0.05, "min": 0.0,
+		"key": "gyne_release_energy", "label": "Gyne needs", "step": 0.05, "min": 0.0,
 		"category": "Seasons & health",
-		"tip": "How far through the year gynes will start leaving, as a fraction of a season. They wait until late because one released in spring would have nowhere to overwinter -- and because letting them go the moment they matured would remove the decision about when to start raising them.",
+		"tip": "How full a gyne's crop has to be before you can send her to found a colony, as a share of capacity. She is founding a colony on what she carries.",
 	},
 	{
 		"persist": "none",
-		"key": "gyne_release_energy", "label": "Gyne needs", "step": 0.05, "min": 0.0,
+		"key": "genetic_points_per_gyne", "label": "Gyne points", "step": 1.0, "min": 0.0,
 		"category": "Seasons & health",
-		"tip": "How full a gyne's crop has to be before she will leave, as a share of capacity. She is founding a colony on what she carries.",
+		"tip": "The genetic points a gyne earns when you send her out in mid summer. She earns less either side of it, and nothing outside late spring to early autumn, when she finds no mate and is lost.",
 	},
 	{
 		"persist": "none",

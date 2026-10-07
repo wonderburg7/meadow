@@ -15,6 +15,12 @@ extends RefCounted
 ## The recorded days go in the save as an additive field
 ## (save_game.gd's "colony_milestones"); a save without it reads as nothing
 ## met, which is how every save from before this file loads.
+##
+## COL-7 (decision 10): the run's genetic points live here too, counted when
+## season.gd::send_gyne sends a gyne inside the mating window and saved in
+## the same record under GENETIC_POINTS, so save_game.gd needs no new field.
+## A record without them restores 0. They are counted and saved now and
+## spent later (plans/design/progression.md).
 
 const Conditions = preload("res://scripts/conditions.gd")
 const Levels = preload("res://scripts/levels.gd")
@@ -77,11 +83,16 @@ const MILESTONES := [
 ## COL-2: the key under which the win is recorded in met_days, beside the
 ## milestone ids, so the saved record needs no new field.
 const VICTORY := "victory"
+## COL-7: the key the genetic points are saved under, beside the days.
+const GENETIC_POINTS := "genetic_points"
 
 var main: Node2D
 ## Milestone id -> the day it was first met. A milestone absent here is not
 ## met yet.
 var met_days: Dictionary = {}
+## COL-7: the genetic points this run has earned from gynes sent inside the
+## mating window. Colony Run only.
+var genetic_points: int = 0
 
 
 ## True in a Colony Run only. Read from the level row each time, so a load
@@ -113,9 +124,20 @@ func day_met(id: String) -> int:
 	return int(met_days.get(id, -1))
 
 
-## What save_game.gd writes: a copy, so the save never aliases live state.
+## COL-7: adds what a gyne sent today earned (season.gd::send_gyne). Only a
+## Colony Run counts them.
+func add_genetic_points(points: int) -> void:
+	if not applies():
+		return
+	genetic_points += maxi(0, points)
+
+
+## What save_game.gd writes: a copy, so the save never aliases live state,
+## with the genetic points beside the days.
 func save_data() -> Dictionary:
-	return met_days.duplicate()
+	var data: Dictionary = met_days.duplicate()
+	data[GENETIC_POINTS] = genetic_points
+	return data
 
 
 ## Puts back what a save recorded, replacing whatever this run holds.
@@ -131,13 +153,20 @@ func restore(data: Dictionary) -> void:
 	var won = data.get(VICTORY)
 	if typeof(won) == TYPE_INT or typeof(won) == TYPE_FLOAT:
 		met_days[VICTORY] = int(won)
+	# COL-7: a record from before the points restores 0.
+	genetic_points = 0
+	var points = data.get(GENETIC_POINTS)
+	if typeof(points) == TYPE_INT or typeof(points) == TYPE_FLOAT:
+		genetic_points = maxi(0, int(points))
 
 
 ## COL-2 (decision 3): the Colony Run is won the first time a gyne leaves
 ## after the first winter has ended with the queen alive. Called from
 ## season.gd's gyne_released only, so a gyne from before winter never counts
-## and a later day change cannot win on an old release. The win is recorded
-## in met_days, so a load never shows the screen twice.
+## and a later day change cannot win on an old release. Since COL-7 that
+## signal fires only for a gyne the player sent inside the mating window, so
+## one sent outside it, lost, cannot win. The win is recorded in met_days,
+## so a load never shows the screen twice.
 func check_victory() -> void:
 	if main == null or not applies() or met_days.has(VICTORY):
 		return
