@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/L-20` (`codex/L-20`) | Codex | make Codex's closeout directions agree with what `finish` does | Codex | in progress | none | `plans/now/codex-guidance.md` L-20 -- make Codex's closeout directions agree with what `finish` does |
