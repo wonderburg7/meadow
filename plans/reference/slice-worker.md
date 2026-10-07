@@ -1,7 +1,7 @@
 # Slice worker — one claimed slice, implemented by a subagent
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: by a slice-worker subagent only -->
-Status: reference | Owner: Dave / Claude Code | Next: nothing further -- tuned 2 Oct from the FBB-1, BS-9, L-16 and L-17 runs; tune again from the next trial note | Dependency: none | Verified: 2026-10-06
+Status: reference | Owner: Dave / Claude Code | Next: nothing further -- tuned 7 Oct from the SPR-2 to T2-3 run; tune again from the next trial note | Dependency: none | Verified: 2026-10-07
 
 You are a `slice-worker-*` subagent. A coordinator session (the
 `/run-queue` skill, or the Codex `run-queue` skill in
@@ -67,11 +67,25 @@ that rewrites every line of a file means an edit dropped the `\r`.
    - A new `tests/test_*.py` module needs no registration: `tools/verify.ps1`
      finds every one itself (7 Oct 2026). Only an exemption is written down,
      with its reason, in verify.ps1's `$testsNotInVerify`.
-4. Prove it: run the slice's `check` (or the one test it names), and nothing
-   broader. Do not run `verify.ps1`; `finish` does that. If a test fails,
+4. Prove it: run the slice's `check` (or the one test it names), then
+   `python tests/source_checks.py` (seconds, no boot), and nothing broader.
+   Do not run `verify.ps1`; `finish` does that. If a test fails,
    run only that test and read only its function. A check about GDScript
    warnings runs `python tools/gdscript_warnings.py <the files>`: the
    ordinary boot and `godot_compile_check.py` never print a warning.
+   - `source_checks.py` catches what otherwise stops `finish` at verify
+     (T2-2, T2-3, 7 Oct 2026). A new `.gd` file needs its `.uid` tracked:
+     run `godot --headless --import` in the worktree, commit only the
+     `.uid` and revert any `.import` churn. A source-check allowlist that
+     your slice is the named step for (a skill's content step, say) gets
+     the new entry with a comment naming the slice; any other source-check
+     failure is a fault in your change.
+   - When the `check` describes a behaviour (a bee does X once Y), the
+     test shows that behaviour in a run. Reading the code, or asserting
+     only that an order or buy was accepted, does not prove it. If nothing
+     a run records can show it and your `files` cannot add the record,
+     return `blocked` with the options (which file would carry the record,
+     or accept a static test) rather than `ready` (T2-3, 7 Oct 2026).
 5. Closeout edits on the branch (`plans/reference/closeout.md`, "Closeout
    order", steps 1-2): update the owning plan's Status line and `Next:`;
    make sure the `next_after` successor has a fenced `queue` (or
@@ -80,8 +94,11 @@ that rewrites every line of a file means an edit dropped the `\r`.
    `git show master:<file> | grep -F '<text>'` (`present:` must match,
    `absent:` must not), or `finish` stops at the refill gate. File a
    hands-on check with `python tools/new_check.py --name "<what Dave
-   checks>" --owner <the plan path>` only if the slice is click-driven, visual or feel-sensitive and the
-   plan's acceptance says so.
+   checks>" --owner <the plan path>` when the plan section has a
+   **Hands-on.** paragraph, or the slice is click-driven, visual or
+   feel-sensitive and the plan's acceptance says so. Whether the `check`
+   line mentions it makes no difference (T2-1, 7 Oct 2026). Write it in
+   plain language: what Dave does, where, and how he gets there.
 6. Commit on the branch with a plain-language message, ending with the
    attribution trailer from your instructions.
 
