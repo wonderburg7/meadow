@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-1 -- Comb worker and Miner become bought roles, and the queen builds without the skill | Dependency: none for T2-1 to T2-3; COL-4 for T2-4b, T2-5, T2-6 and T2-7; COL-6 for Shiver Cluster (T2-8) and T2-4b's winter bodies | Verified: 2026-10-07
+Status: active | Owner: Dave / Claude Code | Next: T2-2 -- Automation gates working outward | Dependency: none for T2-1 to T2-3; COL-4 for T2-4b, T2-5, T2-6 and T2-7; COL-6 for Shiver Cluster (T2-8) and T2-4b's winter bodies | Verified: 2026-10-07
 
 ## Objective
 

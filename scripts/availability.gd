@@ -138,9 +138,11 @@ static func mode_query(role_id: int, mode_key: String, stage_gate = null) -> Dic
 ## `stage_gate` to leave the stage out), and the skill that unlocks it
 ## (roles.gd `skill`) is owned. A skill-gated role with no `progression` is
 ## not available, the same convention action_query keeps for a row's skill.
+## `bee` is the asking bee (null for a colony-wide answer): the queen is let
+## past the skill for QUEEN_FREE_ROLES.
 ## The one rule the HUD's Job and Raises rows, orders_zones.gd's role and
 ## hatch commands and action_query all read.
-static func role_query(role_id: int, stage_gate = null, progression = null) -> Dictionary:
+static func role_query(role_id: int, stage_gate = null, progression = null, bee = null) -> Dictionary:
 	var role: Dictionary = Roles.entry(role_id)
 	if role.id != role_id:
 		return {"available": false, "reason": REASON_UNKNOWN_KEY}
@@ -148,11 +150,17 @@ static func role_query(role_id: int, stage_gate = null, progression = null) -> D
 		return {"available": false, "reason": REASON_SUPPRESSED}
 	if stage_gate != null and stage_gate.active and not stage_gate.is_unlocked(role.key):
 		return {"available": false, "reason": REASON_LOCKED}
-	if not _role_skill_owned(role_id, progression):
+	if not _role_skill_owned(role_id, progression, bee):
 		return {"available": false, "reason": REASON_SKILL_NOT_OWNED}
 	return {"available": true, "reason": OK}
 
-static func _role_skill_owned(role_id: int, progression) -> bool:
+## T2-1: the roles the queen may take without their skill (progression step
+## 8 decision, Dave 6 Oct 2026). Workers always need the skill.
+const QUEEN_FREE_ROLES := [Roles.NURSE, Roles.COMB_WORKER]
+
+static func _role_skill_owned(role_id: int, progression, bee = null) -> bool:
+	if bee != null and bee.is_queen and role_id in QUEEN_FREE_ROLES:
+		return true
 	var skill: String = Roles.skill_for(role_id)
 	return skill == "" or (progression != null and progression.is_owned(skill))
 
@@ -168,7 +176,7 @@ static func _role_skill_owned(role_id: int, progression) -> bool:
 ## empty until it does.
 ## `bee` is the bee asking (null for a colony-wide answer). Decision 7
 ## (BS-9): the queen nurses without the Nurses skill -- for her the role
-## check passes for Roles.NURSE, so a Challenge with no nurse yet still
+## check passes for QUEEN_FREE_ROLES (T2-1 adds Comb worker), so a Challenge with no nurse yet still
 ## feeds its brood. Workers still need the skill (role_query is unchanged).
 ## Callers cache the answer against gate_epoch (bee.gd::_action_available)
 ## rather than asking per action per think tick.
@@ -187,11 +195,8 @@ static func action_query(action_id: String, bee = null, stage_gate = null, progr
 	var skill: String = action.get("skill", "")
 	if skill != "" and (progression == null or not progression.is_owned(skill)):
 		return {"available": false, "reason": REASON_SKILL_NOT_OWNED}
-	var queen_asking: bool = bee != null and bee.is_queen
 	for role_id in action.get("roles", []):
-		if queen_asking and role_id == Roles.NURSE:
-			continue
-		if not _role_skill_owned(role_id, progression):
+		if not _role_skill_owned(role_id, progression, bee):
 			return {"available": false, "reason": REASON_SKILL_NOT_OWNED}
 	return {"available": true, "reason": OK}
 

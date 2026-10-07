@@ -2720,9 +2720,11 @@ func _rebuild_role_controls(bees: Array) -> void:
 	var common_working_role: int = _common_working_role(bees)
 	var first = bees[0] if is_instance_valid(bees[0]) else null
 	var any_queen := false
+	var queen_bee = null
 	for b in bees:
 		if is_instance_valid(b) and b.is_queen:
 			any_queen = true
+			queen_bee = b
 			break
 
 	var show_queen_build_row: bool = show_queen_build_button and bees.size() == 1 and first != null and first.is_queen
@@ -2736,7 +2738,7 @@ func _rebuild_role_controls(bees: Array) -> void:
 		_build_orders_row(common_role, first)
 	_build_follow_control(bees, first)
 
-	_build_job_row(common_role, any_queen)
+	_build_job_row(common_role, any_queen, queen_bee)
 	_build_fallback_row(common_role, first)
 
 	# The wrapper itself stays visible (see job_column_wrapper's field
@@ -2789,7 +2791,7 @@ func _build_follow_control(bees: Array, first) -> void:
 ## Job: what the selection is, lit up, plus one dropdown holding every
 ## role it could be switched to. Builds into the Job column, not
 ## more_panel, per Dave's 22 Aug three-column call.
-func _build_job_row(common_role: int, any_queen: bool) -> void:
+func _build_job_row(common_role: int, any_queen: bool, queen_bee = null) -> void:
 	var row := _column_row(job_column)
 	# Named so LAY-6's control_rect assertion on the "Change to…" menu has a
 	# stable path (see the row.add_child(_make_role_menu(..., "change_to_menu"))
@@ -2811,8 +2813,8 @@ func _build_job_row(common_role: int, any_queen: bool) -> void:
 		if role.id == Roles.QUEEN and not any_queen:
 			continue                       # queen only
 		var key: String = role.key
-		if not _role_offered(role.id):
-			continue                       # not taught yet, or its skill not bought
+		if not _role_offered(role.id, queen_bee):
+			continue                       # not taught yet, or its skill not bought (the queen's free roles aside)
 		items.append({
 			"text": role.label,
 			"action": func(): role_requested.emit(key),
@@ -3453,8 +3455,8 @@ func set_allowed_role_keys(keys: Array) -> void:
 ## offer `role_id`: Availability.role_query over the stage gate and the run's
 ## skills. A role the stage has taught but whose skill is not bought yet
 ## stays hidden until it is.
-func _role_offered(role_id: int) -> bool:
-	return Availability.role_query(role_id, _stage_gate, Session.progression).available
+func _role_offered(role_id: int, bee = null) -> bool:
+	return Availability.role_query(role_id, _stage_gate, Session.progression, bee).available
 
 ## Re-applies role availability to whatever is open: the selection's role
 ## rows and the cell popup's Raises row. Called on a stage change and by the
