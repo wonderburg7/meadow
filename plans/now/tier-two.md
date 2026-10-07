@@ -52,7 +52,6 @@ Verified 7 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-3 | Adaptive constancy becomes a bought behaviour | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `tests/test_t2_3_adaptive_constancy.py`, `test_scenarios/t2_3_bought_constancy_test.json` | yes, after T2-2 in the same lane | low |
 | T2-4a | Cleaning gates taking out the dead larvae | `scripts/actions.gd`, `scripts/challenge_stages.gd`, `scripts/skills.gd`, `tests/test_t2_4a_cleaning_gate.py` | no -- after T2-2 (`actions.gd`, `challenge_stages.gd`) | medium |
 | T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | specified after T2-4a | no -- after T2-4a, COL-4 (`game_config.gd`) and COL-6 (the winter bill) | high |
 | T2-5 | Weather sensing's rain half, Rain recall, and rain on in the Colony Run | specified when T2-3 lands | no -- its PE-2 arc rerun reads COL-4's year | medium |
@@ -80,34 +79,7 @@ T2-1 shipped 2026-10-07; its specification is `plans/archive/T2-1_2026-10-07.md`
 
 T2-2 shipped 2026-10-07; its specification is `plans/archive/T2-2_2026-10-07.md`.
 
-## T2-3 -- Adaptive constancy becomes a bought behaviour
-
-<!-- LAYER: immediate-task -->
-
-Level: low (one effect entry and one helper, the Tarsal secretions pattern).
-
-**True now.** Adaptive constancy runs only when the
-`adaptive_constancy_on` setting is on; buying the node changes nothing.
-
-**True afterwards.** Its `skills.gd` entry carries
-`[{"type": "enable_behaviour", "key": "adaptive_constancy_on"}]`, and
-`bee_foraging.gd::adaptive_constancy_on()` (setting **or** owned, as
-`tarsal_markers_on`) replaces the three direct reads. The skill's `status`
-becomes `"existing"`, so the tree drops its "Not built yet" note.
-`test_scenarios/t2_3_bought_constancy_test.json` buys it on day 1 with the
-setting off and records constancy switches; the same run unbought records
-none (AP-6's shape). `tests/test_t2_3_adaptive_constancy.py` runs both.
-
-**Must not change.** Behaviour with the setting on.
-
-```queue
-**[Claude] T2-3 -- Adaptive constancy becomes a bought behaviour**
-- Plan: `plans/now/tier-two.md` -- "T2-3 -- Adaptive constancy becomes a bought behaviour"
-- Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `tests/test_t2_3_adaptive_constancy.py`, `test_scenarios/t2_3_bought_constancy_test.json`
-- Check: `python -m unittest tests.test_t2_3_adaptive_constancy` passes (bought with the setting off, a forager re-evaluates its species; unbought, none does); `tools/verify.ps1` is green
-- Proof: `absent: scripts/bee_foraging.gd :: static func adaptive_constancy_on`
-- Next after: T2-4a -- Cleaning gates taking out the dead larvae
-```
+T2-3 shipped 2026-10-07; its specification is `plans/archive/T2-3_2026-10-07.md`.
 
 ## T2-4a -- Cleaning gates taking out the dead larvae
 
