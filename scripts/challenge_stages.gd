@@ -24,6 +24,8 @@ class_name ChallengeStages
 const NURSES_SKILL := "skill.brood.nurses"
 const COMB_SKILL := "skill.colony.comb_worker"
 const MINER_SKILL := "skill.colony.miner"
+const BACKUP_ROLES_SKILL := "skill.hive_mind.backup_roles"
+const AUTOMATION_SKILL := "skill.hive_mind.automation"
 
 ## Challenge 1's wax cells hold this much nectar. The 1.11 lesson completes
 ## when one reaches that capacity, so the goal and storage rule cannot drift.
@@ -435,8 +437,8 @@ const STAGES_2 := [
 	},
 	{
 		"id": "2.8", "goal": "miner_expansion", "condition": {"custom": "_goal_check_miner_expansion"},
-		"free_skills": [COMB_SKILL, MINER_SKILL],
-		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation", "skills_window", NURSES_SKILL, "nurse", "nurse_feed", "nurse_both", "hatch_lock", COMB_SKILL, "comb_worker", "comb_worker_build", "comb_worker_maintain", MINER_SKILL, "miner", "miner_automine"],
+		"free_skills": [COMB_SKILL, MINER_SKILL, BACKUP_ROLES_SKILL, AUTOMATION_SKILL],
+		"unlocked_keys": ["meadow_view", "laying", "colony_window", "foraging_window", "forager", "nectar", "pollen", "cell_designation", "skills_window", NURSES_SKILL, "nurse", "nurse_feed", "nurse_both", "hatch_lock", COMB_SKILL, "comb_worker", "comb_worker_build", "comb_worker_maintain", MINER_SKILL, "miner", "miner_automine", BACKUP_ROLES_SKILL, AUTOMATION_SKILL],
 		"goal_text": "Goal: raise a miner, dig new space, and build a cell in it.",
 		"prompts": [
 			{"id": "2.8_welcome", "trigger": "welcome", "delay": 0.0, "text": "Comb needs somewhere to exist. For that, the colony requires miners: the underground department."},

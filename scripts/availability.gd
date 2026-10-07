@@ -121,15 +121,24 @@ static func mode_gate_key(role_id: int, mode_key: String) -> String:
 ## code existence (the mode belongs to this role in roles.gd), config
 ## gate (none currently defined for any mode), level/Challenge unlock
 ## (`stage_gate`, only while a run is active) and suppression.
-static func mode_query(role_id: int, mode_key: String, stage_gate = null) -> Dictionary:
-	var mode_keys: Array = Roles.modes_for(role_id).map(func(m): return m.key)
-	if mode_key not in mode_keys:
+static func mode_query(role_id: int, mode_key: String, stage_gate = null, progression = null) -> Dictionary:
+	var mode: Dictionary = {}
+	for m in Roles.modes_for(role_id):
+		if m.key == mode_key:
+			mode = m
+	if mode.is_empty():
 		return {"available": false, "reason": REASON_UNKNOWN_KEY}
 	var gate_key: String = mode_gate_key(role_id, mode_key)
 	if _suppressed.has(gate_key):
 		return {"available": false, "reason": REASON_SUPPRESSED}
 	if stage_gate != null and stage_gate.active and not stage_gate.is_unlocked(gate_key):
 		return {"available": false, "reason": REASON_LOCKED}
+	# T2-2: a mode may name a skill (Miner's automine: Automation). Only an
+	# explicit progression is asked, so a caller that passes none sees the
+	# mode as before.
+	var skill: String = mode.get("skill", "")
+	if skill != "" and progression != null and not progression.is_owned(skill):
+		return {"available": false, "reason": REASON_SKILL_NOT_OWNED}
 	return {"available": true, "reason": OK}
 
 ## BS-3: whether a bee may be put in `role_id`, or a cell set to raise one,

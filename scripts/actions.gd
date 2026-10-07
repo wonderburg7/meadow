@@ -84,6 +84,12 @@ const ACTIONS := [
 		"band": 3, "modes": ["build", "both"], "find": "create_cell_site_at",
 		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
 	},
+	# T2-2: extending the outward spiral past the marked sites is Automation's.
+	{
+		"id": "comb_build_outward", "label": "Build comb outward", "roles": [Roles.COMB_WORKER],
+		"band": 4, "modes": ["build", "both"], "find": "create_next_cell_site_outward",
+		"feature": "", "skill": "skill.hive_mind.automation", "gate_key": "", "config_flag": "", "season": "",
+	},
 
 	# A direct player order always wins over a marked block, which wins over
 	# autonomous mining.
@@ -100,7 +106,7 @@ const ACTIONS := [
 	{
 		"id": "mine_automine_block", "label": "Mine nearest edge block", "roles": [Roles.MINER],
 		"band": 2, "modes": ["automine"], "find": "find_nearest_edge_block",
-		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
+		"feature": "", "skill": "skill.hive_mind.automation", "gate_key": "", "config_flag": "", "season": "",
 	},
 
 	# A honey maker deposits a held load, fans wet honey, then fetches nectar.
