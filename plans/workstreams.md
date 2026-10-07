@@ -46,3 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.claude/worktrees/run-queue-4-209d0f` (`claude/run-queue-4-209d0f`) | Claude (docs only) | `NEXTSTEPS.md` not-in-queue gate lines | Claude Code | active | none | queue upkeep after T2-2/T2-3 |
