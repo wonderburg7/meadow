@@ -23,39 +23,39 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] SPR-2 -- the windowed render baseline at 500 and 1,000 bees**
-   - Plan: `plans/now/render-scale.md` -- "SPR-2 -- the windowed render baseline at 500 and 1,000 bees"
-   - Files: `test_scenarios/spr2_render_500.json`, `test_scenarios/spr2_render_1000.json`, `docs/performance.md`
-   - Check: `python tools/run_scenario.py test_scenarios/spr2_render_1000.json --windowed --report full` exits 0 with a draw-call mean above 0; `docs/performance.md` holds the table for 200, 500 and 1,000 bees; `python tools/check_docs.py` passes
-   - Proof: `absent: docs/performance.md :: SPR-2`
-   - Next after: none -- plans/now/render-scale.md is complete once SPR-2 lands; whether a sprite or batching pass follows is decided with Dave from the table
-
-2. **[Claude] T2-1 -- Comb worker and Miner become bought roles, and the queen builds without the skill**
+1. **[Claude] T2-1 -- Comb worker and Miner become bought roles, and the queen builds without the skill**
    - Plan: `plans/now/tier-two.md` -- "T2-1 -- Comb worker and Miner become bought roles, and the queen builds without the skill"
    - Files: `scripts/roles.gd`, `scripts/availability.gd`, `scripts/orders_zones.gd`, `scripts/hud.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_1_comb_miner_gate.py`, `test_scenarios/t2_1_queen_builds.json`
    - Check: `python -m unittest tests.test_t2_1_comb_miner_gate` passes (the Colony Run queen draws a cell with no skill owned; no worker becomes a Comb worker or Miner unbought; Challenge 2's 2.7 and 2.8 free them); `python -m unittest tests.test_challenge2_checks` passes; a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `absent: scripts/roles.gd :: "skill": "skill.colony.comb_worker"`
    - Next after: T2-2 -- Automation gates working outward
 
-3. **[Claude] T2-2 -- Automation gates working outward**
+2. **[Claude] T2-2 -- Automation gates working outward**
    - Plan: `plans/now/tier-two.md` -- "T2-2 -- Automation gates working outward"
    - Files: `scripts/roles.gd`, `scripts/availability.gd`, `scripts/actions.gd`, `scripts/hive.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_2_automation_gate.py`
    - Check: `python -m unittest tests.test_t2_2_automation_gate` passes (automine and outward building refused without Automation, allowed with it; marked work unaffected; Challenge 2's 2.8 frees Backup roles and Automation); `python -m unittest tests.test_challenge2_checks` passes; a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `absent: scripts/actions.gd :: skill.hive_mind.automation`
    - Next after: T2-3 -- Adaptive constancy becomes a bought behaviour
 
-4. **[Claude] T2-3 -- Adaptive constancy becomes a bought behaviour**
+3. **[Claude] T2-3 -- Adaptive constancy becomes a bought behaviour**
    - Plan: `plans/now/tier-two.md` -- "T2-3 -- Adaptive constancy becomes a bought behaviour"
    - Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `tests/test_t2_3_adaptive_constancy.py`, `test_scenarios/t2_3_bought_constancy_test.json`
    - Check: `python -m unittest tests.test_t2_3_adaptive_constancy` passes (bought with the setting off, a forager re-evaluates its species; unbought, none does); `tools/verify.ps1` is green
    - Proof: `absent: scripts/bee_foraging.gd :: static func adaptive_constancy_on`
    - Next after: T2-4a -- Cleaning gates taking out the dead larvae
 
-5. **[Claude] COL-6 -- winter is skipped and resolved in one step**
+4. **[Claude] COL-6 -- winter is skipped and resolved in one step**
    - Plan: `plans/now/colony-run.md` -- "COL-6 -- winter is skipped and resolved in one step"
    - Files: `scripts/season.gd`, `scripts/year_winter.gd`, `tests/test_col6_winter_skip.py`, `test_scenarios/col6_winter_skip_test.json`
    - Check: `python -m unittest tests.test_col6_winter_skip` passes (a stocked colony crosses winter in one tick with nobody lost and the day advanced by winter's length; an under-stocked one loses its oldest workers first and keeps its queen); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `absent: scripts/season.gd :: winter_bill`
+   - Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
+
+5. **[Claude] COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate**
+   - Plan: `plans/now/colony-run.md` -- "COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate"
+   - Files: `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd`
+   - Check: `python -m unittest tests.test_col11_nuptial_flight` passes (no mating where the curve is 0; a queen flying in mid summer mates within the test's days and then lays worker brood); `python tools/pacing_gates.py` before and after is recorded in this plan; a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `absent: scripts/game_config.gd :: nuptial_flight_peak_chance`
    - Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
 
 ### Codex lane
@@ -90,7 +90,6 @@ One line each: the id, its plan, and the single thing it waits for.
 
 - **COL-7** (`plans/now/colony-run.md`) -- the mating window, genetic points and COL-2's narrower win wait for COL-6, and are specified once it lands.
 - **NF-2** (`plans/now/nectar-fermentation.md`) -- nectar ferments past an age; waits for COL-4 (Codex lane), which edits `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, and for NF-1's evidence.
-- **COL-11** (`plans/now/colony-run.md`) -- startable, but the Claude lane is full.
 - **COL-12** (`plans/now/colony-run.md`) -- startable, but the Claude lane is full.
 - **T2-4a to T2-8** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-4a waits for T2-2 (`actions.gd`, `challenge_stages.gd`); T2-4b (bodies) for T2-4a, COL-4 and COL-6; T2-5 (rain) and T2-7 (tier-2 prices) for COL-4's year; T2-6 (Associative learning) for COL-4 (`game_config.gd`); T2-8 (Shiver Cluster) for COL-6.
 - **BB-1 to BB-4** (`plans/now/bee-bread.md`) -- Bee Bread; BB-1 waits for COL-4 and NF-2 (`game_config.gd`, `hive_cell.gd`, `hive.gd`, the save files) and T2-3 (`roles.gd`, `actions.gd`, `skills.gd`); the rest follow BB-1.
