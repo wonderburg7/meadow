@@ -163,6 +163,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | BS-4, BS-6, BS-7, BS-8, BS-9 -- the Brood spine: bought Nurses and Honey worker, one availability sheet per run, the queen's own nursing | `plans/archive/brood-spine_2026-10-05.md` |
 | GC-1, GC-2, GC-3 -- an Idle bee stays put, a job change delivers the load, honey conserves energy | `plans/archive/gameplay-consistency_2026-10-06.md` |
 | PE-1 -- the headless pacing gates timed to the hour | `plans/archive/pacing-evidence_2026-10-01.md` |
+| AR-1 to AR-4 -- alpha-route evidence: recorded gates, their diagnostic boundary, then an end-to-end scripted route | `plans/now/alpha-route-evidence.md` |
 | WO-1 -- winter's countdown opens by itself on a set day | `plans/archive/winter-onset_2026-10-01.md` |
 | UI-F-1, UI-F-2, UI-F-3 -- the game-over screen's theme, warning severity, comb label scale | `plans/archive/ui-feedback_2026-10-01.md` |
 | FBB-1 -- the skill tree hides the cut skills and says which are not built | `plans/archive/feedback-build_2026-10-05.md` |
