@@ -167,6 +167,37 @@ COL-11 shipped 2026-10-07; its specification is `plans/archive/COL-11_2026-10-07
 
 COL-7 shipped 2026-10-07; its specification is `plans/archive/COL-7_2026-10-07.md`.
 
+## Found while landing COL-6 to COL-7, not yet slices
+
+<!-- LAYER: immediate-task -->
+
+Follow-ups the 7 Oct 2026 run found in or beside this plan's slices. Each
+needs a section and a queue block before it can be built; delete its line
+when it gets one.
+
+- `test_scenarios/wo1_winter_onset_test.json` still asserts `winter_here` on
+  day 32. It has failed since COL-6, which never plays winter, but
+  `verify.ps1` doesn't run it. Update it to a skipped winter or retire it.
+- `plans/design/product-scope.md` (§6.2, the two `_gyne_season` mentions)
+  still describes the automatic, late-year gyne release that COL-7 removed.
+- A forager mid-trip when COL-6's clock jumps logs one trip and one flower
+  visit about 2,000 s long (`bee_foraging.gd` `trip_start_time`,
+  `flower_visit_started_at`). Reset those timers at the jump if anything
+  but diagnostics reads them.
+- COL-7's `gyne_lost` is connected in `year_winter.gd`'s deferred `_ready`,
+  because `main.gd`, where season's other signals are wired, was outside its
+  files. Move it beside the others.
+- A ready gyne nobody sends now sits in the hive eating, with no prompt
+  (COL-7). A problem-strip signal for a ready gyne would surface her.
+- An unmated queen's nuptial-flight mode is not saved (COL-11; SI-1 holds the
+  save files), so a load puts her back to laying drones. Save it once SI-1 has
+  landed.
+- `tools/analyze_session.py` (COL-13) reads any snapshot gap of at least
+  winter's length as a skipped winter. That's harmless in today's logs, but a
+  sparse log would date a winter that never came.
+- A save made during a played winter, before COL-6, reports only the bill's
+  losses in the spring notice, not the bees that died earlier that winter.
+
 ## COL-8 -- winter die-back and spring regrowth
 
 <!-- LAYER: immediate-task -->
