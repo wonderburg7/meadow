@@ -33,7 +33,7 @@ on day 21 (WO-1). A game-day lasts 200 seconds at speed 1, so day 21 is about
 
    ```powershell
    cd $env:APPDATA\Godot\app_userdata
-   Rename-Item "Meadow - Claude" "Meadow - Claude (Dave)"
+   Rename-Item "Meadow" "Meadow (Dave)"
    ```
 
 3. Launch exactly as the tester will ("On the day", step 2) and play the route
@@ -49,7 +49,7 @@ on day 21 (WO-1). A game-day lasts 200 seconds at speed 1, so day 21 is about
 
    ```powershell
    cd $env:APPDATA\Godot\app_userdata
-   Rename-Item "Meadow - Claude" "Meadow - Claude (rehearsal)"
+   Rename-Item "Meadow" "Meadow (rehearsal)"
    ```
 
 ## On the day
@@ -67,7 +67,7 @@ on day 21 (WO-1). A game-day lasts 200 seconds at speed 1, so day 21 is about
 
    This runs the game without the editor, so a script error is written to the
    log and play carries on instead of stopping in the editor's debugger. The
-   window title reads "Meadow - Claude (DEBUG)"; that is expected.
+   window title reads "Meadow (DEBUG)"; that is expected.
 3. Before the tester sits down: open the cog on the main menu, set Text scale
    under Appearance to what reads comfortably on this screen, and leave
    everything else, Developer mode included, as it is. Give them a mouse with
@@ -107,9 +107,9 @@ on day 21 (WO-1). A game-day lasts 200 seconds at speed 1, so day 21 is about
    ```powershell
    cd $env:APPDATA\Godot\app_userdata
    New-Item -ItemType Directory -Force C:\Users\dl13860\Documents\Meadow\feedback | Out-Null
-   Copy-Item -Recurse "Meadow - Claude\logs" C:\Users\dl13860\Documents\Meadow\feedback\2026-10-03-logs
-   Rename-Item "Meadow - Claude" "Meadow - Claude (tester)"
-   Rename-Item "Meadow - Claude (Dave)" "Meadow - Claude"
+   Copy-Item -Recurse "Meadow\logs" C:\Users\dl13860\Documents\Meadow\feedback\2026-10-03-logs
+   Rename-Item "Meadow" "Meadow (tester)"
+   Rename-Item "Meadow (Dave)" "Meadow"
    ```
 
    The logs folder holds one `session_*.jsonl` per run (its settings, every

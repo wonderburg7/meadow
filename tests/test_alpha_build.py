@@ -29,6 +29,9 @@ class AlphaBuildTest(unittest.TestCase):
     def test_version_build_ignore_and_helper_are_configured(self):
         project = (ROOT / "project.godot").read_text(encoding="utf-8")
         self.assertRegex(project, r'(?m)^config/version="[^"]+"$')
+        # The name is the window title and the user:// folder; "Meadow - Claude"
+        # shipped in the first alpha build until Dave renamed it, 7 Oct 2026.
+        self.assertRegex(project, r'(?m)^config/name="Meadow"$')
         self.assertIn("build/", (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines())
         helper = (ROOT / "tools" / "build_alpha.ps1").read_text(encoding="utf-8")
         self.assertIn('--export-release "Windows Desktop"', helper)
