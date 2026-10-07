@@ -103,6 +103,11 @@ var winter_starts_day: float = 0.0
 ## on what it stored.
 var winter_here: bool = false
 var winter_ends_day: float = 0.0
+## Whether this run's year has a winter in it. Set from the level each
+## time the meadow is built (world_building.gd::_build_meadow), so a load
+## derives it again rather than saving it. A level with winter off has a
+## year of only its playable season, with no autumn hold (Dave, 7 Oct 2026).
+var year_has_winter: bool = true
 ## Gynes that have left to found colonies of their own. This is the
 ## score: the whole point of a season is how many you get away.
 var gynes_released: int = 0
@@ -303,6 +308,15 @@ var rain_intensity: float = 0.0
 ## Called by main.gd when a run restarts, so nothing from the last one
 ## leaks into the next. Preferences are deliberately *not* reset -- they
 ## belong to the player, not the run.
+## Days in one year of this run: the playable season, then winter's days
+## when the run has a winter. The one place the year's length is worked
+## out; read per flower, so it stays a couple of reads and an add.
+func year_days() -> float:
+	var season_days: float = maxf(1.0, GameConfig.season_length_days)
+	if not year_has_winter:
+		return season_days
+	return season_days + maxf(1.0, GameConfig.winter_length_days)
+
 func reset_run_state() -> void:
 	sim_time = 0.0
 	winter_coming = false

@@ -3,10 +3,10 @@
   "nurses": 2, "builders": 2, "miners": 2,
   "random_seed": 4242,
   "actions": [
-    {"do": "assert", "condition": {"winter_coming": false}, "when": {"day_at_least": 5}},
-    {"do": "assert", "condition": {"winter_coming": true}, "when": {"day_at_least": 7}},
-    {"do": "assert", "condition": {"winter_here": false}, "when": {"day_at_least": 20}},
-    {"do": "assert", "condition": {"winter_here": true}, "when": {"day_at_least": 22}}
+    {"do": "assert", "condition": {"winter_coming": false}, "when": {"day_at_least": 15}},
+    {"do": "assert", "condition": {"winter_coming": true}, "when": {"day_at_least": 17}},
+    {"do": "assert", "condition": {"winter_here": false}, "when": {"day_at_least": 30}},
+    {"do": "assert", "condition": {"winter_here": true}, "when": {"day_at_least": 32}}
   ],
-  "stop": {"when_actions_resolved": true, "max_days": 23}
+  "stop": {"when_actions_resolved": true, "max_days": 33}
 }
