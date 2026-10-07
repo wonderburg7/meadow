@@ -1,5 +1,5 @@
 extends Node2D
-## The year: seasons, disease pressure, winter, and gynes leaving.
+## The year: seasons, disease pressure, winter, and sending gynes out.
 ##
 ## These four are together because they are one idea. A colony's year has
 ## a shape -- build up, peak, prepare, survive -- and each of these is one
@@ -15,6 +15,9 @@ extends Node2D
 signal winter_started()
 signal winter_survived(losses: int)
 signal gyne_released(total: int)
+## COL-7: a gyne was sent outside the mating window, found no mate and is
+## lost. Nothing counts: no release, no genetic points, no win.
+signal gyne_lost()
 
 var world: Node2D = null
 
@@ -47,7 +50,6 @@ func _process(delta: float) -> void:
 
 	_advance_disease(elapsed)
 	_advance_winter()
-	_release_ready_gynes()
 	Perf.end("season")
 
 # --- disease ------------------------------------------------------
@@ -284,35 +286,58 @@ func mating_curve() -> float:
 func nuptial_mating_chance() -> float:
 	return clampf(GameConfig.nuptial_flight_peak_chance * mating_curve(), 0.0, 1.0)
 
-# --- gynes leaving ------------------------------------------------
-## A mature gyne with enough in her flies off to found a colony of her
-## own. She counts once and is removed: the colony has spent everything
-## it spent on her, and what it gets back is a number on the scoreboard.
+# --- sending a gyne -----------------------------------------------
+## COL-7 (decisions 7 and 10 of plans/now/colony-run.md). No gyne leaves by
+## herself: the player sends one, from her panel, once she is ready. What
+## she is worth depends on the day she goes, read off the one mating curve
+## above. Inside the window she finds a mate, counts as sent out -- the
+## Colony Run's win (COL-2) -- and earns genetic_points_per_gyne x the
+## curve, rounded. Outside it she still goes, but finds no mate and is
+## lost: nothing counts.
 ##
-## This is the win condition. A run isn't measured by how big the hive
-## got -- a huge hive that released nothing has failed at the only thing
-## a season is for.
-func _release_ready_gynes() -> void:
-	if not _gyne_season():
-		return
-	for bee in world.get_tree().get_nodes_in_group("bees"):
-		if not is_instance_valid(bee) or not bee.is_gyne or bee.is_dying:
-			continue
-		if bee.energy < GameConfig.energy_capacity * GameConfig.gyne_release_energy:
-			continue
-		bee.leave_to_found_colony()
-		Session.gynes_released += 1
-		gyne_released.emit(Session.gynes_released)
+## This is what a season is for. A run isn't measured by how big the hive
+## got -- a huge hive that sent out nothing has failed at the only thing a
+## season is for.
 
-## Gynes only leave late in the year -- one released in spring would have
-## nowhere to overwinter, and letting them go the moment they matured
-## would remove the decision about when to start raising them.
-func _gyne_season() -> bool:
-	if Session.winter_here:
+## Why `bee` can't be sent to found a colony now, or "" if she can: she is
+## a gyne (not one who has become the queen) with at least
+## gyne_release_energy of a full crop in her to found a colony on. hud.gd
+## shows the reason in her readout and greys out her send button with it.
+func gyne_not_ready_reason(bee) -> String:
+	if bee == null or not is_instance_valid(bee) or not bee.is_gyne or bee.is_queen or bee.is_dying:
+		return "Only a gyne can be sent to found a colony."
+	if bee.energy < GameConfig.energy_capacity * GameConfig.gyne_release_energy:
+		return "Not ready to found a colony: she needs a crop %d%% full to found one on, and has %d%%." % [
+			int(round(100.0 * GameConfig.gyne_release_energy)),
+			int(100.0 * bee.energy / maxf(0.001, GameConfig.energy_capacity)),
+		]
+	return ""
+
+## The genetic points a gyne sent today earns: genetic_points_per_gyne x
+## today's mating curve, rounded, so 0 outside the window.
+func genetic_points_today() -> int:
+	return int(round(GameConfig.genetic_points_per_gyne * mating_curve()))
+
+## Sends `bee` to found a colony, if she is ready, and returns whether she
+## left. Runs on the press of her panel's "Send her to found a colony"
+## button, never on a tick.
+func send_gyne(bee) -> bool:
+	if gyne_not_ready_reason(bee) != "":
 		return false
-	if not GameConfig.seasons_on:
+	var found_a_mate: bool = mating_curve() > 0.0
+	var points: int = genetic_points_today()
+	bee.leave_to_found_colony()
+	if not found_a_mate:
+		gyne_lost.emit()
 		return true
-	return Flower.season_fraction() >= GameConfig.gyne_release_day
+	# On the record before the signal, so the released notice and the
+	# milestone and victory hooks it drives read the new total.
+	var milestones = world.get("colony_milestones") if world != null and is_instance_valid(world) else null
+	if milestones != null:
+		milestones.add_genetic_points(points)
+	Session.gynes_released += 1
+	gyne_released.emit(Session.gynes_released)
+	return true
 
 const Flower = preload("res://scripts/flower.gd")
 const Levels = preload("res://scripts/levels.gd")

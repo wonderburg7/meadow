@@ -23,14 +23,7 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] COL-7 -- the mating window, genetic points and COL-2's narrower win**
-   - Plan: `plans/now/colony-run.md` -- "COL-7 -- the mating window, genetic points and COL-2's narrower win"
-   - Files: `scripts/season.gd`, `scripts/hud.gd`, `scripts/year_winter.gd`, `scripts/colony_milestones.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col7_gyne_window.py`, `tests/col7_gyne_window_test.gd`
-   - Check: `python -m unittest tests.test_col7_gyne_window` passes (a ready gyne stays put across many season ticks; sent in mid summer she counts, emits `gyne_released` and adds 10 points; sent where the curve is 0 she is gone, `gyne_lost` fires, and the release count, points and victory don't change; the points survive `save_data`/`restore`, and a record without them restores 0); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
-   - Proof: `absent: scripts/season.gd :: func send_gyne`
-   - Next after: COL-8 -- winter die-back and spring regrowth
-
-2. **[Claude] COL-8 -- winter die-back and spring regrowth**
+1. **[Claude] COL-8 -- winter die-back and spring regrowth**
    - Plan: `plans/now/colony-run.md` -- "COL-8 -- winter die-back and spring regrowth"
    - Files: `scripts/flower.gd`, `scripts/season.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col8_winter_dieback.py`, `tests/col8_winter_dieback_test.gd`
    - Check: `python -m unittest tests.test_col8_winter_dieback` passes (an in-season flower holding nectar before the skip holds none just after it; on spring's first day its `season_strength()` is below the same date's value in a year with no winter behind it, and equal again by day 1 + `spring_regrowth_days`; the flower count is unchanged by the die-back; the run's first spring is unchanged); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green

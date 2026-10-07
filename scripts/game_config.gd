@@ -857,11 +857,16 @@ var disease_brood_penalty: float = 0.55
 var disease_lifespan_penalty: float = 0.4
 
 # --- gynes leaving ---
-## A gyne that reaches maturity and has enough stored energy flies off to
-## found a colony of her own. That is the score: a season is measured in
-## how many you get away, not in how big the hive got.
-var gyne_release_day: float = 0.75   # fraction of the season, earliest
+## COL-7: no gyne leaves by herself. The player sends one
+## (season.gd::send_gyne) once she has this share of a full crop to found a
+## colony on. That is the score: a season is measured in how many you get
+## away, not in how big the hive got.
 var gyne_release_energy: float = 0.8 # share of a full crop she needs first
+## COL-7 (decision 10): the genetic points a gyne sent in mid summer earns.
+## Elsewhere in the mating window she earns this times season.gd's
+## mating_curve, rounded; outside it, nothing. Counted and saved in a
+## Colony Run (colony_milestones.gd); spending them is a later slice.
+var genetic_points_per_gyne: float = 10.0
 
 # --- nuptial flights ---
 ## COL-11. An unmated queen on nuptial flights rolls once each time she
