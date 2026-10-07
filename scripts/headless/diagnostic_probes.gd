@@ -2,7 +2,7 @@
 class_name HeadlessDiagnosticProbes
 extends RefCounted
 
-const SNAPSHOT_FIELDS := ["population.total", "resources.food_stores", "resources.stored_nectar", "resources.stored_pollen", "environment.winter_here", "environment.flowers_by_species", "environment.flowers_in_season", "environment.flowers_out_of_season", "role_outcomes.cells_completed_total", "performance.fps", "performance.top_sections_ms"]
+const SNAPSHOT_FIELDS := ["population.total", "resources.food_stores", "resources.stored_nectar", "resources.stored_pollen", "environment.winter_here", "environment.flowers_by_species", "environment.flowers_in_season", "environment.flowers_out_of_season", "role_outcomes.cells_completed_total", "performance.fps", "performance.top_sections_ms", "colony.milestone_days"]
 
 static func selected_snapshot(world: Node2D, fields: Array, counters: Dictionary) -> Dictionary:
 	var snapshot := {"type": "snapshot", "game_time": Session.sim_time, "day": world.day}
@@ -24,6 +24,11 @@ static func selected_snapshot(world: Node2D, fields: Array, counters: Dictionary
 				if Session.perf_enabled:
 					for key in Perf.top_sections(8): sections[key] = Perf.averages[key]
 				_merge_field(snapshot, "performance", "top_sections_ms", sections)
+			"colony.milestone_days":
+				var milestone_days: Dictionary = {}
+				if is_instance_valid(world.colony_milestones) and world.colony_milestones.applies():
+					milestone_days = world.colony_milestones.met_days.duplicate()
+				_merge_field(snapshot, "colony", "milestone_days", milestone_days)
 	return snapshot
 
 ## Adds one field into the snapshot's group dictionary, creating the group on

@@ -1,5 +1,6 @@
 {
   "random_seed": 20260923,
+  "run_type": "colony",
   "config_overrides": {
     "energy_burn_rate": 0.17,
     "nectar_recharge_rate": 0.5,
@@ -16,7 +17,8 @@
         "resources.stored_nectar",
         "resources.stored_pollen",
         "role_outcomes.cells_completed_total",
-        "environment.winter_here"
+        "environment.winter_here",
+        "colony.milestone_days"
       ],
       "only_when_changed": false
     }

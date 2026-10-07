@@ -44,9 +44,18 @@ static func create_cell_site_at(bee: Node2D) -> bool:
 	if site == null:
 		site = bee.hive.find_unfinished_cell()
 	if site == null:
-		site = bee.hive.create_next_cell_site(bee.home_hex if bee.has_home_hex else Vector2i.ZERO)
+		return false
+	return _start_building(bee, site)
+
+## T2-2: the outward half -- starts a new site on the spiral. Gated by
+## Automation in actions.gd; the marked half above never makes one.
+static func create_next_cell_site_outward(bee: Node2D) -> bool:
+	var site: Node2D = bee.hive.create_next_cell_site(bee.home_hex if bee.has_home_hex else Vector2i.ZERO)
 	if site == null:
 		return false
+	return _start_building(bee, site)
+
+static func _start_building(bee: Node2D, site: Node2D) -> bool:
 	bee.target_cell = site
 	bee.state = State.TO_BUILD_SITE
 	DiagnosticLog.log_build_target(bee, site, "assigned", "build_work_selected", "pending", "not_checked")

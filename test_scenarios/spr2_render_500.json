@@ -1,0 +1,31 @@
+{
+  "cells": 100,
+  "nectar_foragers": 0,
+  "pollen_foragers": 0,
+  "nurses": 500,
+  "builders": 0,
+  "miners": 0,
+  "time_scale": 1,
+  "random_seed": 20260927,
+  "config_overrides": {
+    "seconds_per_day": 600
+  },
+  "diagnostics": {
+    "profile": "performance",
+    "limits": {
+      "snapshot_lines": 1
+    }
+  },
+  "performance_capture": {
+    "warmup_frames": 120,
+    "measurement_frames": 480,
+    "include_fog": false,
+    "sections": [
+      "hive_find_food",
+      "frame_time_ms"
+    ]
+  },
+  "stop": {
+    "max_days": 2
+  }
+}

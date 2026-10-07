@@ -46,5 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/AR-1` (`codex/AR-1`) | Codex | headless snapshots carry the Colony Run milestone record | Codex | in progress | none | `plans/now/alpha-route-evidence.md` AR-1 -- headless snapshots carry the Colony Run milestone record |
-| `.worktrees/SPR-2` (`claude/SPR-2`) | Claude | the windowed render baseline at 500 and 1,000 bees | Claude | in progress | none | `plans/now/render-scale.md` SPR-2 -- the windowed render baseline at 500 and 1,000 bees |
+| `.worktrees/AR-2` (`codex/AR-2`) | Codex | analysis turns that record into named alpha-gate facts | Codex | in progress | none | `plans/now/alpha-route-evidence.md` AR-2 -- analysis turns that record into named alpha-gate facts |

@@ -25,7 +25,7 @@ recorded in this file.
 
 ---
 
-## hud.gd (3,545 lines)
+## hud.gd (3,547 lines)
 
 Corner readouts, panels, popups, warnings, the problem strip, the
 Challenge goal readout.
@@ -140,47 +140,47 @@ Challenge goal readout.
 2679 func _selection_has_command_lock(bees: Array) -> bool
 2700 static func _detach_and_free_children(container: Node) -> void
 2713 func _rebuild_role_controls(bees: Array) -> void
-2763 func _build_queen_build_row(column: VBoxContainer) -> void
-2777 func _build_follow_control(bees: Array, first) -> void
-2792 func _build_job_row(common_role: int, any_queen: bool) -> void
-2824 func _build_doing_row(common_role: int, first) -> void
-2850 func _mode_is_active(role_id: int, bee, mode_key: String) -> bool
-2865 func _build_orders_row(common_role: int, first) -> void
-2912 func _build_restock_row(first) -> void
-2947 func _build_fallback_row(common_role: int, first) -> void
-2997 func _secondary_items() -> Array
-3013 func _column_row(parent: Container) -> HFlowContainer
-3021 func _labelled_row(title: String) -> HFlowContainer
-3040 func _toggle_button(label: String, is_current: bool, action: Callable, tip: String) -> Control
-3052 func _action_button(label: String, action: Callable, tip: String) -> Control
-3061 func _current_role_marker(label: String) -> Control
-3076 func _common_role(bees: Array) -> int
-3093 func _common_working_role(bees: Array) -> int
-3111 func _make_role_menu(label: String, tip: String, items: Array, node_name: String = "") -> Control
-3133 func _refresh_selection_text() -> void
-3232 func _apply_selection_tray_width() -> void
-3283 func _match_summary_header_button_heights() -> void
-3301 func _tray_column_share(inner_width: float) -> float
-3310 func _apply_even_column_widths(wrappers: Array) -> void
-3338 func _update_command_tray_width() -> void
-3359 func _resize_command_tray() -> void
-3394 func _resettle_command_tray(generation: int, previous_content_min_y: float, stable_streak: int, pass_count: int) -> void
-3408 func _apply_command_tray_rect() -> void
-3426 func _on_command_content_minimum_size_changed() -> void
-3433 func set_winter_button_visible(value: bool) -> void
-3439 func set_view_label(in_hive: bool) -> void
-3448 func set_allowed_role_keys(keys: Array) -> void
-3456 func _role_offered(role_id: int) -> bool
-3462 func refresh_role_gating() -> void
-3471 func set_command_locked_bees(bees: Array) -> void
-3476 func set_allowed_mode_keys(keys: Array) -> void
-3486 func set_allowed_designation_keys(keys: Array) -> void
-3496 func set_queen_build_button_visible(value: bool) -> void
-3501 # --- stage gates --------------------------------------------------
-3509 func apply_gates(stage_gate) -> void
-3527 func _register_gated_control(control_name: String, getter: Callable) -> void
-3535 func _apply_gate_to_control(control_name: String) -> void
-3544 func _is_gate_open(control_name: String) -> bool
+2765 func _build_queen_build_row(column: VBoxContainer) -> void
+2779 func _build_follow_control(bees: Array, first) -> void
+2794 func _build_job_row(common_role: int, any_queen: bool, queen_bee = null) -> void
+2826 func _build_doing_row(common_role: int, first) -> void
+2852 func _mode_is_active(role_id: int, bee, mode_key: String) -> bool
+2867 func _build_orders_row(common_role: int, first) -> void
+2914 func _build_restock_row(first) -> void
+2949 func _build_fallback_row(common_role: int, first) -> void
+2999 func _secondary_items() -> Array
+3015 func _column_row(parent: Container) -> HFlowContainer
+3023 func _labelled_row(title: String) -> HFlowContainer
+3042 func _toggle_button(label: String, is_current: bool, action: Callable, tip: String) -> Control
+3054 func _action_button(label: String, action: Callable, tip: String) -> Control
+3063 func _current_role_marker(label: String) -> Control
+3078 func _common_role(bees: Array) -> int
+3095 func _common_working_role(bees: Array) -> int
+3113 func _make_role_menu(label: String, tip: String, items: Array, node_name: String = "") -> Control
+3135 func _refresh_selection_text() -> void
+3234 func _apply_selection_tray_width() -> void
+3285 func _match_summary_header_button_heights() -> void
+3303 func _tray_column_share(inner_width: float) -> float
+3312 func _apply_even_column_widths(wrappers: Array) -> void
+3340 func _update_command_tray_width() -> void
+3361 func _resize_command_tray() -> void
+3396 func _resettle_command_tray(generation: int, previous_content_min_y: float, stable_streak: int, pass_count: int) -> void
+3410 func _apply_command_tray_rect() -> void
+3428 func _on_command_content_minimum_size_changed() -> void
+3435 func set_winter_button_visible(value: bool) -> void
+3441 func set_view_label(in_hive: bool) -> void
+3450 func set_allowed_role_keys(keys: Array) -> void
+3458 func _role_offered(role_id: int, bee = null) -> bool
+3464 func refresh_role_gating() -> void
+3473 func set_command_locked_bees(bees: Array) -> void
+3478 func set_allowed_mode_keys(keys: Array) -> void
+3488 func set_allowed_designation_keys(keys: Array) -> void
+3498 func set_queen_build_button_visible(value: bool) -> void
+3503 # --- stage gates --------------------------------------------------
+3511 func apply_gates(stage_gate) -> void
+3529 func _register_gated_control(control_name: String, getter: Callable) -> void
+3537 func _apply_gate_to_control(control_name: String) -> void
+3546 func _is_gate_open(control_name: String) -> bool
 ```
 
 ## bee.gd (2,538 lines)
@@ -385,29 +385,7 @@ The headless verbs, `when` clauses and layout assertions.
 1640 static func _log(do: String, target_desc: String, result: String, reason: String) -> void
 ```
 
-## settings_catalogue.gd (1,440 lines)
-
-Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
-
-```
-22   # --- preloads and collection order --------------------------------
-48   # --- the tunables table -------------------------------------------
-1315 # --- settings owned by Session ------------------------------------
-1329 # --- reading and writing a setting --------------------------------
-1330 static func setting_get(key: String)
-1333 static func setting_set(key: String, value) -> void
-1340 # --- resetting ----------------------------------------------------
-1357 static func reset_config_to_defaults() -> void
-1369 static func reset_config_keys(keys: Array) -> void
-1375 # --- applying a setting with its cascades -------------------------
-1384 static func apply_setting(key: String, value) -> void
-1395 # --- the cascade helpers ------------------------------------------
-1400 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1418 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1432 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
-```
-
-## bee_foraging.gd (1,436 lines)
+## bee_foraging.gd (1,440 lines)
 
 The forager's search, scouting, recruitment and species-preference
 behaviour.
@@ -449,44 +427,67 @@ behaviour.
 551  static func nectar_strength(_bee: Node2D) -> float
 559  static func shelter(bee: Node2D, _delta: float) -> void
 564  # --- skill-or-setting behaviour switches ---------------------------
-569  static func tarsal_markers_on() -> bool
-572  static func orientation_flight_on() -> bool
-576  # --- accepting or rejecting a flower ------------------------------
-577  static func worth_feeding(bee: Node2D, f: Node2D) -> bool
-590  static func reject_flower(bee: Node2D) -> void
-608  # --- collecting ---------------------------------------------------
-609  static func start_collecting(bee: Node2D) -> void
-682  static func _handling_experience_scale(bee: Node2D, species: String) -> float
-691  static func collect(bee: Node2D, delta: float) -> void
-740  static func finish_collecting(bee: Node2D) -> void
-779  # --- entering the hive and depositing -----------------------------
-783  static func enter_hive(bee: Node2D) -> void
-810  static func approach_cell(bee: Node2D, cell: Node2D, delta: float) -> int
-825  static func release_cell_slot(bee: Node2D) -> void
-832  static func go_to_deposit_cell(bee: Node2D, delta: float) -> void
-922  static func finish_depositing(bee: Node2D) -> void
-962  static func _after_delivery_state(bee: Node2D) -> int
-973  static func _resume_own_job_if_indoors(bee: Node2D) -> bool
-981  # --- scoring a trip -----------------------------------------------
-986  static func _score_trip(bee: Node2D) -> void
-1064 # --- leaving the hive ---------------------------------------------
-1065 static func go_to_exit(bee: Node2D, delta: float) -> void
-1108 static func _entrance_wait_spot(bee: Node2D, side: int) -> Vector2
-1120 static func _leave_hive_and_resume(bee: Node2D) -> void
-1147 static func _send_to_scout_point(bee: Node2D) -> void
-1158 # --- scouting -----------------------------------------------------
-1164 static func start_scouting(bee: Node2D) -> void
-1182 # --- waiting at the entrance --------------------------------------
-1187 static func wait_at_entrance(bee: Node2D, delta: float) -> void
-1291 # --- the recruitment dance ----------------------------------------
-1299 static func _update_dance_eligibility(bee: Node2D) -> void
-1323 static func check_dance_proximity(bee: Node2D, _delta: float) -> void
-1348 static func _start_dance(mentor: Node2D, seeker: Node2D) -> void
-1368 static func dance(bee: Node2D, delta: float) -> void
-1380 static func _end_dance(bee: Node2D) -> void
-1402 static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void
-1429 # --- remote deposit -----------------------------------------------
-1431 static func deposit_everything_remotely(bee: Node2D) -> void
+569  static func adaptive_constancy_on() -> bool
+573  static func tarsal_markers_on() -> bool
+576  static func orientation_flight_on() -> bool
+580  # --- accepting or rejecting a flower ------------------------------
+581  static func worth_feeding(bee: Node2D, f: Node2D) -> bool
+594  static func reject_flower(bee: Node2D) -> void
+612  # --- collecting ---------------------------------------------------
+613  static func start_collecting(bee: Node2D) -> void
+686  static func _handling_experience_scale(bee: Node2D, species: String) -> float
+695  static func collect(bee: Node2D, delta: float) -> void
+744  static func finish_collecting(bee: Node2D) -> void
+783  # --- entering the hive and depositing -----------------------------
+787  static func enter_hive(bee: Node2D) -> void
+814  static func approach_cell(bee: Node2D, cell: Node2D, delta: float) -> int
+829  static func release_cell_slot(bee: Node2D) -> void
+836  static func go_to_deposit_cell(bee: Node2D, delta: float) -> void
+926  static func finish_depositing(bee: Node2D) -> void
+966  static func _after_delivery_state(bee: Node2D) -> int
+977  static func _resume_own_job_if_indoors(bee: Node2D) -> bool
+985  # --- scoring a trip -----------------------------------------------
+990  static func _score_trip(bee: Node2D) -> void
+1068 # --- leaving the hive ---------------------------------------------
+1069 static func go_to_exit(bee: Node2D, delta: float) -> void
+1112 static func _entrance_wait_spot(bee: Node2D, side: int) -> Vector2
+1124 static func _leave_hive_and_resume(bee: Node2D) -> void
+1151 static func _send_to_scout_point(bee: Node2D) -> void
+1162 # --- scouting -----------------------------------------------------
+1168 static func start_scouting(bee: Node2D) -> void
+1186 # --- waiting at the entrance --------------------------------------
+1191 static func wait_at_entrance(bee: Node2D, delta: float) -> void
+1295 # --- the recruitment dance ----------------------------------------
+1303 static func _update_dance_eligibility(bee: Node2D) -> void
+1327 static func check_dance_proximity(bee: Node2D, _delta: float) -> void
+1352 static func _start_dance(mentor: Node2D, seeker: Node2D) -> void
+1372 static func dance(bee: Node2D, delta: float) -> void
+1384 static func _end_dance(bee: Node2D) -> void
+1406 static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void
+1433 # --- remote deposit -----------------------------------------------
+1435 static func deposit_everything_remotely(bee: Node2D) -> void
+```
+
+## settings_catalogue.gd (1,440 lines)
+
+Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
+
+```
+22   # --- preloads and collection order --------------------------------
+48   # --- the tunables table -------------------------------------------
+1315 # --- settings owned by Session ------------------------------------
+1329 # --- reading and writing a setting --------------------------------
+1330 static func setting_get(key: String)
+1333 static func setting_set(key: String, value) -> void
+1340 # --- resetting ----------------------------------------------------
+1357 static func reset_config_to_defaults() -> void
+1369 static func reset_config_keys(keys: Array) -> void
+1375 # --- applying a setting with its cascades -------------------------
+1384 static func apply_setting(key: String, value) -> void
+1395 # --- the cascade helpers ------------------------------------------
+1400 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1418 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1432 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
 ## main.gd (1,337 lines)

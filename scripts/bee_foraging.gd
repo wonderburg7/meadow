@@ -454,7 +454,7 @@ static func _weighted_flower_choice(bee: Node2D, nodes: Array, accept: Callable,
 		# distance/heading score above, rather than replacing it -- a
 		# confident bee still prefers a close, well-aligned flower of her
 		# trusted species over a far one of the same species.
-		if GameConfig.adaptive_constancy_on:
+		if adaptive_constancy_on():
 			var confidence: float = float(bee.species_confidence.get(f.species_name, 0.0))
 			w *= (1.0 + GameConfig.adaptive_constancy_weight * confidence)
 		candidates.append(f)
@@ -566,6 +566,10 @@ static func shelter(bee: Node2D, _delta: float) -> void:
 ## it (plans/design/progression.md section 11). Session.progression is null
 ## when main.gd never booted, so it is read null-safely. Neither is a
 ## per-frame read: these run per flower considered or visited.
+static func adaptive_constancy_on() -> bool:
+	return GameConfig.adaptive_constancy_on or (Session.progression != null and Session.progression.is_behaviour_enabled("adaptive_constancy_on"))
+
+
 static func tarsal_markers_on() -> bool:
 	return GameConfig.tarsal_markers_on or (Session.progression != null and Session.progression.is_behaviour_enabled("tarsal_markers_on"))
 
@@ -597,7 +601,7 @@ static func reject_flower(bee: Node2D) -> void:
 		# species specifically, faster than a good visit builds it (see
 		# GameConfig.adaptive_constancy_decay) -- a species that's turned
 		# unrewarding should lose favour quickly.
-		if GameConfig.adaptive_constancy_on:
+		if adaptive_constancy_on():
 			var species: String = bee.current_flower.species_name
 			bee.species_confidence[species] = max(0.0, float(bee.species_confidence.get(species, 0.0)) - GameConfig.adaptive_constancy_decay)
 		bee.current_flower.release(bee)
@@ -761,7 +765,7 @@ static func finish_collecting(bee: Node2D) -> void:
 		# below, which is a species she looked at and turned down.
 		if GameConfig.handling_experience_on:
 			bee.species_experience[species] = int(bee.species_experience.get(species, 0)) + 1
-		if GameConfig.adaptive_constancy_on:
+		if adaptive_constancy_on():
 			bee.species_confidence[species] = minf(1.0, float(bee.species_confidence.get(species, 0.0)) + GameConfig.adaptive_constancy_gain)
 		# stay away until it's had time to fully recharge
 		bee.flower_cooldowns[bee.current_flower] = Session.sim_time + bee.current_flower.seconds_until_full(bee.resource_type)

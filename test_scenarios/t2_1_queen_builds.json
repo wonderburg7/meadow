@@ -1,0 +1,27 @@
+{
+  "run_type": "colony",
+  "random_seed": 20261007,
+  "cells": 0,
+  "nectar_foragers": 1,
+  "pollen_foragers": 0,
+  "nurses": 0,
+  "builders": 0,
+  "miners": 0,
+  "honey_makers": 0,
+  "winter": true,
+  "skill_grants": [],
+  "skill_bans": [],
+  "skill_delays": {},
+  "queen_laying_backup": "nurse",
+  "actions": [
+    {"do": "assert", "condition": {"skill_owned": "skill.colony.comb_worker", "owned": false}},
+    {"do": "assert", "condition": {"skill_owned": "skill.colony.miner", "owned": false}},
+    {"do": "assign_role", "target": {"current_role": "forager", "count": 1}, "role": "comb_worker", "expect_refused": true},
+    {"do": "assign_role", "target": {"current_role": "forager", "count": 1}, "role": "miner", "expect_refused": true},
+    {"do": "assign_role", "target": {"queen": true}, "role": "comb_worker"},
+    {"do": "queue_build", "target": {"queen": true}, "hex": [0, 0]},
+    {"do": "assert", "within_seconds": 600, "condition": {"built_cells_at_least": 1}},
+    {"do": "assert", "condition": {"skill_owned": "skill.colony.comb_worker", "owned": false}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 3}
+}

@@ -83,7 +83,7 @@ const ROLES := [
 	},
 	{
 		"id": COMB_WORKER, "key": "comb_worker", "label": "Comb worker", "letter": "C",
-		"skill": "",
+		"skill": "skill.colony.comb_worker",
 		"start_count_key": "builders", "start_config": "starting_builders",
 		"colour": Color(0.55, 0.85, 0.45),
 		"tip": "Looks after the comb itself: drawing new cells, clearing blocked ones, and moving stores between them.\n\nBuilding burns extra energy, because bees make wax from the sugar they have eaten.",
@@ -112,12 +112,12 @@ const ROLES := [
 	},
 	{
 		"id": MINER, "key": "miner", "label": "Miner", "letter": "M",
-		"skill": "",
+		"skill": "skill.colony.miner",
 		"start_count_key": "miners", "start_config": "starting_miners",
 		"colour": Color(0.80, 0.55, 0.35),
 		"tip": "Digs out soil blocks to make room for more comb.\n\nOne miner takes about two minutes per block; several digging the same block share the work. A miner fills up with spoil as it digs and has to carry it outside before it can carry on.",
 		"modes": [
-			{"key": "automine", "label": "Dig on its own", "tip": "Pick the nearest exposed soil block and start digging without waiting to be told, so the hive opens up around itself. Blocks you have marked yourself still come first."},
+			{"key": "automine", "skill": "skill.hive_mind.automation", "label": "Dig on its own", "tip": "Pick the nearest exposed soil block and start digging without waiting to be told, so the hive opens up around itself. Blocks you have marked yourself still come first."},
 		],
 	},
 	{

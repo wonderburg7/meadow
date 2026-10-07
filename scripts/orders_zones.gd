@@ -141,14 +141,12 @@ func _on_role_requested(role_name: String) -> void:
 ## Availability.role_query allows it. The stage part is left out here: which
 ## controls a Challenge shows is the HUD's lesson plan, while owning a role's
 ## skill is a rule of the run that holds for every caller.
-func _role_permitted(role_id: int) -> bool:
-	return main.Availability.role_query(role_id, null, Session.progression).available
+func _role_permitted(role_id: int, bee = null) -> bool:
+	return main.Availability.role_query(role_id, null, Session.progression, bee).available
 
 func _assign_role(role_id: int) -> void:
-	if not _role_permitted(role_id):
-		return
 	for b in main.selected_bees:
-		if is_instance_valid(b):
+		if is_instance_valid(b) and _role_permitted(role_id, b):
 			b.set_role(role_id)
 	main._update_population_readout()
 	main.hud.update_selection(main.selected_bees)
@@ -184,10 +182,8 @@ func _on_favourite_requested(value: bool) -> void:
 
 func _on_secondary_role_requested(role_name: String) -> void:
 	var target_role: int = main.Roles.id_for_key(role_name)
-	if target_role >= 0 and not _role_permitted(target_role):
-		return
 	for b in main.selected_bees:
-		if is_instance_valid(b):
+		if is_instance_valid(b) and (target_role < 0 or _role_permitted(target_role, b)):
 			b.set_secondary_role(target_role)
 	main.hud.update_selection(main.selected_bees)
 
