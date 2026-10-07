@@ -929,6 +929,13 @@ func _nuptial_flight_step(delta: float) -> void:
 			if _is_inside_hive():
 				nuptial_phase = NUPTIAL_NONE
 				_end_nuptial_flight()
+			elif state != State.TO_HIVE:
+				# A player's order took her off the way home: the flight ends
+				# here, without a mate, as it does when she is taken off the
+				# site. Back on NUPTIAL_NONE, eating is no longer held off and
+				# the outdoors fallback above brings her home once the order
+				# has run its course, so she is never left outside.
+				nuptial_phase = NUPTIAL_NONE
 
 ## Cheapest test first: once she has flown today the rest is skipped.
 func _nuptial_flight_due() -> bool:
@@ -936,8 +943,10 @@ func _nuptial_flight_due() -> bool:
 		return false
 	if _is_busy() or player_driven or Session.winter_here:
 		return false
-	# Fed before she goes, so she is not out on an empty crop.
-	return not BeeSurvival.should_go_and_eat(self)
+	# Fed before she goes, so she is not out on an empty crop. Her energy
+	# itself, not should_go_and_eat: that is false in a hive with no food,
+	# which would send a hungry queen out.
+	return energy > GameConfig.energy_capacity * GameConfig.hunger_threshold
 
 func _begin_nuptial_flight() -> void:
 	nuptial_flight_day = int(world.day)

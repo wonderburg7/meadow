@@ -214,7 +214,10 @@ at mid season). `season.gd::nuptial_mating_chance` is the peak chance times
 the curve, clamped to 0-1. The flight runs on states the bee already has
 (`bee.gd::_nuptial_flight_step`): out through the entrance to a meadow point
 260 px from the hive, a quarter of a day waiting there, home on `TO_HIVE`;
-the roll is on arriving home.
+the roll is on arriving home. She sets out only above `hunger_threshold`
+of her energy. A player's order that takes her off the site or off the way
+home ends that flight without a roll, and once the order has run its
+course she comes home by herself (review, 7 Oct 2026).
 
 **The readout switch** (Dave's decision, 7 Oct 2026: `scripts/hud.gd` joins
 COL-11). With one unmated queen selected, the selected-bee panel's Doing

@@ -9,6 +9,8 @@ extends SceneTree
 ## - in early spring she leaves the hive, lays nothing while she is out,
 ##   comes home, and has not mated (the curve is 0 there);
 ## - she does not fly a second time the same day;
+## - the next day, a move order on her way home ends that flight without a
+##   roll, and she still gets back inside;
 ## - on a mid-summer day she flies again and comes home mated, her flights
 ##   mode gone, her readout no longer "Unmated" and the Mating row gone;
 ## - she then lays worker brood, not drones.
@@ -28,6 +30,7 @@ const FLIGHT_FRAMES := 9000 # frames allowed for one whole flight
 const SAME_DAY_FRAMES := 300  # 40 in-game seconds, well inside the day
 const LAY_FRAMES := 9000    # frames allowed for her first worker egg
 const SPRING_DAY := 2       # season fraction 0.03: before the window opens
+const INTERRUPT_DAY := 3    # season fraction 0.07: still before the window
 const SUMMER_DAY := 16      # season fraction 0.5: mid summer
 
 var _main: Node = null
@@ -39,12 +42,17 @@ var _phase := "boot"
 var _phase_frame := 0
 var _left_hive := false
 var _brood_at_departure := -1
+var _interrupted := false
 var _worker_brood_at_mating: Array = []
 var _failures: PackedStringArray = PackedStringArray()
 
 
 func _process(_delta: float) -> bool:
 	_frame += 1
+	# A flight never loses her: a queen who died on one fails here rather
+	# than on the next call into a freed node.
+	if _phase not in ["boot", "settle", "done"] and not is_instance_valid(_queen):
+		_fail("the queen died during the %s" % _phase)
 	match _phase:
 		"boot":
 			_boot()
@@ -55,6 +63,8 @@ func _process(_delta: float) -> bool:
 			_watch_flight(_after_spring_flight)
 		"same_day":
 			_watch_same_day()
+		"interrupted_flight":
+			_watch_interrupted_flight()
 		"summer_flight":
 			_watch_flight(_after_summer_flight)
 		"worker_brood":
@@ -169,8 +179,31 @@ func _watch_same_day() -> void:
 	if not _failures.is_empty():
 		_phase = "done"
 		return
-	_jump_to_day(SUMMER_DAY)
-	_begin_flight_watch("summer_flight")
+	_jump_to_day(INTERRUPT_DAY)
+	_begin_flight_watch("interrupted_flight")
+
+
+## On her way home she is ordered further out into the meadow. The flight
+## ends there without a roll, and once the order has run its course she
+## comes home by herself.
+func _watch_interrupted_flight() -> void:
+	if not _interrupted:
+		if _queen.nuptial_phase == _queen.NUPTIAL_BACK and not _queen._is_inside_hive():
+			var away: Vector2 = (_queen.position - _main.hive.position).normalized()
+			_queen.command_move_to(_queen.global_position + away * 100.0)
+			_interrupted = true
+	elif _queen._is_inside_hive() and _queen.nuptial_phase == _queen.NUPTIAL_NONE:
+		print("COL11 interrupted flight home %d frames after it began" % (_frame - _phase_frame))
+		_check(_queen.nuptial_flights_flown == 1,
+			"the interrupted flight rolled (%d flights flown)" % _queen.nuptial_flights_flown)
+		_check(not _queen.is_mated, "the queen mated on an interrupted flight")
+		_jump_to_day(SUMMER_DAY)
+		_begin_flight_watch("summer_flight")
+		return
+	if _frame - _phase_frame > FLIGHT_FRAMES:
+		_fail("%d frames into the interrupted flight the queen was not home (interrupted %s, phase %d, state %d, inside %s)" % [
+			FLIGHT_FRAMES, _interrupted, _queen.nuptial_phase, _queen.state, _queen._is_inside_hive(),
+		])
 
 
 func _after_summer_flight() -> void:
