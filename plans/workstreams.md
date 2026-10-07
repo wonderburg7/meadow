@@ -46,4 +46,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/T2-1` (`claude/T2-1`) | Claude | Comb worker and Miner become bought roles, and the queen builds without the skill | Claude | in progress | none | `plans/now/tier-two.md` T2-1 -- Comb worker and Miner become bought roles, and the queen builds without the skill |
