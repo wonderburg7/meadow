@@ -48,3 +48,18 @@ class AlphaBuildTest(unittest.TestCase):
         self.assertIn('$ErrorActionPreference = "Continue"', helper[:export_line])
         self.assertIn("_console.exe", helper)
         self.assertIn("export_templates", helper)
+
+    def test_editor_addons_stay_out_of_the_export(self):
+        """Until 7 Oct 2026 the alpha packed 350 editor-only addon files.
+        godot_ai strips its own autoload at export (mcp_export_plugin.gd), so
+        excluding addons/ leaves the game's autoloads intact."""
+        options = configparser.ConfigParser(interpolation=None)
+        options.read(ROOT / "export_presets.cfg", encoding="utf-8")
+        excluded = [p.strip() for p in options["preset.0"]["exclude_filter"].strip('"').split(",")]
+        self.assertIn("addons/*", excluded)
+        self.assertIn("godot-copy-all-errors-*/*", excluded)
+        project = (ROOT / "project.godot").read_text(encoding="utf-8")
+        autoload = project.split("[autoload]", 1)[1].split("\n[", 1)[0]
+        for line in autoload.splitlines():
+            if "res://addons/" in line:
+                self.assertTrue(line.startswith("_mcp_game_helper="), line)

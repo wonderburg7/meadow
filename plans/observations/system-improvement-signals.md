@@ -70,6 +70,26 @@ explicit request from Dave.
 - Disposition: untriaged
 -->
 
+### 2026-10-07 — readout history starts empty after every load, and no review has asked whether it should
+
+- Source: save review (`docs/save-review-2026-10-07.md`, Hand-offs); filed
+  ad hoc the same day, since that record predates contract rule 4
+- Area: architecture
+- Signal: `foraging_stats`, the colony graphs' `history_samples`,
+  `emergence_log` and `day_store_totals` are not saved, so a loaded run's
+  graphs and foraging readouts start from nothing. The save review left it
+  to the UI review as a presentation call; that hand-off lived only in the
+  record.
+- Evidence: the save review's state inventory, "Readout history" row;
+  `grep -n "history_samples\|emergence_log\|day_store_totals" scripts/save_game.gd`
+  finds nothing.
+- Consequence: a player who loads mid-run loses the trend they were reading,
+  which matters most for the Colony Run's later days.
+- Candidate direction: Hypothesis — the UI review decides with Dave whether
+  the readouts should continue across a load; if yes, it returns to the save
+  review as an additive-field question under `.claude/rules/saving.md`.
+- Disposition: untriaged
+
 ### 2026-10-07 — sessions still try to read the four denied paths, and a hint hook would widen the deny list
 
 - Source: context review (`docs/context-review-2026-10-07.md`, Hand-offs)
