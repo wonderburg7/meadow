@@ -32,7 +32,10 @@ it can become one.
 
 - winter, sprites, Challenge-aware save/load and the wider ecology systems:
   `DESIGN_BACKLOG.md`'s "Deferred product decisions" holds the decision on each.
-- second-hive-site progression.
+
+Colonies have one hive site. A future swarming behaviour may instead establish
+a new colony at another location; it needs its own design pass before it can
+be planned.
 
 Choose a playable, independently testable slice from one row. Do not promote a
 later idea into the queue until it has a named owner, data boundary, validation
