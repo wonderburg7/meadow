@@ -24,6 +24,7 @@ extends VBoxContainer
 const ServerStateScript := preload("res://addons/godot_ai/utils/mcp_server_state.gd")
 const ClientRefreshStateScript := preload("res://addons/godot_ai/utils/mcp_client_refresh_state.gd")
 const Client := preload("res://addons/godot_ai/clients/_base.gd")
+const PortResolver := preload("res://addons/godot_ai/utils/port_resolver.gd")
 const ClientConfigurator := preload("res://addons/godot_ai/client_configurator.gd")
 const ClientRegistry := preload("res://addons/godot_ai/clients/_registry.gd")
 const ToolCatalog := preload("res://addons/godot_ai/tool_catalog.gd")
@@ -54,6 +55,7 @@ static var COLOR_AMBER := Color(1.0, 0.75, 0.25)
 
 signal update_requested
 signal client_action_requested(client_id: String, action: String)
+signal client_action_cancel_requested(client_id: String)
 signal client_status_refresh_requested(client_ids: Array[String], force: bool)
 signal status_snapshot_requested
 signal live_server_probe_requested(port: int)
@@ -165,11 +167,6 @@ var _uv_recheck_pending := false
 ## (foreign-port branch never sets `_server_pid`, so `_stop_server`
 ## can't kill it); the line has to show the mismatch honestly.
 var _setup_server_label: Label
-## Last rendered server-version string. `_update_status_label` runs every
-## frame; early-outs text repaint when nothing changed. Empty means
-## "no line rendered yet" (dev-checkout branch doesn't render a
-## user-mode Server line).
-var _last_rendered_server_text: String = ""
 ## Restart-server button shown next to the Setup container when
 ## `McpConnection.server_version` drifts from the plugin version. Hidden
 ## in the match case so the UI stays calm.
@@ -457,7 +454,7 @@ func _build_ui() -> void:
 
 	_crash_docs_btn = Button.new()
 	_crash_docs_btn.text = "How to change the port"
-	_crash_docs_btn.tooltip_text = "Open the guide: change godot_ai/http_port and reconfigure your MCP clients"
+	_crash_docs_btn.tooltip_text = "Open the guide: change ports in Godot AI settings and reconfigure your MCP clients"
 	_crash_docs_btn.visible = false
 	_crash_docs_btn.pressed.connect(func(): OS.shell_open(_port_conflict_docs_url()))
 	_crash_panel.add_child(_crash_docs_btn)
@@ -720,13 +717,13 @@ func _build_client_row(client_id: String) -> void:
 
 	var configure_btn := Button.new()
 	configure_btn.text = "Configure"
-	configure_btn.pressed.connect(_on_configure_client.bind(client_id))
+	configure_btn.pressed.connect(_on_client_action_button_pressed.bind(client_id, "configure"))
 	row.add_child(configure_btn)
 
 	var remove_btn := Button.new()
 	remove_btn.text = "Remove"
 	remove_btn.visible = false
-	remove_btn.pressed.connect(_on_remove_client.bind(client_id))
+	remove_btn.pressed.connect(_on_client_action_button_pressed.bind(client_id, "remove"))
 	row.add_child(remove_btn)
 
 	# F-3-4: use the authoritative facade so Open/Reveal land on the same
@@ -827,6 +824,13 @@ func _update_status() -> void:
 	elif bool(server_status.get("handoff_retry_pending", false)):
 		status_text = "Recovering after update…"
 		status_color = COLOR_AMBER
+	elif state == ServerStateScript.UNSUPPORTED_CONFIG:
+		status_text = "Unsupported remote access configuration"
+		status_color = Color.RED
+	elif state == ServerStateScript.CRASHED and str(server_status.get("reason", "")) == "endpoint_lost":
+		var recovery_pending := bool(server_status.get("recovery_pending", false))
+		status_text = "Connection lost; reconnecting..." if recovery_pending else "Connection lost"
+		status_color = COLOR_AMBER if recovery_pending else Color.RED
 	elif state == ServerStateScript.CRASHED:
 		var exit_ms: int = server_status.get("exit_ms", 0)
 		status_text = "Server exited after %.1fs" % (exit_ms / 1000.0)
@@ -843,7 +847,10 @@ func _update_status() -> void:
 		var conflict_port: int = int(server_status.get("conflict_port", 0))
 		if conflict_port <= 0:
 			conflict_port = ClientConfigurator.http_port()
-		status_text = "Port %d held by another process" % conflict_port
+		status_text = (
+			"Windows port discovery unavailable" if str(server_status.get("episode_reason", "")) == "port_occupancy_unknown"
+			else "Port %d held by another process" % conflict_port
+		)
 		status_color = Color.RED
 	elif state == ServerStateScript.NO_COMMAND:
 		status_text = "No server command found"
@@ -980,6 +987,8 @@ static func _crash_body_for_state(state: int, server_status: Dictionary = {}) ->
 	## problem; don't repeat it here. This copy answers "what do I do?".
 	var port := ClientConfigurator.http_port()
 	match state:
+		ServerStateScript.UNSUPPORTED_CONFIG:
+			return str(server_status.get("message", "Use an IPv4 allowlist or clear Allow remote hosts, then reload the plugin."))
 		ServerStateScript.PORT_EXCLUDED:
 			return "Windows (Hyper-V / WSL2 / Docker) reserved port %d. Pick a free port or try `net stop winnat; net start winnat` in an admin shell." % port
 		ServerStateScript.INCOMPATIBLE:
@@ -1056,8 +1065,11 @@ static func _crash_body_for_state(state: int, server_status: Dictionary = {}) ->
 ## the client's attach command, so clients must be reconfigured afterwards.
 ## The per-client reconfigure steps live behind the crash panel's docs link.
 static func _free_port_hint(port: int) -> String:
-	var free_http := ClientConfigurator.suggest_free_port(port + 1)
-	var free_ws := ClientConfigurator.suggest_free_port(ClientConfigurator.ws_port() + 1)
+	var occupancy := PortResolver.windows_listener_snapshot() if OS.get_name() == "Windows" else {}
+	var free_http := ClientConfigurator.suggest_free_port(port + 1, 2048, occupancy)
+	var free_ws := ClientConfigurator.suggest_free_port(ClientConfigurator.ws_port() + 1, 2048, occupancy)
+	if free_http == 0 or free_ws == 0:
+		return "Automatic port selection is unavailable. Choose HTTP and WS ports manually below, or retry."
 	return "Suggested ports: %d (HTTP) and %d (WS). Choose both ports below, click Apply + Reload, then Configure your AI clients to use the new pair." % [free_http, free_ws]
 
 
@@ -1341,13 +1353,19 @@ func _refresh_server_version_label(server_status: Dictionary = {}) -> void:
 			## look like it had multiple restart paths.
 			or (is_incompatible and can_recover and _crash_restart_btn == null)
 		)
-	if text == _last_rendered_server_text:
-		_setup_server_label.add_theme_color_override("font_color", color)
-		_update_restart_button(show_restart)
-		return
-	_last_rendered_server_text = text
+	## Runs every frame, so write only what changed (#1121). `Label.text`
+	## already ignores same-value writes; `add_theme_color_override` does
+	## not — every call re-sends NOTIFICATION_THEME_CHANGED and queues a
+	## redraw, which kept the idle editor redrawing while this row was
+	## visible. Compare against the label itself so a rebuilt row still
+	## gets its color and a same-text state change (amber drift -> red
+	## incompatible) still repaints.
 	_setup_server_label.text = text
-	_setup_server_label.add_theme_color_override("font_color", color)
+	if (
+		not _setup_server_label.has_theme_color_override("font_color")
+		or _setup_server_label.get_theme_color("font_color") != color
+	):
+		_setup_server_label.add_theme_color_override("font_color", color)
 	_update_restart_button(show_restart)
 
 
@@ -1365,12 +1383,10 @@ func _on_restart_stale_server() -> void:
 	if _server_restart_in_progress:
 		return
 	_server_restart_in_progress = true
-	_last_rendered_server_text = ""
 	_refresh_server_version_label()
 	if not is_inside_tree():
 		_dispatch_stale_server_restart()
 		_server_restart_in_progress = false
-		_last_rendered_server_text = ""
 		_refresh_server_version_label()
 		return
 	call_deferred("_restart_stale_server_after_feedback")
@@ -1380,7 +1396,6 @@ func _restart_stale_server_after_feedback() -> void:
 	await get_tree().create_timer(0.15).timeout
 	if not _dispatch_stale_server_restart():
 		_server_restart_in_progress = false
-		_last_rendered_server_text = ""
 		_refresh_server_version_label()
 
 
@@ -1401,7 +1416,6 @@ func present_lifecycle_action_result(accepted: bool) -> void:
 	if accepted:
 		return
 	_server_restart_in_progress = false
-	_last_rendered_server_text = ""
 	_refresh_server_version_label()
 
 
@@ -1499,7 +1513,6 @@ func _refresh_setup_status() -> void:
 		_version_restart_btn.visible = false
 		server_row.add_child(_version_restart_btn)
 		_setup_container.add_child(server_row)
-		_last_rendered_server_text = ""
 		_refresh_server_version_label()
 	else:
 		_setup_container.add_child(_make_status_row("uv", "not found", Color.RED))
@@ -1745,8 +1758,13 @@ func _on_configure_client(client_id: String) -> void:
 	_dispatch_client_action(client_id, "configure")
 
 
-func _on_remove_client(client_id: String) -> void:
-	_dispatch_client_action(client_id, "remove")
+func _on_client_action_button_pressed(client_id: String, action: String) -> void:
+	if _is_self_update_in_progress():
+		return
+	if _client_work_snapshot.get("action_phases", {}).get(client_id, "") == "queued":
+		client_action_cancel_requested.emit(client_id)
+		return
+	_dispatch_client_action(client_id, action)
 
 
 ## Emit a value intent; plugin.gd routes it to the plugin-lifetime job owner.
@@ -1771,6 +1789,12 @@ func present_client_action_result(
 ) -> void:
 	_report_prewarm_outcome(client_id, prewarm)
 	_finalize_action_buttons(client_id)
+	if result.get("status") == "cancelled":
+		var row: Dictionary = _client_rows.get(client_id, {})
+		if not row.is_empty():
+			_apply_row_status(client_id, row.get("status", Client.Status.NOT_CONFIGURED))
+		_refresh_clients_summary()
+		return
 	var success_status := Client.Status.NOT_CONFIGURED if action == "remove" else Client.Status.CONFIGURED
 	if result.get("status") == "ok":
 		## #877: Remove targets only the selected scope, so a configure is the
@@ -1805,7 +1829,11 @@ func present_client_work_snapshot(snapshot: Dictionary) -> void:
 		var id := String(client_id)
 		if busy.has(id):
 			_set_row_action_in_flight(id, String(names.get(id, "configure")))
-			if String(phases.get(id, "")) == "prewarm":
+			if String(phases.get(id, "")) == "queued":
+				var button := "remove_btn" if String(names.get(id, "configure")) == "remove" else "configure_btn"
+				(_client_rows[id][button] as Button).text = "Cancel queued"
+				(_client_rows[id][button] as Button).disabled = false
+			elif String(phases.get(id, "")) == "prewarm":
 				(_client_rows[id]["configure_btn"] as Button).text = "Installing…"
 		else:
 			_finalize_action_buttons(id)
@@ -2335,9 +2363,19 @@ func _build_settings_tab(tabs: TabContainer) -> void:
 	## `_reset_tools_pending_from_setting` / `_on_open_clients_window`).
 	var settings_tab := VBoxContainer.new()
 	settings_tab.add_theme_constant_override("separation", 8)
+	settings_tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	## The section stack below (Vision Routing + Remote access) can outgrow
+	## the window's minimum height, especially at larger editor scales —
+	## scroll instead of growing the window, same idiom as the Clients and
+	## Tools tabs (#1090).
+	var settings_scroll := ScrollContainer.new()
+	settings_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	settings_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	settings_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	settings_scroll.add_child(settings_tab)
 	var settings_margin := _build_margin_container()
 	settings_margin.name = "Settings"
-	settings_margin.add_child(settings_tab)
+	settings_margin.add_child(settings_scroll)
 	tabs.add_child(settings_margin)
 
 	## Vision Routing is configuration, not status — it lives here rather
@@ -2448,25 +2486,17 @@ func _on_allow_hosts_text_changed(_new_text: String) -> void:
 func _refresh_allow_hosts_ui_state() -> void:
 	if _allow_hosts_edit == null or _allow_hosts_apply_btn == null:
 		return
-	var invalid := McpAllowHosts.invalid_tokens(_allow_hosts_edit.text)
-	if invalid.is_empty():
-		_allow_hosts_hint.visible = false
-	else:
-		## Name the accepted syntax in the hint — matches the server's
-		## `parse_allow_hosts` (CIDR / bare IP, comma-separated).
-		_allow_hosts_hint.text = (
-			"Invalid entries (must be a CIDR like 192.168.1.0/24 or a bare IP, comma-separated): %s"
-			% ", ".join(invalid)
-		)
-		_allow_hosts_hint.visible = true
-	_allow_hosts_apply_btn.disabled = not _allow_hosts_is_dirty() or not invalid.is_empty()
+	var error := McpAllowHosts.configuration_error(_allow_hosts_edit.text)
+	_allow_hosts_hint.text = error
+	_allow_hosts_hint.visible = not error.is_empty()
+	_allow_hosts_apply_btn.disabled = not _allow_hosts_is_dirty() or not error.is_empty()
 
 
 func _on_allow_hosts_apply() -> void:
 	if _allow_hosts_edit == null:
 		return
 	var normalized := McpAllowHosts.normalize(_allow_hosts_edit.text)
-	if not McpAllowHosts.invalid_tokens(normalized).is_empty():
+	if not McpAllowHosts.configuration_error(normalized).is_empty():
 		return
 	_allow_hosts_saved = normalized
 	_allow_hosts_edit.text = normalized
