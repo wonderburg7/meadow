@@ -187,14 +187,50 @@ def _milestone_states(snapshot: dict[str, Any], settings: dict[str, Any],
     return states, winter_seen
 
 
+def _number(value: Any) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return float(value)
+
+
+def _skipped_winter(previous: dict[str, Any] | None, snapshot: dict[str, Any],
+                    settings: dict[str, Any]) -> bool:
+    """True when the clock jumps by winter's length between two snapshots.
+
+    season.gd resolves a skipped winter in one tick, so winter_here is never
+    true in a snapshot; the jump in game_time is the only trace it leaves.
+    """
+    if previous is None:
+        return False
+    length = _number(settings.get("winter_length_days"))
+    seconds_per_day = _number(settings.get("seconds_per_day"))
+    before = _number(previous.get("game_time"))
+    after = _number(snapshot.get("game_time"))
+    if None in (length, seconds_per_day, before, after) or length <= 0 or seconds_per_day <= 0:
+        return False
+    return after - before >= length * seconds_per_day
+
+
+def _has_population(snapshot: dict[str, Any]) -> bool:
+    population = snapshot.get("population")
+    total = population.get("total") if isinstance(population, dict) else None
+    return _number(total) is not None and total >= 1
+
+
 def _milestones(snapshots: list[dict[str, Any]], settings: dict[str, Any]) -> dict[str, int]:
     """The first day each pacing milestone became true."""
     milestones: dict[str, int] = {}
     winter_seen = False
+    previous: dict[str, Any] | None = None
     for snapshot in _last_snapshot_per_day(snapshots):
         day = snapshot.get("day")
         if not isinstance(day, int):
             continue
+        if _skipped_winter(previous, snapshot, settings):
+            milestones.setdefault("winter_entered_day", previous.get("day", day))
+            if _has_population(snapshot):
+                milestones.setdefault("winter_survived_day", day)
+        previous = snapshot
         states, winter_seen = _milestone_states(snapshot, settings, winter_seen)
         for name, reached in states.items():
             if reached:
@@ -216,10 +252,20 @@ def _milestone_times(snapshots: list[dict[str, Any]], settings: dict[str, Any]) 
 
     milestone_times: dict[str, float] = {}
     winter_seen = False
+    previous = None
     for snapshot in snapshots:
         game_time = snapshot.get("game_time")
         if isinstance(game_time, bool) or not isinstance(game_time, (int, float)):
             continue
+        if _skipped_winter(previous, snapshot, settings):
+            # The jump is winter's whole length, so winter began that far back from
+            # here (never before the earlier snapshot); the earlier snapshot's own
+            # time would put the row up to a snapshot gap too early.
+            began = max(previous["game_time"], game_time - settings["winter_length_days"] * seconds_per_day)
+            milestone_times.setdefault("winter_entered_day", began / seconds_per_day)
+            if _has_population(snapshot):
+                milestone_times.setdefault("winter_survived_day", game_time / seconds_per_day)
+        previous = snapshot
         states, winter_seen = _milestone_states(snapshot, settings, winter_seen)
         for name, reached in states.items():
             if reached:
