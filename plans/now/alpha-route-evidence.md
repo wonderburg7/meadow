@@ -1,7 +1,7 @@
 # Alpha Route Evidence -- measure the promised five gates without inventing player understanding
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: AR-3 -- the pacing report presents every alpha gate and its evidence boundary | Dependency: AR-1 → AR-2 → AR-3; the playable end-to-end route remains gated on Tier 2, Bee Bread and Colony Run work | Verified: 2026-10-07
+Status: active | Owner: Dave / Codex | Next: AR-4 -- a scripted Colony Run reaches and records all five gates | Dependency: AR-1 → AR-2 → AR-3; the playable end-to-end route remains gated on Tier 2, Bee Bread and Colony Run work | Verified: 2026-10-07
 
 ## Objective
 
@@ -72,4 +72,15 @@ route is playable.
 
 ## Not in the queue, and why
 
-- **AR-4 -- a scripted Colony Run reaches and records all five gates** is gated on Tier 2 automation, Bee Bread and the gyne route. It cannot be an honest acceptance scenario while those mechanics are still incomplete; the first three slices make that absence visible instead of faking a successful run.
+```queue-gated
+**[Codex] AR-4 -- a scripted Colony Run reaches and records all five gates**
+- Plan: `plans/now/alpha-route-evidence.md` -- "AR-4 -- a scripted Colony Run reaches and records all five gates"
+- Files: `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
+- Check: `python -m unittest tests.test_pacing_gates` and the scripted Colony Run record all five product-scope gates
+- Proof: `present: tools/pacing_gates.py :: Not instrumented: 20m forage/weather crisis; 90m gyne release.`
+- Next after: None -- plan complete
+```
+
+AR-4 is gated on Tier 2 automation, Bee Bread and the gyne route. It cannot be
+an honest acceptance scenario while those mechanics are still incomplete; the
+first three slices make that absence visible instead of faking a successful run.

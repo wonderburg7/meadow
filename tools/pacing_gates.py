@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Measure the headless alpha arc against the closed-alpha pacing targets.
 
-The twenty-minute forage/weather crisis and the ninety-minute gyne release are
-player-experience outcomes, not events the headless log currently records.
-This command therefore reports the four truthful, instrumented proxies rather
-than inventing a time for either one.
+The twenty-minute forage/weather crisis is a player-experience outcome, not an
+event the headless log currently records. This command distinguishes that
+hands-on question from measured gates and facts the scripted route has not yet
+reached, rather than inventing an in-band result.
 """
 
 from __future__ import annotations
@@ -40,17 +40,21 @@ class Gate:
     label: str
     metric: str
     target_minutes: int
+    source: str | None = "milestone_times"
+    required_metrics: tuple[str, ...] = ()
 
 
-# These are the observable counterparts of product-scope.md section 3. The
-# 90-minute target is winter emergence, the prerequisite to its later gyne
-# release, which the current diagnostic log does not yet timestamp.
+# These are the product-scope gates.  Food security remains a useful
+# per-seed diagnostic, but it is not a substitute for the automation gate.
 GATES = (
     Gate("first worker", "first_worker_day", 5),
-    Gate("food secure", "food_secure_day", 10),
-    Gate("winter entered", "winter_entered_day", 60),
-    Gate("winter survived", "winter_survived_day", 90),
+    Gate("first automation", "first_automation_day", 10, "alpha_route"),
+    Gate("crisis response", "", 20, None),
+    Gate("winter survival", "winter_survived_day", 60),
+    Gate("gyne/victory", "victory_day", 90, "alpha_route", ("first_gyne_day", "victory_day")),
 )
+
+DIAGNOSTIC_METRICS = ("first_worker_day", "food_secure_day", "winter_entered_day", "winter_survived_day")
 
 
 def target_day(target_minutes: int, day_length_seconds: float) -> float:
@@ -87,25 +91,31 @@ def winter_schedule(analyses: list[dict[str, Any]]) -> tuple[float, float]:
 def build_rows(analyses: list[dict[str, Any]], day_length_seconds: float) -> list[dict[str, Any]]:
     """Return one display-ready row for each measurable pacing gate."""
     rows = []
-    winter_entered_day, winter_ended_day = winter_schedule(analyses)
+    _winter_entered_day, winter_ended_day = winter_schedule(analyses)
     for gate in GATES:
-        values = [analysis.get("milestone_times", {}).get(gate.metric) for analysis in analyses]
-        complete = all(isinstance(value, (int, float)) and not isinstance(value, bool) for value in values)
+        source_values = [analysis.get(gate.source, {}) if gate.source else {} for analysis in analyses]
+        required_metrics = gate.required_metrics or (gate.metric,)
+        complete = gate.source is not None and all(
+            isinstance(source.get(metric), (int, float)) and not isinstance(source.get(metric), bool)
+            for source in source_values for metric in required_metrics
+        )
+        values = [source.get(gate.metric) for source in source_values]
         median_day = statistics.median(values) if complete else None
-        if gate.metric == "winter_entered_day":
-            target = winter_entered_day
-            inside = in_days(median_day, target)
-        elif gate.metric == "winter_survived_day":
+        if gate.metric == "winter_survived_day":
             target = winter_ended_day
             inside = in_days(median_day, target)
         else:
             target = target_day(gate.target_minutes, day_length_seconds)
             inside = in_band(median_day, target)
+        status = "in band" if inside else "out of band" if complete else "unavailable"
+        boundary = "hands-on question" if gate.source is None else "measured fact" if complete else "unavailable"
         rows.append({
             "milestone": gate.label,
             "median_day": median_day,
             "target_day": target,
             "inside_band": inside,
+            "status": status,
+            "boundary": boundary,
         })
     return rows
 
@@ -121,7 +131,7 @@ def seed_rows(analyses: list[dict[str, Any]]) -> list[dict[str, Any]]:
         colony = analysis.get("colony", {})
         rows.append({
             "seed": analysis.get("seed"),
-            "days": [times.get(gate.metric) for gate in GATES],
+            "days": [times.get(metric) for metric in DIAGNOSTIC_METRICS],
             "lived": bool(colony.get("lived")),
             "population": colony.get("population"),
         })
@@ -148,14 +158,13 @@ def render_table(rows: list[dict[str, Any]], day_length_seconds: float, repeat: 
     lines = [
         "Pacing gates (%d runs, %.0fs/day, +/-%.0f%%; winter rows +/-%d day of the recorded schedule)" % (
             repeat, day_length_seconds, BAND_FRACTION * 100, WINTER_BAND_DAYS),
-        "milestone        median day  target day  in band",
-        "---------------  ----------  ----------  -------",
+        "milestone         median day  target day  result       evidence boundary",
+        "----------------  ----------  ----------  -----------  -----------------",
     ]
     for row in rows:
         median = "missing" if row["median_day"] is None else "%.2f" % row["median_day"]
-        result = "yes" if row["inside_band"] else "no"
-        lines.append("%-15s  %10s  %10.2f  %7s" % (
-            row["milestone"], median, row["target_day"], result,
+        lines.append("%-16s  %10s  %10.2f  %-11s  %s" % (
+            row["milestone"], median, row["target_day"], row["status"], row["boundary"],
         ))
     lines.append("Not instrumented: 20m forage/weather crisis; 90m gyne release.")
     return "\n".join(lines)
@@ -237,7 +246,8 @@ def main() -> int:
         return 1
     rows = build_rows(analyses, day_length_seconds)
     print(render_table(rows, day_length_seconds, args.repeat))
-    print(render_seed_rows(seed_rows(analyses), rows[2]["target_day"], rows[3]["target_day"]))
+    winter_entered_day, winter_ended_day = winter_schedule(analyses)
+    print(render_seed_rows(seed_rows(analyses), winter_entered_day, winter_ended_day))
     return 0
 
 
