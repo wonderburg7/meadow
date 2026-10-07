@@ -25,7 +25,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
 1. **[Claude] T2-2 -- Automation gates working outward**
    - Plan: `plans/now/tier-two.md` -- "T2-2 -- Automation gates working outward"
-   - Files: `scripts/roles.gd`, `scripts/availability.gd`, `scripts/actions.gd`, `scripts/hive.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_2_automation_gate.py`
+   - Files: `scripts/roles.gd`, `scripts/availability.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `tests/test_t2_2_automation_gate.py`, `tests/t2_2_automation_gate_test.gd`
    - Check: `python -m unittest tests.test_t2_2_automation_gate` passes (automine and outward building refused without Automation, allowed with it; marked work unaffected; Challenge 2's 2.8 frees Backup roles and Automation); `python -m unittest tests.test_challenge2_checks` passes; a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `absent: scripts/actions.gd :: skill.hive_mind.automation`
    - Next after: T2-3 -- Adaptive constancy becomes a bought behaviour

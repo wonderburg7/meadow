@@ -36,6 +36,11 @@ class AutomationGateTest(unittest.TestCase):
             self.assertIn(name, keys)
         self.assertNotIn("AUTOMATION_SKILL", _stage_block(text, "2.7"))
 
+    def test_stage_2_7_hint_points_at_build_here(self):
+        text = (ROOT / "scripts" / "challenge_stages.gd").read_text(encoding="utf-8")
+        self.assertIn("Build here", _stage_block(text, "2.7"))
+        self.assertNotIn("automatically", _stage_block(text, "2.7"))
+
     def test_gate_data(self):
         actions = (ROOT / "scripts" / "actions.gd").read_text(encoding="utf-8")
         self.assertEqual(actions.count('"skill": "skill.hive_mind.automation"'), 2)

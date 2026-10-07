@@ -432,7 +432,7 @@ const STAGES_2 := [
 		"goal_text": "Goal: raise a Comb worker and build more comb.",
 		"prompts": [
 			{"id": "2.7_welcome", "trigger": "welcome", "delay": 0.0, "text": "The colony is starting to outgrow its first furniture. Raise a comb worker and give the hive more comb."},
-			{"id": "2.7_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Choose where the next cell should go, then let a comb worker take on some building automatically once the pattern is obvious."},
+			{"id": "2.7_hint", "trigger": "hint", "delay": HINT_DELAY, "text": "Select your comb worker and press \"Build here\", then click where the next cells should go. The comb worker builds each one you mark."},
 		],
 	},
 	{
