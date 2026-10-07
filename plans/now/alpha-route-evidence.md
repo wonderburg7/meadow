@@ -32,39 +32,11 @@ hands-on feedback questions, not diagnostics.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| AR-1 | headless snapshots carry the Colony Run milestone record | `scripts/headless/diagnostic_probes.gd`, `test_scenarios/alpha_arc_test.json`, `tests/test_headless_profiles.py` | yes | medium |
 | AR-2 | analysis turns that record into named alpha-gate facts | `tools/analyze_session.py`, `tests/test_headless_verdicts.py` | after AR-1 | medium |
 | AR-3 | the pacing report presents every alpha gate and its evidence boundary | `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | after AR-2 | low |
 | AR-4 | a scripted Colony Run reaches and records all five gates | the alpha scenario and its new evidence test | no -- after Tier 2 automation, Bee Bread and the gyne route are playable | high |
 
-## AR-1 -- headless snapshots carry the Colony Run milestone record
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one scenario-only snapshot field, with a profile contract test).
-
-**True now.** `colony_milestones.gd::met_days` owns the exact days for Colony
-Run milestones, but `scripts/headless/diagnostic_probes.gd` has no allowlisted field
-for it. `alpha_arc_test.json` cannot ask for the record.
-
-**True afterwards.** The selected-snapshot contract has one `colony` field
-that copies the current run's milestone-day dictionary when the world has a
-valid Colony Run milestone object, otherwise `{}`. `alpha_arc_test.json`
-requests that field. Its profile test accepts the field and proves a snapshot
-keeps the mapping unchanged; no legacy diagnostic snapshot grows it.
-
-**Must not change.** A milestone's condition, its saved shape, the scenario's
-actions, or normal-session logging cadence. This is a scenario-selected,
-bounded copy of an existing record, never a per-frame evaluator.
-
-```queue
-**[Codex] AR-1 -- headless snapshots carry the Colony Run milestone record**
-- Plan: `plans/now/alpha-route-evidence.md` -- "AR-1 -- headless snapshots carry the Colony Run milestone record"
-- Files: `scripts/headless/diagnostic_probes.gd`, `test_scenarios/alpha_arc_test.json`, `tests/test_headless_profiles.py`, `tools/headless/profiles.py`
-- Check: `python -m unittest tests.test_headless_profiles` passes, and `test_scenarios/alpha_arc_test.json` requests the allowlisted Colony Run milestone field
-- Proof: `absent: scripts/headless/diagnostic_probes.gd :: colony.milestone_days`
-- Next after: AR-2 -- analysis turns that record into named alpha-gate facts
-```
+AR-1 shipped 2026-10-07; its specification is `plans/archive/AR-1_2026-10-07.md`.
 
 ## AR-2 -- analysis turns that record into named alpha-gate facts
 
