@@ -211,8 +211,8 @@ const SKILLS := [
 		"sector": "foraging", "tier": 2, "axial": Vector2i(4, 1),
 		"max_rank": 1, "cost": {HONEY: 20, NECTAR: 180, POLLEN: 80},
 		"requires_previous_tier": true, "all_of": [], "any_of": [],
-		"feature": "", "introduced_by": "", "effects": [], "icon": "",
-		"status": "existing_foundation", "baseline": false, "open": false,
+		"feature": "", "introduced_by": "", "effects": [{"type": "enable_behaviour", "key": "adaptive_constancy_on"}], "icon": "",
+		"status": "existing", "baseline": false, "open": false,
 	},
 	{
 		"id": WEIGHTED_FLOWER_CHOICE, "name": "Weighted flower choice",
