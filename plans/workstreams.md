@@ -59,3 +59,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/AR-1` (`codex/AR-1`) | Codex | headless snapshots carry the Colony Run milestone record | Codex | in progress | none | `plans/now/alpha-route-evidence.md` AR-1 -- headless snapshots carry the Colony Run milestone record |
