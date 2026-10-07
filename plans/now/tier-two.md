@@ -52,12 +52,12 @@ Verified 7 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-4a | Cleaning gates taking out the dead larvae | `scripts/actions.gd`, `scripts/challenge_stages.gd`, `scripts/skills.gd`, `tests/test_t2_4a_cleaning_gate.py` | yes (T2-2 landed 7 Oct 2026); waits for room in the lane | medium |
-| T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | specified after T2-4a | no -- after T2-4a, COL-4 (`game_config.gd`) and COL-6 (the winter bill) | high |
+| T2-4a | Cleaning gates taking out the dead larvae | `scripts/actions.gd`, `scripts/challenge_stages.gd`, `scripts/skills.gd`, `tests/test_t2_4a_cleaning_gate.py` | yes (T2-2 landed 7 Oct 2026); Codex lane (Dave, 7 Oct 2026) | medium |
+| T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | specified after T2-4a | no -- after T2-4a (COL-6 landed 7 Oct 2026) | high |
 | T2-5 | Weather sensing's rain half, Rain recall, and rain on in the Colony Run | specified when T2-3 lands | no -- its PE-2 arc rerun reads COL-4's year | medium |
 | T2-6 | Associative learning: per-bee, per-species familiarity, saved | specified when T2-5 lands | no -- after COL-4 (`game_config.gd`, `settings_catalogue.gd`) | high |
 | T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | specified when T2-1 to T2-3 and COL-4 have landed | no -- needs COL-4's year and the gates | medium |
-| T2-8 | Shiver Cluster: the skill, the multiplied bill without it, the warning | specified when COL-6 lands | no -- after COL-6 (`plans/now/colony-run.md`) and T2-2 | high |
+| T2-8 | Shiver Cluster: the skill, the multiplied bill without it, the warning | to be specified now COL-6 has landed | yes -- COL-6 and T2-2 have landed | high |
 
 **Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
 T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
@@ -65,7 +65,7 @@ and each adds a test module. They depend on
 nothing else. T2-4a follows T2-2 (`actions.gd`, `challenge_stages.gd`).
 T2-4b needs a `GameConfig` cap (COL-4 holds `game_config.gd`) and COL-6's
 winter bill. T2-6 and T2-7 wait for COL-4; T2-7 also for T2-1 to T2-3, whose
-gates it prices. T2-8 waits for COL-6, whose one-step winter it multiplies.
+gates it prices. T2-8 multiplies COL-6's one-step winter (landed 7 Oct 2026).
 NF-4 (`plans/now/nectar-fermentation.md`) adds a Colony tier-2 node; T2-7
 re-prices it if it has landed by then. A new test module no longer edits
 `tools/verify.ps1`, which finds them itself since 7 Oct 2026, so adding a
@@ -99,7 +99,7 @@ and the stage move.
 **Must not change.** Behaviour with Cleaning owned.
 
 ```queue
-**[Claude] T2-4a -- Cleaning gates taking out the dead larvae**
+**[Codex] T2-4a -- Cleaning gates taking out the dead larvae**
 - Plan: `plans/now/tier-two.md` -- "T2-4a -- Cleaning gates taking out the dead larvae"
 - Files: `scripts/actions.gd`, `scripts/challenge_stages.gd`, `scripts/skills.gd`, `tests/test_t2_4a_cleaning_gate.py`
 - Check: `python -m unittest tests.test_t2_4a_cleaning_gate` passes; `tools/verify.ps1` is green

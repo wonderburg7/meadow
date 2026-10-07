@@ -24,7 +24,7 @@ the live world instead. Writes go straight to the target path with
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | SI-1 | disease, crab-spider species and the rival colony survive a load | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/rival_hive.gd`, `scripts/main.gd`, `tests/si1_run_state_test.gd`, `tests/test_si1_run_state.py` | yes | medium |
-| SI-2 | a checkpoint restore puts back soil dug since the checkpoint | `scripts/saving.gd`, `tests/si2_exact_rollback_test.gd`, `tests/test_si2_exact_rollback.py` | after SI-1 | medium |
+| SI-2 | a checkpoint restore puts back soil dug since the checkpoint | `scripts/saving.gd`, `tests/si2_exact_rollback_test.gd`, `tests/test_si2_exact_rollback.py` | after SI-1 (Codex lane, Dave 7 Oct 2026) | medium |
 | SI-3 | save, checkpoint and index writes are all-or-nothing | `scripts/save_slots.gd`, `scripts/save_game.gd`, `tests/si3_atomic_write_test.gd`, `tests/test_si3_atomic_write.py` | after SI-2 | medium |
 
 Dependencies: SI-1, SI-2 and SI-3 share `saving.gd`/`save_game.gd`, so they
@@ -100,7 +100,7 @@ itself.
 anything beyond `_collapse()`.
 
 ```queue
-**[Claude] SI-1 -- disease, crab-spider species and the rival colony survive a load**
+**[Codex] SI-1 -- disease, crab-spider species and the rival colony survive a load**
 - Plan: `plans/now/save-integrity.md` -- "SI-1 -- disease, crab-spider species and the rival colony survive a load"
 - Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/rival_hive.gd`, `scripts/main.gd`, `tests/si1_run_state_test.gd`, `tests/test_si1_run_state.py`
 - Check: `python -m unittest tests.test_si1_run_state` passes with `SI1 PASS`; `.\tools\verify.ps1` is green
@@ -154,7 +154,7 @@ still passes.
 navigation or edge flags wrong after `_restore`'s own `build_navigation()`
 and `refresh_edge_flags()`.
 
-```queue
+```queue-gated
 **[Claude] SI-2 -- a checkpoint restore puts back soil dug since the checkpoint**
 - Plan: `plans/now/save-integrity.md` -- "SI-2 -- a checkpoint restore puts back soil dug since the checkpoint"
 - Files: `scripts/saving.gd`, `tests/si2_exact_rollback_test.gd`, `tests/test_si2_exact_rollback.py`
@@ -213,7 +213,7 @@ still passes.
 file on Windows (then the choice between remove-then-rename and a backup
 file is Dave's).
 
-```queue
+```queue-gated
 **[Claude] SI-3 -- save, checkpoint and index writes are all-or-nothing**
 - Plan: `plans/now/save-integrity.md` -- "SI-3 -- save, checkpoint and index writes are all-or-nothing"
 - Files: `scripts/save_slots.gd`, `scripts/save_game.gd`, `tests/si3_atomic_write_test.gd`, `tests/test_si3_atomic_write.py`

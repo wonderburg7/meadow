@@ -129,7 +129,7 @@ PE-2's arc (`tools/pacing_gates.py`).
 
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| COL-12 | the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns | `scripts/main.gd`, `scripts/world_building.gd`, `tests/test_sf1_founding_flower_mix.py`, `test_scenarios/sf1_founding_flower_mix_test.json` | yes | medium |
+| COL-12 | the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns | `scripts/main.gd`, `scripts/world_building.gd`, `tests/test_sf1_founding_flower_mix.py`, `test_scenarios/sf1_founding_flower_mix_test.json` | yes -- Codex lane (Dave, 7 Oct 2026), after COL-13 | medium |
 | COL-11 | nuptial flights: an unmated queen can leave each day to find a mate | `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd` | yes -- COL-4, COL-6 and COL-10 have landed | high |
 | COL-13 | the pacing arc sees a skipped winter | `tools/analyze_session.py`, `tests/test_col13_skipped_winter_arc.py` | yes -- ahead of COL-12 and COL-11, whose checks read the arc | medium |
 
@@ -248,7 +248,7 @@ as settings.
 **Escalate** if PE-2's arc changes its two-of-three survival record.
 
 ```queue
-**[Claude] COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns**
+**[Codex] COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns**
 - Plan: `plans/now/colony-run.md` -- "COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns"
 - Files: `scripts/main.gd`, `scripts/world_building.gd`, `tests/test_sf1_founding_flower_mix.py`, `test_scenarios/sf1_founding_flower_mix_test.json`
 - Check: `python -m unittest tests.test_sf1_founding_flower_mix` passes at 0.05 on the pinned seed and three others; `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
