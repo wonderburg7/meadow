@@ -46,3 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/T2-2` (`claude/T2-2`) | Claude | Automation gates working outward | Claude | in progress | none | `plans/now/tier-two.md` T2-2 -- Automation gates working outward |
