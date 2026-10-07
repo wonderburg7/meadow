@@ -46,4 +46,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/AR-2` (`codex/AR-2`) | Codex | analysis turns that record into named alpha-gate facts | Codex | in progress | none | `plans/now/alpha-route-evidence.md` AR-2 -- analysis turns that record into named alpha-gate facts |
