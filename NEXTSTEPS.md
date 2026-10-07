@@ -30,6 +30,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/game_config.gd :: nuptial_flight_peak_chance`
    - Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
 
+2. **[Claude] COL-7 -- the mating window, genetic points and COL-2's narrower win**
+   - Plan: `plans/now/colony-run.md` -- "COL-7 -- the mating window, genetic points and COL-2's narrower win"
+   - Files: `scripts/season.gd`, `scripts/hud.gd`, `scripts/year_winter.gd`, `scripts/colony_milestones.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col7_gyne_window.py`, `tests/col7_gyne_window_test.gd`
+   - Check: `python -m unittest tests.test_col7_gyne_window` passes (a ready gyne stays put across many season ticks; sent in mid summer she counts, emits `gyne_released` and adds 10 points; sent where the curve is 0 she is gone, `gyne_lost` fires, and the release count, points and victory don't change; the points survive `save_data`/`restore`, and a record without them restores 0); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `absent: scripts/season.gd :: func send_gyne`
+   - Next after: COL-8 -- winter die-back and spring regrowth
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -67,7 +74,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **COL-7** (`plans/now/colony-run.md`) -- the mating window, genetic points and COL-2's narrower win; COL-6 landed 7 Oct 2026, so it waits only to be specified.
+- **COL-8** (`plans/now/colony-run.md`) -- winter die-back and spring regrowth (decision 8); specified when COL-7 lands.
 - **SI-2** (`plans/now/save-integrity.md`) -- a checkpoint restore puts back soil dug since the checkpoint; waits for SI-1, which moved to the Codex lane (Dave, 7 Oct 2026) and shares `scripts/saving.gd`.
 - **SI-3** (`plans/now/save-integrity.md`) -- save, checkpoint and index writes are all-or-nothing; waits for SI-2.
 - **NF-2** (`plans/now/nectar-fermentation.md`) -- nectar ferments past an age; waits for COL-4 (Codex lane), which edits `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, and for NF-1's evidence.
