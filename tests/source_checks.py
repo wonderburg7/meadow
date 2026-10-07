@@ -2698,6 +2698,8 @@ def check_progression_tier_and_cost(problems):
 TRANSCRIBED_EFFECTS = {
     "skill.foraging.tarsal_secretions": ("enable_behaviour", "tarsal_markers_on"),
     "skill.foraging.orientation_flight": ("enable_behaviour", "orientation_flight_on"),
+    # T2-3: adaptive constancy is a bought behaviour, its own content step.
+    "skill.foraging.adaptive_constancy": ("enable_behaviour", "adaptive_constancy_on"),
 }
 
 
@@ -2731,8 +2733,8 @@ def check_progression_transcribed_effects(problems):
             if effects:
                 problems.append(
                     "skills.gd: %s has a non-empty effects list -- section 11 "
-                    "Phase A step 4 authors effects only for Tarsal secretions "
-                    "and Orientation flight, everything else stays [] until "
+                    "Phase A step 4 authors effects only for Tarsal secretions, "
+                    "Orientation flight and Adaptive constancy, everything else stays [] until "
                     "its own content step reaches it" % owner
                 )
             continue
