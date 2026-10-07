@@ -69,6 +69,12 @@ a machine-specific path in repository instructions:
 .\tools\run_headless.ps1 -PythonPath C:\path\to\python.exe test_scenarios/slice1_smoke_test.json
 ```
 
+To run every short scenario at once, one line each, use
+`python tools/scenario_sweep.py` (or `--only <name part>`). No `verify.ps1`
+stage runs scenarios, so the sweep is how a red one gets noticed. The
+verification review runs it, and so should a slice that changes behaviour a
+fixture asserts on.
+
 On Windows, every Godot launch is unattended: the runner disables Godot's
 crash handler and temporarily applies the inherited no-dialog error mode while
 starting the child process. An engine crash therefore returns an exit status

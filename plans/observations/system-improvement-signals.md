@@ -70,6 +70,45 @@ explicit request from Dave.
 - Disposition: untriaged
 -->
 
+### 2026-10-07 — `finish` still verifies inside the lifecycle lock, so one lane's closeout stalls the other's
+
+- Source: verification review (`docs/verification-review-2026-10-07.md`, Hand-offs)
+- Area: tooling / process
+- Signal: L-15 made a busy lifecycle lock wait instead of refusing, and it
+  recorded narrowing the lock as out of scope. Branch verification still
+  runs inside the lock, so while one lane's `finish` verifies, the other
+  lane's `finish` or `start` waits.
+- Evidence: `docs/codex-workflow-review-2026-10-05.md` counts 51 "lifecycle
+  busy" stops, and primary/branch verify as the largest stop stages (26 and
+  22). The 25 Sep entry below says L-15 left narrowing out of scope. The
+  verification review cut the suite from about 530 s to about 300 s but did
+  not move it out of the lock.
+- Consequence: a closeout in one lane still delays the other by the length
+  of a verify, about 5-7 minutes.
+- Candidate direction: Hypothesis — take the lock only for the phases that
+  touch shared state (merge, archive, refill, ledger). Run branch
+  verification before taking it, and have the merge step refuse if master
+  moved while verify ran.
+- Disposition: untriaged
+
+### 2026-10-07 — the Codex sandbox question was "Rejected" pending a decision nobody has asked Dave for
+
+- Source: verification review (`docs/verification-review-2026-10-07.md`, Hand-offs)
+- Area: tooling / environment
+- Signal: `docs/codex-workflow-review-2026-10-05.md` F3 found that
+  `codex sandbox -P meadow` fails to resolve its home directory before
+  launch, so it cannot reproduce a Godot denial. It is disposed "Rejected --
+  changing sandbox/home/profile configuration needs Dave's explicit
+  decision", but the decision was never put to Dave with options.
+- Evidence: that record's F3 row and its closing paragraph.
+- Consequence: no tool can reproduce Codex-only Godot failures. Earlier
+  concurrent kills and timeouts stay undiagnosable, and the
+  review-contract's "Decided" disposition was bypassed.
+- Candidate direction: Hypothesis — the agent workflow review puts the
+  sandbox-home options and their costs to Dave in session, and records the
+  answer in `plans/now/codex-guidance.md`.
+- Disposition: untriaged
+
 ### 2026-10-07 — every test-adding slice owns `tools/verify.ps1`, so the lanes cannot both hold one
 
 - Source: plan-ahead session (claude/plan-ahead-80424a)
