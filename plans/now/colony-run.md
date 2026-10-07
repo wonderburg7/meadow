@@ -130,7 +130,6 @@ PE-2's arc (`tools/pacing_gates.py`).
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
 | COL-12 | the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns | `scripts/main.gd`, `scripts/world_building.gd`, `tests/test_sf1_founding_flower_mix.py`, `test_scenarios/sf1_founding_flower_mix_test.json` | yes -- Codex lane (Dave, 7 Oct 2026); COL-13 has landed | medium |
-| COL-7 | the mating window, genetic points and COL-2's narrower win | `scripts/season.gd`, `scripts/hud.gd`, `scripts/year_winter.gd`, `scripts/colony_milestones.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col7_gyne_window.py`, `tests/col7_gyne_window_test.gd` | yes -- COL-11 has landed (`season.gd::mating_curve`) | high |
 | COL-8 | winter die-back and spring regrowth | `scripts/flower.gd`, `scripts/season.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col8_winter_dieback.py`, `tests/col8_winter_dieback_test.gd` | yes -- COL-7 has landed (both edit `season.gd`) | high |
 
 **Dependencies.** COL-4 then COL-6: both edit `scripts/season.gd`, and
@@ -166,90 +165,7 @@ COL-6 shipped 2026-10-07; its specification is `plans/archive/COL-6_2026-10-07.m
 
 COL-11 shipped 2026-10-07; its specification is `plans/archive/COL-11_2026-10-07.md`.
 
-## COL-7 -- the mating window, genetic points and COL-2's narrower win
-
-<!-- LAYER: immediate-task -->
-
-Level: high (a gameplay outcome, the win condition and a saved count;
-simulated first). Specified 7 Oct 2026 from decisions 7 and 10, with two
-answers from Dave that day: **the player sends a gyne** (none leaves by
-herself), and **a gyne is worth `genetic_points_per_gyne` (10) x the mating
-curve on the day she leaves, rounded**. COL-11 has landed: its curve is
-`season.gd::mating_curve`.
-
-**True now** (verified against master, 7 Oct 2026).
-`season.gd::_release_ready_gynes` sends every adult gyne whose energy is at
-least `energy_capacity` x `gyne_release_energy` away by herself, on each
-season tick when `_gyne_season()` allows it (`Flower.season_fraction() >=
-GameConfig.gyne_release_day`, the old flower year). Each one adds 1 to
-`Session.gynes_released` and emits `gyne_released`, which drives
-`year_winter.gd::_on_gyne_released`'s notice, `colony_milestones.evaluate`
-and `colony_milestones.check_victory`. Nothing counts genetic points. No
-scenario or test waits for an automatic release (`grep gynes_released
-test_scenarios` is empty).
-
-**True afterwards.**
-- No gyne leaves by herself. `_release_ready_gynes`, `_gyne_season` and
-  `GameConfig.gyne_release_day` with its settings row go. (A saved settings
-  file that still carries the key loads unchanged; if it would not, keep the
-  field unread and say so here.)
-- With one gyne selected who is ready (adult, and energy at the threshold
-  release uses today), her readout in `hud.gd`'s selected-bee panel offers
-  "Send her to found a colony". Pressing it calls a new
-  `season.gd::send_gyne(bee)`. A gyne who isn't ready shows why, using the
-  readout's existing hint pattern. This runs on the press, and the row is
-  refreshed with the panel (only while it is visible), never per frame.
-- `send_gyne` reads COL-11's mating curve for today (the same function, not a
-  second one; `plans/README.md` rule 4).
-  - Curve above 0: she leaves as a released gyne does today
-    (`leave_to_found_colony`, `Session.gynes_released` + 1, `gyne_released`),
-    and adds `round(genetic_points_per_gyne x curve)` genetic points.
-  - Curve 0, outside late spring to early autumn: she leaves and is lost. A
-    new `gyne_lost` signal drives a `year_winter.gd` notice saying she found
-    no mate outside the mating season, so she doesn't count. No release is
-    counted, no points, no victory.
-- COL-2's win narrows by construction: `check_victory` still runs only on
-  `gyne_released`, which only a gyne sent inside the window fires.
-- Genetic points (decision 10: counted and saved now, spent later) live in
-  `colony_milestones.gd`, the owner of the Colony Run's record, which already
-  saves its victory day beside the milestone days (COL-2). Its saved record
-  gains a `genetic_points` key, so `save_game.gd` and `saving.gd` (the Codex
-  lane's SI-1) are untouched, and a save without the key loads with 0. Only a
-  Colony Run counts them (`applies()`). The released notice names the points
-  earned and the run's total.
-- `genetic_points_per_gyne` is a `GameConfig` value with a settings row,
-  starting at 10. The slice runs `tools/pacing_gates.py` before and after
-  and records both here. The arc's gyne gate is not instrumented, so expect
-  no change there; any other change needs explaining.
-
-**Must not change.** COL-6's winter bill; COL-11's flights and curve; a
-mated queen's laying; `Session.gynes_released`'s meaning (gynes sent inside
-the window); the save format outside `colony_milestones`' own record.
-Spending the points belongs to `plans/design/progression.md` (the tier-4
-Drones skill thread), not here.
-
-**Pacing gates and notes (7 Oct 2026).** `tools/pacing_gates.py` before and after, 3 seeds
-each (first worker / food secure / winter entered / winter survived,
-median day): before 22.18 / missing / 30.01 / 40.01; after 22.18 / missing / 30.01 / 40.01, per seed identical too (first worker 22.18, 16.92, 22.99; every colony lived with 9, 3 and 8 bees). No change, as expected: the arc never had a gyne released, and its gyne gate is not instrumented.
-`gyne_release_day` was a `persist: none` row, so no settings file
-carries it, and a save that did would load unchanged:
-`save_game.gd::apply_settings` skips a key `GameConfig` lacks. The
-`gyne_lost` notice is connected by `year_winter.gd::_connect_season`,
-deferred from its `_ready`, since `main.gd` was outside this slice.
-Hands-on check: C-115.
-
-**Hands-on.** Dave selects a ready gyne in mid summer and sends her (the
-notice names the points, and a first one after winter wins). Then he sends
-one in early spring, and the lost notice shows with no win.
-
-```queue
-**[Claude] COL-7 -- the mating window, genetic points and COL-2's narrower win**
-- Plan: `plans/now/colony-run.md` -- "COL-7 -- the mating window, genetic points and COL-2's narrower win"
-- Files: `scripts/season.gd`, `scripts/hud.gd`, `scripts/year_winter.gd`, `scripts/colony_milestones.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col7_gyne_window.py`, `tests/col7_gyne_window_test.gd`
-- Check: `python -m unittest tests.test_col7_gyne_window` passes (a ready gyne stays put across many season ticks; sent in mid summer she counts, emits `gyne_released` and adds 10 points; sent where the curve is 0 she is gone, `gyne_lost` fires, and the release count, points and victory don't change; the points survive `save_data`/`restore`, and a record without them restores 0); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `absent: scripts/season.gd :: func send_gyne`
-- Next after: COL-8 -- winter die-back and spring regrowth
-```
+COL-7 shipped 2026-10-07; its specification is `plans/archive/COL-7_2026-10-07.md`.
 
 ## COL-8 -- winter die-back and spring regrowth
 
