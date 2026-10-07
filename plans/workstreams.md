@@ -46,3 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/T2-3` (`claude/T2-3`) | Claude | Adaptive constancy becomes a bought behaviour | Claude | in progress | none | `plans/now/tier-two.md` T2-3 -- Adaptive constancy becomes a bought behaviour |
