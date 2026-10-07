@@ -196,7 +196,7 @@ static func season_weight(species: Dictionary, year_fraction: float = -1.0) -> f
 	if fraction < 0.0:
 		var day: float = 1.0 + Session.sim_time / max(1.0, GameConfig.seconds_per_day)
 		var season_days: float = max(1.0, GameConfig.season_length_days)
-		var year_days: float = season_days + max(1.0, GameConfig.winter_length_days)
+		var year_days: float = Session.year_days()
 		var day_in_year: float = fposmod(day - 1.0, year_days) + 1.0
 		fraction = clampf((day_in_year - 1.0) / season_days, 0.0, 1.0)
 	var strength: float = GameConfig.out_of_season_seed_weight

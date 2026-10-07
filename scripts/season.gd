@@ -146,7 +146,7 @@ func _advance_winter() -> void:
 ## into the previous winter; that keeps the countdown inside its own year.
 func _winter_countdown_day() -> float:
 	var season_days: float = maxf(1.0, GameConfig.season_length_days)
-	var year_days: float = season_days + maxf(1.0, GameConfig.winter_length_days)
+	var year_days: float = Session.year_days()
 	var year_start: float = floor((world.day - 1.0) / year_days) * year_days + 1.0
 	return year_start + maxf(0.0, season_days - GameConfig.winter_countdown_days)
 
