@@ -33,3 +33,18 @@ class AlphaBuildTest(unittest.TestCase):
         helper = (ROOT / "tools" / "build_alpha.ps1").read_text(encoding="utf-8")
         self.assertIn('--export-release "Windows Desktop"', helper)
         self.assertIn("Compress-Archive", helper)
+
+    def test_export_does_not_stop_before_godot_does(self):
+        """The three reasons build_alpha.ps1 never built, found 7 Oct 2026:
+        Godot logs an error for each missing preset filter key; Windows
+        PowerShell 5.1 under "Stop" aborts on Godot's first stderr line; and a
+        GUI Godot.exe returns before exporting, with no exit code."""
+        options = configparser.ConfigParser(interpolation=None)
+        options.read(ROOT / "export_presets.cfg", encoding="utf-8")
+        self.assertIn("include_filter", options["preset.0"])
+        self.assertIn("exclude_filter", options["preset.0"])
+        helper = (ROOT / "tools" / "build_alpha.ps1").read_text(encoding="utf-8")
+        export_line = helper.index('--export-release "Windows Desktop"')
+        self.assertIn('$ErrorActionPreference = "Continue"', helper[:export_line])
+        self.assertIn("_console.exe", helper)
+        self.assertIn("export_templates", helper)

@@ -84,7 +84,7 @@ class SliceDoctorTest(unittest.TestCase):
         )
         subprocess.run(["git", "add", "."], cwd=self.root, check=True)
         subprocess.run(
-            ["git", "commit", "-m", "fixture"],
+            ["git", "commit", "-q", "-m", "fixture"],
             cwd=self.root,
             capture_output=True,
             text=True,
@@ -138,7 +138,7 @@ class SliceDoctorTest(unittest.TestCase):
         (worktree / "NEXTSTEPS.md").write_text("## Next up\n\n", encoding="utf-8")
         subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
         subprocess.run(
-            ["git", "commit", "-m", "archive and refill the queue"],
+            ["git", "commit", "-q", "-m", "archive and refill the queue"],
             cwd=worktree,
             check=True,
         )
@@ -210,7 +210,7 @@ class SliceDoctorTest(unittest.TestCase):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")
         subprocess.run(["git", "add", "NEXTSTEPS.md"], cwd=self.root, check=True)
         subprocess.run(
-            ["git", "commit", "-m", "queue"], cwd=self.root, capture_output=True, check=True
+            ["git", "commit", "-q", "-m", "queue"], cwd=self.root, capture_output=True, check=True
         )
         subprocess.run(
             ["git", "switch", "-c", "claude/ad-hoc"], cwd=self.root, capture_output=True, check=True
@@ -246,11 +246,11 @@ class SliceDoctorTest(unittest.TestCase):
         def commit_new_file(name: str) -> None:
             (self.root / name).write_text(f"{name}\n", encoding="utf-8")
             git("add", name)
-            git("commit", "-m", f"add {name}")
+            git("commit", "-q", "-m", f"add {name}")
 
         self.write_queue("`absent: scripts/sample.gd :: new_function`")
         git("add", "NEXTSTEPS.md")
-        git("commit", "-m", "queue")
+        git("commit", "-q", "-m", "queue")
         git("switch", "-c", "claude/criss-cross")
         commit_new_file("plans/branch-side.md")
         git("switch", "master")
@@ -606,7 +606,7 @@ class SliceDoctorTest(unittest.TestCase):
 
         subprocess.run(["git", "add", "."], cwd=self.root, check=True)
         subprocess.run(
-            ["git", "commit", "-m", "fixture: stub suites and a stale ledger row"],
+            ["git", "commit", "-q", "-m", "fixture: stub suites and a stale ledger row"],
             cwd=self.root,
             check=True,
         )
@@ -677,7 +677,7 @@ class SliceDoctorTest(unittest.TestCase):
             check=True,
         )
         subprocess.run(
-            ["git", "commit", "-m", "use mock verifier"],
+            ["git", "commit", "-q", "-m", "use mock verifier"],
             cwd=self.root,
             capture_output=True,
             text=True,
@@ -749,7 +749,7 @@ class SliceDoctorTest(unittest.TestCase):
             encoding="utf-8",
         )
         subprocess.run(["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True)
-        subprocess.run(["git", "commit", "-m", "use failing verifier"], cwd=self.root, capture_output=True, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "use failing verifier"], cwd=self.root, capture_output=True, check=True)
         start = subprocess.run(
             [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
             cwd=self.root, capture_output=True, text=True,
@@ -784,7 +784,7 @@ class SliceDoctorTest(unittest.TestCase):
             encoding="utf-8",
         )
         subprocess.run(["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True)
-        subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, capture_output=True, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "use mock verifier"], cwd=self.root, capture_output=True, check=True)
         start = subprocess.run(
             [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
             cwd=self.root, capture_output=True, text=True,
@@ -820,7 +820,7 @@ class SliceDoctorTest(unittest.TestCase):
             check=True,
         )
         subprocess.run(
-            ["git", "commit", "-m", "use mock verifier"],
+            ["git", "commit", "-q", "-m", "use mock verifier"],
             cwd=self.root,
             capture_output=True,
             text=True,
@@ -941,7 +941,7 @@ class SliceDoctorTest(unittest.TestCase):
         subprocess.run(
             ["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True
         )
-        subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "use mock verifier"], cwd=self.root, check=True)
         start = subprocess.run(
             [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
             cwd=self.root, capture_output=True, text=True,
@@ -980,7 +980,7 @@ class SliceDoctorTest(unittest.TestCase):
         subprocess.run(
             ["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True
         )
-        subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "use mock verifier"], cwd=self.root, check=True)
 
         phases = (
             "started", "verified", "branch-committed", "actions-committed", "archived", "refilled",
@@ -1044,7 +1044,7 @@ class SliceDoctorTest(unittest.TestCase):
                 )
                 self.write_queue("`absent: scripts/sample.gd :: new_function`")
                 subprocess.run(["git", "add", "scripts/sample.gd", "NEXTSTEPS.md"], cwd=self.root, check=True)
-                subprocess.run(["git", "commit", "-m", "reset mock source and queue"], cwd=self.root, check=True)
+                subprocess.run(["git", "commit", "-q", "-m", "reset mock source and queue"], cwd=self.root, check=True)
 
     def test_closeout_pushes_exactly_once(self):
         """The whole transaction reaches the remote in one push.
@@ -1064,7 +1064,7 @@ class SliceDoctorTest(unittest.TestCase):
         subprocess.run(
             ["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True
         )
-        subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "use mock verifier"], cwd=self.root, check=True)
         subprocess.run(
             ["git", "config", "core.logAllRefUpdates", "always"],
             cwd=self.remote,
@@ -1128,7 +1128,7 @@ class SliceDoctorTest(unittest.TestCase):
         subprocess.run(
             ["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True
         )
-        subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "use mock verifier"], cwd=self.root, check=True)
 
         start = subprocess.run(
             [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
@@ -1155,7 +1155,7 @@ class SliceDoctorTest(unittest.TestCase):
         )
         subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
         subprocess.run(
-            ["git", "commit", "-m", "archive T-1 and promote T-2"], cwd=worktree, check=True
+            ["git", "commit", "-q", "-m", "archive T-1 and promote T-2"], cwd=worktree, check=True
         )
 
         finish = subprocess.run(
@@ -1202,7 +1202,7 @@ class SliceDoctorTest(unittest.TestCase):
             encoding="utf-8",
         )
         subprocess.run(["git", "add", "-A"], cwd=self.root, check=True)
-        subprocess.run(["git", "commit", "-m", "sample plan and mock verifier"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "sample plan and mock verifier"], cwd=self.root, check=True)
 
         start = subprocess.run(
             [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
@@ -1227,7 +1227,7 @@ class SliceDoctorTest(unittest.TestCase):
             encoding="utf-8",
         )
         subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
-        subprocess.run(["git", "commit", "-m", "archive T-1 and complete the plan"], cwd=worktree, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "archive T-1 and complete the plan"], cwd=worktree, check=True)
 
         finish = subprocess.run(
             [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish -PythonPath '{}'".format(
@@ -1300,7 +1300,7 @@ class SliceDoctorTest(unittest.TestCase):
             master_ready.mkdir(parents=True, exist_ok=True)
             (master_ready / master_confirms_check).write_text("# fixture check\n", encoding="utf-8")
             subprocess.run(["git", "add", "checks/ready"], cwd=self.root, check=True)
-        subprocess.run(["git", "commit", "-m", "use mock verifier"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "use mock verifier"], cwd=self.root, check=True)
 
         start = subprocess.run(
             [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
@@ -1311,7 +1311,7 @@ class SliceDoctorTest(unittest.TestCase):
             subprocess.run(
                 ["git", "rm", "-q", f"checks/ready/{master_confirms_check}"], cwd=self.root, check=True
             )
-            subprocess.run(["git", "commit", "-m", "confirm a check"], cwd=self.root, check=True)
+            subprocess.run(["git", "commit", "-q", "-m", "confirm a check"], cwd=self.root, check=True)
         worktree = self.root / ".worktrees" / "T-1"
         (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
         if check_record:
@@ -1330,7 +1330,7 @@ class SliceDoctorTest(unittest.TestCase):
         )
         subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
         subprocess.run(
-            ["git", "commit", "-m", "archive T-1 and defer T-2"], cwd=worktree, check=True
+            ["git", "commit", "-q", "-m", "archive T-1 and defer T-2"], cwd=worktree, check=True
         )
 
         return subprocess.run(
@@ -1552,7 +1552,7 @@ class SliceDoctorTest(unittest.TestCase):
     def start_committed_queue(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")
         subprocess.run(["git", "add", "NEXTSTEPS.md"], cwd=self.root, check=True)
-        subprocess.run(["git", "commit", "-m", "queue"], cwd=self.root, capture_output=True, text=True, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "queue"], cwd=self.root, capture_output=True, text=True, check=True)
         return subprocess.run(
             [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
             cwd=self.root, capture_output=True, text=True,
@@ -1607,7 +1607,7 @@ class SliceDoctorTest(unittest.TestCase):
         def commit_work(worktree: Path) -> None:
             (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
             subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
-            subprocess.run(["git", "commit", "-m", "work"], cwd=worktree, capture_output=True, check=True)
+            subprocess.run(["git", "commit", "-q", "-m", "work"], cwd=worktree, capture_output=True, check=True)
 
         refusal = self.start_against_open_worktree(commit_work)
         self.assertIn(self.squeeze("Codex lane already has an open worktree"), refusal)
@@ -1700,7 +1700,7 @@ class ConsoleEncodingTest(unittest.TestCase):
             encoding="utf-8",
         )
         subprocess.run(["git", "add", "-A"], cwd=self.root, check=True)
-        subprocess.run(["git", "commit", "-m", "encoding fixture"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "encoding fixture"], cwd=self.root, check=True)
 
         start = self.run_cp1252(self.root / "tools" / "slice.ps1", "start -Lane Codex", self.root)
         self.assertEqual(0, start.returncode, self.text_of(start))
@@ -1731,7 +1731,7 @@ class ConsoleEncodingTest(unittest.TestCase):
             encoding="utf-8",
         )
         subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
-        subprocess.run(["git", "commit", "-m", "archive T-1 and promote T-2"], cwd=worktree, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "archive T-1 and promote T-2"], cwd=worktree, check=True)
 
         finish_command = "finish -PythonPath '{}'".format(sys.executable.replace("'", "''"))
         stopped = self.run_cp1252(worktree / "tools" / "slice.ps1", finish_command, worktree)
@@ -1743,7 +1743,7 @@ class ConsoleEncodingTest(unittest.TestCase):
 
         archive_file.write_text(f"# T-1 -- {self.TEXT}\n\nShipped.\n", encoding="utf-8")
         subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
-        subprocess.run(["git", "commit", "-m", "name the heading in the archive"], cwd=worktree, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "name the heading in the archive"], cwd=worktree, check=True)
         finish = self.run_cp1252(worktree / "tools" / "slice.ps1", finish_command, worktree)
         self.assertEqual(0, finish.returncode, self.text_of(finish))
 

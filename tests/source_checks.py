@@ -228,11 +228,13 @@ def check_autoloads(problems):
 
 
 def scripts_missing_uid(tracked_paths):
-    """The tracked scripts/*.gd whose `.gd.uid` companion is not tracked."""
+    """The tracked scripts/*.gd and tests/*.gd whose `.gd.uid` companion is
+    not tracked. tests/ joined on 7 Oct 2026: seven GDScript tests had no
+    uid, so every Godot boot left them untracked in the worktree."""
     tracked = set(tracked_paths)
     return sorted(
         path for path in tracked
-        if path.startswith("scripts/") and path.endswith(".gd")
+        if path.startswith(("scripts/", "tests/")) and path.endswith(".gd")
         and path + ".uid" not in tracked
     )
 
@@ -246,7 +248,7 @@ def check_script_uids_tracked(problems):
     (four scripts did this until 30 Sep 2026)."""
     try:
         listed = subprocess.run(
-            ["git", "ls-files", "-z", "--", "scripts"],
+            ["git", "ls-files", "-z", "--", "scripts", "tests"],
             cwd=os.path.join(ROOT, ".."), capture_output=True, text=True, check=True,
         ).stdout
     except (OSError, subprocess.CalledProcessError) as error:
@@ -3201,24 +3203,37 @@ def check_ui_gate_table(problems):
             "UI_GATES row governs" % name)
 
 
-# Test modules that verify.ps1 deliberately does not run, each with its reason.
-# Every other tests/test_*.py must be named in verify.ps1's $lifecycleModules
-# or $unitModules, so a new module cannot sit unrun (two did, unseen, until
-# the 30 Sep 2026 verification review).
-TESTS_NOT_IN_VERIFY = {}
+def test_module_wiring_problems(verify, present):
+    """What is wrong with how verify.ps1 picks its test modules.
+
+    Until 7 Oct 2026 verify.ps1 listed every module and this check failed one
+    named nowhere (two had sat unrun until the 30 Sep 2026 verification
+    review). The list made every test-adding slice own verify.ps1, so it now
+    globs tests/ and keeps only $lifecycleModules and $testsNotInVerify
+    explicit: the glob must stay, each name in those must exist, and none may
+    sit in both."""
+    problems = []
+    if not re.search(r'^\$unitModules = @\(Get-ChildItem\b[^\n]*-Filter "test_\*\.py"', verify, re.M):
+        problems.append("verify.ps1: $unitModules no longer finds tests/test_*.py itself, "
+                        "so a new test module could sit unrun")
+    lifecycle_line = re.search(r"^\$lifecycleModules = @\(([^)]*)\)", verify, re.M)
+    exempt_block = re.search(r"^\$testsNotInVerify = @\{(.*?)\}", verify, re.M | re.S)
+    if not lifecycle_line or not exempt_block:
+        problems.append("verify.ps1: $lifecycleModules or $testsNotInVerify is missing")
+        return problems
+    lifecycle = set(re.findall(r"tests\.(test_\w+)", lifecycle_line.group(1)))
+    exempt = set(re.findall(r'"tests\.(test_\w+)"\s*=', exempt_block.group(1)))
+    for module in sorted((lifecycle | exempt) - set(present)):
+        problems.append("verify.ps1 names tests/%s.py, which no longer exists" % module)
+    for module in sorted(lifecycle & exempt):
+        problems.append("verify.ps1 both runs and exempts tests/%s.py" % module)
+    return problems
 
 
 def check_test_modules_are_run(problems):
     verify = open(os.path.join(ROOT, "..", "tools", "verify.ps1"), encoding="utf-8").read()
-    named = set(re.findall(r"tests\.(test_\w+)", verify))
     present = {os.path.basename(p)[:-3] for p in glob.glob(os.path.join(ROOT, "..", "tests", "test_*.py"))}
-    for module in sorted(present - named - set(TESTS_NOT_IN_VERIFY)):
-        problems.append("tests/%s.py is run by nothing: add it to verify.ps1's $unitModules or "
-                        "$lifecycleModules, or to TESTS_NOT_IN_VERIFY with a reason" % module)
-    for module in sorted(set(TESTS_NOT_IN_VERIFY) - present):
-        problems.append("TESTS_NOT_IN_VERIFY names %s, which no longer exists" % module)
-    for module in sorted(set(TESTS_NOT_IN_VERIFY) & named):
-        problems.append("TESTS_NOT_IN_VERIFY exempts %s, but verify.ps1 runs it" % module)
+    problems.extend(test_module_wiring_problems(verify, present))
 
 
 def check_scenario_condition_keys(problems):

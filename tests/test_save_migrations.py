@@ -210,8 +210,12 @@ class SaveMigrationsSourceTest(unittest.TestCase):
     def test_read_never_weakens_the_newer_than_current_rejection(self):
         with open(SCRIPTS / "save_game.gd", encoding="utf-8") as handle:
             save_game_source = handle.read()
-        self.assertIn("save_version > FORMAT_VERSION", save_game_source)
-        self.assertIn("return {}", save_game_source)
+        # The return must sit inside the rejection branch itself: "return {}"
+        # appears elsewhere in read(), so a file-wide search passed with the
+        # branch's return deleted (verification review, 7 Oct 2026).
+        branch = re.search(r"(?m)^(\t+)if save_version > FORMAT_VERSION:\n((?:\1\t.*\n|\s*\n)+)", save_game_source)
+        self.assertIsNotNone(branch, "save_game.gd no longer rejects a save newer than FORMAT_VERSION")
+        self.assertRegex(branch.group(2), r"(?m)^\t+return \{\}$")
 
 
 class SaveMigrationsFixtureTest(unittest.TestCase):
