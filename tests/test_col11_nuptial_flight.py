@@ -4,6 +4,7 @@ Runs tests/col11_nuptial_flight_test.gd in a headless Godot at a fixed frame
 rate: season.gd's mating curve is 0 in early spring and 1 at mid summer; an
 unmated queen sent on flights through the succession window leaves the hive,
 lays nothing while she is out, and comes home unmated where the curve is 0;
+the selected-bee panel's Mating row switches her mode both ways;
 she flies once a day; in mid summer she comes home mated and then lays
 worker brood.
 

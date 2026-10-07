@@ -5,11 +5,12 @@ extends SceneTree
 ## the succession window's "Nuptial flights" button, sends her flying. With
 ## the peak chance raised to certainty, checks that:
 ## - season.gd's mating curve is 0 in early spring and 1 at mid summer;
+## - with her selected, the panel's Mating row switches her mode both ways;
 ## - in early spring she leaves the hive, lays nothing while she is out,
 ##   comes home, and has not mated (the curve is 0 there);
 ## - she does not fly a second time the same day;
 ## - on a mid-summer day she flies again and comes home mated, her flights
-##   mode gone and her readout no longer "Unmated";
+##   mode gone, her readout no longer "Unmated" and the Mating row gone;
 ## - she then lays worker brood, not drones.
 ##
 ## Runs at eight times speed on a fixed frame rate (the Python wrapper
@@ -105,6 +106,7 @@ func _start_flights() -> void:
 	_main.succession_panel.choose_flights(true)
 	_check(_queen.nuptial_flights, "the window's Nuptial flights button did not set her mode")
 	_check(not _main.succession_panel.is_open(), "the succession window stayed open after a choice")
+	_check_mating_row()
 	Engine.time_scale = SPEED
 	_begin_flight_watch("spring_flight")
 
@@ -176,6 +178,8 @@ func _after_summer_flight() -> void:
 	_check(not _queen.nuptial_flights, "a mated queen still has a flights mode")
 	_check(not _queen.role_name_text().contains("Unmated"),
 		"the mated queen's readout is \"%s\"" % _queen.role_name_text())
+	_main.hud.update_selection([_queen])
+	_check(_mating_row() == null, "a mated queen's panel still has a Mating row")
 	if not _failures.is_empty():
 		_phase = "done"
 		return
@@ -196,6 +200,37 @@ func _watch_worker_brood() -> void:
 		_fail("%d frames after mating the queen had laid no worker brood (drone brood %d)" % [
 			LAY_FRAMES, _brood_count(true),
 		])
+
+
+## With her selected, the panel's Mating row switches her mode either way,
+## lighting the choice in force. Leaves her on flights.
+func _check_mating_row() -> void:
+	_main.hud.update_selection([_queen])
+	for choice in [["Lay drones in the hive", false], ["Nuptial flights", true]]:
+		var button: Button = _find_button(_mating_row(), choice[0])
+		if button == null:
+			_fail("the unmated queen's panel has no \"%s\" button in a Mating row" % choice[0])
+			return
+		button.pressed.emit()
+		_check(_queen.nuptial_flights == choice[1],
+			"the Mating row's \"%s\" left her flights mode %s" % [choice[0], _queen.nuptial_flights])
+	_main.hud.update_selection([])
+
+
+func _mating_row() -> Node:
+	return _main.hud.focus_column.get_node_or_null("mating_row")
+
+
+func _find_button(node: Node, text: String) -> Button:
+	if node == null:
+		return null
+	if node is Button and node.text == text:
+		return node
+	for child in node.get_children():
+		var found: Button = _find_button(child, text)
+		if found != null:
+			return found
+	return null
 
 
 func _brood_count(drones_only: bool) -> int:
