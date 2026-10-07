@@ -46,5 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.claude/worktrees/run-queue-4-209d0f` (`claude/run-queue-4-209d0f`) | Claude (docs only) | `plans/reference/slice-worker.md`, both `run-queue` skills | Claude Code | active | none | run-queue trial-note changes, 7 Oct 2026 |
 | `.worktrees/AR-2` (`codex/AR-2`) | Codex | analysis turns that record into named alpha-gate facts | Codex | in progress | none | `plans/now/alpha-route-evidence.md` AR-2 -- analysis turns that record into named alpha-gate facts |
