@@ -175,6 +175,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | SPR-1 -- a windowed render baseline for the procedural bees, before any sprite pass | `plans/archive/sprites_2026-10-06.md` |
 | NF-1, NF-2 -- unprocessed nectar ferments, and tipsy bees pay for it | `plans/now/nectar-fermentation.md` |
 | SPR-2 -- the windowed render baseline at 500 and 1,000 bees | `plans/now/render-scale.md` |
+| SI-1 to SI-3 -- save integrity: run state a load misses, exact Challenge rollback, all-or-nothing writes | `plans/now/save-integrity.md` |
 | T2-1 to T2-8 -- progression step 8: tier-2 skills gated and built, bodies, rain in the Colony Run, Shiver Cluster | `plans/now/tier-two.md` |
 | BB-1 to BB-4 -- Bee Bread: Fermenters, larval feeding, the tier-3 currency, re-pacing | `plans/now/bee-bread.md` |
 | Progression/skills design | `plans/design/progression.md` |

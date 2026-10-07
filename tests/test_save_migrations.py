@@ -18,19 +18,36 @@ FIXTURES = ROOT / "tests" / "fixtures"
 
 FORMAT_VERSION = 6  # must match scripts/save_game.gd's FORMAT_VERSION
 
-# Mirrors scripts/game_config.gd's defaults for the eight fields
-# save_migrations.gd::_migrate_4_to_5 backfills into an older save's
-# "settings" dict. Update alongside game_config.gd if any default changes.
-GAME_CONFIG_DEFAULTS = {
-    "seasons_on": True,
-    "season_length_days": 60.0,
-    "disease_on": True,
-    "rival_hive_on": False,
-    "fog_of_war_on": True,
-    "lay_weight_low": 1.0,
-    "lay_weight_medium": 2.0,
-    "lay_weight_high": 3.0,
-}
+# The eight fields save_migrations.gd::_migrate_4_to_5 backfills into an
+# older save's "settings" dict, with their defaults read from
+# scripts/game_config.gd itself. A hand-kept copy drifted once: COL-4 moved
+# season_length_days from 60 to 30 and this mirror still said 60.
+MIGRATED_SETTINGS_V5 = (
+    "seasons_on", "season_length_days", "disease_on", "rival_hive_on",
+    "fog_of_war_on", "lay_weight_low", "lay_weight_medium", "lay_weight_high",
+)
+
+
+def read_game_config_defaults(keys):
+    source = (SCRIPTS / "game_config.gd").read_text(encoding="utf-8")
+    defaults = {}
+    for key in keys:
+        match = re.search(
+            r"^var %s: (bool|float|int) = ([^\s#]+)" % re.escape(key),
+            source, re.MULTILINE)
+        if match is None:
+            raise AssertionError("game_config.gd has no typed default for %s" % key)
+        kind, value = match.groups()
+        if kind == "bool":
+            defaults[key] = value == "true"
+        elif kind == "float":
+            defaults[key] = float(value)
+        else:
+            defaults[key] = int(value)
+    return defaults
+
+
+GAME_CONFIG_DEFAULTS = read_game_config_defaults(MIGRATED_SETTINGS_V5)
 
 
 def load_fixture(name):
@@ -184,6 +201,11 @@ class SaveMigrationsSourceTest(unittest.TestCase):
         pairs = sorted({(int(a), int(b)) for a, b in steps})
         self.assertEqual([(1, 2), (2, 3), (3, 4), (4, 5), (5, 6)], pairs)
         self.assertEqual(FORMAT_VERSION, max(b for _, b in pairs))
+
+    def test_migrated_settings_match_the_gdscript_list(self):
+        block = re.search(r"const MIGRATED_SETTINGS_V5 := \[(.*?)\]", self.source, re.DOTALL)
+        self.assertIsNotNone(block, "MIGRATED_SETTINGS_V5 not found in save_migrations.gd")
+        self.assertEqual(MIGRATED_SETTINGS_V5, tuple(re.findall(r'"([a-z_]+)"', block.group(1))))
 
     def test_read_never_weakens_the_newer_than_current_rejection(self):
         with open(SCRIPTS / "save_game.gd", encoding="utf-8") as handle:
