@@ -65,7 +65,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 1. **[Codex] AR-1 -- headless snapshots carry the Colony Run milestone record**
    - Plan: `plans/now/alpha-route-evidence.md` -- "AR-1 -- headless snapshots carry the Colony Run milestone record"
-   - Files: `scripts/headless/diagnostic_probes.gd`, `test_scenarios/alpha_arc_test.json`, `tests/test_headless_profiles.py`
+   - Files: `scripts/headless/diagnostic_probes.gd`, `test_scenarios/alpha_arc_test.json`, `tests/test_headless_profiles.py`, `tools/headless/profiles.py`
    - Check: `python -m unittest tests.test_headless_profiles` passes, and `test_scenarios/alpha_arc_test.json` requests the allowlisted Colony Run milestone field
    - Proof: `absent: scripts/headless/diagnostic_probes.gd :: colony.milestone_days`
    - Next after: AR-2 -- analysis turns that record into named alpha-gate facts

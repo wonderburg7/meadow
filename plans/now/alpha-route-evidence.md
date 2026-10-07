@@ -1,7 +1,7 @@
 # Alpha Route Evidence -- measure the promised five gates without inventing player understanding
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: AR-1 -- headless snapshots carry the Colony Run milestone record | Dependency: AR-1 → AR-2 → AR-3; the playable end-to-end route remains gated on Tier 2, Bee Bread and Colony Run work | Verified: 2026-10-07
+Status: active | Owner: Dave / Codex | Next: AR-2 -- analysis turns that record into named alpha-gate facts | Dependency: AR-1 → AR-2 → AR-3; the playable end-to-end route remains gated on Tier 2, Bee Bread and Colony Run work | Verified: 2026-10-07
 
 ## Objective
 
@@ -60,7 +60,7 @@ bounded copy of an existing record, never a per-frame evaluator.
 ```queue
 **[Codex] AR-1 -- headless snapshots carry the Colony Run milestone record**
 - Plan: `plans/now/alpha-route-evidence.md` -- "AR-1 -- headless snapshots carry the Colony Run milestone record"
-- Files: `scripts/headless/diagnostic_probes.gd`, `test_scenarios/alpha_arc_test.json`, `tests/test_headless_profiles.py`
+- Files: `scripts/headless/diagnostic_probes.gd`, `test_scenarios/alpha_arc_test.json`, `tests/test_headless_profiles.py`, `tools/headless/profiles.py`
 - Check: `python -m unittest tests.test_headless_profiles` passes, and `test_scenarios/alpha_arc_test.json` requests the allowlisted Colony Run milestone field
 - Proof: `absent: scripts/headless/diagnostic_probes.gd :: colony.milestone_days`
 - Next after: AR-2 -- analysis turns that record into named alpha-gate facts

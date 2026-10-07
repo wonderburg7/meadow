@@ -64,6 +64,20 @@ class HeadlessProfileTest(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "positive integer"):
             validate_diagnostics({"profile": "custom", "limits": {"snapshot_lines": 0}})
 
+    def test_colony_milestone_snapshot_is_allowlisted_and_copied(self):
+        selection = validate_diagnostics({"profile": "custom", "snapshots": {
+            "every_sim_seconds": 30, "fields": ["colony.milestone_days"],
+        }})
+        self.assertEqual(["colony.milestone_days"], selection["snapshots"]["fields"])
+        legacy = validate_diagnostics({"profile": "custom", "snapshots": {
+            "every_sim_seconds": 30, "fields": ["population.total"],
+        }})
+        self.assertEqual(["population.total"], legacy["snapshots"]["fields"])
+        probes = (Path(__file__).resolve().parent.parent / "scripts" / "headless" / "diagnostic_probes.gd").read_text(encoding="utf-8")
+        self.assertIn('"colony.milestone_days"', probes)
+        self.assertIn("is_instance_valid(world.colony_milestones) and world.colony_milestones.applies()", probes)
+        self.assertIn("milestone_days = world.colony_milestones.met_days.duplicate()", probes)
+
     def test_legacy_analysis_accepts_a_partial_selected_snapshot(self):
         analysis = analyze([
             {"type": "config", "settings": {}},

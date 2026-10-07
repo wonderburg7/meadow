@@ -16,7 +16,8 @@
         "resources.stored_nectar",
         "resources.stored_pollen",
         "role_outcomes.cells_completed_total",
-        "environment.winter_here"
+        "environment.winter_here",
+        "colony.milestone_days"
       ],
       "only_when_changed": false
     }
