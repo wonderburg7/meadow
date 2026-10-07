@@ -52,9 +52,9 @@ Verified 7 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-1 | Comb worker and Miner become bought roles; the queen builds without the skill; Challenge 2 frees them | `scripts/roles.gd`, `scripts/availability.gd`, `scripts/orders_zones.gd`, `scripts/hud.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_1_comb_miner_gate.py`, `test_scenarios/t2_1_queen_builds.json`, `tools/verify.ps1` | yes | medium |
-| T2-2 | Automation gates working outward: "Dig on its own" and outward building | `scripts/roles.gd`, `scripts/availability.gd`, `scripts/actions.gd`, `scripts/hive.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_2_automation_gate.py`, `tools/verify.ps1` | yes, after T2-1 in the same lane (shared files) | medium |
-| T2-3 | Adaptive constancy becomes a bought behaviour | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `tests/test_t2_3_adaptive_constancy.py`, `test_scenarios/t2_3_bought_constancy_test.json`, `tools/verify.ps1` | yes, after T2-2 in the same lane (`tools/verify.ps1`) | low |
+| T2-1 | Comb worker and Miner become bought roles; the queen builds without the skill; Challenge 2 frees them | `scripts/roles.gd`, `scripts/availability.gd`, `scripts/orders_zones.gd`, `scripts/hud.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_1_comb_miner_gate.py`, `test_scenarios/t2_1_queen_builds.json` | yes | medium |
+| T2-2 | Automation gates working outward: "Dig on its own" and outward building | `scripts/roles.gd`, `scripts/availability.gd`, `scripts/actions.gd`, `scripts/hive.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_2_automation_gate.py` | yes, after T2-1 in the same lane (shared files) | medium |
+| T2-3 | Adaptive constancy becomes a bought behaviour | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `tests/test_t2_3_adaptive_constancy.py`, `test_scenarios/t2_3_bought_constancy_test.json` | yes, after T2-2 in the same lane | low |
 | T2-4a | Cleaning gates taking out the dead larvae | specified when T2-3 lands | no -- after T2-2 (`actions.gd`, `challenge_stages.gd`) | medium |
 | T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | specified after T2-4a | no -- after T2-4a, COL-4 (`game_config.gd`) and COL-6 (the winter bill) | high |
 | T2-5 | Weather sensing's rain half, Rain recall, and rain on in the Colony Run | specified when T2-3 lands | no -- its PE-2 arc rerun reads COL-4's year | medium |
@@ -64,16 +64,15 @@ Verified 7 Oct 2026 against master:
 
 **Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
 T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
-and all three register a test module in `tools/verify.ps1`. They depend on
+and each adds a test module. They depend on
 nothing else. T2-4a follows T2-2 (`actions.gd`, `challenge_stages.gd`).
 T2-4b needs a `GameConfig` cap (COL-4 holds `game_config.gd`) and COL-6's
 winter bill. T2-6 and T2-7 wait for COL-4; T2-7 also for T2-1 to T2-3, whose
 gates it prices. T2-8 waits for COL-6, whose one-step winter it multiplies.
 NF-4 (`plans/now/nectar-fermentation.md`) adds a Colony tier-2 node; T2-7
-re-prices it if it has landed by then. `tools/verify.ps1` is a file every
-test-adding slice owns, so none of these can share a lane window with a
-Codex slice that adds a test (`plans/observations/system-improvement-signals.md`,
-7 Oct 2026).
+re-prices it if it has landed by then. A new test module no longer edits
+`tools/verify.ps1`, which finds them itself since 7 Oct 2026, so adding a
+test puts no shared file in either lane.
 
 **Reads.** A slice reads its own section below and the step 8 decisions in
 `plans/design/progression.md` (`python tools/heading.py
@@ -108,7 +107,7 @@ queen's exemption covers Nurse only, inside `action_query`.
   start (level row with `"run_type": "colony"`) and asserts the queen
   draws a cell with no skill owned and no worker can be made a Comb worker
   or Miner. `tests/test_t2_1_comb_miner_gate.py` runs it and checks the
-  Challenge 2 stage data; it is registered in `tools/verify.ps1`.
+  Challenge 2 stage data.
 
 **Must not change.** Levels 4-6 and every fixture that seeds builders or
 miners play as today (seeding implies owning). Challenge 2's stage order
@@ -120,7 +119,7 @@ Miner, as free buys, and the Job menu offers the role only once bought.
 ```queue
 **[Claude] T2-1 -- Comb worker and Miner become bought roles, and the queen builds without the skill**
 - Plan: `plans/now/tier-two.md` -- "T2-1 -- Comb worker and Miner become bought roles, and the queen builds without the skill"
-- Files: `scripts/roles.gd`, `scripts/availability.gd`, `scripts/orders_zones.gd`, `scripts/hud.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_1_comb_miner_gate.py`, `test_scenarios/t2_1_queen_builds.json`, `tools/verify.ps1`
+- Files: `scripts/roles.gd`, `scripts/availability.gd`, `scripts/orders_zones.gd`, `scripts/hud.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_1_comb_miner_gate.py`, `test_scenarios/t2_1_queen_builds.json`
 - Check: `python -m unittest tests.test_t2_1_comb_miner_gate` passes (the Colony Run queen draws a cell with no skill owned; no worker becomes a Comb worker or Miner unbought; Challenge 2's 2.7 and 2.8 free them); `python -m unittest tests.test_challenge2_checks` passes; a Godot boot is clean; `tools/verify.ps1` is green
 - Proof: `absent: scripts/roles.gd :: "skill": "skill.colony.comb_worker"`
 - Next after: T2-2 -- Automation gates working outward
@@ -150,15 +149,14 @@ building split from the marked half).
   7 Oct 2026). Backup roles is free only so Hive Mind tier 2 opens; it
   changes no queen backup.
 - `tests/test_t2_2_automation_gate.py` asserts both halves refused unowned
-  and allowed owned, and Challenge 2's 2.8 data; registered in
-  `tools/verify.ps1`.
+  and allowed owned, and Challenge 2's 2.8 data.
 
 **Must not change.** Marked digging and queued blocks; dispatch bands.
 
 ```queue
 **[Claude] T2-2 -- Automation gates working outward**
 - Plan: `plans/now/tier-two.md` -- "T2-2 -- Automation gates working outward"
-- Files: `scripts/roles.gd`, `scripts/availability.gd`, `scripts/actions.gd`, `scripts/hive.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_2_automation_gate.py`, `tools/verify.ps1`
+- Files: `scripts/roles.gd`, `scripts/availability.gd`, `scripts/actions.gd`, `scripts/hive.gd`, `scripts/challenge_stages.gd`, `tests/test_t2_2_automation_gate.py`
 - Check: `python -m unittest tests.test_t2_2_automation_gate` passes (automine and outward building refused without Automation, allowed with it; marked work unaffected; Challenge 2's 2.8 frees Backup roles and Automation); `python -m unittest tests.test_challenge2_checks` passes; a Godot boot is clean; `tools/verify.ps1` is green
 - Proof: `absent: scripts/actions.gd :: skill.hive_mind.automation`
 - Next after: T2-3 -- Adaptive constancy becomes a bought behaviour
@@ -180,15 +178,14 @@ Level: low (one effect entry and one helper, the Tarsal secretions pattern).
 becomes `"existing"`, so the tree drops its "Not built yet" note.
 `test_scenarios/t2_3_bought_constancy_test.json` buys it on day 1 with the
 setting off and records constancy switches; the same run unbought records
-none (AP-6's shape). `tests/test_t2_3_adaptive_constancy.py` runs both;
-registered in `tools/verify.ps1`.
+none (AP-6's shape). `tests/test_t2_3_adaptive_constancy.py` runs both.
 
 **Must not change.** Behaviour with the setting on.
 
 ```queue
 **[Claude] T2-3 -- Adaptive constancy becomes a bought behaviour**
 - Plan: `plans/now/tier-two.md` -- "T2-3 -- Adaptive constancy becomes a bought behaviour"
-- Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `tests/test_t2_3_adaptive_constancy.py`, `test_scenarios/t2_3_bought_constancy_test.json`, `tools/verify.ps1`
+- Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `tests/test_t2_3_adaptive_constancy.py`, `test_scenarios/t2_3_bought_constancy_test.json`
 - Check: `python -m unittest tests.test_t2_3_adaptive_constancy` passes (bought with the setting off, a forager re-evaluates its species; unbought, none does); `tools/verify.ps1` is green
 - Proof: `absent: scripts/bee_foraging.gd :: static func adaptive_constancy_on`
 - Next after: T2-4a -- Cleaning gates taking out the dead larvae

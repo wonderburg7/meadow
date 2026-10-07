@@ -78,7 +78,7 @@ Verified 6 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| NF-2 | nectar ferments past an age, changes colour, and is lost to honey makers | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf2_fermentation.py`, `test_scenarios/nf2_fermentation.json`, `tools/verify.ps1` | no -- after COL-4 (shares `game_config.gd`, `settings_catalogue.gd`) and NF-1 (its threshold comes from NF-1's numbers) | high |
+| NF-2 | nectar ferments past an age, changes colour, and is lost to honey makers | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf2_fermentation.py`, `test_scenarios/nf2_fermentation.json` | no -- after COL-4 (shares `game_config.gd`, `settings_catalogue.gd`) and NF-1 (its threshold comes from NF-1's numbers) | high |
 | NF-3 | a bee that drinks fermented nectar goes tipsy (decision 3) | specified after NF-2 | no -- after NF-2 | high |
 | NF-4 | the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; without it, closest first (decisions 4-5) | specified after NF-3 | no -- after NF-3 | high |
 | NF-5 | an order to clear fermented cells, extending today's restock orders (decision 6) | specified after NF-2 | no -- after NF-2 | medium |
@@ -86,8 +86,9 @@ Verified 6 Oct 2026 against master:
 **Dependencies.** NF-1, then NF-2. NF-3 and NF-5 each follow NF-2, and
 NF-4 follows NF-3. NF-2 waits for COL-4 in the Codex lane, which edits
 `scripts/game_config.gd` and `scripts/settings_catalogue.gd`. COL-6 and
-COL-11 (`plans/now/colony-run.md`) also edit `tools/verify.ps1`, and are
-gated on COL-4 too. Whichever is queued second waits for the other's merge,
+COL-11 (`plans/now/colony-run.md`) are gated on COL-4 too, and COL-11
+shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` with NF-2.
+Whichever of NF-2 and COL-11 is queued second waits for the other's merge,
 as the one-branch lane already ensures. Bee Bread's BB-1
 (`plans/now/bee-bread.md`) waits for NF-2: it shares `hive_cell.gd`,
 `hive.gd` and the save files. NF-4's node joins Colony tier 2, which
@@ -132,7 +133,7 @@ cell content type.
 ```queue-gated
 **[Claude] NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers**
 - Plan: `plans/now/nectar-fermentation.md` -- "NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers"
-- Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf2_fermentation.py`, `test_scenarios/nf2_fermentation.json`, `tools/verify.ps1`
+- Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf2_fermentation.py`, `test_scenarios/nf2_fermentation.json`
 - Check: `python -m unittest tests.test_nf2_fermentation` passes (a cell ferments, honey makers skip it, a top-up leaves it fermented, its stamp survives save and restore); `tools/verify.ps1` is green
 - Proof: `absent: scripts/hive_cell.gd :: func is_fermented`
 - Next after: NF-3 -- a bee that drinks fermented nectar goes tipsy

@@ -85,7 +85,12 @@ explicit request from Dave.
 - Candidate direction: Hypothesis — `verify.ps1` discovers
   `tests/test_*.py` itself and keeps only the lifecycle list and an
   exemption list explicit, so a new test module edits no shared file.
-- Disposition: untriaged
+- Disposition: promoted and fixed 7 Oct 2026 by the verification review
+  (`docs/verification-review-2026-10-07.md` F1, Dave's answer that day):
+  `verify.ps1` globs `tests/test_*.py`, `$testsNotInVerify` holds any
+  exemption, `tests/source_checks.py::check_test_modules_are_run` keeps the
+  glob in place, and `tools/verify.ps1` left the Files lines of T2-1 to T2-3,
+  COL-6, COL-11 and NF-2.
 
 ### 2026-09-30 — `tests/source_checks.py` misses an inner class's own signal and engine calls
 

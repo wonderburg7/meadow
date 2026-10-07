@@ -92,7 +92,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
             encoding="utf-8",
         )
         subprocess.run(["git", "add", "."], cwd=self.root, check=True)
-        subprocess.run(["git", "commit", "-m", "fixture"], cwd=self.root, capture_output=True, text=True, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "fixture"], cwd=self.root, capture_output=True, text=True, check=True)
         subprocess.run(["git", "remote", "add", "origin", str(self.remote)], cwd=self.root, check=True)
         subprocess.run(["git", "push", "-u", "origin", "master"], cwd=self.root, capture_output=True, text=True, check=True)
 
@@ -107,7 +107,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         )
         (self.root / "NEXTSTEPS.md").write_text("## Next up\n\n" + body, encoding="utf-8")
         subprocess.run(["git", "add", "NEXTSTEPS.md"], cwd=self.root, check=True)
-        subprocess.run(["git", "commit", "-m", "queue both lanes"], cwd=self.root, capture_output=True, text=True, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "queue both lanes"], cwd=self.root, capture_output=True, text=True, check=True)
 
     def run_slice(self, *args, env=None, cwd=None, timeout=90):
         return subprocess.run(
@@ -147,7 +147,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         )
         subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
         subprocess.run(
-            ["git", "commit", "-m", f"archive {delivered_id} and refill the queue"],
+            ["git", "commit", "-q", "-m", f"archive {delivered_id} and refill the queue"],
             cwd=worktree, check=True,
         )
 
@@ -305,7 +305,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8")
             subprocess.run(["git", "add", name], cwd=clone, check=True)
-            subprocess.run(["git", "commit", "-m", message], cwd=clone, capture_output=True, text=True, check=True)
+            subprocess.run(["git", "commit", "-q", "-m", message], cwd=clone, capture_output=True, text=True, check=True)
             subprocess.run(["git", "push", "origin", "master"], cwd=clone, capture_output=True, text=True, check=True)
 
     def git_out(self, *args):
@@ -314,7 +314,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
     def commit_local(self, name, content, message):
         (self.root / name).write_text(content, encoding="utf-8")
         subprocess.run(["git", "add", name], cwd=self.root, check=True)
-        subprocess.run(["git", "commit", "-m", message], cwd=self.root, capture_output=True, text=True, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", message], cwd=self.root, capture_output=True, text=True, check=True)
 
     def test_remote_ahead_integrates_before_the_merge(self):
         self.write_two_lane_queue()
@@ -511,7 +511,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
             encoding="utf-8",
         )
         subprocess.run(["git", "add", "-A"], cwd=self.root, check=True)
-        subprocess.run(["git", "commit", "-m", "real closeout tools"], cwd=self.root, capture_output=True, text=True, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "real closeout tools"], cwd=self.root, capture_output=True, text=True, check=True)
         subprocess.run(["git", "push", "origin", "master"], cwd=self.root, capture_output=True, text=True, check=True)
 
     def claim_and_code_a1(self):
@@ -575,7 +575,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         self.use_real_closeout_tools()
         worktree = self.claim_and_code_a1()
         subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
-        subprocess.run(["git", "commit", "-m", "deliver A-1"], cwd=worktree, capture_output=True, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "deliver A-1"], cwd=worktree, capture_output=True, check=True)
         self.write_journal("branch-committed")
 
         resumed = self.run_slice("resume", "-Lane", "Claude")
@@ -589,11 +589,11 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         self.use_real_closeout_tools()
         worktree = self.claim_and_code_a1()
         subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
-        subprocess.run(["git", "commit", "-m", "deliver A-1"], cwd=worktree, capture_output=True, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "deliver A-1"], cwd=worktree, capture_output=True, check=True)
         subprocess.run([sys.executable, str(worktree / "tools" / "archive_slice.py"), "A-1", "--root", str(worktree)],
                        capture_output=True, check=True)
         subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
-        subprocess.run(["git", "commit", "-m", "archive A-1 by hand"], cwd=worktree, capture_output=True, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "archive A-1 by hand"], cwd=worktree, capture_output=True, check=True)
         self.write_journal("archived")
 
         held = self.run_slice("resume", "-Lane", "Claude")
@@ -605,7 +605,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         subprocess.run([sys.executable, str(worktree / "tools" / "refill_lane.py"), "--delete", "A-1", "--root", str(worktree)],
                        capture_output=True, check=True)
         subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
-        subprocess.run(["git", "commit", "-m", "refill by hand"], cwd=worktree, capture_output=True, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "refill by hand"], cwd=worktree, capture_output=True, check=True)
         resumed = self.run_slice("resume", "-Lane", "Claude")
         self.assertEqual(0, resumed.returncode, resumed.stdout + resumed.stderr)
         self.assert_a1_closed_out()
@@ -641,7 +641,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         (self.root / "plans" / "now").mkdir(parents=True, exist_ok=True)
         (self.root / "plans" / "now" / "third.md").write_text(self.THIRD_PLAN, encoding="utf-8")
         subprocess.run(["git", "add", "-A"], cwd=self.root, check=True)
-        subprocess.run(["git", "commit", "-m", "queue block for A-3"], cwd=self.root, capture_output=True, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "queue block for A-3"], cwd=self.root, capture_output=True, check=True)
         queue_path = self.root / "NEXTSTEPS.md"
         before = queue_path.read_text(encoding="utf-8")
 
@@ -673,7 +673,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         the fixture carries the one file it needs that the others do not."""
         (self.root / "checks" / "blocked.md").write_text("# Blocked hands-on checks\n", encoding="utf-8")
         subprocess.run(["git", "add", "-A"], cwd=self.root, check=True)
-        subprocess.run(["git", "commit", "-m", "blocked checks file"], cwd=self.root, capture_output=True, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "blocked checks file"], cwd=self.root, capture_output=True, check=True)
         subprocess.run(["git", "push", "origin", "master"], cwd=self.root, capture_output=True, check=True)
 
     def move_z9_to_the_codex_lane_on_master(self):

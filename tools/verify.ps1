@@ -102,27 +102,41 @@ function Get-FailureLine {
     return ""
 }
 
-# The workflow ("lifecycle") suite: every module Start-LifecycleJob runs.
-$lifecycleModules = @("tests.test_source_checks", "tests.test_slice_lifecycle", "tests.test_two_lane_closeout", "tests.test_codex_environment", "tests.test_verify_generated", "tests.test_alpha_build", "tests.test_godot_cache", "tests.test_godot_compile_check", "tests.test_pacing_gates", "tests.test_review_tools")
+# The workflow ("lifecycle") suite: the two modules that drive slice.ps1 and
+# verify.ps1 through whole closeouts in temporary repositories. Each runs as
+# its own job, side by side: 530 s one after the other, 297 s in parallel
+# (7 Oct 2026). Everything else under tests/ takes seconds.
+$lifecycleModules = @("tests.test_slice_lifecycle", "tests.test_two_lane_closeout")
 
-# The fast Python suites. They need no PowerShell or repository state, so they
-# run on every branch verify (about 2 s together). The last four boot Godot:
-# they add about 60 s where it is installed and skip themselves where it is
-# not. Before 30 Sep 2026 none of these ran anywhere and two had gone red
-# unseen. A module that belongs in neither list must be exempted, with its
-# reason, in tests/source_checks.py::TESTS_NOT_IN_VERIFY.
-$unitModules = @("tests.test_conditions", "tests.test_equivalence", "tests.test_headless_efficiency_baseline", "tests.test_headless_experiments", "tests.test_headless_jobs", "tests.test_headless_profiles", "tests.test_headless_route", "tests.test_headless_verdicts", "tests.test_run_scenario_launch", "tests.test_save_migrations", "tests.test_session_cost_stops", "tests.test_signal_catalogue", "tests.test_layout_regression", "tests.test_hc8_tray_first_open", "tests.test_hc16_tray_reselect", "tests.test_gc4_nurse_role_change_keeps_food", "tests.test_ho10_queen_starvation_ends_run", "tests.test_ho15_menu_hex_fit", "tests.test_challenge2_checks", "tests.test_sf1_founding_flower_mix", "tests.test_bs13_stage_columns", "tests.test_bs14_saved_skill_policy", "tests.test_col9_drones", "tests.test_col10_succession", "tests.test_session_cost_scope", "tests.test_queue_lookahead", "tests.test_nf1_nectar_age")
+# Modules no verify stage runs, each with its reason, as
+# "tests.test_<name>" = "<reason>". tests/source_checks.py
+# (check_test_modules_are_run) reads this table.
+$testsNotInVerify = @{}
+
+# Every other tests/test_*.py runs in the unit job on every branch verify.
+# They are found, not listed: until 7 Oct 2026 each new test module edited a
+# list on this file, so every slice that added a test owned verify.ps1 (the
+# two lanes could not both hold one) and set off the lifecycle suite, 12 of
+# its 28 runs since 1 Oct. The ones that boot Godot skip themselves where it
+# is not installed.
+$unitModules = @(Get-ChildItem -Path (Join-Path $PSScriptRoot "..\tests") -Filter "test_*.py" -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Extension -eq ".py" } |
+    ForEach-Object { "tests." + $_.BaseName } |
+    Where-Object { $lifecycleModules -notcontains $_ -and -not $testsNotInVerify.ContainsKey($_) } |
+    Sort-Object)
 
 # The lifecycle suite runs only when the branch's diff against master can
 # reach it -- in the branch scope, finish's included. It used to run in the
 # primary scope on every finish too (V-2), but that run tested master before
 # the merge, which the branch that last changed this tooling had already
 # tested: 3-10 minutes of every closeout for no new coverage (27 Sep 2026).
-# The list is everything the suite reads from the repository; every test
-# builds its queue and ledger in a temporary fixture, so NEXTSTEPS.md is not
-# on it.
+# The list is every file the two modules copy into their fixture
+# repositories (workflow_test_support.py's paths and the tools they copy by
+# name); every test builds its queue and ledger there, so NEXTSTEPS.md is not
+# on it. Until 7 Oct 2026 it was all of tools/, so a change to a headless or
+# balance tool ran the suite for nothing.
 function Test-LifecycleTouched {
-    $paths = @("tools/", ".codex/", "tests/workflow_test_support.py", "tests/source_checks.py", "export_presets.cfg", "project.godot", ".gitignore") + @($lifecycleModules | ForEach-Object { ($_ -replace "\.", "/") + ".py" })
+    $paths = @("tools/slice.ps1", "tools/verify.ps1", "tools/diagnostics.ps1", "tools/check_docs.py", "tools/backlog.py", "tools/archive_slice.py", "tools/refill_lane.py", "tools/heading.py", "tests/workflow_test_support.py") + @($lifecycleModules | ForEach-Object { ($_ -replace "\.", "/") + ".py" })
     try {
         $changed = @(& git -C $PSScriptRoot diff --name-only "$(if ($env:MEADOW_VERIFY_BASE) { $env:MEADOW_VERIFY_BASE } else { "master" })...HEAD" 2>$null)
         $changed += @(& git -C $PSScriptRoot diff --name-only HEAD 2>$null)
@@ -138,8 +152,8 @@ function Test-LifecycleTouched {
 }
 
 function Start-LifecycleJob {
-    param($Interpreter, $Root)
-    Start-Job -Name "lifecycle tests" -ArgumentList $Interpreter, $Root, $lifecycleModules -ScriptBlock {
+    param($Interpreter, $Root, $Module)
+    Start-Job -Name "lifecycle tests ($($Module -replace '^tests\.test_', ''))" -ArgumentList $Interpreter, $Root, @($Module) -ScriptBlock {
         param($interpreter, $root, $modules)
         Set-Location $root
         # The suite drives finish in temporary repositories, and that finish
@@ -314,6 +328,9 @@ if ($runBranchScope -and -not $Docs) {
         (Start-Job -Name "unit tests" -ArgumentList $python, $repoRoot, $unitModules -ScriptBlock {
             param($interpreter, $root, $modules)
             Set-Location $root
+            # A checkout with no tests/ (a lifecycle fixture) finds none, and a
+            # bare `-m unittest` would discover from the root instead.
+            if (-not $modules) { Write-Output "unit tests: none found"; return }
             & $interpreter -m unittest @modules
             if ($LASTEXITCODE -ne 0) {
                 throw "unit test modules exited with code $LASTEXITCODE"
@@ -328,7 +345,9 @@ if ($runBranchScope -and -not $Docs) {
     if ($env:MEADOW_LIFECYCLE_SUITE -ne "1") {
         if (Test-LifecycleTouched) {
             $suiteLock = Enter-LifecycleSuiteLock
-            $jobs += (Start-LifecycleJob -Interpreter $python -Root $repoRoot)
+            foreach ($module in $lifecycleModules) {
+                $jobs += (Start-LifecycleJob -Interpreter $python -Root $repoRoot -Module $module)
+            }
         }
         else {
             Write-Output "lifecycle tests: skipped -- branch touches no lifecycle tooling"
@@ -339,8 +358,8 @@ if ($runBranchScope -and -not $Docs) {
     Wait-Job -Job $jobs | Out-Null
     $failed = $false
     foreach ($job in $jobs) {
-        # A job records its own start and end, so the three parallel stages --
-        # the slowest in the run -- are measured without a stopwatch each.
+        # A job records its own start and end, so the parallel stages -- the
+        # slowest in the run -- are measured without a stopwatch each.
         $jobMs = 0
         if ($job.PSBeginTime -and $job.PSEndTime) {
             $jobMs = [int](($job.PSEndTime - $job.PSBeginTime).TotalMilliseconds)

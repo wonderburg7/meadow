@@ -98,6 +98,36 @@ class InnerClassCallChecksTest(unittest.TestCase):
         self.assertIn("not_a_function()", problems[0])
 
 
+class TestModuleWiringTest(unittest.TestCase):
+    """verify.ps1 finds tests/test_*.py itself (7 Oct 2026); only its
+    lifecycle and exemption tables name modules."""
+
+    def test_the_real_verify_script_is_wired_correctly(self):
+        verify = VERIFY_PATH.read_text(encoding="utf-8")
+        present = [path.stem for path in VERIFY_PATH.parent.parent.joinpath("tests").glob("test_*.py")]
+
+        self.assertEqual([], source_checks.test_module_wiring_problems(verify, present))
+
+    def test_a_listed_unit_module_set_fails(self):
+        verify = ('$lifecycleModules = @("tests.test_a")\n$testsNotInVerify = @{}\n'
+                  '$unitModules = @("tests.test_b")\n')
+
+        problems = source_checks.test_module_wiring_problems(verify, ["test_a", "test_b"])
+
+        self.assertEqual(1, len(problems))
+        self.assertIn("no longer finds tests/test_*.py", problems[0])
+
+    def test_a_stale_or_doubled_name_fails(self):
+        verify = ('$lifecycleModules = @("tests.test_a", "tests.test_gone")\n'
+                  '$testsNotInVerify = @{\n    "tests.test_a" = "slow"\n}\n'
+                  '$unitModules = @(Get-ChildItem -Path x -Filter "test_*.py" -File |\n')
+
+        problems = source_checks.test_module_wiring_problems(verify, ["test_a"])
+
+        self.assertEqual(["verify.ps1 names tests/test_gone.py, which no longer exists",
+                          "verify.ps1 both runs and exempts tests/test_a.py"], problems)
+
+
 class ScriptUidChecksTest(unittest.TestCase):
     """An untracked .gd.uid gets a fresh random uid on every worktree boot."""
 
@@ -105,6 +135,11 @@ class ScriptUidChecksTest(unittest.TestCase):
         tracked = ["scripts/main.gd", "scripts/main.gd.uid", "scripts/saves_panel.gd"]
 
         self.assertEqual(["scripts/saves_panel.gd"], source_checks.scripts_missing_uid(tracked))
+
+    def test_gdscript_tests_need_their_uid_too(self):
+        tracked = ["tests/col9_drones_test.gd", "tests/gc4_test.gd", "tests/gc4_test.gd.uid"]
+
+        self.assertEqual(["tests/col9_drones_test.gd"], source_checks.scripts_missing_uid(tracked))
 
     def test_scripts_outside_scripts_and_non_gd_files_are_ignored(self):
         tracked = ["tools/helper.gd", "scripts/theme.tres", "scripts/sub/panel.gd",
