@@ -2731,6 +2731,7 @@ func _rebuild_role_controls(bees: Array) -> void:
 	if show_queen_build_row:
 		_build_queen_build_row(job_column)
 	_build_doing_row(common_working_role, first)
+	_build_mating_row(bees, first)
 	# Skipped while the queen's own "Build cell" button is showing --
 	# that button is the one build control Challenge 1 wants here, not
 	# also the ordinary placement/home-cell controls this row offers.
@@ -2847,6 +2848,41 @@ func _build_doing_row(common_role: int, first) -> void:
 			func(): role_requested.emit(command),
 			mode.tip
 		))
+
+## COL-11: a single selected unmated queen chooses, at any time until she
+## mates, between laying drones in the hive and nuptial flights -- the same
+## two choices as the succession window (decision 12 of
+## plans/now/colony-run.md). The flight mode is not saved yet (SI-1 holds
+## the save files), so after a load this row is how the player puts her back
+## on flights. Built with the rest of the panel, never per frame; a press
+## rebuilds the panel so the lit button follows her mode. Once she has mated
+## the row goes at the next rebuild, and a press before then does nothing.
+func _build_mating_row(bees: Array, first) -> void:
+	if bees.size() != 1 or first == null or not first.is_queen or first.is_mated:
+		return
+	var row := _column_row(focus_column)
+	row.name = "mating_row"
+	var label := Label.new()
+	label.text = "Mating:"
+	label.theme_type_variation = "Small"
+	UiTheme.bind_color(label, "font_color", "text_secondary")
+	row.add_child(label)
+	row.add_child(_toggle_button(
+		"Lay drones in the hive", not first.nuptial_flights,
+		func(): _set_nuptial_flights(first, false),
+		"She stays in the hive and lays. She has not mated, so every egg hatches as a drone, who eats but does no work."
+	))
+	row.add_child(_toggle_button(
+		"Nuptial flights", first.nuptial_flights,
+		func(): _set_nuptial_flights(first, true),
+		"Once a day she leaves the hive for part of the day to find a mate, laying nothing while she is away. Her chance is best in mid summer and nothing outside late spring to early autumn. Once she has mated she lays workers again."
+	))
+
+func _set_nuptial_flights(queen, on: bool) -> void:
+	if queen != null and is_instance_valid(queen):
+		queen.set_nuptial_flights(on)
+	if not shown_bees.is_empty():
+		_rebuild_role_controls(shown_bees)
 
 ## Is `bee` currently on this sub-mode?
 func _mode_is_active(role_id: int, bee, mode_key: String) -> bool:

@@ -23,14 +23,7 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate**
-   - Plan: `plans/now/colony-run.md` -- "COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate"
-   - Files: `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd`
-   - Check: `python -m unittest tests.test_col11_nuptial_flight` passes (no mating where the curve is 0; a queen flying in mid summer mates within the test's days and then lays worker brood); `python tools/pacing_gates.py` before and after is recorded in this plan; a Godot boot is clean; `tools/verify.ps1` is green
-   - Proof: `absent: scripts/game_config.gd :: nuptial_flight_peak_chance`
-   - Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
-
-2. **[Claude] COL-7 -- the mating window, genetic points and COL-2's narrower win**
+1. **[Claude] COL-7 -- the mating window, genetic points and COL-2's narrower win**
    - Plan: `plans/now/colony-run.md` -- "COL-7 -- the mating window, genetic points and COL-2's narrower win"
    - Files: `scripts/season.gd`, `scripts/hud.gd`, `scripts/year_winter.gd`, `scripts/colony_milestones.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col7_gyne_window.py`, `tests/col7_gyne_window_test.gd`
    - Check: `python -m unittest tests.test_col7_gyne_window` passes (a ready gyne stays put across many season ticks; sent in mid summer she counts, emits `gyne_released` and adds 10 points; sent where the curve is 0 she is gone, `gyne_lost` fires, and the release count, points and victory don't change; the points survive `save_data`/`restore`, and a record without them restores 0); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green

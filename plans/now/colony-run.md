@@ -1,6 +1,6 @@
 # Colony Run -- the flagship run's definition and first slices
 
-Status: active | Owner: Dave / Claude Code | Next: COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns, Codex lane (a COL-4 integration finding, Dave 7 Oct 2026); COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate, Claude lane, startable now COL-6 has landed (decision 12, Dave 5 Oct 2026); COL-7 -- the mating window, genetic points and COL-2's narrower win, Claude lane, after COL-11 (decisions 7 and 10; the player sends a gyne, Dave 7 Oct 2026) (COL-13 landed: tools/analyze_session.py dates a skipped winter from the game_time jump of winter's length, so the pacing arc shows both winter rows in band and every seed lived; COL-6 landed: winter is no longer played -- the day it arrives season.gd::_resolve_winter charges season.gd::winter_bill (bees x energy_burn_rate x winter_burn_factor x winter's seconds) out of the stores, sealed cells included, removes bees until the survivors' bill fits -- drones, then workers, then gynes, oldest first within each, Dave's decision 7 Oct 2026 -- and the queen last, only if the stores cannot cover her share, moves Session.sim_time on by winter's length and fires winter_survived once with the bees it took; year_winter.gd's forecast reads winter_bill and winter_stores; COL-4 landed: a year is `season_length_days` (30) playable days then `winter_length_days` (10) of winter, both saved run settings; the flower fraction restarts after every winter, and winter recurs each year with its countdown derived by season.gd::_winter_countdown_day, so `winter_countdown_start_day` is gone; a level with winter off has a year of only its playable season (Session.year_has_winter, Session.year_days); SF-1's tolerance is 0.20 until COL-12; COL-10 landed: when the queen dies the oldest adult gyne becomes an unmated queen on Egg layer through main.gd::_promote_gyne_to_queen, before colony_lost is set, and succession_panel.gd explains it once; with no gyne the run ends as before; COL-9 landed: an unmated queen (bee.gd::is_mated, saved, true by default) lays drone brood that hatches an Idle drone through main.gd's emergence loop, and set_role refuses him any other job; COL-5 landed: level rows no longer carry the unread unlocks and win_conditions keys; COL-3 landed: game_over.gd offers the latest checkpoint of a Colony Run through saves_panel.gd::reload_from; COL-2 landed: colony_milestones.check_victory records a victory day and opens the win screen with Colony Run wording; COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4, decisions 5-10) is queued in the Codex lane after GC-3, which shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` (Dave, 4 Oct 2026) | Verified: 2026-10-07
+Status: active | Owner: Dave / Claude Code | Next: COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns, Codex lane (a COL-4 integration finding, Dave 7 Oct 2026); COL-7 -- the mating window, genetic points and COL-2's narrower win, Claude lane, startable now COL-11 has landed (decisions 7 and 10; the player sends a gyne, Dave 7 Oct 2026) (COL-11 landed: season.gd::mating_curve is the year's one mating curve, 0 outside late spring to early autumn and 1 at mid summer, and season.gd::nuptial_mating_chance is `nuptial_flight_peak_chance` (0.5, a settings row) times it; an unmated queen chooses laying drones or nuptial flights in the succession window or, at any time, the selected-bee panel's Mating row (hud.gd, Dave 7 Oct 2026); on flights she leaves through the entrance once a day, waits in the meadow a quarter of a day, comes home and rolls once, and mated she lays workers; the mode is not saved yet; COL-13 landed: tools/analyze_session.py dates a skipped winter from the game_time jump of winter's length, so the pacing arc shows both winter rows in band and every seed lived; COL-6 landed: winter is no longer played -- the day it arrives season.gd::_resolve_winter charges season.gd::winter_bill (bees x energy_burn_rate x winter_burn_factor x winter's seconds) out of the stores, sealed cells included, removes bees until the survivors' bill fits -- drones, then workers, then gynes, oldest first within each, Dave's decision 7 Oct 2026 -- and the queen last, only if the stores cannot cover her share, moves Session.sim_time on by winter's length and fires winter_survived once with the bees it took; year_winter.gd's forecast reads winter_bill and winter_stores; COL-4 landed: a year is `season_length_days` (30) playable days then `winter_length_days` (10) of winter, both saved run settings; the flower fraction restarts after every winter, and winter recurs each year with its countdown derived by season.gd::_winter_countdown_day, so `winter_countdown_start_day` is gone; a level with winter off has a year of only its playable season (Session.year_has_winter, Session.year_days); SF-1's tolerance is 0.20 until COL-12; COL-10 landed: when the queen dies the oldest adult gyne becomes an unmated queen on Egg layer through main.gd::_promote_gyne_to_queen, before colony_lost is set, and succession_panel.gd explains it once; with no gyne the run ends as before; COL-9 landed: an unmated queen (bee.gd::is_mated, saved, true by default) lays drone brood that hatches an Idle drone through main.gd's emergence loop, and set_role refuses him any other job; COL-5 landed: level rows no longer carry the unread unlocks and win_conditions keys; COL-3 landed: game_over.gd offers the latest checkpoint of a Colony Run through saves_panel.gd::reload_from; COL-2 landed: colony_milestones.check_victory records a victory day and opens the win screen with Colony Run wording; COL-1 landed: the goal shelf shows the next milestone via colony_milestones.show_next; PE-2 landed with its evidence below; CR-2 landed: scripts/colony_milestones.gd records the day each milestone is first met, saved as an additive field) | Dependency: none; COL-2 follows COL-1, and the year (COL-4, decisions 5-10) is queued in the Codex lane after GC-3, which shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` (Dave, 4 Oct 2026) | Verified: 2026-10-07
 
 This is the design pass that `plans/design/product-scope.md` §6.2 put next
 (Dave, 30 Sep 2026): run policy for the flagship Colony Run. It ran on 3 Oct
@@ -130,7 +130,6 @@ PE-2's arc (`tools/pacing_gates.py`).
 | Id | Slice | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
 | COL-12 | the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns | `scripts/main.gd`, `scripts/world_building.gd`, `tests/test_sf1_founding_flower_mix.py`, `test_scenarios/sf1_founding_flower_mix_test.json` | yes -- Codex lane (Dave, 7 Oct 2026); COL-13 has landed | medium |
-| COL-11 | nuptial flights: an unmated queen can leave each day to find a mate | `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd` | yes -- COL-4, COL-6 and COL-10 have landed | high |
 | COL-7 | the mating window, genetic points and COL-2's narrower win | `scripts/season.gd`, `scripts/hud.gd`, `scripts/year_winter.gd`, `scripts/colony_milestones.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col7_gyne_window.py`, `tests/col7_gyne_window_test.gd` | after COL-11 (its mating curve) | high |
 
 **Dependencies.** COL-4 then COL-6: both edit `scripts/season.gd`, and
@@ -164,47 +163,7 @@ COL-4 shipped 2026-10-07; its specification is `plans/archive/COL-4_2026-10-07.m
 
 COL-6 shipped 2026-10-07; its specification is `plans/archive/COL-6_2026-10-07.md`.
 
-## COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate
-
-<!-- LAYER: immediate-task -->
-
-Level: high (a new balance value and the year's mating curve, simulated
-first). Specified 5 Oct 2026 from decision 12; startable once COL-4 and
-COL-10 have landed.
-
-**True now** (verified 5 Oct 2026). No mating exists.
-`season.gd::_gyne_season` gates gyne release on the old 60-day flower year
-(`Flower.season_fraction() >= GameConfig.gyne_release_day`), which COL-4
-replaces with decisions 5 and 6's year. Decision 7's curve is not built.
-
-**True afterwards.**
-- `season.gd`, which owns the calendar once COL-4 lands, answers one mating
-  curve: 0 outside late spring to early autumn, rising to 1 at mid summer.
-  This slice builds it; COL-7 reads the same function for genetic credit
-  rather than writing a second (`plans/README.md` rule 4), and says so when
-  it is specified.
-- COL-10's window gains "Nuptial flights", and the queen's readout can
-  switch between the two modes at any time while she is unmated.
-- In flight mode she leaves through the entrance once a day, is away for part
-  of the day (laying nothing meanwhile) and comes back. Each return rolls
-  once: chance = `nuptial_flight_peak_chance` x the curve that day. Success
-  sets `is_mated`; she then lays as any queen does and the modes go. A flight
-  never loses her.
-- `nuptial_flight_peak_chance` is a `GameConfig` value with a settings row,
-  starting at an unsimulated 0.5. The slice runs `tools/pacing_gates.py`
-  before and after and records both here.
-
-**Must not change.** Gyne release (`_release_ready_gynes`); COL-6's winter
-bill; a mated queen's laying.
-
-```queue
-**[Claude] COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate**
-- Plan: `plans/now/colony-run.md` -- "COL-11 -- nuptial flights: an unmated queen can leave each day to find a mate"
-- Files: `scripts/season.gd`, `scripts/bee.gd`, `scripts/succession_panel.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col11_nuptial_flight.py`, `tests/col11_nuptial_flight_test.gd`
-- Check: `python -m unittest tests.test_col11_nuptial_flight` passes (no mating where the curve is 0; a queen flying in mid summer mates within the test's days and then lays worker brood); `python tools/pacing_gates.py` before and after is recorded in this plan; a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `absent: scripts/game_config.gd :: nuptial_flight_peak_chance`
-- Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
-```
+COL-11 shipped 2026-10-07; its specification is `plans/archive/COL-11_2026-10-07.md`.
 
 ## COL-7 -- the mating window, genetic points and COL-2's narrower win
 

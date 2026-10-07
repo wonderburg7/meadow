@@ -252,6 +252,38 @@ func _winter_countdown_day() -> float:
 func foraging_stopped() -> bool:
 	return Session.winter_here
 
+# --- the mating curve ---------------------------------------------
+## Decision 7 of plans/now/colony-run.md: mating follows one curve through
+## the year -- nothing outside late spring to early autumn, rising to 1 at
+## mid summer. This is that curve, the only one: COL-11's nuptial flights
+## read it through nuptial_mating_chance, and COL-7's genetic credit reads
+## mating_curve itself rather than keeping a second.
+##
+## Measured on the playable season's fraction (Flower.season_fraction), in
+## the thirds year_winter.gd names: spring to 0.33, summer to 0.66, autumn
+## to 1. The window opens in the last part of spring and closes early in
+## autumn, and peaks halfway through, in mid summer.
+const MATING_WINDOW_START := 0.2
+const MATING_WINDOW_END := 0.8
+
+## Today's place on the curve, 0 to 1: 0 outside the window and through
+## winter, a smooth arch inside it, 1 at mid summer. With seasons off the
+## year holds at mid season (season_fraction is 0.5), so the curve is 1.
+func mating_curve() -> float:
+	if Session.winter_here:
+		return 0.0
+	var through_year: float = Flower.season_fraction()
+	if through_year <= MATING_WINDOW_START or through_year >= MATING_WINDOW_END:
+		return 0.0
+	var through_window: float = (through_year - MATING_WINDOW_START) / (MATING_WINDOW_END - MATING_WINDOW_START)
+	return sin(PI * through_window)
+
+## The chance an unmated queen coming home from a nuptial flight today has
+## mated: GameConfig.nuptial_flight_peak_chance at mid summer, scaled by
+## the curve everywhere else. bee.gd::_end_nuptial_flight rolls against it.
+func nuptial_mating_chance() -> float:
+	return clampf(GameConfig.nuptial_flight_peak_chance * mating_curve(), 0.0, 1.0)
+
 # --- gynes leaving ------------------------------------------------
 ## A mature gyne with enough in her flies off to found a colony of her
 ## own. She counts once and is removed: the colony has spent everything

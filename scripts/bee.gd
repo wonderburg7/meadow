@@ -110,6 +110,35 @@ const DRONE_COLOUR := Color(0.62, 0.52, 0.78)   # dusky violet, apart from every
 ## before.
 var is_mated: bool = true
 
+## COL-11. An unmated queen's choice (decision 12 of
+## plans/now/colony-run.md): false lays drones in the hive, true flies out
+## once a day to find a mate. Set through set_nuptial_flights by the
+## succession window. Meaningless once she has mated. Not saved -- the save
+## format is the Codex lane's SI-1's -- so a load puts her back to laying
+## drones until the player chooses flights again.
+var nuptial_flights: bool = false
+## Where today's flight has got to (NUPTIAL_* below). Runs on states the
+## state machine already has: out through the entrance and over the meadow
+## on IN_HIVE_TO_EXIT and MOVE_TO_POINT, waiting at the mating site on
+## IDLING, home on TO_HIVE. She lays nothing until she is back.
+var nuptial_phase: int = 0
+## Seconds left at the mating site.
+var nuptial_timer: float = 0.0
+## The day she last set out, so she flies once a day.
+var nuptial_flight_day: int = 0
+## Flights she has come home from, for the readout and the COL-11 test.
+var nuptial_flights_flown: int = 0
+const NUPTIAL_NONE := 0
+const NUPTIAL_OUT := 1
+const NUPTIAL_AWAY := 2
+const NUPTIAL_BACK := 3
+## How much of a day she spends at the mating site, and how far from the
+## entrance it is. Here rather than in GameConfig: they shape how a flight
+## looks, not whether it succeeds -- nuptial_flight_peak_chance and the
+## season's mating curve decide that.
+const NUPTIAL_AWAY_DAY_FRACTION := 0.25
+const NUPTIAL_SITE_DISTANCE := 260.0
+
 ## Nursery sub-mode: "feed" tends and feeds brood, "jelly" makes royal
 ## jelly for gyne larvae, "both" does either as it comes up.
 var nurse_mode: String = "feed"
@@ -845,6 +874,96 @@ func become_queen() -> void:
 	_update_role_marker()
 	_update_label()
 
+# --- nuptial flights (COL-11) -------------------------------------
+## Switches an unmated queen between laying drones in the hive and flying
+## out each day to find a mate. The player can switch either way at any
+## time while she is unmated. A flight already under way finishes either
+## way: she comes home and the return still rolls. Does nothing once she
+## has mated, when the choice is gone.
+func set_nuptial_flights(on: bool) -> void:
+	if not is_queen or is_mated:
+		return
+	nuptial_flights = on
+
+## Called every frame for an unmated queen, before the state machine. Each
+## day she is free -- between tasks, fed, in the hive -- she walks out
+## through the entrance to a point in the meadow, waits there for part of
+## the day, and flies home. Coming home rolls once, against
+## season.gd::nuptial_mating_chance: success mates her, and from then on she
+## lays as any queen does. A flight never loses her.
+func _nuptial_flight_step(delta: float) -> void:
+	match nuptial_phase:
+		NUPTIAL_NONE:
+			if not _is_inside_hive():
+				# Outdoors with no flight under way: a load mid-flight (the
+				# flight's progress is not saved), or a player's order that has
+				# run its course. Her work is indoors, so she comes home.
+				if state != State.TO_HIVE and state != State.MOVE_TO_POINT and state != State.IN_HIVE_TO_EXIT:
+					state = State.TO_HIVE
+				return
+			if _nuptial_flight_due():
+				_begin_nuptial_flight()
+		NUPTIAL_OUT:
+			if state == State.IN_HIVE_TO_EXIT or state == State.MOVE_TO_POINT:
+				return
+			if _is_inside_hive():
+				# Something turned her round before she got out: no flight today.
+				nuptial_phase = NUPTIAL_NONE
+				return
+			# MOVE_TO_POINT hands her to her role's idle state on arrival; at
+			# the site she waits instead.
+			state = State.IDLING
+			nuptial_timer = GameConfig.seconds_per_day * NUPTIAL_AWAY_DAY_FRACTION
+			nuptial_phase = NUPTIAL_AWAY
+		NUPTIAL_AWAY:
+			if state != State.IDLING:
+				# A player's order took her off the site: she goes where she was
+				# sent, and the flight ends without a mate.
+				nuptial_phase = NUPTIAL_NONE
+				return
+			nuptial_timer -= delta
+			if nuptial_timer <= 0.0:
+				state = State.TO_HIVE
+				nuptial_phase = NUPTIAL_BACK
+		NUPTIAL_BACK:
+			if _is_inside_hive():
+				nuptial_phase = NUPTIAL_NONE
+				_end_nuptial_flight()
+			elif state != State.TO_HIVE:
+				# A player's order took her off the way home: the flight ends
+				# here, without a mate, as it does when she is taken off the
+				# site. Back on NUPTIAL_NONE, eating is no longer held off and
+				# the outdoors fallback above brings her home once the order
+				# has run its course, so she is never left outside.
+				nuptial_phase = NUPTIAL_NONE
+
+## Cheapest test first: once she has flown today the rest is skipped.
+func _nuptial_flight_due() -> bool:
+	if not nuptial_flights or world == null or int(world.day) == nuptial_flight_day:
+		return false
+	if _is_busy() or player_driven or Session.winter_here:
+		return false
+	# Fed before she goes, so she is not out on an empty crop. Her energy
+	# itself, not should_go_and_eat: that is false in a hive with no food,
+	# which would send a hungry queen out.
+	return energy > GameConfig.energy_capacity * GameConfig.hunger_threshold
+
+func _begin_nuptial_flight() -> void:
+	nuptial_flight_day = int(world.day)
+	nuptial_phase = NUPTIAL_OUT
+	var site: Vector2 = hive.position + Vector2.from_angle(randf() * TAU) * NUPTIAL_SITE_DISTANCE
+	site = BeeMovement.resolve_flight_start(self, site).point
+	command_move_through_entrance(site, false)
+
+func _end_nuptial_flight() -> void:
+	nuptial_flights_flown += 1
+	var chance: float = 0.0
+	if world.season != null and is_instance_valid(world.season):
+		chance = world.season.nuptial_mating_chance()
+	if randf() < chance:
+		is_mated = true
+		nuptial_flights = false
+
 # --- setup, stats and appearance ----------------------------------
 func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGER, world_node: Node2D = null) -> void:
 	hive = hive_node
@@ -1079,7 +1198,7 @@ func _process(delta: float) -> void:
 		# ends in one -- a forager that finishes a walk-to-point drops
 		# straight into looking for a flower, and would otherwise never
 		# pick the change up.
-		if pending_role != -1 and not _is_busy():
+		if pending_role != -1 and not _is_busy() and nuptial_phase == NUPTIAL_NONE:
 			_apply_pending_role()
 
 		# Backup building/mining is the one case secondary_role's "drops it
@@ -1095,9 +1214,14 @@ func _process(delta: float) -> void:
 		# bee that has run low breaks off whatever it was doing, walks to
 		# a cell with food in it and feeds there. Checked before the
 		# state machine so it can interrupt anything.
-		if BeeSurvival.should_go_and_eat(self):
+		if nuptial_phase == NUPTIAL_NONE and BeeSurvival.should_go_and_eat(self):
 			BeeSurvival.begin_feeding_self(self)
 		Perf.end("bee_think")
+
+	# COL-11: an unmated queen's nuptial flights. One test for every other
+	# bee, and only an unmated queen -- one per colony at most -- goes in.
+	if is_queen and not is_mated:
+		_nuptial_flight_step(delta)
 
 	# Cleared before the state machine runs so it reflects only this
 	# frame's movement -- bee_movement.gd's move_towards sets it back to
@@ -2290,8 +2414,14 @@ func role_name_text() -> String:
 			elif state == State.DANCING:
 				base += " -- dancing to recruit a struggling forager" if dance_role == "mentor" else " -- being danced at"
 	# COL-10: a queen who took over from a dead one has not mated.
+	# COL-11: and says whether she is laying drones or flying to mate.
 	if is_queen and not is_mated:
-		base += " -- Unmated: lays drones"
+		if nuptial_phase != NUPTIAL_NONE:
+			base += " -- Unmated: on a nuptial flight"
+		elif nuptial_flights:
+			base += " -- Unmated: flies out each day to mate"
+		else:
+			base += " -- Unmated: lays drones"
 	if secondary_role != -1 and secondary_role != role:
 		base += " -- when idle: %s" % Roles.label_for(secondary_role)
 	return base
