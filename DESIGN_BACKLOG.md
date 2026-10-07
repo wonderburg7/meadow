@@ -31,7 +31,7 @@ home per fact: read the plan.
 | Agent lifecycle and closeout | `plans/now/agent-lifecycle.md` |
 | Alpha-route evidence and pacing gates | `plans/now/alpha-route-evidence.md` |
 | Nectar fermentation and stocking | plans/now/nectar-fermentation.md |
-| Render cost by colony size (sprites) | plans/now/render-scale.md |
+| Render cost by colony size (sprites) | plans/archive/render-scale_2026-10-07.md |
 | When winter comes in a run | `plans/archive/winter-onset_2026-10-01.md` |
 
 ## Areas whose plan is complete
