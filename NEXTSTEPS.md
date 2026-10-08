@@ -78,7 +78,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **GD-2** (`plans/now/guidance-explanations.md`) -- implement the accepted persistent entry point and first explanations; waits for Dave's GD-1 decision.
 - **CR-1** (`plans/now/crisis-readiness.md`) -- define the first-crisis readiness and evidence contract; waits for COL-8 and CD-2.
 - **CR-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; waits for Dave's CR-1 decision.
-- **SI-2** (`plans/now/save-integrity.md`) -- a checkpoint restore puts back soil dug since the checkpoint; waits for SI-1, which moved to the Codex lane (Dave, 7 Oct 2026) and shares `scripts/saving.gd`.
 - **SI-3** (`plans/now/save-integrity.md`) -- save, checkpoint and index writes are all-or-nothing; waits for SI-2.
 - **NF-2** (`plans/now/nectar-fermentation.md`) -- nectar ferments past an age; waits for COL-4 (Codex lane), which edits `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, and for NF-1's evidence.
 - **T2-4b to T2-8** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-4a is in the Codex lane (Dave, 7 Oct 2026); T2-4b (bodies) for T2-4a (COL-6 landed 7 Oct 2026); T2-5 (rain) and T2-7 (tier-2 prices) for COL-4's year; T2-6 (Associative learning) for COL-4 (`game_config.gd`); T2-8 (Shiver Cluster) is to be specified; COL-6 and T2-2 have landed, and its skill goes in `scripts/skills.gd`, which the Codex lane's T2-4a holds.

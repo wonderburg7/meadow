@@ -1,7 +1,7 @@
 # Save integrity -- what a load must bring back, and a write that cannot half-finish
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SI-1 -- disease, crab-spider species and the rival colony survive a load | Dependency: none (shares `scripts/save_game.gd` and `scripts/saving.gd` with NF-2 in `plans/now/nectar-fermentation.md`, so never in the other lane at the same time) | Verified: 2026-10-07
+Status: active | Owner: Dave / Claude Code | Next: SI-2 -- a checkpoint restore puts back soil dug since the checkpoint | Dependency: none (shares `scripts/save_game.gd` and `scripts/saving.gd` with NF-2 in `plans/now/nectar-fermentation.md`, so never in the other lane at the same time) | Verified: 2026-10-08
 
 ## Objective
 
@@ -99,8 +99,8 @@ itself.
 three added save fields, a collapsed rival, revival during an in-place
 restore, older saves without the fields, and control groups cleared by a
 fresh load. `python -m unittest tests.test_si1_run_state` and
-`tools/verify.ps1 -Scope branch -Quiet` pass. The plan stays on SI-1 until
-the save-schema branch is reviewed and integrated.
+`tools/verify.ps1 -Scope branch -Quiet` and the full `tools/verify.ps1 -Quiet`
+pass. The new Godot test script's `.uid` is tracked.
 
 **Escalate** if `main.season` or `main.rival` is not yet built when
 `saving._restore` runs on a load, or if restoring `alive == false` needs
@@ -161,7 +161,7 @@ still passes.
 navigation or edge flags wrong after `_restore`'s own `build_navigation()`
 and `refresh_edge_flags()`.
 
-```queue-gated
+```queue
 **[Claude] SI-2 -- a checkpoint restore puts back soil dug since the checkpoint**
 - Plan: `plans/now/save-integrity.md` -- "SI-2 -- a checkpoint restore puts back soil dug since the checkpoint"
 - Files: `scripts/saving.gd`, `tests/si2_exact_rollback_test.gd`, `tests/test_si2_exact_rollback.py`
