@@ -23,7 +23,6 @@ the live world instead. Writes go straight to the target path with
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SI-1 | disease, crab-spider species and the rival colony survive a load | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/rival_hive.gd`, `scripts/main.gd`, `tests/si1_run_state_test.gd`, `tests/test_si1_run_state.py` | yes | medium |
 | SI-2 | a checkpoint restore puts back soil dug since the checkpoint | `scripts/saving.gd`, `tests/si2_exact_rollback_test.gd`, `tests/test_si2_exact_rollback.py` | after SI-1 (Codex lane, Dave 7 Oct 2026) | medium |
 | SI-3 | save, checkpoint and index writes are all-or-nothing | `scripts/save_slots.gd`, `scripts/save_game.gd`, `tests/si3_atomic_write_test.gd`, `tests/test_si3_atomic_write.py` | after SI-2 | medium |
 
@@ -35,85 +34,7 @@ itself. The GDScript test pattern to copy is
 `tests/test_bs14_saved_skill_policy.py` (boot `Main.tscn`, act, print
 `<ID> PASS`, exit 0 or 1; the runner skips where no Godot is installed).
 
-## SI-1 -- disease, crab-spider species and the rival colony survive a load
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (three additive save fields and one round-trip test).
-
-**True now.** `save_game.gd::save` writes none of: `season.gd::disease`
-(pathogen pressure 0-1; on by default, slows brood and shortens lives),
-`Session.crab_spider_preferred_species` (rolled once by `crab_spider.gd`), or
-the rival colony's `population`, `nectar`, `pollen`, `brood`,
-`forager_share` and `alive` (`rival_hive.gd`). A load therefore cures disease,
-re-picks the spiders' species (or keeps the previous run's, because the
-load path reloads the scene without `Session.reset_run_state()`), and
-rebuilds a collapsed rival at its starting size. The same skipped reset
-carries `Session.control_groups` (bee ids) from the previous run into the
-loaded one, where the ids name different bees.
-
-**True afterwards.**
-- `save_game.gd::save` writes `"disease": world.season.disease` inside the
-  `"session"` block when `world.season` is valid, and
-  `"crab_spider_species": Session.crab_spider_preferred_species` there too.
-- `rival_hive.gd` gains `save_data() -> Dictionary` (the six fields above)
-  and `restore(data: Dictionary) -> void`, the same owner-holds-its-own-save
-  shape as `colony_milestones.gd`. `restore` sets the five numbers with
-  `.get()` defaults equal to the values `_ready()` sets, and calls
-  `_collapse()` when the saved `alive` is false and the rival is still
-  alive. `save_game.gd::save` writes `"rival": world.rival.save_data()` only
-  when `world.rival` is valid.
-- `saving.gd::_restore` reads them back in its `session_state` block:
-  `main.season.disease = clampf(float(session_state.get("disease", 0.0)), 0.0, 1.0)`
-  when `main.season` is valid, and
-  `Session.crab_spider_preferred_species = str(session_state.get("crab_spider_species", ""))`;
-  and, after `_restore_flowers`, `main.rival.restore(data.get("rival", {}))`
-  when `main.rival` is valid and `data` has a `"rival"` dictionary.
-- `main.gd::_ready`'s `if Session.load_pending:` branch clears
-  `Session.control_groups` before `saving._restore(loaded)`. Not in
-  `_restore` itself: Challenge 2's rollback keeps the same bee ids, so its
-  groups stay right.
-- A save without these keys loads exactly as it does today (disease 0,
-  species `""` so it is rolled on the first hunt, rival as freshly built).
-
-**Must not change.** `FORMAT_VERSION` (6) and `save_migrations.gd`; the
-saved shape of every existing key; `Session.reset_run_state()`; any
-Challenge. The rival's drawn foragers are presentation and are not saved.
-
-**Check.** `tests/si1_run_state_test.gd` boots level 3 with
-`GameConfig.rival_hive_on = true` set before the boot (put it back after),
-sets `main.season.disease = 0.4`, `Session.crab_spider_preferred_species`
-to a species name, the rival's `population` to 7 and its `nectar` to 33,
-saves with `SaveGame.save(main, "user://si1_test_save.json")`, then changes
-all of them, sets `Session.control_groups[1] = [1]`, reads the file back with
-`SaveGame.read` and calls `main.saving._restore`, and asserts every value is
-the saved one. A second save with the rival collapsed (`_collapse()`) must
-restore `alive == false` and `population == 0`. A third read of a save with
-the three keys erased must leave disease 0, species `""` and the rival as
-`_ready()` built it. Delete the test save at the end. `tools/verify.ps1` finds the new module
-itself.
-`python -m unittest tests.test_si1_run_state` passes and prints
-`SI1 PASS`.
-
-**SI-1 branch check (8 Oct 2026).** The headless round trip covers all
-three added save fields, a collapsed rival, revival during an in-place
-restore, older saves without the fields, and control groups cleared by a
-fresh load. `python -m unittest tests.test_si1_run_state` and
-`tools/verify.ps1 -Scope branch -Quiet` and the full `tools/verify.ps1 -Quiet`
-pass. The new Godot test script's `.uid` is tracked.
-
-**Escalate** if `main.season` or `main.rival` is not yet built when
-`saving._restore` runs on a load, or if restoring `alive == false` needs
-anything beyond `_collapse()`.
-
-```queue
-**[Codex] SI-1 -- disease, crab-spider species and the rival colony survive a load**
-- Plan: `plans/now/save-integrity.md` -- "SI-1 -- disease, crab-spider species and the rival colony survive a load"
-- Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/rival_hive.gd`, `scripts/main.gd`, `tests/si1_run_state_test.gd`, `tests/test_si1_run_state.py`
-- Check: `python -m unittest tests.test_si1_run_state` passes with `SI1 PASS`; `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/save_game.gd :: crab_spider_species`
-- Next after: SI-2 -- a checkpoint restore puts back soil dug since the checkpoint
-```
+SI-1 shipped 2026-10-08; its specification is `plans/archive/SI-1_2026-10-08.md`.
 
 ## SI-2 -- a checkpoint restore puts back soil dug since the checkpoint
 
