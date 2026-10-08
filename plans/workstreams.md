@@ -46,5 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/COL-8` (`claude/COL-8`) | Claude | winter die-back and spring regrowth | Claude | in progress | none | `plans/now/colony-run.md` COL-8 -- winter die-back and spring regrowth |
 | `.worktrees/T2-4a` (`codex/T2-4a`) | Codex | Cleaning gates taking out the dead larvae | Codex | in progress | none | `plans/now/tier-two.md` T2-4a -- Cleaning gates taking out the dead larvae |
