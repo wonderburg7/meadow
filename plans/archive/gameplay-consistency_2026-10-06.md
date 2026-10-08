@@ -1,7 +1,7 @@
 # Gameplay consistency — a job change keeps the bee and her load, and honey stores energy without creating it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: complete | Owner: Dave / Claude Code | Next: None -- plan complete; GC-3 delivered 6 Oct 2026 (nectar_per_honey 4.0, so honey stores energy without creating it), GC-4 delivered 2 Oct 2026, C-89 and C-90 passed 2 Oct 2026; follow-ups: none -- COL-4 (Codex lane, `plans/now/colony-run.md`) next edits the same two script files | Dependency: none | Verified: 2026-10-06
+Status: complete | Owner: Dave / Claude Code | Next: None -- plan complete; GC-3 delivered 6 Oct 2026 (nectar_per_honey 4.0, so honey stores energy without creating it), GC-4 delivered 2 Oct 2026, C-89 and C-90 passed 2 Oct 2026; follow-ups: none -- COL-4 (Codex lane, `plans/archive/colony-run_2026-10-08.md`) next edits the same two script files | Dependency: none | Verified: 2026-10-06
 
 **Objective.** Three rules that the code breaks today hold again: an Idle bee
 does what the Idle tooltip says, a change of job never loses what the bee is

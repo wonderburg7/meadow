@@ -60,7 +60,7 @@ Path-scoped rules, on the most-edited paths (`git log --since=2026-09-18 --name-
 ## Noted, not pursued
 
 - `python tools/update_function_map.py --check`: map complete; it warns that `main_menu.gd` and `input_selection.gd` lack early section headers.
-- `plans/now/colony-run.md` is 323 lines (check_docs soft limit 260) -- plan lane.
+- `plans/archive/colony-run_2026-10-08.md` is 323 lines (check_docs soft limit 260) -- plan lane.
 - `.claudeignore` may not be read by Claude Code at all (inference); the settings deny list already covers `.godot/` and `_backups/`.
 - `.claude/settings.local.json` holds one-off allows, one naming an old scratchpad path; personal, not routed.
 - `CHATGPT.md` is 13 KB; the Codex start-up read skips its 100-line closeout section as `AGENTS.md` says.

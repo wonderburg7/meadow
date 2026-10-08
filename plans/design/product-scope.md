@@ -197,7 +197,7 @@ no gameplay change.
 
 **Done 3 Oct 2026:** the pass's decisions, its open questions (the year,
 level 0, the unread level keys) and its slices live in
-`plans/now/colony-run.md`; it ran before the feedback session's notes
+`plans/archive/colony-run_2026-10-08.md`; it ran before the feedback session's notes
 arrived (Dave, 3 Oct 2026). The brief below is kept as the question it
 answered.
 
@@ -349,7 +349,7 @@ balance decisions requiring the scenario harness; they are not guessed here.
   (25 days, 100%) for the rest of their lives; only larvae raised after
   loading follow the rule.
 - **Fermenting takes about two game-days**, not seven: the year is 30
-  playable days (`plans/now/colony-run.md` decision 6), and a colony should
+  playable days (`plans/archive/colony-run_2026-10-08.md` decision 6), and a colony should
   turn Bee Bread over several times before winter. A `GameConfig` value,
   confirmed by simulation. This supersedes "seven game-days" above.
 - **Fermenter is a Honey worker mode the player turns on** (`roles.gd`'s

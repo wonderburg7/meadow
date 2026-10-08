@@ -7,7 +7,7 @@ Scoped 3 Sep 2026 as the first of `plans/design/product-scope.md` §6.2's five
 undesigned "shared foundations" to get its own design pass (Dave's pick —
 the other four are goal model, event director, job catalogue/dispatcher and
 run policy, and this file does not define them). As of 5 Oct 2026 run
-policy is designed for the Colony Run (`plans/now/colony-run.md`), the goal
+policy is designed for the Colony Run (`plans/archive/colony-run_2026-10-08.md`), the goal
 model and job catalogue are built through the architecture review's chains
 (`plans/design/product-scope.md` §6.2), and the event director's
 selection logic is the one still without a design pass. Its one slice shipped as CD-1 on 4 Sep 2026; this file now stands as
