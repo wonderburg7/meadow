@@ -185,16 +185,45 @@ func _update_regrowth() -> void:
 
 ## What `bees` bees burn through `days` of winter, in energy units:
 ## bees x energy_burn_rate x winter_burn_factor x winter's seconds
-## (decision 11). The one copy of the formula: year_winter.gd's forecast
-## reads it, so the forecast and the charge can never disagree. `days`
-## defaults to a whole winter.
+## (decision 11), times winter_unclustered_multiplier while the colony does
+## not own Shiver Cluster (T2-8a). The one copy of the formula: the charge,
+## _winter_losses and year_winter.gd's forecast all read it, so none of them
+## can disagree. `days` defaults to a whole winter.
 func winter_bill(bees: int, days: float = -1.0) -> float:
 	if days < 0.0:
 		days = GameConfig.winter_length_days
-	return (
+	var bill: float = (
 		bees * GameConfig.energy_burn_rate * GameConfig.winter_burn_factor
 		* days * GameConfig.seconds_per_day
 	)
+	if not owns_shiver_cluster():
+		bill *= GameConfig.winter_unclustered_multiplier
+	return bill
+
+## T2-8a: the Hive Mind node that keeps a colony's winter bill at its base
+## figure (plans/design/progression.md, "Shiver Cluster"). T2-8b adds it to
+## skills.gd.
+const SHIVER_CLUSTER := "skill.hive_mind.shiver_cluster"
+
+## The skill that counts as Shiver Cluster. Only a test points it elsewhere,
+## at a skill that does exist, to see the unowned bill before T2-8b does.
+static var shiver_cluster_skill: String = SHIVER_CLUSTER
+
+## Whether winter's bill is the base figure. progression.gd answers (the
+## only file that asks the skill catalogue): a node it does not have yet
+## counts as owned, so until T2-8b nothing in play changes, and T2-8b's node
+## makes the multiplier live without touching this. No progression at all
+## (no run yet) also answers owned. Static so problem_messages.gd can ask it.
+static func owns_shiver_cluster() -> bool:
+	return Session.progression == null or Session.progression.is_owned_or_absent(shiver_cluster_skill)
+
+## T2-8a: the problem strip's urgent entry -- the countdown is open, it is in
+## its last winter_unclustered_warning_days days, and the colony does not own
+## Shiver Cluster. `day` is main.day.
+static func unclustered_warning_due(day: float) -> bool:
+	if not Session.winter_coming or Session.winter_here or owns_shiver_cluster():
+		return false
+	return Session.winter_starts_day - day <= GameConfig.winter_unclustered_warning_days
 
 ## What the comb holds against the bill, in the same energy units: nectar
 ## plus ripe honey at honey_energy_factor, sealed cells included. Read by the

@@ -139,6 +139,13 @@ func is_owned(skill_id: String) -> bool:
 	return _mastered.has(skill_id) or _temporary.has(skill_id)
 
 
+## T2-8a: owned, or not in the catalogue at all -- for a rule written ahead
+## of its node (season.gd's Shiver Cluster bill), which must change nothing
+## until the node exists.
+func is_owned_or_absent(skill_id: String) -> bool:
+	return not Skills.has(skill_id) or is_owned(skill_id)
+
+
 func is_mastered(skill_id: String) -> bool:
 	return _mastered.has(skill_id)
 
