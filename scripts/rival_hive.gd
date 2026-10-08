@@ -78,6 +78,34 @@ func _ready() -> void:
 	for i in range(SHOWN_FORAGERS):
 		foragers.append(_make_forager())
 
+func save_data() -> Dictionary:
+	return {
+		"population": population,
+		"nectar": nectar,
+		"pollen": pollen,
+		"brood": brood,
+		"forager_share": forager_share,
+		"alive": alive,
+	}
+
+func restore(data: Dictionary) -> void:
+	population = float(data.get("population", max(4.0, GameConfig.rival_starting_bees)))
+	nectar = float(data.get("nectar", 120.0))
+	pollen = float(data.get("pollen", 40.0))
+	brood = float(data.get("brood", 0.0))
+	forager_share = float(data.get("forager_share", 0.7))
+	if not bool(data.get("alive", true)):
+		if alive:
+			_collapse()
+	elif not alive:
+		alive = true
+		body.color = Color(0.42, 0.24, 0.30)
+		for i in range(SHOWN_FORAGERS):
+			foragers.append(_make_forager())
+		_update_label()
+	else:
+		_update_label()
+
 func _make_forager() -> Dictionary:
 	var dot := Polygon2D.new()
 	dot.polygon = Shapes.circle_points(3.5, 8)

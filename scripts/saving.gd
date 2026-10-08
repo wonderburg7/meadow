@@ -70,6 +70,9 @@ func _restore(data: Dictionary) -> void:
 	Session.winter_here = bool(session_state.get("winter_here", false))
 	Session.winter_ends_day = float(session_state.get("winter_ends_day", 0.0))
 	Session.gynes_released = int(session_state.get("gynes_released", 0))
+	Session.crab_spider_preferred_species = str(session_state.get("crab_spider_species", ""))
+	if is_instance_valid(main.season):
+		main.season.disease = clampf(float(session_state.get("disease", 0.0)), 0.0, 1.0)
 	main.hud.set_winter_button_visible(Session.winter_coming)
 	# After the winter fields and gynes_released: the season text reads them,
 	# and a scene-reload load still holds the previous run's values until here.
@@ -79,6 +82,8 @@ func _restore(data: Dictionary) -> void:
 	_restore_cells(data.get("cells", []))
 	_restore_hive_state(data.get("hive", {}))
 	main.flower_grid.rebuild(_restore_flowers(data.get("flowers", [])))
+	if is_instance_valid(main.rival) and data.get("rival") is Dictionary:
+		main.rival.restore(data["rival"])
 	var new_bees := _restore_bees(data.get("bees", []))
 	main.fog_of_war.restore(data.get("fog", []))
 	main.SaveGame.restore_skills(data, Session.progression)

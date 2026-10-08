@@ -502,7 +502,7 @@ behaviour.
 1435 static func deposit_everything_remotely(bee: Node2D) -> void
 ```
 
-## main.gd (1,342 lines)
+## main.gd (1,343 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
@@ -515,41 +515,41 @@ Per-frame entry point, everything not yet split out of main.
 348  # --- _ready and construction --------------------------------------
 358  static func run_definition(level_id: int, developer_edits_allowed: bool, overrides_path: String = DeveloperOverrides.PATH) -> Dictionary
 377  func _ready() -> void
-659  # --- public surface other scripts call directly -------------------
-666  func is_on_screen(node: Node2D) -> bool
-669  func hive_entrance_inside() -> Vector2
-672  func entrance_wait_point(side: int) -> Vector2
-675  func move_bee_into_hive(bee: Node2D) -> void
-678  func move_bee_out_of_hive(bee: Node2D) -> void
-681  func mark_death(bee: Node2D) -> void
-689  func _on_bee_died(bee: Node2D) -> void
-693  func finish_mining(block: Node2D) -> void
-696  func save_run() -> void
-699  func begin_winter_countdown() -> void
-702  # --- per-frame ----------------------------------------------------
-712  func _process(delta: float) -> void
-799  # --- the frame rate readout ----------------------------------------
-818  func _sample_fps() -> void
-841  func _reseed_meadow(delta: float) -> void
-861  func _hatch_ready_brood() -> void
-897  func _sample_day_stores() -> void
-914  func _advance_weather(delta: float) -> void
-945  func _apply_rain_overlay() -> void
-972  func _check_for_loss() -> void
-1000 func _promote_gyne_to_queen() -> bool
-1021 func _check_colony_energy(delta: float) -> void
-1052 func invalidate_population() -> void
-1063 func _role_counts(bees = null) -> Dictionary
-1080 func _update_population_readout(bees = null) -> void
-1094 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-1100 func _prune_selection() -> void
-1113 func _on_restart_after_loss() -> void
-1119 func _on_level_chosen(level: int) -> void
-1132 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-1150 func _apply_scenario_boot_arg() -> void
-1275 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
-1315 func _is_whole_number(value: Variant) -> bool
-1329 func _end_scenario_run(outcome: String) -> void
+660  # --- public surface other scripts call directly -------------------
+667  func is_on_screen(node: Node2D) -> bool
+670  func hive_entrance_inside() -> Vector2
+673  func entrance_wait_point(side: int) -> Vector2
+676  func move_bee_into_hive(bee: Node2D) -> void
+679  func move_bee_out_of_hive(bee: Node2D) -> void
+682  func mark_death(bee: Node2D) -> void
+690  func _on_bee_died(bee: Node2D) -> void
+694  func finish_mining(block: Node2D) -> void
+697  func save_run() -> void
+700  func begin_winter_countdown() -> void
+703  # --- per-frame ----------------------------------------------------
+713  func _process(delta: float) -> void
+800  # --- the frame rate readout ----------------------------------------
+819  func _sample_fps() -> void
+842  func _reseed_meadow(delta: float) -> void
+862  func _hatch_ready_brood() -> void
+898  func _sample_day_stores() -> void
+915  func _advance_weather(delta: float) -> void
+946  func _apply_rain_overlay() -> void
+973  func _check_for_loss() -> void
+1001 func _promote_gyne_to_queen() -> bool
+1022 func _check_colony_energy(delta: float) -> void
+1053 func invalidate_population() -> void
+1064 func _role_counts(bees = null) -> Dictionary
+1081 func _update_population_readout(bees = null) -> void
+1095 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+1101 func _prune_selection() -> void
+1114 func _on_restart_after_loss() -> void
+1120 func _on_level_chosen(level: int) -> void
+1133 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+1151 func _apply_scenario_boot_arg() -> void
+1276 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
+1316 func _is_whole_number(value: Variant) -> bool
+1330 func _end_scenario_run(outcome: String) -> void
 ```
 
 ## challenge_runner.gd (1,249 lines)
