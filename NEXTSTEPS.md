@@ -30,6 +30,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/game_config.gd :: spring_regrowth_days`
    - Next after: T2-8a -- Winter's bill multiplied without Shiver Cluster, and the warning
 
+2. **[Claude] T2-8a -- Winter's bill multiplied without Shiver Cluster, and the warning**
+   - Plan: `plans/now/tier-two.md` -- "T2-8a -- Winter's bill multiplied without Shiver Cluster, and the warning"
+   - Files: `scripts/season.gd`, `scripts/winter_panel.gd`, `scripts/problem_messages.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_8a_shiver_bill.py`
+   - Check: `python -m unittest tests.test_t2_8a_shiver_bill` passes (an unowned colony's `winter_bill` is the owned bill times `winter_unclustered_multiplier`; the unowned shortfall kills oldest workers first and the queen last; with the node absent the bill is unchanged; the forecast and an urgent problem entry appear while unowned and the countdown is in its last days); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `absent: scripts/game_config.gd :: winter_unclustered_multiplier`
+   - Next after: T2-8b -- Shiver Cluster, the skill
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude

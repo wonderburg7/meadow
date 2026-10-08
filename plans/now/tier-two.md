@@ -57,7 +57,7 @@ Verified 7 Oct 2026 against master:
 | T2-5 | Weather sensing's rain half, Rain recall, and rain on in the Colony Run | specified when T2-3 lands | no -- its PE-2 arc rerun reads COL-4's year | medium |
 | T2-6 | Associative learning: per-bee, per-species familiarity, saved | specified when T2-5 lands | no -- after COL-4 (`game_config.gd`, `settings_catalogue.gd`) | high |
 | T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | specified when T2-1 to T2-3 and COL-4 have landed | no -- needs COL-4's year and the gates | medium |
-| T2-8a | Winter's bill multiplied without Shiver Cluster, and the warning | this plan | yes -- `season.gd`, `year_winter.gd`, `winter_panel.gd`, `problem_messages.gd`, `game_config.gd`, `settings_catalogue.gd` are free once COL-8 merges (Dave, 8 Oct 2026) | high |
+| T2-8a | Winter's bill multiplied without Shiver Cluster, and the warning | this plan | yes -- `season.gd`, `winter_panel.gd`, `problem_messages.gd`, `game_config.gd`, `settings_catalogue.gd` are free once COL-8 merges (Dave, 8 Oct 2026) | high |
 | T2-8b | Shiver Cluster, the skill: the node, and owned at run start outside the Colony Run | specified when T2-8a lands | no -- after T2-4a (Codex lane, `skills.gd`) | medium |
 
 **Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
@@ -133,7 +133,7 @@ warning.
   node does not exist yet (until T2-8b), it answers owned, so this slice
   changes nothing in play; T2-8b's node makes the multiplier live without
   touching this code again.
-- While not owned, `winter_panel.gd` says so and shows the multiplied figure
+- While not owned, `winter_panel.gd` (asking `season.gd` itself, so `year_winter.gd`, which the Codex lane holds, is untouched) says so and shows the multiplied figure
   from the moment the countdown opens, and `problem_messages.gd` raises an
   urgent entry (severity 2) in the countdown's last days. Both reuse what
   exists; no new window. How many "last days" is a `GameConfig` value
@@ -152,7 +152,7 @@ files the player-facing check.
 ```queue
 **[Claude] T2-8a -- Winter's bill multiplied without Shiver Cluster, and the warning**
 - Plan: `plans/now/tier-two.md` -- "T2-8a -- Winter's bill multiplied without Shiver Cluster, and the warning"
-- Files: `scripts/season.gd`, `scripts/year_winter.gd`, `scripts/winter_panel.gd`, `scripts/problem_messages.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_8a_shiver_bill.py`
+- Files: `scripts/season.gd`, `scripts/winter_panel.gd`, `scripts/problem_messages.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_8a_shiver_bill.py`
 - Check: `python -m unittest tests.test_t2_8a_shiver_bill` passes (an unowned colony's `winter_bill` is the owned bill times `winter_unclustered_multiplier`; the unowned shortfall kills oldest workers first and the queen last; with the node absent the bill is unchanged; the forecast and an urgent problem entry appear while unowned and the countdown is in its last days); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
 - Proof: `absent: scripts/game_config.gd :: winter_unclustered_multiplier`
 - Next after: T2-8b -- Shiver Cluster, the skill
