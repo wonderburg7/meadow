@@ -33,30 +33,31 @@ def _out_of_season_share(counts: dict) -> float:
 
 
 class FoundingFlowerMixTest(unittest.TestCase):
-    def test_founders_match_the_same_phase_next_year_mix(self):
+    def test_post_founding_meadow_matches_the_same_phase_next_year_mix(self):
         godot_path = _resolve_godot_path()
         if not godot_path:
             self.skipTest("no Godot executable found -- this test needs a real headless boot")
 
-        session_file = run_once(FIXTURE, godot_path, timeout=120, fixed_fps=30)
-        self.assertIsNotNone(session_file, "scenario run produced no session log")
-        entries = load_entries(session_file)
-        snapshots = [
-            entry["environment"]
-            for entry in entries
-            if entry.get("type") == "snapshot" and "flowers_in_season" in entry.get("environment", {})
-        ]
-        self.assertTrue(snapshots, "fixture produced no flower-season snapshot")
-        summary = next(entry for entry in reversed(entries) if entry.get("type") == "summary")
+        for seed in (4242, 17, 89, 2026):
+            with self.subTest(seed=seed):
+                session_file = run_once(FIXTURE, godot_path, timeout=120, fixed_fps=10, seed_override=seed)
+                self.assertIsNotNone(session_file, "scenario run produced no session log")
+                entries = load_entries(session_file)
+                phase_snapshots = {}
+                for entry in entries:
+                    if entry.get("type") != "snapshot" or entry.get("day") not in (10, 15):
+                        continue
+                    environment = entry.get("environment", {})
+                    if "flowers_in_season" in environment:
+                        phase_snapshots.setdefault(entry["day"], environment)
+                self.assertEqual(set(phase_snapshots), {10, 15})
+                for environment in phase_snapshots.values():
+                    flower_total = environment["flowers_in_season"] + environment["flowers_out_of_season"]
+                    self.assertGreaterEqual(flower_total, 700, "meadow drained before the phase comparison")
 
-        initial_share = _out_of_season_share(snapshots[0])
-        final_share = _out_of_season_share(summary)
-        # 0.20, not SF-1's 0.05, until COL-12 (plans/now/colony-run.md):
-        # founding plants more units than flower_count, so reseeding pauses
-        # on day 1, and headless reseeding adds at most one flower a frame.
-        # Since COL-4 starts the year at fraction 0, that day-1 gap starves
-        # the early species and the share drifts by about 0.11 on this seed.
-        self.assertLessEqual(abs(initial_share - final_share), 0.20)
+                initial_share = _out_of_season_share(phase_snapshots[10])
+                final_share = _out_of_season_share(phase_snapshots[15])
+                self.assertLessEqual(abs(initial_share - final_share), 0.05)
 
 
 if __name__ == "__main__":

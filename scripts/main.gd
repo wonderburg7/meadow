@@ -842,9 +842,14 @@ func _reseed_meadow(delta: float) -> void:
 	reseed_timer -= delta
 	if reseed_timer > 0.0:
 		return
-	reseed_timer = GameConfig.flower_regrow_seconds
-	if get_tree().get_nodes_in_group("flowers").size() < int(GameConfig.flower_count):
-		world_building._seed_flower()
+	var interval: float = maxf(GameConfig.flower_regrow_seconds, 0.001)
+	var owed: int = floori(-reseed_timer / interval) + 1
+	reseed_timer += float(owed) * interval
+	var room: int = int(GameConfig.flower_count) - get_tree().get_nodes_in_group("flowers").size()
+	var to_seed: int = mini(owed, room)
+	while to_seed > 0:
+		to_seed -= world_building._seed_flower(false, to_seed)
+	if room > 0 and owed > 0:
 		world_building._rebuild_flower_grid()
 	if dragging:
 		selection_layer.queue_redraw()
