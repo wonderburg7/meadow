@@ -67,6 +67,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
+- **COL-7** (`plans/now/colony-run.md`) -- already landed; it waits for nothing and is listed here only to resolve COL-12's recorded `Next after` during closeout.
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation, Bee Bread and the gyne route.
 - **WC-1** (`plans/now/workflow-checks.md`) -- a deferral whose gate has cleared is flagged; waits for room in the Codex lane.
 - **WC-2** (`plans/now/workflow-checks.md`) -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane; waits for WC-1 and room in the Codex lane.
