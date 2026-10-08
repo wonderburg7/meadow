@@ -311,12 +311,15 @@ recorded three of three colonies surviving winter. Both had a median first
 worker on day 22.18 and winter survival on day 40.01; first automation,
 crisis response and gyne/victory were unavailable in both. Survivors for
 seeds 20260923/20260924/20260925 were 9/3/8 bees before and 9/8/3 after.
+The COL-11 headless fixture now reserves one brood cell before flights;
+otherwise the fuller meadow lets foragers fill all three cells, leaving a
+mated queen with enough pollen but nowhere to lay. Its isolated test passes.
 
 ```queue
 **[Codex] COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns**
 - Plan: `plans/now/colony-run.md` -- "COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns"
-- Files: `scripts/main.gd`, `scripts/world_building.gd`, `tests/test_sf1_founding_flower_mix.py`, `test_scenarios/sf1_founding_flower_mix_test.json`
-- Check: `python -m unittest tests.test_sf1_founding_flower_mix` passes at 0.05 on the pinned seed and three others; `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
+- Files: `scripts/main.gd`, `scripts/world_building.gd`, `tests/test_sf1_founding_flower_mix.py`, `test_scenarios/sf1_founding_flower_mix_test.json`, `tests/col11_nuptial_flight_test.gd`
+- Check: `python -m unittest tests.test_sf1_founding_flower_mix` passes at 0.05 on the pinned seed and three others; `python -m unittest tests.test_col11_nuptial_flight` passes; `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
 - Proof: `present: tests/test_sf1_founding_flower_mix.py :: assertLessEqual(abs(initial_share - final_share), 0.20)`
 - Next after: COL-8 -- winter die-back and spring regrowth
 ```
