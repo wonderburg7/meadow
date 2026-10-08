@@ -502,7 +502,7 @@ behaviour.
 1435 static func deposit_everything_remotely(bee: Node2D) -> void
 ```
 
-## main.gd (1,337 lines)
+## main.gd (1,342 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
@@ -531,25 +531,25 @@ Per-frame entry point, everything not yet split out of main.
 799  # --- the frame rate readout ----------------------------------------
 818  func _sample_fps() -> void
 841  func _reseed_meadow(delta: float) -> void
-856  func _hatch_ready_brood() -> void
-892  func _sample_day_stores() -> void
-909  func _advance_weather(delta: float) -> void
-940  func _apply_rain_overlay() -> void
-967  func _check_for_loss() -> void
-995  func _promote_gyne_to_queen() -> bool
-1016 func _check_colony_energy(delta: float) -> void
-1047 func invalidate_population() -> void
-1058 func _role_counts(bees = null) -> Dictionary
-1075 func _update_population_readout(bees = null) -> void
-1089 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-1095 func _prune_selection() -> void
-1108 func _on_restart_after_loss() -> void
-1114 func _on_level_chosen(level: int) -> void
-1127 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-1145 func _apply_scenario_boot_arg() -> void
-1270 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
-1310 func _is_whole_number(value: Variant) -> bool
-1324 func _end_scenario_run(outcome: String) -> void
+861  func _hatch_ready_brood() -> void
+897  func _sample_day_stores() -> void
+914  func _advance_weather(delta: float) -> void
+945  func _apply_rain_overlay() -> void
+972  func _check_for_loss() -> void
+1000 func _promote_gyne_to_queen() -> bool
+1021 func _check_colony_energy(delta: float) -> void
+1052 func invalidate_population() -> void
+1063 func _role_counts(bees = null) -> Dictionary
+1080 func _update_population_readout(bees = null) -> void
+1094 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+1100 func _prune_selection() -> void
+1113 func _on_restart_after_loss() -> void
+1119 func _on_level_chosen(level: int) -> void
+1132 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+1150 func _apply_scenario_boot_arg() -> void
+1275 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
+1315 func _is_whole_number(value: Variant) -> bool
+1329 func _end_scenario_run(outcome: String) -> void
 ```
 
 ## challenge_runner.gd (1,249 lines)

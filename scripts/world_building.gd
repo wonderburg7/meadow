@@ -56,8 +56,9 @@ func _build_meadow() -> void:
 	var level: Dictionary = main.Levels.get_level(Session.starting_level)
 	Session.year_has_winter = bool(level.get("winter", true))
 
-	for i in range(int(GameConfig.flower_count)):
-		_seed_flower(true)
+	var founding_units := 0
+	while founding_units < int(GameConfig.flower_count):
+		founding_units += _seed_flower(true, int(GameConfig.flower_count) - founding_units)
 
 	_rebuild_flower_grid()
 
@@ -203,7 +204,7 @@ func _random_point_in_zone(habitat: String) -> Vector2:
 ## Founders are sampled as though they were born earlier in this same year,
 ## rather than all being born in today's season. Replacements retain the
 ## current-season selection used before SF-1.
-func _seed_flower(founding: bool = false) -> void:
+func _seed_flower(founding: bool = false, max_units: int = 4) -> int:
 	var excluded_species: Array = ["Poppy"] if Session.starting_level == 1 else []
 	var starting_age := -1.0
 	var birth_fraction := -1.0
@@ -255,6 +256,7 @@ func _seed_flower(founding: bool = false) -> void:
 	if species.get("bushy", false):
 		unit_count = randi_range(
 			species.get("bush_min_units", 2), species.get("bush_max_units", 4))
+	unit_count = mini(unit_count, max_units)
 
 	for unit in range(unit_count):
 		var pos: Vector2 = anchor
@@ -278,6 +280,7 @@ func _seed_flower(founding: bool = false) -> void:
 		main.meadow_root.add_child(flower)
 		flower.setup(species_index, starting_age)
 		main.CrabSpider.maybe_spawn(flower)
+	return unit_count
 
 func _is_clear_ground(point: Vector2) -> bool:
 	for obstacle in main.obstacles:

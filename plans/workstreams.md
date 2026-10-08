@@ -46,5 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.claude/worktrees/game-dev-haiku-optimization-483040` (`claude/game-dev-haiku-optimization-483040`) | Claude (docs only) | Haiku 5.5 model routing: pinned agent model ids, low slice worker on Haiku, slice reviews in a subagent; edits `.claude/agents/`, the run-queue skill, `Get-SliceAdvice` and `LEVEL_MODELS` only | Claude | in progress | none | ad hoc |
-| `.worktrees/COL-12` (`codex/COL-12`) | Codex | the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns | Codex | in progress | none | `plans/now/colony-run.md` COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns |
+| `.worktrees/SI-1` (`codex/SI-1`) | Codex | disease, crab-spider species and the rival colony survive a load | Codex | in progress | none | `plans/now/save-integrity.md` SI-1 -- disease, crab-spider species and the rival colony survive a load |

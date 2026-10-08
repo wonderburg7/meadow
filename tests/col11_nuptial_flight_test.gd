@@ -97,6 +97,8 @@ func _start_flights() -> void:
 	if _queen == null or not is_instance_valid(_queen):
 		_fail("level %d has no queen after boot" % LEVEL)
 		return
+	# Keep one cell for eggs while the level's foragers fill the other comb.
+	_main.hive.cells[0].set_designation("brood")
 	_config.seasons_on = true
 	# Above 1 so the clamped chance is certain wherever the curve is above
 	# 0 -- the test is about where she can mate, not about luck.
