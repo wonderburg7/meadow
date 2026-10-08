@@ -126,7 +126,7 @@ explicit request from Dave.
 - Consequence: latent; the first spaced id that leads a lane fails `start`.
 - Candidate direction: Hypothesis — `check_docs.py` fails a queue or
   `queue` block id that contains whitespace.
-- Disposition: untriaged
+- Disposition: promoted 7 Oct 2026 as WC-4 (`plans/now/workflow-checks.md`)
 
 ### 2026-10-07 — the panel-rectangle rule has a home again, and three plan files still restate or bypass it
 
@@ -158,7 +158,7 @@ explicit request from Dave.
 - Consequence: the next model rename makes the drift report wrong silently.
 - Candidate direction: Hypothesis — read the `switch` out of `slice.ps1` with
   a regex, or add one test that compares the two.
-- Disposition: untriaged
+- Disposition: promoted 7 Oct 2026 as WC-5 (`plans/now/workflow-checks.md`)
 
 ### 2026-10-07 — `.codex/hooks.json` calls `$CLAUDE_PROJECT_DIR`, which Codex may not set
 
@@ -173,7 +173,8 @@ explicit request from Dave.
 - Consequence: `session_cost.py --events` would undercount Codex sessions.
 - Candidate direction: Hypothesis — check the event log for Codex
   `session_start` events; if absent, use a path Codex resolves.
-- Disposition: untriaged
+- Disposition: promoted 7 Oct 2026 as WC-3 (`plans/now/workflow-checks.md`);
+  checked first: 168 events on `codex/*` branches, none from a hook
 
 ### 2026-10-07 — `finish` still verifies inside the lifecycle lock, so one lane's closeout stalls the other's
 
@@ -538,3 +539,100 @@ explicit request from Dave.
   (`advice.dry_after`, either lane) and L-24 makes the warning a
   `check_docs.py` lookahead and a rule to specify before claiming, both in
   `plans/now/agent-lifecycle.md`
+
+### 2026-10-07 — a branch behind master reads a dry lane at `finish`
+
+- Source: `/run-queue 4` coordinator (Claude), watching AR-3's closeout
+- Area: tooling / `tools/slice.ps1 finish` refill gate
+- Signal: AR-3's `finish` stopped twice with "no [Codex] item after AR-3",
+  but master's Codex lane already held COL-12, SI-1 and T2-4a.
+- Evidence: `codex/AR-3` was 40 commits behind `origin/master`, and its own
+  `NEXTSTEPS.md` listed only AR-3. On master,
+  `python tools/refill_lane.py --delete AR-3 --top-up --lane Codex --json`
+  gives `lane_after: 3, dry_after: false`. The same cause as memory note
+  "stale branch blocks finish" (27 Sep onward).
+- Consequence: a correct refill on master looks as if it never happened, and
+  a session goes looking for a missing commit instead of merging master in.
+- Candidate direction: Hypothesis -- judge the gate against master's queue,
+  or have the stop say "the branch is N commits behind master: merge it in"
+  instead of reporting a dry lane.
+- Disposition: untriaged
+
+### 2026-10-07 — "primary checkout is not on master" names no holder
+
+- Source: COL-6 closeout under `/run-queue 4` (Claude)
+- Area: tooling / `finish`'s primary checkout checks
+- Signal: the stop said only "primary checkout is on 'codex/refill-ar3', not
+  master". The checkout held 69 uncommitted files from Codex's refill plus a
+  `godot_ai` plugin update, and the coordinator had to dig to find whose work
+  it was before Dave could decide.
+- Evidence: kept as commits 543678b and 1d89b05 on `codex/refill-ar3`.
+- Consequence: a lane stalls until someone works out by hand which session
+  owns the checkout, and it is easy to move someone else's work by mistake.
+- Candidate direction: Hypothesis -- the stop names the branch's lane and
+  ledger row and the count of uncommitted files, and says whether a live
+  session is on that branch.
+- Disposition: untriaged
+
+### 2026-10-07 — a ledger row committed off master fails every lane's verify
+
+- Source: COL-6 closeout under `/run-queue 4` (Claude)
+- Area: process / `plans/workstreams.md` registration
+- Signal: AR-3's worktree row was committed only on `codex/refill-ar3`
+  (68be93c), so `verify.ps1 -Scope primary` on master failed for the Claude
+  lane's COL-6 with "worktree ... AR-3 is registered with Git but has no
+  ledger row".
+- Evidence: fixed by 1863881 (the row landed on master).
+- Consequence: one lane's half-landed registration blocks the other lane's
+  closeout.
+- Candidate direction: Hypothesis -- registering a worktree lands its row on
+  master, or the check names the branch that holds the row.
+- Disposition: untriaged
+
+### 2026-10-07 — a lane move can split a file-sharing sequence
+
+- Source: `/run-queue 4` coordinator's lane move (Claude, Dave's
+  authorisation)
+- Area: tooling / `tools/refill_lane.py`, `tools/check_docs.py`
+- Signal: moving SI-1 to the Codex lane left SI-2 (after SI-1; both edit
+  `scripts/saving.gd`) queued in the Claude lane ahead of it, and SI-3
+  (after SI-2) on an ungated `queue` fence. Neither tool objected. Codex's
+  own refill had the same gap.
+- Evidence: fixed by hand in 59d60d5 (SI-2 and SI-3 fenced `queue-gated`).
+- Consequence: a lane can claim a slice whose predecessor sits unlanded in
+  the other lane.
+- Candidate direction: Hypothesis -- refuse or warn when a queued item's
+  slice-table row says "after X" and X is unlanded, wherever X is queued.
+- Disposition: untriaged
+
+### 2026-10-07 — slice file lists miss the UI file a readout needs
+
+- Source: COL-11 under `/run-queue 4` (Claude)
+- Area: planning / `plans/README.md` "Writing or editing a plan"
+- Signal: COL-11's section promised that "the queen's readout can switch
+  between the two modes", but its Files line had no `scripts/hud.gd`, so the
+  worker stopped and Dave had to widen the slice.
+- Evidence: commit 2161b5f ("hud.gd in its files").
+- Consequence: an extra round trip to Dave for every slice whose spec names
+  a panel without its file.
+- Candidate direction: Hypothesis -- a writing rule (a section that changes
+  what a readout, panel or window shows lists the file that builds it), or a
+  `check_docs.py` heuristic on "readout"/"panel" with no UI file listed.
+- Disposition: untriaged
+
+### 2026-10-07 — workers settle open gameplay points themselves
+
+- Source: COL-6 under `/run-queue 4` (Claude)
+- Area: instructions / `plans/reference/slice-worker.md`
+- Signal: the section left open whether drones and gynes are billed away in
+  winter. The worker chose ("drones with the workers, gynes never") and
+  recorded it as an "As built" note with `status: ready`. The code review
+  caught it, and Dave chose a different order.
+- Evidence: commit e170c3e (the order Dave chose).
+- Consequence: a gameplay outcome is decided without Dave unless the review
+  happens to read the plan note.
+- Candidate direction: Hypothesis -- the worker brief says that a point the
+  section leaves open that decides who lives or dies, a win or a save is a
+  `blocked` question, never an "As built" note (CLAUDE.md rule 5 applied to
+  workers).
+- Disposition: untriaged
