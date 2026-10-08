@@ -1,6 +1,7 @@
 """L-6: both lanes claiming, finishing and resuming at once (plans/now/agent-lifecycle.md)."""
 
 from pathlib import Path
+import json
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -211,11 +212,16 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         deadline = time.time() + 10
         while time.time() < deadline:
             try:
-                if lock_path.read_bytes():
+                note = json.loads(lock_path.read_text(encoding="utf-8"))
+                if note.get("pid") == holder.pid:
                     break
-            except OSError:
+            except (OSError, ValueError):
                 pass
             time.sleep(0.2)
+        else:
+            holder.terminate()
+            holder.wait(timeout=5)
+            self.fail("the lifecycle lock holder did not write a complete note")
         return holder
 
     def test_a_second_finish_waits_for_the_lock_and_completes(self):
