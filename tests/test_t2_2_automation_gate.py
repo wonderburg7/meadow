@@ -26,14 +26,16 @@ def _stage_block(text: str, stage_id: str) -> str:
 
 
 class AutomationGateTest(unittest.TestCase):
-    def test_stage_2_8_frees_backup_roles_and_automation(self):
+    def test_stage_2_8_frees_automation_after_backup_roles(self):
         text = (ROOT / "scripts" / "challenge_stages.gd").read_text(encoding="utf-8")
         self.assertIn('const BACKUP_ROLES_SKILL := "skill.hive_mind.backup_roles"', text)
         self.assertIn('const AUTOMATION_SKILL := "skill.hive_mind.automation"', text)
         free, keys = _stage_block(text, "2.8").split('"unlocked_keys"')
-        for name in ("BACKUP_ROLES_SKILL", "AUTOMATION_SKILL"):
-            self.assertIn(name, free)
-            self.assertIn(name, keys)
+        self.assertIn("AUTOMATION_SKILL", free)
+        self.assertIn("AUTOMATION_SKILL", keys)
+        self.assertIn("BACKUP_ROLES_SKILL", keys)
+        self.assertNotIn("BACKUP_ROLES_SKILL", free)
+        self.assertIn("BACKUP_ROLES_SKILL", _stage_block(text, "2.7"))
         self.assertNotIn("AUTOMATION_SKILL", _stage_block(text, "2.7"))
 
     def test_stage_2_7_hint_points_at_build_here(self):

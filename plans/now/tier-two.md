@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-4a -- Cleaning gates taking out the dead larvae | Dependency: none for T2-1 to T2-3; COL-4 for T2-4b, T2-5, T2-6 and T2-7; COL-6 for Shiver Cluster (T2-8) and T2-4b's winter bodies | Verified: 2026-10-07
+Status: active | Owner: Dave / Claude Code | Next: T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run | Dependency: COL-4 and COL-6 landed; T2-4b follows T2-4a; T2-6 follows T2-5 | Verified: 2026-10-08
 
 ## Objective
 
@@ -54,7 +54,7 @@ Verified 7 Oct 2026 against master:
 | --- | --- | --- | --- | --- |
 | T2-4a | Cleaning gates taking out the dead larvae | `scripts/actions.gd`, `scripts/challenge_stages.gd`, `scripts/skills.gd`, `tests/test_t2_4a_cleaning_gate.py` | yes (T2-2 landed 7 Oct 2026); Codex lane (Dave, 7 Oct 2026) | medium |
 | T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | specified after T2-4a | no -- after T2-4a (COL-6 landed 7 Oct 2026) | high |
-| T2-5 | Weather sensing's rain half, Rain recall, and rain on in the Colony Run | specified when T2-3 lands | no -- its PE-2 arc rerun reads COL-4's year | medium |
+| T2-5 | Weather sensing's rain half, Rain recall, and rain on in the Colony Run | `scripts/skills.gd`, `scripts/bee_status.gd`, `scripts/bee_foraging.gd`, `scripts/bee.gd`, `scripts/main.gd`, `scripts/levels.gd`, `tests/test_t2_5_rain_skills.py`, `tests/t2_5_rain_skills_test.gd` | yes -- COL-4 and T2-3 landed | medium |
 | T2-6 | Associative learning: per-bee, per-species familiarity, saved | specified when T2-5 lands | no -- after COL-4 (`game_config.gd`, `settings_catalogue.gd`) | high |
 | T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | specified when T2-1 to T2-3 and COL-4 have landed | no -- needs COL-4's year and the gates | medium |
 | T2-8 | Shiver Cluster: the skill, the multiplied bill without it, the warning | to be specified now COL-6 has landed | after T2-4a (Codex lane, `skills.gd`); COL-6 and T2-2 have landed | high |
@@ -81,6 +81,8 @@ T2-2 shipped 2026-10-07; its specification is `plans/archive/T2-2_2026-10-07.md`
 
 T2-3 shipped 2026-10-07; its specification is `plans/archive/T2-3_2026-10-07.md`.
 
+COL-4 shipped 2026-10-07; its specification is `plans/archive/COL-4_2026-10-07.md`.
+
 ## T2-4a -- Cleaning gates taking out the dead larvae
 
 <!-- LAYER: immediate-task -->
@@ -105,6 +107,40 @@ and the stage move.
 - Check: `python -m unittest tests.test_t2_4a_cleaning_gate` passes; `tools/verify.ps1` is green
 - Proof: `absent: scripts/actions.gd :: "skill": "skill.hive_mind.cleaning"`
 - Next after: T2-5 -- Weather sensing's rain half
+```
+
+## T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run
+
+<!-- LAYER: immediate-task -->
+
+Level: medium (bounded rain behaviour and run-specific weather policy).
+
+**True now.** `bee_status.gd::grounded` stops new trips only when current rain
+intensity passes `rain_forage_limit`. Bees already outside continue their work.
+`main.gd::_advance_weather` requires `GameConfig.weather_on`, so the Colony
+Run's level row cannot turn rain on when the global setting is off. Weather
+sensing and Rain recall are authored in `skills.gd` but have no effect.
+
+**True afterwards.** With Weather sensing owned, the departure check reads
+the approaching `main.gd::rain_target` at the same forage limit; without it,
+the check still reads current intensity. With Rain recall owned, bees already
+outside head home when current intensity passes that limit. Neither skill
+changes nectar dilution or flight cost. The Colony Run row explicitly enables
+rain even if `GameConfig.weather_on` is false. Challenge rows keep rain off;
+Scenario rows without a weather override still follow the setting. The two
+skills become `existing` in the tree. Run PE-2's three-seed arc before and
+after and record any pacing change here.
+
+**Must not change.** Current rain safety without either skill, save fields for
+weather, and the existing weather behaviour of Challenges and Scenarios.
+
+```queue
+**[Codex] T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run**
+- Plan: `plans/now/tier-two.md` -- "T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run"
+- Files: `scripts/skills.gd`, `scripts/bee_status.gd`, `scripts/bee_foraging.gd`, `scripts/bee.gd`, `scripts/main.gd`, `scripts/levels.gd`, `tests/test_t2_5_rain_skills.py`, `tests/t2_5_rain_skills_test.gd`
+- Check: `python -m unittest tests.test_t2_5_rain_skills` passes (owned and unowned departures, outside recall, level weather policy); `python tools/pacing_gates.py` before and after is recorded here; `tools/verify.ps1` is green
+- Proof: `absent: scripts/bee_status.gd :: WEATHER_SENSING`
+- Next after: T2-6 -- Associative learning
 ```
 
 ## Later slices -- outline only

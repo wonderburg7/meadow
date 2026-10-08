@@ -503,7 +503,7 @@ const SKILLS := [
 	},
 	{
 		"id": CLEANING, "name": "Cleaning",
-		"description": "Debris and corpses become work the colony takes on deliberately, rather than something that simply sits there.",
+		"description": "Comb workers clear dead larvae from blocked cells as well as moving stores out of cells that need emptying.",
 		# (-5, 0) sat on the sector's own r=0 spine, exactly on Backup
 		# roles' connect line to both Adjustment panel and Extended
 		# backup roles (the grid check caught it); this slot is off that
@@ -512,7 +512,7 @@ const SKILLS := [
 		"max_rank": 1, "cost": {HONEY: 20, NECTAR: 160, POLLEN: 60},
 		"requires_previous_tier": true, "all_of": [], "any_of": [],
 		"feature": "", "introduced_by": "", "effects": [], "icon": "",
-		"status": "existing_foundation", "baseline": false, "open": false,
+		"status": "existing", "baseline": false, "open": false,
 	},
 	{
 		# Depends on the behaviours it sets existing: combat (Defence T2),

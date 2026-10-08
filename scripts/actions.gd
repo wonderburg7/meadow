@@ -67,7 +67,7 @@ const ACTIONS := [
 	{
 		"id": "comb_clean_cell", "label": "Clean cell", "roles": [Roles.COMB_WORKER],
 		"band": 0, "modes": ["maintain", "restock", "both"], "find": "find_cell_needing_cleaning",
-		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
+		"feature": "", "skill": "skill.hive_mind.cleaning", "gate_key": "", "config_flag": "", "season": "",
 	},
 	{
 		"id": "comb_evict_cell", "label": "Evict cell stores", "roles": [Roles.COMB_WORKER],
