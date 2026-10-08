@@ -47,4 +47,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/T2-4a` (`codex/T2-4a`) | Codex | Cleaning gates taking out the dead larvae | Codex | in progress | none | `plans/now/tier-two.md` T2-4a -- Cleaning gates taking out the dead larvae |
-| `.worktrees/T2-8a` (`claude/T2-8a`) | Claude | Winter's bill multiplied without Shiver Cluster, and the warning | Claude | in progress | none | `plans/now/tier-two.md` T2-8a -- Winter's bill multiplied without Shiver Cluster, and the warning |
