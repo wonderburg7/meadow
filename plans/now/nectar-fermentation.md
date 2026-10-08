@@ -1,7 +1,7 @@
 # Nectar fermentation -- unprocessed nectar ferments, and tipsy bees pay for it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: NF-1 is built (nectar age is measured); NF-2 is specified and gated on COL-4 (Codex lane, `plans/now/colony-run.md`), which holds `scripts/game_config.gd` and `scripts/settings_catalogue.gd` | Dependency: COL-4 for NF-2 onwards | Verified: 2026-10-06
+Status: active | Owner: Dave / Claude Code | Next: NF-1 is built (nectar age is measured); NF-2 is specified and gated on COL-4 (Codex lane, `plans/archive/colony-run_2026-10-08.md`), which holds `scripts/game_config.gd` and `scripts/settings_catalogue.gd` | Dependency: COL-4 for NF-2 onwards | Verified: 2026-10-06
 
 ## Objective
 
@@ -86,7 +86,7 @@ Verified 6 Oct 2026 against master:
 **Dependencies.** NF-1, then NF-2. NF-3 and NF-5 each follow NF-2, and
 NF-4 follows NF-3. NF-2 waits for COL-4 in the Codex lane, which edits
 `scripts/game_config.gd` and `scripts/settings_catalogue.gd`. COL-6 and
-COL-11 (`plans/now/colony-run.md`) are gated on COL-4 too, and COL-11
+COL-11 (`plans/archive/colony-run_2026-10-08.md`) are gated on COL-4 too, and COL-11
 shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` with NF-2.
 Whichever of NF-2 and COL-11 is queued second waits for the other's merge,
 as the one-branch lane already ensures. Bee Bread's BB-1

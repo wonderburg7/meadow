@@ -60,7 +60,6 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **COL-7** (`plans/now/colony-run.md`) -- already landed; it waits for nothing and is listed here only to resolve COL-12's recorded `Next after` during closeout.
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation, Bee Bread and the gyne route.
 - **WC-1** (`plans/now/workflow-checks.md`) -- a deferral whose gate has cleared is flagged; waits for room in the Codex lane.
 - **WC-2** (`plans/now/workflow-checks.md`) -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane; waits for WC-1 and room in the Codex lane.
@@ -77,7 +76,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **T2-8b** (`plans/now/tier-two.md`) -- the Shiver Cluster skill node and its run-start ownership; waits for T2-4a (Codex lane), which holds `scripts/skills.gd`, and for T2-8a.
 - **T2-4b to T2-8** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-4a is in the Codex lane (Dave, 7 Oct 2026); T2-4b (bodies) for T2-4a (COL-6 landed 7 Oct 2026); T2-5 (rain) and T2-7 (tier-2 prices) for COL-4's year; T2-6 (Associative learning) for COL-4 (`game_config.gd`); T2-8 (Shiver Cluster) is to be specified; COL-6 and T2-2 have landed, and its skill goes in `scripts/skills.gd`, which the Codex lane's T2-4a holds.
 - **BB-1 to BB-4** (`plans/now/bee-bread.md`) -- Bee Bread; BB-1 waits for COL-4 and NF-2 (`game_config.gd`, `hive_cell.gd`, `hive.gd`, the save files); the rest follow BB-1.
-- **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Gallerin guidance is the next design pass, now that step 8's ran on 6-7 Oct 2026 (booked by Dave, 5 Oct 2026); the event director's wait on the Colony Run's year (COL-4, COL-6) has cleared; it still needs its design pass. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/now/colony-run.md`).
+- **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Gallerin guidance is the next design pass, now that step 8's ran on 6-7 Oct 2026 (booked by Dave, 5 Oct 2026); the event director's wait on the Colony Run's year (COL-4, COL-6) has cleared; it still needs its design pass. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/archive/colony-run_2026-10-08.md`).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
 

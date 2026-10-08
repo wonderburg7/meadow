@@ -173,7 +173,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | BS-10, BS-11 -- C-81 rewritten for Challenge 2; the developer table's cut-skill and feature rows | `plans/archive/brood-spine_2026-10-05.md` |
 | GC-4 -- a nurse's brood food survives a job change | `plans/archive/gameplay-consistency_2026-10-06.md` |
 | SR-1 to SR-5 -- the four red scenarios and the red SF-1 test from the 30 Sep verification review | `plans/archive/scenario-reds_2026-10-04.md` |
-| CR-1, CR-2, PE-2, COL-1 to COL-8 -- the Colony Run: started from the menu and remembered by a save, its milestones, the played arc, the milestone shelf, victory, restore, the year and the unread level keys | `plans/now/colony-run.md` |
+| CR-1, CR-2, PE-2, COL-1 to COL-8 -- the Colony Run: started from the menu and remembered by a save, its milestones, the played arc, the milestone shelf, victory, restore, the year and the unread level keys | `plans/archive/colony-run_2026-10-08.md` |
 | L-16, L-17 -- the slice lifecycle in `tools/slice.ps1` (L-1 to L-15 are archived) | `plans/now/agent-lifecycle.md` |
 | SPR-1 -- a windowed render baseline for the procedural bees, before any sprite pass | `plans/archive/sprites_2026-10-06.md` |
 | NF-1, NF-2 -- unprocessed nectar ferments, and tipsy bees pay for it | `plans/now/nectar-fermentation.md` |
@@ -182,7 +182,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | T2-1 to T2-8 -- progression step 8: tier-2 skills gated and built, bodies, rain in the Colony Run, Shiver Cluster | `plans/now/tier-two.md` |
 | BB-1 to BB-4 -- Bee Bread: Fermenters, larval feeding, the tier-3 currency, re-pacing | `plans/now/bee-bread.md` |
 | Progression/skills design | `plans/design/progression.md` |
-| Product scope, alpha/beta gates (the Colony Run definition itself is `plans/now/colony-run.md`) | `plans/design/product-scope.md` |
+| Product scope, alpha/beta gates (the Colony Run definition itself is `plans/archive/colony-run_2026-10-08.md`) | `plans/design/product-scope.md` |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |
 | Colony diagnostics (derived colony-state facts) | `plans/reference/colony-diagnostics.md` (reference only -- no open slice) |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` (candidate B is measurement-gated; no open slice) |
