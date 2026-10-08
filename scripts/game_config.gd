@@ -882,6 +882,9 @@ var nuptial_flight_peak_chance: float = 0.5
 ## friends) are state of the run rather than settings.
 var winter_countdown_days: float = 15.0
 var winter_length_days: float = 10.0
+## COL-8: days after a winter over which the meadow regrows, every flower's
+## season strength rising from 0 to its normal value. Unsimulated.
+var spring_regrowth_days: float = 3.0
 ## What a bee burns through winter, as a multiple of its ordinary rate.
 ## Well below 1 because a clustered colony is nearly dormant, and because
 ## anything higher makes the target impossible: at 0.55 a fifty-bee

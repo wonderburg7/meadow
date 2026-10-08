@@ -276,6 +276,19 @@ func _process(delta: float) -> void:
 	_update_crab_spider_marker()
 	Perf.end("flowers")
 
+## COL-8: 0 to 1, how far the meadow has regrown since the last winter. Worked
+## out once per season tick by season.gd (1.0 with no winter behind the run),
+## so season_strength() pays one float multiply instead of date maths per flower.
+static var regrowth_factor: float = 1.0
+
+## COL-8: winter kills the plants back to the ground. Nectar and pollen go, and
+## the recharge clock restarts at `resume_time` (the post-skip sim time) so the
+## skipped days credit nothing. The plant itself stays where it is.
+func die_back(resume_time: float) -> void:
+	_nectar_amount = 0.0
+	_pollen_amount = 0.0
+	_last_recharge_update = resume_time
+
 ## Where we are in the playable season, 0 to 1. Winter is outside this
 ## curve: it holds at autumn until its end, then the next spring restarts.
 static func season_fraction() -> float:
@@ -304,14 +317,14 @@ func season_strength() -> float:
 		return 1.0
 	var f: float = season_fraction()
 	if f < season_start or f > season_end:
-		return GameConfig.out_of_season_strength
+		return GameConfig.out_of_season_strength * regrowth_factor
 	var span: float = max(0.001, season_end - season_start)
 	var through: float = (f - season_start) / span
 	# A smooth arch from the out-of-season floor up to peak_season_strength
 	# and back. Interpolating from the floor rather than from zero also
 	# removes the old discontinuity: the curve used to ease to 0.0 at the
 	# window edge and then jump to out_of_season_strength.
-	return lerpf(
+	return regrowth_factor * lerpf(
 		GameConfig.out_of_season_strength,
 		GameConfig.peak_season_strength,
 		sin(through * PI)

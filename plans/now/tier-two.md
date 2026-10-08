@@ -57,7 +57,8 @@ Verified 7 Oct 2026 against master:
 | T2-5 | Weather sensing's rain half, Rain recall, and rain on in the Colony Run | specified when T2-3 lands | no -- its PE-2 arc rerun reads COL-4's year | medium |
 | T2-6 | Associative learning: per-bee, per-species familiarity, saved | specified when T2-5 lands | no -- after COL-4 (`game_config.gd`, `settings_catalogue.gd`) | high |
 | T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | specified when T2-1 to T2-3 and COL-4 have landed | no -- needs COL-4's year and the gates | medium |
-| T2-8 | Shiver Cluster: the skill, the multiplied bill without it, the warning | to be specified now COL-6 has landed | after T2-4a (Codex lane, `skills.gd`); COL-6 and T2-2 have landed | high |
+| T2-8a | Winter's bill multiplied without Shiver Cluster, and the warning | this plan | yes -- `season.gd`, `winter_panel.gd`, `problem_messages.gd`, `game_config.gd`, `settings_catalogue.gd` are free once COL-8 merges (Dave, 8 Oct 2026) | high |
+| T2-8b | Shiver Cluster, the skill: the node, and owned at run start outside the Colony Run | specified when T2-8a lands | no -- after T2-4a (Codex lane, `skills.gd`) | medium |
 
 **Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
 T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
@@ -107,6 +108,56 @@ and the stage move.
 - Next after: T2-5 -- Weather sensing's rain half
 ```
 
+## T2-8a -- Winter's bill multiplied without Shiver Cluster, and the warning
+
+<!-- LAYER: immediate-task -->
+
+Level: high (it changes COL-6's bill, which decides who survives winter).
+T2-8 was split in two on 8 Oct 2026 (Dave): the skill node needs
+`scripts/skills.gd`, which T2-4a holds, so the bill and the warning go first
+and the node follows as T2-8b. The design is `plans/design/progression.md`
+"Shiver Cluster" (Dave, 6 Oct 2026); this slice restates only what it builds.
+
+**True now.** `season.gd::winter_bill` is bees x `energy_burn_rate` x
+`winter_burn_factor` x winter's seconds for every colony; `year_winter.gd`'s
+forecast and `winter_panel.gd` show that figure; there is no skill and no
+warning.
+
+**True afterwards.**
+- `GameConfig.winter_unclustered_multiplier` (working value 2, a settings
+  row, unsimulated) multiplies `winter_bill` when the colony does not own
+  `skill.hive_mind.shiver_cluster`. `winter_bill` stays the one copy of the
+  formula, so the charge, `_winter_losses`' shortfall rule and the forecast
+  cannot disagree. A colony that owns it pays the bill as today.
+- Ownership is one new `season.gd` function. While `Skills.has` says the
+  node does not exist yet (until T2-8b), it answers owned, so this slice
+  changes nothing in play; T2-8b's node makes the multiplier live without
+  touching this code again.
+- While not owned, `winter_panel.gd` (asking `season.gd` itself, so `year_winter.gd`, which the Codex lane holds, is untouched) says so and shows the multiplied figure
+  from the moment the countdown opens, and `problem_messages.gd` raises an
+  urgent entry (severity 2) in the countdown's last days. Both reuse what
+  exists; no new window. How many "last days" is a `GameConfig` value
+  (working value 3).
+- The multiplier's final value is set by PE-2's arc (`tools/pacing_gates.py`)
+  in a later tuning pass (T2-7 or a COL slice); this slice records the arc
+  before and after and leaves 2.
+
+**Must not change.** The bill's formula and ordering with COL-8's die-back
+(bill, die-back, clock jump); who dies first; any run's behaviour while the
+node does not exist.
+
+**Hands-on.** None needed: with no node the figures are unchanged. T2-8b
+files the player-facing check.
+
+```queue
+**[Claude] T2-8a -- Winter's bill multiplied without Shiver Cluster, and the warning**
+- Plan: `plans/now/tier-two.md` -- "T2-8a -- Winter's bill multiplied without Shiver Cluster, and the warning"
+- Files: `scripts/season.gd`, `scripts/winter_panel.gd`, `scripts/problem_messages.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_8a_shiver_bill.py`
+- Check: `python -m unittest tests.test_t2_8a_shiver_bill` passes (an unowned colony's `winter_bill` is the owned bill times `winter_unclustered_multiplier`; the unowned shortfall kills oldest workers first and the queen last; with the node absent the bill is unchanged; the forecast and an urgent problem entry appear while unowned and the countdown is in its last days); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
+- Proof: `absent: scripts/game_config.gd :: winter_unclustered_multiplier`
+- Next after: T2-8b -- Shiver Cluster, the skill
+```
+
 ## Later slices -- outline only
 
 <!-- LAYER: design -->
@@ -135,7 +186,7 @@ slice before it lands. The decisions they implement are in
 - **T2-7** -- one PE-2 arc sweep (`tools/pacing_gates.py`) prices the
   tier-2 recipes so a reasonable Colony Run's first tier-2 purchase lands
   around day 5; recorded with before/after.
-- **T2-8** -- `skill.hive_mind.shiver_cluster` in `skills.gd` (Hive Mind
+- **T2-8b** -- (T2-8a is above) `skill.hive_mind.shiver_cluster` in `skills.gd` (Hive Mind
   tier 2, a free grid slot found by the grid validators); owned from the
   start by any run without `"run_type": "colony"`; COL-6's bill multiplied
   by a `GameConfig` value when unowned; `winter_panel.gd`'s forecast and a
