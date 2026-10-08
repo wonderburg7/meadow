@@ -33,9 +33,9 @@ sitting in a `.worktrees/` directory:
    (`python tools/heading.py <plan> "<heading>" | grep -i reasoning`, not
    the whole section), go to 5 with that level, and count it toward the
    maximum. Any other held state stops the run. If the lane is empty,
-   refill it (below), then rerun `doctor`.
-2. **Claim.** Read `advice.dry_after` from `doctor`. When it is true, run
-   "Refilling the lane" (below) or ask Dave *before* `start`, never after:
+   dispatch the steward with `JOB=refill` (below), then rerun `doctor`.
+2. **Claim.** Read `advice.dry_after` from `doctor`. When it is true, dispatch the
+   steward with `JOB=refill` (below) or ask Dave *before* `start`, never after:
    a slice built with nothing admissible behind it is stranded at `finish`'s
    refill gate (BS-12, 4 Oct 2026). Then run `start`. Keep its JSON, and note
    `advice.level`.
@@ -89,81 +89,55 @@ sitting in a `.worktrees/` directory:
    - On a stop, read only the stop block. A verify failure inside the
      slice's files goes back to the worker once, then rerun `finish`. A
      stale branch: merge master into it, regenerate `FUNCTION_MAP.md`,
-     rerun. The refill gate (backlog dry) means specifying the owning
-     plan's next slice. That is planning work, so do it yourself in the
-     slice worktree, as in steps 2-3 of the refill below, then rerun.
-     The same stop also comes when a block the worker wrote has a
-     `Proof:` that fails on master, or names a successor with no block:
-     fix the block. While there, open any `queue-gated` fence whose gate
-     a slice landed earlier in this run has now cleared (its gate line
-     under `## Not in the queue, and why` goes too), so the lane does
-     not run dry one slice later.
+     rerun. The refill gate (backlog dry), or a block whose `Proof:`
+     fails on master or names a successor with no block, is planning work:
+     dispatch the steward with `JOB=finish-stop`, the stop block and the
+     slice worktree, then rerun. Add `gates` to the job so the lane does not
+     run dry one slice later.
      The lifecycle lock held by another lane's `finish` (the cause names
      its PID): wait for it and rerun in one background call,
      `powershell.exe -NoProfile -Command "Wait-Process -Id <pid>"; (cd <ROOT>/.worktrees/<id> && powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 finish)`.
      Anything else stops the run.
 7. **Record.** Keep only the `Slice landed:` block and the worker's
    one-line summary. Drop everything else from your working notes.
-8. **Clear stale gates.** If the `Next slice:` line says an id `is
-   deferred`, and the gate it names is a slice landed in this run, that
-   gate has cleared. Update the id's line under `## Not in the queue, and
-   why` and the plan's slice-table row to say what it waits for now. Do
-   the same for any other line naming a slice landed in this run. This is
-   a docs-only edit on this session's worktree, as in "Refilling the lane"
-   step 3. Do it even after the last slice of the run: `finish` never
-   rewrites those lines (T2-4a, 7 Oct 2026).
+8. **Clear stale gates.** Dispatch the steward with `JOB=gates` and the ids
+   landed in this run. Add `refill` when `finish` left the lane short. Do it
+   even after the last slice of the run: `finish` never rewrites those
+   lines (T2-4a, 7 Oct 2026).
 
 An empty or short lane is not a reason to stop: refill it. Stop only when
 the maximum is reached, a `start` refuses for any reason but an empty lane,
-or a refill needs Dave (below).
+or the steward returns `blocked` (below).
 
-## Refilling the lane
+## The queue steward
 
-Do this when `doctor` finds the lane empty, or when `finish` lands it with
-no admissible block left in the backlog. It is planning work, so do it at
-high reasoning, and read only what specifying the slice needs. Don't read
-plan history or `plans/archive/`.
+A `queue-steward` subagent (Opus 5.5, `plans/reference/queue-steward.md`)
+does all plan and queue editing, so this session never reads a plan section.
+Dispatch it in the foreground (`run_in_background: false`) with `ROOT=<ROOT>`,
+`JOB=<gates | refill | finish-stop, one or more>`, and what the job needs:
+the ids landed, the `finish` stop block and slice worktree, or this session's
+worktree path. It returns one JSON line.
 
-1. **Find the owner.** In `plans/now/`, find a live plan whose Status is
-   not terminal and whose `Next:` names work that hasn't been specified
-   yet. Read its Status line and the section that `Next:` points to.
-2. **Specify** its next slice, or two if they are plainly sequential. Read
-   `plans/README.md` § "Writing or editing a plan" first. Each slice gets
-   a fenced `queue` block in its plan section, which is what
-   `.claude/rules/documentation.md` calls the backlog. It holds the
-   `**[Claude] <id> -- <title>**` line and its `Plan:`/`Files:`/`Check:`/
-   `Proof:`/`Next after:` lines. Never edit the Codex lane. Use only files
-   the Codex lane doesn't own (`tools/slice.ps1 owner <path>` for each one). State a reasoning
-   level and a deterministic `Check:` where one exists. Write a `Proof:`
-   that holds on master today. Fence a slice that can't start yet as
-   `queue-gated`, with its one line under `## Not in the queue, and why`.
-3. **Queue it.** Inside a slice worktree at a `finish` stop, edit there
-   (step 6 above). Otherwise -- including while the lane's one slice branch
-   is open -- a docs-only refill goes on this coordinator session's own
-   worktree branch, not a second lane branch: add its row to
-   `plans/workstreams.md` (lane "Claude (docs only)") before editing, and
-   remove the row once the merge is pushed. Run
-   `python tools/refill_lane.py --top-up --lane Claude`, then
-   `python tools/check_docs.py`. Commit, merge to master and push, then
-   go back to Preflight.
+- `done`: check it with `git -C <ROOT> show --stat <commit>` and rerun
+  `python tools/check_docs.py`. Do not read the plan sections it touched.
+  Then go back to Preflight.
+- `blocked`: ask Dave with AskUserQuestion (its question, options and costs,
+  recommending its pick), send his answer to the same steward with
+  SendMessage, and go back to this step. It blocks only when no live plan in
+  `plans/now/` has work left, or when specifying the slice would change an
+  ownership boundary, save compatibility, a gameplay outcome, or more than
+  one later slice (CLAUDE.md rule 5). Those are the only times a refill
+  stops the run.
 
-Stop the run and ask Dave with AskUserQuestion (give the options and their
-costs, and recommend one) only if either of these is true:
-- No live plan in `plans/now/` has work left to specify. In that case,
-  propose which `ROADMAP.md` or `DESIGN_BACKLOG.md` item should become a
-  new plan. Read those two files with `git -C <ROOT> show master:ROADMAP.md`
-  and `git -C <ROOT> show master:DESIGN_BACKLOG.md`: every file tool, and
-  Bash on their paths, is denied.
-- Specifying the slice would change an ownership boundary, save
-  compatibility, a gameplay outcome, or more than one later slice, and
-  the plan leaves that open (CLAUDE.md rule 5).
+The stale-branch stop in step 6 (merge master, regenerate `FUNCTION_MAP.md`)
+stays here: it is three commands and needs no plan reading.
 
 ## Final report
 
 For each slice: the CLAUDE.md end-of-slice block, plus the worker type used
 and any reviews or retries. For a low slice, say whether the Haiku worker
 needed a retry or a review fix: that is the evidence for keeping it on
-Haiku or moving it back to Sonnet. For each refill: the plan it came from, the
+Haiku or moving it back to Sonnet. For each refill: the plan it came from (the steward's `note`), the
 ids it added, and why that slice came next. Then a one-paragraph trial note covering what
 the worker got wrong, where you had to step in, and any change the worker
 brief or this skill needs. Fill in `Connectors: active now` from your own
