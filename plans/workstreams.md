@@ -46,4 +46,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/AR-3` (`codex/AR-3`) | Codex | the pacing report presents every alpha gate and its evidence boundary | Codex | in progress | none | `plans/now/alpha-route-evidence.md` AR-3 -- the pacing report presents every alpha gate and its evidence boundary |
