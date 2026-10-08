@@ -46,5 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.claude/worktrees/game-dev-haiku-optimization-483040` (`claude/game-dev-haiku-optimization-483040`) | Claude (docs only) | plans the coordinator-context slices (CX-1, CX-2): a new `plans/now/coordinator-context.md`, its routing row in `plans/README.md`, a dependency line in `plans/now/workflow-checks.md`; never edits `NEXTSTEPS.md` | Claude | in progress | none | ad hoc |
 | `.worktrees/SI-1` (`codex/SI-1`) | Codex | disease, crab-spider species and the rival colony survive a load | Codex | in progress | none | `plans/now/save-integrity.md` SI-1 -- disease, crab-spider species and the rival colony survive a load |
