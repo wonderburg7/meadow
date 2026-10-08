@@ -35,28 +35,21 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] SI-1 -- disease, crab-spider species and the rival colony survive a load**
-   - Plan: `plans/now/save-integrity.md` -- "SI-1 -- disease, crab-spider species and the rival colony survive a load"
-   - Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/rival_hive.gd`, `scripts/main.gd`, `tests/si1_run_state_test.gd`, `tests/test_si1_run_state.py`
-   - Check: `python -m unittest tests.test_si1_run_state` passes with `SI1 PASS`; `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/save_game.gd :: crab_spider_species`
-   - Next after: SI-2 -- a checkpoint restore puts back soil dug since the checkpoint
-
-2. **[Codex] T2-4a -- Cleaning gates taking out the dead larvae**
+1. **[Codex] T2-4a -- Cleaning gates taking out the dead larvae**
    - Plan: `plans/now/tier-two.md` -- "T2-4a -- Cleaning gates taking out the dead larvae"
    - Files: `scripts/actions.gd`, `scripts/challenge_stages.gd`, `scripts/skills.gd`, `tests/test_t2_4a_cleaning_gate.py`
    - Check: `python -m unittest tests.test_t2_4a_cleaning_gate` passes; `tools/verify.ps1` is green
    - Proof: `absent: scripts/actions.gd :: "skill": "skill.hive_mind.cleaning"`
    - Next after: T2-5 -- Weather sensing's rain half
 
-3. **[Codex] CD-2 -- missing workforce and blocked work become named, tested facts**
+2. **[Codex] CD-2 -- missing workforce and blocked work become named, tested facts**
    - Plan: `plans/now/diagnostic-readiness.md` -- "CD-2 -- missing workforce and blocked work become named, tested facts"
    - Files: `scripts/colony_diagnostics.gd`, `scripts/year_winter.gd`, `tests/test_colony_diagnostics.py`
    - Check: `python -m unittest tests.test_colony_diagnostics` passes with empty, staffed and blocked-cell fixtures; `tools/verify.ps1` is green
    - Proof: `present: scripts/colony_diagnostics.gd :: static func compute`
    - Next after: CD-3 -- waiting and travel get a deterministic diagnostic boundary
 
-4. **[Codex] GD-1 -- decide the causal-explanation contract**
+3. **[Codex] GD-1 -- decide the causal-explanation contract**
    - Plan: `plans/now/guidance-explanations.md` -- "GD-1 -- decide the causal-explanation contract"
    - Files: `plans/now/guidance-explanations.md`, `plans/design/product-scope.md`
    - Check: `python tools/check_docs.py` passes and GD-1 records one owner for facts, trigger policy and presentation
