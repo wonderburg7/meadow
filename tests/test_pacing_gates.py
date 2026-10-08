@@ -30,31 +30,42 @@ class PacingGatesTest(unittest.TestCase):
         self.assertFalse(in_band(4.49, 6.0))
         self.assertFalse(in_band(None, 6.0))
 
-    def test_rows_use_elapsed_milestone_times_and_mark_an_incomplete_gate_outside_band(self):
+    def test_rows_show_five_product_gates_and_mark_missing_facts_unavailable(self):
         analyses = [
-            {"settings": SCHEDULE_SETTINGS, "milestone_times": {"first_worker_day": 1.5, "food_secure_day": 3,
-                            "winter_entered_day": 17, "winter_survived_day": 28}},
-            {"settings": SCHEDULE_SETTINGS, "milestone_times": {"first_worker_day": 1.5, "food_secure_day": 3,
-                            "winter_entered_day": 18, "winter_survived_day": 27}},
-            {"settings": SCHEDULE_SETTINGS, "milestone_times": {"first_worker_day": 1.5, "food_secure_day": 4,
-                            "winter_entered_day": 19}},
+            {"settings": SCHEDULE_SETTINGS, "milestone_times": {"first_worker_day": 1.5, "winter_survived_day": 41},
+             "alpha_route": {"first_automation_day": 3, "first_gyne_day": 26, "victory_day": 27}},
+            {"settings": SCHEDULE_SETTINGS, "milestone_times": {"first_worker_day": 1.5, "winter_survived_day": 41},
+             "alpha_route": {"first_automation_day": 3, "first_gyne_day": 26, "victory_day": 27}},
+            {"settings": SCHEDULE_SETTINGS, "milestone_times": {"first_worker_day": 1.5, "winter_survived_day": 41},
+             "alpha_route": {"first_automation_day": 3, "first_gyne_day": 26, "victory_day": 27}},
         ]
         rows = build_rows(analyses, 200)
+        self.assertEqual(["first worker", "first automation", "crisis response", "winter survival", "gyne/victory"],
+                         [row["milestone"] for row in rows])
         self.assertEqual(1.5, rows[0]["median_day"])
         self.assertTrue(rows[0]["inside_band"])
         self.assertEqual(3, rows[1]["median_day"])
-        self.assertEqual(18, rows[2]["median_day"])
-        self.assertIsNone(rows[3]["median_day"])
-        self.assertFalse(rows[3]["inside_band"])
+        self.assertEqual("unavailable", rows[2]["status"])
+        self.assertEqual("hands-on question", rows[2]["boundary"])
+        self.assertTrue(rows[3]["inside_band"])
+        self.assertTrue(rows[4]["inside_band"])
+
+        analyses[-1]["alpha_route"].pop("first_gyne_day")
+        gyne = build_rows(analyses, 200)[4]
+        self.assertIsNone(gyne["median_day"])
+        self.assertEqual("unavailable", gyne["status"])
+        self.assertFalse(gyne["inside_band"])
 
     def test_table_is_compact_and_names_missing_evidence(self):
-        rows = build_rows([{"settings": SCHEDULE_SETTINGS, "milestone_times": {gate: 2 for gate in (
-            "first_worker_day", "food_secure_day", "winter_entered_day", "winter_survived_day",
-        )}}], 200)
+        rows = build_rows([{"settings": SCHEDULE_SETTINGS,
+                            "milestone_times": {"first_worker_day": 2, "winter_survived_day": 41},
+                            "alpha_route": {"first_automation_day": 2, "first_gyne_day": 2, "victory_day": 2}}], 200)
         table = render_table(rows, 200, 1)
         self.assertLess(len(table.splitlines()), 40)
-        self.assertIn("milestone        median day  target day  in band", table)
+        self.assertIn("evidence boundary", table)
         self.assertIn("Not instrumented: 20m forage/weather crisis; 90m gyne release.", table)
+        self.assertIn("crisis response", table)
+        self.assertIn("hands-on question", table)
         self.assertIn("2.00", table)
 
     def test_first_worker_at_two_elapsed_days_is_outside_the_five_minute_band(self):
@@ -67,8 +78,6 @@ class PacingGatesTest(unittest.TestCase):
         self.assertFalse(in_days(35.0, 31))
         analyses = [{"settings": SCHEDULE_SETTINGS, "milestone_times": {"winter_entered_day": 30.02, "winter_survived_day": 40.05}}]
         rows = build_rows(analyses, 200)
-        self.assertEqual(31.0, rows[2]["target_day"])
-        self.assertTrue(rows[2]["inside_band"])
         self.assertEqual(41.0, rows[3]["target_day"])
         self.assertTrue(rows[3]["inside_band"])
 
