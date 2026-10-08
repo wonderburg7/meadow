@@ -37,6 +37,12 @@ folder holds a `slice-worker-*` dispatch.
   bound); reviews about 16%; queue and plan edits about 15%. The
   post-`finish` stretch is mostly `grep`/`sed` reads of plans and
   `NEXTSTEPS.md`, `git` calls, gate clearing (run-queue step 8) and refills.
+- Baseline from `python tools/session_cost.py --coordinator --days 14`
+  (8 Oct 2026, CX-1): 13 sessions, 1,374 requests, 196M context, 54
+  dispatches (the scratch script's 63 counted differently): about 3.6M per
+  dispatch; median per request 124K; median housekeeping share 9.3% per
+  session (0% to 55%), well under the scratch 47% upper bound, which counted
+  any "finish" command.
 - No single tool result is large (each adds about 1-2K); the cost is many
   small reads carried at a large context.
 - Since 8 Oct 2026 the reviews run in a `slice-reviewer` subagent
