@@ -787,6 +787,12 @@ const TUNABLES := [
 		"tip": "How long the winter will be. This is what the required-stores figure is calculated from, so it is the main dial for how hard surviving one is.",
 	},
 	{
+		"persist": "none",
+		"key": "spring_regrowth_days", "label": "Spring regrowth days", "step": 0.5, "min": 0.0,
+		"category": "Winter",
+		"tip": "How many days the meadow takes to flower again after a winter. The plants die back over winter; for this long after it, flowers recover from nothing to full strength.",
+	},
+	{
 		"persist": "run",
 		"key": "winter_burn_factor", "label": "Winter burn x", "step": 0.05, "min": 0.05,
 		"category": "Winter",

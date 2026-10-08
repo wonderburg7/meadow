@@ -50,6 +50,7 @@ func _process(delta: float) -> void:
 
 	_advance_disease(elapsed)
 	_advance_winter()
+	_update_regrowth()
 	Perf.end("season")
 
 # --- disease ------------------------------------------------------
@@ -159,10 +160,28 @@ func _resolve_winter(days: float) -> void:
 	# checkpoint offer (COL-3).
 	for bee in lost:
 		BeeSurvival.die(bee, "starvation")
-	Session.sim_time += days * GameConfig.seconds_per_day
+	# After the bill, before the clock moves (COL-8): the plants die back, and
+	# their recharge clocks restart at spring so the skipped days credit nothing.
+	var spring_time: float = Session.sim_time + days * GameConfig.seconds_per_day
+	for flower in world.get_tree().get_nodes_in_group("flowers"):
+		if is_instance_valid(flower):
+			flower.die_back(spring_time)
+	Session.sim_time = spring_time
 	Session.winter_here = false
 	Session.winter_coming = false
+	_update_regrowth()
 	winter_survived.emit(lost.size())
+
+## COL-8: Flower.regrowth_factor, once per tick. 1 with no winter behind the
+## run (or winter off); after one, rises from 0 on spring's first day to 1
+## over GameConfig.spring_regrowth_days.
+func _update_regrowth() -> void:
+	if Session.winter_ends_day <= 0.0 or Session.winter_here:
+		Flower.regrowth_factor = 1.0
+		return
+	var day: float = 1.0 + Session.sim_time / maxf(1.0, GameConfig.seconds_per_day)
+	var since: float = day - Session.winter_ends_day
+	Flower.regrowth_factor = clampf(since / maxf(0.001, GameConfig.spring_regrowth_days), 0.0, 1.0)
 
 ## What `bees` bees burn through `days` of winter, in energy units:
 ## bees x energy_burn_rate x winter_burn_factor x winter's seconds
