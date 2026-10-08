@@ -58,7 +58,7 @@ Verified 7 Oct 2026 against master:
 | T2-6 | Associative learning: per-bee, per-species familiarity, saved | specified when T2-5 lands | no -- after COL-4 (`game_config.gd`, `settings_catalogue.gd`) | high |
 | T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | specified when T2-1 to T2-3 and COL-4 have landed | no -- needs COL-4's year and the gates | medium |
 | T2-8a | Winter's bill multiplied without Shiver Cluster, and the warning | this plan | yes -- `season.gd`, `winter_panel.gd`, `problem_messages.gd`, `game_config.gd`, `settings_catalogue.gd` are free once COL-8 merges (Dave, 8 Oct 2026) | high |
-| T2-8b | Shiver Cluster, the skill: the node, and owned at run start outside the Colony Run | specified when T2-8a lands | no -- after T2-4a (Codex lane, `skills.gd`) | medium |
+| T2-8b | Shiver Cluster, the skill: the node, and owned at run start outside the Colony Run | `scripts/skills.gd`, `scripts/run_availability.gd`, `tests/test_t2_8a_shiver_bill.py`, `tests/test_t2_8b_shiver_skill.py` | no -- after T2-4a (Codex lane, `skills.gd`); specified, fenced `queue-gated` | medium |
 
 **Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
 T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
@@ -149,6 +149,13 @@ node does not exist.
 **Hands-on.** None needed: with no node the figures are unchanged. T2-8b
 files the player-facing check.
 
+**PE-2 arc, before and after (8 Oct 2026, `python tools/pacing_gates.py`,
+seeds 20260923-5).** Identical, as it must be with the node absent: first
+worker median day 16.87 (out of band, target 1.5); per seed, 20260923 died
+before winter, 20260924 entered winter on day 30.01 and came through on day
+40.01 with 9 bees, 20260925 likewise with 3 bees. The multiplier stays 2
+until a tuning pass runs this arc with it live (after T2-8b).
+
 ```queue
 **[Claude] T2-8a -- Winter's bill multiplied without Shiver Cluster, and the warning**
 - Plan: `plans/now/tier-two.md` -- "T2-8a -- Winter's bill multiplied without Shiver Cluster, and the warning"
@@ -156,6 +163,48 @@ files the player-facing check.
 - Check: `python -m unittest tests.test_t2_8a_shiver_bill` passes (an unowned colony's `winter_bill` is the owned bill times `winter_unclustered_multiplier`; the unowned shortfall kills oldest workers first and the queen last; with the node absent the bill is unchanged; the forecast and an urgent problem entry appear while unowned and the countdown is in its last days); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
 - Proof: `absent: scripts/game_config.gd :: winter_unclustered_multiplier`
 - Next after: T2-8b -- Shiver Cluster, the skill
+```
+
+## T2-8b -- Shiver Cluster, the skill
+
+<!-- LAYER: immediate-task -->
+
+Level: medium (one catalogue row and one derived starting rule; the bill and
+the warning already exist). Gated: `scripts/skills.gd` is held by T2-4a in the
+Codex lane. The design is `plans/design/progression.md` "Shiver Cluster".
+
+**True now (after T2-8a).** `season.gd::owns_shiver_cluster` answers owned
+because `Skills.has("skill.hive_mind.shiver_cluster")` is false; the moment
+the node exists it asks `Session.progression.is_owned`, and `winter_bill`,
+`winter_panel.gd`'s note and `problem_messages.gd`'s `winter_unclustered`
+row all follow it. `tests/test_t2_8a_shiver_bill.py` reaches the unowned path
+through `season.gd`'s `shiver_cluster_skill` seam and asserts the node is
+absent (`ABSENT_EXISTS false`).
+
+**True afterwards.**
+- `skill.hive_mind.shiver_cluster` is a Hive Mind tier-2 node in `skills.gd`,
+  beside Automation and Cleaning, reached through Backup roles, in a free grid
+  slot the grid validators accept, costing honey like every tier-2 node (the
+  price is T2-7's to tune).
+- `run_availability.gd::sheet_for` puts it in `"starting"` for every run whose
+  definition has no `"run_type": "colony"`, derived like "seeding implies
+  owning"; no level lists it by hand. A `skill_bans` entry still wins.
+- So the Colony Run without it pays the multiplied bill and sees the warning;
+  Scenarios and Challenges play as today.
+- `tests/test_t2_8a_shiver_bill.py`'s absent-node case becomes "owned at the
+  start of a non-Colony run"; its unowned cases use the real id.
+
+**Hands-on.** Filed by this slice: in a Colony Run, open the Winter window
+when the countdown starts and see the Shiver Cluster note and the doubled
+figure; buy the node and see both go.
+
+```queue-gated
+**[Claude] T2-8b -- Shiver Cluster, the skill**
+- Plan: `plans/now/tier-two.md` -- "T2-8b -- Shiver Cluster, the skill"
+- Files: `scripts/skills.gd`, `scripts/run_availability.gd`, `tests/test_t2_8a_shiver_bill.py`, `tests/test_t2_8b_shiver_skill.py`
+- Check: `python -m unittest tests.test_t2_8b_shiver_skill tests.test_t2_8a_shiver_bill` passes (the node is Hive Mind tier 2 behind Backup roles; a level row without `"run_type": "colony"` starts owning it and the Colony Run does not; the Colony Run's `winter_bill` is the multiplied one until it is bought); a Godot boot is clean; `tools/verify.ps1` is green
+- Proof: `absent: scripts/skills.gd :: shiver_cluster`
+- Next after: T2-4b -- Bees that die in the hive leave bodies; winter's dead appear at spring
 ```
 
 ## Later slices -- outline only
@@ -186,8 +235,4 @@ slice before it lands. The decisions they implement are in
 - **T2-7** -- one PE-2 arc sweep (`tools/pacing_gates.py`) prices the
   tier-2 recipes so a reasonable Colony Run's first tier-2 purchase lands
   around day 5; recorded with before/after.
-- **T2-8b** -- (T2-8a is above) `skill.hive_mind.shiver_cluster` in `skills.gd` (Hive Mind
-  tier 2, a free grid slot found by the grid validators); owned from the
-  start by any run without `"run_type": "colony"`; COL-6's bill multiplied
-  by a `GameConfig` value when unowned; `winter_panel.gd`'s forecast and a
-  `problem_messages.gd` urgent entry while unowned.
+- **T2-8b** -- specified above, fenced `queue-gated` until T2-4a frees `skills.gd`.

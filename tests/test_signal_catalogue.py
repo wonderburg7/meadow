@@ -26,6 +26,7 @@ MESSAGES = {
     "low_pollen": "Almost no pollen — the queen cannot lay",
     "low_food": "Food is running out",
     "no_nurses": "No nurses — brood will not develop at all",
+    "winter_unclustered": "Winter in %d days, and without Shiver Cluster the colony burns 2 times its stores through it",
     "no_free_cells": "No free cells — nowhere to store food or lay eggs",
     "hungry": "%d bees are running low on energy",
     "no_foragers": "No foragers — nothing is coming in",
@@ -52,6 +53,9 @@ def matches(state, condition):
         "low_pollen": state["day"] >= 7 and state["pollen"] < 30,
         "low_food": state["nectar"] < 40 and state["honey"] < 10,
         "no_nurses": state["nurses"] == 0 and state["brood_cells"] > 0,
+        # T2-8a: season.gd decides this one itself (tests/test_t2_8a_shiver_bill.py);
+        # here it is a given fact, with winter's days left as its count.
+        "winter_unclustered": state["winter_unclustered"] > 0,
         "no_free_cells": state["free_cells"] == 0,
         "hungry": state["hungry"] > 0,
         "no_foragers": state["foragers"] == 0,
@@ -84,7 +88,7 @@ def colony(**changes):
         "day": 1, "starving": 0, "hungry_brood": 0, "dead_cells": 0,
         "pollen": 60, "nectar": 100, "honey": 100, "nurses": 1,
         "brood_cells": 0, "free_cells": 1, "hungry": 0, "foragers": 1,
-        "comb_workers": 1, "rain_intensity": 0.0,
+        "comb_workers": 1, "rain_intensity": 0.0, "winter_unclustered": 0,
     }
     state.update(changes)
     return state
@@ -93,7 +97,7 @@ def colony(**changes):
 class SignalCatalogueTest(unittest.TestCase):
     def test_catalogue_rows_keep_the_signal_contract(self):
         rows = catalogue()
-        self.assertEqual(12, len(rows))
+        self.assertEqual(13, len(rows))
         for signal_id, condition, _severity, _action, _category, message in rows:
             with self.subTest(signal=signal_id):
                 self.assertEqual(signal_id, condition)
@@ -102,7 +106,7 @@ class SignalCatalogueTest(unittest.TestCase):
         for _signal_id, _condition, _severity, _action, _category, message in rows:
             self.assertIn(f'"{message}": return {message}(state)', SOURCE)
 
-    def test_six_distinct_colony_states_have_exact_lines(self):
+    def test_seven_distinct_colony_states_have_exact_lines(self):
         cases = {
             "clear": (colony(), []),
             "urgent_brood": (colony(starving=2, hungry_brood=3, dead_cells=1, nurses=0, brood_cells=3, free_cells=0, foragers=0, comb_workers=0), [
@@ -117,6 +121,11 @@ class SignalCatalogueTest(unittest.TestCase):
             "low_stores": (colony(day=7, pollen=29, nectar=39, honey=9), [
                 ("Almost no pollen — the queen cannot lay", 2, "", "brood"),
                 ("Food is running out", 2),
+            ]),
+            "unclustered_winter": (colony(winter_unclustered=3, nurses=0, brood_cells=1, hungry=1), [
+                ("No nurses — brood will not develop at all", 2, "", "brood"),
+                ("Winter in 3 days, and without Shiver Cluster the colony burns 2 times its stores through it", 2),
+                ("1 bees are running low on energy", 1, "hungry"),
             ]),
             "hungry_workers": (colony(hungry=4), [("4 bees are running low on energy", 1, "hungry")]),
             "hard_rain": (colony(rain_intensity=0.6), [("Raining hard — foragers are grounded", 1)]),

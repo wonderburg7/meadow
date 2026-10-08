@@ -15,6 +15,7 @@ extends GamePanel
 ## several times its volume because that is what it is worth.
 
 const UI = preload("res://scripts/ui.gd")
+const Season = preload("res://scripts/season.gd")
 
 var headline: Label
 var detail: Label
@@ -91,6 +92,13 @@ func refresh(needs: Dictionary) -> void:
 		bees, int(required), int(GameConfig.winter_length_days),
 		int(held), int(GameConfig.honey_energy_factor),
 	]
+	# T2-8a: `required` is season.gd's winter_bill, already multiplied while
+	# Shiver Cluster is not owned; this says why the figure is that high.
+	if not Season.owns_shiver_cluster():
+		detail.text += (
+			"\n\nThe colony has not learned Shiver Cluster, so it cannot cluster tightly: "
+			+ "that figure is %s times what a clustered colony would need."
+		) % String.num(GameConfig.winter_unclustered_multiplier, 2).trim_suffix(".0")
 
 	var shortfall: float = required - held
 	if shortfall <= 0.0:

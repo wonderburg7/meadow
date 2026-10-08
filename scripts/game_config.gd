@@ -905,4 +905,12 @@ var winter_burn_factor: float = 0.15
 ## winter_length_days) before trusting it, the same way winter_burn_factor
 ## itself was worked out.
 var winter_lifespan_factor: float = 4.0
+## T2-8a: what winter's bill is multiplied by while the colony does not own
+## Shiver Cluster (plans/design/progression.md). A working value, not
+## simulated: PE-2's arc (tools/pacing_gates.py) sets the final one in a
+## later tuning pass.
+var winter_unclustered_multiplier: float = 2.0
+## T2-8a: how many of the countdown's last days the problem strip warns that
+## the colony does not own Shiver Cluster.
+var winter_unclustered_warning_days: float = 3.0
 
