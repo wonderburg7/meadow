@@ -51,6 +51,11 @@ slice until the next measurement says what those sessions were doing.
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
 
+WC-1 to WC-5 (`plans/now/workflow-checks.md`, Codex lane, 7 Oct 2026) extend
+this plan's `tools/check_docs.py` and `tools/refill_lane.py` without changing
+`tools/slice.ps1` or any format: stale deferrals, the dry-lane report,
+Codex's hooks, spaced ids and level-to-model parity.
+
 L-21 to L-24 come from `docs/agent-workflow-review-2026-10-05.md` (F1 to F5);
 L-23 and L-24 are Dave's 5 Oct 2026 choices. L-22 follows L-19 and L-24
 follows L-18 (shared `tools/slice.ps1`; L-18's machine-readable dry run).

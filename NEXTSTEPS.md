@@ -67,6 +67,12 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
+- **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation, Bee Bread and the gyne route.
+- **WC-1** (`plans/now/workflow-checks.md`) -- a deferral whose gate has cleared is flagged; waits for room in the Codex lane.
+- **WC-2** (`plans/now/workflow-checks.md`) -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane; waits for WC-1 and room in the Codex lane.
+- **WC-3** (`plans/now/workflow-checks.md`) -- Codex's hooks log its sessions; waits for room in the Codex lane.
+- **WC-4** (`plans/now/workflow-checks.md`) -- a queue id with whitespace fails the documentation check; waits for WC-2 and room in the Codex lane.
+- **WC-5** (`plans/now/workflow-checks.md`) -- the two level-to-model tables are tested against each other; waits for room in the Codex lane.
 - **SI-2** (`plans/now/save-integrity.md`) -- a checkpoint restore puts back soil dug since the checkpoint; waits for SI-1, which moved to the Codex lane (Dave, 7 Oct 2026) and shares `scripts/saving.gd`.
 - **SI-3** (`plans/now/save-integrity.md`) -- save, checkpoint and index writes are all-or-nothing; waits for SI-2.
 - **NF-2** (`plans/now/nectar-fermentation.md`) -- nectar ferments past an age; waits for COL-4 (Codex lane), which edits `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, and for NF-1's evidence.
