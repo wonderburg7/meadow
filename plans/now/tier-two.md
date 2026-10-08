@@ -173,9 +173,10 @@ Level: medium (one catalogue row and one derived starting rule; the bill and
 the warning already exist). Gated: `scripts/skills.gd` is held by T2-4a in the
 Codex lane. The design is `plans/design/progression.md` "Shiver Cluster".
 
-**True now (after T2-8a).** `season.gd::owns_shiver_cluster` answers owned
-because `Skills.has("skill.hive_mind.shiver_cluster")` is false; the moment
-the node exists it asks `Session.progression.is_owned`, and `winter_bill`,
+**True now (after T2-8a).** `season.gd::owns_shiver_cluster` asks
+`progression.gd::is_owned_or_absent`, which answers owned while the catalogue
+has no `skill.hive_mind.shiver_cluster`; the moment the node exists it is
+plain ownership, and `winter_bill`,
 `winter_panel.gd`'s note and `problem_messages.gd`'s `winter_unclustered`
 row all follow it. `tests/test_t2_8a_shiver_bill.py` reaches the unowned path
 through `season.gd`'s `shiver_cluster_skill` seam and asserts the node is

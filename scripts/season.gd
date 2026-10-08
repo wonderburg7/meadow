@@ -209,14 +209,13 @@ const SHIVER_CLUSTER := "skill.hive_mind.shiver_cluster"
 ## at a skill that does exist, to see the unowned bill before T2-8b does.
 static var shiver_cluster_skill: String = SHIVER_CLUSTER
 
-## Whether winter's bill is the base figure. A node the catalogue does not
-## have yet answers owned, so until T2-8b nothing in play changes; once it
-## exists, T2-8b's node makes the multiplier live without touching this.
-## Static so problem_messages.gd can ask it too.
+## Whether winter's bill is the base figure. progression.gd answers (the
+## only file that asks the skill catalogue): a node it does not have yet
+## counts as owned, so until T2-8b nothing in play changes, and T2-8b's node
+## makes the multiplier live without touching this. No progression at all
+## (no run yet) also answers owned. Static so problem_messages.gd can ask it.
 static func owns_shiver_cluster() -> bool:
-	if not Skills.has(shiver_cluster_skill):
-		return true
-	return Session.progression != null and Session.progression.is_owned(shiver_cluster_skill)
+	return Session.progression == null or Session.progression.is_owned_or_absent(shiver_cluster_skill)
 
 ## T2-8a: the problem strip's urgent entry -- the countdown is open, it is in
 ## its last winter_unclustered_warning_days days, and the colony does not own
@@ -392,4 +391,3 @@ const Flower = preload("res://scripts/flower.gd")
 const Levels = preload("res://scripts/levels.gd")
 const Resources = preload("res://scripts/resources.gd")
 const BeeSurvival = preload("res://scripts/bee_survival.gd")
-const Skills = preload("res://scripts/skills.gd")

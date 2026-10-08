@@ -805,7 +805,7 @@ const TUNABLES := [
 		"tip": "How much longer a bee's natural lifespan runs through the winter, as a multiple of its ordinary one. Above one because a dormant, clustered bee wears out slower -- without this, bees can die of old age mid-winter even when perfectly fed.",
 	},
 	{
-		"persist": "run",
+		"persist": "none",
 		"key": "winter_unclustered_multiplier", "label": "Unclustered winter x", "step": 0.25, "min": 1.0,
 		"category": "Winter",
 		"tip": "What the winter bill is multiplied by while the colony has not learned Shiver Cluster. One makes the skill change nothing.",

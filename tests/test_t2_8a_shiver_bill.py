@@ -3,7 +3,8 @@
 season.gd::winter_bill multiplies the bill by
 GameConfig.winter_unclustered_multiplier while the colony does not own
 skill.hive_mind.shiver_cluster. Until T2-8b adds that node to skills.gd,
-season.gd::owns_shiver_cluster answers owned, so nothing in play changes.
+season.gd::owns_shiver_cluster (through progression.gd::is_owned_or_absent)
+answers owned, so nothing in play changes.
 
 To see the unowned path before the node exists, the headless script points
 season.gd's shiver_cluster_skill at a skill the catalogue does have and the
@@ -85,6 +86,8 @@ func _check() -> void:
 	session.winter_starts_day = 20.0
 
 	# The node absent: owned, so the bill and everything else is as before.
+	var progression = load("res://scripts/progression.gd").new()
+	session.progression = progression
 	print("T2_8A ABSENT_EXISTS %s" % Skills.has(Season.SHIVER_CLUSTER))
 	print("T2_8A ABSENT_OWNED %s" % Season.owns_shiver_cluster())
 	print("T2_8A ABSENT_BILL %s" % season.winter_bill(4, 1.0))
@@ -98,7 +101,6 @@ func _check() -> void:
 			stand_in = skill_id
 			break
 	Season.shiver_cluster_skill = stand_in
-	session.progression = null
 	print("T2_8A UNOWNED_OWNED %s" % Season.owns_shiver_cluster())
 	print("T2_8A UNOWNED_BILL %s" % season.winter_bill(4, 1.0))
 	for held in [8.0, 4.0, 2.0, 1.0]:
@@ -115,9 +117,7 @@ func _check() -> void:
 	print("T2_8A UNOWNED_PANEL %s" % panel.detail.text.contains("Shiver Cluster"))
 
 	# Owned through progression: back to the base bill, no warning.
-	var progression = load("res://scripts/progression.gd").new()
 	progression.grant_temporary(stand_in)
-	session.progression = progression
 	print("T2_8A OWNED_OWNED %s" % Season.owns_shiver_cluster())
 	print("T2_8A OWNED_BILL %s" % season.winter_bill(4, 1.0))
 	print("T2_8A OWNED_STRIP %s" % _strip(messages, 18.0))
