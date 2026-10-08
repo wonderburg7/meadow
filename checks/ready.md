@@ -30,6 +30,7 @@ unblocker.
 - [C-113 -- Challenge 2 offers Comb worker at 2.7 and Miner at 2.8 as free buys](ready/C-113.md)
 - [C-114 -- An unmated queen's nuptial flights: the succession window's button and the Mating row switch](ready/C-114.md)
 - [C-115 -- Sending a gyne in mid summer wins; in early spring she is lost](ready/C-115.md)
+- [C-116 -- Meadow dies back over winter and regrows](ready/C-116.md)
 - [C-60 -- a chosen panel texture appears](ready/C-60.md)
 - [C-81 -- Nurse stays locked until Nurses is bought](ready/C-81.md)
 - [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)
