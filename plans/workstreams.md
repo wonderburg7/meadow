@@ -46,4 +46,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/COL-12` (`codex/COL-12`) | Codex | the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns | Codex | in progress | none | `plans/now/colony-run.md` COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns |
