@@ -723,7 +723,7 @@ class DiagnosticWritersTest(unittest.TestCase):
         ]
         totals = {
             "a": (5, 0, 0, Counter({"claude-opus-5-20260401": 4, "claude-sonnet-5-20260401": 1})),
-            "b": (2, 0, 0, Counter({"claude-haiku-4-5-20251001": 2})),
+            "b": (2, 0, 0, Counter({"claude-haiku-5-5-20261001": 2})),
         }
 
         out = io.StringIO()

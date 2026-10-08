@@ -1,8 +1,8 @@
 ---
 name: slice-worker-low
 description: Implements one already-claimed Meadow slice whose plan states low reasoning (one-file mechanical work). Dispatched by the /run-queue coordinator with the slice's start JSON; not for direct invocation.
-model: sonnet
-effort: low
+model: claude-haiku-5-5
+effort: medium
 tools: Bash, Read, Write, Edit, Grep, Glob
 ---
 
