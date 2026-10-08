@@ -37,10 +37,10 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 1. **[Codex] COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns**
    - Plan: `plans/now/colony-run.md` -- "COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns"
-   - Files: `scripts/main.gd`, `scripts/world_building.gd`, `tests/test_sf1_founding_flower_mix.py`, `test_scenarios/sf1_founding_flower_mix_test.json`
-   - Check: `python -m unittest tests.test_sf1_founding_flower_mix` passes at 0.05 on the pinned seed and three others; `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
+   - Files: `scripts/main.gd`, `scripts/world_building.gd`, `tests/test_sf1_founding_flower_mix.py`, `test_scenarios/sf1_founding_flower_mix_test.json`, `tests/col11_nuptial_flight_test.gd`
+   - Check: `python -m unittest tests.test_sf1_founding_flower_mix` passes at 0.05 on the pinned seed and three others; `python -m unittest tests.test_col11_nuptial_flight` passes; `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `present: tests/test_sf1_founding_flower_mix.py :: assertLessEqual(abs(initial_share - final_share), 0.20)`
-   - Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
+   - Next after: COL-8 -- winter die-back and spring regrowth
 
 2. **[Codex] SI-1 -- disease, crab-spider species and the rival colony survive a load**
    - Plan: `plans/now/save-integrity.md` -- "SI-1 -- disease, crab-spider species and the rival colony survive a load"
