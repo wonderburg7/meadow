@@ -46,3 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/SI-1` (`codex/SI-1`) | Codex | disease, crab-spider species and the rival colony survive a load | Codex | in progress | none | `plans/now/save-integrity.md` SI-1 -- disease, crab-spider species and the rival colony survive a load |
