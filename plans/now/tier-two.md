@@ -52,7 +52,6 @@ Verified 7 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-4a | Cleaning gates taking out the dead larvae | `scripts/actions.gd`, `scripts/challenge_stages.gd`, `scripts/skills.gd`, `tests/test_t2_4a_cleaning_gate.py` | yes (T2-2 landed 7 Oct 2026); Codex lane (Dave, 7 Oct 2026) | medium |
 | T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | specified after T2-4a | no -- after T2-4a (COL-6 landed 7 Oct 2026) | high |
 | T2-5 | Weather sensing's rain half, Rain recall, and rain on in the Colony Run | `scripts/skills.gd`, `scripts/bee_status.gd`, `scripts/bee_foraging.gd`, `scripts/bee.gd`, `scripts/main.gd`, `scripts/levels.gd`, `tests/test_t2_5_rain_skills.py`, `tests/t2_5_rain_skills_test.gd` | yes -- COL-4 and T2-3 landed | medium |
 | T2-6 | Associative learning: per-bee, per-species familiarity, saved | specified when T2-5 lands | no -- after COL-4 (`game_config.gd`, `settings_catalogue.gd`) | high |
@@ -83,31 +82,7 @@ T2-3 shipped 2026-10-07; its specification is `plans/archive/T2-3_2026-10-07.md`
 
 COL-4 shipped 2026-10-07; its specification is `plans/archive/COL-4_2026-10-07.md`.
 
-## T2-4a -- Cleaning gates taking out the dead larvae
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (a gate plus a stage-data move, the T2-2 pattern).
-
-**True now.** `comb_clean_cell` has no skill gate, so a Clearing comb worker
-always takes out dead larvae.
-
-**True afterwards.** `comb_clean_cell` carries `skill.hive_mind.cleaning`;
-Clearing without it only evicts stores. Challenge 2's stage 2.7 frees Backup
-roles and Cleaning (moving Backup roles from 2.8), and the skill's status
-becomes `existing`. `tests/test_t2_4a_cleaning_gate.py` checks the gate data
-and the stage move.
-
-**Must not change.** Behaviour with Cleaning owned.
-
-```queue
-**[Codex] T2-4a -- Cleaning gates taking out the dead larvae**
-- Plan: `plans/now/tier-two.md` -- "T2-4a -- Cleaning gates taking out the dead larvae"
-- Files: `scripts/actions.gd`, `scripts/challenge_stages.gd`, `scripts/skills.gd`, `tests/test_t2_4a_cleaning_gate.py`
-- Check: `python -m unittest tests.test_t2_4a_cleaning_gate` passes; `tools/verify.ps1` is green
-- Proof: `absent: scripts/actions.gd :: "skill": "skill.hive_mind.cleaning"`
-- Next after: T2-5 -- Weather sensing's rain half
-```
+T2-4a shipped 2026-10-08; its specification is `plans/archive/T2-4a_2026-10-08.md`.
 
 ## T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run
 
