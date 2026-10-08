@@ -23,12 +23,12 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] T2-8a -- Winter's bill multiplied without Shiver Cluster, and the warning**
-   - Plan: `plans/now/tier-two.md` -- "T2-8a -- Winter's bill multiplied without Shiver Cluster, and the warning"
-   - Files: `scripts/season.gd`, `scripts/winter_panel.gd`, `scripts/problem_messages.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_8a_shiver_bill.py`
-   - Check: `python -m unittest tests.test_t2_8a_shiver_bill` passes (an unowned colony's `winter_bill` is the owned bill times `winter_unclustered_multiplier`; the unowned shortfall kills oldest workers first and the queen last; with the node absent the bill is unchanged; the forecast and an urgent problem entry appear while unowned and the countdown is in its last days); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
-   - Proof: `absent: scripts/game_config.gd :: winter_unclustered_multiplier`
-   - Next after: T2-8b -- Shiver Cluster, the skill
+1. **[Claude] SI-2 -- a checkpoint restore puts back soil dug since the checkpoint**
+   - Plan: `plans/now/save-integrity.md` -- "SI-2 -- a checkpoint restore puts back soil dug since the checkpoint"
+   - Files: `scripts/saving.gd`, `tests/si2_exact_rollback_test.gd`, `tests/test_si2_exact_rollback.py`
+   - Check: `python -m unittest tests.test_si2_exact_rollback` passes with `SI2 PASS`; `python tools/run_scenario.py test_scenarios/sv1_named_saves_test.json` passes; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/saving.gd :: _add_soil_block`
+   - Next after: SI-3 -- save, checkpoint and index writes are all-or-nothing
 
 ### Codex lane
 
@@ -71,7 +71,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **GD-2** (`plans/now/guidance-explanations.md`) -- implement the accepted persistent entry point and first explanations; waits for Dave's GD-1 decision.
 - **CR-1** (`plans/now/crisis-readiness.md`) -- define the first-crisis readiness and evidence contract; waits for COL-8 and CD-2.
 - **CR-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; waits for Dave's CR-1 decision.
-- **SI-2** (`plans/now/save-integrity.md`) -- a checkpoint restore puts back soil dug since the checkpoint; ready after SI-1 and waits for the Claude lane to take its open queue block.
 - **SI-3** (`plans/now/save-integrity.md`) -- save, checkpoint and index writes are all-or-nothing; waits for SI-2.
 - **NF-2** (`plans/now/nectar-fermentation.md`) -- nectar ferments past an age; waits for COL-4 (Codex lane), which edits `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, and for NF-1's evidence.
 - **T2-8b** (`plans/now/tier-two.md`) -- the Shiver Cluster skill node and its run-start ownership; waits for T2-4a (Codex lane), which holds `scripts/skills.gd`, and for T2-8a.
