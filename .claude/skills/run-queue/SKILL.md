@@ -41,7 +41,8 @@ sitting in a `.worktrees/` directory:
    `advice.level`.
 3. **Dispatch.** Spawn the worker in the foreground
    (`run_in_background: false`). Its `subagent_type` comes from the level:
-   `slice-worker-low`, `-medium` or `-high`. If the level is `unstated`, use
+   `slice-worker-low` (Haiku 5.5), `-medium` (Sonnet 5.5) or `-high`
+   (Opus 5.5). If the level is `unstated`, use
    medium and say so in the report. The prompt is the `start` JSON
    verbatim, plus `ROOT=<ROOT>` and `WORKTREE=<ROOT>\.worktrees\<id>`.
    Nothing else: the worker's brief says what to do.
@@ -58,16 +59,20 @@ sitting in a `.worktrees/` directory:
    - Every changed file must be in `files`, or be the owning plan, a test,
      `checks/` or `FUNCTION_MAP.md`. Anything else goes back to the worker
      as a question.
-   - For a `medium` or `high` slice, run the `code-review` skill on the
-     branch (args `low <branch>` for medium, `medium <branch>` for high),
-     going by the plan's level, not your own sense of the risk. It reads
-     the diff itself, so don't also read it. A correctness finding inside
-     the slice's files goes back to the worker (SendMessage) once; anything
-     else goes in the trial note. Skip it for a `low` slice.
-     **The review ends with a `ReportFindings` call. That is one step of
-     this loop, not the end of your turn: in the same turn, carry straight
-     on.** A run on 1 Oct ended its turn there and left L-16 reviewed but
-     unfinished for six hours.
+   - Review every slice through a `slice-reviewer` subagent, in the
+     foreground. Its prompt is `ROOT=<ROOT>`, `BRANCH=<branch>`,
+     `LEVEL=<level>` and the `files` and `proof` from the `start` JSON.
+     `LEVEL` is `low` for a low or medium slice and `medium` for a high
+     one, going by the plan's level, not your own sense of the risk. Never
+     run `code-review` in this session or read the diff for it: a review
+     run here re-sent its reading on every later request, about a sixth of
+     a run's context (8 Oct 2026). A low slice is reviewed too, because
+     its worker is Haiku and a cheap tier is only cheap when checked.
+     A correctness finding with `in_slice: true` goes back to the worker
+     (SendMessage) once; anything else goes in the trial note. The
+     reviewer's reply is one step of this loop, not the end of your turn:
+     carry straight on (a run on 1 Oct stopped after a review and left
+     L-16 unfinished for six hours).
    - If the stat looks wrong, read the full diff of the code files (not the
      docs) and check it against `proof`.
    - Spot-check one claim from the worker's `check_run` by rerunning that
@@ -156,7 +161,9 @@ costs, and recommend one) only if either of these is true:
 ## Final report
 
 For each slice: the CLAUDE.md end-of-slice block, plus the worker type used
-and any reviews or retries. For each refill: the plan it came from, the
+and any reviews or retries. For a low slice, say whether the Haiku worker
+needed a retry or a review fix: that is the evidence for keeping it on
+Haiku or moving it back to Sonnet. For each refill: the plan it came from, the
 ids it added, and why that slice came next. Then a one-paragraph trial note covering what
 the worker got wrong, where you had to step in, and any change the worker
 brief or this skill needs. Fill in `Connectors: active now` from your own

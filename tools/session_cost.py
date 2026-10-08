@@ -62,7 +62,7 @@ PHASE_LABELS = {
 # direction; CLAUDE.md rule 4 treats both as mistakes. Matched by prefix,
 # because a transcript records a dated id such as claude-sonnet-5-20260401.
 LEVEL_MODELS = {
-    "low": ("claude-sonnet-5", "claude-haiku-4-5"),
+    "low": ("claude-sonnet-5", "claude-haiku-5-5"),
     "medium": ("claude-sonnet-5",),
     "high": ("claude-opus-5",),
 }

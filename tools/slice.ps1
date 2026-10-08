@@ -855,7 +855,12 @@ function Get-SliceAdvice {
     # Which model and which connectors a slice needs, derived from facts the
     # queue and plan already hold so every briefing and report agrees.
     # Model follows CLAUDE.md rule 4: the routine model for bounded work, the
-    # strongest only where the plan says the reasoning is hard. Connectors:
+    # strongest only where the plan says the reasoning is hard. Full model
+    # ids, as in .claude/agents/, so a model release never moves them
+    # silently. A low slice's /run-queue worker is Haiku 5.5, which matched
+    # Sonnet on bounded, checkable work (8 Oct 2026); a whole low session
+    # stays on Sonnet, since only the coordinator's review checks a worker.
+    # Connectors:
     # git, headless runs and file edits need no MCP connector, and every
     # enabled connector's tool listing is re-sent on every request, so the
     # default is all off; the Godot connector is worth its cost only when a
@@ -867,10 +872,10 @@ function Get-SliceAdvice {
     }
     else {
         $model = switch ($level) {
-            "high"   { "claude-opus-5" }
-            "medium" { "claude-sonnet-5" }
-            "low"    { "claude-sonnet-5 at low effort" }
-            default  { "claude-sonnet-5; the plan states no level -- say so in the report" }
+            "high"   { "claude-opus-5-5" }
+            "medium" { "claude-sonnet-5-5" }
+            "low"    { "claude-sonnet-5-5 at low effort (a /run-queue worker uses claude-haiku-5-5)" }
+            default  { "claude-sonnet-5-5; the plan states no level -- say so in the report" }
         }
     }
     $uiFile = @($Candidate.Files | Where-Object { $_ -match '\.(tscn|tres)$' -or $_ -match '^scripts/(hud|ui_[a-z_]+|[a-z_]+_panel|debug_panel|main)\.gd$' })

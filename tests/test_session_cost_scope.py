@@ -84,5 +84,17 @@ class SessionCostScopeTest(unittest.TestCase):
         self.assertIn("verify skips                 lifecycle tests=1", text)
 
 
+class WorkerAgentModelTest(unittest.TestCase):
+    """Each slice-worker agent's pinned model is one its level allows, so the
+    drift report never flags the routing it was built from (8 Oct 2026)."""
+
+    def test_worker_models_match_level_models(self):
+        agents = Path(__file__).resolve().parents[1] / ".claude" / "agents"
+        for level, prefixes in session_cost.LEVEL_MODELS.items():
+            text = (agents / f"slice-worker-{level}.md").read_text(encoding="utf-8")
+            model = next(line.split(":", 1)[1].strip() for line in text.splitlines() if line.startswith("model:"))
+            self.assertTrue(model.startswith(prefixes), f"{level}: {model} not in {prefixes}")
+
+
 if __name__ == "__main__":
     unittest.main()

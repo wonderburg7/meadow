@@ -1,7 +1,7 @@
 ---
 name: slice-worker-medium
 description: Implements one already-claimed Meadow slice whose plan states medium reasoning (bounded work with an acceptance check). Dispatched by the /run-queue coordinator with the slice's start JSON; not for direct invocation.
-model: sonnet
+model: claude-sonnet-5-5
 effort: medium
 tools: Bash, Read, Write, Edit, Grep, Glob
 ---
