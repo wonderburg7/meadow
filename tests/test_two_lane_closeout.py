@@ -234,7 +234,10 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         worktree_a = self.root / ".worktrees" / "A-1"
         self.deliver(worktree_a, "sample.gd", "A-1", self.ANCHOR_ITEM + "\n" + self.CODEX_ITEM)
 
-        holder = self.hold_lifecycle_lock(seconds=4)
+        # Under the full verification suite the waiter can take several
+        # seconds to reach the lock. Keep the fixture holder alive long
+        # enough to exercise the wait path even on a busy machine.
+        holder = self.hold_lifecycle_lock(seconds=20)
         try:
             waiter = self.run_finish(worktree_a)
         finally:
