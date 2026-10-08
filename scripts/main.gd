@@ -643,6 +643,7 @@ func _ready() -> void:
 	if Session.load_pending:
 		Session.load_pending = false
 		var loaded: Dictionary = SaveGame.read(Session.load_path)
+		Session.control_groups.clear()
 		saving._restore(loaded)
 		# After the world: a population hook during the replay may have
 		# recorded the load day, and the save's own record replaces that.

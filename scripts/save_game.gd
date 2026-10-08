@@ -114,6 +114,7 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 			"winter_here": Session.winter_here,
 			"winter_ends_day": Session.winter_ends_day,
 			"gynes_released": Session.gynes_released,
+			"crab_spider_species": Session.crab_spider_preferred_species,
 		},
 		"cells": _cells_data(world),
 		"soil": _soil_data(world),
@@ -129,6 +130,10 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 			"bans": Session.run_skill_bans.duplicate(),
 		},
 	}
+	if is_instance_valid(world.season):
+		data["session"]["disease"] = world.season.disease
+	if is_instance_valid(world.rival):
+		data["rival"] = world.rival.save_data()
 	# BS-14: says, at the top of the file, that developer edits changed this
 	# run's level policy at its start. Absent otherwise.
 	if Session.run_developer_changes:

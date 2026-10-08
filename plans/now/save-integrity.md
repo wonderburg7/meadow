@@ -95,6 +95,13 @@ itself.
 `python -m unittest tests.test_si1_run_state` passes and prints
 `SI1 PASS`.
 
+**SI-1 branch check (8 Oct 2026).** The headless round trip covers all
+three added save fields, a collapsed rival, revival during an in-place
+restore, older saves without the fields, and control groups cleared by a
+fresh load. `python -m unittest tests.test_si1_run_state` and
+`tools/verify.ps1 -Scope branch -Quiet` pass. The plan stays on SI-1 until
+the save-schema branch is reviewed and integrated.
+
 **Escalate** if `main.season` or `main.rival` is not yet built when
 `saving._restore` runs on a load, or if restoring `alive == false` needs
 anything beyond `_collapse()`.
