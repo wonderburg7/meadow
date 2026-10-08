@@ -37,6 +37,12 @@ folder holds a `slice-worker-*` dispatch.
   bound); reviews about 16%; queue and plan edits about 15%. The
   post-`finish` stretch is mostly `grep`/`sed` reads of plans and
   `NEXTSTEPS.md`, `git` calls, gate clearing (run-queue step 8) and refills.
+- Baseline from `python tools/session_cost.py --coordinator --days 14`
+  (8 Oct 2026, CX-1): 13 sessions, 1,374 requests, 196M context, 54
+  dispatches (the scratch script's 63 counted differently): about 3.6M per
+  dispatch; median per request 124K; median housekeeping share 9.3% per
+  session (0% to 55%), well under the scratch 47% upper bound, which counted
+  any "finish" command.
 - No single tool result is large (each adds about 1-2K); the cost is many
   small reads carried at a large context.
 - Since 8 Oct 2026 the reviews run in a `slice-reviewer` subagent
@@ -49,7 +55,6 @@ folder holds a `slice-worker-*` dispatch.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CX-1 | `session_cost.py --coordinator` reports each coordinator run's cost and its post-`finish` share | `tools/session_cost.py`, `tests/test_cx1_coordinator_cost.py`, `.claude/skills/run-queue/SKILL.md` | yes | medium |
 | CX-2 | a `queue-steward` subagent does the post-`finish` housekeeping and every refill | `.claude/agents/queue-steward.md`, `plans/reference/queue-steward.md`, `.claude/skills/run-queue/SKILL.md`, `tests/test_cx2_queue_steward.py` | after CX-1 | medium |
 
 **Dependencies.** CX-2 after CX-1: CX-1 records the baseline that CX-2's
@@ -65,56 +70,7 @@ to queue both at once, so whichever is queued second waits.
 and alone runs `start` and `finish`. `plans/reference/slice-worker.md` and
 the Codex coordinator (`.agents/skills/`) are out of scope.
 
-## CX-1 -- session_cost.py reports what each /run-queue coordinator spends, and where
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (a transcript report with a test; the transcript format is
-already handled by the functions it reuses).
-
-**True now.** `session_cost.py` reports cost by phase, stop and branch, and
-`_subagent_models` joins a worker dispatch to its transcript, but nothing
-picks out coordinator sessions. The numbers under "Current state" came from
-a throwaway script and cannot be rerun.
-
-**True afterwards.** `python tools/session_cost.py --coordinator --days N`
-prints one row per coordinator session (a top-level transcript whose
-`subagents/*.meta.json` names a `slice-worker-*` agent type): its first
-timestamp, requests, median and peak context per request, total context,
-worker dispatches, context per dispatch, and the share of context in
-requests made after a call to `slice.ps1 finish` and before the next
-`slice-worker-*` dispatch (the housekeeping share). Context per request is
-`input_tokens + cache_read_input_tokens + cache_creation_input_tokens` from
-each assistant message's `usage`, counted once per message `id`. A `finish`
-call is a Bash or PowerShell command containing both `slice.ps1` and
-`finish`, so a `grep finish` is not one. A footer gives the medians across
-sessions. It reuses `_transcript_files` for the window rather than
-re-walking `~/.claude/projects`.
-
-The run-queue skill's "Final report" gains one line: run
-`python tools/session_cost.py --coordinator --days 1` and paste the row for
-this session (the newest), so that every trial note carries its own number.
-
-The test builds a temporary home with one coordinator transcript (two
-dispatches, one `finish`, known `usage` values, one duplicated message id),
-one ordinary session and one subagent transcript, and proves: only the
-coordinator is reported; the totals, median and dispatch count match by
-hand; the housekeeping share counts only the requests between the `finish`
-and the next dispatch; a `grep finish` command does not open that stretch.
-
-After it lands, record the 14-day baseline the tool prints in "Current
-state" above, replacing the scratch-script figures if they differ.
-
-**Must not change.** Every existing `session_cost.py` option's output.
-
-```queue
-**[Claude] CX-1 -- session_cost.py reports what each /run-queue coordinator spends, and where**
-- Plan: `plans/now/coordinator-context.md` -- "CX-1 -- session_cost.py reports what each /run-queue coordinator spends, and where"
-- Files: `tools/session_cost.py`, `tests/test_cx1_coordinator_cost.py`, `.claude/skills/run-queue/SKILL.md`
-- Check: `python -m unittest tests.test_cx1_coordinator_cost` passes (only the coordinator is reported; totals, median and dispatches match by hand; the housekeeping share runs from a `slice.ps1 finish` call to the next dispatch and a `grep finish` does not open it); `python tools/session_cost.py --coordinator --days 14` prints the baseline, recorded in the plan; `tools/verify.ps1` is green
-- Proof: `absent: tools/session_cost.py :: --coordinator`
-- Next after: CX-2 -- a queue-steward subagent does the post-finish housekeeping and every refill
-```
+CX-1 shipped 2026-10-08; its specification is `plans/archive/CX-1_2026-10-08.md`.
 
 ## CX-2 -- a queue-steward subagent does the post-finish housekeeping and every refill
 

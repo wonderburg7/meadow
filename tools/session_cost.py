@@ -344,6 +344,124 @@ def _transcript_files(days, home=None):
     return files, primary, worktree
 
 
+def _is_coordinator(path):
+    """A top-level transcript whose subagents/*.meta.json names a slice-worker-* agent."""
+    for meta in (path.parent / path.stem / "subagents").glob("*.meta.json"):
+        try:
+            agent_type = json.loads(meta.read_text(encoding="utf-8")).get("agentType", "")
+        except Exception:
+            continue
+        if str(agent_type).startswith("slice-worker-"):
+            return True
+    return False
+
+
+def _is_finish_call(block):
+    if block.get("name") not in ("Bash", "PowerShell"):
+        return False
+    command = str((block.get("input") or {}).get("command", ""))
+    return "slice.ps1" in command and "finish" in command
+
+
+def _is_worker_dispatch(block):
+    if block.get("name") not in ("Agent", "Task"):
+        return False
+    return str((block.get("input") or {}).get("subagent_type", "")).startswith("slice-worker-")
+
+
+def _coordinator_stats(path):
+    """(first timestamp, per-request contexts, dispatches, housekeeping context) for one session.
+
+    Context per request is counted once per assistant message id. The
+    housekeeping stretch opens after a `slice.ps1 finish` call and closes at
+    the next slice-worker dispatch; the request that issues either is not in it.
+    """
+    seen = set()
+    contexts = []
+    dispatches = housekeeping = 0
+    first_ts = None
+    is_open = False
+    with path.open("r", encoding="utf-8") as fh:
+        for line in fh:
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            if first_ts is None and row.get("timestamp"):
+                first_ts = row["timestamp"]
+            if row.get("type") != "assistant":
+                continue
+            message = row.get("message", {})
+            usage = message.get("usage")
+            if not usage:
+                continue
+            msg_id = message.get("id")
+            if msg_id:
+                if msg_id in seen:
+                    continue
+                seen.add(msg_id)
+            context = (
+                usage.get("input_tokens", 0)
+                + usage.get("cache_read_input_tokens", 0)
+                + usage.get("cache_creation_input_tokens", 0)
+            )
+            contexts.append(context)
+            blocks = [
+                b for b in (message.get("content") or []) if isinstance(b, dict) and b.get("type") == "tool_use"
+            ]
+            dispatched = [b for b in blocks if _is_worker_dispatch(b)]
+            if is_open and not dispatched:
+                housekeeping += context
+            if dispatched:
+                dispatches += len(dispatched)
+                is_open = False
+            if any(_is_finish_call(b) for b in blocks):
+                is_open = True
+    return first_ts, contexts, dispatches, housekeeping
+
+
+def run_coordinator(files):
+    """One row per /run-queue coordinator session: what it spends and the housekeeping share."""
+    rows = []
+    for f in files:
+        if not _is_coordinator(f):
+            continue
+        try:
+            first_ts, contexts, dispatches, housekeeping = _coordinator_stats(f)
+        except Exception:
+            continue
+        if contexts:
+            rows.append((first_ts or "", contexts, dispatches, housekeeping))
+    rows.sort(key=lambda r: r[0])
+    if not rows:
+        print("no coordinator sessions in the window")
+        return
+    print("first request        reqs   median     peak       total  disp  ctx/disp  housekeeping")
+    shares, medians, totals, per_dispatch = [], [], [], []
+    for first_ts, contexts, dispatches, housekeeping in rows:
+        total = sum(contexts)
+        median = int(statistics.median(contexts))
+        per = total // dispatches if dispatches else 0
+        share = 100.0 * housekeeping / total if total else 0.0
+        print(
+            f"{first_ts[:19]:20s}{len(contexts):>5d}{median:>9d}{max(contexts):>9d}{total:>12d}"
+            f"{dispatches:>6d}{per:>10d}{share:>12.1f}%"
+        )
+        shares.append(share)
+        medians.append(median)
+        totals.append(total)
+        if dispatches:
+            per_dispatch.append(per)
+
+    def med(values):
+        return int(statistics.median(values)) if values else 0
+
+    print(
+        f"median of {len(rows)} sessions: median/request {med(medians)}, total {med(totals)}, "
+        f"context/dispatch {med(per_dispatch)}, housekeeping {statistics.median(shares):.1f}%"
+    )
+
+
 def _subagent_models(session, slice_id, home=None):
     """Models of the session's subagent transcripts dispatched for `slice_id`.
 
@@ -777,6 +895,11 @@ def main():
     parser.add_argument("--no-edit-reasons", action="store_true")
     parser.add_argument("--stops", action="store_true")
     parser.add_argument(
+        "--coordinator",
+        action="store_true",
+        help="one row per /run-queue coordinator session: context, dispatches, housekeeping share",
+    )
+    parser.add_argument(
         "--events",
         action="store_true",
         help="summarise the diagnostic event log: verify stages, sessions, cost by branch",
@@ -812,6 +935,10 @@ def main():
 
     if args.no_edit_reasons:
         run_no_edit_reasons(files)
+        return 0
+
+    if args.coordinator:
+        run_coordinator(files)
         return 0
 
     session_count = 0

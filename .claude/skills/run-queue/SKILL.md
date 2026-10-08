@@ -167,4 +167,6 @@ Haiku or moving it back to Sonnet. For each refill: the plan it came from, the
 ids it added, and why that slice came next. Then a one-paragraph trial note covering what
 the worker got wrong, where you had to step in, and any change the worker
 brief or this skill needs. Fill in `Connectors: active now` from your own
-tool list.
+tool list. Then run
+`python tools/session_cost.py --coordinator --days 1` and paste the newest row
+(this session's), so the trial note carries its own number.
