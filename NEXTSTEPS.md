@@ -35,40 +35,40 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] AR-3 -- the pacing report presents every alpha gate and its evidence boundary**
-   - Plan: `plans/now/alpha-route-evidence.md` -- "AR-3 -- the pacing report presents every alpha gate and its evidence boundary"
-   - Files: `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
-   - Check: `python -m unittest tests.test_pacing_gates` passes with five named alpha-gate rows, and missing crisis or gyne facts render as unavailable rather than in-band
-   - Proof: `present: tools/pacing_gates.py :: Not instrumented: 20m forage/weather crisis; 90m gyne release.`
-   - Next after: AR-4 -- a scripted Colony Run reaches and records all five gates
-
-2. **[Codex] COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns**
+1. **[Codex] COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns**
    - Plan: `plans/now/colony-run.md` -- "COL-12 -- the meadow reseeds as fast as it dies, and SF-1's 0.05 check returns"
    - Files: `scripts/main.gd`, `scripts/world_building.gd`, `tests/test_sf1_founding_flower_mix.py`, `test_scenarios/sf1_founding_flower_mix_test.json`
    - Check: `python -m unittest tests.test_sf1_founding_flower_mix` passes at 0.05 on the pinned seed and three others; `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
    - Proof: `present: tests/test_sf1_founding_flower_mix.py :: assertLessEqual(abs(initial_share - final_share), 0.20)`
    - Next after: COL-7 -- the mating window, genetic points and COL-2's narrower win
 
-3. **[Codex] SI-1 -- disease, crab-spider species and the rival colony survive a load**
+2. **[Codex] SI-1 -- disease, crab-spider species and the rival colony survive a load**
    - Plan: `plans/now/save-integrity.md` -- "SI-1 -- disease, crab-spider species and the rival colony survive a load"
    - Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/rival_hive.gd`, `scripts/main.gd`, `tests/si1_run_state_test.gd`, `tests/test_si1_run_state.py`
    - Check: `python -m unittest tests.test_si1_run_state` passes with `SI1 PASS`; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/save_game.gd :: crab_spider_species`
    - Next after: SI-2 -- a checkpoint restore puts back soil dug since the checkpoint
 
-4. **[Codex] T2-4a -- Cleaning gates taking out the dead larvae**
+3. **[Codex] T2-4a -- Cleaning gates taking out the dead larvae**
    - Plan: `plans/now/tier-two.md` -- "T2-4a -- Cleaning gates taking out the dead larvae"
    - Files: `scripts/actions.gd`, `scripts/challenge_stages.gd`, `scripts/skills.gd`, `tests/test_t2_4a_cleaning_gate.py`
    - Check: `python -m unittest tests.test_t2_4a_cleaning_gate` passes; `tools/verify.ps1` is green
    - Proof: `absent: scripts/actions.gd :: "skill": "skill.hive_mind.cleaning"`
    - Next after: T2-5 -- Weather sensing's rain half
 
-5. **[Codex] CD-2 -- missing workforce and blocked work become named, tested facts**
+4. **[Codex] CD-2 -- missing workforce and blocked work become named, tested facts**
    - Plan: `plans/now/diagnostic-readiness.md` -- "CD-2 -- missing workforce and blocked work become named, tested facts"
    - Files: `scripts/colony_diagnostics.gd`, `scripts/year_winter.gd`, `tests/test_colony_diagnostics.py`
    - Check: `python -m unittest tests.test_colony_diagnostics` passes with empty, staffed and blocked-cell fixtures; `tools/verify.ps1` is green
    - Proof: `present: scripts/colony_diagnostics.gd :: static func compute`
    - Next after: CD-3 -- waiting and travel get a deterministic diagnostic boundary
+
+5. **[Codex] GD-1 -- decide the causal-explanation contract**
+   - Plan: `plans/now/guidance-explanations.md` -- "GD-1 -- decide the causal-explanation contract"
+   - Files: `plans/now/guidance-explanations.md`, `plans/design/product-scope.md`
+   - Check: `python tools/check_docs.py` passes and GD-1 records one owner for facts, trigger policy and presentation
+   - Proof: `present: scripts/gallerin_panel.gd :: Nothing feeds it real prompts yet`
+   - Next after: GD-2 -- implement the accepted persistent entry point and first explanations
 
 ## Not in the queue, and why
 
