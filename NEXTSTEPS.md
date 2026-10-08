@@ -23,14 +23,7 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] CX-2 -- a queue-steward subagent does the post-finish housekeeping and every refill**
-   - Plan: `plans/now/coordinator-context.md` -- "CX-2 -- a queue-steward subagent does the post-finish housekeeping and every refill"
-   - Files: `.claude/agents/queue-steward.md`, `plans/reference/queue-steward.md`, `.claude/skills/run-queue/SKILL.md`, `tests/test_cx2_queue_steward.py`
-   - Check: `python -m unittest tests.test_cx2_queue_steward` passes (the agent pins claude-opus-5-5 without Agent or AskUserQuestion; the brief names the gates, refill and finish-stop jobs and both JSON shapes; the skill dispatches queue-steward and no longer holds the refill steps); `python tools/check_docs.py` passes; `tools/verify.ps1` is green
-   - Proof: `absent: .claude/skills/run-queue/SKILL.md :: queue-steward`
-   - Next after: none -- plans/now/coordinator-context.md is complete
-
-2. **[Claude] COL-8 -- winter die-back and spring regrowth**
+1. **[Claude] COL-8 -- winter die-back and spring regrowth**
    - Plan: `plans/now/colony-run.md` -- "COL-8 -- winter die-back and spring regrowth"
    - Files: `scripts/flower.gd`, `scripts/season.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_col8_winter_dieback.py`, `tests/col8_winter_dieback_test.gd`
    - Check: `python -m unittest tests.test_col8_winter_dieback` passes (an in-season flower holding nectar before the skip holds none just after it; on spring's first day its `season_strength()` is below the same date's value in a year with no winter behind it, and equal again by day 1 + `spring_regrowth_days`; the flower count is unchanged by the die-back; the run's first spring is unchanged); `python tools/pacing_gates.py` before and after is recorded here; a Godot boot is clean; `tools/verify.ps1` is green
