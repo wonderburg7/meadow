@@ -2,13 +2,10 @@
 
 season.gd::winter_bill multiplies the bill by
 GameConfig.winter_unclustered_multiplier while the colony does not own
-skill.hive_mind.shiver_cluster. Until T2-8b adds that node to skills.gd,
-season.gd::owns_shiver_cluster (through progression.gd::is_owned_or_absent)
-answers owned, so nothing in play changes.
+skill.hive_mind.shiver_cluster. T2-8b added that node: a run without
+"run_type": "colony" starts owning it, so only the Colony Run pays.
 
-To see the unowned path before the node exists, the headless script points
-season.gd's shiver_cluster_skill at a skill the catalogue does have and the
-run does not own, the one seam the code leaves for it. Everything else runs
+The headless script runs
 the shipping code: the bill, _winter_losses (with stand-in bees, as
 tests/test_col6_winter_skip.py does), problem_messages.gd's strip lines and
 winter_panel.gd's window. Requires a real Godot.
@@ -85,22 +82,25 @@ func _check() -> void:
 	session.winter_here = false
 	session.winter_starts_day = 20.0
 
-	# The node absent: owned, so the bill and everything else is as before.
+	# A non-Colony run starts owning the node (T2-8b): owned, as before.
+	var RunAvailability = load("res://scripts/run_availability.gd")
 	var progression = load("res://scripts/progression.gd").new()
 	session.progression = progression
-	print("T2_8A ABSENT_EXISTS %s" % Skills.has(Season.SHIVER_CLUSTER))
+	print("T2_8A EXISTS %s" % Skills.has(Season.SHIVER_CLUSTER))
+	var plain: Dictionary = RunAvailability.sheet_for({}, progression)
+	print("T2_8A START_PLAIN %s" % plain.starting.has(Season.SHIVER_CLUSTER))
+	var colony: Dictionary = RunAvailability.sheet_for({"run_type": "colony"}, progression)
+	print("T2_8A START_COLONY %s" % colony.starting.has(Season.SHIVER_CLUSTER))
+	progression.grant_temporary(Season.SHIVER_CLUSTER)
 	print("T2_8A ABSENT_OWNED %s" % Season.owns_shiver_cluster())
 	print("T2_8A ABSENT_BILL %s" % season.winter_bill(4, 1.0))
 	print("T2_8A ABSENT_LOSSES 4: %s" % _losses(season, bees, 4.0))
 	print("T2_8A ABSENT_STRIP %s" % _strip(messages, 18.0))
+	progression = load("res://scripts/progression.gd").new()
+	session.progression = progression
 
-	# Unowned: a skill the catalogue has and this run does not own.
-	var stand_in: String = ""
-	for skill_id in Skills.ids():
-		if not Skills.is_baseline(skill_id):
-			stand_in = skill_id
-			break
-	Season.shiver_cluster_skill = stand_in
+	# Unowned: the real node, not bought.
+	var stand_in: String = Season.SHIVER_CLUSTER
 	print("T2_8A UNOWNED_OWNED %s" % Season.owns_shiver_cluster())
 	print("T2_8A UNOWNED_BILL %s" % season.winter_bill(4, 1.0))
 	for held in [8.0, 4.0, 2.0, 1.0]:
@@ -177,9 +177,11 @@ class ShiverBillTest(unittest.TestCase):
             ShiverBillTest.seen = _run_script(self)
         return ShiverBillTest.seen
 
-    def test_with_the_node_absent_nothing_changes(self):
+    def test_a_non_colony_run_starts_owning_it_so_nothing_changes(self):
         seen = self.results()
-        self.assertEqual(seen["ABSENT_EXISTS"], "false")
+        self.assertEqual(seen["EXISTS"], "true")
+        self.assertEqual(seen["START_PLAIN"], "true")
+        self.assertEqual(seen["START_COLONY"], "false")
         self.assertEqual(seen["ABSENT_OWNED"], "true")
         self.assertEqual(float(seen["ABSENT_BILL"]), 4.0)
         self.assertEqual(seen["ABSENT_LOSSES 4"], "")

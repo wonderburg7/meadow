@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-6 -- Associative learning (specification needed) | Dependency: COL-4 and COL-6 landed; T2-4b follows T2-4a; T2-6 follows T2-5 | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: T2-6 -- Associative learning (specification needed); T2-4b needs specifying (T2-8b landed 9 Oct 2026) | Dependency: COL-4 and COL-6 landed; T2-4b follows T2-4a; T2-6 follows T2-5 | Verified: 2026-10-09
 
 ## Objective
 
