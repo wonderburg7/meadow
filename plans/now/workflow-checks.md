@@ -1,7 +1,7 @@
 # Workflow checks -- say what a waiting lane is waiting for, and catch latent tooling drift
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: WC-1 -- a deferral whose gate has cleared is flagged, in the Codex lane | Dependency: none; WC-1 to WC-5 run in order in the Codex lane (WC-1, WC-2 and WC-4 share `tools/check_docs.py`) | Verified: 2026-10-07
+Status: active | Owner: Dave / Codex | Next: WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane, in the Codex lane | Dependency: none; WC-1 to WC-5 run in order in the Codex lane (WC-1, WC-2 and WC-4 share `tools/check_docs.py`) | Verified: 2026-10-09
 
 ## Objective
 
@@ -20,14 +20,12 @@ cannot work, or a test.
 
 ## Current state
 
-Verified 7 Oct 2026 against master `27b645e`:
+Verified 9 Oct 2026 against master `4ca584c`:
 
-- `NEXTSTEPS.md`'s "Not in the queue, and why" names COL-4 as the gate for
-  NF-2, T2-5 to T2-7, BB-1 and the event director, and NF-1 for NF-2. Both
-  shipped (`plans/archive/COL-4_2026-10-07.md`,
-  `plans/archive/NF-1_2026-10-06.md`); `python tools/check_docs.py` says
-  nothing. `plans/README.md` rule 9 says it warns about the archived-id case,
-  but `check_queue_ids_are_unused` covers queued ids only.
+- `NEXTSTEPS.md`'s "Not in the queue, and why" names shipped gates including
+  COL-4 and NF-1 for NF-2. `python tools/check_docs.py` now warns once per
+  archived gate, while preserving an explicit `landed` or `shipped` note as
+  historical context; `plans/README.md` rule 9 names that expiry rule.
 - `refill_lane.py --delete AR-3 --top-up --lane Codex --dry-run` refuses
   with "no [Codex] item -- both lanes must have work", and
   `check_queue_lookahead`'s warning says only "specify the owning plan's next
@@ -50,7 +48,6 @@ Verified 7 Oct 2026 against master `27b645e`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| WC-1 | a deferral whose gate has cleared is flagged | `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py` | in the Codex lane (queued 9 Oct 2026, after T2-4a landed) | medium |
 | WC-2 | a dry-lane warning names the missing deferral and the specified blocks that could serve the lane | `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_wc2_dry_lane_report.py` | after WC-1 and room in the Codex lane | medium |
 | WC-3 | Codex's hooks log its sessions | `.codex/hooks.json`, `tests/test_wc3_codex_hooks.py` | in the Codex lane (queued 9 Oct 2026, after T2-4a landed) | medium |
 | WC-4 | a queue id with whitespace fails the documentation check | `tools/check_docs.py`, `tests/test_wc4_spaced_ids.py` | after WC-2 and room in the Codex lane | low |
@@ -69,41 +66,7 @@ below is deliberately gated until a lane slot opens.
 **Reads.** A slice reads its own section below and the functions it names
 (`python tools/func.py <file> <function>`), nothing else.
 
-## WC-1 -- a deferral whose gate has cleared is flagged
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (a regex over prose with one deliberate exemption).
-
-**True now.** A bullet under `NEXTSTEPS.md`'s "Not in the queue, and why"
-can keep naming a slice as its gate long after that slice shipped; nothing
-compares the ids in a bullet's reason with `plans/archive/`.
-
-**True afterwards.** A new `check_docs.py` function, called from `main()`
-beside `check_not_in_queue_reasons`, warns once per bullet for each id in
-the bullet's reason (the text after its bolded lead) that has a
-`plans/archive/<id>_*.md` record. The warning contains `waits for a shipped
-slice` and names the id, its archive file and the bullet's lead, and points
-at `plans/README.md` rule 9. An id followed within its clause by `landed` or
-`shipped` is exempt, because that sentence already records the gate as
-cleared. The id pattern matches the ids the queue uses (`COL-4`, `T2-4a`,
-`NF-1`, `L-24`). The test builds a temporary root with a `NEXTSTEPS.md` and
-archive files and proves: a stale gate warns; an unshipped gate does not;
-"T2-2 landed 7 Oct 2026" does not; the bolded lead's own id is never checked.
-
-**Must not change.** It is a warning, never an error: a shipped gate can
-still be a correct historical pointer in a sentence this rule cannot read.
-Do not edit the existing bullets to make the warning quiet; their owning
-plans re-verify their gates.
-
-```queue
-**[Codex] WC-1 -- a deferral whose gate has cleared is flagged**
-- Plan: `plans/now/workflow-checks.md` -- "WC-1 -- a deferral whose gate has cleared is flagged"
-- Files: `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py`
-- Check: `python -m unittest tests.test_wc1_stale_deferrals` passes (a stale gate warns, an unshipped gate and a "landed" clause do not); `python tools/check_docs.py` on master prints the warning for NF-2's COL-4 and NF-1; `tools/verify.ps1` is green
-- Proof: `absent: tools/check_docs.py :: waits for an archived slice`
-- Next after: WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane
-```
+WC-1 shipped 2026-10-09; its specification is `plans/archive/WC-1_2026-10-09.md`.
 
 ## WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane
 

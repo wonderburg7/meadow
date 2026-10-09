@@ -629,6 +629,42 @@ def check_not_in_queue_reasons(errors: list[str], text: str | None = None) -> No
             )
 
 
+def check_stale_deferrals(warnings: list[str], text: str | None = None,
+                          root: Path | None = None) -> None:
+    """Warn when a deferred item's stated gate has already shipped.
+
+    The bold lead identifies the deferred item, so only its following reason is
+    inspected.  A reason may deliberately record that a gate landed; that is a
+    historical note rather than a stale restriction.
+    """
+    if text is None:
+        text = (ROOT / "NEXTSTEPS.md").read_text(encoding="utf-8")
+    root = root or ROOT
+    not_queued_match = re.search(
+        r"^## Not in the queue, and why\s*$([\s\S]*?)(?=^## |\Z)", text, re.MULTILINE
+    )
+    if not not_queued_match:
+        return
+
+    slice_id = re.compile(r"\b[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-\d+[a-z]?\b")
+    for bullet in re.findall(r"^-\s+.*$", not_queued_match.group(1), re.MULTILINE):
+        lead = re.match(r"^-\s+\*\*(.+?)\*\*", bullet)
+        name = lead.group(1) if lead else bullet[:40]
+        reason = bullet[lead.end():] if lead else bullet
+        for match in slice_id.finditer(reason):
+            gate = match.group(0)
+            clause = re.split(r"[.;]", reason[match.end():], maxsplit=1)[0]
+            if re.search(r"\b(?:landed|shipped)\b", clause, re.IGNORECASE):
+                continue
+            archives = sorted((root / "plans" / "archive").glob(f"{gate}_*.md"))
+            for archive in archives:
+                warnings.append(
+                    f"NEXTSTEPS.md: '{name}' waits for a shipped slice {gate} "
+                    f"({archive.relative_to(root).as_posix()}) -- update the deferral; "
+                    "see plans/README.md rule 9"
+                )
+
+
 def check_queue_proofs(errors: list[str], text: str | None = None) -> None:
     """Each queue item's Proof: line must still hold against the code it names.
 
@@ -1254,6 +1290,7 @@ def main() -> int:
     check_queue_lookahead(warnings)
     check_queue_section_agreement(errors)
     check_not_in_queue_reasons(errors)
+    check_stale_deferrals(warnings)
     check_plan_queue_blocks(errors, warnings)
     check_markdown_links(errors)
     check_backticked_paths(errors)
