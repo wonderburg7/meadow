@@ -54,7 +54,7 @@ Verified 7 Oct 2026 against master `27b645e`:
 | WC-2 | a dry-lane warning names the missing deferral and the specified blocks that could serve the lane | `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_wc2_dry_lane_report.py` | after WC-1 and room in the Codex lane | medium |
 | WC-3 | Codex's hooks log its sessions | `.codex/hooks.json`, `tests/test_wc3_codex_hooks.py` | in the Codex lane (queued 9 Oct 2026, after T2-4a landed) | medium |
 | WC-4 | a queue id with whitespace fails the documentation check | `tools/check_docs.py`, `tests/test_wc4_spaced_ids.py` | after WC-2 and room in the Codex lane | low |
-| WC-5 | the two level-to-model tables are tested against each other | `tools/session_cost.py`, `tests/test_wc5_level_model_parity.py` | waits for room in the Codex lane | low |
+| WC-5 | the two level-to-model tables are tested against each other | `tools/session_cost.py`, `tests/test_wc5_level_model_parity.py` | yes -- the Codex lane has room (9 Oct 2026) | low |
 
 **Dependencies.** WC-1, WC-2 and WC-4 edit `tools/check_docs.py` and run in
 that order; WC-3 and WC-5 depend on nothing. None edits `tools/slice.ps1`,
@@ -222,7 +222,7 @@ comment above `LEVEL_MODELS` names the test instead of the word "mirrors".
 
 **Must not change.** Either table's values; `tools/slice.ps1`.
 
-```queue-gated
+```queue
 **[Codex] WC-5 -- the two level-to-model tables are tested against each other**
 - Plan: `plans/now/workflow-checks.md` -- "WC-5 -- the two level-to-model tables are tested against each other"
 - Files: `tools/session_cost.py`, `tests/test_wc5_level_model_parity.py`

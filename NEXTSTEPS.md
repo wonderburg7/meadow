@@ -30,6 +30,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/saving.gd :: _add_soil_block`
    - Next after: SI-3 -- save, checkpoint and index writes are all-or-nothing
 
+2. **[Claude] T2-8b -- Shiver Cluster, the skill**
+   - Plan: `plans/now/tier-two.md` -- "T2-8b -- Shiver Cluster, the skill"
+   - Files: `scripts/skills.gd`, `scripts/run_availability.gd`, `tests/test_t2_8a_shiver_bill.py`, `tests/test_t2_8b_shiver_skill.py`
+   - Check: `python -m unittest tests.test_t2_8b_shiver_skill tests.test_t2_8a_shiver_bill` passes (the node is Hive Mind tier 2 behind Backup roles; a level row without `"run_type": "colony"` starts owning it and the Colony Run does not; the Colony Run's `winter_bill` is the multiplied one until it is bought); a Godot boot is clean; `tools/verify.ps1` is green
+   - Proof: `absent: scripts/skills.gd :: shiver_cluster`
+   - Next after: T2-4b -- Bees that die in the hive leave bodies; winter's dead appear at spring
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -63,6 +70,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `present: scripts/year_winter.gd :: func _refresh_signals`
    - Next after: none -- diagnostic readiness is complete
 
+5. **[Codex] WC-5 -- the two level-to-model tables are tested against each other**
+   - Plan: `plans/now/workflow-checks.md` -- "WC-5 -- the two level-to-model tables are tested against each other"
+   - Files: `tools/session_cost.py`, `tests/test_wc5_level_model_parity.py`
+   - Check: `python -m unittest tests.test_wc5_level_model_parity` passes, and fails when one `LEVEL_MODELS` entry is edited by hand; `tools/verify.ps1` is green
+   - Proof: `present: tools/session_cost.py :: mirrors Get-SliceAdvice in`
+   - Next after: none -- plans/now/workflow-checks.md is complete
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
@@ -70,13 +84,11 @@ One line each: the id, its plan, and the single thing it waits for.
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation, Bee Bread and the gyne route.
 - **WC-2** (`plans/now/workflow-checks.md`) -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane; waits for WC-1 and room in the Codex lane.
 - **WC-4** (`plans/now/workflow-checks.md`) -- a queue id with whitespace fails the documentation check; waits for WC-2 and room in the Codex lane.
-- **WC-5** (`plans/now/workflow-checks.md`) -- the two level-to-model tables are tested against each other; waits for room in the Codex lane.
 - **GD-2** (`plans/now/guidance-explanations.md`) -- implement the accepted persistent entry point and first explanations; waits for Dave's GD-1 decision.
 - **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; waits for Dave's FC-1 decision.
 - **SI-3** (`plans/now/save-integrity.md`) -- save, checkpoint and index writes are all-or-nothing; waits for SI-2.
 - **NF-2** (`plans/now/nectar-fermentation.md`) -- nectar ferments past an age; waits for COL-4 (Codex lane), which edits `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, and for NF-1's evidence.
-- **T2-8b** (`plans/now/tier-two.md`) -- the Shiver Cluster skill node and its run-start ownership; waits for T2-5 (Codex lane), which holds `scripts/skills.gd`; T2-4a and T2-8a have landed (8 Oct 2026).
-- **T2-4b, T2-6 and T2-7** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-4b (bodies) is to be specified now T2-4a has landed (8 Oct 2026); T2-6 (Associative learning) is specified when T2-5, now in the Codex lane, lands; T2-7 (tier-2 prices) is to be specified now T2-1 to T2-3 and COL-4 have landed; T2-8b (Shiver Cluster's node) is its own line above.
+- **T2-4b, T2-6 and T2-7** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-4b (bodies) is to be specified now T2-4a has landed (8 Oct 2026); T2-6 (Associative learning) is specified and fenced `queue-gated`, and waits for Dave's decision on its familiarity rates, handling-speed cap and old-save default (T2-5 landed 9 Oct 2026); T2-7 (tier-2 prices) is to be specified now T2-1 to T2-3 and COL-4 have landed; T2-8b (Shiver Cluster's node) is queued in the Claude lane.
 - **BB-1 to BB-4** (`plans/now/bee-bread.md`) -- Bee Bread; BB-1 waits for COL-4 and NF-2 (`game_config.gd`, `hive_cell.gd`, `hive.gd`, the save files); the rest follow BB-1.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Gallerin guidance is the next design pass, now that step 8's ran on 6-7 Oct 2026 (booked by Dave, 5 Oct 2026); the event director's wait on the Colony Run's year (COL-4, COL-6) has cleared; it still needs its design pass. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/archive/colony-run_2026-10-08.md`).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).

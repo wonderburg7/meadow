@@ -55,7 +55,7 @@ Verified 7 Oct 2026 against master:
 | T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | to be specified now T2-4a has landed (8 Oct 2026) | no -- not yet specified; T2-4a and COL-6 have landed | high |
 | T2-6 | Associative learning: per-bee, per-species familiarity, saved | `scripts/skills.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd` | no -- rate and save acceptance need specification | high |
 | T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | specified when T2-1 to T2-3 and COL-4 have landed | no -- needs COL-4's year and the gates | medium |
-| T2-8b | Shiver Cluster, the skill: the node, and owned at run start outside the Colony Run | `scripts/skills.gd`, `scripts/run_availability.gd`, `tests/test_t2_8a_shiver_bill.py`, `tests/test_t2_8b_shiver_skill.py` | no -- after T2-5 (Codex lane, `skills.gd`; T2-4a landed 8 Oct 2026); specified, fenced `queue-gated` | medium |
+| T2-8b | Shiver Cluster, the skill: the node, and owned at run start outside the Colony Run | `scripts/skills.gd`, `scripts/run_availability.gd`, `tests/test_t2_8a_shiver_bill.py`, `tests/test_t2_8b_shiver_skill.py` | yes -- T2-4a, T2-8a and T2-5 landed (T2-5 freed `skills.gd`, 9 Oct 2026) | medium |
 
 **Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
 T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
@@ -111,8 +111,8 @@ is recorded in "Later slices" below; T2-5 does not choose those values.
 <!-- LAYER: immediate-task -->
 
 Level: medium (one catalogue row and one derived starting rule; the bill and
-the warning already exist). Gated: `scripts/skills.gd` is held by T2-5 in the
-Codex lane (T2-4a, which held it first, landed 8 Oct 2026). The design is `plans/design/progression.md` "Shiver Cluster".
+the warning already exist). Startable: T2-5, the last holder of
+`scripts/skills.gd`, landed 9 Oct 2026. The design is `plans/design/progression.md` "Shiver Cluster".
 
 **True now (after T2-8a).** `season.gd::owns_shiver_cluster` asks
 `progression.gd::is_owned_or_absent`, which answers owned while the catalogue
@@ -140,7 +140,7 @@ absent (`ABSENT_EXISTS false`).
 when the countdown starts and see the Shiver Cluster note and the doubled
 figure; buy the node and see both go.
 
-```queue-gated
+```queue
 **[Claude] T2-8b -- Shiver Cluster, the skill**
 - Plan: `plans/now/tier-two.md` -- "T2-8b -- Shiver Cluster, the skill"
 - Files: `scripts/skills.gd`, `scripts/run_availability.gd`, `tests/test_t2_8a_shiver_bill.py`, `tests/test_t2_8b_shiver_skill.py`
@@ -174,4 +174,4 @@ slice before it lands. The decisions they implement are in
 - **T2-7** -- one PE-2 arc sweep (`tools/pacing_gates.py`) prices the
   tier-2 recipes so a reasonable Colony Run's first tier-2 purchase lands
   around day 5; recorded with before/after.
-- **T2-8b** -- specified above, fenced `queue-gated` until T2-5 frees `skills.gd`.
+- **T2-8b** -- specified above and queued now T2-5 has freed `skills.gd`.
