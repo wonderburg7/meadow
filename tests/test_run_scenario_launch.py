@@ -40,6 +40,7 @@ class RunOncePreparesLaunchTest(unittest.TestCase):
         self.godot = str(Path(folder.name) / "Godot.exe")
         Path(self.godot).write_bytes(b"")
         for patch in (mock.patch.dict(run_scenario._prepared, clear=True),
+                      mock.patch.object(run_scenario, "PRIVATE_USER_ROOT", Path(folder.name) / "users"),
                       mock.patch.object(run_scenario, "session_file_for_run_id",
                                         return_value=SESSION)):
             patch.start()
@@ -68,6 +69,10 @@ class RunOncePreparesLaunchTest(unittest.TestCase):
                          [name for name, _args, _kwargs in calls.mock_calls])
         calls.ensure_cache.assert_called_once_with(run_scenario.ROOT, self.godot)
         self.assertEqual(1, stderr.count("godot cache: seeded from primary"))
+        # Each launch gets a user:// of its own (private_user_env).
+        homes = [kwargs["env"]["APPDATA" if run_scenario.os.name == "nt" else "XDG_DATA_HOME"]
+                 for _args, kwargs in calls.launch.call_args_list]
+        self.assertEqual(2, len(set(homes)))
 
     def test_a_refused_seed_fails_at_once_without_launching(self):
         refusal = ("godot cache: FAILED -- the primary checkout C:\\meadow does not boot "
@@ -79,6 +84,40 @@ class RunOncePreparesLaunchTest(unittest.TestCase):
         # Remembered: the second run does not boot the primary again.
         calls.ensure_cache.assert_called_once()
         self.assertEqual(2, stderr.count("error: not launching Godot -- " + refusal))
+
+
+class PrivateUserDirTest(unittest.TestCase):
+    """Every scenario run empties user://scenario_saves/ as it starts, so
+    runs side by side (verify.ps1's parallel modules) each need their own
+    user:// or one wipes another's saves between save_slot and restore_slot
+    (9 Oct 2026)."""
+
+    def setUp(self):
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        self.root = Path(folder.name) / "users"
+        patch = mock.patch.object(run_scenario, "PRIVATE_USER_ROOT", self.root)
+        patch.start()
+        self.addCleanup(patch.stop)
+
+    def test_two_runs_get_separate_user_dirs_and_saves(self):
+        first, second = (run_scenario.private_user_env(run_id) for run_id in ("aaa", "bbb"))
+        self.assertNotEqual(run_scenario.user_dir(first), run_scenario.user_dir(second))
+        self.assertTrue(run_scenario.user_dir(first).is_relative_to(self.root / "aaa"))
+        session = run_scenario.log_dir(first) / "session_x_aaa.jsonl"
+        self.assertEqual(run_scenario.user_dir(first) / "scenario_saves",
+                         run_scenario.scenario_saves_dir(session))
+        self.assertTrue((self.root / ".gdignore").is_file())
+
+    def test_a_new_run_clears_only_stale_user_dirs(self):
+        run_scenario.private_user_env("old")
+        run_scenario.private_user_env("recent")
+        stale = run_scenario.time.time() - run_scenario.PRIVATE_USER_KEEP_SECONDS - 60
+        run_scenario.os.utime(self.root / "old", (stale, stale))
+        run_scenario.private_user_env("new")
+        self.assertFalse((self.root / "old").exists())
+        self.assertTrue((self.root / "recent").is_dir())
+        self.assertTrue((self.root / "new").is_dir())
 
 
 class WindowedLaunchTest(unittest.TestCase):
@@ -103,6 +142,7 @@ class WindowedLaunchTest(unittest.TestCase):
         commands = {}
         for windowed in (False, True):
             with mock.patch.dict(run_scenario._prepared, clear=True), \
+                 mock.patch.object(run_scenario, "PRIVATE_USER_ROOT", Path(folder.name) / "users"), \
                  mock.patch.object(run_scenario, "ensure_writable_user_dir"), \
                  mock.patch.object(run_scenario.godot_cache, "ensure_cache", return_value=(True, "")), \
                  mock.patch.object(run_scenario, "session_file_for_run_id", return_value=SESSION), \

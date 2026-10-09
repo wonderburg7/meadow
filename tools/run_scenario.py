@@ -30,6 +30,7 @@ import json
 import os
 import random
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -37,7 +38,7 @@ import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from diagnostics import write_event  # noqa: E402
@@ -65,6 +66,9 @@ DEFAULT_TIMEOUT = 300
 # wall-clock timing.
 DEFAULT_FIXED_FPS = 30
 DEFAULT_RESULT_ROOT = Path(tempfile.gettempdir()) / "meadow-headless-results"
+# Each run's own user:// (private_user_env); ignored by Git and Godot.
+PRIVATE_USER_ROOT = ROOT / ".headless_user"
+PRIVATE_USER_KEEP_SECONDS = 6 * 3600
 BASELINE_PROBE_TIMEOUT = 30
 _WINDOWS_HEADLESS_ERROR_MODE = 0x0001 | 0x0002  # SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX
 
@@ -92,15 +96,17 @@ def _suppress_windows_crash_dialogs():
         kernel32.SetErrorMode(previous)
 
 
-def log_dir() -> Path:
-    # Matches diagnostic_log.gd's LOG_DIR ("user://logs"), resolved from the
-    # project name rather than a stale literal.  Godot uses config/name for
-    # the app_userdata directory, and a renamed project must not make a
-    # completed scenario look as though it wrote no result.
-    appdata = os.environ.get("APPDATA")
+def user_dir(env: Mapping[str, str] | None = None) -> Path:
+    """The Godot user:// folder a process launched with ``env`` (default:
+    this process's own environment) uses, resolved from the project name
+    rather than a stale literal -- a renamed project must not make a
+    completed scenario look as though it wrote no result.
+    """
+    env = os.environ if env is None else env
+    appdata = env.get("APPDATA")
     if not appdata and os.name != "nt":
         # Godot on Linux and macOS keeps user:// under XDG_DATA_HOME, not APPDATA.
-        data_home = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
+        data_home = env.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
         root = Path(data_home) / "godot" / "app_userdata"
     elif not appdata:
         raise RuntimeError("%APPDATA% not set -- can't find the Godot user:// dir")
@@ -110,7 +116,57 @@ def log_dir() -> Path:
     name_match = re.search(r'^config/name="([^"]+)"$', project_text, re.MULTILINE)
     if name_match is None:
         raise RuntimeError("project.godot has no config/name -- can't find the Godot user:// dir")
-    return root / name_match.group(1) / "logs"
+    return root / name_match.group(1)
+
+
+def log_dir(env: Mapping[str, str] | None = None) -> Path:
+    # Matches diagnostic_log.gd's LOG_DIR ("user://logs").
+    return user_dir(env) / "logs"
+
+
+def scenario_saves_dir(session_file: Path) -> Path:
+    """The scenario save slots (save_slots.gd's SCRATCH_ROOT) of the run
+    that wrote ``session_file``. Both live in that run's private user://
+    (see private_user_env), so a test reads its saves from here rather
+    than from this process's own user://.
+    """
+    return session_file.parent.parent / "scenario_saves"
+
+
+def private_user_env(run_id: str) -> dict[str, str]:
+    """A launch environment whose user:// belongs to this run alone.
+
+    Every scenario run empties user://scenario_saves/ as it starts
+    (save_slots.gd::use_scratch_root) and keeps only the newest few session
+    logs (diagnostic_log.gd::_prune_old_sessions). With one user:// shared by
+    every Godot on the machine, a run that started while another was between
+    save_slot and restore_slot wiped that run's save, and verify.ps1's
+    parallel modules hit it (9 Oct 2026). Pointing APPDATA (XDG_DATA_HOME
+    off Windows) at a folder named for the run gives each its own.
+
+    The folders sit in the worktree, not the system temp folder, because
+    Codex's sandbox can hide a temp folder's files from Python once the
+    Godot child exits. They outlive the run so callers can read the session
+    log and saves afterwards; each new run removes those older than
+    PRIVATE_USER_KEEP_SECONDS.
+    """
+    PRIVATE_USER_ROOT.mkdir(exist_ok=True)
+    marker = PRIVATE_USER_ROOT / ".gdignore"
+    if not marker.exists():
+        marker.write_text("", encoding="utf-8")
+    cutoff = time.time() - PRIVATE_USER_KEEP_SECONDS
+    for old in PRIVATE_USER_ROOT.iterdir():
+        try:
+            stale = old.is_dir() and old.stat().st_mtime < cutoff
+        except OSError:
+            continue
+        if stale:
+            shutil.rmtree(old, ignore_errors=True)
+    home = PRIVATE_USER_ROOT / run_id
+    home.mkdir()
+    env = dict(os.environ)
+    env["APPDATA" if os.name == "nt" else "XDG_DATA_HOME"] = str(home)
+    return env
 
 
 def _scenario_declares_seed(scenario_path: Path) -> bool:
@@ -128,14 +184,14 @@ def _scenario_declares_seed(scenario_path: Path) -> bool:
     return isinstance(data, dict) and "random_seed" in data
 
 
-def session_file_for_run_id(run_id: str) -> Path | None:
+def session_file_for_run_id(run_id: str, env: Mapping[str, str] | None = None) -> Path | None:
     """The session_*.jsonl this exact run wrote, found by the --run-id we
     passed at launch (CHATGPT_INSIGHTS_PLAN.md's A1) rather than by
     newest mtime -- two runs can share a filesystem mtime, and mtime alone
     can't tell this run's log apart from a stale file or Dave's own live
-    play session either.
+    play session either. ``env`` is the run's launch environment.
     """
-    d = log_dir()
+    d = log_dir(env)
     if not d.is_dir():
         return None
     candidates = list(d.glob("session_*_%s.jsonl" % run_id))
@@ -243,11 +299,12 @@ def run_once(scenario_path: Path, godot_path: str, timeout: int,
         # identical replays of main.gd's DEFAULT_RANDOM_SEED.
         cmd.append("--random-seed=%d" % random.randint(0, 2**31 - 1))
     print("running: %s" % " ".join(cmd))
+    env = private_user_env(run_id)
 
     start = time.time()
     try:
         with _suppress_windows_crash_dialogs():
-            result = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True)
+            result = subprocess.run(cmd, timeout=timeout, capture_output=True, text=True, env=env)
     except subprocess.TimeoutExpired:
         print("error: scenario run exceeded %ds timeout, killed" % timeout, file=sys.stderr)
         return None
@@ -258,7 +315,7 @@ def run_once(scenario_path: Path, godot_path: str, timeout: int,
         return None
     print("wall time: %.1fs" % (time.time() - start))
 
-    session_file = session_file_for_run_id(run_id)
+    session_file = session_file_for_run_id(run_id, env)
     if session_file is None:
         label = ("Godot exited with code %d and " % result.returncode if result.returncode != 0
                   else "") + "no session_*_%s.jsonl written after this run" % run_id
@@ -514,10 +571,11 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
     process_stdout = ""
     status = "passed"
     reason: dict[str, Any] | None = None
+    env = private_user_env(run_id)
     started_at = time.monotonic()
     try:
         with _suppress_windows_crash_dialogs():
-            process_outcome = run_headless_process(cmd, timeout)
+            process_outcome = run_headless_process(cmd, timeout, env=env)
             # A worktree cache left stale by a merge cannot resolve a new
             # script: refresh it from the primary and run once more.
             if process_outcome.kind not in ("timed_out", "environment_failure"):
@@ -528,7 +586,7 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
                         print(line, file=sys.stderr)
                     if retry:
                         session_path.unlink(missing_ok=True)
-                        process_outcome = run_headless_process(cmd, timeout)
+                        process_outcome = run_headless_process(cmd, timeout, env=env)
         returncode = process_outcome.returncode
         process_stdout = process_outcome.stdout
         process_output = "--- stdout ---\n%s\n--- stderr ---\n%s" % (

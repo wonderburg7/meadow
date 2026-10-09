@@ -6,8 +6,9 @@ one cell with nectar, lets it ferment and saves; tops it up and turns two
 miners into honey makers, waits and saves; stocks a second, fresh cell as a
 control, waits and saves; then restores the first save and saves again.
 
-The saves are read back from the scenario scratch root (save_slots.gd's
-SCRATCH_ROOT) and show, from the run itself, that the cell ferments, that the
+The saves are read back from the run's own scenario scratch root
+(save_slots.gd's SCRATCH_ROOT under the private user:// run_once gives it)
+and show, from the run itself, that the cell ferments, that the
 honey makers leave it alone while they do turn fresh nectar into honey, that
 the top-up keeps the old stamp, and that the stamp survives save and restore.
 """
@@ -15,12 +16,9 @@ the top-up keeps the old stamp, and that the stamp survives save and restore.
 from __future__ import annotations
 
 import json
-import os
 import sys
-import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
 TOOLS = ROOT / "tools"
@@ -28,7 +26,7 @@ sys.path.insert(0, str(TOOLS))
 
 from analyze_session import load_entries  # noqa: E402
 from godot_compile_check import find_godot  # noqa: E402
-from run_scenario import log_dir, run_once  # noqa: E402
+from run_scenario import run_once, scenario_saves_dir  # noqa: E402
 
 FIXTURE = ROOT / "test_scenarios" / "nf2_fermentation.json"
 SAVES = ("fermented", "skipped", "control", "restored")
@@ -51,22 +49,19 @@ class FermentationTest(unittest.TestCase):
         scenario = json.loads(FIXTURE.read_text(encoding="utf-8"))
         cls.hour = float(scenario["config_overrides"]["seconds_per_day"]) / 24.0
         cls.threshold = float(scenario["config_overrides"]["nectar_ferment_hours"]) * cls.hour
-        # Keep Godot's user:// files in the writable worktree. The Windows
-        # sandbox's temporary APPDATA can hide saved slots from Python after
-        # the Godot child process exits, despite a readable session log.
-        with tempfile.TemporaryDirectory(prefix="nf2-godot-", dir=ROOT) as appdata:
-            with patch.dict(os.environ, {"APPDATA": appdata}):
-                session_file = run_once(FIXTURE, godot_path, timeout=300, fixed_fps=30)
-                if session_file is None:
-                    raise AssertionError("scenario run produced no session log")
-                cls.rejected = [e for e in load_entries(session_file)
-                                if e.get("type") == "action" and e.get("result") == "rejected"]
-                scratch = log_dir().parent / "scenario_saves"
-                cls.saves = {}
-                for name in SAVES:
-                    path = scratch / ("nf2-%s.json" % name)
-                    if path.exists():
-                        cls.saves[name] = json.loads(path.read_text(encoding="utf-8"))
+        # run_once gives the run a user:// of its own, so its saves are read
+        # from there (scenario_saves_dir), safe from runs alongside it.
+        session_file = run_once(FIXTURE, godot_path, timeout=300, fixed_fps=30)
+        if session_file is None:
+            raise AssertionError("scenario run produced no session log")
+        cls.rejected = [e for e in load_entries(session_file)
+                        if e.get("type") == "action" and e.get("result") == "rejected"]
+        scratch = scenario_saves_dir(session_file)
+        cls.saves = {}
+        for name in SAVES:
+            path = scratch / ("nf2-%s.json" % name)
+            if path.exists():
+                cls.saves[name] = json.loads(path.read_text(encoding="utf-8"))
 
     def setUp(self):
         self.assertEqual(self.rejected, [], "a scenario action was rejected")
