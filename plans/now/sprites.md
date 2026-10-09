@@ -131,7 +131,7 @@ and measurements (`EMPTY_TEXTURE`, `EMPTY_TEXTURE_BASE_Y/_H`,
 ```queue
 **[Claude] SP-2 -- the sprite exporter, the sprite table and the generated catalogue**
 - Plan: `plans/now/sprites.md` -- "SP-2 -- the sprite exporter, the sprite table and the generated catalogue"
-- Files: `tools/sprites.py`, `tests/test_sp2_sprites.py`, `assets/sprites/`, `scripts/sprite_catalogue.gd`, `scripts/hive_cell.gd`, `tools/verify.ps1`
+- Files: `tools/sprites.py`, `tests/test_sp2_sprites.py`, `assets/sprites/SPRITES.md`, `assets/sprites/comb/wax_cell_nectar.aseprite`, `assets/sprites/comb/wax_cell_pollen.aseprite`, `assets/sprites/meadow/hive_skep.png`, `assets/sprites/meadow/grass_base.png`, `assets/sprites/bees/bee_forager_meadow.aseprite`, `assets/sprites/environment/wax.cell.empty.png`, `scripts/sprite_catalogue.gd`, `scripts/hive_cell.gd`, `tools/verify.ps1`
 - Check: `python -m unittest tests.test_sp2_sprites` passes and `python tools/sprites.py --check` is clean; `tools/verify.ps1` is green
 - Proof: `present: scripts/hive_cell.gd :: const EMPTY_TEXTURE :=`
 - Next after: SP-4 -- nectar and pollen fill levels drawn from the sprites
