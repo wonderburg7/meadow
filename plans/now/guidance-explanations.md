@@ -41,26 +41,9 @@ shipped behaviour.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| GD-1 | choose facts, trigger policy, history and presentation boundary | this plan, `plans/design/product-scope.md` | yes | high |
 | GD-2 | implement the accepted persistent entry point and first explanations | specified by GD-1 | after Dave accepts GD-1 | high |
 
-## GD-1 -- decide the causal-explanation contract
-
-<!-- LAYER: immediate-task -->
-
-Produce one decision record with options and costs for: which diagnostic facts
-may trigger guidance, when a first encounter becomes shown, how history is
-reopened, and how explanations offer responses without declaring a required
-organisation. It may update the scope link but changes no runtime code.
-
-```queue
-**[Codex] GD-1 -- decide the causal-explanation contract**
-- Plan: `plans/now/guidance-explanations.md` -- "GD-1 -- decide the causal-explanation contract"
-- Files: `plans/now/guidance-explanations.md`, `plans/design/product-scope.md`
-- Check: `python tools/check_docs.py` passes and GD-1 records one owner for facts, trigger policy and presentation
-- Proof: `present: scripts/gallerin_panel.gd :: Nothing feeds it real prompts yet`
-- Next after: GD-2 -- implement the accepted persistent entry point and first explanations
-```
+GD-1 shipped 2026-10-09; its specification is `plans/archive/GD-1_2026-10-09.md`.
 
 ## GD-2 -- implement the accepted persistent entry point and first explanations
 
