@@ -73,10 +73,12 @@ reaches for them without being told to.
 | About 60 minutes | The colony enters and survives its first winter. |
 | About 90 minutes | After emerging from winter, the colony raises and releases gynes, reaches formal victory and may continue. |
 
-The 20-minute crisis's trigger, readiness inputs, visible cause and scenario
-evidence are proposed in `plans/now/crisis-readiness.md` (FC-1). Its timing
-choice awaits Dave's decision; the 20-minute gate remains a player outcome,
-not a weather timer or a claim that automated display proves comprehension.
+The 20-minute crisis uses the bounded readiness gate accepted for FC-1 in
+`plans/now/crisis-readiness.md`: early automation, an able forager and food
+cover may bring forward one announced heavy-rain episode inside a measured
+window; the window's end runs it even if preparation is absent. The 20-minute
+gate remains a player outcome, not a claim that automated display proves
+comprehension.
 
 The build does not need every planned feature. It needs one complete route
 through the economy and skill tree to Gyne Rearing, representative pressures,

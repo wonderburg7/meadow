@@ -1,7 +1,7 @@
 # Crisis readiness -- decide a readable first pressure event before implementing it
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: FC-1 -- define the first-crisis readiness and evidence contract | Dependency: COL-8's season change and CD-2's diagnostic vocabulary both landed (8 and 9 Oct 2026) | Verified: 2026-10-09
+Status: active | Owner: Dave / Codex | Next: FC-2 -- implement the accepted crisis and deterministic scenario after its file owners land | Dependency: COL-8's season change and CD-2's diagnostic vocabulary landed; Dave accepted FC-1 option A; FC-2 waits for T2-4b, NF-3, BB-1 and CD-3 (9 Oct 2026) | Verified: 2026-10-09
 
 ## Objective
 
@@ -14,8 +14,8 @@ Run's archived CR-1 and CR-2 already hold those ids.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FC-1 | decide trigger, readiness, failure boundary and scenario evidence | this plan, `plans/design/product-scope.md` | yes -- COL-8 and CD-2 landed | high |
-| FC-2 | implement the accepted crisis and deterministic scenario | specified by FC-1 | after Dave accepts FC-1 | high |
+| FC-1 | decide trigger, readiness, failure boundary and scenario evidence | this plan, `plans/design/product-scope.md` | accepted -- closeout pending | high |
+| FC-2 | implement the accepted crisis and deterministic scenario | see its `Files:` line below | after FC-1, T2-4b, NF-3, BB-1 and CD-3 land | high |
 
 ## FC-1 -- define the first-crisis readiness and evidence contract
 
@@ -33,9 +33,8 @@ schedule a first crisis against elapsed play or colony preparation. Rain already
 dilutes nectar, increases flight cost and can keep foragers in; FC-2 should use
 those simulation rules for the outcome rather than add a scripted loss.
 
-**Decision for Dave before FC-2.** Which rule schedules the first serious
-forage-and-weather crisis in the Colony Run? Reply `FC-1: A`, `FC-1: B` or
-`FC-1: C`; record the accepted choice in this section before FC-2 starts.
+**Accepted decision (Dave, 9 Oct 2026): A, bounded readiness gate.** The
+alternatives and their costs remain below as the record of that choice.
 
 | Trigger | Player consequence | Cost |
 | --- | --- | --- |
@@ -43,12 +42,17 @@ forage-and-weather crisis in the Colony Run? Reply `FC-1: A`, `FC-1: B` or
 | **B: fixed first episode.** Announce and run one heavy-rain episode at a fixed elapsed-play or game-day point, independent of preparation. | The player can learn the timetable; a slow start may be hit before useful automation. | Simpler scheduling and replay; readiness affects only the result, so Easy's readiness-weighted timing would need a separate explicit rule. |
 | **C: existing random rain only.** Keep the current rolls and let the first qualifying storm count. | Some runs may meet no serious crisis near 20 minutes; others may be hit too early. | No new scheduler, but it cannot by itself satisfy the 20-minute experience gate or give a bounded scenario. |
 
-**Proposed readiness and outcome contract, if A is accepted.** A working
-forager means at least one living worker assigned and able to forage, rather
+**Readiness and outcome contract.** The first episode cannot start before the
+measured 20-minute window opens. Within that window, the early automation
+milestone, a working forager and food cover allow it to start; at the window's
+end it starts after warning even if these inputs are still absent. FC-2 must
+set the window's numeric bounds from deterministic pacing evidence, with the
+20-minute experience gate inside it, and record those bounds in its scenario.
+A working forager means at least one living worker assigned and able to forage, rather
 than merely a purchased role. Food reserve means stored brood/adult food can
 cover a measured rain-length interruption at the current consumption rate;
-FC-2 must name the existing diagnostic or simulation owner that calculates
-both inputs and choose the numeric threshold from scenario evidence. Readiness
+FC-2 must derive both inputs through the existing diagnostic or simulation
+owner and choose the numeric threshold from scenario evidence. Readiness
 can move the episode within its window but cannot cancel it. The episode's
 pressure is reduced forage income through the existing rain rules. Running
 short of food, brood loss or recovery follows ordinary simulation; the event
@@ -81,6 +85,13 @@ check can establish whether someone understands the cause or chooses a useful
 response. Do not claim comprehension from warning display, "Why?" use or a
 scripted action alone.
 
+The run-save format must retain whether the first episode is pending, active
+or spent, plus any scheduled start, so a load cannot repeat or skip it. The
+existing three-slot checkpoint rotation should write a checkpoint immediately
+before this major crisis, independently of the five-day cadence, without
+touching the player's named save. Ordinary random rain remains available
+outside the first episode and must not overlap it.
+
 ```queue
 **[Codex] FC-1 -- define the first-crisis readiness and evidence contract**
 - Plan: `plans/now/crisis-readiness.md` -- "FC-1 -- define the first-crisis readiness and evidence contract"
@@ -92,14 +103,30 @@ scripted action alone.
 
 ## FC-2 -- implement the accepted crisis and deterministic scenario
 
-Specified only after FC-1 records Dave's decision and owns no file held by the
-season work.
+Implement option A in the existing weather owner rather than introducing a
+parallel event director. Derive readiness from live simulation/diagnostic
+facts; evaluate it on a bounded tick or milestone change, not in each bee's
+frame. Use existing rain simulation for the outcome. Add a warning and
+persistent causal explanation, save/restore the one-shot state, create the
+pre-crisis checkpoint, and record prepared and unprepared pinned-seed runs.
+The scenario check must observe the actual rain, forage and store effects,
+plus save/restore across the trigger; a displayed warning alone is not proof.
+File a hands-on check for whether a player can diagnose and answer the event.
+
+The implementation files remain held by other queued work: T2-4b, NF-3 and
+BB-1 own `scripts/save_game.gd` and `scripts/saving.gd`; BB-1 also owns
+`scripts/hud.gd`; CD-3 owns `scripts/colony_diagnostics.gd`. Recheck ownership
+and the file list when they land; FC-2 stays gated until then.
 
 ```queue-gated
 **[Codex] FC-2 -- implement the accepted crisis and deterministic scenario**
 - Plan: `plans/now/crisis-readiness.md` -- "FC-2 -- implement the accepted crisis and deterministic scenario"
-- Files: specified by FC-1
-- Check: specified by FC-1
-- Proof: `present: plans/now/crisis-readiness.md :: ## FC-1 -- define the first-crisis readiness and evidence contract`
+- Files: `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `scripts/colony_diagnostics.gd`, `scripts/scenario_actions.gd`, `test_scenarios/fc2_first_crisis_prepared.json`, `test_scenarios/fc2_first_crisis_unprepared.json`, `tests/test_fc2_first_crisis.py`, `plans/now/crisis-readiness.md`
+- Check: `python tests/test_fc2_first_crisis.py` passes and traces one announced crisis, its weather/forage/store effect, and save/restore on prepared and unprepared runs; file a played comprehension check
+- Proof: `present: scripts/main.gd :: func _advance_weather`
 - Next after: none -- crisis readiness is complete
 ```
+
+## Not in the queue, and why
+
+- **FC-2** waits for T2-4b, NF-3 and BB-1 to release save/HUD files and for CD-3 to release diagnostics, then its `Files:` line must be rechecked before admitting it.
