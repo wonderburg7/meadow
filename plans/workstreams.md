@@ -46,4 +46,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.claude/worktrees/run-queue-6-2ba689` (`claude/run-queue-6-2ba689`) | Claude (docs only) | queue gates and Claude-lane refill: open NF-2, specify T2-4b | Claude | in progress | none | `plans/now/nectar-fermentation.md` NF-2; `plans/now/tier-two.md` T2-4b |
