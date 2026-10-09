@@ -53,7 +53,6 @@ Verified 7 Oct 2026 against master:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | to be specified now T2-4a has landed (8 Oct 2026) | no -- not yet specified; T2-4a and COL-6 have landed | high |
-| T2-5 | Weather sensing's rain half, Rain recall, and rain on in the Colony Run | `scripts/skills.gd`, `scripts/bee_status.gd`, `scripts/bee_foraging.gd`, `scripts/bee.gd`, `scripts/main.gd`, `scripts/levels.gd`, `tests/test_t2_5_rain_skills.py`, `tests/t2_5_rain_skills_test.gd` | yes -- COL-4 and T2-3 landed | medium |
 | T2-6 | Associative learning: per-bee, per-species familiarity, saved | `scripts/skills.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd` | no -- rate and save acceptance need specification | high |
 | T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | specified when T2-1 to T2-3 and COL-4 have landed | no -- needs COL-4's year and the gates | medium |
 | T2-8b | Shiver Cluster, the skill: the node, and owned at run start outside the Colony Run | `scripts/skills.gd`, `scripts/run_availability.gd`, `tests/test_t2_8a_shiver_bill.py`, `tests/test_t2_8b_shiver_skill.py` | no -- after T2-5 (Codex lane, `skills.gd`; T2-4a landed 8 Oct 2026); specified, fenced `queue-gated` | medium |
@@ -84,53 +83,7 @@ COL-4 shipped 2026-10-07; its specification is `plans/archive/COL-4_2026-10-07.m
 
 T2-4a shipped 2026-10-08; its specification is `plans/archive/T2-4a_2026-10-08.md`.
 
-## T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (bounded rain behaviour and run-specific weather policy).
-
-**True now.** `bee_status.gd::grounded` stops new trips only when current rain
-intensity passes `rain_forage_limit`. Outdoor bees in `SEEK_FLOWER` or
-`SEARCHING` already turn home at that intensity; bees in other outdoor tasks
-continue their work.
-`main.gd::_advance_weather` requires `GameConfig.weather_on`, so the Colony
-Run's level row cannot turn rain on when the global setting is off. Weather
-sensing and Rain recall are authored in `skills.gd` but have no effect.
-
-**True afterwards.** With Weather sensing owned, the departure check reads
-the approaching `main.gd::rain_target` at the same forage limit; without it,
-the check still reads current intensity. With Rain recall owned, bees already
-outside in other tasks, including travel, inspection and collection, head
-home when current intensity passes that limit. Neither skill
-changes nectar dilution or flight cost. The Colony Run row explicitly enables
-rain even if `GameConfig.weather_on` is false. Challenge rows keep rain off;
-Scenario rows without a weather override still follow the setting. The two
-skills become `existing` in the tree. Run PE-2's three-seed arc before and
-after and record any pacing change here.
-
-**Must not change.** Current rain safety without either skill, save fields for
-weather, and the existing weather behaviour of Challenges and Scenarios.
-
-```queue
-**[Codex] T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run**
-- Plan: `plans/now/tier-two.md` -- "T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run"
-- Files: `scripts/skills.gd`, `scripts/bee_status.gd`, `scripts/bee_foraging.gd`, `scripts/bee.gd`, `scripts/main.gd`, `scripts/levels.gd`, `tests/test_t2_5_rain_skills.py`, `tests/t2_5_rain_skills_test.gd`
-- Check: `python -m unittest tests.test_t2_5_rain_skills` passes (owned and unowned departures, outside recall, level weather policy); `python tools/pacing_gates.py` before and after is recorded here; `tools/verify.ps1` is green
-- Proof: `absent: scripts/bee_status.gd :: WEATHER_SENSING`
-- Next after: T2-6 -- Associative learning
-```
-
-**PE-2 three-seed arc (2026-10-09).** `python tools/pacing_gates.py`
-was run from clean master (`594c3c6`) for the before baseline and from this
-branch after the rain changes. Both runs reported first worker median day
-16.87 (target 1.50, out of band), first automation/crisis/winter
-survival/gyne unavailable, and per-seed first workers on days 16.87, 22.27
-and 16.87. Seeds 20260924 and 20260925 survived winter with 9 and 3 bees;
-20260923 died. No measured pacing gate changed. C-117 is filed for the
-visible rain timing in the Colony Run.
-
-T2-8a shipped 2026-10-08; its specification is `plans/archive/T2-8a_2026-10-08.md`.
+T2-5 shipped 2026-10-09; its specification is `plans/archive/T2-5_2026-10-09.md`.
 
 ## T2-6 -- Associative learning
 
