@@ -47,4 +47,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/SI-2` (`claude/SI-2`) | Claude | a checkpoint restore puts back soil dug since the checkpoint | Claude | in progress | none | `plans/now/save-integrity.md` SI-2 -- a checkpoint restore puts back soil dug since the checkpoint |
-| `.worktrees/CD-2` (`codex/CD-2`) | Codex | missing workforce and blocked work become named, tested facts | Codex | in progress | none | `plans/now/diagnostic-readiness.md` CD-2 -- missing workforce and blocked work become named, tested facts |
