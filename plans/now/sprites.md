@@ -77,7 +77,6 @@ Verified 9 Oct 2026 against master and the main checkout:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | SP-2 | the sprite exporter, the sprite table and the generated catalogue; art moves into the new folders | tools/sprites.py and its test, assets/sprites/, scripts/sprite_catalogue.gd, `scripts/hive_cell.gd`, `tools/verify.ps1` | yes -- SP-1 landed 9 Oct 2026; queued in the Claude lane | medium |
-| SP-3 | cell colours follow the new sprites; honey moves off orange | `scripts/hive_cell.gd`, `scripts/bee.gd`, `tests/test_sp3_content_colours.py` | yes -- queued in the Claude lane | medium |
 | SP-4 | nectar and pollen fill levels drawn from the sprites | `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, the sprite table and catalogue, tests | after SP-2 and SP-3 | medium |
 | SP-5 | the skep in the meadow, and the rival hive as a recoloured skep | `scripts/hive.gd`, `scripts/rival_hive.gd`, the sprite table and catalogue, tests | after SP-2 | medium |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for Dave's repacked sheet | high (per-bee hot path) |
@@ -137,30 +136,7 @@ and measurements (`EMPTY_TEXTURE`, `EMPTY_TEXTURE_BASE_Y/_H`,
 - Next after: SP-4 -- nectar and pollen fill levels drawn from the sprites
 ```
 
-## SP-3 -- cell colours follow the new sprites
-
-**True now.**
-
-- `NECTAR_COLOR` is pale blue (0.747, 0.834, 0.8525) and `POLLEN_COLOR`
-  is gold (0.97, 0.78, 0.22).
-- `HONEY_COLOR` (0.85, 0.42, 0.05) and `HONEY_WET_COLOR`
-  (0.78, 0.55, 0.18) sit 0.08-0.10 from the new pollen orange.
-- `bee.gd`'s load dot is pale yellow for pollen and pale blue for nectar.
-
-**True afterwards.**
-
-- `NECTAR_COLOR` is the sprite lime (187,248,36) and `POLLEN_COLOR` is the
-  sprite orange (255,123,0), exactly.
-- Honey becomes a darker amber, starting from about (0.55, 0.27, 0.04),
-  and is re-tuned with `HONEY_WET_COLOR` until the test passes. As
-  proposed, it sits 0.07 from `SITE_COLOR`, so expect to nudge it.
-- The load dot uses lime and orange.
-- A Python test asserts that every pair of cell-content colours is at
-  least 0.10 apart in OKLab. The set is empty wax, nectar, fermented,
-  pollen, wet and ripe honey, brood, jelly, gyne brood, corpse, site, and
-  bee bread once it exists.
-- Hands-on for Dave: a comb holding each content side by side, also in
-  colour-blind mode.
+SP-3 shipped 2026-10-09; its specification is `plans/archive/SP-3_2026-10-09.md`.
 
 ## SP-4 -- nectar and pollen fill levels drawn from the sprites
 
