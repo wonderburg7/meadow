@@ -1,7 +1,7 @@
 # Nectar fermentation -- unprocessed nectar ferments, and tipsy bees pay for it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: NF-1 is built (nectar age is measured); NF-2 is specified and gated on COL-4 (Codex lane, `plans/archive/colony-run_2026-10-08.md`), which holds `scripts/game_config.gd` and `scripts/settings_catalogue.gd` | Dependency: COL-4 for NF-2 onwards | Verified: 2026-10-06
+Status: active | Owner: Dave / Claude Code | Next: NF-2 -- nectar ferments past an age, queued in the Claude lane (its gates, NF-1 and COL-4, have landed) | Dependency: none for NF-2; NF-3 to NF-5 follow it | Verified: 2026-10-09
 
 ## Objective
 
@@ -78,22 +78,19 @@ Verified 6 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| NF-2 | nectar ferments past an age, changes colour, and is lost to honey makers | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf2_fermentation.py`, `test_scenarios/nf2_fermentation.json` | no -- after COL-4 (shares `game_config.gd`, `settings_catalogue.gd`) and NF-1 (its threshold comes from NF-1's numbers) | high |
+| NF-2 | nectar ferments past an age, changes colour, and is lost to honey makers | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf2_fermentation.py`, `test_scenarios/nf2_fermentation.json` | yes -- COL-4 (7 Oct 2026) and NF-1 (6 Oct 2026) have landed | high |
 | NF-3 | a bee that drinks fermented nectar goes tipsy (decision 3) | specified after NF-2 | no -- after NF-2 | high |
 | NF-4 | the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; without it, closest first (decisions 4-5) | specified after NF-3 | no -- after NF-3 | high |
 | NF-5 | an order to clear fermented cells, extending today's restock orders (decision 6) | specified after NF-2 | no -- after NF-2 | medium |
 
 **Dependencies.** NF-1, then NF-2. NF-3 and NF-5 each follow NF-2, and
-NF-4 follows NF-3. NF-2 waits for COL-4 in the Codex lane, which edits
-`scripts/game_config.gd` and `scripts/settings_catalogue.gd`. COL-6 and
-COL-11 (`plans/archive/colony-run_2026-10-08.md`) are gated on COL-4 too, and COL-11
-shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` with NF-2.
-Whichever of NF-2 and COL-11 is queued second waits for the other's merge,
-as the one-branch lane already ensures. Bee Bread's BB-1
+NF-4 follows NF-3. NF-2's gates, COL-4 and COL-11 (both in
+`plans/archive/colony-run_2026-10-08.md`), have landed. Bee Bread's BB-1
 (`plans/now/bee-bread.md`) waits for NF-2: it shares `hive_cell.gd`,
-`hive.gd` and the save files. SI-1 to SI-3 (`plans/now/save-integrity.md`)
-also edit `save_game.gd` and `saving.gd`, so NF-2 is never in the other
-lane while one of them is queued. NF-4's node joins Colony tier 2, which
+`hive.gd` and the save files. SI-3 (`plans/now/save-integrity.md`) and
+T2-4b (`plans/now/tier-two.md`) also edit `save_game.gd`, `saving.gd` and
+(T2-4b) `hive.gd`; all three sit in the Claude lane, which runs them one
+branch at a time, so none may move to the Codex lane while another is queued. NF-4's node joins Colony tier 2, which
 `plans/now/tier-two.md` T2-7 prices if NF-4 has landed by then.
 
 NF-1 shipped 2026-10-06; its specification is `plans/archive/NF-1_2026-10-06.md`.
@@ -132,7 +129,7 @@ ferments.
 **Must not change.** Ripe-honey ripening, eating order, and every other
 cell content type.
 
-```queue-gated
+```queue
 **[Claude] NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers**
 - Plan: `plans/now/nectar-fermentation.md` -- "NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers"
 - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf2_fermentation.py`, `test_scenarios/nf2_fermentation.json`

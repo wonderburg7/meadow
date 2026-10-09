@@ -30,6 +30,20 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/save_slots.gd :: write_atomic`
    - Next after: none -- plans/now/save-integrity.md is complete once SI-3 lands
 
+2. **[Claude] NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers**
+   - Plan: `plans/now/nectar-fermentation.md` -- "NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers"
+   - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf2_fermentation.py`, `test_scenarios/nf2_fermentation.json`
+   - Check: `python -m unittest tests.test_nf2_fermentation` passes (a cell ferments, honey makers skip it, a top-up leaves it fermented, its stamp survives save and restore); `tools/verify.ps1` is green
+   - Proof: `absent: scripts/hive_cell.gd :: func is_fermented`
+   - Next after: NF-3 -- a bee that drinks fermented nectar goes tipsy
+
+3. **[Claude] T2-4b -- Bees that die in the hive leave bodies; winter's dead appear at spring**
+   - Plan: `plans/now/tier-two.md` -- "T2-4b -- Bees that die in the hive leave bodies; winter's dead appear at spring"
+   - Files: `scripts/hive_body.gd`, `scripts/hive.gd`, `scripts/bee_survival.gd`, `scripts/season.gd`, `scripts/bee_building.gd`, `scripts/bee.gd`, `scripts/actions.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/t2_4b_bodies_test.gd`, `tests/test_t2_4b_bodies.py`
+   - Check: `python -m unittest tests.test_t2_4b_bodies` passes with `T2-4B PASS`; `python tools/run_scenario.py test_scenarios/col6_winter_skip_test.json` passes; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/game_config.gd :: max_hive_bodies`
+   - Next after: T2-6 -- Associative learning
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -72,9 +86,8 @@ One line each: the id, its plan, and the single thing it waits for.
 - **WC-4** (`plans/now/workflow-checks.md`) -- a queue id with whitespace fails the documentation check; waits for WC-2 and room in the Codex lane.
 - **GD-2** (`plans/now/guidance-explanations.md`) -- implement the accepted persistent entry point and first explanations; waits for Dave's GD-1 decision.
 - **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; waits for Dave's FC-1 decision.
-- **NF-2** (`plans/now/nectar-fermentation.md`) -- nectar ferments past an age; waits for COL-4 (Codex lane), which edits `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, and for NF-1's evidence.
-- **T2-4b, T2-6 and T2-7** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-4b (bodies) is to be specified now T2-4a has landed (8 Oct 2026); T2-6 (Associative learning) is specified and fenced `queue-gated`, and waits for Dave's decision on its familiarity rates, handling-speed cap and old-save default (T2-5 landed 9 Oct 2026); T2-7 (tier-2 prices) is to be specified now T2-1 to T2-3 and COL-4 have landed; T2-8b (Shiver Cluster's node) is queued in the Claude lane.
-- **BB-1 to BB-4** (`plans/now/bee-bread.md`) -- Bee Bread; BB-1 waits for COL-4 and NF-2 (`game_config.gd`, `hive_cell.gd`, `hive.gd`, the save files); the rest follow BB-1.
+- **T2-6 and T2-7** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-6 (Associative learning) is specified and fenced `queue-gated`, and waits for Dave's decision on its familiarity rates, handling-speed cap and old-save default; T2-7 (tier-2 prices) is still to be specified, and T2-6's block names it next. T2-8b landed 9 Oct 2026; T2-4b (bodies) is queued in the Claude lane.
+- **BB-1 to BB-4** (`plans/now/bee-bread.md`) -- Bee Bread; BB-1 waits for NF-2, queued in the Claude lane (`game_config.gd`, `hive_cell.gd`, `hive.gd`, the save files; COL-4 has landed); the rest follow BB-1.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Gallerin guidance is the next design pass, now that step 8's ran on 6-7 Oct 2026 (booked by Dave, 5 Oct 2026); the event director's wait on the Colony Run's year (COL-4, COL-6) has cleared; it still needs its design pass. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/archive/colony-run_2026-10-08.md`).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts

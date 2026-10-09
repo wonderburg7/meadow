@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-6 -- Associative learning (specification needed); T2-4b needs specifying (T2-8b landed 9 Oct 2026) | Dependency: COL-4 and COL-6 landed; T2-4b follows T2-4a; T2-6 follows T2-5 | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: T2-4b -- bodies, queued in the Claude lane (specified 9 Oct 2026, after T2-8b landed); T2-6 -- Associative learning waits for Dave's decision | Dependency: COL-4, COL-6 and T2-4a landed; T2-6 waits for Dave; T2-7 is still to be specified | Verified: 2026-10-09
 
 ## Objective
 
@@ -52,7 +52,7 @@ Verified 7 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | to be specified now T2-4a has landed (8 Oct 2026) | no -- not yet specified; T2-4a and COL-6 have landed | high |
+| T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | `scripts/hive_body.gd`, `scripts/hive.gd`, `scripts/bee_survival.gd`, `scripts/season.gd`, `scripts/bee_building.gd`, `scripts/bee.gd`, `scripts/actions.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/t2_4b_bodies_test.gd`, `tests/test_t2_4b_bodies.py` | yes -- T2-4a and COL-6 have landed; queued after SI-3 and NF-2, which share the save files and `hive.gd` | high |
 | T2-6 | Associative learning: per-bee, per-species familiarity, saved | `scripts/skills.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd` | no -- rate and save acceptance need specification | high |
 | T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | specified when T2-1 to T2-3 and COL-4 have landed | no -- needs COL-4's year and the gates | medium |
 
@@ -60,8 +60,11 @@ Verified 7 Oct 2026 against master:
 T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
 and each adds a test module. They depend on
 nothing else. T2-4a follows T2-2 (`actions.gd`, `challenge_stages.gd`).
-T2-4b needs a `GameConfig` cap (COL-4 holds `game_config.gd`) and COL-6's
-winter bill. T2-6 and T2-7 wait for COL-4; T2-7 also for T2-1 to T2-3, whose
+T2-4b (COL-4 and COL-6 have landed) shares `hive.gd`, `save_game.gd` and
+`saving.gd` with SI-3 (`plans/now/save-integrity.md`) and NF-2
+(`plans/now/nectar-fermentation.md`), all in the Claude lane, so it runs after
+them; Bee Bread's BB-1 (`plans/now/bee-bread.md`) shares the same files.
+T2-6 and T2-7 wait for COL-4; T2-7 also for T2-1 to T2-3, whose
 gates it prices. T2-8 multiplies COL-6's one-step winter (landed 7 Oct 2026).
 NF-4 (`plans/now/nectar-fermentation.md`) adds a Colony tier-2 node; T2-7
 re-prices it if it has landed by then. A new test module no longer edits
@@ -83,6 +86,69 @@ COL-4 shipped 2026-10-07; its specification is `plans/archive/COL-4_2026-10-07.m
 T2-4a shipped 2026-10-08; its specification is `plans/archive/T2-4a_2026-10-08.md`.
 
 T2-5 shipped 2026-10-09; its specification is `plans/archive/T2-5_2026-10-09.md`.
+
+## T2-4b -- Bees that die in the hive leave bodies; winter's dead appear at spring
+
+<!-- LAYER: immediate-task -->
+
+Level: high (a saved field with its old-save default, and a gameplay rule).
+Implements `plans/design/progression.md` step 8, "Bodies" (Dave, 7 Oct 2026).
+
+**True now** (verified 9 Oct 2026). An adult bee vanishes on death:
+`bee_survival.gd::die` emits `bee_died`, whose listener
+(`main.gd::_on_bee_died`) places a presentation-only death marker. The only
+"corpse" is a dead larva in a cell; `season.gd::_advance_disease` counts
+`cells_holding("corpse")` at `GameConfig.disease_per_corpse`, and Clearing
+(`actions.gd` `comb_clean_cell`, gated on Cleaning since T2-4a) clears those
+cells through `bee_building.gd::architect_clean` and the waste-exit walk.
+The skipped winter's losses die through `BeeSurvival.die` inside
+`season.gd::_resolve_winter`, just before the clock jumps to spring.
+
+**True afterwards.**
+
+- A bee that dies inside the hive leaves a body: a small node
+  (`scripts/hive_body.gd`) at the point where she fell, blocking no cell,
+  held in one list on `hive.gd`. A bee that dies in the meadow leaves
+  nothing. Every bee the winter bill takes leaves one, at the nearest
+  walkable point inside if she was outside, so they lie there at spring.
+  `death_marker.gd` stays presentation only and unchanged.
+- Disease counts bodies at a dead larva's rate:
+  `season.gd::_advance_disease` adds the list's size to the corpse count.
+- With Cleaning owned, a Comb worker in Clearing mode carries a body out
+  through the existing waste-exit walk; dead-larva cells keep their priority
+  over bodies. This extends `comb_clean_cell`'s cleaning path rather than
+  adding a parallel job. Without Cleaning, bodies stay.
+- `GameConfig.max_hive_bodies` (with its `settings_catalogue.gd` entry) caps
+  the list; past it the oldest body goes. Its value comes from a headless
+  count recorded in this section: the most bodies a colony without Cleaning
+  holds over `test_scenarios/col6_winter_skip_test.json`, rounded up, so the
+  cap guards against unbounded growth and never changes an ordinary run.
+- Bodies are saved as an additive field (position and time of death each)
+  and restored by `saving.gd`, including the in-place checkpoint restore
+  SI-2 made exact: a restore replaces the list, never adds to it. An older
+  save loads with no bodies (`.claude/rules/saving.md`).
+- Runtime: the list changes on a death, a clear or the cap, never per frame;
+  the disease tick reads its size.
+
+**Must not change.** Dead-larva cells and their clearing order; a meadow
+death; the death marker; `scripts/colony_diagnostics.gd` (Codex lane, CD-3),
+which keeps counting corpse cells only.
+
+**Check.** `tests/t2_4b_bodies_test.gd`, run by `tests/test_t2_4b_bodies.py`
+in a headless Godot, prints `T2-4B PASS` when: an in-hive death leaves one
+body and a meadow death none; bodies raise disease as dead larvae do; a
+Comb worker with Cleaning carries one out and one without leaves it; the cap
+drops the oldest; and bodies survive a save and load, an in-place checkpoint
+restore leaves the saved count, and an old save loads with none.
+
+```queue
+**[Claude] T2-4b -- Bees that die in the hive leave bodies; winter's dead appear at spring**
+- Plan: `plans/now/tier-two.md` -- "T2-4b -- Bees that die in the hive leave bodies; winter's dead appear at spring"
+- Files: `scripts/hive_body.gd`, `scripts/hive.gd`, `scripts/bee_survival.gd`, `scripts/season.gd`, `scripts/bee_building.gd`, `scripts/bee.gd`, `scripts/actions.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/t2_4b_bodies_test.gd`, `tests/test_t2_4b_bodies.py`
+- Check: `python -m unittest tests.test_t2_4b_bodies` passes with `T2-4B PASS`; `python tools/run_scenario.py test_scenarios/col6_winter_skip_test.json` passes; `.\tools\verify.ps1` is green
+- Proof: `absent: scripts/game_config.gd :: max_hive_bodies`
+- Next after: T2-6 -- Associative learning
+```
 
 ## T2-6 -- Associative learning
 
@@ -115,21 +181,9 @@ Each is specified, with its queue block and verified `Proof:`, when the
 slice before it lands. The decisions they implement are in
 `plans/design/progression.md` step 8 and section 5.6.
 
-- **T2-4b** -- a body object per in-hive death, held in one saved list in
-  `hive.gd` (additive save field; an old save loads with none), adding
-  disease at `disease_per_corpse`; Clearing with Cleaning carries it out; a
-  `GameConfig` cap drops the oldest. Winter's bill dead appear at spring
-  (COL-6's hook). Runtime: bodies change on a death or a clear, never per
-  frame; the disease sum reads the list's size.
-- **T2-5** -- Weather sensing (`enable_behaviour`) makes bees read the rain
-  target rather than its intensity before setting out; Rain recall sends
-  every bee outside home at `rain_forage_limit`; the Colony Run's level row
-  turns rain on over `weather_on`, and only rows that say so. PE-2's arc
-  rerun first, its before/after recorded here.
 - **T2-6** -- familiarity per bee per species, saved, raising handling
   speed to the step 8 intent and fading while the bee works other species;
   rates from a headless sweep. Runtime: updated on a flower visit only.
 - **T2-7** -- one PE-2 arc sweep (`tools/pacing_gates.py`) prices the
   tier-2 recipes so a reasonable Colony Run's first tier-2 purchase lands
   around day 5; recorded with before/after.
-- **T2-8b** -- specified above and queued now T2-5 has freed `skills.gd`.

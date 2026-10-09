@@ -1,7 +1,7 @@
 # Bee Bread -- fermented larval food, the tier-3 currency, and what it makes of a worker
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BB-1 -- Fermenters make Bee Bread in a store cell, specified once its gates clear | Dependency: COL-4 and NF-2 (`game_config.gd`, `settings_catalogue.gd`, `hive_cell.gd`, `hive.gd`, the save files); T2-2 and T2-3 (`roles.gd`, `actions.gd`, `skills.gd`) | Verified: 2026-10-07
+Status: active | Owner: Dave / Claude Code | Next: BB-1 -- Fermenters make Bee Bread in a store cell, specified once its gates clear | Dependency: NF-2, queued in the Claude lane (COL-4 has landed; `game_config.gd`, `settings_catalogue.gd`, `hive_cell.gd`, `hive.gd`, the save files); T2-2 and T2-3 (`roles.gd`, `actions.gd`, `skills.gd`) | Verified: 2026-10-07
 
 ## Objective
 
