@@ -787,6 +787,12 @@ const TUNABLES := [
 		"tip": "How long the winter will be. This is what the required-stores figure is calculated from, so it is the main dial for how hard surviving one is.",
 	},
 	{
+		"persist": "none",
+		"key": "spring_regrowth_days", "label": "Spring regrowth days", "step": 0.5, "min": 0.0,
+		"category": "Winter",
+		"tip": "How many days the meadow takes to flower again after a winter. The plants die back over winter; for this long after it, flowers recover from nothing to full strength.",
+	},
+	{
 		"persist": "run",
 		"key": "winter_burn_factor", "label": "Winter burn x", "step": 0.05, "min": 0.05,
 		"category": "Winter",
@@ -797,6 +803,18 @@ const TUNABLES := [
 		"key": "winter_lifespan_factor", "label": "Winter lifespan x", "step": 0.25, "min": 1.0,
 		"category": "Winter",
 		"tip": "How much longer a bee's natural lifespan runs through the winter, as a multiple of its ordinary one. Above one because a dormant, clustered bee wears out slower -- without this, bees can die of old age mid-winter even when perfectly fed.",
+	},
+	{
+		"persist": "none",
+		"key": "winter_unclustered_multiplier", "label": "Unclustered winter x", "step": 0.25, "min": 1.0,
+		"category": "Winter",
+		"tip": "What the winter bill is multiplied by while the colony has not learned Shiver Cluster. One makes the skill change nothing.",
+	},
+	{
+		"persist": "none",
+		"key": "winter_unclustered_warning_days", "label": "Shiver warning days", "step": 1.0, "min": 0.0,
+		"category": "Winter",
+		"tip": "How many of the winter countdown's last days the problem strip warns that the colony has not learned Shiver Cluster.",
 	},
 
 	# --- The rival colony ---

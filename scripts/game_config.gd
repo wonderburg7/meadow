@@ -882,6 +882,9 @@ var nuptial_flight_peak_chance: float = 0.5
 ## friends) are state of the run rather than settings.
 var winter_countdown_days: float = 15.0
 var winter_length_days: float = 10.0
+## COL-8: days after a winter over which the meadow regrows, every flower's
+## season strength rising from 0 to its normal value. Unsimulated.
+var spring_regrowth_days: float = 3.0
 ## What a bee burns through winter, as a multiple of its ordinary rate.
 ## Well below 1 because a clustered colony is nearly dormant, and because
 ## anything higher makes the target impossible: at 0.55 a fifty-bee
@@ -902,4 +905,12 @@ var winter_burn_factor: float = 0.15
 ## winter_length_days) before trusting it, the same way winter_burn_factor
 ## itself was worked out.
 var winter_lifespan_factor: float = 4.0
+## T2-8a: what winter's bill is multiplied by while the colony does not own
+## Shiver Cluster (plans/design/progression.md). A working value, not
+## simulated: PE-2's arc (tools/pacing_gates.py) sets the final one in a
+## later tuning pass.
+var winter_unclustered_multiplier: float = 2.0
+## T2-8a: how many of the countdown's last days the problem strip warns that
+## the colony does not own Shiver Cluster.
+var winter_unclustered_warning_days: float = 3.0
 

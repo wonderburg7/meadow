@@ -636,3 +636,23 @@ explicit request from Dave.
   `blocked` question, never an "As built" note (CLAUDE.md rule 5 applied to
   workers).
 - Disposition: untriaged
+
+### 2026-10-08 — a plan finish kept live leaves the next closeout red
+
+- Source: T2-8a closeout (Claude)
+- Area: process / `tools/archive_slice.py --complete-plans`
+- Signal: COL-8's `finish` merged with `plans/now/colony-run.md` at "Next:
+  None -- plan complete", but `--complete-plans` kept it live because
+  `NEXTSTEPS.md` still named it (a stale COL-7 "Not in the queue" placeholder
+  and a passing mention in the Gallerin line). `finish` reported success, and
+  master then failed `check_docs`' terminal-plan rule, so T2-8a's
+  `verify.ps1 -Scope primary` stopped twice; fixing it on the branch could
+  not help, since primary verify reads master before the merge.
+- Evidence: fixed by 16ca004 (placeholder dropped, mention repointed, plan
+  archived on master).
+- Consequence: one slice's incomplete closeout blocks the next slice's merge,
+  in either lane.
+- Candidate direction: Hypothesis -- `finish` treats "plan kept live" for a
+  terminal plan as a stop, not a note, or `--complete-plans` repoints plain
+  mentions in `NEXTSTEPS.md` and refuses only on queue items and ledger rows.
+- Disposition: untriaged

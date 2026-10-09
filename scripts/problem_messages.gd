@@ -5,6 +5,11 @@ extends RefCounted
 ## never decides whether a problem exists. Choosing the lowest bee id keeps a
 ## condition's protagonist stable across the strip's one-second refreshes, and
 ## the fallbacks keep every warning honest when no relevant individual exists.
+## One row is the exception: T2-8a's winter_unclustered asks season.gd itself
+## (whether Shiver Cluster is owned, whether the countdown is in its last
+## days), so year_winter.gd's state stays as it was.
+
+const Season = preload("res://scripts/season.gd")
 
 ## The problem strip is an ordered catalogue, rather than a second set of
 ## decisions living in year_winter.gd. `condition` deliberately uses the
@@ -19,6 +24,7 @@ const SIGNALS := [
 	{"id": "low_pollen", "condition": {"custom": "low_pollen"}, "severity": 2, "action": "", "category": "brood", "message": "signal_low_pollen"},
 	{"id": "low_food", "condition": {"custom": "low_food"}, "severity": 2, "action": null, "category": null, "message": "signal_low_food"},
 	{"id": "no_nurses", "condition": {"custom": "no_nurses"}, "severity": 2, "action": "", "category": "brood", "message": "signal_no_nurses"},
+	{"id": "winter_unclustered", "condition": {"custom": "winter_unclustered"}, "severity": 2, "action": null, "category": null, "message": "signal_winter_unclustered"},
 	{"id": "no_free_cells", "condition": {"custom": "no_free_cells"}, "severity": 1, "action": null, "category": null, "message": "signal_no_free_cells"},
 	{"id": "hungry", "condition": {"custom": "hungry"}, "severity": 1, "action": "hungry", "category": null, "message": "signal_hungry"},
 	{"id": "no_foragers", "condition": {"custom": "no_foragers"}, "severity": 1, "action": "", "category": null, "message": "signal_no_foragers"},
@@ -55,6 +61,7 @@ static func _dispatch(message: String, state: Dictionary) -> String:
 		"signal_low_pollen": return signal_low_pollen(state)
 		"signal_low_food": return signal_low_food(state)
 		"signal_no_nurses": return signal_no_nurses(state)
+		"signal_winter_unclustered": return signal_winter_unclustered(state)
 		"signal_no_free_cells": return signal_no_free_cells(state)
 		"signal_hungry": return signal_hungry(state)
 		"signal_no_foragers": return signal_no_foragers(state)
@@ -75,6 +82,7 @@ static func _matches(state: Dictionary, condition: Dictionary) -> bool:
 		"low_pollen": return int(state.day) >= int(GameConfig.pollen_warning_first_day) and float(state.pollen) < GameConfig.egg_pollen_cost * GameConfig.pollen_warning_stock_multiplier
 		"low_food": return float(state.nectar) < GameConfig.nectar_warning_total and float(state.honey) < GameConfig.honey_warning_total
 		"no_nurses": return int(state.nurses) == 0 and int(state.brood_cells) > 0
+		"winter_unclustered": return Season.unclustered_warning_due(float(state.day))
 		"no_free_cells": return int(state.free_cells) == 0
 		"hungry": return int(state.hungry) > 0
 		"no_foragers": return int(state.foragers) == 0
@@ -106,6 +114,13 @@ static func signal_low_food(_state: Dictionary) -> String:
 
 static func signal_no_nurses(_state: Dictionary) -> String:
 	return "No nurses — brood will not develop at all"
+
+
+static func signal_winter_unclustered(state: Dictionary) -> String:
+	var days_left: int = int(ceil(maxf(0.0, Session.winter_starts_day - float(state.day))))
+	return "Winter in %d day%s, and without Shiver Cluster the colony burns %s times its stores through it" % [
+		days_left, "" if days_left == 1 else "s", String.num(GameConfig.winter_unclustered_multiplier, 2).trim_suffix(".0"),
+	]
 
 
 static func signal_no_free_cells(state: Dictionary) -> String:
