@@ -1,7 +1,7 @@
 # Crisis readiness -- decide a readable first pressure event before implementing it
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: FC-2 -- implement the accepted crisis and deterministic scenario after its file owners land | Dependency: COL-8's season change and CD-2's diagnostic vocabulary landed; Dave accepted FC-1 option A; FC-2 waits for T2-4b, NF-3, BB-1 and CD-3 (9 Oct 2026) | Verified: 2026-10-09
+Status: active | Owner: Dave / Codex | Next: FC-2 -- implement the accepted crisis and deterministic scenario after its file owners land | Dependency: COL-8's season change and CD-2's diagnostic vocabulary landed; Dave accepted FC-1 option A; FC-2 waits for NF-3, BB-1 and CD-3 (9 Oct 2026) | Verified: 2026-10-09
 
 ## Objective
 
@@ -14,7 +14,7 @@ Run's archived CR-1 and CR-2 already hold those ids.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FC-2 | implement the accepted crisis and deterministic scenario | see its `Files:` line below | after FC-1, T2-4b, NF-3, BB-1 and CD-3 land | high |
+| FC-2 | implement the accepted crisis and deterministic scenario | see its `Files:` line below | after NF-3, BB-1 and CD-3 land | high |
 
 FC-1 shipped 2026-10-09; its specification is `plans/archive/FC-1_2026-10-09.md`.
 
@@ -31,8 +31,8 @@ pre-rain response on the fallback path, actual rain, forage and store effects,
 plus save/restore across the trigger; a displayed warning alone is not proof.
 File a hands-on check for whether a player can diagnose and answer the event.
 
-The implementation files remain held by other queued work: T2-4b, NF-3 and
-BB-1 own `scripts/save_game.gd` and `scripts/saving.gd`; BB-1 also owns
+The implementation files remain held by other queued work: NF-3 and BB-1
+own `scripts/save_game.gd` and `scripts/saving.gd`; BB-1 also owns
 `scripts/hud.gd`; CD-3 owns `scripts/colony_diagnostics.gd`. Recheck ownership
 and the file list when they land; FC-2 stays gated until then.
 
@@ -47,4 +47,4 @@ and the file list when they land; FC-2 stays gated until then.
 
 ## Not in the queue, and why
 
-- **FC-2** waits for T2-4b, NF-3 and BB-1 to release save/HUD files and for CD-3 to release diagnostics, then its `Files:` line must be rechecked before admitting it.
+- **FC-2** waits for NF-3 and BB-1 to release save/HUD files and for CD-3 to release diagnostics, then its `Files:` line must be rechecked before admitting it.

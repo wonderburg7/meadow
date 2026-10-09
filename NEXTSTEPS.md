@@ -42,29 +42,29 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] CD-3 -- waiting and travel get a deterministic diagnostic boundary**
-   - Plan: `plans/now/diagnostic-readiness.md` -- "CD-3 -- waiting and travel get a deterministic diagnostic boundary"
-   - Files: `scripts/colony_diagnostics.gd`, `scripts/year_winter.gd`, `tests/test_colony_diagnostics.py`
-   - Check: `python -m unittest tests.test_colony_diagnostics` passes with waiting, travelling and no-work fixtures; `tools/verify.ps1` is green
-   - Proof: `present: scripts/year_winter.gd :: func _refresh_signals`
-   - Next after: none -- diagnostic readiness is complete
-
-2. **[Codex] WC-5 -- the two level-to-model tables are tested against each other**
+1. **[Codex] WC-5 -- the two level-to-model tables are tested against each other**
    - Plan: `plans/now/workflow-checks.md` -- "WC-5 -- the two level-to-model tables are tested against each other"
    - Files: `tools/session_cost.py`, `tests/test_wc5_level_model_parity.py`
    - Check: `python -m unittest tests.test_wc5_level_model_parity` passes, and fails when one `LEVEL_MODELS` entry is edited by hand; `tools/verify.ps1` is green
    - Proof: `present: tools/session_cost.py :: mirrors Get-SliceAdvice in`
    - Next after: none -- plans/now/workflow-checks.md is complete
 
+2. **[Codex] WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane**
+   - Plan: `plans/now/workflow-checks.md` -- "WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane"
+   - Files: `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_wc2_dry_lane_report.py`
+   - Check: `python -m unittest tests.test_wc2_dry_lane_report` passes (an undeferred successor is named; a file-disjoint low/medium other-lane block is listed as borrowable; a high-level, gated, colliding or already-queued one is not; the existing keys are unchanged); `python -m unittest tests.test_slice_lifecycle` passes; `tools/verify.ps1` is green
+   - Proof: `absent: tools/refill_lane.py :: borrowable`
+   - Next after: WC-4 -- a queue id with whitespace fails the documentation check
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation, Bee Bread and the gyne route.
-- **WC-2** (`plans/now/workflow-checks.md`) -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane; waits for WC-1 and room in the Codex lane.
+- **CD-3** (`plans/now/diagnostic-readiness.md`) -- waiting and travel get a deterministic diagnostic boundary; waits for NF-3 and BB-1 to release `scripts/bee.gd`.
 - **WC-4** (`plans/now/workflow-checks.md`) -- a queue id with whitespace fails the documentation check; waits for WC-2 and room in the Codex lane.
 - **GD-2** (`plans/now/guidance-explanations.md`) -- implement the accepted persistent entry point and first explanations; waits for Dave's GD-1 decision.
-- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; waits for Dave's FC-1 decision.
+- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; waits for NF-3 and BB-1 to release save/HUD files and for CD-3 to release diagnostics.
 - **T2-6 and T2-7** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-6 (Associative learning) is specified and fenced `queue-gated`, and waits for Dave's decision on its familiarity rates, handling-speed cap and old-save default; T2-7 (tier-2 prices) is still to be specified, and T2-6's block names it next. T2-8b landed 9 Oct 2026; T2-4b (bodies) is queued in the Claude lane.
 - **BB-2 to BB-4** (`plans/now/bee-bread.md`) -- the rest of Bee Bread; BB-2 and BB-3 wait for BB-1, queued in the Claude lane, and BB-4 for BB-2.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Gallerin guidance is the next design pass, now that step 8's ran on 6-7 Oct 2026 (booked by Dave, 5 Oct 2026); the event director's wait on the Colony Run's year (COL-4, COL-6) has cleared; it still needs its design pass. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/archive/colony-run_2026-10-08.md`).

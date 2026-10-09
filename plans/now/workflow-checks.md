@@ -1,7 +1,7 @@
 # Workflow checks -- say what a waiting lane is waiting for, and catch latent tooling drift
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane, in the Codex lane; WC-3 ready for finish | Dependency: none; WC-1 to WC-5 run in order in the Codex lane (WC-1, WC-2 and WC-4 share `tools/check_docs.py`) | Verified: 2026-10-09
+Status: active | Owner: Dave / Codex | Next: WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane, in the Codex lane | Dependency: WC-1 landed; WC-4 follows WC-2 because both edit `tools/check_docs.py`; WC-3 landed and WC-5 is independent | Verified: 2026-10-09
 
 ## Objective
 
@@ -48,7 +48,7 @@ Verified 9 Oct 2026 against master `4ca584c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| WC-2 | a dry-lane warning names the missing deferral and the specified blocks that could serve the lane | `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_wc2_dry_lane_report.py` | after WC-1 and room in the Codex lane | medium |
+| WC-2 | a dry-lane warning names the missing deferral and the specified blocks that could serve the lane | `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_wc2_dry_lane_report.py` | yes -- WC-1 landed and the Codex lane has room | medium |
 | WC-4 | a queue id with whitespace fails the documentation check | `tools/check_docs.py`, `tests/test_wc4_spaced_ids.py` | after WC-2 and room in the Codex lane | low |
 | WC-5 | the two level-to-model tables are tested against each other | `tools/session_cost.py`, `tests/test_wc5_level_model_parity.py` | yes -- the Codex lane has room (9 Oct 2026) | low |
 
@@ -95,13 +95,13 @@ that reassignment is Dave's decision; nothing here retags a block.
 `Get-SliceDryAfter` reads them. No block is moved or retagged by any code
 path.
 
-```queue-gated
+```queue
 **[Codex] WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane**
 - Plan: `plans/now/workflow-checks.md` -- "WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane"
 - Files: `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_wc2_dry_lane_report.py`
 - Check: `python -m unittest tests.test_wc2_dry_lane_report` passes (an undeferred successor is named; a file-disjoint low/medium other-lane block is listed as borrowable; a high-level, gated, colliding or already-queued one is not; the existing keys are unchanged); `python -m unittest tests.test_slice_lifecycle` passes; `tools/verify.ps1` is green
 - Proof: `absent: tools/refill_lane.py :: borrowable`
-- Next after: WC-3 -- Codex's hooks log its sessions
+- Next after: WC-4 -- a queue id with whitespace fails the documentation check
 ```
 
 WC-3 shipped 2026-10-09; its specification is `plans/archive/WC-3_2026-10-09.md`.
