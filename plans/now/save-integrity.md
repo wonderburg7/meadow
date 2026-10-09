@@ -1,7 +1,7 @@
 # Save integrity -- what a load must bring back, and a write that cannot half-finish
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SI-2 -- a checkpoint restore puts back soil dug since the checkpoint | Dependency: none (shares `scripts/save_game.gd` and `scripts/saving.gd` with NF-2 in `plans/now/nectar-fermentation.md`, so never in the other lane at the same time) | Verified: 2026-10-08
+Status: active | Owner: Dave / Claude Code | Next: SI-3 -- save, checkpoint and index writes are all-or-nothing | Dependency: none (shares `scripts/save_game.gd` and `scripts/saving.gd` with NF-2 in `plans/now/nectar-fermentation.md`, so never in the other lane at the same time) | Verified: 2026-10-08
 
 ## Objective
 
