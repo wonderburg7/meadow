@@ -561,10 +561,19 @@ static func shelter(bee: Node2D, _delta: float) -> void:
 		bee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT if bee._is_inside_hive() else State.SEEK_FLOWER)
 
 
-## Rain recall interrupts any outdoor task once heavy rain has arrived.
+## The outdoor foraging trip Rain recall may cut short. A builder or miner
+## dumping at the door is excluded: sent home, she would carry the corpse or
+## spoil back in. A player's MOVE_TO_POINT order is excluded too.
+const RAIN_RECALL_STATES: Array[int] = [
+	State.SEEK_FLOWER, State.SEARCHING, State.TO_FLOWER,
+	State.INSPECTING, State.COLLECTING, State.DRINKING,
+]
+
+
+## Rain recall interrupts an outdoor foraging trip once heavy rain has arrived.
 ## Keep this on the bee's think tick; it need not scan the meadow per frame.
 static func recall_for_rain(bee: Node2D) -> void:
-	if bee._is_inside_hive() or bee.state in [State.TO_HIVE]:
+	if bee._is_inside_hive() or not bee.state in RAIN_RECALL_STATES:
 		return
 	if BeeStatus.rain_recall_on():
 		if bee.current_flower != null and is_instance_valid(bee.current_flower):

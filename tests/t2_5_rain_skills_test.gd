@@ -80,6 +80,11 @@ func _run() -> void:
 	session.rain_intensity = limit
 	BeeForaging.recall_for_rain(bee)
 	_expect(failures, bee.state == BeeEnums.State.COLLECTING, "recall waits until rain exceeds limit")
+	session.rain_intensity = limit + 0.1
+	for kept in [BeeEnums.State.DUMPING_WASTE, BeeEnums.State.DUMPING_DIRT, BeeEnums.State.MOVE_TO_POINT]:
+		bee.state = kept
+		BeeForaging.recall_for_rain(bee)
+		_expect(failures, bee.state == kept, "recall leaves non-foraging outdoor state %d alone" % kept)
 
 	config.weather_on = false
 	_expect(failures, Levels.weather_enabled(8), "Colony Run enables rain with global setting off")
