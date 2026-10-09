@@ -1,7 +1,7 @@
 # Crisis readiness -- decide a readable first pressure event before implementing it
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: FC-1 -- define the first-crisis readiness and evidence contract | Dependency: COL-8's season change and CD-2's diagnostic vocabulary both landed (8 and 9 Oct 2026) | Verified: 2026-10-09
+Status: active | Owner: Dave / Codex | Next: FC-2 -- implement the accepted crisis and deterministic scenario after its file owners land | Dependency: COL-8's season change and CD-2's diagnostic vocabulary landed; Dave accepted FC-1 option A; FC-2 waits for T2-4b, NF-3, BB-1 and CD-3 (9 Oct 2026) | Verified: 2026-10-09
 
 ## Objective
 
@@ -14,37 +14,37 @@ Run's archived CR-1 and CR-2 already hold those ids.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FC-1 | decide trigger, readiness, failure boundary and scenario evidence | this plan, `plans/design/product-scope.md` | yes -- COL-8 and CD-2 landed | high |
-| FC-2 | implement the accepted crisis and deterministic scenario | specified by FC-1 | after Dave accepts FC-1 | high |
+| FC-2 | implement the accepted crisis and deterministic scenario | see its `Files:` line below | after FC-1, T2-4b, NF-3, BB-1 and CD-3 land | high |
 
-## FC-1 -- define the first-crisis readiness and evidence contract
-
-<!-- LAYER: immediate-task -->
-
-State alternatives and costs for the trigger, what preparation counts as
-readiness, how the player sees the cause, and the scenario evidence that can
-measure availability without pretending to measure comprehension. Do not alter
-weather timing or balance.
-
-```queue
-**[Codex] FC-1 -- define the first-crisis readiness and evidence contract**
-- Plan: `plans/now/crisis-readiness.md` -- "FC-1 -- define the first-crisis readiness and evidence contract"
-- Files: `plans/now/crisis-readiness.md`, `plans/design/product-scope.md`
-- Check: `python tools/check_docs.py` passes and FC-1 names a trigger, readiness input, visible cause and deterministic scenario boundary
-- Proof: `present: scripts/main.gd :: func _advance_weather`
-- Next after: FC-2 -- implement the accepted crisis and deterministic scenario
-```
+FC-1 shipped 2026-10-09; its specification is `plans/archive/FC-1_2026-10-09.md`.
 
 ## FC-2 -- implement the accepted crisis and deterministic scenario
 
-Specified only after FC-1 records Dave's decision and owns no file held by the
-season work.
+Implement option A in the existing weather owner rather than introducing a
+parallel event director. Derive readiness from live simulation/diagnostic
+facts; evaluate it on a bounded tick or milestone change, not in each bee's
+frame. Use existing rain simulation for the outcome. Add a warning and
+persistent causal explanation, save/restore the one-shot state, create the
+pre-crisis checkpoint, and record prepared and unprepared pinned-seed runs.
+The scenario check must observe the warning-to-rain lead, an accepted
+pre-rain response on the fallback path, actual rain, forage and store effects,
+plus save/restore across the trigger; a displayed warning alone is not proof.
+File a hands-on check for whether a player can diagnose and answer the event.
+
+The implementation files remain held by other queued work: T2-4b, NF-3 and
+BB-1 own `scripts/save_game.gd` and `scripts/saving.gd`; BB-1 also owns
+`scripts/hud.gd`; CD-3 owns `scripts/colony_diagnostics.gd`. Recheck ownership
+and the file list when they land; FC-2 stays gated until then.
 
 ```queue-gated
 **[Codex] FC-2 -- implement the accepted crisis and deterministic scenario**
 - Plan: `plans/now/crisis-readiness.md` -- "FC-2 -- implement the accepted crisis and deterministic scenario"
-- Files: specified by FC-1
-- Check: specified by FC-1
-- Proof: `present: plans/now/crisis-readiness.md :: ## FC-1 -- define the first-crisis readiness and evidence contract`
+- Files: `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `scripts/colony_diagnostics.gd`, `scripts/scenario_actions.gd`, `test_scenarios/fc2_first_crisis_prepared.json`, `test_scenarios/fc2_first_crisis_unprepared.json`, `tests/test_fc2_first_crisis.py`, `plans/now/crisis-readiness.md`
+- Check: `python tests/test_fc2_first_crisis.py` passes and traces one announced crisis, a usable warning-to-rain lead with a completed pre-rain forage response on the unprepared path, its weather/forage/store effect, and save/restore on both paths; file a played comprehension check
+- Proof: `present: scripts/main.gd :: func _advance_weather`
 - Next after: none -- crisis readiness is complete
 ```
+
+## Not in the queue, and why
+
+- **FC-2** waits for T2-4b, NF-3 and BB-1 to release save/HUD files and for CD-3 to release diagnostics, then its `Files:` line must be rechecked before admitting it.

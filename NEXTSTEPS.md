@@ -49,21 +49,14 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] FC-1 -- define the first-crisis readiness and evidence contract**
-   - Plan: `plans/now/crisis-readiness.md` -- "FC-1 -- define the first-crisis readiness and evidence contract"
-   - Files: `plans/now/crisis-readiness.md`, `plans/design/product-scope.md`
-   - Check: `python tools/check_docs.py` passes and FC-1 names a trigger, readiness input, visible cause and deterministic scenario boundary
-   - Proof: `present: scripts/main.gd :: func _advance_weather`
-   - Next after: FC-2 -- implement the accepted crisis and deterministic scenario
-
-2. **[Codex] CD-3 -- waiting and travel get a deterministic diagnostic boundary**
+1. **[Codex] CD-3 -- waiting and travel get a deterministic diagnostic boundary**
    - Plan: `plans/now/diagnostic-readiness.md` -- "CD-3 -- waiting and travel get a deterministic diagnostic boundary"
    - Files: `scripts/colony_diagnostics.gd`, `scripts/year_winter.gd`, `tests/test_colony_diagnostics.py`
    - Check: `python -m unittest tests.test_colony_diagnostics` passes with waiting, travelling and no-work fixtures; `tools/verify.ps1` is green
    - Proof: `present: scripts/year_winter.gd :: func _refresh_signals`
    - Next after: none -- diagnostic readiness is complete
 
-3. **[Codex] WC-5 -- the two level-to-model tables are tested against each other**
+2. **[Codex] WC-5 -- the two level-to-model tables are tested against each other**
    - Plan: `plans/now/workflow-checks.md` -- "WC-5 -- the two level-to-model tables are tested against each other"
    - Files: `tools/session_cost.py`, `tests/test_wc5_level_model_parity.py`
    - Check: `python -m unittest tests.test_wc5_level_model_parity` passes, and fails when one `LEVEL_MODELS` entry is edited by hand; `tools/verify.ps1` is green
