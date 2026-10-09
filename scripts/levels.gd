@@ -134,6 +134,7 @@ const LEVELS := {
 		"cells": 0, "nectar_foragers": 0, "pollen_foragers": 0,
 		"nurses": 0, "builders": 0, "miners": 0, "honey_makers": 0,
 		"winter": true,
+		"weather": true,
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
 		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
@@ -153,6 +154,9 @@ static func get_level(id: int) -> Dictionary:
 	if id == SCENARIO_LEVEL_ID and not scenario_override.is_empty():
 		return scenario_override
 	return LEVELS.get(id, {})
+
+static func weather_enabled(id: int) -> bool:
+	return get_level(id).get("weather", GameConfig.weather_on)
 
 ## Dev-only headless playtest path (AI_PLAYTEST_PLAN.md slice 2). Applies a
 ## scenario file's "config_overrides" block to GameConfig, one field at a

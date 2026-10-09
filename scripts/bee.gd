@@ -1222,6 +1222,10 @@ func _process(delta: float) -> void:
 	# bee, and only an unmated queen -- one per colony at most -- goes in.
 	if is_queen and not is_mated:
 		_nuptial_flight_step(delta)
+	# A nuptial flight has its own return and mating roll. Recalling her in
+	# flight would make that return look like a player interruption.
+	if thinking and not _is_inside_hive() and nuptial_phase == NUPTIAL_NONE:
+		BeeForaging.recall_for_rain(self)
 
 	# Cleared before the state machine runs so it reflects only this
 	# frame's movement -- bee_movement.gd's move_towards sets it back to

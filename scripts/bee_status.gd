@@ -30,6 +30,23 @@ static func grounded(bee: Node2D) -> bool:
 	return false
 
 
+## At the hive door, owned Weather sensing also considers rain on its way.
+## The current intensity remains the safety cutoff while rain eases off.
+static func grounded_for_departure(bee: Node2D) -> bool:
+	if grounded(bee):
+		return true
+	return (Session.progression != null
+		and Session.progression.is_behaviour_enabled("weather_sensing_on")
+		and bee.world != null and is_instance_valid(bee.world)
+		and bee.world.rain_target > GameConfig.rain_forage_limit)
+
+
+static func rain_recall_on() -> bool:
+	return (Session.rain_intensity > GameConfig.rain_forage_limit
+		and Session.progression != null
+		and Session.progression.is_behaviour_enabled("rain_recall_on"))
+
+
 static func works_indoors(bee: Node2D) -> bool:
 	return (
 		bee.role == Role.NURSERY
