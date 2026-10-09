@@ -45,8 +45,8 @@ changes balance, so each is simulated first with PE-2's arc
 (`tools/pacing_gates.py`). Cross-plan: `plans/now/nectar-fermentation.md`
 NF-2 and `plans/now/tier-two.md` T2-3, which had to land first, have, and
 NF-5 (`plans/now/nectar-fermentation.md`), which shared `hud.gd`, landed
-9 Oct 2026. BB-2 shares `hive_cell.gd` and `bee.gd` with SP-3
-(`plans/now/sprites.md`), ahead of it in the Claude lane, and
+9 Oct 2026, and so did SP-3 (`plans/now/sprites.md`), which shared
+`hive_cell.gd` and `bee.gd`. BB-2 shares
 `bee_nursery.gd` and `bee_survival.gd` with NF-4, queued after it; CD-3 (`plans/now/diagnostic-readiness.md`, for
 `bee.gd`) and FC-2 (`plans/now/crisis-readiness.md`, for the save files and
 `hud.gd`) wait for BB-2 to release them;
