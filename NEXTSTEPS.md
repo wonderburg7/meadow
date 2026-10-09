@@ -49,14 +49,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] WC-5 -- the two level-to-model tables are tested against each other**
-   - Plan: `plans/now/workflow-checks.md` -- "WC-5 -- the two level-to-model tables are tested against each other"
-   - Files: `tools/session_cost.py`, `tests/test_wc5_level_model_parity.py`
-   - Check: `python -m unittest tests.test_wc5_level_model_parity` passes, and fails when one `LEVEL_MODELS` entry is edited by hand; `tools/verify.ps1` is green
-   - Proof: `present: tools/session_cost.py :: mirrors Get-SliceAdvice in`
-   - Next after: none -- plans/now/workflow-checks.md is complete
-
-2. **[Codex] WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane**
+1. **[Codex] WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane**
    - Plan: `plans/now/workflow-checks.md` -- "WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane"
    - Files: `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_wc2_dry_lane_report.py`
    - Check: `python -m unittest tests.test_wc2_dry_lane_report` passes (an undeferred successor is named; a file-disjoint low/medium other-lane block is listed as borrowable; a high-level, gated, colliding or already-queued one is not; the existing keys are unchanged); `python -m unittest tests.test_slice_lifecycle` passes; `tools/verify.ps1` is green
