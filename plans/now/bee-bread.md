@@ -1,7 +1,7 @@
 # Bee Bread -- fermented larval food, the tier-3 currency, and what it makes of a worker
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BB-2 -- Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved, specified below now BB-1 has landed (9 Oct 2026); BB-3 is specified when BB-2 lands | Dependency: none -- COL-4, NF-2, T2-2, T2-3 and BB-1 have landed | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: BB-2 -- Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved, then BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it, both specified below and queued in the Claude lane now BB-1 has landed (9 Oct 2026); BB-4 is specified when BB-2 lands | Dependency: none -- COL-4, NF-2, T2-2, T2-3 and BB-1 have landed | Verified: 2026-10-09
 
 ## Objective
 
@@ -34,20 +34,21 @@ Verified 7 Oct 2026 against master; BB-1 (9 Oct 2026) has since built Bee Bread 
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BB-2 | Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved; every run | `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_foraging.gd`, `scripts/world_building.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `tests/test_bb2_bee_bread_nursing.py`, `test_scenarios/bb2_bee_bread_nursing.json` | yes -- BB-1 has landed | high |
-| BB-3 | Bee Bread is spendable on tier-3 recipes, from the cells that hold it | specified when BB-1 lands | no -- after BB-1 | medium |
+| BB-2 | Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved; every run | `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_foraging.gd`, `scripts/world_building.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `tests/test_bb2_bee_bread_nursing.py`, `test_scenarios/bb2_bee_bread_nursing.json` | yes -- BB-1 has landed; queued in the Claude lane | high |
+| BB-3 | Bee Bread is spendable on tier-3 recipes, from the cells that hold it | `scripts/skill_tree_panel.gd`, `tests/test_bb3_bee_bread_currency.py`, `test_scenarios/bb3_bee_bread_currency.json` | yes -- BB-1 has landed; queued in the Claude lane after BB-2 | medium |
 | BB-4 | Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers | specified when BB-2 lands | no -- after BB-2 | medium |
 
-**Dependencies.** BB-1 first; BB-2 and BB-3 each follow it and may run in
-either order (BB-2 owns nursing and `bee.gd`, BB-3 `progression.gd`'s
-stores). BB-4 follows BB-2, whose rule it balances around. Every slice
+**Dependencies.** BB-1 has landed; BB-2 and BB-3 may run in either order
+(BB-2 owns nursing and `bee.gd`, BB-3 the skill window's stores in
+`skill_tree_panel.gd`; they share no file). BB-4 follows BB-2, whose rule it balances around. Every slice
 changes balance, so each is simulated first with PE-2's arc
 (`tools/pacing_gates.py`). Cross-plan: `plans/now/nectar-fermentation.md`
-NF-2 and `plans/now/tier-two.md` T2-3, which had to land first, have; BB-1
-shared `hive.gd`, `bee.gd`, `game_config.gd`, `settings_catalogue.gd` and
-the save files with NF-3 (landed 9 Oct 2026), and shares `orders_zones.gd`
-and `hud.gd` with NF-5, both in the Claude lane (T2-4b, which shared them too, landed 9 Oct
-2026);
+NF-2 and `plans/now/tier-two.md` T2-3, which had to land first, have. BB-2
+shares `hud.gd` with NF-5 (`plans/now/nectar-fermentation.md`) and
+`hive_cell.gd` and `bee.gd` with SP-3 (`plans/now/sprites.md`), all in the
+Claude lane ahead of it; CD-3 (`plans/now/diagnostic-readiness.md`, for
+`bee.gd`) and FC-2 (`plans/now/crisis-readiness.md`, for the save files and
+`hud.gd`) wait for BB-2 to release them;
 `plans/design/progression.md` step 13 (tier-3 content) waits for BB-3.
 
 **Reads.** A slice reads its own section here and `product-scope.md`
@@ -112,6 +113,59 @@ necessary.
 - Check: `python -m unittest tests.test_bb2_bee_bread_nursing` passes (a larva fed Bee Bread emerges with the 25-day, 105% outcome and one fed only pollen with the 15-day, 95% one; the outcome survives save and restore; a pre-BB-2 save loads its adults unchanged); `.\tools\verify.ps1` is green
 - Proof: `absent: scripts/game_config.gd :: brood_feed_bee_bread`
 - Next after: BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it
+```
+
+## BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it
+
+<!-- LAYER: immediate-task -->
+
+Level: medium (one file and an acceptance check; the recipes and the
+spending rule are already decided). Specified 9 Oct 2026 by the queue
+steward, from this plan's outline, after reading the files named below.
+
+**True now.** `skills.gd` already prices tier-3 and later skills in
+`Skills.BEE_BREAD` (for example 12 to 30 per skill), so the resolver
+(`progression.gd::can_afford` / `purchase`) asks for it, but nothing ever
+supplies it: `skill_tree_panel.gd::_stores()` builds the snapshot the window
+prices against from `STORE_CONTENT`, which maps only nectar, pollen, honey
+and royal jelly to cell contents. Every Bee Bread recipe is therefore
+unaffordable, however much the comb holds. `buy_skill` takes exactly what
+`purchase` deducted from the comb with `hive.gd::take()`, which walks the
+cells; BB-1's `hive_cell.gd::take_resource("bee_bread", ...)` already
+refuses an unripe cell, and `is_ripe_bee_bread()` says when one is ripe.
+
+**True afterwards.**
+
+- `STORE_CONTENT` maps `Skills.BEE_BREAD` to `Resources.BEE_BREAD`, and
+  `_stores()` counts a Bee Bread cell only when `is_ripe_bee_bread()` (as it
+  counts honey only when ripe), so the snapshot holds exactly what `take()`
+  can reach and the take cannot fall short.
+- Buying a skill with Bee Bread in its recipe spends it from the ripe cells
+  (section 4.2: the recipe is spent); the stores list in the window shows
+  "Bee bread" with the rest.
+- `test_scenarios/bb3_bee_bread_currency.json` makes or seeds a sealed Bee
+  Bread cell with the prerequisites of one Bee Bread-priced skill in place:
+  buying it while the cell is unripe is refused (`buy_skill` with
+  `expect_refused`); after `bee_bread_ripen_hours` it is bought, and the
+  cell holds that recipe's Bee Bread less. `tests/test_bb3_bee_bread_currency.py`
+  asserts both from the run.
+
+**Runtime.** None added: `_stores()` runs on opening the window and per
+purchase, as now, and ripeness is read from BB-1's stamp on demand.
+
+**Must not change.** The recipes in `skills.gd`, Bee Bread making (BB-1),
+nursing (BB-2), and the other currencies' counting.
+
+**Out of scope.** New tier-3 content (`plans/design/progression.md` step 13,
+which waits for this slice), Priority Cells, and any price change.
+
+```queue
+**[Claude] BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it**
+- Plan: `plans/now/bee-bread.md` -- "BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it"
+- Files: `scripts/skill_tree_panel.gd`, `tests/test_bb3_bee_bread_currency.py`, `test_scenarios/bb3_bee_bread_currency.json`
+- Check: `python -m unittest tests.test_bb3_bee_bread_currency` passes (a Bee Bread-priced skill is refused while the colony's only Bee Bread is unripe, is bought once it ripens, and the ripe cell loses exactly the recipe's Bee Bread); `.\tools\verify.ps1` is green
+- Proof: `absent: scripts/skill_tree_panel.gd :: Skills.BEE_BREAD`
+- Next after: BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers
 ```
 
 ## Outline

@@ -44,6 +44,20 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `present: scripts/hive_cell.gd :: const NECTAR_COLOR := Color(0.747, 0.834, 0.8525)`
    - Next after: SP-4 -- nectar and pollen fill levels drawn from the sprites
 
+4. **[Claude] BB-2 -- Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved**
+   - Plan: `plans/now/bee-bread.md` -- "BB-2 -- Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved"
+   - Files: `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_foraging.gd`, `scripts/world_building.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `tests/test_bb2_bee_bread_nursing.py`, `test_scenarios/bb2_bee_bread_nursing.json`
+   - Check: `python -m unittest tests.test_bb2_bee_bread_nursing` passes (a larva fed Bee Bread emerges with the 25-day, 105% outcome and one fed only pollen with the 15-day, 95% one; the outcome survives save and restore; a pre-BB-2 save loads its adults unchanged); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/game_config.gd :: brood_feed_bee_bread`
+   - Next after: BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it
+
+5. **[Claude] BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it**
+   - Plan: `plans/now/bee-bread.md` -- "BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it"
+   - Files: `scripts/skill_tree_panel.gd`, `tests/test_bb3_bee_bread_currency.py`, `test_scenarios/bb3_bee_bread_currency.json`
+   - Check: `python -m unittest tests.test_bb3_bee_bread_currency` passes (a Bee Bread-priced skill is refused while the colony's only Bee Bread is unripe, is bought once it ripens, and the ripe cell loses exactly the recipe's Bee Bread); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/skill_tree_panel.gd :: Skills.BEE_BREAD`
+   - Next after: BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -61,11 +75,11 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation, Bee Bread and the gyne route.
-- **CD-3** (`plans/now/diagnostic-readiness.md`) -- waiting and travel get a deterministic diagnostic boundary; waits for BB-1, queued in the Claude lane, to release `scripts/bee.gd` (NF-3 landed 9 Oct 2026).
+- **CD-3** (`plans/now/diagnostic-readiness.md`) -- waiting and travel get a deterministic diagnostic boundary; waits for SP-3 and BB-2, queued in the Claude lane, to release `scripts/bee.gd` (BB-1 and NF-3 landed 9 Oct 2026).
 - **GD-2** (`plans/now/guidance-explanations.md`) -- implement the accepted persistent entry point and first explanations; waits for Dave's GD-1 decision.
-- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for BB-1 and NF-5 (Claude lane) to release the save, HUD and scenario files and for CD-3 to release diagnostics (NF-3 landed 9 Oct 2026).
+- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for NF-5 and BB-2 (Claude lane) to release the save, HUD and scenario files and for CD-3 to release diagnostics (BB-1 and NF-3 landed 9 Oct 2026).
 - **T2-6 and T2-7** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-6 (Associative learning) is specified and fenced `queue-gated`, and waits for Dave's decision on its familiarity rates, handling-speed cap and old-save default; T2-7 (tier-2 prices) is still to be specified, and T2-6's block names it next. T2-8b and T2-4b (bodies) landed 9 Oct 2026.
-- **BB-2 to BB-4** (`plans/now/bee-bread.md`) -- the rest of Bee Bread; BB-2 and BB-3 wait for BB-1, queued in the Claude lane, and BB-4 for BB-2.
+- **BB-4** (`plans/now/bee-bread.md`) -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers; waits for BB-2, queued in the Claude lane, and is specified when it lands (BB-1 landed 9 Oct 2026; BB-2 and BB-3 are queued).
 - **NF-4** (`plans/now/nectar-fermentation.md`) -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; outlined and fenced `queue-gated` now that NF-3 has landed (9 Oct 2026); waits for Dave's answers on whether nurses may carry fermented nectar to brood and whether Restocking may draw from a fermented cell (the plan's "Still open").
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Gallerin guidance is the next design pass, now that step 8's ran on 6-7 Oct 2026 (booked by Dave, 5 Oct 2026); the event director's wait on the Colony Run's year (COL-4, COL-6) has cleared; it still needs its design pass. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/archive/colony-run_2026-10-08.md`).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
