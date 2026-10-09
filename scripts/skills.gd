@@ -132,6 +132,7 @@ const LANDSCAPE_MEMORY := "skill.ecology.landscape_memory"
 const BACKUP_ROLES := "skill.hive_mind.backup_roles"
 const AUTOMATION := "skill.hive_mind.automation"
 const CLEANING := "skill.hive_mind.cleaning"
+const SHIVER_CLUSTER := "skill.hive_mind.shiver_cluster"
 const ADJUSTMENT_PANEL := "skill.hive_mind.adjustment_panel"
 const EXTENDED_BACKUP_ROLES := "skill.hive_mind.extended_backup_roles"
 const CHEMICAL_CASCADE := "skill.hive_mind.chemical_cascade"
@@ -510,6 +511,18 @@ const SKILLS := [
 		# axis entirely.
 		"sector": "hive_mind", "tier": 2, "axial": Vector2i(-4, -1),
 		"max_rank": 1, "cost": {HONEY: 20, NECTAR: 160, POLLEN: 60},
+		"requires_previous_tier": true, "all_of": [], "any_of": [],
+		"feature": "", "introduced_by": "", "effects": [], "icon": "",
+		"status": "existing", "baseline": false, "open": false,
+	},
+	{
+		# Owning it is the default outside the Colony Run (run_availability.gd
+		# starts it there), so only a Colony Run feels the multiplied winter
+		# bill and its warning (season.gd::winter_bill). Price is T2-7's.
+		"id": SHIVER_CLUSTER, "name": "Shiver Cluster",
+		"description": "The colony huddles through winter and burns far less of its stores keeping warm.",
+		"sector": "hive_mind", "tier": 2, "axial": Vector2i(-5, 1),
+		"max_rank": 1, "cost": {HONEY: 25, NECTAR: 180},
 		"requires_previous_tier": true, "all_of": [], "any_of": [],
 		"feature": "", "introduced_by": "", "effects": [], "icon": "",
 		"status": "existing", "baseline": false, "open": false,

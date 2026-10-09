@@ -73,6 +73,9 @@ static func sheet_for(run_definition: Dictionary, progression = null) -> Diction
 			rows[skill_id] = {"source": SOURCE_START, "reason": REASON_RUN_GRANT}
 		elif seeded.has(skill_id):
 			rows[skill_id] = {"source": SOURCE_START, "reason": REASON_SEEDED_ROLE}
+		# Owned at the start of any run but the Colony Run (T2-8b), like seeding.
+		elif skill_id == Skills.SHIVER_CLUSTER and str(run_definition.get("run_type", "")) != "colony":
+			rows[skill_id] = {"source": SOURCE_START, "reason": REASON_RUN_GRANT}
 		elif Skills.is_cut(skill_id):
 			rows[skill_id] = {"source": SOURCE_UNAVAILABLE, "reason": REASON_CUT}
 		elif progression != null and not progression.feature_valid(skill_id):
