@@ -46,5 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/NF-2` (`claude/NF-2`) | Claude | nectar ferments past an age, changes colour, and is lost to honey makers | Claude | in progress | none | `plans/now/nectar-fermentation.md` NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers |
 | `.worktrees/FC-1` (`codex/FC-1`) | Codex | define the first-crisis readiness and evidence contract | Codex | in progress | none | `plans/now/crisis-readiness.md` FC-1 -- define the first-crisis readiness and evidence contract |
