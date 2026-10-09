@@ -46,4 +46,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.` (`codex/defer-cd3-queue`) | Codex (docs only) | Defer CD-3 and refresh cleared Codex gates | Codex | in progress | CD-3 availability decision and file ownership | `plans/now/diagnostic-readiness.md` CD-3 |
