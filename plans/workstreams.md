@@ -46,3 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/WC-5` (`codex/WC-5`) | Codex | the two level-to-model tables are tested against each other | Codex | in progress | none | `plans/now/workflow-checks.md` WC-5 -- the two level-to-model tables are tested against each other |
