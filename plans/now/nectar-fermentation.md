@@ -92,7 +92,6 @@ Verified 6 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| NF-3 | a bee that drinks fermented nectar goes tipsy (decision 3) | `scripts/bee.gd`, `scripts/bee_enums.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/bee_foraging.gd`, `scripts/bee_status.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf3_tipsy.py`, `test_scenarios/nf3_tipsy.json` | yes -- queued in the Claude lane (NF-2 landed 9 Oct 2026) | high |
 | NF-4 | the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; without it, closest first (decisions 4-5) | specified after NF-3 | no -- after NF-3 | high |
 | NF-5 | an order to clear fermented cells, built on the cell popup's eviction orders (decision 6) | `scripts/bee_building.gd`, `scripts/orders_zones.gd`, `scripts/hud.gd`, `scripts/main.gd`, `scripts/scenario_actions.gd`, `tests/test_nf5_clear_fermented.py`, `test_scenarios/nf5_clear_fermented.json` | yes -- queued in the Claude lane (specified 9 Oct 2026) | medium |
 
@@ -111,85 +110,7 @@ NF-1 shipped 2026-10-06; its specification is `plans/archive/NF-1_2026-10-06.md`
 
 NF-2 shipped 2026-10-09; its specification is `plans/archive/NF-2_2026-10-09.md`.
 
-## NF-3 -- a bee that drinks fermented nectar goes tipsy
-
-<!-- LAYER: immediate-task -->
-
-Level: high (a per-bee hot path, a save field, and a balance value set by a
-sweep).
-
-**True now.** NF-2's `hive_cell.is_fermented()` exists, and hungry bees
-still eat from fermented cells through `hive.find_food_cell` (decision 4).
-Nothing happens to a bee that does.
-
-**True afterwards.**
-
-- A bee that eats from a fermented cell (`bee_survival.gd`, checked before
-  the take, since a take that empties the cell clears its stamp) becomes
-  tipsy for `GameConfig.tipsy_seconds`, with its `settings_catalogue.gd`
-  row. Eating again while tipsy restarts the timer, not stacks it.
-- While tipsy (decision 3): the bee moves at `GameConfig.tipsy_speed_factor`
-  of its speed, its heading wobbles (`bee_movement.gd`), its forage
-  perception radius shrinks by `GameConfig.tipsy_vision_factor`, and it is
-  never dance-eligible, so it cannot dance or recruit
-  (`bee_foraging.gd::_update_dance_eligibility`). In a work state it
-  sometimes breaks off into a short confused wander inside the hive and then
-  resumes the task: one shared interlude in `bee.gd`, with its state in
-  `bee_enums.gd` and its status line in `bee_status.gd`, not a change to
-  each role's routine.
-- The remaining tipsy seconds are saved per bee as an additive field; an
-  older save loads every bee sober (`.claude/rules/saving.md`).
-- The duration and strengths come from a headless sweep run in this slice
-  and recorded here, not guessed (the plan's open question): long and
-  strong enough that a colony eating mostly fermented nectar visibly loses
-  forage per day, short enough that one sip costs a single trip.
-- `test_scenarios/nf3_tipsy.json` stocks a fermented cell through a short
-  `nectar_ferment_hours` and no other food. `tests/test_nf3_tipsy.py`
-  asserts from the run that a bee that eats there goes tipsy, moves slower,
-  is never dance-eligible while tipsy, recovers after the set time, and that
-  its remaining time survives a save and restore.
-
-**Sweep (9 Oct 2026, built on the branch).** Base: 20 cells, 8 nectar and
-2 pollen foragers, 2 nurses, 1 builder, no honey makers, default 200-second
-days, `nectar_ferment_hours` 1 (so stored nectar is nearly all fermented),
-4 days, matched seeds, forage per day = `forager_delivery_amount` / days.
-First finding: with default settings foragers refuel at flowers
-(`forager_drink_threshold` 0.7) and never ate in the hive in 3 days, so no
-setting changed forage at all. The sweep therefore also set
-`forager_drink_threshold` 0, so foragers eat at home: the "colony eating
-mostly fermented nectar" case. A trip then takes about 66 s (10 foragers,
-121 deliveries in 800 s), and a forager eats about once every six trips, so
-a 60 s tipsiness keeps it tipsy 13% of the time (counted from saves).
-
-| tipsy_seconds | speed / vision / wobble | forage per day vs off, 5 seeds (401-405) |
-| --- | --- | --- |
-| 60 | 0.6 / 0.5 / 35 deg | -1.8% (every seed lower, -0.6 to -3.2) |
-| 60 | 0.5 / 0.4 / 45 deg | -2.3% (-0.8 to -3.7) |
-| 60 | 0.4 / 0.4 / 45 deg | -2.2% (-1.1 to -4.8) |
-| 180 | 0.6 / 0.5 / 35 deg | -4.7% (-2.3 to -7.2) |
-| 300 | 0.6 / 0.5 / 35 deg | -6.4% (-3.0 to -9.0) |
-
-Strength barely matters, because a forager is tipsy for only one trip in
-six; duration does. The two targets conflict: one sip costing a single
-trip (about 60 s) loses about 2% of forage a day, which is not visible,
-while a visible loss (5% or more) needs 180-300 s, three to five trips per
-sip. Dave chose the visible loss (9 Oct 2026): built with `tipsy_seconds`
-300 (about five trips per sip, -6.4% forage a day), speed 0.6, vision 0.5,
-wobble 35 degrees, wander 0.05 a second for 6 s. Indoor workers carry a
-visible cost too: a tipsy nurse, builder or honey maker walks at 0.6 and
-breaks off into a wander about three times a minute.
-
-**Must not change.** Eating order, honey ripening, fermentation itself, and
-a sober bee's movement and work.
-
-```queue
-**[Claude] NF-3 -- a bee that drinks fermented nectar goes tipsy**
-- Plan: `plans/now/nectar-fermentation.md` -- "NF-3 -- a bee that drinks fermented nectar goes tipsy"
-- Files: `scripts/bee.gd`, `scripts/bee_enums.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/bee_foraging.gd`, `scripts/bee_status.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf3_tipsy.py`, `test_scenarios/nf3_tipsy.json`
-- Check: `python -m unittest tests.test_nf3_tipsy` passes (a bee that eats fermented nectar goes tipsy, moves slower, cannot dance, recovers, and its tipsiness survives save and restore); `tools/verify.ps1` is green
-- Proof: `absent: scripts/game_config.gd :: tipsy_seconds`
-- Next after: NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first
-```
+NF-3 shipped 2026-10-09; its specification is `plans/archive/NF-3_2026-10-09.md`.
 
 ## NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first
 
