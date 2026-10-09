@@ -656,3 +656,22 @@ explicit request from Dave.
   terminal plan as a stop, not a note, or `--complete-plans` repoints plain
   mentions in `NEXTSTEPS.md` and refuses only on queue items and ledger rows.
 - Disposition: untriaged
+
+### 2026-10-09 — finish skips branch verify after a master merge
+
+- Source: T2-4a closeout (Claude, integrating Codex's branch)
+- Area: process / `tools/slice.ps1` `Test-BranchVerified`
+- Signal: Codex's `finish` recorded a branch-verify pass at `7069309`, then
+  stopped on primary verify. After master (T2-8a, COL-8) was merged into the
+  branch, `finish` printed "already passed this closeout; skipping" twice --
+  the record is matched on branch name only, not head -- and merged without
+  verifying the merged tree. Moving the record aside did not change that.
+  The Codex sandbox also owns the worktree's `.git`, so every git call from
+  Dave's account needed `safe.directory` (passed through `GIT_CONFIG_*`), and
+  the worktree lacked the untracked `.claude/settings.local.json` that
+  `docs/context-review-2026-10-07.md` names, failing `check_docs` there only.
+- Evidence: `verify.ps1` was run by hand on master `1e8ac3a` afterwards.
+- Consequence: a resumed closeout can land code that no verify has seen.
+- Candidate direction: Hypothesis -- the verified record stores and compares
+  `HEAD` (or the tree hash), so any new commit forces a fresh branch verify.
+- Disposition: untriaged
