@@ -586,6 +586,42 @@ const TUNABLES := [
 		"category": "Honey",
 		"tip": "In-game hours raw nectar can sit in a cell before it ferments and turns murky. Honey makers cannot use fermented nectar. Topping a cell up keeps the age of its oldest nectar, so only emptying the cell resets it.",
 	},
+	{
+		"persist": "none",
+		"key": "tipsy_seconds", "label": "Tipsy for s", "step": 5.0, "min": 1.0,
+		"category": "Honey",
+		"tip": "Seconds a bee stays tipsy after eating fermented nectar. Eating more while tipsy starts the count again rather than adding to it.",
+	},
+	{
+		"persist": "none",
+		"key": "tipsy_speed_factor", "label": "Tipsy speed x", "step": 0.05, "min": 0.05,
+		"category": "Honey",
+		"tip": "A tipsy bee moves at this fraction of its normal speed, indoors and out.",
+	},
+	{
+		"persist": "none",
+		"key": "tipsy_vision_factor", "label": "Tipsy sight x", "step": 0.05, "min": 0.05,
+		"category": "Honey",
+		"tip": "A tipsy forager spots flowers from only this fraction of the usual distance, so it searches longer for each one.",
+	},
+	{
+		"persist": "none",
+		"key": "tipsy_wobble_degrees", "label": "Tipsy wobble deg", "step": 5.0, "min": 0.0,
+		"category": "Honey",
+		"tip": "How far either side of its course a tipsy bee's flight swings. Wider wobbles waste more of every trip.",
+	},
+	{
+		"persist": "none",
+		"key": "tipsy_wander_chance", "label": "Tipsy wander /s", "step": 0.01, "min": 0.0,
+		"category": "Honey",
+		"tip": "Chance per second that a tipsy bee working in the hive stops partway through its task and wanders off confused.",
+	},
+	{
+		"persist": "none",
+		"key": "tipsy_wander_seconds", "label": "Tipsy wander s", "step": 1.0, "min": 0.5,
+		"category": "Honey",
+		"tip": "How long one confused wander lasts before the bee walks back and carries on with its task.",
+	},
 
 	# --- Gynes & royal jelly ---
 	{

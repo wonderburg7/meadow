@@ -47,6 +47,18 @@ static func rain_recall_on() -> bool:
 		and Session.progression.is_behaviour_enabled("rain_recall_on"))
 
 
+## NF-3. The selection panel's line for a tipsy bee's confused wander
+## (State.TIPSY_WANDER), and the note on any other line while it is tipsy.
+static func tipsy_wander_text(bee: Node2D) -> String:
+	if bee.tipsy_returning:
+		return "tipsy -- weaving back to the job it wandered off from"
+	return "tipsy -- wandering the hive in a daze, the job forgotten for now"
+
+
+static func tipsy_note(bee: Node2D, line: String) -> String:
+	return "%s (tipsy on fermented nectar, %ds left)" % [line, ceili(bee.tipsy_time_left)]
+
+
 static func works_indoors(bee: Node2D) -> bool:
 	return (
 		bee.role == Role.NURSERY

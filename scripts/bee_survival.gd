@@ -234,11 +234,25 @@ static func feed_self(bee: Node2D, delta: float) -> void:
 
 	var per_unit: float = GameConfig.honey_energy_factor if bee.target_cell.content_type == "honey" else 1.0
 	var energy_wanted: float = min(GameConfig.bee_eat_rate * delta, room)
+	# NF-3: asked before the take, since a take that empties the cell
+	# clears its nectar stamp and with it the fermentation.
+	var fermented: bool = bee.target_cell.is_fermented()
 	var taken: float = bee.target_cell.take_resource(bee.target_cell.content_type, energy_wanted / per_unit)
 	bee.energy += taken * per_unit
+	if fermented and taken > 0.0:
+		go_tipsy(bee)
 	bee.hive.announce()
 	if taken <= 0.0:
 		after_feeding(bee)
+
+
+## NF-3. Fermented nectar makes a bee tipsy for GameConfig.tipsy_seconds.
+## Every mouthful restarts the clock rather than adding to it, so a long
+## meal ends tipsy_seconds after its last sip. A tipsy bee cannot dance or
+## recruit, so it leaves any recruitment list it was waiting in.
+static func go_tipsy(bee: Node2D) -> void:
+	bee.tipsy_time_left = GameConfig.tipsy_seconds
+	BeeForaging.leave_recruitment(bee)
 
 
 ## Back to work. A forager still carrying a load finishes delivering it;

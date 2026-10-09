@@ -622,6 +622,24 @@ var starting_honey_makers: float = 0.0
 ## 24 hours a day to 360 by day 19. Four days sits just above the first, so
 ## a staffed colony rarely sees it, and an unstaffed one ferments by day 8.
 var nectar_ferment_hours: float = 96.0
+## NF-3. A bee that eats from a fermented cell (bee_survival.gd::feed_self)
+## is tipsy for tipsy_seconds of game time; eating again restarts the clock
+## rather than adding to it. While tipsy it moves at tipsy_speed_factor of
+## its speed, its flight heading swings up to tipsy_wobble_degrees either
+## side, it spots flowers from tipsy_vision_factor of
+## forage_perception_radius, and it cannot dance or recruit. At indoor work
+## it breaks off at tipsy_wander_chance per second into a confused wander
+## of tipsy_wander_seconds before walking back to the task.
+## Set from NF-3's headless sweep -- see plans/now/nectar-fermentation.md,
+## "NF-3 -- a bee that drinks fermented nectar goes tipsy". Dave chose 300 s
+## (9 Oct 2026): about five forager trips per sip, for a visible loss of
+## about 6% of forage a day in a colony eating mostly fermented nectar.
+var tipsy_seconds: float = 300.0
+var tipsy_speed_factor: float = 0.6
+var tipsy_vision_factor: float = 0.5
+var tipsy_wobble_degrees: float = 35.0
+var tipsy_wander_chance: float = 0.05
+var tipsy_wander_seconds: float = 6.0
 
 # --- comb building ---
 ## Miner-seconds to break down one soil block. Like building, several

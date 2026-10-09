@@ -360,9 +360,16 @@ static func move_towards(bee: Node2D, target: Vector2, delta: float) -> void:
 	Perf.begin("bee_move")
 	var step: float = bee.speed * bee._terrain_speed_factor() * delta
 	var before: Vector2 = bee.position
+	# NF-3: one float test for a sober bee, so its movement is unchanged.
+	var tipsy: bool = bee.tipsy_time_left > 0.0
+	if tipsy:
+		step *= GameConfig.tipsy_speed_factor
 
 	if not bee._is_inside_hive():
-		var wanted: Vector2 = bee.position.move_toward(avoid_obstacles(bee, target), step)
+		var aim: Vector2 = avoid_obstacles(bee, target)
+		if tipsy:
+			aim = _tipsy_wobble(bee, aim)
+		var wanted: Vector2 = bee.position.move_toward(aim, step)
 		bee.position = block_obstacles(bee, wanted)
 		bee.flying_outdoors = true   # bumble flight -- see bee.gd::_update_wander_flight
 		_update_heading(bee, before)
@@ -396,6 +403,19 @@ static func move_towards(bee: Node2D, target: Vector2, delta: float) -> void:
 		bee.position = _hive_move_toward(bee.position, target, step)
 	_update_heading(bee, before)
 	Perf.end("bee_move")
+
+
+## NF-3. A tipsy bee's flight swings either side of its course, up to
+## GameConfig.tipsy_wobble_degrees, so it weaves rather than flying
+## straight. Turned about the bee rather than the aim, so the distance left
+## is kept and a near target is still reached. Outdoors only: indoors the
+## route keeps to open tiles, and a tipsy bee's confusion there is its
+## wander away from work (bee.gd, State.TIPSY_WANDER).
+const TIPSY_WOBBLE_HZ := 0.6
+
+static func _tipsy_wobble(bee: Node2D, aim: Vector2) -> Vector2:
+	var swing: float = deg_to_rad(GameConfig.tipsy_wobble_degrees) * sin(Session.sim_time * TAU * TIPSY_WOBBLE_HZ + bee.wander_phase)
+	return bee.position + (aim - bee.position).rotated(swing)
 
 
 ## Slice 6: bee.heading tracks the direction she actually just moved in,

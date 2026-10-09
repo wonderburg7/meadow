@@ -55,4 +55,7 @@ enum State {
 	# GameConfig.proximity_recruitment_on. Appended for the same reason
 	# as every other state on this list: state is saved as a plain int.
 	DANCING,
+	# NF-3: a tipsy bee's confused wander away from its work and back --
+	# see bee.gd's "the tipsy wander" section. Appended, same reason.
+	TIPSY_WANDER,
 }

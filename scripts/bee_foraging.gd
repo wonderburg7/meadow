@@ -211,7 +211,11 @@ static func search_for_flower(bee: Node2D, delta: float) -> void:
 			bee.search_start_direction = randf() * TAU
 			bee.search_waypoint = _spiral_point(bee, bee.search_origin, bee.search_angle)
 			return
-		best = nearest_flower(bee, false, GameConfig.forage_search_radius, true)
+		# NF-3: a tipsy bee's last look is short-sighted too, and gets no
+		# whole-meadow scan, so it heads home rather than seeing everything.
+		var tipsy: bool = bee.tipsy_time_left > 0.0
+		var last_look: float = GameConfig.forage_search_radius * (GameConfig.tipsy_vision_factor if tipsy else 1.0)
+		best = nearest_flower(bee, false, last_look, not tipsy)
 		if best != null:
 			_commit_to_flower(bee, best)
 		else:
@@ -249,10 +253,20 @@ static func advance_search_waypoint(bee: Node2D) -> void:
 ## if that finds nothing, neither ever falling through to a full scan --
 ## see nearest_flower's allow_full_scan parameter.
 static func _perceive_flower(bee: Node2D) -> Node2D:
-	var best := nearest_flower(bee, true, GameConfig.forage_perception_radius, false)
+	var radius: float = perception_radius(bee)
+	var best := nearest_flower(bee, true, radius, false)
 	if best == null:
-		best = nearest_flower(bee, false, GameConfig.forage_perception_radius, false)
+		best = nearest_flower(bee, false, radius, false)
 	return best
+
+
+## How far this bee can spot a flower at a glance. A tipsy bee (NF-3) sees
+## only GameConfig.tipsy_vision_factor of it; the search spiral's own
+## widening is unchanged, so a tipsy forager simply finds less on each loop.
+static func perception_radius(bee: Node2D) -> float:
+	if bee.tipsy_time_left > 0.0:
+		return GameConfig.forage_perception_radius * GameConfig.tipsy_vision_factor
+	return GameConfig.forage_perception_radius
 
 
 static func _commit_to_flower(bee: Node2D, flower: Node2D) -> void:
@@ -1108,7 +1122,8 @@ static func go_to_exit(bee: Node2D, delta: float) -> void:
 		# new, or auto-recruitment just switched on for an established bee)
 		# goes straight back out rather than judging itself on a number
 		# that isn't real yet.
-		if GameConfig.auto_recruitment_on and bee.role == Role.FORAGER:
+		# NF-3: a tipsy bee cannot recruit or be recruited.
+		if GameConfig.auto_recruitment_on and bee.role == Role.FORAGER and bee.tipsy_time_left <= 0.0:
 			var past_grace: bool = bee.trips_scored >= GameConfig.recruit_grace_trips
 			var lower: float = GameConfig.recruit_lower_threshold_nectar if bee.resource_type == "nectar" else GameConfig.recruit_lower_threshold_pollen
 			var upper: float = GameConfig.recruit_upper_threshold_nectar if bee.resource_type == "nectar" else GameConfig.recruit_upper_threshold_pollen
@@ -1326,6 +1341,9 @@ static func _update_dance_eligibility(bee: Node2D) -> void:
 		return
 	bee.hive.remove_dance_eligible_mentor(bee)
 	bee.hive.remove_dance_eligible_seeker(bee)
+	# NF-3: a tipsy bee is never dance-eligible, on either side.
+	if bee.tipsy_time_left > 0.0:
+		return
 	var past_grace: bool = bee.trips_scored >= GameConfig.recruit_grace_trips
 	if not past_grace and not bee.is_scouting:
 		return
@@ -1335,6 +1353,24 @@ static func _update_dance_eligibility(bee: Node2D) -> void:
 		bee.hive.add_dance_eligible_seeker(bee)
 	elif past_grace and bee.avg_collection_rate > upper and not CrabSpider.recruitment_suppressed(bee):
 		bee.hive.add_dance_eligible_mentor(bee)
+
+## NF-3. Takes a bee that has just gone tipsy out of every recruitment list
+## it may be waiting in, so it can neither dance nor be danced to until it
+## is sober and scores another trip. A dance already paired is broken off on
+## both sides: a bee pulled out of DANCING to feed keeps its partner link,
+## and the mentor's _complete_dance would otherwise still hand it a patch.
+static func leave_recruitment(bee: Node2D) -> void:
+	if bee.hive != null:
+		bee.hive.remove_dance_eligible_mentor(bee)
+		bee.hive.remove_dance_eligible_seeker(bee)
+		bee.hive.remove_entrance_mentor(bee)
+	var partner: Node2D = bee.dance_partner
+	if partner != null and is_instance_valid(partner) and partner.dance_partner == bee:
+		partner.dance_partner = null
+	if bee.state == State.DANCING:
+		_end_dance(bee)
+	bee.dance_partner = null
+	bee.dance_role = ""
 
 ## Called once a frame for every indoor forager while proximity
 ## recruitment is on (see bee.gd's per-frame dispatch) -- cheap by
