@@ -580,6 +580,12 @@ const TUNABLES := [
 		"category": "Honey",
 		"tip": "Adding fresh wet mix to a part-dried cell sets its drying back to this fraction of the progress it had. Low values make topping cells up expensive.",
 	},
+	{
+		"persist": "none",
+		"key": "nectar_ferment_hours", "label": "Nectar ferments h", "step": 6.0, "min": 1.0,
+		"category": "Honey",
+		"tip": "In-game hours raw nectar can sit in a cell before it ferments and turns murky. Honey makers cannot use fermented nectar. Topping a cell up keeps the age of its oldest nectar, so only emptying the cell resets it.",
+	},
 
 	# --- Gynes & royal jelly ---
 	{

@@ -172,6 +172,7 @@ static func _cells_data(world) -> Array:
 			"drone": cell.brood_is_drone,
 			"clean": cell.clean_progress,
 			"ripen": cell.ripen_progress,
+			"nectar_since": cell.nectar_since,
 			"hatch_role": cell.hatch_role,
 			"hatch_focus": cell.hatch_focus,
 			"hatch_automine": cell.hatch_automine,

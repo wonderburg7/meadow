@@ -188,6 +188,11 @@ func _restore_cells(cells: Array) -> void:
 		cell.brood_is_drone = bool(entry.get("drone", false)) and not cell.brood_is_gyne
 		cell.clean_progress = float(entry.get("clean", 0.0))
 		cell.ripen_progress = float(entry.get("ripen", 0.0))
+		# NF-2, additive: Session.sim_time is restored above, so a save from
+		# before NF-2 gives its nectar a fresh stamp at the restore time.
+		cell.nectar_since = -1.0
+		if cell.content_type == "nectar":
+			cell.nectar_since = float(entry.get("nectar_since", Session.sim_time))
 		cell.hatch_role = int(entry.get("hatch_role", -1))
 		cell.hatch_focus = str(entry.get("hatch_focus", "nectar"))
 		cell.hatch_automine = bool(entry.get("hatch_automine", false))

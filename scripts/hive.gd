@@ -545,12 +545,17 @@ func find_food_cell(except: Node2D = null) -> Node2D:
 func has_room_for_egg() -> bool:
 	return find_empty_cell() != null
 
+## Fermented nectar (NF-2) is skipped: a honey maker cannot turn it into
+## honey. find_food_cell still offers it, since a bee cannot tell (decision 4).
 func find_cell_with(resource_type: String) -> Node2D:
 	var bucket: String = "ripe_honey" if resource_type == "honey" else resource_type
+	var skip_fermented: bool = resource_type == "nectar"
 	for cell in cells_holding(bucket):
 		# a sealed cell is out of circulation -- sending a bee to one just
 		# has it walk over, get nothing, and ask again
 		if cell.amount > 0.0 and cell.can_withdraw():
+			if skip_fermented and cell.is_fermented():
+				continue
 			return cell
 	return null
 
