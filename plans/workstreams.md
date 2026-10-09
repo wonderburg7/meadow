@@ -46,3 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/SI-3` (`claude/SI-3`) | Claude | save, checkpoint and index writes are all-or-nothing | Claude | in progress | none | `plans/now/save-integrity.md` SI-3 -- save, checkpoint and index writes are all-or-nothing |
