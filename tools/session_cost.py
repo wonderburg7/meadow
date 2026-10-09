@@ -57,9 +57,10 @@ PHASE_LABELS = {
 # is logged on its own. Token counts are estimated at 4 characters per
 # token, the standard rough ratio for English/code text; treat the split
 # as an estimate, not an exact accounting.
-# The model each stated level asks for -- mirrors Get-SliceAdvice in
-# tools/slice.ps1. A model outside its level's entry is drift, in whichever
-# direction; CLAUDE.md rule 4 treats both as mistakes. Matched by prefix,
+# The model each stated level asks for -- checked against Get-SliceAdvice in
+# tools/slice.ps1 by tests/test_wc5_level_model_parity.py. A model outside
+# its level's entry is drift in either direction; CLAUDE.md rule 4 treats
+# both as mistakes. Matched by prefix,
 # because a transcript records a dated id such as claude-sonnet-5-20260401.
 LEVEL_MODELS = {
     "low": ("claude-sonnet-5", "claude-haiku-5-5"),

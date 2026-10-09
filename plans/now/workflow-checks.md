@@ -1,7 +1,7 @@
 # Workflow checks -- say what a waiting lane is waiting for, and catch latent tooling drift
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane, in the Codex lane | Dependency: WC-1 landed; WC-4 follows WC-2 because both edit `tools/check_docs.py`; WC-3 landed and WC-5 is independent | Verified: 2026-10-09
+Status: active | Owner: Dave / Codex | Next: WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane, in the Codex lane | Dependency: WC-1 and WC-3 landed; WC-4 follows WC-2 because both edit `tools/check_docs.py`; WC-5 is ready to close | Verified: 2026-10-09
 
 ## Objective
 
