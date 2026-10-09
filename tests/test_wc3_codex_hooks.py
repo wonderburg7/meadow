@@ -41,23 +41,29 @@ class CodexHooksTest(unittest.TestCase):
             )
             env = os.environ.copy()
             env.pop("CLAUDE_PROJECT_DIR", None)
-            for event_name, kind in (("SessionStart", "session_start"), ("Stop", "session_end")):
-                for entry in config["hooks"][event_name]:
-                    for hook in entry["hooks"]:
-                        result = subprocess.run(
-                            hook["command"],
-                            shell=True,
-                            cwd=checkout,
-                            env=env,
-                            input=json.dumps({"cwd": str(checkout), "session_id": "wc3-test"}),
-                            capture_output=True,
-                            text=True,
-                            timeout=15,
-                        )
-                        self.assertEqual(result.returncode, 0, result.stderr)
+            subdirectory = checkout / "nested"
+            subdirectory.mkdir()
+            for cwd in (checkout, subdirectory):
+                for event_name in ("SessionStart", "Stop"):
+                    for entry in config["hooks"][event_name]:
+                        for hook in entry["hooks"]:
+                            result = subprocess.run(
+                                hook["command"],
+                                shell=True,
+                                cwd=cwd,
+                                env=env,
+                                input=json.dumps({"cwd": str(cwd), "session_id": "wc3-test"}),
+                                capture_output=True,
+                                text=True,
+                                timeout=15,
+                            )
+                            self.assertEqual(result.returncode, 0, result.stderr)
             log = checkout / ".git" / "meadow-diagnostics.jsonl"
             events = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()]
-            self.assertEqual([event["kind"] for event in events], ["session_start", "session_end"])
+            self.assertEqual(
+                [event["kind"] for event in events],
+                ["session_start", "session_end", "session_start", "session_end"],
+            )
             self.assertTrue(all(event["session"] == "wc3-test" for event in events))
 
 

@@ -119,8 +119,10 @@ may not set; with it empty the command runs `python "/tools/hook_log.py"`.
 **Cause found.** Codex supports project hooks from `.codex/hooks.json`, but
 does not supply Claude's `CLAUDE_PROJECT_DIR` variable. With that variable
 unset, the script path points outside the checkout, so `hook_log.py` never
-runs. Calling `python tools/hook_log.py` from the checkout resolves on Windows;
-the regression test finds both session events in a temporary checkout's log.
+runs. Codex runs hook commands with the session's cwd, which may be a nested
+directory. The commands now resolve the checkout root with Git before running
+the logger; the regression test finds both session events from root and nested
+working directories in a temporary checkout's log.
 
 **True afterwards.** Every `.codex/hooks.json` command finds
 `tools/hook_log.py` without `CLAUDE_PROJECT_DIR`, by a form Codex resolves
