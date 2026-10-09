@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/FC-1` (`codex/FC-1`) | Codex | define the first-crisis readiness and evidence contract | Codex | in progress | none | `plans/now/crisis-readiness.md` FC-1 -- define the first-crisis readiness and evidence contract |
+| `.worktrees/T2-4b` (`claude/T2-4b`) | Claude | Bees that die in the hive leave bodies; winter's dead appear at spring | Claude | in progress | none | `plans/now/tier-two.md` T2-4b -- Bees that die in the hive leave bodies; winter's dead appear at spring |
