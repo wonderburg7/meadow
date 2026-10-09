@@ -43,10 +43,11 @@ Verified 7 Oct 2026 against master; BB-1 (9 Oct 2026) has since built Bee Bread 
 `skill_tree_panel.gd`; they share no file). BB-4 follows BB-2, whose rule it balances around. Every slice
 changes balance, so each is simulated first with PE-2's arc
 (`tools/pacing_gates.py`). Cross-plan: `plans/now/nectar-fermentation.md`
-NF-2 and `plans/now/tier-two.md` T2-3, which had to land first, have. BB-2
-shares `hud.gd` with NF-5 (`plans/now/nectar-fermentation.md`) and
-`hive_cell.gd` and `bee.gd` with SP-3 (`plans/now/sprites.md`), all in the
-Claude lane ahead of it; CD-3 (`plans/now/diagnostic-readiness.md`, for
+NF-2 and `plans/now/tier-two.md` T2-3, which had to land first, have, and
+NF-5 (`plans/now/nectar-fermentation.md`), which shared `hud.gd`, landed
+9 Oct 2026. BB-2 shares `hive_cell.gd` and `bee.gd` with SP-3
+(`plans/now/sprites.md`), ahead of it in the Claude lane, and
+`bee_nursery.gd` and `bee_survival.gd` with NF-4, queued after it; CD-3 (`plans/now/diagnostic-readiness.md`, for
 `bee.gd`) and FC-2 (`plans/now/crisis-readiness.md`, for the save files and
 `hud.gd`) wait for BB-2 to release them;
 `plans/design/progression.md` step 13 (tier-3 content) waits for BB-3.
