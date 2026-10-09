@@ -46,4 +46,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/BB-1` (`claude/BB-1`) | Claude | Fermenters make Bee Bread in a store cell | Claude | in progress | none | `plans/now/bee-bread.md` BB-1 -- Fermenters make Bee Bread in a store cell |
