@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/SI-2` (`claude/SI-2`) | Claude | a checkpoint restore puts back soil dug since the checkpoint | Claude | in progress | none | `plans/now/save-integrity.md` SI-2 -- a checkpoint restore puts back soil dug since the checkpoint |
+| `.claude/worktrees/codex-t2-4a-integration-145d3c` (`claude/codex-t2-4a-integration-145d3c`) | Claude (docs only) | open the WC-1 and WC-3 gates now the Codex lane has room after T2-4a | Claude | in progress | none | `plans/now/workflow-checks.md` WC-1, WC-3 |
