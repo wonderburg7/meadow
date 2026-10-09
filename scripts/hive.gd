@@ -554,6 +554,16 @@ func find_cell_with(resource_type: String) -> Node2D:
 			return cell
 	return null
 
+## NF-2. The nectar a honey maker may take: find_cell_with("nectar") less
+## fermented cells, since fermented nectar cannot be made into honey
+## (decision 2). Only bee_honey.gd asks this; hungry bees (find_food_cell)
+## and nurses (find_cell_with) still take fermented nectar (decision 4).
+func find_honey_source() -> Node2D:
+	for cell in cells_holding("nectar"):
+		if cell.amount > 0.0 and cell.can_withdraw() and not cell.is_fermented():
+			return cell
+	return null
+
 ## The brood a nurse should go to: the hungriest larva first, so feeding
 ## keeps up with the whole nursery rather than one favoured cell. Falls
 ## back to any brood at all, since standing over a fed larva still speeds

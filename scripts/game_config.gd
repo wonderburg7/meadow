@@ -613,6 +613,15 @@ var honey_ripen_time: float = 30.0      # bee-seconds of fanning to dry one cell
 ## back by this fraction, so topping a cell up has a real cost.
 var honey_rewet_factor: float = 0.5
 var starting_honey_makers: float = 0.0
+## NF-2. In-game hours raw nectar can sit in a cell before it ferments
+## (hive_cell.gd::is_fermented). A honey maker cannot turn fermented nectar
+## into honey. Topping a cell up keeps its oldest nectar's age, so a cell
+## that is never emptied ferments too. Chosen from NF-1's headless runs at
+## 20-second days (9 Oct 2026): with two or four honey makers the daily p95
+## nectar age was 94 hours across three 20-day runs, and with none it grew
+## 24 hours a day to 360 by day 19. Four days sits just above the first, so
+## a staffed colony rarely sees it, and an unstaffed one ferments by day 8.
+var nectar_ferment_hours: float = 96.0
 
 # --- comb building ---
 ## Miner-seconds to break down one soil block. Like building, several

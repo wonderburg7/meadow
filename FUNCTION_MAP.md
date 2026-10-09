@@ -397,26 +397,26 @@ The headless verbs, `when` clauses and layout assertions.
 1640 static func _log(do: String, target_desc: String, result: String, reason: String) -> void
 ```
 
-## settings_catalogue.gd (1,464 lines)
+## settings_catalogue.gd (1,470 lines)
 
 Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
 
 ```
 22   # --- preloads and collection order --------------------------------
 48   # --- the tunables table -------------------------------------------
-1339 # --- settings owned by Session ------------------------------------
-1353 # --- reading and writing a setting --------------------------------
-1354 static func setting_get(key: String)
-1357 static func setting_set(key: String, value) -> void
-1364 # --- resetting ----------------------------------------------------
-1381 static func reset_config_to_defaults() -> void
-1393 static func reset_config_keys(keys: Array) -> void
-1399 # --- applying a setting with its cascades -------------------------
-1408 static func apply_setting(key: String, value) -> void
-1419 # --- the cascade helpers ------------------------------------------
-1424 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1442 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1456 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+1345 # --- settings owned by Session ------------------------------------
+1359 # --- reading and writing a setting --------------------------------
+1360 static func setting_get(key: String)
+1363 static func setting_set(key: String, value) -> void
+1370 # --- resetting ----------------------------------------------------
+1387 static func reset_config_to_defaults() -> void
+1399 static func reset_config_keys(keys: Array) -> void
+1405 # --- applying a setting with its cascades -------------------------
+1414 static func apply_setting(key: String, value) -> void
+1425 # --- the cascade helpers ------------------------------------------
+1430 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1448 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1462 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
 ## bee_foraging.gd (1,461 lines)
@@ -730,92 +730,93 @@ The session JSONL writer, counters and capture profiles.
 1219 func _capture_entry(entry: Dictionary) -> bool
 ```
 
-## hive_cell.gd (1,215 lines)
+## hive_cell.gd (1,236 lines)
 
 One cell: contents, brood, honey ripening, how it draws.
 
 ```
 25   # --- constants and colours ----------------------------------------
-99   # --- cell state ---------------------------------------------------
-144  # --- building state -----------------------------------------------
-168  func effective_build_time() -> float
-171  # --- designation and orders ---------------------------------------
-213  # --- hatch settings -----------------------------------------------
-231  # --- layout and display nodes -------------------------------------
-272  # --- slots --------------------------------------------------------
-286  # --- setup --------------------------------------------------------
-288  func _ready() -> void
-402  # --- overlay, selection and rings ---------------------------------
-409  func set_overlay(mode: String) -> void
-415  func _overlay_colour() -> Array
-453  func set_selected(value: bool) -> void
-465  func set_zone_glow(value: bool, glow_colour: Color = Color.WHITE, tag: String = "") -> void
-476  func _set_outline_points(line: Line2D, size: float) -> void
-487  func _silhouette_point_to_local(p: Vector2) -> Vector2
-499  func _set_outline_points_cup(line: Line2D, size: float) -> void
-515  func _apply_outline_points(line: Line2D, size: float) -> void
-523  func _set_selection_ring_points() -> void
-526  # --- per-frame update ---------------------------------------------
-544  func _process(delta: float) -> void
-565  # --- brood development --------------------------------------------
-570  func _develop_brood(delta: float) -> void
-591  func _health_factor() -> float
-599  func _larva_dies() -> void
-612  # --- index and display epochs -------------------------------------
-618  func _invalidate_hive_index() -> void
-628  func _invalidate_stock() -> void
-642  func bump_display_epoch() -> void
-645  # --- working positions --------------------------------------------
-650  func claim_slot(bee: Node2D) -> int
-661  func release_slot(bee: Node2D) -> void
-668  func has_free_slot() -> bool
-677  func slot_position(index: int) -> Vector2
-689  # --- building -----------------------------------------------------
-691  func start_as_site() -> void
-696  func claim_builder(bee: Node2D) -> void
-700  func release_builder(bee: Node2D) -> void
-706  func add_build_progress(delta: float) -> void
-717  func build_fraction() -> float
-720  # --- contents -----------------------------------------------------
-722  func is_empty() -> bool
-727  func capacity_for(resource_type: String) -> float
-735  func accepts(resource_type: String) -> bool
-754  func is_nursery_cell() -> bool
-757  func space_for(resource_type: String) -> float
-773  func needs_eviction() -> bool
-791  func add_resource(resource_type: String, requested: float) -> float
-827  func nectar_age() -> float
-835  func take_resource(resource_type: String, requested: float) -> float
-864  func can_withdraw() -> bool
-869  func set_closed(value: bool) -> void
-876  func set_fill_then_close(value: bool) -> void
-885  func fill_fraction() -> float
-892  func set_designation(resource_type: String, explicit: bool = true) -> void
-900  # --- honey ---------------------------------------------------------
-902  func is_ripe_honey() -> bool
-906  func needs_fanning() -> bool
-911  func add_fanning_progress(delta: float) -> void
-921  func ripen_fraction() -> float
-924  # --- brood ---------------------------------------------------------
-926  func start_brood(as_gyne: bool = false, as_drone: bool = false) -> void
-939  func brood_kind_label() -> String
-949  func develop_time() -> float
-957  func feed_brood(seconds: float, on_honey: bool) -> void
-962  func needs_feeding() -> bool
-966  func seconds_until_death() -> float
-971  # --- clearing a dead larva ------------------------------------------
-973  func needs_cleaning() -> bool
-979  func add_clean_progress(delta: float) -> bool
-985  func clean_fraction() -> float
-988  func brood_ready() -> bool
-991  func clear_cell() -> void
-1006 # --- display ------------------------------------------------------
-1011 func _resource_outline_colour(resource_type: String) -> Color
-1025 func _refresh() -> void
-1166 func _designation_tag() -> String
-1188 func _priority_mark() -> String
-1201 func _apply_fill_shading() -> void
-1212 func development_percent() -> float
+104  # --- cell state ---------------------------------------------------
+149  # --- building state -----------------------------------------------
+173  func effective_build_time() -> float
+176  # --- designation and orders ---------------------------------------
+218  # --- hatch settings -----------------------------------------------
+236  # --- layout and display nodes -------------------------------------
+277  # --- slots --------------------------------------------------------
+291  # --- setup --------------------------------------------------------
+293  func _ready() -> void
+407  # --- overlay, selection and rings ---------------------------------
+414  func set_overlay(mode: String) -> void
+420  func _overlay_colour() -> Array
+458  func set_selected(value: bool) -> void
+470  func set_zone_glow(value: bool, glow_colour: Color = Color.WHITE, tag: String = "") -> void
+481  func _set_outline_points(line: Line2D, size: float) -> void
+492  func _silhouette_point_to_local(p: Vector2) -> Vector2
+504  func _set_outline_points_cup(line: Line2D, size: float) -> void
+520  func _apply_outline_points(line: Line2D, size: float) -> void
+528  func _set_selection_ring_points() -> void
+531  # --- per-frame update ---------------------------------------------
+549  func _process(delta: float) -> void
+570  # --- brood development --------------------------------------------
+575  func _develop_brood(delta: float) -> void
+596  func _health_factor() -> float
+604  func _larva_dies() -> void
+617  # --- index and display epochs -------------------------------------
+623  func _invalidate_hive_index() -> void
+633  func _invalidate_stock() -> void
+647  func bump_display_epoch() -> void
+650  # --- working positions --------------------------------------------
+655  func claim_slot(bee: Node2D) -> int
+666  func release_slot(bee: Node2D) -> void
+673  func has_free_slot() -> bool
+682  func slot_position(index: int) -> Vector2
+694  # --- building -----------------------------------------------------
+696  func start_as_site() -> void
+701  func claim_builder(bee: Node2D) -> void
+705  func release_builder(bee: Node2D) -> void
+711  func add_build_progress(delta: float) -> void
+722  func build_fraction() -> float
+725  # --- contents -----------------------------------------------------
+727  func is_empty() -> bool
+732  func capacity_for(resource_type: String) -> float
+740  func accepts(resource_type: String) -> bool
+759  func is_nursery_cell() -> bool
+762  func space_for(resource_type: String) -> float
+778  func needs_eviction() -> bool
+796  func add_resource(resource_type: String, requested: float) -> float
+833  func nectar_age() -> float
+845  func is_fermented() -> bool
+852  func take_resource(resource_type: String, requested: float) -> float
+881  func can_withdraw() -> bool
+886  func set_closed(value: bool) -> void
+893  func set_fill_then_close(value: bool) -> void
+902  func fill_fraction() -> float
+909  func set_designation(resource_type: String, explicit: bool = true) -> void
+917  # --- honey ---------------------------------------------------------
+919  func is_ripe_honey() -> bool
+923  func needs_fanning() -> bool
+928  func add_fanning_progress(delta: float) -> void
+938  func ripen_fraction() -> float
+941  # --- brood ---------------------------------------------------------
+943  func start_brood(as_gyne: bool = false, as_drone: bool = false) -> void
+956  func brood_kind_label() -> String
+966  func develop_time() -> float
+974  func feed_brood(seconds: float, on_honey: bool) -> void
+979  func needs_feeding() -> bool
+983  func seconds_until_death() -> float
+988  # --- clearing a dead larva ------------------------------------------
+990  func needs_cleaning() -> bool
+996  func add_clean_progress(delta: float) -> bool
+1002 func clean_fraction() -> float
+1005 func brood_ready() -> bool
+1008 func clear_cell() -> void
+1023 # --- display ------------------------------------------------------
+1028 func _resource_outline_colour(resource_type: String) -> Color
+1042 func _refresh() -> void
+1187 func _designation_tag() -> String
+1209 func _priority_mark() -> String
+1222 func _apply_fill_shading() -> void
+1233 func development_percent() -> float
 ```
 
 ## debug_panel.gd (1,157 lines)
@@ -888,7 +889,7 @@ restart.
 1143 func _restart() -> void
 ```
 
-## hive.gd (1,049 lines)
+## hive.gd (1,059 lines)
 
 The comb as a whole: cells, navigation, finding a cell.
 
@@ -932,43 +933,44 @@ The comb as a whole: cells, navigation, finding a cell.
 528  func find_food_cell(except: Node2D = null) -> Node2D
 545  func has_room_for_egg() -> bool
 548  func find_cell_with(resource_type: String) -> Node2D
-561  func find_brood_cell() -> Node2D
-576  func find_cell_needing_fanning() -> Node2D
-584  func find_honey_target() -> Node2D
-587  func find_unfinished_cell() -> Node2D
-596  func find_cell_needing_cleaning() -> Node2D
-600  func find_cell_needing_eviction() -> Node2D
-608  func has_gyne_brood() -> bool
-616  func has_room_elsewhere(resource_type: String, except: Node2D) -> bool
-619  # --- growing the comb ---------------------------------------------
-653  func create_next_cell_site(around: Vector2i = Vector2i.ZERO) -> Node2D
-687  func set_keep_clear(hex: Vector2i, value: bool) -> void
-693  func is_keep_clear(hex: Vector2i) -> bool
-700  func can_build_on(hex: Vector2i) -> bool
-703  func _can_build_on(hex: Vector2i) -> bool
-706  func _start_site_at(hex: Vector2i) -> Node2D
-728  func create_cell_site_at(hex: Vector2i) -> Node2D
-733  # --- navigation ---------------------------------------------------
-744  func build_navigation() -> void
-785  func _is_solid(hex: Vector2i) -> bool
-791  func _tile_cost(hex: Vector2i) -> float
-794  func tile_is_walkable(hex: Vector2i) -> bool
-803  func nearest_walkable_point(point: Vector2) -> Vector2
-830  func path_between(from_point: Vector2, to_point: Vector2) -> PackedVector2Array
-864  func _smooth_path(from_point: Vector2, raw: PackedVector2Array) -> PackedVector2Array
-888  func _line_is_clear(from_point: Vector2, to_point: Vector2) -> bool
-902  # --- mining -------------------------------------------------------
-911  func refresh_edge_flags() -> void
-933  func find_marked_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
-961  func find_nearest_edge_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
-985  func _is_markable_block(node) -> bool
-992  func mine_stand_hex(block: Node2D)
-1015 func mine_stand_point(block: Node2D, from_point: Vector2) -> Vector2
-1037 func remove_block(block: Node2D, floor_maker: Callable) -> void
-1048 func announce() -> void
+561  func find_honey_source() -> Node2D
+571  func find_brood_cell() -> Node2D
+586  func find_cell_needing_fanning() -> Node2D
+594  func find_honey_target() -> Node2D
+597  func find_unfinished_cell() -> Node2D
+606  func find_cell_needing_cleaning() -> Node2D
+610  func find_cell_needing_eviction() -> Node2D
+618  func has_gyne_brood() -> bool
+626  func has_room_elsewhere(resource_type: String, except: Node2D) -> bool
+629  # --- growing the comb ---------------------------------------------
+663  func create_next_cell_site(around: Vector2i = Vector2i.ZERO) -> Node2D
+697  func set_keep_clear(hex: Vector2i, value: bool) -> void
+703  func is_keep_clear(hex: Vector2i) -> bool
+710  func can_build_on(hex: Vector2i) -> bool
+713  func _can_build_on(hex: Vector2i) -> bool
+716  func _start_site_at(hex: Vector2i) -> Node2D
+738  func create_cell_site_at(hex: Vector2i) -> Node2D
+743  # --- navigation ---------------------------------------------------
+754  func build_navigation() -> void
+795  func _is_solid(hex: Vector2i) -> bool
+801  func _tile_cost(hex: Vector2i) -> float
+804  func tile_is_walkable(hex: Vector2i) -> bool
+813  func nearest_walkable_point(point: Vector2) -> Vector2
+840  func path_between(from_point: Vector2, to_point: Vector2) -> PackedVector2Array
+874  func _smooth_path(from_point: Vector2, raw: PackedVector2Array) -> PackedVector2Array
+898  func _line_is_clear(from_point: Vector2, to_point: Vector2) -> bool
+912  # --- mining -------------------------------------------------------
+921  func refresh_edge_flags() -> void
+943  func find_marked_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
+971  func find_nearest_edge_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D
+995  func _is_markable_block(node) -> bool
+1002 func mine_stand_hex(block: Node2D)
+1025 func mine_stand_point(block: Node2D, from_point: Vector2) -> Vector2
+1047 func remove_block(block: Node2D, floor_maker: Callable) -> void
+1058 func announce() -> void
 ```
 
-## game_config.gd (916 lines)
+## game_config.gd (925 lines)
 
 The balance fields.
 
@@ -985,16 +987,16 @@ The balance fields.
 573  # --- weather ---
 591  # --- warnings ---
 600  # --- honey ---
-617  # --- comb building ---
-637  # --- hive geometry ---
-666  # --- bee life ---
-671  # --- bee individuality ---
-750  # --- the rival colony ---
-799  # --- seasons ---
-831  # --- disease ---
-859  # --- gynes leaving ---
-871  # --- nuptial flights ---
-879  # --- winter ---
+626  # --- comb building ---
+646  # --- hive geometry ---
+675  # --- bee life ---
+680  # --- bee individuality ---
+759  # --- the rival colony ---
+808  # --- seasons ---
+840  # --- disease ---
+868  # --- gynes leaving ---
+880  # --- nuptial flights ---
+888  # --- winter ---
 ```
 
 ## main_menu.gd (728 lines)

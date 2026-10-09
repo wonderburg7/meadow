@@ -83,6 +83,11 @@ const EMPTY_SILHOUETTE: Array = [
 ## redo the lerp by hand if this needs retuning by eye.
 const NECTAR_COLOR := Color(0.747, 0.834, 0.8525)
 
+## NF-2. Nectar left past GameConfig.nectar_ferment_hours turns a murky
+## olive, so a fermented cell stands apart from fresh nectar, pollen and
+## honey at a glance. Colour-blind mode adds a "sour" tag (see _refresh).
+const FERMENTED_NECTAR_COLOR := Color(0.56, 0.6, 0.36)
+
 ## Pollen keeps the amber/gold that nectar used to be, nudged a little
 ## lighter and further towards yellow so the two read as clearly
 ## different resources sitting side by side.
@@ -136,9 +141,9 @@ var brood_is_drone: bool = false
 var ripen_progress: float = 0.0
 
 ## Session.sim_time at which this cell first took nectar (the age of its
-## oldest nectar; topping up keeps it). -1.0 means "not stamped yet", which
-## is what a restored or script-filled cell holds until it is first asked.
-## Transient: not saved. See nectar_age().
+## oldest nectar; topping up keeps it). -1.0 means "not stamped yet".
+## Saved per cell (NF-2); a save from before NF-2 restores the stamp at the
+## restore time (saving.gd). See nectar_age() and is_fermented().
 var nectar_since: float = -1.0
 
 # --- building state -----------------------------------------------
@@ -822,14 +827,26 @@ func add_resource(resource_type: String, requested: float) -> float:
 	return added
 
 ## Sim-seconds the oldest nectar here has sat in the cell; 0 when it holds
-## none. A cell never stamped (restored, or filled by a scenario action)
-## is stamped now, so its age counts from the first time it is asked.
+## none. add_resource stamps a cell's first nectar (scenario fills included)
+## and saving.gd restores the saved stamp, so an unstamped nectar cell is a
+## fallback only: it is stamped now, and its age counts from this call.
 func nectar_age() -> float:
 	if content_type != "nectar" or amount <= 0.0:
 		return 0.0
 	if nectar_since < 0.0:
 		nectar_since = Session.sim_time
 	return Session.sim_time - nectar_since
+
+## NF-2. Has the nectar here sat past GameConfig.nectar_ferment_hours?
+## Derived from the stamp on every call and changes nothing, so it costs no
+## per-frame work. Fresh nectar topped up into a fermented cell keeps the
+## old stamp, so the cell stays fermented until it is emptied (decision 8).
+## An unstamped cell has no age yet, so it is never fermented.
+func is_fermented() -> bool:
+	if content_type != "nectar" or amount <= 0.0 or nectar_since < 0.0:
+		return false
+	var hour: float = maxf(0.001, GameConfig.seconds_per_day / 24.0)
+	return Session.sim_time - nectar_since > GameConfig.nectar_ferment_hours * hour
 
 ## Removes up to `requested`, returns how much came out.
 func take_resource(resource_type: String, requested: float) -> float:
@@ -1086,6 +1103,10 @@ func _refresh() -> void:
 		"nectar":
 			color = NECTAR_COLOR
 			info_label.text = "N%d" % int(round(amount))
+			if is_fermented():
+				color = FERMENTED_NECTAR_COLOR
+				if Session.colour_blind_mode:
+					info_label.text = "sour " + info_label.text
 		"pollen":
 			color = POLLEN_COLOR
 			info_label.text = "P%d" % int(round(amount))

@@ -1,7 +1,7 @@
 # Nectar fermentation -- unprocessed nectar ferments, and tipsy bees pay for it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: NF-2 -- nectar ferments past an age, queued in the Claude lane (its gates, NF-1 and COL-4, have landed) | Dependency: none for NF-2; NF-3 to NF-5 follow it | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: NF-3 -- a bee that drinks fermented nectar goes tipsy, specified below and queued once NF-2 lands (NF-2 is on its branch) | Dependency: none for NF-3 once NF-2 lands; NF-4 follows NF-3, NF-5 follows NF-2 | Verified: 2026-10-09
 
 ## Objective
 
@@ -53,6 +53,12 @@ happening.
   headless sweep in NF-3, not guessed.
 - **What the detection skill costs** (NF-4): set by simulation when NF-4
   is specified; its slot is decision 9.
+- **Whether nurses may carry fermented nectar to brood** (NF-4). NF-2
+  left nurses as they were: they take nectar through
+  `hive.find_cell_with("nectar")`, which still offers fermented cells
+  (decision 4); only honey makers use NF-2's `hive.find_honey_source()`,
+  which skips them. NF-4 decides whether the detection skill also steers
+  nurses away from it.
 
 ## Current state
 
@@ -78,8 +84,7 @@ Verified 6 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| NF-2 | nectar ferments past an age, changes colour, and is lost to honey makers | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf2_fermentation.py`, `test_scenarios/nf2_fermentation.json` | yes -- COL-4 (7 Oct 2026) and NF-1 (6 Oct 2026) have landed | high |
-| NF-3 | a bee that drinks fermented nectar goes tipsy (decision 3) | specified after NF-2 | no -- after NF-2 | high |
+| NF-3 | a bee that drinks fermented nectar goes tipsy (decision 3) | `scripts/bee.gd`, `scripts/bee_enums.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/bee_foraging.gd`, `scripts/bee_status.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf3_tipsy.py`, `test_scenarios/nf3_tipsy.json` | yes, once NF-2 lands | high |
 | NF-4 | the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; without it, closest first (decisions 4-5) | specified after NF-3 | no -- after NF-3 | high |
 | NF-5 | an order to clear fermented cells, extending today's restock orders (decision 6) | specified after NF-2 | no -- after NF-2 | medium |
 
@@ -96,45 +101,54 @@ lane while the other is queued (SI-3, which shared the save files, landed
 
 NF-1 shipped 2026-10-06; its specification is `plans/archive/NF-1_2026-10-06.md`.
 
-## NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers
+NF-2 shipped 2026-10-09; its specification is `plans/archive/NF-2_2026-10-09.md`.
+
+## NF-3 -- a bee that drinks fermented nectar goes tipsy
 
 <!-- LAYER: immediate-task -->
 
-Level: high (a save field with its migration, and a gameplay rule).
+Level: high (a per-bee hot path, a save field, and a balance value set by a
+sweep).
 
-**True now.** NF-1's `nectar_since` exists but is not saved. No nectar
-ferments.
+**True now.** NF-2's `hive_cell.is_fermented()` exists, and hungry bees
+still eat from fermented cells through `hive.find_food_cell` (decision 4).
+Nothing happens to a bee that does.
 
 **True afterwards.**
 
-- `GameConfig.nectar_ferment_hours` (in-game hours, with its
-  `settings_catalogue.gd` entry) is chosen from NF-1's evidence: above the
-  p95 age of a colony with honey makers, so a staffed colony rarely sees
-  fermentation, and below the age reached without them.
-- `hive_cell.is_fermented()` is derived: nectar content older than that
-  threshold. It changes no state of its own, so it costs nothing per frame.
-  A fermented cell draws its nectar in a distinct colour. It still takes
-  fresh nectar, and stays fermented (decision 8).
-- `hive.find_cell_with("nectar")`, for honey makers, skips fermented
-  cells. `find_food_cell` still offers them: bees cannot tell (decision 4),
-  and the debuff is NF-3's.
-- `nectar_since` is saved per cell as an additive field. An older save
-  loads with the stamp at the restore time, following
-  `.claude/rules/saving.md`.
-- `test_scenarios/nf2_fermentation.json` uses a short threshold through
-  `config_overrides`, with no honey makers. `tests/test_nf2_fermentation.py`
-  asserts that a nectar cell ferments, a honey maker never takes from it,
-  fresh nectar added to it leaves it fermented, and its stamp survives a
-  save and restore.
+- A bee that eats from a fermented cell (`bee_survival.gd`, checked before
+  the take, since a take that empties the cell clears its stamp) becomes
+  tipsy for `GameConfig.tipsy_seconds`, with its `settings_catalogue.gd`
+  row. Eating again while tipsy restarts the timer, not stacks it.
+- While tipsy (decision 3): the bee moves at `GameConfig.tipsy_speed_factor`
+  of its speed, its heading wobbles (`bee_movement.gd`), its forage
+  perception radius shrinks by `GameConfig.tipsy_vision_factor`, and it is
+  never dance-eligible, so it cannot dance or recruit
+  (`bee_foraging.gd::_update_dance_eligibility`). In a work state it
+  sometimes breaks off into a short confused wander inside the hive and then
+  resumes the task: one shared interlude in `bee.gd`, with its state in
+  `bee_enums.gd` and its status line in `bee_status.gd`, not a change to
+  each role's routine.
+- The remaining tipsy seconds are saved per bee as an additive field; an
+  older save loads every bee sober (`.claude/rules/saving.md`).
+- The duration and strengths come from a headless sweep run in this slice
+  and recorded here, not guessed (the plan's open question): long and
+  strong enough that a colony eating mostly fermented nectar visibly loses
+  forage per day, short enough that one sip costs a single trip.
+- `test_scenarios/nf3_tipsy.json` stocks a fermented cell through a short
+  `nectar_ferment_hours` and no other food. `tests/test_nf3_tipsy.py`
+  asserts from the run that a bee that eats there goes tipsy, moves slower,
+  is never dance-eligible while tipsy, recovers after the set time, and that
+  its remaining time survives a save and restore.
 
-**Must not change.** Ripe-honey ripening, eating order, and every other
-cell content type.
+**Must not change.** Eating order, honey ripening, fermentation itself, and
+a sober bee's movement and work.
 
 ```queue
-**[Claude] NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers**
-- Plan: `plans/now/nectar-fermentation.md` -- "NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers"
-- Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf2_fermentation.py`, `test_scenarios/nf2_fermentation.json`
-- Check: `python -m unittest tests.test_nf2_fermentation` passes (a cell ferments, honey makers skip it, a top-up leaves it fermented, its stamp survives save and restore); `tools/verify.ps1` is green
-- Proof: `absent: scripts/hive_cell.gd :: func is_fermented`
-- Next after: NF-3 -- a bee that drinks fermented nectar goes tipsy
+**[Claude] NF-3 -- a bee that drinks fermented nectar goes tipsy**
+- Plan: `plans/now/nectar-fermentation.md` -- "NF-3 -- a bee that drinks fermented nectar goes tipsy"
+- Files: `scripts/bee.gd`, `scripts/bee_enums.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/bee_foraging.gd`, `scripts/bee_status.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf3_tipsy.py`, `test_scenarios/nf3_tipsy.json`
+- Check: `python -m unittest tests.test_nf3_tipsy` passes (a bee that eats fermented nectar goes tipsy, moves slower, cannot dance, recovers, and its tipsiness survives save and restore); `tools/verify.ps1` is green
+- Proof: `absent: scripts/game_config.gd :: tipsy_seconds`
+- Next after: NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first
 ```

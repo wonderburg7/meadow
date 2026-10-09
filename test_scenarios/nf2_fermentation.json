@@ -1,0 +1,27 @@
+{
+  "cells": 15, "nectar_foragers": 0, "pollen_foragers": 0,
+  "nurses": 0, "builders": 0, "miners": 2, "honey_makers": 0,
+  "weather": false, "disease": false, "rival_hive": false, "winter": false,
+  "skill_grants": ["skill.brood.honey_worker"],
+  "random_seed": 5202,
+  "config_overrides": {
+    "seconds_per_day": 20,
+    "nectar_ferment_hours": 12
+  },
+  "actions": [
+    {"do": "set_cell_contents", "cell": {"built_index": 0}, "resource": "nectar", "amount": 60},
+    {"do": "wait", "seconds": 15},
+    {"do": "save_run", "name": "NF2 fermented"},
+    {"do": "set_cell_contents", "cell": {"built_index": 0}, "resource": "nectar", "amount": 20},
+    {"do": "assign_role", "target": {"current_role": "miner"}, "role": "honey"},
+    {"do": "wait", "seconds": 20},
+    {"do": "save_run", "name": "NF2 skipped"},
+    {"do": "set_cell_contents", "cell": {"built_index": 1}, "resource": "nectar", "amount": 60},
+    {"do": "wait", "seconds": 30},
+    {"do": "save_run", "name": "NF2 control"},
+    {"do": "restore_slot", "name": "NF2 fermented"},
+    {"do": "settle", "ticks": 2},
+    {"do": "save_run", "name": "NF2 restored"}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 10}
+}
