@@ -1,7 +1,7 @@
 # Workflow checks -- say what a waiting lane is waiting for, and catch latent tooling drift
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane, in the Codex lane | Dependency: none; WC-1 to WC-5 run in order in the Codex lane (WC-1, WC-2 and WC-4 share `tools/check_docs.py`) | Verified: 2026-10-09
+Status: active | Owner: Dave / Codex | Next: WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane, in the Codex lane; WC-3 ready for finish | Dependency: none; WC-1 to WC-5 run in order in the Codex lane (WC-1, WC-2 and WC-4 share `tools/check_docs.py`) | Verified: 2026-10-09
 
 ## Objective
 
@@ -49,7 +49,6 @@ Verified 9 Oct 2026 against master `4ca584c`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | WC-2 | a dry-lane warning names the missing deferral and the specified blocks that could serve the lane | `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_wc2_dry_lane_report.py` | after WC-1 and room in the Codex lane | medium |
-| WC-3 | Codex's hooks log its sessions | `.codex/hooks.json`, `tests/test_wc3_codex_hooks.py` | in the Codex lane (queued 9 Oct 2026, after T2-4a landed) | medium |
 | WC-4 | a queue id with whitespace fails the documentation check | `tools/check_docs.py`, `tests/test_wc4_spaced_ids.py` | after WC-2 and room in the Codex lane | low |
 | WC-5 | the two level-to-model tables are tested against each other | `tools/session_cost.py`, `tests/test_wc5_level_model_parity.py` | yes -- the Codex lane has room (9 Oct 2026) | low |
 
@@ -105,42 +104,7 @@ path.
 - Next after: WC-3 -- Codex's hooks log its sessions
 ```
 
-## WC-3 -- Codex's hooks log its sessions
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (an environment fault diagnosed from evidence, with a mechanical fix).
-
-**True now.** No hook event has ever been logged from a `codex/*` branch
-(see "Current state"). Every `.codex/hooks.json` command names
-`$CLAUDE_PROJECT_DIR`, which `.claude/settings.json` can rely on and Codex
-may not set; with it empty the command runs `python "/tools/hook_log.py"`.
-
-**True afterwards.** Every `.codex/hooks.json` command finds
-`tools/hook_log.py` without `CLAUDE_PROJECT_DIR`, by a form Codex resolves
-on Windows (`tools/hook_log.py` already takes the event's root from the
-payload's `cwd`). The test reads `.codex/hooks.json`, asserts no command
-names `CLAUDE_PROJECT_DIR`, and runs each `session_start`/`session_end`
-command from a temporary Git checkout holding a copy of `tools/hook_log.py`,
-with the variable unset, finding the event in that checkout's log. Record
-the cause found in this section. Hooks load at session start, so the live
-confirmation is the next Codex session's own `session_start` event under
-`python tools/session_cost.py --events`. That is a reading for the next
-agent-workflow review, not a gate on this slice. If Codex does not run
-`.codex/hooks.json` at all, stop: say so in the plan with the evidence, and
-leave the file unchanged.
-
-**Must not change.** `.claude/settings.json`'s hooks; `tools/hook_log.py`'s
-event shape; what is logged (one command token, never a command line).
-
-```queue
-**[Codex] WC-3 -- Codex's hooks log its sessions**
-- Plan: `plans/now/workflow-checks.md` -- "WC-3 -- Codex's hooks log its sessions"
-- Files: `.codex/hooks.json`, `tests/test_wc3_codex_hooks.py`
-- Check: `python -m unittest tests.test_wc3_codex_hooks` passes with `CLAUDE_PROJECT_DIR` unset; `tools/verify.ps1` is green
-- Proof: `present: .codex/hooks.json :: $CLAUDE_PROJECT_DIR/tools/hook_log.py`
-- Next after: WC-4 -- a queue id with whitespace fails the documentation check
-```
+WC-3 shipped 2026-10-09; its specification is `plans/archive/WC-3_2026-10-09.md`.
 
 ## WC-4 -- a queue id with whitespace fails the documentation check
 
