@@ -46,4 +46,5 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.claude/worktrees/run-queue-6-2ba689` (`claude/run-queue-6-2ba689`) | Claude (docs only) | queue gates after NF-2, and refill the Claude lane with BB-1 | Claude | in progress | none | `plans/now/bee-bread.md` BB-1; `plans/now/nectar-fermentation.md`; `plans/now/tier-two.md` T2-4b |
 | `.worktrees/FC-1` (`codex/FC-1`) | Codex | define the first-crisis readiness and evidence contract | Codex | in progress | none | `plans/now/crisis-readiness.md` FC-1 -- define the first-crisis readiness and evidence contract |
