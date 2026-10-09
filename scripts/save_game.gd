@@ -172,7 +172,8 @@ static func _cells_data(world) -> Array:
 			"drone": cell.brood_is_drone,
 			"clean": cell.clean_progress,
 			"ripen": cell.ripen_progress,
-			"nectar_since": cell.nectar_since,
+			# NF-2: saving.gd reads it back for nectar cells only.
+			"nectar_since": cell.nectar_since if cell.content_type == "nectar" else -1.0,
 			"hatch_role": cell.hatch_role,
 			"hatch_focus": cell.hatch_focus,
 			"hatch_automine": cell.hatch_automine,

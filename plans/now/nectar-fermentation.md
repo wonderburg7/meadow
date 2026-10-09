@@ -53,12 +53,12 @@ happening.
   headless sweep in NF-3, not guessed.
 - **What the detection skill costs** (NF-4): set by simulation when NF-4
   is specified; its slot is decision 9.
-- **Whether nurses may carry fermented nectar to brood** (NF-4). NF-2 made
-  `hive.find_cell_with("nectar")` skip fermented cells, as the plan named
-  it, and nurses share that call (`bee_nursery.gd`), so a nurse with only
-  fermented nectar to hand feeds brood no carbohydrate. Decision 4 says bees
-  cannot tell without the skill; NF-4 decides whether nurses keep skipping
-  it or get a call of their own.
+- **Whether nurses may carry fermented nectar to brood** (NF-4). NF-2
+  left nurses as they were: they take nectar through
+  `hive.find_cell_with("nectar")`, which still offers fermented cells
+  (decision 4); only honey makers use NF-2's `hive.find_honey_source()`,
+  which skips them. NF-4 decides whether the detection skill also steers
+  nurses away from it.
 
 ## Current state
 
@@ -121,9 +121,11 @@ ferments.
   threshold. It changes no state of its own, so it costs nothing per frame.
   A fermented cell draws its nectar in a distinct colour. It still takes
   fresh nectar, and stays fermented (decision 8).
-- `hive.find_cell_with("nectar")`, for honey makers, skips fermented
-  cells. `find_food_cell` still offers them: bees cannot tell (decision 4),
-  and the debuff is NF-3's.
+- Honey makers skip fermented cells. As built (review, 9 Oct 2026), this is
+  a dedicated `hive.find_honey_source()` that `bee_honey.gd` calls, leaving
+  the shared `find_cell_with("nectar")`, which nurses and `bee.gd`'s status
+  line also use, unchanged. `find_food_cell` still offers fermented cells:
+  bees cannot tell (decision 4), and the debuff is NF-3's.
 - `nectar_since` is saved per cell as an additive field. An older save
   loads with the stamp at the restore time, following
   `.claude/rules/saving.md`.

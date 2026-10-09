@@ -827,8 +827,9 @@ func add_resource(resource_type: String, requested: float) -> float:
 	return added
 
 ## Sim-seconds the oldest nectar here has sat in the cell; 0 when it holds
-## none. A cell never stamped (restored, or filled by a scenario action)
-## is stamped now, so its age counts from the first time it is asked.
+## none. add_resource stamps a cell's first nectar (scenario fills included)
+## and saving.gd restores the saved stamp, so an unstamped nectar cell is a
+## fallback only: it is stamped now, and its age counts from this call.
 func nectar_age() -> float:
 	if content_type != "nectar" or amount <= 0.0:
 		return 0.0
