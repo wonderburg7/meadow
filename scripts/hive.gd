@@ -595,6 +595,31 @@ func find_cell_needing_fanning() -> Node2D:
 func find_honey_target() -> Node2D:
 	return find_cell_for("honey")
 
+## BB-1. Where a Fermenting honey maker packs bee bread: an unsealed bee
+## bread cell first, topped up to the brim, else an empty cell the player
+## reserved for it, else any spare cell, which the first deposit marks
+## (find_cell_for). A cell seals only when full, so find_cell_for's
+## "practically full" skip would leave every cell just short of sealing; a
+## sealed cell has no space, so it is never chosen.
+func find_bee_bread_target(except: Node2D = null) -> Node2D:
+	for cell in cells_holding(Resources.BEE_BREAD):
+		if cell != except and is_instance_valid(cell) and cell.space_for(Resources.BEE_BREAD) > 0.0:
+			return cell
+	return find_cell_for(Resources.BEE_BREAD, except)
+
+## BB-1. Can `amount` of `resource_type` be drawn from the comb right now?
+## Counts only cells take() would draw on (ripe honey, open cells), stopping
+## as soon as there is enough. Read by an idle Fermenting honey maker.
+func can_take(resource_type: String, amount: float) -> bool:
+	var bucket: String = "ripe_honey" if resource_type == "honey" else resource_type
+	var found := 0.0
+	for cell in cells_holding(bucket):
+		if is_instance_valid(cell) and cell.can_withdraw():
+			found += cell.amount
+			if found >= amount:
+				return true
+	return found >= amount
+
 func find_unfinished_cell() -> Node2D:
 	for cell in cells:
 		if not cell.is_built and cell.has_free_slot():

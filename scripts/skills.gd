@@ -44,7 +44,7 @@ const Features = preload("res://scripts/features.gd")
 
 # --- cost currencies ----------------------------------------------
 ## Cost keys, not resources.gd entries: nectar and pollen are harvested
-## resources today, honey is produced, and bee bread and Pollinator
+## resources today, honey and bee bread (BB-1) are produced, and Pollinator
 ## Points do not exist yet. Naming them here is what lets the ladder be
 ## authored and validated before those resources are built.
 
@@ -280,15 +280,16 @@ const SKILLS := [
 		"status": "existing", "baseline": false, "open": false,
 	},
 	{
-		# The chain's shape is settled; the recipe, cell capacity and
-		# larval ration are still open (section 5.9 item 3).
+		# BB-1 built it: the Honey role's Fermenting mode. Its recipe and
+		# cell capacity are GameConfig's bee_bread_* values, set by BB-1's
+		# sweep; the larval ration arrives with BB-2.
 		"id": BEE_BREAD_SKILL, "name": "Bee bread",
 		"description": "A honey worker seals pollen and honey into a cell and lets it ferment, making the richest thing a nurse can carry.",
 		"sector": "brood", "tier": 2, "axial": Vector2i(5, -5),
 		"max_rank": 1, "cost": {HONEY: 30, POLLEN: 150},
 		"requires_previous_tier": true, "all_of": [], "any_of": [],
 		"feature": "", "introduced_by": "", "effects": [], "icon": "",
-		"status": "new", "baseline": false, "open": false,
+		"status": "existing", "baseline": false, "open": false,
 	},
 	{
 		"id": ROYAL_JELLY_SKILL, "name": "Royal jelly",

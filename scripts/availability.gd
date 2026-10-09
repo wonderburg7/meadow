@@ -61,9 +61,11 @@ static var _suppressed: Dictionary = {}
 ## "controls" are hud.gd member names, shown or hidden whole.
 ## "designations" are the cell popup's "Reserve for" keys ("any" is
 ## Unreserve); they filter that rebuilt row through
-## set_allowed_designation_keys instead. Honey and jelly sit behind keys no
-## Challenge 2 stage unlocks -- those systems are deferred entirely, not
-## just until designation is taught (2.5).
+## set_allowed_designation_keys instead. Honey, jelly and bee bread sit
+## behind keys no Challenge 2 stage unlocks -- those systems are deferred
+## entirely, not just until designation is taught (2.5).
+## A row may also name a "skill" (BB-1): its designations are offered in any
+## run only once that skill is owned (designation_owned below).
 ##
 ## No stage_gate.ACCESSIBILITY_KEYS entry may appear here: accessibility
 ## toggles are outside the hide/reveal system altogether.
@@ -82,6 +84,7 @@ const UI_GATES := {
 	"cell_designation": {"designations": ["nectar", "pollen", "brood", "any"]},
 	"honey_designation": {"designations": ["honey"]},
 	"jelly_designation": {"designations": ["jelly"]},
+	"bee_bread_designation": {"designations": ["bee_bread"], "skill": "skill.brood.bee_bread"},
 }
 
 ## Stage-gate keys that deliberately have no UI_GATES row, with the reason.
@@ -92,6 +95,19 @@ const UI_GATES := {
 const UNTABLED_GATE_KEYS := {
 	"queen_commands": "Challenge 1's event-trigger documentation hook. The queen's command lock follows stage 1.1 in challenge_runner.gd, not this key, so no control shows or hides with it.",
 }
+
+## BB-1: whether the skills owned offer the cell popup's "Reserve for"
+## `designation_key`. Only a UI_GATES row naming a "skill" can refuse; with
+## no `progression` a skill-gated key is refused, as role_query does.
+static func designation_owned(designation_key: String, progression) -> bool:
+	for key in UI_GATES:
+		var row: Dictionary = UI_GATES[key]
+		if not designation_key in row.get("designations", []):
+			continue
+		var skill: String = row.get("skill", "")
+		if skill != "" and (progression == null or not progression.is_owned(skill)):
+			return false
+	return true
 
 static func invalidate() -> void:
 	gate_epoch += 1

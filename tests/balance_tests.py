@@ -463,8 +463,9 @@ def test_cell_capacity():
     section("Cell capacity: capacity_for() reads the resource catalogue")
     cell_capacity = cfg("cell_capacity")
     kinds = _catalogue_capacity_kinds()
-    check(len(kinds) == 7,
-          f"expected seven resource kinds in resources.gd, found {len(kinds)}")
+    # BB-1 added bee bread, the eighth.
+    check(len(kinds) == 8,
+          f"expected eight resource kinds in resources.gd, found {len(kinds)}")
     for kind, capacity_config in kinds:
         expected = cfg(capacity_config) if capacity_config else cell_capacity
         label = kind if kind else "(empty)"

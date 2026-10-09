@@ -133,7 +133,10 @@ static func hatch_options() -> Array:
 		if role.id == Roles.QUEEN or role.id == Roles.IDLE:
 			continue   # a cell can't raise a queen, and "raises idle" is nonsense
 		var options: Array = []
-		if role.modes.is_empty():
+		# BB-1: Honey's one mode, Fermenting, is not offered here -- a cell
+		# raises a plain honey maker (a hatch-cell Fermenting option is out
+		# of BB-1's scope).
+		if role.modes.is_empty() or role.id == Roles.HONEY:
 			options.append({"label": role.label, "focus": "nectar", "automine": false})
 		else:
 			for mode in role.modes:
@@ -1505,6 +1508,15 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	live_buttons["designation_jelly"] = jelly_btn
 	row.add_child(_with_info(jelly_btn, "Reserve this cell for royal jelly. Nurses on the royal jelly sub-mode store what they make here, and draw on it when feeding gyne larvae."))
 
+	# BB-1: shown once Bee bread is bought (_apply_cell_popup_gating).
+	var bee_bread_btn := Button.new()
+	_style_button(bee_bread_btn)
+	bee_bread_btn.text = "Bee bread"
+	bee_bread_btn.focus_mode = Control.FOCUS_NONE
+	bee_bread_btn.pressed.connect(func(): _request_designation("bee_bread"))
+	live_buttons["designation_bee_bread"] = bee_bread_btn
+	row.add_child(_with_info(bee_bread_btn, "Reserve this cell for bee bread. Honey makers on Fermenting pack pollen and ripe honey in here. Once the cell is full it seals itself and ripens over about two days."))
+
 	var egg_btn := Button.new()
 	_style_button(egg_btn)
 	egg_btn.text = "Eggs"
@@ -2069,6 +2081,16 @@ func _refresh_cell_popup() -> void:
 				content_lines.append("Pollen: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
 			"jelly":
 				content_lines.append("Royal jelly: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
+			"bee_bread":
+				if active_cell.is_ripe_bee_bread():
+					content_lines.append("Bee bread: %d — ripe" % int(round(active_cell.amount)))
+				elif active_cell.is_bee_bread_sealed():
+					content_lines.append("Bee bread: %d — sealed, %d%% ripened" % [
+						int(round(active_cell.amount)), int(active_cell.bee_bread_ripen_fraction() * 100.0),
+					])
+					content_lines.append("Not usable until it ripens")
+				else:
+					content_lines.append("Bee bread: %d / %d — seals when full" % [int(round(active_cell.amount)), int(active_cell.capacity)])
 			"honey":
 				if active_cell.is_ripe_honey():
 					content_lines.append("Honey: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
@@ -2158,10 +2180,11 @@ func _refresh_cell_popup() -> void:
 ## empty means unrestricted -- outside a Challenge every control here
 ## stays visible, same convention as the bee-selection panel's role row.
 func _apply_cell_popup_gating() -> void:
-	for suffix in ["nectar", "pollen", "honey", "jelly", "brood", "any"]:
+	for suffix in ["nectar", "pollen", "honey", "jelly", "bee_bread", "brood", "any"]:
 		var btn: Button = live_buttons.get("designation_%s" % suffix)
 		if btn != null:
-			btn.visible = allowed_designation_keys.is_empty() or allowed_designation_keys.has(suffix)
+			var staged: bool = allowed_designation_keys.is_empty() or allowed_designation_keys.has(suffix)
+			btn.visible = staged and Availability.designation_owned(suffix, Session.progression)
 	var any_raise_option := false
 	for entry in hatch_option_controls:
 		var role: int = entry.role
@@ -2188,6 +2211,7 @@ func _light_current_options() -> void:
 	_set_lit("designation_pollen", designation == "pollen")
 	_set_lit("designation_honey", designation == "honey")
 	_set_lit("designation_jelly", designation == "jelly")
+	_set_lit("designation_bee_bread", designation == "bee_bread")
 	_set_lit("designation_brood", designation == "brood")
 	_set_lit("designation_any", designation == "" and not active_cell.keep_empty)
 
@@ -2847,6 +2871,11 @@ func _build_doing_row(common_role: int, first) -> void:
 		var gate_key: String = Availability.mode_gate_key(common_role, key)
 		if not allowed_mode_keys.is_empty() and not allowed_mode_keys.has(gate_key):
 			continue
+		# BB-1: Fermenting is offered only once Bee bread is owned. Limited to
+		# the Honey role: the Miner's "Dig on its own" has shown regardless
+		# since T2-2 (its work row is what Automation gates).
+		if common_role == Roles.HONEY and not Availability.mode_query(common_role, key, null, Session.progression).available:
+			continue
 		var current: bool = _mode_is_active(common_role, first, key)
 		var command: String = mode_command(common_role, key)
 		focus_column.add_child(_toggle_button(
@@ -2937,6 +2966,8 @@ func _mode_is_active(role_id: int, bee, mode_key: String) -> bool:
 			return bee.architect_mode == mode_key
 		Roles.MINER:
 			return bee.automine       # the miner's only mode is a toggle
+		Roles.HONEY:
+			return bee.fermenting     # so is honey's (BB-1)
 	return false
 
 ## Orders: the "click this, then click a spot" actions. Grouped together

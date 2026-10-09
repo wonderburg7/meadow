@@ -109,20 +109,35 @@ const ACTIONS := [
 		"feature": "", "skill": "skill.hive_mind.automation", "gate_key": "", "config_flag": "", "season": "",
 	},
 
+	# BB-1: bee bread comes ahead of honey. Any honey maker holding bee bread
+	# puts it in a cell first, so turning Fermenting off never strands a
+	# load; only a Fermenting one makes more. When neither applies, the
+	# honey rows below run as before.
+	{
+		"id": "honey_deposit_bee_bread", "label": "Store bee bread", "roles": [Roles.HONEY],
+		"band": 0, "modes": [], "find": "find_bee_bread_target",
+		"feature": "", "skill": "skill.brood.bee_bread", "gate_key": "", "config_flag": "", "season": "",
+	},
+	{
+		"id": "honey_make_bee_bread", "label": "Make bee bread", "roles": [Roles.HONEY],
+		"band": 1, "modes": ["ferment"], "find": "find_bee_bread_ingredients",
+		"feature": "", "skill": "skill.brood.bee_bread", "gate_key": "", "config_flag": "", "season": "",
+	},
+
 	# A honey maker deposits a held load, fans wet honey, then fetches nectar.
 	{
 		"id": "honey_deposit_load", "label": "Deposit honey", "roles": [Roles.HONEY],
-		"band": 0, "modes": [], "find": "find_honey_target",
+		"band": 2, "modes": [], "find": "find_honey_target",
 		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
 	},
 	{
 		"id": "honey_fan_cell", "label": "Fan honey", "roles": [Roles.HONEY],
-		"band": 1, "modes": [], "find": "find_cell_needing_fanning",
+		"band": 3, "modes": [], "find": "find_cell_needing_fanning",
 		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
 	},
 	{
 		"id": "honey_fetch_nectar", "label": "Fetch nectar", "roles": [Roles.HONEY],
-		"band": 2, "modes": [], "find": "find_cell_with",
+		"band": 4, "modes": [], "find": "find_cell_with",
 		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
 	},
 

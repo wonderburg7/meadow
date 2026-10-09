@@ -697,6 +697,38 @@ const TUNABLES := [
 		"tip": "How much royal jelly a single cell holds.",
 	},
 
+	# --- Bee bread (BB-1), listed under Honey: honey workers make it ---
+	{
+		"persist": "none",
+		"key": "bee_bread_pollen_per_load", "label": "Bee bread: pollen", "step": 1.0, "min": 0.0,
+		"category": "Honey",
+		"tip": "Pollen a Fermenting honey worker takes from the comb for one load of bee bread.",
+	},
+	{
+		"persist": "none",
+		"key": "bee_bread_honey_per_load", "label": "Bee bread: honey", "step": 1.0, "min": 0.0,
+		"category": "Honey",
+		"tip": "Ripe honey a Fermenting honey worker takes from the comb for one load of bee bread. Wet honey still being fanned will not do.",
+	},
+	{
+		"persist": "none",
+		"key": "bee_bread_per_load", "label": "Bee bread per load", "step": 1.0, "min": 1.0,
+		"category": "Honey",
+		"tip": "How much bee bread one load packs into its cell.",
+	},
+	{
+		"persist": "none",
+		"key": "bee_bread_cell_capacity", "label": "Bee bread per cell", "step": 10.0, "min": 1.0,
+		"category": "Honey",
+		"tip": "How much bee bread a single cell holds. A cell seals once it is full and takes no more.",
+	},
+	{
+		"persist": "none",
+		"key": "bee_bread_ripen_hours", "label": "Bee bread ripens h", "step": 6.0, "min": 1.0,
+		"category": "Honey",
+		"tip": "In-game hours a sealed cell of bee bread takes to ripen. Until then it is neither food nor something you can spend.",
+	},
+
 	# --- Weather ---
 	{
 		"persist": "run",

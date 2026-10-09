@@ -193,6 +193,12 @@ func _restore_cells(cells: Array) -> void:
 		cell.nectar_since = -1.0
 		if cell.content_type == "nectar":
 			cell.nectar_since = float(entry.get("nectar_since", Session.sim_time))
+		# BB-1, additive: a save from before BB-1 holds no bee bread, so it
+		# has no stamp to restore.
+		cell.bee_bread_sealed_at = -1.0
+		if cell.content_type == "bee_bread":
+			cell.bee_bread_sealed_at = float(entry.get("bee_bread_sealed_at", -1.0))
+			cell.restore_bee_bread_seal()
 		cell.hatch_role = int(entry.get("hatch_role", -1))
 		cell.hatch_focus = str(entry.get("hatch_focus", "nectar"))
 		cell.hatch_automine = bool(entry.get("hatch_automine", false))
@@ -329,6 +335,9 @@ func _restore_bees(bees: Array) -> Array:
 		bee.current_load = float(entry.get("load", 0.0))
 		bee.current_load_type = str(entry.get("load_type", ""))
 		bee.honey_load = float(entry.get("honey_load", 0.0))
+		# BB-1, additive: a save from before BB-1 has no Fermenting bees.
+		bee.fermenting = bool(entry.get("fermenting", false))
+		bee.bee_bread_load = float(entry.get("bee_bread_load", 0.0))
 		bee.dirt_load = float(entry.get("dirt", 0.0))
 		bee.pollen_eaten = float(entry.get("pollen_eaten", 0.0))
 		bee.nurse_pollen = float(entry.get("nurse_pollen", 0.0))

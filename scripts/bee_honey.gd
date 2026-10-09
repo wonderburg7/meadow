@@ -10,6 +10,41 @@ const State = BeeEnums.State
 const BeeForaging = preload("res://scripts/bee_foraging.gd")
 
 ## Catalogue finders all take one bee and return whether they started work.
+
+## BB-1. Any honey maker holding bee bread takes it to a cell with room.
+## With none, it waits in HONEY_IDLE holding the load: the honey rows below
+## refuse a bee carrying bee bread, so it never takes nectar on top of it.
+static func find_bee_bread_target(bee: Node2D) -> bool:
+	if bee.bee_bread_load <= 0.0:
+		return false
+	var cell = bee.hive.find_bee_bread_target()
+	if cell == null:
+		return false
+	bee.target_cell = cell
+	bee.state = State.TO_BEE_BREAD_CELL
+	return true
+
+## BB-1. A Fermenting honey maker with empty hands takes the pollen and ripe
+## honey for one load from the comb and sets off with it as bee bread. It
+## starts only when both are there and a cell has room, so nothing is taken
+## that cannot be stored; otherwise the honey rows run as before.
+static func find_bee_bread_ingredients(bee: Node2D) -> bool:
+	if bee.bee_bread_load > 0.0 or bee.honey_load > 0.0 or bee.current_load > 0.0:
+		return false
+	var pollen_needed: float = GameConfig.bee_bread_pollen_per_load
+	var honey_needed: float = GameConfig.bee_bread_honey_per_load
+	if not bee.hive.can_take("pollen", pollen_needed) or not bee.hive.can_take("honey", honey_needed):
+		return false
+	var cell = bee.hive.find_bee_bread_target()
+	if cell == null:
+		return false
+	bee.hive.take("pollen", pollen_needed)
+	bee.hive.take("honey", honey_needed)
+	bee.bee_bread_load = GameConfig.bee_bread_per_load
+	bee.target_cell = cell
+	bee.state = State.TO_BEE_BREAD_CELL
+	return true
+
 static func find_honey_target(bee: Node2D) -> bool:
 	if bee.honey_load <= 0.0:
 		return false
@@ -22,7 +57,7 @@ static func find_honey_target(bee: Node2D) -> bool:
 
 
 static func find_cell_needing_fanning(bee: Node2D) -> bool:
-	if bee.honey_load > 0.0:
+	if bee.honey_load > 0.0 or bee.bee_bread_load > 0.0:
 		return false
 	var drying = bee.hive.find_cell_needing_fanning()
 	if drying == null:
@@ -35,8 +70,8 @@ static func find_cell_needing_fanning(bee: Node2D) -> bool:
 static func find_cell_with(bee: Node2D) -> bool:
 	if bee.current_load > 0.0:
 		return false   # still holding a load (GC-2): never lift over it
-	if bee.honey_load > 0.0:
-		return false
+	if bee.honey_load > 0.0 or bee.bee_bread_load > 0.0:
+		return false   # BB-1: holding bee bread, it waits for a cell instead
 	var nectar_cell = bee.hive.find_honey_source()   # NF-2: never fermented nectar
 	if nectar_cell == null or bee.hive.find_honey_target() == null:
 		return false
@@ -130,6 +165,41 @@ static func honey_deposit(bee: Node2D, delta: float) -> void:
 		bee.honey_load = 0.0
 		DiagnosticLog.count_honey_batch_deposited()
 		bee.state = State.FANNING if bee.fan_target != null else State.HONEY_IDLE
+
+
+## BB-1. Carrying bee bread to its cell. A cell that filled up or sealed on
+## the way is swapped for the next one with room; with none, the bee waits in
+## HONEY_IDLE, still holding the load, until the deposit row finds one.
+static func bee_bread_go_to_cell(bee: Node2D, delta: float) -> void:
+	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or bee.target_cell.space_for("bee_bread") <= 0.0:
+		BeeForaging.release_cell_slot(bee)
+		bee.target_cell = bee.hive.find_bee_bread_target()
+		if bee.target_cell == null:
+			bee.state = State.HONEY_IDLE
+		return
+
+	var approach := BeeForaging.approach_cell(bee, bee.target_cell, delta)
+	if approach < 0:
+		bee.target_cell = bee.hive.find_bee_bread_target(bee.target_cell)
+		return
+	if approach == 1:
+		bee.timer = bee.deposit_time
+		bee.state = State.DEPOSITING_BEE_BREAD
+
+
+static func bee_bread_deposit(bee: Node2D, delta: float) -> void:
+	bee.timer -= delta
+	if bee.timer > 0.0:
+		return
+	if bee.target_cell != null and is_instance_valid(bee.target_cell):
+		bee.bee_bread_load -= bee.target_cell.add_resource("bee_bread", bee.bee_bread_load)
+		bee.hive.announce()
+	BeeForaging.release_cell_slot(bee)
+	bee.target_cell = null
+	if bee.bee_bread_load <= 0.001:
+		bee.bee_bread_load = 0.0
+	# Still carrying some: the deposit row finds it another cell.
+	bee.state = State.HONEY_IDLE
 
 
 ## Beating its wings over the open cell to drive a breeze across it. Each

@@ -126,7 +126,11 @@ const ROLES := [
 		"start_count_key": "honey_makers", "start_config": "starting_honey_makers",
 		"colour": Color(0.95, 0.45, 0.25),
 		"tip": "Turns stored nectar into honey.\n\nA honey bee takes nectar back out of the comb, chews enzymes into it, spits the mix into a cell of its own and then fans its wings over that cell until the water has evaporated off. Only then is it honey -- which is four times as energy-dense as the nectar it came from, keeps far better, and lets nurses raise larvae faster.",
-		"modes": [],
+		# BB-1: a toggle, as the Miner's "Dig on its own" is. Off, the bee
+		# only makes honey; on, it makes bee bread first whenever it can.
+		"modes": [
+			{"key": "ferment", "skill": "skill.brood.bee_bread", "label": "Fermenting", "tip": "Take pollen and ripe honey from the comb and pack them into a cell as bee bread. A full cell seals itself and ripens over about two days. When there is no ripe honey, no pollen or no cell with room, the bee makes honey as usual."},
+		],
 	},
 ]
 
