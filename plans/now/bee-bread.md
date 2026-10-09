@@ -34,7 +34,6 @@ Verified 7 Oct 2026 against master; BB-1 (9 Oct 2026) has since built Bee Bread 
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BB-1 | Fermenters make Bee Bread in a store cell, ripe after about two days; recipe from a sweep; saved | `scripts/resources.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/roles.gd`, `scripts/bee.gd`, `scripts/bee_enums.gd`, `scripts/bee_honey.gd`, `scripts/actions.gd`, `scripts/skills.gd`, `scripts/availability.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/diagnostic_log.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_bb1_bee_bread.py`, `test_scenarios/bb1_bee_bread.json` | yes -- COL-4, NF-2, T2-2 and T2-3 have landed; queued in the Claude lane | high |
 | BB-2 | Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved; every run | `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_foraging.gd`, `scripts/world_building.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `tests/test_bb2_bee_bread_nursing.py`, `test_scenarios/bb2_bee_bread_nursing.json` | yes -- BB-1 has landed | high |
 | BB-3 | Bee Bread is spendable on tier-3 recipes, from the cells that hold it | specified when BB-1 lands | no -- after BB-1 | medium |
 | BB-4 | Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers | specified when BB-2 lands | no -- after BB-2 | medium |
@@ -55,133 +54,7 @@ and `hud.gd` with NF-5, both in the Claude lane (T2-4b, which shared them too, l
 section 9 (`python tools/heading.py plans/design/product-scope.md "9. Bee
 Bread"`).
 
-## BB-1 -- Fermenters make Bee Bread in a store cell
-
-<!-- LAYER: immediate-task -->
-
-Level: high (a new cell content kind, a role's first mode, a save field and
-a recipe set by a sweep). Specified 9 Oct 2026 by the queue steward, after
-NF-2 landed; verified against master that day.
-
-**True now.** `skills.gd` reserves `BEE_BREAD` and `skill.brood.bee_bread`
-(Brood tier 2, cost honey 30 and pollen 150, status `new`); nothing makes
-Bee Bread and no file but `skills.gd` names it. The Honey role
-(`roles.gd`) has no modes. Royal jelly is the precedent this slice copies:
-a nurse mode (`nurse_make_jelly`, `nurse_store_jelly` in `actions.gd`), a
-`resources.gd` row (`jelly_cell_capacity`, storable, designatable), a cell
-colour in `hive_cell.gd` and a `jelly_designation` row in
-`availability.gd::UI_GATES`. NF-2's `hive_cell.nectar_since` stamp, read on
-demand by `is_fermented()`, is the precedent for ripening.
-
-**True afterwards.**
-
-- **The content kind.** `bee_bread` is a `resources.gd` row: storable,
-  designatable, not energy, not evictable (nothing moves it in BB-1; BB-2
-  and BB-3 spend it), capacity `GameConfig.bee_bread_cell_capacity`. It
-  joins the hand lists that file's header names: the cell popup's
-  Reserve-for buttons and their gating in `hud.gd`, a
-  `bee_bread_designation` row in `availability.gd::UI_GATES` shown once
-  the skill is bought, `hive_cell.gd`'s colour constants and content
-  branches, and `diagnostic_log.gd`'s cells-by-content loop. Hungry adults
-  never eat it: `hive.find_food_cell` is unchanged. Its colour sits at
-  least 0.10 (OKLab) from every other cell-content colour; SP-3's test
-  (`plans/now/sprites.md`) checks that whichever of the two lands second.
-- **Sealing and ripening.** A `bee_bread` cell that reaches capacity is
-  sealed: it takes no more deposits, and `hive_cell.gd` stamps
-  `bee_bread_sealed_at` with `Session.sim_time`. `is_ripe_bee_bread()` is
-  derived from that stamp on every call, as `is_fermented()` is, so ripening
-  costs no per-frame work. Ripe after `GameConfig.bee_bread_ripen_hours`
-  (about two game-days: 48, confirmed by the sweep). Until ripe it is
-  neither food nor currency; the cell shows sealed and ripe states apart.
-- **The Fermenting mode.** Honey gets its first `roles.gd` mode,
-  `{"key": "ferment", "skill": "skill.brood.bee_bread", "label":
-  "Fermenting"}`, a toggle as the Miner's "Dig on its own" is, wired
-  through every place `roles.gd`'s header lists for a sub-mode (a
-  `fermenting` bee field, `bee.gd::_action_mode_for_role` and
-  `role_name_text`, `hud.gd::_mode_is_active`,
-  `orders_zones.gd::_apply_mode`, and the field in `save_game.gd` and
-  `saving.gd`). Honey workers never ferment unless the player turns it on.
-  A Fermenting bee takes `GameConfig.bee_bread_pollen_per_load` pollen and
-  `GameConfig.bee_bread_honey_per_load` ripe honey from the comb, carries
-  them to a cell designated `bee_bread` (else an empty cell found through
-  `hive.find_cell_for`, which the first deposit marks, as nectar, pollen
-  and honey find theirs today) and
-  deposits `GameConfig.bee_bread_per_load`. Its work is new `actions.gd`
-  rows ahead of the honey rows, found by `bee_honey.gd`, with any new
-  states in `bee_enums.gd`; when it cannot ferment (no ripe honey, no
-  pollen, or no cell with room) it makes honey as before.
-- **The skill.** `skill.brood.bee_bread`'s status becomes `existing`, and
-  its comment no longer calls the recipe open.
-- **Saves.** Each cell's `bee_bread_sealed_at` and each bee's `fermenting`
-  are additive fields (`.claude/rules/saving.md`); a save from before
-  BB-1 has neither, so it restores no Bee Bread and no Fermenting bees.
-- **The recipe, from a sweep run in this slice and recorded here.**
-  `test_scenarios/bb1_bee_bread.json` starts a colony with the skill bought,
-  stocked honey and pollen, a designated `bee_bread` cell and two honey
-  workers set to Fermenting. The sweep picks the per-load amounts and cell
-  capacity so that the cell fills, seals and ripens within about three
-  game-days of the run's start while the colony's honey and pollen never
-  reach zero. `tests/test_bb1_bee_bread.py` asserts from that run that the
-  cell fills, seals, is not ripe before `bee_bread_ripen_hours` and is ripe
-  after, that no adult ate from it, and that the cell's stamp and contents
-  and the bees' Fermenting flag survive a save and restore.
-
-**Sweep record (9 Oct 2026, BB-1).** `test_scenarios/bb1_bee_bread.json`:
-8 cells, the cell at hex (0, 0) reserved for bee bread, 600 pollen and 600
-wet honey stocked, the queen laying, 200-second days, two Fermenting honey
-workers. Recipes as pollen / honey / bee bread per load, cell capacity:
-
-| Recipe | Reserved cell sealed | Ripe | Lowest pollen |
-| --- | --- | --- | --- |
-| 2 / 1 / 2, 60 | 92 s | 492 s | 201 |
-| **3 / 1 / 3, 60** | 67 s | 468 s | 202 |
-| 4 / 2 / 4, 80 | 67 s | 468 s | 0 by day 3 |
-| 3 / 1 / 3, 90 | 92 s | 492 s | 15 |
-
-Chosen: 3 / 1 / 3 into 60-unit cells (`bee_bread_pollen_per_load`,
-`bee_bread_honey_per_load`, `bee_bread_per_load`, `bee_bread_cell_capacity`),
-with `bee_bread_ripen_hours` 48: one unit of pollen per unit of bee bread and
-a third of a unit of ripe honey. Seeds 11, 23 and 37 gave the same seal and
-ripe times. Ripe honey never ran out once the first cell was fanned. A
-fermenter in a small hive packs a load every few seconds, so its pollen draw
-is set by how many spare cells it can fill; BB-4's re-pacing, with foragers
-in the loop, revisits that. The first sweep found that `find_cell_for`'s
-"practically full" skip left every cell just short of sealing, so
-`hive.gd::find_bee_bread_target` tops an unsealed bee bread cell up to the
-brim before starting another.
-
-**Built beside the specification.** Fermenting is offered on the Doing row
-only once Bee bread is owned (`hud.gd::_build_doing_row`; the Miner's "Dig on
-its own" is left as it was); the Bee bread "Reserve for" button reads the
-skill from its `UI_GATES` row (`Availability.designation_owned`); and the
-cell popup's Raises menu offers a plain honey maker, never a Fermenting one.
-After review: a cell holding bee bread refuses re-reservation for another
-kind, emptying and keep-empty (`orders_zones.gd`, `bee.gd::command_empty_cell`),
-since nothing may move it yet; a bee bread cell's size is fixed by its first
-deposit, so a later capacity change cannot leave it unable to seal (restore
-re-sizes it and seals one already full); a honey maker leaving the role puts
-its carried bee bread back into the comb; one holding bee bread with no cell
-waits rather than fanning or fetching nectar; and pressing Fermenting sets
-every selected bee to the state the button showed.
-
-**Must not change.** Honey making for a honey worker not set to
-Fermenting, nursing (nurses still feed pollen; BB-2 changes that), adult
-eating order, the stores the skills window prices against (BB-3), and
-PE-2's pacing arc (`python tools/pacing_gates.py`), which runs no
-Fermenting bee.
-
-**Out of scope.** Nurses feeding it and adult outcomes (BB-2), spending it
-(BB-3), re-pacing (BB-4), a hatch-cell Fermenting option, and emptying or
-moving Bee Bread.
-
-```queue
-**[Claude] BB-1 -- Fermenters make Bee Bread in a store cell**
-- Plan: `plans/now/bee-bread.md` -- "BB-1 -- Fermenters make Bee Bread in a store cell"
-- Files: `scripts/resources.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/roles.gd`, `scripts/bee.gd`, `scripts/bee_enums.gd`, `scripts/bee_honey.gd`, `scripts/actions.gd`, `scripts/skills.gd`, `scripts/availability.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/diagnostic_log.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_bb1_bee_bread.py`, `test_scenarios/bb1_bee_bread.json`
-- Check: `python -m unittest tests.test_bb1_bee_bread` passes (Fermenting honey workers fill a Bee Bread cell, it seals, ripens only after `bee_bread_ripen_hours`, no adult eats it, and the cell and the bees' mode survive save and restore); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/game_config.gd :: bee_bread_ripen_hours`
-- Next after: BB-2 -- Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved
-```
+BB-1 shipped 2026-10-09; its specification is `plans/archive/BB-1_2026-10-09.md`.
 
 ## BB-2 -- Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved
 
