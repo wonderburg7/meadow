@@ -46,5 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/T2-4a` (`codex/T2-4a`) | Codex | Cleaning gates taking out the dead larvae | Codex | in progress | none | `plans/now/tier-two.md` T2-4a -- Cleaning gates taking out the dead larvae |
 | `.worktrees/SI-2` (`claude/SI-2`) | Claude | a checkpoint restore puts back soil dug since the checkpoint | Claude | in progress | none | `plans/now/save-integrity.md` SI-2 -- a checkpoint restore puts back soil dug since the checkpoint |
