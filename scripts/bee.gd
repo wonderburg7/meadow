@@ -542,6 +542,27 @@ var has_danced_this_visit: bool = false
 ## debug print re-added every time the thresholds need rechecking.
 var settled_rate_logged: bool = false
 
+# --- tipsiness (NF-3) ---------------------------------------------
+## NF-3. Seconds of tipsiness left after eating fermented nectar
+## (BeeSurvival.feed_self). 0.0 is sober; eating again restarts it at
+## GameConfig.tipsy_seconds rather than adding to it. While it runs the bee
+## moves slower and its flight wobbles (BeeMovement.move_towards), it sees
+## flowers from less far (BeeForaging.perception_radius), it is never
+## dance-eligible, and at work indoors it now and then breaks off into a
+## confused wander (State.TIPSY_WANDER). Saved per bee as "tipsy"; an older
+## save loads every bee sober.
+var tipsy_time_left: float = 0.0
+## The task a confused wander interrupted and where the bee stood, so it
+## walks back and picks the task up where it left off -- the same stash
+## pre_dance_state/pre_dance_timer keep for a dance. -1 when not wandering.
+## Not saved: a save taken mid-wander records the interrupted state instead
+## (saved_state), so a reload resumes the task.
+var tipsy_resume_state: int = -1
+var tipsy_resume_timer: float = 0.0
+var tipsy_resume_point: Vector2 = Vector2.ZERO
+var tipsy_wander_point: Vector2 = Vector2.ZERO
+var tipsy_returning: bool = false
+
 # --- build and mine queues ----------------------------------------
 ## A player-placed manual cell site a builder should try first, before
 ## falling back to its usual pick-a-site logic. Consumed (cleared) the
@@ -1193,6 +1214,10 @@ func _process(delta: float) -> void:
 		Perf.end("bees")
 		return   # died during ageing
 
+	# NF-3: tipsiness wears off in game time, every frame, on screen or not.
+	if tipsy_time_left > 0.0:
+		tipsy_time_left = maxf(0.0, tipsy_time_left - delta)
+
 	if thinking:
 		Perf.begin("bee_think")
 		BeeSurvival.watch_for_stalls(self, think_delta)
@@ -1220,6 +1245,11 @@ func _process(delta: float) -> void:
 		# state machine so it can interrupt anything.
 		if nuptial_phase == NUPTIAL_NONE and BeeSurvival.should_go_and_eat(self):
 			BeeSurvival.begin_feeding_self(self)
+
+		# NF-3: a tipsy bee at work now and then loses the thread and
+		# wanders off -- one shared interlude, not a change to each role.
+		if tipsy_time_left > 0.0:
+			_maybe_start_tipsy_wander(think_delta)
 		Perf.end("bee_think")
 
 	# COL-11: an unmated queen's nuptial flights. One test for every other
@@ -1354,6 +1384,10 @@ func _process(delta: float) -> void:
 		State.FEEDING:
 			BeeSurvival.feed_self(self, delta)
 
+		# --- tipsy, any working role (NF-3) ---
+		State.TIPSY_WANDER:
+			_tipsy_wander(delta)
+
 		# --- builder ---
 		State.BUILD_IDLE:
 			_idle_dispatch()
@@ -1456,6 +1490,93 @@ func _process(delta: float) -> void:
 func _reset_stall_watch() -> void:
 	stall_best_distance = INF
 	stall_timer = 0.0
+
+# --- the tipsy wander (NF-3) --------------------------------------
+## Decision 3: a tipsy bee can still nurse, build and make honey, but it
+## stops partway through a task, wanders the hive confused, then walks back
+## and carries on. One interlude here serves every role's routine.
+##
+## The work states it may break off from: indoor tasks where the bee holds
+## nothing it would lose. CHEWING, LOADING_FOOD and MAKING_JELLY are left
+## out for the reason should_go_and_eat gives. A forager's own states are
+## left out too: its cost is the slower, shorter-sighted flight and the
+## lost dance, not a wander.
+const TIPSY_WANDER_FROM := [
+	State.TO_BROOD, State.TENDING, State.TO_FOOD_CELL,
+	State.TO_JELLY_CELL, State.DEPOSITING_JELLY,
+	State.TO_BUILD_SITE, State.BUILDING, State.TO_CLEAN_CELL, State.CLEANING,
+	State.TO_RESTOCK_SOURCE, State.TO_RESTOCK_TARGET,
+	State.TO_HAUL_SOURCE, State.TO_HAUL_TARGET,
+	State.TO_MINE_SITE, State.MINING,
+	State.TO_NECTAR_CELL, State.TO_HONEY_CELL, State.DEPOSITING_HONEY, State.FANNING,
+	State.TO_POLLEN_CELL, State.TO_CELL_TO_LAY,
+]
+## How far one confused step strays, in hive cell spacings, and how many
+## random points are tried before the bee just stands there dazed.
+const TIPSY_WANDER_REACH := 1.6
+const TIPSY_WANDER_TRIES := 6
+## Longest the walk back to the task may take before the task resumes
+## anyway, so a route that closed behind the bee cannot strand it.
+const TIPSY_RETURN_LIMIT := 10.0
+
+## Rolled on think ticks only, and only for a tipsy bee, so a sober colony
+## pays nothing and draws no extra random numbers.
+func _maybe_start_tipsy_wander(think_delta: float) -> void:
+	if state == State.TIPSY_WANDER or player_driven or nuptial_phase != NUPTIAL_NONE:
+		return
+	if not (state in TIPSY_WANDER_FROM) or not _is_inside_hive():
+		return
+	if randf() >= GameConfig.tipsy_wander_chance * think_delta:
+		return
+	tipsy_resume_state = state
+	tipsy_resume_timer = timer
+	tipsy_resume_point = position
+	tipsy_returning = false
+	tipsy_wander_point = _tipsy_wander_target()
+	timer = GameConfig.tipsy_wander_seconds
+	state = State.TIPSY_WANDER
+
+## State.TIPSY_WANDER's per-frame handler: stagger from point to point
+## until the wander runs out, then walk back to where the task was left.
+func _tipsy_wander(delta: float) -> void:
+	timer -= delta
+	if not tipsy_returning:
+		BeeMovement.move_towards(self, tipsy_wander_point, delta)
+		if position.distance_to(tipsy_wander_point) < arrive_distance:
+			tipsy_wander_point = _tipsy_wander_target()
+		if timer <= 0.0:
+			tipsy_returning = true
+			timer = TIPSY_RETURN_LIMIT
+		return
+	BeeMovement.move_towards(self, tipsy_resume_point, delta)
+	if position.distance_to(tipsy_resume_point) < arrive_distance or timer <= 0.0:
+		_end_tipsy_wander()
+
+func _end_tipsy_wander() -> void:
+	state = tipsy_resume_state if tipsy_resume_state != -1 else _default_state_for_role()
+	timer = tipsy_resume_timer
+	tipsy_resume_state = -1
+	tipsy_resume_timer = 0.0
+	tipsy_returning = false
+
+## A nearby open tile to stagger towards, or where the bee already stands
+## when none of the tries lands on one.
+func _tipsy_wander_target() -> Vector2:
+	var reach: float = GameConfig.hive_cell_spacing * TIPSY_WANDER_REACH
+	for _attempt in TIPSY_WANDER_TRIES:
+		var point: Vector2 = position + Vector2.from_angle(randf() * TAU) * randf_range(0.4, 1.0) * reach
+		var hex: Vector2i = Shapes.pixel_to_hex(point - hive.comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
+		if hive.tile_is_walkable(hex):
+			return point
+	return position
+
+## The state a save records. A bee saved mid-wander is saved at the task it
+## broke off from, so a reload resumes the work rather than a wander with
+## nothing to walk back to.
+func saved_state() -> int:
+	if state == State.TIPSY_WANDER and tipsy_resume_state != -1:
+		return tipsy_resume_state
+	return state
 # --- foraging -----------------------------------------------------
 ## Moved to bee_foraging.gd -- see BEE_SPLIT_PLAN.md.
 # --- entering and leaving the hive --------------------------------
@@ -2235,10 +2356,18 @@ func idle_reason() -> String:
 			return "Set to idle. It will stay put until you give it a job."
 	return ""
 
+## The selection panel's "Now:" line: what this bee is doing, with a
+## note while it is tipsy (NF-3, wording in bee_status.gd).
+func task_description() -> String:
+	var line: String = _task_line()
+	if tipsy_time_left > 0.0 and state != State.TIPSY_WANDER:
+		return BeeStatus.tipsy_note(self, line)
+	return line
+
 ## A plain-language description of what this bee is doing right now,
 ## shown in the selection panel. Deliberately concrete ("returning
 ## pollen to the hive") rather than naming internal states.
-func task_description() -> String:
+func _task_line() -> String:
 	if challenge_vocabulary_limited() and not (state in CHALLENGE_TAUGHT_STATES):
 		return "busy in the hive"
 	match state:
@@ -2391,6 +2520,8 @@ func task_description() -> String:
 			return "carrying an egg to a free cell"
 		State.LAYING:
 			return "laying an egg into a cell"
+		State.TIPSY_WANDER:
+			return BeeStatus.tipsy_wander_text(self)
 	return "idle"
 
 ## Only ever reached from task_description() while sitting in an idle

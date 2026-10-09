@@ -324,6 +324,8 @@ func _restore_bees(bees: Array) -> Array:
 		bee.state = int(entry.get("state", bee.state))
 		bee.energy = float(entry.get("energy", GameConfig.energy_capacity))
 		bee.age_seconds = float(entry.get("age", 0.0))
+		# NF-3, additive: a save from before tipsiness loads every bee sober.
+		bee.tipsy_time_left = maxf(0.0, float(entry.get("tipsy", 0.0)))
 		bee.current_load = float(entry.get("load", 0.0))
 		bee.current_load_type = str(entry.get("load_type", ""))
 		bee.honey_load = float(entry.get("honey_load", 0.0))

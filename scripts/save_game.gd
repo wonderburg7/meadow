@@ -231,10 +231,13 @@ static func _bees_data(world) -> Array:
 			"indoors": b.get_parent() == world.hive_root,
 			"x": b.position.x, "y": b.position.y,
 			"role": b.role,
-			"state": b.state,
+			"state": b.saved_state(),
 			"resource": b.resource_type,
 			"energy": b.energy,
 			"age": b.age_seconds,
+			# NF-3, additive: seconds of tipsiness left. An older save has
+			# none, and saving.gd loads that bee sober.
+			"tipsy": b.tipsy_time_left,
 			"load": b.current_load,
 			"load_type": b.current_load_type,
 			"honey_load": b.honey_load,

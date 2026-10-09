@@ -1,7 +1,7 @@
 # Nectar fermentation -- unprocessed nectar ferments, and tipsy bees pay for it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: NF-3 -- a bee that drinks fermented nectar goes tipsy, and NF-5 -- clear fermented cells, both specified below and queued in the Claude lane (NF-5 on 9 Oct 2026); NF-4 is specified when NF-3 lands | Dependency: none (NF-2 landed 9 Oct 2026); NF-4 follows NF-3 | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: NF-5 -- clear fermented cells, queued in the Claude lane; NF-4 -- the detection skill, outlined below and gated on Dave's nurse and Restocking answers (NF-3 built 9 Oct 2026; its tipsy duration awaits Dave's choice, see its sweep) | Dependency: none (NF-2 landed 9 Oct 2026); NF-4 follows NF-3 | Verified: 2026-10-09
 
 ## Objective
 
@@ -149,6 +149,37 @@ Nothing happens to a bee that does.
   is never dance-eligible while tipsy, recovers after the set time, and that
   its remaining time survives a save and restore.
 
+**Sweep (9 Oct 2026, built on the branch).** Base: 20 cells, 8 nectar and
+2 pollen foragers, 2 nurses, 1 builder, no honey makers, default 200-second
+days, `nectar_ferment_hours` 1 (so stored nectar is nearly all fermented),
+4 days, matched seeds, forage per day = `forager_delivery_amount` / days.
+First finding: with default settings foragers refuel at flowers
+(`forager_drink_threshold` 0.7) and never ate in the hive in 3 days, so no
+setting changed forage at all. The sweep therefore also set
+`forager_drink_threshold` 0, so foragers eat at home: the "colony eating
+mostly fermented nectar" case. A trip then takes about 66 s (10 foragers,
+121 deliveries in 800 s), and a forager eats about once every six trips, so
+a 60 s tipsiness keeps it tipsy 13% of the time (counted from saves).
+
+| tipsy_seconds | speed / vision / wobble | forage per day vs off, 5 seeds (401-405) |
+| --- | --- | --- |
+| 60 | 0.6 / 0.5 / 35 deg | -1.8% (every seed lower, -0.6 to -3.2) |
+| 60 | 0.5 / 0.4 / 45 deg | -2.3% (-0.8 to -3.7) |
+| 60 | 0.4 / 0.4 / 45 deg | -2.2% (-1.1 to -4.8) |
+| 180 | 0.6 / 0.5 / 35 deg | -4.7% (-2.3 to -7.2) |
+| 300 | 0.6 / 0.5 / 35 deg | -6.4% (-3.0 to -9.0) |
+
+Strength barely matters, because a forager is tipsy for only one trip in
+six; duration does. The two targets conflict: one sip costing a single
+trip (about 60 s) loses about 2% of forage a day, which is not visible,
+while a visible loss (5% or more) needs 180-300 s, three to five trips per
+sip. Built with the single-trip reading: `tipsy_seconds` 60, speed 0.6,
+vision 0.5, wobble 35 degrees, wander 0.05 a second for 6 s. Dave chooses
+which target wins before NF-3 merges; the other reading is a one-line change
+to `tipsy_seconds` in `game_config.gd`. Indoor workers carry the visible
+cost either way: a tipsy nurse, builder or honey maker walks at 0.6 and
+breaks off into a wander about three times a minute.
+
 **Must not change.** Eating order, honey ripening, fermentation itself, and
 a sober bee's movement and work.
 
@@ -159,6 +190,57 @@ a sober bee's movement and work.
 - Check: `python -m unittest tests.test_nf3_tipsy` passes (a bee that eats fermented nectar goes tipsy, moves slower, cannot dance, recovers, and its tipsiness survives save and restore); `tools/verify.ps1` is green
 - Proof: `absent: scripts/game_config.gd :: tipsy_seconds`
 - Next after: NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first
+```
+
+## NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first
+
+<!-- LAYER: immediate-task -->
+
+Level: high (a new skill node, which cells every eater and honey maker
+chooses, and a cost set by simulation). Outlined 9 Oct 2026 when NF-3
+landed; gated until Dave settles its nurse and Restocking questions under
+"Still open".
+
+**True now.** Bees cannot tell fermented nectar from fresh (decision 4):
+`hive.find_food_cell` and `hive.find_cell_with("nectar")` both offer a
+fermented cell, so a hungry bee eats there and goes tipsy (NF-3), and a
+nurse can carry it to brood. Only honey makers skip it, through NF-2's
+`hive.find_honey_source()`, which takes the first indexed fresh cell rather
+than the closest (decision 5 wants closest). `skill.colony.fermentation_sense`
+is a working id in `plans/design/progression.md` section 5.3, Colony tier 2,
+and is not yet in `scripts/skills.gd`.
+
+**True afterwards.**
+
+- `skill.colony.fermentation_sense` is a Colony tier 2 node in
+  `scripts/skills.gd` beside Comb worker and Miner, costing honey at the
+  figure the simulation below sets, and its row in
+  `plans/design/progression.md` section 5.3 loses "working id".
+- Without the skill, honey makers take the closest fresh nectar cell to
+  where they stand (decision 5); hungry bees eat as they do now.
+- With the skill, hungry bees skip fermented cells while any other food is
+  left, so a colony with sense eats fresh nectar or honey first; honey
+  makers take the oldest fresh nectar first, so less of it reaches the
+  threshold.
+- Nurses and restocking follow whatever Dave decides for the two open
+  questions under "Still open".
+- The skill's cost comes from a headless comparison run in this slice and
+  recorded here: the same fermenting colony with and without the skill.
+- `test_scenarios/nf4_fermentation_sense.json` and
+  `tests/test_nf4_fermentation_sense.py` show from the run that, with the
+  skill, no bee goes tipsy while fresh food is left and honey makers empty
+  the oldest cell first, and, without it, honey makers take the closest.
+
+**Must not change.** Fermentation itself, tipsiness (NF-3), honey ripening,
+and what a colony without the skill eats.
+
+```queue-gated
+**[Claude] NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first**
+- Plan: `plans/now/nectar-fermentation.md` -- "NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first"
+- Files: `scripts/skills.gd`, `scripts/hive.gd`, `scripts/bee_honey.gd`, `scripts/bee_survival.gd`, `scripts/bee_nursery.gd`, `scripts/bee_building.gd`, `plans/design/progression.md`, `tests/test_nf4_fermentation_sense.py`, `test_scenarios/nf4_fermentation_sense.json`
+- Check: `python -m unittest tests.test_nf4_fermentation_sense` passes (with the skill no bee goes tipsy while fresh food is left and honey makers take the oldest nectar first; without it honey makers take the closest); `tools/verify.ps1` is green
+- Proof: `absent: scripts/skills.gd :: skill.colony.fermentation_sense`
+- Next after: none -- nectar fermentation is complete once NF-5 has landed too
 ```
 
 ## NF-5 -- clear fermented cells
@@ -245,3 +327,11 @@ NF-4's to decide, under "Still open".
 - Proof: `absent: scripts/orders_zones.gd :: is_fermented`
 - Next after: NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first
 ```
+
+## Not in the queue, and why
+
+- **NF-4** waits for Dave's answers to its two questions under "Still
+  open": whether the skill also steers nurses away from fermented nectar,
+  and whether Restocking may draw from a fermented cell. (Its cost is set by
+  simulation inside the slice.) When both are in, recheck its `Files:` line
+  against the skill tree's own files, then open the fence to `queue`.
