@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-1 -- crisp pixels on the comb cell, and SP-3 -- cell colours follow the new sprites, both specified below with queue blocks; SP-2, SP-4 and SP-5 are specified here and get their blocks when their predecessor lands; SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; shares `scripts/hive_cell.gd`, `scripts/bee.gd`, `scripts/hive.gd` and `scripts/settings_catalogue.gd` with queued BB-1 (same lane, so they run in turn; NF-3 landed 9 Oct 2026) | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: SP-2 -- the sprite exporter and SP-3 -- cell colours follow the new sprites, both specified below with queue blocks (SP-1 landed 9 Oct 2026); SP-4 and SP-5 are specified here and get their blocks when their predecessor lands; SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; shares `scripts/hive_cell.gd`, `scripts/bee.gd`, `scripts/hive.gd` and `scripts/settings_catalogue.gd` with queued BB-1 (same lane, so they run in turn; NF-3 landed 9 Oct 2026) | Verified: 2026-10-09
 
 ## Objective
 
@@ -165,6 +165,15 @@ and measurements (`EMPTY_TEXTURE`, `EMPTY_TEXTURE_BASE_Y/_H`,
 - Run `godot --headless --import` and commit the `.import` files.
 - `hive_cell.gd` reads the empty frame and its measurements from the
   catalogue.
+
+```queue
+**[Claude] SP-2 -- the sprite exporter, the sprite table and the generated catalogue**
+- Plan: `plans/now/sprites.md` -- "SP-2 -- the sprite exporter, the sprite table and the generated catalogue"
+- Files: `tools/sprites.py`, `tests/test_sp2_sprites.py`, `assets/sprites/`, `scripts/sprite_catalogue.gd`, `scripts/hive_cell.gd`, `tools/verify.ps1`
+- Check: `python -m unittest tests.test_sp2_sprites` passes and `python tools/sprites.py --check` is clean; `tools/verify.ps1` is green
+- Proof: `present: scripts/hive_cell.gd :: const EMPTY_TEXTURE :=`
+- Next after: SP-4 -- nectar and pollen fill levels drawn from the sprites
+```
 
 ## SP-3 -- cell colours follow the new sprites
 
