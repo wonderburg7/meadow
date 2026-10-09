@@ -333,9 +333,8 @@ func _ready() -> void:
 	# radius.
 	empty_sprite = Sprite2D.new()
 	empty_sprite.texture = EMPTY_TEXTURE
-	var sprite_size: float = GameConfig.hive_cell_spacing
-	empty_scale = (sprite_size * 2.0) / EMPTY_TEXTURE.get_width()
-	empty_sprite.scale = Vector2.ONE * empty_scale * EMPTY_SPRITE_SCALE_NUDGE
+	empty_scale = PixelSprite.hive_scale()
+	PixelSprite.apply(empty_sprite, empty_scale * EMPTY_SPRITE_SCALE_NUDGE)
 	# The floor slice sits low in its 32-tall canvas (see
 	# EMPTY_TEXTURE_BASE_Y), so shift up until the floor's own centre --
 	# not the canvas's -- lands on this cell's actual centre; otherwise
