@@ -83,7 +83,9 @@ demand by `is_fermented()`, is the precedent for ripening.
   `bee_bread_designation` row in `availability.gd::UI_GATES` shown once
   the skill is bought, `hive_cell.gd`'s colour constants and content
   branches, and `diagnostic_log.gd`'s cells-by-content loop. Hungry adults
-  never eat it: `hive.find_food_cell` is unchanged.
+  never eat it: `hive.find_food_cell` is unchanged. Its colour sits at
+  least 0.10 (OKLab) from every other cell-content colour; SP-3's test
+  (`plans/now/sprites.md`) checks that whichever of the two lands second.
 - **Sealing and ripening.** A `bee_bread` cell that reaches capacity is
   sealed: it takes no more deposits, and `hive_cell.gd` stamps
   `bee_bread_sealed_at` with `Session.sim_time`. `is_ripe_bee_bread()` is

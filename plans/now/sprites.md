@@ -1,0 +1,257 @@
+# Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
+
+<!-- CONTEXT: plan | LAYER: immediate-task -->
+Status: active | Owner: Dave / Claude Code | Next: SP-1 -- crisp pixels on the comb cell, and SP-3 -- cell colours follow the new sprites, both specified below with queue blocks; SP-2, SP-4 and SP-5 are specified here and get their blocks when their predecessor lands; SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; shares `scripts/hive_cell.gd`, `scripts/bee.gd`, `scripts/hive.gd` and `scripts/settings_catalogue.gd` with queued NF-3 and BB-1 (same lane, so they run in turn) | Verified: 2026-10-09
+
+## Objective
+
+Dave drew the first pixel-art set on 9 Oct 2026: nectar and pollen cells
+with fill levels, an eight-direction meadow forager and a straw skep for
+the meadow hive. This plan puts them in the game so they look like crisp
+pixel art at every zoom. It also sets up one standard route for adding
+the next sprite: Dave saves a file and adds one table row, and one
+command does the rest. A session never opens an image.
+
+The pixel scale per view, the size every element should be drawn at, and
+the file conventions live in `plans/design/pixel-art.md`. This plan
+builds them and does not restate them.
+
+## Decisions (Dave, 9 Oct 2026)
+
+1. **Formats.** `.aseprite` is the source of truth, saved from Resprite or
+   Aseprite. The game loads PNG sheets generated from it by the SP-2
+   exporter. `.resprite` files are not read. No Aseprite install is
+   needed: the exporter is plain Python.
+2. **Colours follow the art.** Nectar is lime and pollen is orange. The
+   game's flat colours, overlays and load dots change to match. Honey
+   moves off orange so it cannot be mistaken for pollen (SP-3).
+3. **Bee art is per view.** The forager sheet is for the meadow only.
+   Dave will draw larger bees for inside the hive.
+4. **Forager sheet.** Dave will repack it onto a regular grid later.
+   Row order today: 1 left, 2 right, 3 down-left, 4 down-right,
+   5 up-right, 6 up-left, 7 down, 8 up.
+5. **One pixel scale per view:** hive 1.1875, meadow 1.5 world units per
+   art pixel (`plans/design/pixel-art.md`).
+6. **Sharp-pixel shader rather than plain nearest filtering.** The camera
+   zooms smoothly (0.4-3.0) and cells sit at 1.1875x. Plain nearest
+   filtering would leave pixels unevenly sized (1 or 2 screen px each) and
+   make them shimmer while zooming. A shared sharp-bilinear shader keeps
+   the pixels square at any zoom (SP-1).
+
+## Current state
+
+Verified 9 Oct 2026 against master and the main checkout:
+
+- `assets/sprites/environment/` tracks `wax.cell.empty.png` (with its
+  `.resprite`) and `grass_base.png`. Nothing references `grass_base.png`.
+  Untracked in the main checkout only: `wax.cell.nectar.aseprite`,
+  `wax.cell.pollen.aseprite`, `Outside_forager_sprites.png` with
+  `Outside_forager_sprites_aes.aseprite`, `hive.meadow.view.png`,
+  `Sprite details.md`.
+- Both cell files are 32x32. Layer 0 matches `wax.cell.empty.png` pixel
+  for pixel, and each further layer is one fill level. The nectar file has
+  7 levels (upper bounds 10/25/40/55/70/85/100 %), filled flat lime
+  (187,248,36). The pollen file has 4 (30/60/90/100 %), in five oranges
+  around (255,123,0). Neither has part-transparent pixels.
+- The forager sheet is 52x100 with 8 rows x 4 wing frames. Each bee is
+  9-12 px and drawn in 4 colours. It is **not on a regular grid**: rows
+  start at y 1/12/23/35/46/59/73/86, and column spacing is 11-13 px and
+  differs from row to row. The `.aseprite` has a hidden guide layer and an
+  empty tilemap layer.
+- The skep is 54x41 with 42x35 of drawing and 8 colours.
+- `hive_cell.gd` shows `empty_sprite` (`EMPTY_TEXTURE`, scale 38/32) only
+  for an empty cell while `Session.use_cell_sprites` is on. Filled cells
+  draw a flat hex plus `fill_shape`. It sets no texture filter and no
+  material, and `project.godot` sets no default canvas texture filter.
+  Godot's linear default therefore blurs the art: that is the blur Dave
+  sees when zoomed in.
+- Bees are stacks of `Polygon2D` circles under `visual_root` (`bee.gd`,
+  "the visual nodes"). `hive.gd` is itself a 60x60 square `Polygon2D`.
+  `rival_hive.gd` draws a 52x52 square.
+- Measured OKLab distance between the new pollen orange and today's
+  `HONEY_COLOR` is 0.08, which reads as the same colour. Nectar lime to
+  `FERMENTED_NECTAR_COLOR` is 0.28, which reads as distinct.
+
+## Open slices
+
+| Slice | What it does | Files it owns | Startable | Level |
+| --- | --- | --- | --- | --- |
+| SP-1 | crisp pixels on the comb cell: shared sharp-pixel shader and pixel-scale helper | `assets/shaders/pixel_sharp.gdshader`, `scripts/pixel_sprite.gd`, `scripts/hive_cell.gd`, `tests/sp1_pixel_sprite_test.gd`, `tests/test_sp1_pixel_sprite.py` | yes | medium |
+| SP-2 | the sprite exporter, the sprite table and the generated catalogue; art moves into the new folders | tools/sprites.py and its test, assets/sprites/, scripts/sprite_catalogue.gd, `scripts/hive_cell.gd`, `tools/verify.ps1` | after SP-1 | medium |
+| SP-3 | cell colours follow the new sprites; honey moves off orange | `scripts/hive_cell.gd`, `scripts/bee.gd`, `tests/test_sp3_content_colours.py` | yes | medium |
+| SP-4 | nectar and pollen fill levels drawn from the sprites | `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, the sprite table and catalogue, tests | after SP-2 and SP-3 | medium |
+| SP-5 | the skep in the meadow, and the rival hive as a recoloured skep | `scripts/hive.gd`, `scripts/rival_hive.gd`, the sprite table and catalogue, tests | after SP-2 | medium |
+| SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for Dave's repacked sheet | high (per-bee hot path) |
+
+Dependencies: SP-1 -> SP-2 -> SP-4 -> SP-5 -> SP-6. SP-3 can land at any
+time before SP-4. **BB-1** (`plans/now/bee-bread.md`) adds a bee bread
+colour to `hive_cell.gd`: whichever of BB-1 and SP-3 lands second checks
+that colour against SP-3's distinct-colour test.
+
+## SP-1 -- crisp pixels on the comb cell
+
+**True now.** See current state: the empty-cell sprite is drawn with
+Godot's default linear filter at 1.1875x, so it blurs when zoomed.
+
+**True afterwards.**
+
+- `assets/shaders/pixel_sharp.gdshader` is a `canvas_item` sharp-bilinear
+  shader. Per fragment it does:
+  - `px = UV * size`, `seam = floor(px + 0.5)`;
+  - `px = seam + clamp((px - seam) / fwidth(px), -0.5, 0.5)`;
+  - samples at `px / size`.
+
+  It needs linear filtering and carries the node's modulate through a
+  varying set in `vertex()`, because fragment `COLOR` already includes one
+  texture sample.
+- `scripts/pixel_sprite.gd` (new) owns the two view scales from the design
+  doc (the hive one is derived from `GameConfig.hive_cell_spacing`), one
+  shared `ShaderMaterial` (shared so every sprite still batches) and
+  `apply(sprite, px_scale)`. `apply` sets the material,
+  `TEXTURE_FILTER_LINEAR` and the scale.
+- Rule-4 owner check: nothing owns texture presentation today.
+  `hive_cell.gd` hard-codes its one sprite, and this replaces that part
+  rather than adding a second way.
+- `hive_cell.gd`'s empty sprite goes through `apply`.
+- Runtime: set once in `_ready`, with no per-frame work.
+- Hands-on for Dave: zoom the comb from minimum to maximum. Pixels stay
+  square and sharp, nothing shimmers while zooming, and no seams open
+  between cells (`EMPTY_SPRITE_SCALE_NUDGE` stays 1.0).
+
+```queue
+**[Claude] SP-1 -- crisp pixels on the comb cell**
+- Plan: `plans/now/sprites.md` -- "SP-1 -- crisp pixels on the comb cell"
+- Files: `assets/shaders/pixel_sharp.gdshader`, `scripts/pixel_sprite.gd`, `scripts/hive_cell.gd`, `tests/sp1_pixel_sprite_test.gd`, `tests/test_sp1_pixel_sprite.py`
+- Check: `python -m unittest tests.test_sp1_pixel_sprite` passes (an empty HiveCell's sprite carries PixelSprite's shared material, linear filtering and the hive pixel scale); `tools/verify.ps1` is green
+- Proof: `absent: scripts/hive_cell.gd :: PixelSprite`
+- Next after: SP-2 -- the sprite exporter, the sprite table and the generated catalogue
+```
+
+## SP-2 -- the sprite exporter, the sprite table and the generated catalogue
+
+**True now.** Art is in `assets/sprites/environment/`, partly untracked
+(see current state). `hive_cell.gd` hard-codes the empty sprite's path
+and measurements (`EMPTY_TEXTURE`, `EMPTY_TEXTURE_BASE_Y/_H`,
+`EMPTY_SILHOUETTE`).
+
+**True afterwards.**
+
+- A new tools/sprites.py uses the standard library only. It reads every
+  `.aseprite` (plus plain `.png` single sprites) under assets/sprites/
+  and the sprite table (assets/sprites/SPRITES.md), then writes one PNG
+  sheet per family beside its source:
+  - each frame gets a 1-px transparent gutter, because the shader samples
+    across texel edges;
+  - layer sprites are flattened, base plus state;
+  - recolour variants are applied.
+- It also validates each sheet against the design doc's conventions:
+  frame sizes are equal, art stays inside its grid cell, there are no
+  part-transparent pixels, and the frame count matches the table.
+- It writes scripts/sprite_catalogue.gd (generated, do not edit). For
+  each family it holds a preload, frame size, hframes/vframes, frame
+  names, anchor, view and level bounds.
+- It prints one line per family. `--check` fails on any stale PNG or
+  catalogue, and `verify.ps1` runs `--check`.
+- Folders and files:
+  - comb/ holds `wax_cell_nectar` and `wax_cell_pollen`. The empty cup is
+    their base layer, so `wax.cell.empty.png` and its `.resprite` retire.
+  - meadow/ holds `hive_skep` and `grass_base`.
+  - bees/ holds `bee_forager_meadow`, unexported until SP-6.
+  - The sprite table replaces `Sprite details.md` and links to the
+    design doc for conventions rather than copying them.
+- The six untracked files are copied from the main checkout into the new
+  paths on this branch. The paths differ, so the merge cannot collide
+  with the untracked originals, which are deleted once their hashes match.
+- Run `godot --headless --import` and commit the `.import` files.
+- `hive_cell.gd` reads the empty frame and its measurements from the
+  catalogue.
+
+## SP-3 -- cell colours follow the new sprites
+
+**True now.**
+
+- `NECTAR_COLOR` is pale blue (0.747, 0.834, 0.8525) and `POLLEN_COLOR`
+  is gold (0.97, 0.78, 0.22).
+- `HONEY_COLOR` (0.85, 0.42, 0.05) and `HONEY_WET_COLOR`
+  (0.78, 0.55, 0.18) sit 0.08-0.10 from the new pollen orange.
+- `bee.gd`'s load dot is pale yellow for pollen and pale blue for nectar.
+
+**True afterwards.**
+
+- `NECTAR_COLOR` is the sprite lime (187,248,36) and `POLLEN_COLOR` is the
+  sprite orange (255,123,0), exactly.
+- Honey becomes a darker amber, starting from about (0.55, 0.27, 0.04),
+  and is re-tuned with `HONEY_WET_COLOR` until the test passes. As
+  proposed, it sits 0.07 from `SITE_COLOR`, so expect to nudge it.
+- The load dot uses lime and orange.
+- A Python test asserts that every pair of cell-content colours is at
+  least 0.10 apart in OKLab. The set is empty wax, nectar, fermented,
+  pollen, wet and ripe honey, brood, jelly, gyne brood, corpse, site, and
+  bee bread once it exists.
+- Hands-on for Dave: a comb holding each content side by side, also in
+  colour-blind mode.
+
+```queue
+**[Claude] SP-3 -- cell colours follow the new sprites**
+- Plan: `plans/now/sprites.md` -- "SP-3 -- cell colours follow the new sprites"
+- Files: `scripts/hive_cell.gd`, `scripts/bee.gd`, `tests/test_sp3_content_colours.py`
+- Check: `python -m unittest tests.test_sp3_content_colours` passes (nectar and pollen equal the sprite fills, and every pair of cell-content colours is at least 0.10 apart in OKLab); `tools/verify.ps1` is green
+- Proof: `present: scripts/hive_cell.gd :: const NECTAR_COLOR := Color(0.747, 0.834, 0.8525)`
+- Next after: SP-4 -- nectar and pollen fill levels drawn from the sprites
+```
+
+## SP-4 -- nectar and pollen fill levels drawn from the sprites
+
+**True now.** A filled cell hides the cup and draws a flat hex plus
+`fill_shape`, a hex scaled by sqrt(fraction).
+
+**True afterwards.**
+
+- With `use_cell_sprites` on, a nectar or pollen cell shows the
+  catalogue frame for its level: the first level whose upper bound is at
+  least amount / capacity, or the empty frame at 0.
+- Fermented nectar shows a `fermented` recolour variant (lime ->
+  `FERMENTED_NECTAR_COLOR`), which needs no new art.
+- Flat body and `fill_shape` are hidden, and the rings follow the cup.
+- Contents with no art keep today's flat look.
+- The bounds are presentation, not balance, so they live in the sprite
+  table, not `GameConfig`.
+- The setting's tip text names filled cells too.
+- Runtime: the frame is set in `_refresh`, and only when it changes.
+
+## SP-5 -- the skep in the meadow, and the rival hive
+
+**True afterwards.**
+
+- `hive.gd` gets a sprite child drawn at the meadow scale, with its
+  footprint centred on the hive. The 60x60 square stays as the hit shape,
+  drawn transparent.
+- `rival_hive.gd` does the same with a darker recolour variant.
+- Hands-on: the skep sits where the square was, and foragers arrive at its
+  entrance.
+
+## SP-6 -- meadow foragers drawn from the sheet
+
+**Gate:** Dave's repack onto a 16x16 `sheet` grid. The exporter rejects
+the current sheet.
+
+**True afterwards.**
+
+- An outdoor worker draws as one sprite.
+- Row: direction from `heading`, eight ways. Octant
+  `k = round(angle / 45) mod 8` gives E, SE, S, SW, W, NW, N, NE, mapped
+  to rows by name from the sprite table.
+- Wing frame: a shared 4-frame clock offset by `wander_phase`.
+- Body and outline circles are hidden outdoors. The load dot stays at
+  about 2 art px. Selection, alarm and attack rings are unchanged.
+- Indoors, drones, gynes and queens keep circles until their art exists.
+- Runtime: the frame is computed in the existing display update and
+  assigned only when it changes. Profile before and after (rule 3); one
+  sprite replaces three or four polygons per bee.
+
+## Read on demand
+
+- `plans/design/pixel-art.md`: scales, sizes and conventions (SP-2 onwards)
+- `scripts/hive_cell.gd`: "constants and colours", `_ready`, `_refresh`
+- `scripts/bee.gd`: "the visual nodes", `_update_role_marker` (SP-3, SP-6)
+- `docs/performance.md` before SP-6
