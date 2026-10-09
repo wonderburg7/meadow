@@ -23,14 +23,7 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] T2-8b -- Shiver Cluster, the skill**
-   - Plan: `plans/now/tier-two.md` -- "T2-8b -- Shiver Cluster, the skill"
-   - Files: `scripts/skills.gd`, `scripts/run_availability.gd`, `tests/test_t2_8a_shiver_bill.py`, `tests/test_t2_8b_shiver_skill.py`
-   - Check: `python -m unittest tests.test_t2_8b_shiver_skill tests.test_t2_8a_shiver_bill` passes (the node is Hive Mind tier 2 behind Backup roles; a level row without `"run_type": "colony"` starts owning it and the Colony Run does not; the Colony Run's `winter_bill` is the multiplied one until it is bought); a Godot boot is clean; `tools/verify.ps1` is green
-   - Proof: `absent: scripts/skills.gd :: shiver_cluster`
-   - Next after: T2-4b -- Bees that die in the hive leave bodies; winter's dead appear at spring
-
-2. **[Claude] SI-3 -- save, checkpoint and index writes are all-or-nothing**
+1. **[Claude] SI-3 -- save, checkpoint and index writes are all-or-nothing**
    - Plan: `plans/now/save-integrity.md` -- "SI-3 -- save, checkpoint and index writes are all-or-nothing"
    - Files: `scripts/save_slots.gd`, `scripts/save_game.gd`, `tests/si3_atomic_write_test.gd`, `tests/test_si3_atomic_write.py`
    - Check: `python -m unittest tests.test_si3_atomic_write` passes with `SI3 PASS`; `python tools/run_scenario.py test_scenarios/sv1_named_saves_test.json` passes; `.\tools\verify.ps1` is green
