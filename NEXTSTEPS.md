@@ -49,26 +49,26 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] CD-3 -- waiting and travel get a deterministic diagnostic boundary**
-   - Plan: `plans/now/diagnostic-readiness.md` -- "CD-3 -- waiting and travel get a deterministic diagnostic boundary"
-   - Files: `scripts/colony_diagnostics.gd`, `scripts/year_winter.gd`, `tests/test_colony_diagnostics.py`
-   - Check: `python -m unittest tests.test_colony_diagnostics` passes with waiting, travelling and no-work fixtures; `tools/verify.ps1` is green
-   - Proof: `present: scripts/year_winter.gd :: func _refresh_signals`
-   - Next after: none -- diagnostic readiness is complete
-
-2. **[Codex] WC-5 -- the two level-to-model tables are tested against each other**
+1. **[Codex] WC-5 -- the two level-to-model tables are tested against each other**
    - Plan: `plans/now/workflow-checks.md` -- "WC-5 -- the two level-to-model tables are tested against each other"
    - Files: `tools/session_cost.py`, `tests/test_wc5_level_model_parity.py`
    - Check: `python -m unittest tests.test_wc5_level_model_parity` passes, and fails when one `LEVEL_MODELS` entry is edited by hand; `tools/verify.ps1` is green
    - Proof: `present: tools/session_cost.py :: mirrors Get-SliceAdvice in`
    - Next after: none -- plans/now/workflow-checks.md is complete
 
+2. **[Codex] WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane**
+   - Plan: `plans/now/workflow-checks.md` -- "WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane"
+   - Files: `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_wc2_dry_lane_report.py`
+   - Check: `python -m unittest tests.test_wc2_dry_lane_report` passes (an undeferred successor is named; a file-disjoint low/medium other-lane block is listed as borrowable; a high-level, gated, colliding or already-queued one is not; the existing keys are unchanged); `python -m unittest tests.test_slice_lifecycle` passes; `tools/verify.ps1` is green
+   - Proof: `absent: tools/refill_lane.py :: borrowable`
+   - Next after: WC-4 -- a queue id with whitespace fails the documentation check
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation, Bee Bread and the gyne route.
-- **WC-2** (`plans/now/workflow-checks.md`) -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane; waits for WC-1 and room in the Codex lane.
+- **CD-3** (`plans/now/diagnostic-readiness.md`) -- waiting and travel get a deterministic diagnostic boundary; waits for NF-3 and BB-1 to release `scripts/bee.gd`.
 - **WC-4** (`plans/now/workflow-checks.md`) -- a queue id with whitespace fails the documentation check; waits for WC-2 and room in the Codex lane.
 - **GD-2** (`plans/now/guidance-explanations.md`) -- implement the accepted persistent entry point and first explanations; waits for Dave's GD-1 decision.
 - **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for NF-3, BB-1 and NF-5 (Claude lane) to release the save, HUD and scenario files and for CD-3 to release diagnostics.
