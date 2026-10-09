@@ -55,7 +55,6 @@ Verified 7 Oct 2026 against master:
 | T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | to be specified now T2-4a has landed (8 Oct 2026) | no -- not yet specified; T2-4a and COL-6 have landed | high |
 | T2-6 | Associative learning: per-bee, per-species familiarity, saved | `scripts/skills.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd` | no -- rate and save acceptance need specification | high |
 | T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | specified when T2-1 to T2-3 and COL-4 have landed | no -- needs COL-4's year and the gates | medium |
-| T2-8b | Shiver Cluster, the skill: the node, and owned at run start outside the Colony Run | `scripts/skills.gd`, `scripts/run_availability.gd`, `tests/test_t2_8a_shiver_bill.py`, `tests/test_t2_8b_shiver_skill.py` | yes -- T2-4a, T2-8a and T2-5 landed (T2-5 freed `skills.gd`, 9 Oct 2026) | medium |
 
 **Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
 T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
@@ -106,48 +105,7 @@ is recorded in "Later slices" below; T2-5 does not choose those values.
 
 - T2-6 waits for its rates, cap, and old-save acceptance to be specified before the high-risk save change starts.
 
-## T2-8b -- Shiver Cluster, the skill
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one catalogue row and one derived starting rule; the bill and
-the warning already exist). Startable: T2-5, the last holder of
-`scripts/skills.gd`, landed 9 Oct 2026. The design is `plans/design/progression.md` "Shiver Cluster".
-
-**True now (after T2-8a).** `season.gd::owns_shiver_cluster` asks
-`progression.gd::is_owned_or_absent`, which answers owned while the catalogue
-has no `skill.hive_mind.shiver_cluster`; the moment the node exists it is
-plain ownership, and `winter_bill`,
-`winter_panel.gd`'s note and `problem_messages.gd`'s `winter_unclustered`
-row all follow it. `tests/test_t2_8a_shiver_bill.py` reaches the unowned path
-through `season.gd`'s `shiver_cluster_skill` seam and asserts the node is
-absent (`ABSENT_EXISTS false`).
-
-**True afterwards.**
-- `skill.hive_mind.shiver_cluster` is a Hive Mind tier-2 node in `skills.gd`,
-  beside Automation and Cleaning, reached through Backup roles, in a free grid
-  slot the grid validators accept, costing honey like every tier-2 node (the
-  price is T2-7's to tune).
-- `run_availability.gd::sheet_for` puts it in `"starting"` for every run whose
-  definition has no `"run_type": "colony"`, derived like "seeding implies
-  owning"; no level lists it by hand. A `skill_bans` entry still wins.
-- So the Colony Run without it pays the multiplied bill and sees the warning;
-  Scenarios and Challenges play as today.
-- `tests/test_t2_8a_shiver_bill.py`'s absent-node case becomes "owned at the
-  start of a non-Colony run"; its unowned cases use the real id.
-
-**Hands-on.** Filed by this slice: in a Colony Run, open the Winter window
-when the countdown starts and see the Shiver Cluster note and the doubled
-figure; buy the node and see both go.
-
-```queue
-**[Claude] T2-8b -- Shiver Cluster, the skill**
-- Plan: `plans/now/tier-two.md` -- "T2-8b -- Shiver Cluster, the skill"
-- Files: `scripts/skills.gd`, `scripts/run_availability.gd`, `tests/test_t2_8a_shiver_bill.py`, `tests/test_t2_8b_shiver_skill.py`
-- Check: `python -m unittest tests.test_t2_8b_shiver_skill tests.test_t2_8a_shiver_bill` passes (the node is Hive Mind tier 2 behind Backup roles; a level row without `"run_type": "colony"` starts owning it and the Colony Run does not; the Colony Run's `winter_bill` is the multiplied one until it is bought); a Godot boot is clean; `tools/verify.ps1` is green
-- Proof: `absent: scripts/skills.gd :: shiver_cluster`
-- Next after: T2-4b -- Bees that die in the hive leave bodies; winter's dead appear at spring
-```
+T2-8b shipped 2026-10-09; its specification is `plans/archive/T2-8b_2026-10-09.md`.
 
 ## Later slices -- outline only
 
