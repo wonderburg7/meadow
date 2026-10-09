@@ -76,8 +76,9 @@ reaches for them without being told to.
 The 20-minute crisis uses the bounded readiness gate accepted for FC-1 in
 `plans/now/crisis-readiness.md`: early automation, an able forager and food
 cover may bring forward one announced heavy-rain episode inside a measured
-window; the window's end runs it even if preparation is absent. The 20-minute
-gate remains a player outcome, not a claim that automated display proves
+window; if preparation is absent, a warning with time for a forage response
+precedes rain at the window's end. The 20-minute gate remains a player outcome,
+not a claim that automated display proves
 comprehension.
 
 The build does not need every planned feature. It needs one complete route

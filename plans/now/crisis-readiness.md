@@ -38,18 +38,23 @@ alternatives and their costs remain below as the record of that choice.
 
 | Trigger | Player consequence | Cost |
 | --- | --- | --- |
-| **A (proposed): bounded readiness gate.** Once the early automation milestone is reached, schedule one clearly announced heavy-rain episode in a bounded window around the 20-minute gate, provided the colony has a working forager and a measurable food reserve. If preparation is absent at the window's end, announce and run the episode anyway. | Preparation can matter, but waiting cannot make the first crisis disappear. A weak colony still sees the pressure and can respond. | Requires a one-time scheduler, a saved pending/used state, a concrete reserve predicate and a measured window. It must coexist with ordinary rain without overlapping storms. |
+| **A (accepted): bounded readiness gate.** Once the early automation milestone is reached, schedule one clearly announced heavy-rain episode in a bounded window around the 20-minute gate, provided the colony has a working forager and a measurable food reserve. If preparation is absent at the warning cutoff, announce the episode then and start rain at the window's end. | Preparation can matter, but waiting cannot make the first crisis disappear. A weak colony receives a response interval before the pressure arrives. | Requires a one-time scheduler, a saved pending/used state, a concrete reserve predicate and a measured window with a usable warning lead. It must coexist with ordinary rain without overlapping storms. |
 | **B: fixed first episode.** Announce and run one heavy-rain episode at a fixed elapsed-play or game-day point, independent of preparation. | The player can learn the timetable; a slow start may be hit before useful automation. | Simpler scheduling and replay; readiness affects only the result, so Easy's readiness-weighted timing would need a separate explicit rule. |
 | **C: existing random rain only.** Keep the current rolls and let the first qualifying storm count. | Some runs may meet no serious crisis near 20 minutes; others may be hit too early. | No new scheduler, but it cannot by itself satisfy the 20-minute experience gate or give a bounded scenario. |
 
 **Readiness and outcome contract.** The first episode cannot start before the
-measured 20-minute window opens. Within that window, the early automation
-milestone, a working forager and food cover allow it to start; at the window's
-end it starts after warning even if these inputs are still absent. FC-2 must
-set the window's numeric bounds from deterministic pacing evidence, with the
-20-minute experience gate inside it, and record those bounds in its scenario.
-A working forager means at least one living worker assigned and able to forage, rather
-than merely a purchased role. Food reserve means stored brood/adult food can
+measured 20-minute window opens. FC-2 must measure and record the window's
+numeric bounds and a positive warning lead time, with the 20-minute experience
+gate inside the window. The lead must give the player time to reassign a worker
+and complete one forage round trip in the pinned scenario before rain begins.
+From window open until `window close - warning lead`, the early automation
+milestone, a working forager and food cover can schedule the episode: warn
+immediately, then start rain after the full lead. If they have not qualified
+by that cutoff, warn there anyway and start rain at window close. Once the
+warning is posted, later readiness changes can help the colony but do not
+reschedule or cancel rain. The warning and rain onset must never share a tick.
+A working forager means at least one living worker assigned and able to
+forage, rather than merely a purchased role. Food reserve means stored brood/adult food can
 cover a measured rain-length interruption at the current consumption rate;
 FC-2 must derive both inputs through the existing diagnostic or simulation
 owner and choose the numeric threshold from scenario evidence. Readiness
@@ -73,13 +78,17 @@ responses, not a mandatory click sequence.
 **Deterministic evidence boundary for FC-2.** In the Colony Run, run a pinned
 seed and scripted preparation through the warning, peak rain and recovery;
 repeat from the same initial state and seed with preparation withheld. Record
-the trigger inputs, scheduled and actual start, warning availability, rain
-intensity, active foragers, forage income, food stores, consumption and
+the trigger inputs, warning cutoff, warning timestamp, scheduled and actual
+rain start, rain intensity, active foragers, forage income, food stores,
+consumption and
 brood/worker outcomes at fixed checkpoints before, during and after the
 episode. The prepared and unprepared paths must both encounter exactly one
-first crisis inside the accepted window, and the trace must show the expected
-forage interruption and possible simulation response. A same-seed ordinary-
-weather baseline can isolate the rain contribution. These automated traces
+first crisis inside the accepted window. On the unprepared fallback path,
+the warning must precede onset by the measured lead; a scripted response at
+the warning must assign a worker and complete one forage round trip before
+rain starts. The trace must show the expected forage interruption and possible
+simulation response. A same-seed ordinary-weather baseline can isolate the
+rain contribution. These automated traces
 show that the causal information and response are available; only a played
 check can establish whether someone understands the cause or chooses a useful
 response. Do not claim comprehension from warning display, "Why?" use or a
@@ -109,7 +118,8 @@ facts; evaluate it on a bounded tick or milestone change, not in each bee's
 frame. Use existing rain simulation for the outcome. Add a warning and
 persistent causal explanation, save/restore the one-shot state, create the
 pre-crisis checkpoint, and record prepared and unprepared pinned-seed runs.
-The scenario check must observe the actual rain, forage and store effects,
+The scenario check must observe the warning-to-rain lead, an accepted
+pre-rain response on the fallback path, actual rain, forage and store effects,
 plus save/restore across the trigger; a displayed warning alone is not proof.
 File a hands-on check for whether a player can diagnose and answer the event.
 
@@ -122,7 +132,7 @@ and the file list when they land; FC-2 stays gated until then.
 **[Codex] FC-2 -- implement the accepted crisis and deterministic scenario**
 - Plan: `plans/now/crisis-readiness.md` -- "FC-2 -- implement the accepted crisis and deterministic scenario"
 - Files: `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `scripts/colony_diagnostics.gd`, `scripts/scenario_actions.gd`, `test_scenarios/fc2_first_crisis_prepared.json`, `test_scenarios/fc2_first_crisis_unprepared.json`, `tests/test_fc2_first_crisis.py`, `plans/now/crisis-readiness.md`
-- Check: `python tests/test_fc2_first_crisis.py` passes and traces one announced crisis, its weather/forage/store effect, and save/restore on prepared and unprepared runs; file a played comprehension check
+- Check: `python tests/test_fc2_first_crisis.py` passes and traces one announced crisis, a usable warning-to-rain lead with a completed pre-rain forage response on the unprepared path, its weather/forage/store effect, and save/restore on both paths; file a played comprehension check
 - Proof: `present: scripts/main.gd :: func _advance_weather`
 - Next after: none -- crisis readiness is complete
 ```
