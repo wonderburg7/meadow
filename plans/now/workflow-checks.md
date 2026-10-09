@@ -1,7 +1,7 @@
 # Workflow checks -- say what a waiting lane is waiting for, and catch latent tooling drift
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane, in the Codex lane | Dependency: WC-1 landed; WC-4 follows WC-2 because both edit `tools/check_docs.py`; WC-3 landed and WC-5 is independent | Verified: 2026-10-09
+Status: active | Owner: Dave / Codex | Next: WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane, in the Codex lane | Dependency: WC-1 and WC-3 landed; WC-4 follows WC-2 because both edit `tools/check_docs.py`; WC-5 is ready to close | Verified: 2026-10-09
 
 ## Objective
 
@@ -50,7 +50,6 @@ Verified 9 Oct 2026 against master `4ca584c`:
 | --- | --- | --- | --- | --- |
 | WC-2 | a dry-lane warning names the missing deferral and the specified blocks that could serve the lane | `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_wc2_dry_lane_report.py` | yes -- WC-1 landed and the Codex lane has room | medium |
 | WC-4 | a queue id with whitespace fails the documentation check | `tools/check_docs.py`, `tests/test_wc4_spaced_ids.py` | after WC-2 and room in the Codex lane | low |
-| WC-5 | the two level-to-model tables are tested against each other | `tools/session_cost.py`, `tests/test_wc5_level_model_parity.py` | yes -- the Codex lane has room (9 Oct 2026) | low |
 
 **Dependencies.** WC-1, WC-2 and WC-4 edit `tools/check_docs.py` and run in
 that order; WC-3 and WC-5 depend on nothing. None edits `tools/slice.ps1`,
@@ -132,28 +131,4 @@ spaced id in each place and a hyphenated one that passes.
 - Next after: WC-5 -- the two level-to-model tables are tested against each other
 ```
 
-## WC-5 -- the two level-to-model tables are tested against each other
-
-<!-- LAYER: immediate-task -->
-
-Level: low (one parity test and a comment).
-
-**True now.** `session_cost.py::LEVEL_MODELS` says it "mirrors
-Get-SliceAdvice"; nothing fails when the two disagree.
-
-**True afterwards.** A test reads the Claude-lane `switch` in
-`tools/slice.ps1::Get-SliceAdvice` with a regex and asserts that each of
-`high`, `medium` and `low` names a model that starts with an entry of
-`LEVEL_MODELS[level]`. It fails with both values when they drift. The
-comment above `LEVEL_MODELS` names the test instead of the word "mirrors".
-
-**Must not change.** Either table's values; `tools/slice.ps1`.
-
-```queue
-**[Codex] WC-5 -- the two level-to-model tables are tested against each other**
-- Plan: `plans/now/workflow-checks.md` -- "WC-5 -- the two level-to-model tables are tested against each other"
-- Files: `tools/session_cost.py`, `tests/test_wc5_level_model_parity.py`
-- Check: `python -m unittest tests.test_wc5_level_model_parity` passes, and fails when one `LEVEL_MODELS` entry is edited by hand; `tools/verify.ps1` is green
-- Proof: `present: tools/session_cost.py :: mirrors Get-SliceAdvice in`
-- Next after: none -- plans/now/workflow-checks.md is complete
-```
+WC-5 shipped 2026-10-09; its specification is `plans/archive/WC-5_2026-10-09.md`.
