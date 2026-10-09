@@ -396,6 +396,30 @@ The first sprite/readability set is **Dandelion, Poppy and Borage**, each with
 rewarding, depleted, out-of-season and ageing/senescent treatment. Procedural
 indicators handle overlapping states to avoid a combinatorial asset set.
 
+**Decisions (Dave, 10 Oct 2026, plan-ahead session).** Sliced in
+`plans/now/pollination.md`.
+
+- **Alpha scope: Pollinator Points and seed set.** The alpha builds the
+  spendable points and the seed-set rule above (an unpollinated flower sets
+  no seed; compatible pollination raises seed set, incompatible pollen
+  lowers it; a background floor keeps every species alive). Pollination
+  Contribution is counted and saved but drives nothing else yet. Offspring
+  quality (the ±15% rule above) waits for post-alpha ecology (§6.3).
+- **The pollination window is the flower's own refill.** A flower that has
+  just awarded a point awards none again until it has recharged, the same
+  recharge bees already wait out (`bee_foraging.gd`'s `flower_cooldowns`).
+  No new timer or balance value. This settles §16's window question.
+- **Gyne rearing gates gyne cells; Royal jelly gates Jelly mode.** In the
+  Colony Run a cell can be marked for a gyne only once Gyne rearing is
+  owned, and nurses make jelly only once Royal jelly is owned. Runs that
+  raise gynes today (Challenges, Scenarios) own both from the start, as
+  they own Shiver Cluster (`plans/design/progression.md` §5.6).
+- **Pacing intent: Gyne rearing is first affordable after the first
+  winter**, so gynes are raised and sent in the second summer's mating
+  window (§12 rule 5). A PE-2 arc sweep (`tools/pacing_gates.py`) sets the
+  point awards and tier-3/4 costs to that intent; the amounts in
+  `skills.gd` remain guesses until it does.
+
 ## 11. Difficulty, failure and recovery
 
 ### Easy
@@ -757,7 +781,8 @@ legal decisions for the release stream, not alpha blockers.
 - exact Work Priorities dispatch rules and its scalable many-bee UI;
 - Bee Bread recipe quantities, rationing and fermentation feedback;
 - exact skill discovery milestones and costs in the 90-minute route;
-- Pollinator Point window duration and seed/quality formula;
+- the seed-set and offspring-quality formulas (the Pollinator Point window
+  is settled in §10's 10 Oct 2026 decisions);
 - Standard and harder difficulty rules;
 - short-term-goal selection, concurrency and dismissal behaviour;
 - named-save count, naming, overwrite and deletion UX;
