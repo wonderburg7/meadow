@@ -76,7 +76,6 @@ Verified 9 Oct 2026 against master and the main checkout:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-1 | crisp pixels on the comb cell: shared sharp-pixel shader and pixel-scale helper | `assets/shaders/pixel_sharp.gdshader`, `scripts/pixel_sprite.gd`, `scripts/hive_cell.gd`, `tests/sp1_pixel_sprite_test.gd`, `tests/test_sp1_pixel_sprite.py` | yes | medium |
 | SP-2 | the sprite exporter, the sprite table and the generated catalogue; art moves into the new folders | tools/sprites.py and its test, assets/sprites/, scripts/sprite_catalogue.gd, `scripts/hive_cell.gd`, `tools/verify.ps1` | after SP-1 | medium |
 | SP-3 | cell colours follow the new sprites; honey moves off orange | `scripts/hive_cell.gd`, `scripts/bee.gd`, `tests/test_sp3_content_colours.py` | yes | medium |
 | SP-4 | nectar and pollen fill levels drawn from the sprites | `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, the sprite table and catalogue, tests | after SP-2 and SP-3 | medium |
@@ -88,44 +87,7 @@ time before SP-4. **BB-1** (`plans/now/bee-bread.md`) adds a bee bread
 colour to `hive_cell.gd`: whichever of BB-1 and SP-3 lands second checks
 that colour against SP-3's distinct-colour test.
 
-## SP-1 -- crisp pixels on the comb cell
-
-**True now.** See current state: the empty-cell sprite is drawn with
-Godot's default linear filter at 1.1875x, so it blurs when zoomed.
-
-**True afterwards.**
-
-- `assets/shaders/pixel_sharp.gdshader` is a `canvas_item` sharp-bilinear
-  shader. Per fragment it does:
-  - `px = UV * size`, `seam = floor(px + 0.5)`;
-  - `px = seam + clamp((px - seam) / fwidth(px), -0.5, 0.5)`;
-  - samples at `px / size`.
-
-  It needs linear filtering and carries the node's modulate through a
-  varying set in `vertex()`, because fragment `COLOR` already includes one
-  texture sample.
-- `scripts/pixel_sprite.gd` (new) owns the two view scales from the design
-  doc (the hive one is derived from `GameConfig.hive_cell_spacing`), one
-  shared `ShaderMaterial` (shared so every sprite still batches) and
-  `apply(sprite, px_scale)`. `apply` sets the material,
-  `TEXTURE_FILTER_LINEAR` and the scale.
-- Rule-4 owner check: nothing owns texture presentation today.
-  `hive_cell.gd` hard-codes its one sprite, and this replaces that part
-  rather than adding a second way.
-- `hive_cell.gd`'s empty sprite goes through `apply`.
-- Runtime: set once in `_ready`, with no per-frame work.
-- Hands-on for Dave: zoom the comb from minimum to maximum. Pixels stay
-  square and sharp, nothing shimmers while zooming, and no seams open
-  between cells (`EMPTY_SPRITE_SCALE_NUDGE` stays 1.0).
-
-```queue
-**[Claude] SP-1 -- crisp pixels on the comb cell**
-- Plan: `plans/now/sprites.md` -- "SP-1 -- crisp pixels on the comb cell"
-- Files: `assets/shaders/pixel_sharp.gdshader`, `scripts/pixel_sprite.gd`, `scripts/hive_cell.gd`, `tests/sp1_pixel_sprite_test.gd`, `tests/test_sp1_pixel_sprite.py`
-- Check: `python -m unittest tests.test_sp1_pixel_sprite` passes (an empty HiveCell's sprite carries PixelSprite's shared material, linear filtering and the hive pixel scale); `tools/verify.ps1` is green
-- Proof: `absent: scripts/hive_cell.gd :: PixelSprite`
-- Next after: SP-2 -- the sprite exporter, the sprite table and the generated catalogue
-```
+SP-1 shipped 2026-10-09; its specification is `plans/archive/SP-1_2026-10-09.md`.
 
 ## SP-2 -- the sprite exporter, the sprite table and the generated catalogue
 
