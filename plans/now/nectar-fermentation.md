@@ -87,10 +87,11 @@ Verified 6 Oct 2026 against master:
 NF-4 follows NF-3. NF-2's gates, COL-4 and COL-11 (both in
 `plans/archive/colony-run_2026-10-08.md`), have landed. Bee Bread's BB-1
 (`plans/now/bee-bread.md`) waits for NF-2: it shares `hive_cell.gd`,
-`hive.gd` and the save files. SI-3 (`plans/archive/save-integrity_2026-10-09.md`) and
-T2-4b (`plans/now/tier-two.md`) also edit `save_game.gd`, `saving.gd` and
-(T2-4b) `hive.gd`; all three sit in the Claude lane, which runs them one
-branch at a time, so none may move to the Codex lane while another is queued. NF-4's node joins Colony tier 2, which
+`hive.gd` and the save files. T2-4b (`plans/now/tier-two.md`) also edits
+`save_game.gd`, `saving.gd` and `hive.gd`; it sits behind NF-2 in the Claude
+lane, which runs them one branch at a time, so neither may move to the Codex
+lane while the other is queued (SI-3, which shared the save files, landed
+9 Oct 2026). NF-4's node joins Colony tier 2, which
 `plans/now/tier-two.md` T2-7 prices if NF-4 has landed by then.
 
 NF-1 shipped 2026-10-06; its specification is `plans/archive/NF-1_2026-10-06.md`.

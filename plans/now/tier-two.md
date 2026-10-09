@@ -52,7 +52,7 @@ Verified 7 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | `scripts/hive_body.gd`, `scripts/hive.gd`, `scripts/bee_survival.gd`, `scripts/season.gd`, `scripts/bee_building.gd`, `scripts/bee.gd`, `scripts/actions.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/t2_4b_bodies_test.gd`, `tests/test_t2_4b_bodies.py` | yes -- T2-4a and COL-6 have landed; queued after SI-3 and NF-2, which share the save files and `hive.gd` | high |
+| T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | `scripts/hive_body.gd`, `scripts/hive.gd`, `scripts/bee_survival.gd`, `scripts/season.gd`, `scripts/bee_building.gd`, `scripts/bee.gd`, `scripts/actions.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/t2_4b_bodies_test.gd`, `tests/test_t2_4b_bodies.py` | yes -- T2-4a and COL-6 have landed; queued after NF-2, which shares the save files and `hive.gd` (SI-3 landed 9 Oct 2026) | high |
 | T2-6 | Associative learning: per-bee, per-species familiarity, saved | `scripts/skills.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd` | no -- rate and save acceptance need specification | high |
 | T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | specified when T2-1 to T2-3 and COL-4 have landed | no -- needs COL-4's year and the gates | medium |
 
@@ -61,9 +61,9 @@ T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
 and each adds a test module. They depend on
 nothing else. T2-4a follows T2-2 (`actions.gd`, `challenge_stages.gd`).
 T2-4b (COL-4 and COL-6 have landed) shares `hive.gd`, `save_game.gd` and
-`saving.gd` with SI-3 (`plans/archive/save-integrity_2026-10-09.md`) and NF-2
-(`plans/now/nectar-fermentation.md`), all in the Claude lane, so it runs after
-them; Bee Bread's BB-1 (`plans/now/bee-bread.md`) shares the same files.
+`saving.gd` with NF-2 (`plans/now/nectar-fermentation.md`), both in the
+Claude lane, so it runs after NF-2 (SI-3, which shared the save files, landed
+9 Oct 2026); Bee Bread's BB-1 (`plans/now/bee-bread.md`) shares the same files.
 T2-6 and T2-7 wait for COL-4; T2-7 also for T2-1 to T2-3, whose
 gates it prices. T2-8 multiplies COL-6's one-step winter (landed 7 Oct 2026).
 NF-4 (`plans/now/nectar-fermentation.md`) adds a Colony tier-2 node; T2-7
