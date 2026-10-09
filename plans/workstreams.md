@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/WC-4` (`codex/WC-4`) | Codex | a queue id with whitespace fails the documentation check | Codex | in progress | none | `plans/now/workflow-checks.md` WC-4 -- a queue id with whitespace fails the documentation check |
+| `.worktrees/SP-1` (`claude/SP-1`) | Claude | crisp pixels on the comb cell | Claude | in progress | none | `plans/now/sprites.md` SP-1 -- crisp pixels on the comb cell |
