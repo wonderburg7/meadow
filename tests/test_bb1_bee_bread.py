@@ -15,14 +15,22 @@ never goes down; pollen and ripe honey never run out; and the cell's seal
 stamp and contents and the bees' Fermenting flag survive save and restore.
 A static check keeps the three bee bread colours apart from every other
 cell-content colour.
+
+The run gets a user:// of its own (APPDATA pointed at a temporary folder).
+Every headless scenario run empties the shared user://scenario_saves/ as it
+starts (save_slots.gd::use_scratch_root), so under verify.ps1, where test
+modules run side by side, another module's run wiped "BB1 day1" before this
+run's restore_slot could read it.
 """
 
 from __future__ import annotations
 
 import json
 import math
+import os
 import re
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -101,18 +109,29 @@ class BeeBreadRunTest(unittest.TestCase):
         cls.capacity = _config("bee_bread_cell_capacity")
         cls.day = _config("seconds_per_day")
         cls.ripen = _config("bee_bread_ripen_hours") * cls.day / 24.0
-        session_file = run_once(FIXTURE, godot_path, timeout=600, fixed_fps=30)
-        if session_file is None:
-            raise AssertionError("scenario run produced no session log")
-        entries = load_entries(session_file)
+        # A private user:// for this run (see the module docstring); log_dir()
+        # follows APPDATA, so the session log and saves are read from it too.
+        old_appdata = os.environ.get("APPDATA")
+        with tempfile.TemporaryDirectory(prefix="meadow-bb1-") as appdata:
+            os.environ["APPDATA"] = appdata
+            try:
+                session_file = run_once(FIXTURE, godot_path, timeout=600, fixed_fps=30)
+                if session_file is None:
+                    raise AssertionError("scenario run produced no session log")
+                entries = load_entries(session_file)
+                scratch = log_dir().parent / "scenario_saves"
+                cls.saves = {}
+                for name in SAVES:
+                    path = scratch / ("bb1-%s.json" % name)
+                    if path.exists():
+                        cls.saves[name] = json.loads(path.read_text(encoding="utf-8"))
+            finally:
+                if old_appdata is None:
+                    os.environ.pop("APPDATA", None)
+                else:
+                    os.environ["APPDATA"] = old_appdata
         cls.rejected = [e for e in entries if e.get("type") == "action" and e.get("result") == "rejected"]
         cls.snapshots = [e for e in entries if e.get("type") == "snapshot"]
-        scratch = log_dir().parent / "scenario_saves"
-        cls.saves = {}
-        for name in SAVES:
-            path = scratch / ("bb1-%s.json" % name)
-            if path.exists():
-                cls.saves[name] = json.loads(path.read_text(encoding="utf-8"))
 
     def setUp(self):
         self.assertEqual(self.rejected, [], "a scenario action was rejected")
