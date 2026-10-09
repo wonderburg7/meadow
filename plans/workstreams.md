@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/NF-2` (`claude/NF-2`) | Claude | nectar ferments past an age, changes colour, and is lost to honey makers | Claude | in progress | none | `plans/now/nectar-fermentation.md` NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers |
+| `.worktrees/WC-3` (`codex/WC-3`) | Codex | Codex's hooks log its sessions | Codex | in progress | none | `plans/now/workflow-checks.md` WC-3 -- Codex's hooks log its sessions |
