@@ -1,7 +1,7 @@
 # Nectar fermentation -- unprocessed nectar ferments, and tipsy bees pay for it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: NF-3 -- a bee that drinks fermented nectar goes tipsy, specified below and queued once NF-2 lands (NF-2 is on its branch) | Dependency: none for NF-3 once NF-2 lands; NF-4 follows NF-3, NF-5 follows NF-2 | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: NF-3 -- a bee that drinks fermented nectar goes tipsy, queued in the Claude lane; NF-5 -- the clear-fermented-cells order, to be specified now that NF-2 has landed | Dependency: none (NF-2 landed 9 Oct 2026); NF-4 follows NF-3 | Verified: 2026-10-09
 
 ## Objective
 
@@ -84,19 +84,16 @@ Verified 6 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| NF-3 | a bee that drinks fermented nectar goes tipsy (decision 3) | `scripts/bee.gd`, `scripts/bee_enums.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/bee_foraging.gd`, `scripts/bee_status.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf3_tipsy.py`, `test_scenarios/nf3_tipsy.json` | yes, once NF-2 lands | high |
+| NF-3 | a bee that drinks fermented nectar goes tipsy (decision 3) | `scripts/bee.gd`, `scripts/bee_enums.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/bee_foraging.gd`, `scripts/bee_status.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf3_tipsy.py`, `test_scenarios/nf3_tipsy.json` | yes -- queued in the Claude lane (NF-2 landed 9 Oct 2026) | high |
 | NF-4 | the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; without it, closest first (decisions 4-5) | specified after NF-3 | no -- after NF-3 | high |
-| NF-5 | an order to clear fermented cells, extending today's restock orders (decision 6) | specified after NF-2 | no -- after NF-2 | medium |
+| NF-5 | an order to clear fermented cells, extending today's restock orders (decision 6) | to be specified; first check what the cell popup's Empty / Discard order (`orders_zones.gd::_empty_one`) already covers (`plans/README.md` rule 3) | no -- NF-2 has landed; waits only to be specified | medium |
 
-**Dependencies.** NF-1, then NF-2. NF-3 and NF-5 each follow NF-2, and
-NF-4 follows NF-3. NF-2's gates, COL-4 and COL-11 (both in
-`plans/archive/colony-run_2026-10-08.md`), have landed. Bee Bread's BB-1
-(`plans/now/bee-bread.md`) waits for NF-2: it shares `hive_cell.gd`,
-`hive.gd` and the save files. T2-4b (`plans/now/tier-two.md`) also edits
-`save_game.gd`, `saving.gd` and `hive.gd`; it sits behind NF-2 in the Claude
-lane, which runs them one branch at a time, so neither may move to the Codex
-lane while the other is queued (SI-3, which shared the save files, landed
-9 Oct 2026). NF-4's node joins Colony tier 2, which
+**Dependencies.** NF-1, then NF-2, both landed. NF-3 and NF-5 each follow
+NF-2, and NF-4 follows NF-3. Bee Bread's BB-1 (`plans/now/bee-bread.md`)
+and T2-4b (`plans/now/tier-two.md`) share `hive.gd`, `game_config.gd`,
+`settings_catalogue.gd` and the save files with NF-3; all three are in the
+Claude lane, which runs them one branch at a time, so none may move to the
+Codex lane while another is queued. NF-4's node joins Colony tier 2, which
 `plans/now/tier-two.md` T2-7 prices if NF-4 has landed by then.
 
 NF-1 shipped 2026-10-06; its specification is `plans/archive/NF-1_2026-10-06.md`.
