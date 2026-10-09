@@ -179,8 +179,9 @@ static func _write_index(index: Dictionary) -> void:
 	write_atomic(root + INDEX_FILE, JSON.stringify(index, "\t"))
 
 ## SI-3: writes `text` to `path + ".tmp"` and renames it over `path`, so a
-## crash or full disk never leaves a half file. Returns false (after
-## removing the .tmp) if the open, the store or the rename fails.
+## crash or full disk never leaves a half file. Returns false if the open,
+## the store or the rename fails (a failed store removes the .tmp; a failed
+## rename keeps it).
 static func write_atomic(path: String, text: String) -> bool:
 	var tmp := path + ".tmp"
 	var file := FileAccess.open(tmp, FileAccess.WRITE)
@@ -194,8 +195,9 @@ static func write_atomic(path: String, text: String) -> bool:
 		DirAccess.remove_absolute(tmp)
 		return false
 	if DirAccess.rename_absolute(tmp, path) != OK:
+		# Keep the .tmp: the rename may have removed the target first, and
+		# read() falls back to the .tmp.
 		push_error("Could not replace the file: %s" % path)
-		DirAccess.remove_absolute(tmp)
 		return false
 	return true
 
