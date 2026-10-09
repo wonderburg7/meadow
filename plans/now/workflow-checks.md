@@ -1,7 +1,7 @@
 # Workflow checks -- say what a waiting lane is waiting for, and catch latent tooling drift
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: WC-1 -- a deferral whose gate has cleared is flagged, in the Codex lane | Dependency: none; WC-1 to WC-5 run in order in the Codex lane (WC-1, WC-2 and WC-4 share `tools/check_docs.py`) | Verified: 2026-10-07
+Status: active | Owner: Dave / Codex | Next: WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane, in the Codex lane | Dependency: none; WC-1 to WC-5 run in order in the Codex lane (WC-1, WC-2 and WC-4 share `tools/check_docs.py`) | Verified: 2026-10-09
 
 ## Objective
 
@@ -20,14 +20,12 @@ cannot work, or a test.
 
 ## Current state
 
-Verified 7 Oct 2026 against master `27b645e`:
+Verified 9 Oct 2026 against master `4ca584c`:
 
-- `NEXTSTEPS.md`'s "Not in the queue, and why" names COL-4 as the gate for
-  NF-2, T2-5 to T2-7, BB-1 and the event director, and NF-1 for NF-2. Both
-  shipped (`plans/archive/COL-4_2026-10-07.md`,
-  `plans/archive/NF-1_2026-10-06.md`); `python tools/check_docs.py` says
-  nothing. `plans/README.md` rule 9 says it warns about the archived-id case,
-  but `check_queue_ids_are_unused` covers queued ids only.
+- `NEXTSTEPS.md`'s "Not in the queue, and why" names shipped gates including
+  COL-4 and NF-1 for NF-2. `python tools/check_docs.py` now warns once per
+  archived gate, while preserving an explicit `landed` or `shipped` note as
+  historical context; `plans/README.md` rule 9 names that expiry rule.
 - `refill_lane.py --delete AR-3 --top-up --lane Codex --dry-run` refuses
   with "no [Codex] item -- both lanes must have work", and
   `check_queue_lookahead`'s warning says only "specify the owning plan's next
