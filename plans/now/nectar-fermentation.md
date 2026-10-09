@@ -84,7 +84,6 @@ Verified 6 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| NF-2 | nectar ferments past an age, changes colour, and is lost to honey makers | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf2_fermentation.py`, `test_scenarios/nf2_fermentation.json` | yes -- COL-4 (7 Oct 2026) and NF-1 (6 Oct 2026) have landed | high |
 | NF-3 | a bee that drinks fermented nectar goes tipsy (decision 3) | `scripts/bee.gd`, `scripts/bee_enums.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/bee_foraging.gd`, `scripts/bee_status.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf3_tipsy.py`, `test_scenarios/nf3_tipsy.json` | yes, once NF-2 lands | high |
 | NF-4 | the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; without it, closest first (decisions 4-5) | specified after NF-3 | no -- after NF-3 | high |
 | NF-5 | an order to clear fermented cells, extending today's restock orders (decision 6) | specified after NF-2 | no -- after NF-2 | medium |
@@ -102,66 +101,7 @@ lane while the other is queued (SI-3, which shared the save files, landed
 
 NF-1 shipped 2026-10-06; its specification is `plans/archive/NF-1_2026-10-06.md`.
 
-## NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers
-
-<!-- LAYER: immediate-task -->
-
-Level: high (a save field with its migration, and a gameplay rule).
-
-**True now.** NF-1's `nectar_since` exists but is not saved. No nectar
-ferments.
-
-**True afterwards.**
-
-- `GameConfig.nectar_ferment_hours` (in-game hours, with its
-  `settings_catalogue.gd` entry) is chosen from NF-1's evidence: above the
-  p95 age of a colony with honey makers, so a staffed colony rarely sees
-  fermentation, and below the age reached without them.
-- `hive_cell.is_fermented()` is derived: nectar content older than that
-  threshold. It changes no state of its own, so it costs nothing per frame.
-  A fermented cell draws its nectar in a distinct colour. It still takes
-  fresh nectar, and stays fermented (decision 8).
-- Honey makers skip fermented cells. As built (review, 9 Oct 2026), this is
-  a dedicated `hive.find_honey_source()` that `bee_honey.gd` calls, leaving
-  the shared `find_cell_with("nectar")`, which nurses and `bee.gd`'s status
-  line also use, unchanged. `find_food_cell` still offers fermented cells:
-  bees cannot tell (decision 4), and the debuff is NF-3's.
-- `nectar_since` is saved per cell as an additive field. An older save
-  loads with the stamp at the restore time, following
-  `.claude/rules/saving.md`.
-- `test_scenarios/nf2_fermentation.json` uses a short threshold through
-  `config_overrides`, with no honey makers. `tests/test_nf2_fermentation.py`
-  asserts that a nectar cell ferments, a honey maker never takes from it,
-  fresh nectar added to it leaves it fermented, and its stamp survives a
-  save and restore.
-
-**Evidence (9 Oct 2026, on the NF-2 branch).** NF-1's fixture
-(`test_scenarios/nf1_nectar_age.json`, 20-second days) run for 20 days:
-with two honey makers (seeds 5101 and 77) and four (seed 5101), the p95 of
-the 24 daily nectar-age samples was 94 in-game hours (one cell reached 118);
-with none, the oldest nectar grew 24 hours a day, to 120 by day 9 and 360 by
-day 19. `GameConfig.nectar_ferment_hours` is 96 (four in-game days). Its
-settings row is tagged `persist: "none"`: `tests/source_checks.py` freezes
-the set a save carries until D1's second half.
-
-**As built.** The fixture turns two miners into honey makers (granting
-`skill.brood.honey_worker`) once the stocked cell has fermented, and stocks
-a fresh control cell they do turn into honey. The test reads the run's own
-saves back from the scenario scratch root. A honey maker that chose a cell
-before it fermented still empties it on arrival (`bee_honey.gd` is not
-NF-2's); the window is the walk, against a 96-hour threshold.
-
-**Must not change.** Ripe-honey ripening, eating order, and every other
-cell content type.
-
-```queue
-**[Claude] NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers**
-- Plan: `plans/now/nectar-fermentation.md` -- "NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers"
-- Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf2_fermentation.py`, `test_scenarios/nf2_fermentation.json`
-- Check: `python -m unittest tests.test_nf2_fermentation` passes (a cell ferments, honey makers skip it, a top-up leaves it fermented, its stamp survives save and restore); `tools/verify.ps1` is green
-- Proof: `absent: scripts/hive_cell.gd :: func is_fermented`
-- Next after: NF-3 -- a bee that drinks fermented nectar goes tipsy
-```
+NF-2 shipped 2026-10-09; its specification is `plans/archive/NF-2_2026-10-09.md`.
 
 ## NF-3 -- a bee that drinks fermented nectar goes tipsy
 
