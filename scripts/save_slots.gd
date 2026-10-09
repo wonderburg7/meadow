@@ -161,7 +161,10 @@ static func _read_index() -> Dictionary:
 static func _load_index_file() -> Dictionary:
 	var path := root + INDEX_FILE
 	if not FileAccess.file_exists(path):
-		return _empty_index()
+		# SI-3: a crash between the replace's remove and rename leaves only .tmp.
+		if not FileAccess.file_exists(path + ".tmp"):
+			return _empty_index()
+		path = path + ".tmp"
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		return _empty_index()
@@ -173,12 +176,28 @@ static func _load_index_file() -> Dictionary:
 	return parsed
 
 static func _write_index(index: Dictionary) -> void:
-	var file := FileAccess.open(root + INDEX_FILE, FileAccess.WRITE)
+	write_atomic(root + INDEX_FILE, JSON.stringify(index, "\t"))
+
+## SI-3: writes `text` to `path + ".tmp"` and renames it over `path`, so a
+## crash or full disk never leaves a half file. Returns false (after
+## removing the .tmp) if the open, the store or the rename fails.
+static func write_atomic(path: String, text: String) -> bool:
+	var tmp := path + ".tmp"
+	var file := FileAccess.open(tmp, FileAccess.WRITE)
 	if file == null:
-		push_error("Could not write the save index: %s" % (root + INDEX_FILE))
-		return
-	file.store_string(JSON.stringify(index, "\t"))
+		push_error("Could not open the file for writing: %s" % tmp)
+		return false
+	var stored := file.store_string(text)
 	file.close()
+	if not stored:
+		push_error("Could not write the file: %s" % tmp)
+		DirAccess.remove_absolute(tmp)
+		return false
+	if DirAccess.rename_absolute(tmp, path) != OK:
+		push_error("Could not replace the file: %s" % path)
+		DirAccess.remove_absolute(tmp)
+		return false
+	return true
 
 ## Creates `root` and, for the player's own catalogue, adopts the legacy
 ## save once. Copies the file byte for byte without opening it, and never

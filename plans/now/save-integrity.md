@@ -1,7 +1,7 @@
 # Save integrity -- what a load must bring back, and a write that cannot half-finish
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SI-3 -- save, checkpoint and index writes are all-or-nothing | Dependency: none (shares `scripts/save_game.gd` and `scripts/saving.gd` with NF-2 in `plans/now/nectar-fermentation.md`, so never in the other lane at the same time) | Verified: 2026-10-08
+Status: complete | Owner: Dave / Claude Code | Next: nothing further -- SI-1 to SI-3 landed | Dependency: none (shares `scripts/save_game.gd` and `scripts/saving.gd` with NF-2 in `plans/now/nectar-fermentation.md`, so never in the other lane at the same time) | Verified: 2026-10-09
 
 ## Objective
 
