@@ -35,35 +35,28 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] CD-2 -- missing workforce and blocked work become named, tested facts**
-   - Plan: `plans/now/diagnostic-readiness.md` -- "CD-2 -- missing workforce and blocked work become named, tested facts"
-   - Files: `scripts/colony_diagnostics.gd`, `scripts/year_winter.gd`, `tests/test_colony_diagnostics.py`
-   - Check: `python -m unittest tests.test_colony_diagnostics` passes with empty, staffed and blocked-cell fixtures; `tools/verify.ps1` is green
-   - Proof: `present: scripts/colony_diagnostics.gd :: static func compute`
-   - Next after: CD-3 -- waiting and travel get a deterministic diagnostic boundary
-
-2. **[Codex] GD-1 -- decide the causal-explanation contract**
+1. **[Codex] GD-1 -- decide the causal-explanation contract**
    - Plan: `plans/now/guidance-explanations.md` -- "GD-1 -- decide the causal-explanation contract"
    - Files: `plans/now/guidance-explanations.md`, `plans/design/product-scope.md`
    - Check: `python tools/check_docs.py` passes and GD-1 records one owner for facts, trigger policy and presentation
    - Proof: `present: scripts/gallerin_panel.gd :: Nothing feeds it real prompts yet`
    - Next after: GD-2 -- implement the accepted persistent entry point and first explanations
 
-3. **[Codex] T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run**
+2. **[Codex] T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run**
    - Plan: `plans/now/tier-two.md` -- "T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run"
    - Files: `scripts/skills.gd`, `scripts/bee_status.gd`, `scripts/bee_foraging.gd`, `scripts/bee.gd`, `scripts/main.gd`, `scripts/levels.gd`, `tests/test_t2_5_rain_skills.py`, `tests/t2_5_rain_skills_test.gd`
    - Check: `python -m unittest tests.test_t2_5_rain_skills` passes (owned and unowned departures, outside recall, level weather policy); `python tools/pacing_gates.py` before and after is recorded here; `tools/verify.ps1` is green
    - Proof: `absent: scripts/bee_status.gd :: WEATHER_SENSING`
    - Next after: T2-6 -- Associative learning
 
-4. **[Codex] WC-1 -- a deferral whose gate has cleared is flagged**
+3. **[Codex] WC-1 -- a deferral whose gate has cleared is flagged**
    - Plan: `plans/now/workflow-checks.md` -- "WC-1 -- a deferral whose gate has cleared is flagged"
    - Files: `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py`
    - Check: `python -m unittest tests.test_wc1_stale_deferrals` passes (a stale gate warns, an unshipped gate and a "landed" clause do not); `python tools/check_docs.py` on master prints the warning for NF-2's COL-4 and NF-1; `tools/verify.ps1` is green
    - Proof: `absent: tools/check_docs.py :: waits for an archived slice`
    - Next after: WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane
 
-5. **[Codex] WC-3 -- Codex's hooks log its sessions**
+4. **[Codex] WC-3 -- Codex's hooks log its sessions**
    - Plan: `plans/now/workflow-checks.md` -- "WC-3 -- Codex's hooks log its sessions"
    - Files: `.codex/hooks.json`, `tests/test_wc3_codex_hooks.py`
    - Check: `python -m unittest tests.test_wc3_codex_hooks` passes with `CLAUDE_PROJECT_DIR` unset; `tools/verify.ps1` is green
