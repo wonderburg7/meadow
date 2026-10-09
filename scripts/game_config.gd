@@ -864,6 +864,17 @@ var disease_threshold: float = 0.35
 ## live this much less long.
 var disease_brood_penalty: float = 0.55
 var disease_lifespan_penalty: float = 0.4
+## T2-4b: the most bodies of dead bees the hive floor holds (hive.gd's
+## `bodies`); past it the oldest goes. A guard against unbounded growth, not
+## a balance lever, so it must never trim an ordinary run. The most bodies
+## one event lays is a winter the stores cannot pay, which leaves one for
+## every bee it takes. Measured headless (9 Oct 2026, no Cleaning,
+## tests/t2_4b_bodies_test.gd): a 200-bee colony -- the largest
+## docs/performance.md runs within a 60 fps frame -- on empty comb lost all
+## 200 and left 200 bodies. (test_scenarios/col6_winter_skip_test.json lost
+## no bee, so held 0.) 250 holds that whole winter with a quarter's headroom
+## (plans/now/tier-two.md, T2-4b).
+var max_hive_bodies: float = 250.0
 
 # --- gynes leaving ---
 ## COL-7: no gyne leaves by herself. The player sends one

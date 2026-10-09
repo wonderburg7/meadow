@@ -13,6 +13,7 @@ const Shapes = preload("res://scripts/shapes.gd")
 const HiveCell = preload("res://scripts/hive_cell.gd")
 const Resources = preload("res://scripts/resources.gd")
 const Roles = preload("res://scripts/roles.gd")
+const HiveBody = preload("res://scripts/hive_body.gd")
 
 var cells: Array = []            # populated by main.gd once the comb is built
 var comb_parent: Node2D = null   # the hive-view root new cells get added to
@@ -625,6 +626,60 @@ func has_gyne_brood() -> bool:
 ## whether re-designating a cell would destroy its contents.
 func has_room_elsewhere(resource_type: String, except: Node2D) -> bool:
 	return find_cell_for(resource_type, except) != null
+
+# --- bodies -------------------------------------------------------
+## T2-4b: the bodies of bees who died inside the hive (hive_body.gd), oldest
+## first. Added by BeeSurvival.die and season.gd's winter, removed by a Comb
+## worker who owns Cleaning (bee_building.gd), the cap and a restore. Read by
+## the disease tick for its size. Never changes per frame.
+var bodies: Array = []
+
+## Lays a body at `point` (hive-view coordinates, comb_parent's space, where
+## a bee inside stands). Past GameConfig.max_hive_bodies the oldest goes, so
+## the list cannot grow without bound. Returns the new body, or null if
+## there is no comb to lay it in or the cap is zero.
+func add_body(point: Vector2, died_at: float) -> Node2D:
+	if comb_parent == null or not is_instance_valid(comb_parent):
+		return null
+	var body := HiveBody.new()
+	body.position = point
+	body.died_at = died_at
+	comb_parent.add_child(body)
+	bodies.append(body)
+	var cap: int = maxi(0, int(GameConfig.max_hive_bodies))
+	while bodies.size() > cap:
+		_free_body(bodies.pop_front())
+	return body if is_instance_valid(body) and body.is_inside_tree() else null
+
+## Takes `body` out of the hive: a Comb worker has lifted it to carry out.
+func remove_body(body: Node2D) -> void:
+	if bodies.has(body):
+		bodies.erase(body)
+		_free_body(body)
+
+## The oldest body no Comb worker is already on, or null. Dead larvae come
+## first: bee_building.gd asks for a body only when no cell needs cleaning.
+func find_body_to_clear() -> Node2D:
+	for body in bodies:
+		if is_instance_valid(body) and not body.is_claimed():
+			return body
+	return null
+
+## Empties the list at once. A restore replaces the bodies rather than
+## adding to them (saving.gd), so the old nodes leave the tree now, not at
+## the end of the frame.
+func clear_bodies() -> void:
+	for body in bodies:
+		_free_body(body)
+	bodies.clear()
+
+func _free_body(body: Node2D) -> void:
+	if body == null or not is_instance_valid(body):
+		return
+	var parent := body.get_parent()
+	if parent != null:
+		parent.remove_child(body)
+	body.queue_free()
 
 # --- growing the comb ---------------------------------------------
 

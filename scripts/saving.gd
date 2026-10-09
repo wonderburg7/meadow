@@ -221,6 +221,17 @@ func _restore_hive_state(state: Dictionary) -> void:
 	if credit.size() == 3:
 		main.hive._tier_credit = [float(credit[0]), float(credit[1]), float(credit[2])]
 	main.hive._brood_pointer = int(state.get("brood_pointer", 0))
+	# T2-4b: the saved bodies replace the live ones, never add to them, so an
+	# in-place checkpoint restore leaves exactly the saved count. An older
+	# save has no "bodies" and loads with none.
+	main.hive.clear_bodies()
+	for entry in state.get("bodies", []):
+		if entry is Dictionary:
+			var body = main.hive.add_body(
+				Vector2(float(entry.get("x", 0.0)), float(entry.get("y", 0.0))),
+				float(entry.get("died_at", 0.0)))
+			if body != null:
+				body.clear_progress = float(entry.get("clear", 0.0))
 
 func _cells_at(refs: Array) -> Array:
 	var out: Array = []

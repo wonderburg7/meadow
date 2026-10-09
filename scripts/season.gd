@@ -57,13 +57,15 @@ func _process(delta: float) -> void:
 ## Pressure builds from two things: bodies left in the comb, and how many
 ## bees are packed into how much space. Both are things the player
 ## controls, which is what makes it a decision rather than a tax.
+## T2-4b: a dead bee on the floor (hive.gd's `bodies`) counts at a dead
+## larva's rate, disease_per_corpse.
 func _advance_disease(elapsed: float) -> void:
 	var level: Dictionary = Levels.get_level(Session.starting_level)
 	if not GameConfig.disease_on or not level.get("disease", true):
 		disease = 0.0
 		return
 
-	var corpses: int = world.hive.cells_holding("corpse").size()
+	var corpses: int = world.hive.cells_holding("corpse").size() + world.hive.bodies.size()
 	var bees: int = world.get_tree().get_nodes_in_group("bees").size()
 	var cells: int = max(1, world.hive.cells.size())
 	# Crowding is bees per cell, not bees: a big colony in a big hive is
@@ -158,7 +160,14 @@ func _resolve_winter(days: float) -> void:
 	# The queen dies through the ordinary path: main.gd's _check_for_loss sees
 	# her gone, a gyne succeeds her (COL-10) or the run ends with the
 	# checkpoint offer (COL-3).
+	# T2-4b: every bee the bill takes leaves a body, so they lie there at
+	# spring. One who was outside is laid at the nearest walkable point
+	# inside -- the entrance she would have come in by -- since a meadow
+	# position means nothing in the hive's space.
+	var inside_entrance: Vector2 = world.hive.nearest_walkable_point(world.hive_entrance_inside())
 	for bee in lost:
+		if is_instance_valid(bee) and not bee.is_dying and not bee._is_inside_hive():
+			world.hive.add_body(inside_entrance, Session.sim_time)
 		BeeSurvival.die(bee, "starvation")
 	# After the bill, before the clock moves (COL-8): the plants die back, and
 	# their recharge clocks restart at spring so the skipped days credit nothing.
