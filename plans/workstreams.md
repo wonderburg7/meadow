@@ -46,5 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/NF-3` (`claude/NF-3`) | Claude | a bee that drinks fermented nectar goes tipsy | Claude | in progress | none | `plans/now/nectar-fermentation.md` NF-3 -- a bee that drinks fermented nectar goes tipsy |
 | `.worktrees/WC-2` (`codex/WC-2`) | Codex | a dry-lane warning names the missing deferral and the specified blocks that could serve the lane | Codex | in progress | none | `plans/now/workflow-checks.md` WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane |
