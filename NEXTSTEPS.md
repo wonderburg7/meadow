@@ -30,6 +30,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/skills.gd :: shiver_cluster`
    - Next after: T2-4b -- Bees that die in the hive leave bodies; winter's dead appear at spring
 
+2. **[Claude] SI-3 -- save, checkpoint and index writes are all-or-nothing**
+   - Plan: `plans/now/save-integrity.md` -- "SI-3 -- save, checkpoint and index writes are all-or-nothing"
+   - Files: `scripts/save_slots.gd`, `scripts/save_game.gd`, `tests/si3_atomic_write_test.gd`, `tests/test_si3_atomic_write.py`
+   - Check: `python -m unittest tests.test_si3_atomic_write` passes with `SI3 PASS`; `python tools/run_scenario.py test_scenarios/sv1_named_saves_test.json` passes; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/save_slots.gd :: write_atomic`
+   - Next after: none -- plans/now/save-integrity.md is complete once SI-3 lands
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -79,7 +86,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **WC-4** (`plans/now/workflow-checks.md`) -- a queue id with whitespace fails the documentation check; waits for WC-2 and room in the Codex lane.
 - **GD-2** (`plans/now/guidance-explanations.md`) -- implement the accepted persistent entry point and first explanations; waits for Dave's GD-1 decision.
 - **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; waits for Dave's FC-1 decision.
-- **SI-3** (`plans/now/save-integrity.md`) -- save, checkpoint and index writes are all-or-nothing; waits for SI-2.
 - **NF-2** (`plans/now/nectar-fermentation.md`) -- nectar ferments past an age; waits for COL-4 (Codex lane), which edits `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, and for NF-1's evidence.
 - **T2-4b, T2-6 and T2-7** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-4b (bodies) is to be specified now T2-4a has landed (8 Oct 2026); T2-6 (Associative learning) is specified and fenced `queue-gated`, and waits for Dave's decision on its familiarity rates, handling-speed cap and old-save default (T2-5 landed 9 Oct 2026); T2-7 (tier-2 prices) is to be specified now T2-1 to T2-3 and COL-4 have landed; T2-8b (Shiver Cluster's node) is queued in the Claude lane.
 - **BB-1 to BB-4** (`plans/now/bee-bread.md`) -- Bee Bread; BB-1 waits for COL-4 and NF-2 (`game_config.gd`, `hive_cell.gd`, `hive.gd`, the save files); the rest follow BB-1.

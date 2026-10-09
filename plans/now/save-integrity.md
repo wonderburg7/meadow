@@ -23,7 +23,7 @@ the live world instead. Writes go straight to the target path with
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SI-3 | save, checkpoint and index writes are all-or-nothing | `scripts/save_slots.gd`, `scripts/save_game.gd`, `tests/si3_atomic_write_test.gd`, `tests/test_si3_atomic_write.py` | after SI-2 | medium |
+| SI-3 | save, checkpoint and index writes are all-or-nothing | `scripts/save_slots.gd`, `scripts/save_game.gd`, `tests/si3_atomic_write_test.gd`, `tests/test_si3_atomic_write.py` | yes -- SI-2 landed 9 Oct 2026 | medium |
 
 Dependencies: SI-1, SI-2 and SI-3 share `saving.gd`/`save_game.gd`, so they
 run one after another in that order (most player-visible first). Each slice
@@ -87,7 +87,7 @@ still passes.
 file on Windows (then the choice between remove-then-rename and a backup
 file is Dave's).
 
-```queue-gated
+```queue
 **[Claude] SI-3 -- save, checkpoint and index writes are all-or-nothing**
 - Plan: `plans/now/save-integrity.md` -- "SI-3 -- save, checkpoint and index writes are all-or-nothing"
 - Files: `scripts/save_slots.gd`, `scripts/save_game.gd`, `tests/si3_atomic_write_test.gd`, `tests/test_si3_atomic_write.py`
