@@ -61,10 +61,9 @@ Verified 7 Oct 2026 against master:
 T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
 and each adds a test module. They depend on
 nothing else. T2-4a follows T2-2 (`actions.gd`, `challenge_stages.gd`).
-T2-4b (COL-4, COL-6 and NF-2 have landed) shares `hive.gd`, `save_game.gd`
-and `saving.gd` with NF-3 (`plans/now/nectar-fermentation.md`) and Bee
-Bread's BB-1 (`plans/now/bee-bread.md`), all in the Claude lane, which runs
-them one branch at a time.
+T2-4b landed 9 Oct 2026, so it no longer shares files with NF-3
+(`plans/now/nectar-fermentation.md`) or Bee Bread's BB-1
+(`plans/now/bee-bread.md`).
 T2-6 and T2-7 wait for COL-4; T2-7 also for T2-1 to T2-3, whose
 gates it prices. T2-8 multiplies COL-6's one-step winter (landed 7 Oct 2026).
 NF-4 (`plans/now/nectar-fermentation.md`) adds a Colony tier-2 node; T2-7
