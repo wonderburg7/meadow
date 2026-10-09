@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"$CLAUDE_PROJECT_DIR/tools/hook_log.py\" session_start",
+            "command": "python tools/hook_log.py session_start",
             "timeout": 15
           }
         ]
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"$CLAUDE_PROJECT_DIR/tools/hook_log.py\" session_end",
+            "command": "python tools/hook_log.py session_end",
             "timeout": 15
           }
         ]
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"$CLAUDE_PROJECT_DIR/tools/hook_log.py\" tool_bash",
+            "command": "python tools/hook_log.py tool_bash",
             "timeout": 10
           }
         ]
@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python \"$CLAUDE_PROJECT_DIR/tools/hook_log.py\" tool_bash_failed",
+            "command": "python tools/hook_log.py tool_bash_failed",
             "timeout": 10
           }
         ]
