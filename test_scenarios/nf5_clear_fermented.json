@@ -1,0 +1,33 @@
+{
+  "cells": 15, "nectar_foragers": 0, "pollen_foragers": 0,
+  "nurses": 0, "builders": 2, "miners": 0, "honey_makers": 0,
+  "weather": false, "disease": false, "rival_hive": false, "winter": false,
+  "random_seed": 5205,
+  "config_overrides": {
+    "seconds_per_day": 20,
+    "nectar_ferment_hours": 12
+  },
+  "actions": [
+    {"do": "set_cell_contents", "cell": {"built_index": 0}, "resource": "nectar", "amount": 60},
+    {"do": "set_cell_contents", "cell": {"built_index": 1}, "resource": "nectar", "amount": 60},
+    {"do": "set_cell_contents", "cell": {"built_index": 2}, "resource": "nectar", "amount": 60},
+    {"do": "wait", "seconds": 15},
+    {"do": "set_cell_contents", "cell": {"built_index": 3}, "resource": "nectar", "amount": 60},
+    {"do": "save_run", "name": "NF5 before"},
+    {"do": "clear_fermented"},
+    {"do": "save_run", "name": "NF5 marked"},
+    {"do": "wait", "seconds": 2},
+    {"do": "save_run", "name": "NF5 partway"},
+    {"do": "restore_slot", "name": "NF5 partway"},
+    {"do": "settle", "ticks": 2},
+    {"do": "save_run", "name": "NF5 restored"},
+    {"do": "wait", "seconds": 40},
+    {"do": "save_run", "name": "NF5 done"},
+    {"do": "set_cell_contents", "cell": {"built_index": 4}, "resource": "nectar", "amount": 60},
+    {"do": "wait", "seconds": 12},
+    {"do": "empty_cell", "cell": {"built_index": 4}},
+    {"do": "wait", "seconds": 20},
+    {"do": "save_run", "name": "NF5 moved"}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 10}
+}

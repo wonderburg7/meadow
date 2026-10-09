@@ -1,7 +1,7 @@
 # Nectar fermentation -- unprocessed nectar ferments, and tipsy bees pay for it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: NF-5 -- clear fermented cells, queued in the Claude lane; NF-4 -- the detection skill, outlined below and gated on Dave's nurse and Restocking answers (NF-3 built 9 Oct 2026, with Dave's 300-second tipsiness from its sweep) | Dependency: none (NF-2 landed 9 Oct 2026); NF-4 follows NF-3 | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: NF-4 -- the detection skill, outlined below and gated on Dave's nurse and Restocking answers (NF-3 built 9 Oct 2026, with Dave's 300-second tipsiness from its sweep; NF-5 built 9 Oct 2026) | Dependency: none (NF-2 landed 9 Oct 2026); NF-4 follows NF-3 | Verified: 2026-10-09
 
 ## Objective
 
@@ -93,7 +93,7 @@ Verified 6 Oct 2026 against master:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | NF-4 | the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; without it, closest first (decisions 4-5) | see its `Files:` line below | no -- outlined and fenced `queue-gated`; waits for Dave's nurse and Restocking answers under "Still open" (NF-3 landed 9 Oct 2026) | high |
-| NF-5 | an order to clear fermented cells, built on the cell popup's eviction orders (decision 6) | `scripts/bee_building.gd`, `scripts/orders_zones.gd`, `scripts/hud.gd`, `scripts/main.gd`, `scripts/scenario_actions.gd`, `tests/test_nf5_clear_fermented.py`, `test_scenarios/nf5_clear_fermented.json` | yes -- queued in the Claude lane (specified 9 Oct 2026) | medium |
+| NF-5 | an order to clear fermented cells, built on the cell popup's eviction orders (decision 6) | `scripts/bee_building.gd`, `scripts/orders_zones.gd`, `scripts/hud.gd`, `scripts/main.gd`, `scripts/scenario_actions.gd`, `tests/test_nf5_clear_fermented.py`, `test_scenarios/nf5_clear_fermented.json` | built 9 Oct 2026 | medium |
 
 **Dependencies.** NF-1, then NF-2, both landed. NF-3 and NF-5 each follow
 NF-2, and NF-4 follows NF-3. Bee Bread's BB-1 (`plans/now/bee-bread.md`)

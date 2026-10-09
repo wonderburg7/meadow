@@ -40,6 +40,7 @@ signal cell_hatch_lock_requested(cell: Node2D, locked: bool)
 ## "discard" (thrown out of the hive). `keep_empty` leaves the cell
 ## closed to deposits afterwards.
 signal cell_empty_requested(cell: Node2D, method: String, keep_empty: bool)
+signal clear_fermented_requested
 ## Applied the moment the checkbox is ticked, independently of whether
 ## the cell is being emptied right now.
 signal cell_keep_empty_requested(cell: Node2D, keep_empty: bool)
@@ -458,6 +459,7 @@ var keep_empty_box: CheckBox
 ## Visible only while active_cell holds something to carry -- see
 ## _refresh_cell_popup. Slice 18.
 var empty_by_bee_btn: Button
+var clear_fermented_btn: Button
 var hatch_lock_box: CheckBox
 var gyne_box: CheckBox
 var gyne_row: HBoxContainer
@@ -1752,7 +1754,7 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 	move_btn.text = "To another cell"
 	move_btn.theme_type_variation = "Small"
 	move_btn.pressed.connect(func(): _request_empty("move"))
-	empty_row.add_child(_with_info(move_btn, "A builder comes and carries the contents to another cell with room for them. If nothing anywhere has room, the load is lost -- so keep an eye on how full the comb is."))
+	empty_row.add_child(_with_info(move_btn, "A builder comes and carries the contents to another cell with room for them. Fermented nectar is always thrown out instead. If nothing anywhere has room, the load is lost -- so keep an eye on how full the comb is."))
 
 	var discard_btn := Button.new()
 	_style_button(discard_btn)
@@ -1760,6 +1762,17 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 	discard_btn.theme_type_variation = "Small"
 	discard_btn.pressed.connect(func(): _request_empty("discard"))
 	empty_row.add_child(_with_info(discard_btn, "Throw the contents out of the hive. Quicker than moving them, but everything in the cell is gone."))
+
+	# NF-5: only offered while the popup's cell holds fermented nectar.
+	clear_fermented_btn = Button.new()
+	_style_button(clear_fermented_btn)
+	clear_fermented_btn.text = "Discard all sour nectar"
+	clear_fermented_btn.theme_type_variation = "Small"
+	clear_fermented_btn.pressed.connect(func():
+		clear_fermented_requested.emit()
+		_refresh_cell_popup()
+	)
+	empty_row.add_child(_with_info(clear_fermented_btn, "Comb workers will carry every fermented cell's nectar out of the hive. Only the cells that are sour now: nectar that ferments later is not included."))
 
 	# The two buttons above wait for a comb worker to pick the job up --
 	# no help to a colony that doesn't have one yet, the queen included,
@@ -2159,6 +2172,8 @@ func _refresh_cell_popup() -> void:
 	# matches command_empty_cell's own guard in bee.gd.
 	empty_by_bee_btn.visible = active_cell.content_type != "" \
 		and active_cell.content_type != "brood" and active_cell.content_type != "corpse"
+
+	clear_fermented_btn.visible = active_cell.is_fermented()
 
 	# reflect the cell's own state without re-firing the signals
 	keep_empty_box.set_pressed_no_signal(active_cell.keep_empty)

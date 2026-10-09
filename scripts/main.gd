@@ -536,6 +536,7 @@ func _ready() -> void:
 	hud.cell_hatch_role_requested.connect(orders_zones._on_cell_hatch_role_requested)
 	hud.cell_hatch_lock_requested.connect(orders_zones._on_cell_hatch_lock_requested)
 	hud.cell_empty_requested.connect(orders_zones._on_cell_empty_requested)
+	hud.clear_fermented_requested.connect(orders_zones._on_clear_fermented_requested)
 	hud.cell_empty_by_bee_requested.connect(input_selection._on_cell_empty_by_bee_requested)
 	hud.cell_keep_empty_requested.connect(orders_zones._on_cell_keep_empty_requested)
 	hud.cell_gyne_requested.connect(orders_zones._on_cell_gyne_requested)
