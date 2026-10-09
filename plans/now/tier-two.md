@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-4a -- Cleaning gates taking out the dead larvae | Dependency: none for T2-1 to T2-3; COL-4 for T2-4b, T2-5, T2-6 and T2-7; COL-6 for Shiver Cluster (T2-8) and T2-4b's winter bodies | Verified: 2026-10-07
+Status: active | Owner: Dave / Claude Code | Next: T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run | Dependency: COL-4 and COL-6 landed; T2-4b follows T2-4a; T2-6 follows T2-5 | Verified: 2026-10-08
 
 ## Objective
 
@@ -52,12 +52,11 @@ Verified 7 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-4a | Cleaning gates taking out the dead larvae | `scripts/actions.gd`, `scripts/challenge_stages.gd`, `scripts/skills.gd`, `tests/test_t2_4a_cleaning_gate.py` | yes (T2-2 landed 7 Oct 2026); Codex lane (Dave, 7 Oct 2026) | medium |
-| T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | specified after T2-4a | no -- after T2-4a (COL-6 landed 7 Oct 2026) | high |
-| T2-5 | Weather sensing's rain half, Rain recall, and rain on in the Colony Run | specified when T2-3 lands | no -- its PE-2 arc rerun reads COL-4's year | medium |
+| T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | to be specified now T2-4a has landed (8 Oct 2026) | no -- not yet specified; T2-4a and COL-6 have landed | high |
+| T2-5 | Weather sensing's rain half, Rain recall, and rain on in the Colony Run | `scripts/skills.gd`, `scripts/bee_status.gd`, `scripts/bee_foraging.gd`, `scripts/bee.gd`, `scripts/main.gd`, `scripts/levels.gd`, `tests/test_t2_5_rain_skills.py`, `tests/t2_5_rain_skills_test.gd` | yes -- COL-4 and T2-3 landed | medium |
 | T2-6 | Associative learning: per-bee, per-species familiarity, saved | specified when T2-5 lands | no -- after COL-4 (`game_config.gd`, `settings_catalogue.gd`) | high |
 | T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | specified when T2-1 to T2-3 and COL-4 have landed | no -- needs COL-4's year and the gates | medium |
-| T2-8b | Shiver Cluster, the skill: the node, and owned at run start outside the Colony Run | `scripts/skills.gd`, `scripts/run_availability.gd`, `tests/test_t2_8a_shiver_bill.py`, `tests/test_t2_8b_shiver_skill.py` | no -- after T2-4a (Codex lane, `skills.gd`); specified, fenced `queue-gated` | medium |
+| T2-8b | Shiver Cluster, the skill: the node, and owned at run start outside the Colony Run | `scripts/skills.gd`, `scripts/run_availability.gd`, `tests/test_t2_8a_shiver_bill.py`, `tests/test_t2_8b_shiver_skill.py` | no -- after T2-5 (Codex lane, `skills.gd`; T2-4a landed 8 Oct 2026); specified, fenced `queue-gated` | medium |
 
 **Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
 T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
@@ -81,30 +80,42 @@ T2-2 shipped 2026-10-07; its specification is `plans/archive/T2-2_2026-10-07.md`
 
 T2-3 shipped 2026-10-07; its specification is `plans/archive/T2-3_2026-10-07.md`.
 
-## T2-4a -- Cleaning gates taking out the dead larvae
+COL-4 shipped 2026-10-07; its specification is `plans/archive/COL-4_2026-10-07.md`.
+
+T2-4a shipped 2026-10-08; its specification is `plans/archive/T2-4a_2026-10-08.md`.
+
+## T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run
 
 <!-- LAYER: immediate-task -->
 
-Level: medium (a gate plus a stage-data move, the T2-2 pattern).
+Level: medium (bounded rain behaviour and run-specific weather policy).
 
-**True now.** `comb_clean_cell` has no skill gate, so a Clearing comb worker
-always takes out dead larvae.
+**True now.** `bee_status.gd::grounded` stops new trips only when current rain
+intensity passes `rain_forage_limit`. Bees already outside continue their work.
+`main.gd::_advance_weather` requires `GameConfig.weather_on`, so the Colony
+Run's level row cannot turn rain on when the global setting is off. Weather
+sensing and Rain recall are authored in `skills.gd` but have no effect.
 
-**True afterwards.** `comb_clean_cell` carries `skill.hive_mind.cleaning`;
-Clearing without it only evicts stores. Challenge 2's stage 2.7 frees Backup
-roles and Cleaning (moving Backup roles from 2.8), and the skill's status
-becomes `existing`. `tests/test_t2_4a_cleaning_gate.py` checks the gate data
-and the stage move.
+**True afterwards.** With Weather sensing owned, the departure check reads
+the approaching `main.gd::rain_target` at the same forage limit; without it,
+the check still reads current intensity. With Rain recall owned, bees already
+outside head home when current intensity passes that limit. Neither skill
+changes nectar dilution or flight cost. The Colony Run row explicitly enables
+rain even if `GameConfig.weather_on` is false. Challenge rows keep rain off;
+Scenario rows without a weather override still follow the setting. The two
+skills become `existing` in the tree. Run PE-2's three-seed arc before and
+after and record any pacing change here.
 
-**Must not change.** Behaviour with Cleaning owned.
+**Must not change.** Current rain safety without either skill, save fields for
+weather, and the existing weather behaviour of Challenges and Scenarios.
 
 ```queue
-**[Codex] T2-4a -- Cleaning gates taking out the dead larvae**
-- Plan: `plans/now/tier-two.md` -- "T2-4a -- Cleaning gates taking out the dead larvae"
-- Files: `scripts/actions.gd`, `scripts/challenge_stages.gd`, `scripts/skills.gd`, `tests/test_t2_4a_cleaning_gate.py`
-- Check: `python -m unittest tests.test_t2_4a_cleaning_gate` passes; `tools/verify.ps1` is green
-- Proof: `absent: scripts/actions.gd :: "skill": "skill.hive_mind.cleaning"`
-- Next after: T2-5 -- Weather sensing's rain half
+**[Codex] T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run**
+- Plan: `plans/now/tier-two.md` -- "T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run"
+- Files: `scripts/skills.gd`, `scripts/bee_status.gd`, `scripts/bee_foraging.gd`, `scripts/bee.gd`, `scripts/main.gd`, `scripts/levels.gd`, `tests/test_t2_5_rain_skills.py`, `tests/t2_5_rain_skills_test.gd`
+- Check: `python -m unittest tests.test_t2_5_rain_skills` passes (owned and unowned departures, outside recall, level weather policy); `python tools/pacing_gates.py` before and after is recorded here; `tools/verify.ps1` is green
+- Proof: `absent: scripts/bee_status.gd :: WEATHER_SENSING`
+- Next after: T2-6 -- Associative learning
 ```
 
 T2-8a shipped 2026-10-08; its specification is `plans/archive/T2-8a_2026-10-08.md`.
@@ -114,8 +125,8 @@ T2-8a shipped 2026-10-08; its specification is `plans/archive/T2-8a_2026-10-08.m
 <!-- LAYER: immediate-task -->
 
 Level: medium (one catalogue row and one derived starting rule; the bill and
-the warning already exist). Gated: `scripts/skills.gd` is held by T2-4a in the
-Codex lane. The design is `plans/design/progression.md` "Shiver Cluster".
+the warning already exist). Gated: `scripts/skills.gd` is held by T2-5 in the
+Codex lane (T2-4a, which held it first, landed 8 Oct 2026). The design is `plans/design/progression.md` "Shiver Cluster".
 
 **True now (after T2-8a).** `season.gd::owns_shiver_cluster` asks
 `progression.gd::is_owned_or_absent`, which answers owned while the catalogue
@@ -160,9 +171,6 @@ Each is specified, with its queue block and verified `Proof:`, when the
 slice before it lands. The decisions they implement are in
 `plans/design/progression.md` step 8 and section 5.6.
 
-- **T2-4a** -- `comb_clean_cell` carries `skill.hive_mind.cleaning`; Clearing
-  without it only evicts stores. Stage 2.7 frees Backup roles and Cleaning
-  (moving Backup roles from 2.8). The skill's status becomes `existing`.
 - **T2-4b** -- a body object per in-hive death, held in one saved list in
   `hive.gd` (additive save field; an old save loads with none), adding
   disease at `disease_per_corpse`; Clearing with Cleaning carries it out; a
@@ -180,4 +188,4 @@ slice before it lands. The decisions they implement are in
 - **T2-7** -- one PE-2 arc sweep (`tools/pacing_gates.py`) prices the
   tier-2 recipes so a reasonable Colony Run's first tier-2 purchase lands
   around day 5; recorded with before/after.
-- **T2-8b** -- specified above, fenced `queue-gated` until T2-4a frees `skills.gd`.
+- **T2-8b** -- specified above, fenced `queue-gated` until T2-5 frees `skills.gd`.

@@ -35,26 +35,26 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] T2-4a -- Cleaning gates taking out the dead larvae**
-   - Plan: `plans/now/tier-two.md` -- "T2-4a -- Cleaning gates taking out the dead larvae"
-   - Files: `scripts/actions.gd`, `scripts/challenge_stages.gd`, `scripts/skills.gd`, `tests/test_t2_4a_cleaning_gate.py`
-   - Check: `python -m unittest tests.test_t2_4a_cleaning_gate` passes; `tools/verify.ps1` is green
-   - Proof: `absent: scripts/actions.gd :: "skill": "skill.hive_mind.cleaning"`
-   - Next after: T2-5 -- Weather sensing's rain half
-
-2. **[Codex] CD-2 -- missing workforce and blocked work become named, tested facts**
+1. **[Codex] CD-2 -- missing workforce and blocked work become named, tested facts**
    - Plan: `plans/now/diagnostic-readiness.md` -- "CD-2 -- missing workforce and blocked work become named, tested facts"
    - Files: `scripts/colony_diagnostics.gd`, `scripts/year_winter.gd`, `tests/test_colony_diagnostics.py`
    - Check: `python -m unittest tests.test_colony_diagnostics` passes with empty, staffed and blocked-cell fixtures; `tools/verify.ps1` is green
    - Proof: `present: scripts/colony_diagnostics.gd :: static func compute`
    - Next after: CD-3 -- waiting and travel get a deterministic diagnostic boundary
 
-3. **[Codex] GD-1 -- decide the causal-explanation contract**
+2. **[Codex] GD-1 -- decide the causal-explanation contract**
    - Plan: `plans/now/guidance-explanations.md` -- "GD-1 -- decide the causal-explanation contract"
    - Files: `plans/now/guidance-explanations.md`, `plans/design/product-scope.md`
    - Check: `python tools/check_docs.py` passes and GD-1 records one owner for facts, trigger policy and presentation
    - Proof: `present: scripts/gallerin_panel.gd :: Nothing feeds it real prompts yet`
    - Next after: GD-2 -- implement the accepted persistent entry point and first explanations
+
+3. **[Codex] T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run**
+   - Plan: `plans/now/tier-two.md` -- "T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run"
+   - Files: `scripts/skills.gd`, `scripts/bee_status.gd`, `scripts/bee_foraging.gd`, `scripts/bee.gd`, `scripts/main.gd`, `scripts/levels.gd`, `tests/test_t2_5_rain_skills.py`, `tests/t2_5_rain_skills_test.gd`
+   - Check: `python -m unittest tests.test_t2_5_rain_skills` passes (owned and unowned departures, outside recall, level weather policy); `python tools/pacing_gates.py` before and after is recorded here; `tools/verify.ps1` is green
+   - Proof: `absent: scripts/bee_status.gd :: WEATHER_SENSING`
+   - Next after: T2-6 -- Associative learning
 
 ## Not in the queue, and why
 
@@ -72,8 +72,8 @@ One line each: the id, its plan, and the single thing it waits for.
 - **CR-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; waits for Dave's CR-1 decision.
 - **SI-3** (`plans/now/save-integrity.md`) -- save, checkpoint and index writes are all-or-nothing; waits for SI-2.
 - **NF-2** (`plans/now/nectar-fermentation.md`) -- nectar ferments past an age; waits for COL-4 (Codex lane), which edits `scripts/game_config.gd` and `scripts/settings_catalogue.gd`, and for NF-1's evidence.
-- **T2-8b** (`plans/now/tier-two.md`) -- the Shiver Cluster skill node and its run-start ownership; waits for T2-4a (Codex lane), which holds `scripts/skills.gd`, and for T2-8a.
-- **T2-4b to T2-7** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-4a is in the Codex lane (Dave, 7 Oct 2026); T2-4b (bodies) for T2-4a (COL-6 landed 7 Oct 2026); T2-5 (rain) and T2-7 (tier-2 prices) for COL-4's year; T2-6 (Associative learning) for COL-4 (`game_config.gd`); T2-8b (Shiver Cluster's node) is its own line above.
+- **T2-8b** (`plans/now/tier-two.md`) -- the Shiver Cluster skill node and its run-start ownership; waits for T2-5 (Codex lane), which holds `scripts/skills.gd`; T2-4a and T2-8a have landed (8 Oct 2026).
+- **T2-4b, T2-6 and T2-7** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-4b (bodies) is to be specified now T2-4a has landed (8 Oct 2026); T2-6 (Associative learning) is specified when T2-5, now in the Codex lane, lands; T2-7 (tier-2 prices) is to be specified now T2-1 to T2-3 and COL-4 have landed; T2-8b (Shiver Cluster's node) is its own line above.
 - **BB-1 to BB-4** (`plans/now/bee-bread.md`) -- Bee Bread; BB-1 waits for COL-4 and NF-2 (`game_config.gd`, `hive_cell.gd`, `hive.gd`, the save files); the rest follow BB-1.
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Gallerin guidance is the next design pass, now that step 8's ran on 6-7 Oct 2026 (booked by Dave, 5 Oct 2026); the event director's wait on the Colony Run's year (COL-4, COL-6) has cleared; it still needs its design pass. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/archive/colony-run_2026-10-08.md`).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
