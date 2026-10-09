@@ -222,6 +222,7 @@ static func _bees_data(world) -> Array:
 	for b in world.get_tree().get_nodes_in_group("bees"):
 		if not is_instance_valid(b):
 			continue
+		var at: Vector2 = b.saved_position()   # NF-3: the task's spot, mid-wander
 		var entry := {
 			"id": b.bee_id,
 			"queen": b.is_queen,
@@ -229,7 +230,7 @@ static func _bees_data(world) -> Array:
 			"drone": b.is_drone,
 			"mated": b.is_mated,
 			"indoors": b.get_parent() == world.hive_root,
-			"x": b.position.x, "y": b.position.y,
+			"x": at.x, "y": at.y,
 			"role": b.role,
 			"state": b.saved_state(),
 			"resource": b.resource_type,

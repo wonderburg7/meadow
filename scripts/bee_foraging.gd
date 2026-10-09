@@ -211,7 +211,11 @@ static func search_for_flower(bee: Node2D, delta: float) -> void:
 			bee.search_start_direction = randf() * TAU
 			bee.search_waypoint = _spiral_point(bee, bee.search_origin, bee.search_angle)
 			return
-		best = nearest_flower(bee, false, GameConfig.forage_search_radius, true)
+		# NF-3: a tipsy bee's last look is short-sighted too, and gets no
+		# whole-meadow scan, so it heads home rather than seeing everything.
+		var tipsy: bool = bee.tipsy_time_left > 0.0
+		var last_look: float = GameConfig.forage_search_radius * (GameConfig.tipsy_vision_factor if tipsy else 1.0)
+		best = nearest_flower(bee, false, last_look, not tipsy)
 		if best != null:
 			_commit_to_flower(bee, best)
 		else:
@@ -1352,13 +1356,21 @@ static func _update_dance_eligibility(bee: Node2D) -> void:
 
 ## NF-3. Takes a bee that has just gone tipsy out of every recruitment list
 ## it may be waiting in, so it can neither dance nor be danced to until it
-## is sober and scores another trip.
+## is sober and scores another trip. A dance already paired is broken off on
+## both sides: a bee pulled out of DANCING to feed keeps its partner link,
+## and the mentor's _complete_dance would otherwise still hand it a patch.
 static func leave_recruitment(bee: Node2D) -> void:
-	if bee.hive == null:
-		return
-	bee.hive.remove_dance_eligible_mentor(bee)
-	bee.hive.remove_dance_eligible_seeker(bee)
-	bee.hive.remove_entrance_mentor(bee)
+	if bee.hive != null:
+		bee.hive.remove_dance_eligible_mentor(bee)
+		bee.hive.remove_dance_eligible_seeker(bee)
+		bee.hive.remove_entrance_mentor(bee)
+	var partner: Node2D = bee.dance_partner
+	if partner != null and is_instance_valid(partner) and partner.dance_partner == bee:
+		partner.dance_partner = null
+	if bee.state == State.DANCING:
+		_end_dance(bee)
+	bee.dance_partner = null
+	bee.dance_role = ""
 
 ## Called once a frame for every indoor forager while proximity
 ## recruitment is on (see bee.gd's per-frame dispatch) -- cheap by

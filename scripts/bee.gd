@@ -1515,9 +1515,11 @@ const TIPSY_WANDER_FROM := [
 ## random points are tried before the bee just stands there dazed.
 const TIPSY_WANDER_REACH := 1.6
 const TIPSY_WANDER_TRIES := 6
-## Longest the walk back to the task may take before the task resumes
-## anyway, so a route that closed behind the bee cannot strand it.
-const TIPSY_RETURN_LIMIT := 10.0
+## Longest the walk back to the task may take. Past it the bee is put
+## back on the spot it left -- a backstop like the stall watchdog's escape,
+## so a route that closed behind it cannot strand it, and an at-site task
+## (TENDING, BUILDING, FANNING ...) never resumes away from its site.
+const TIPSY_RETURN_LIMIT := 30.0
 
 ## Rolled on think ticks only, and only for a tipsy bee, so a sober colony
 ## pays nothing and draws no extra random numbers.
@@ -1549,7 +1551,9 @@ func _tipsy_wander(delta: float) -> void:
 			timer = TIPSY_RETURN_LIMIT
 		return
 	BeeMovement.move_towards(self, tipsy_resume_point, delta)
-	if position.distance_to(tipsy_resume_point) < arrive_distance or timer <= 0.0:
+	if timer <= 0.0:
+		position = tipsy_resume_point
+	if position.distance_to(tipsy_resume_point) < arrive_distance:
 		_end_tipsy_wander()
 
 func _end_tipsy_wander() -> void:
@@ -1570,13 +1574,20 @@ func _tipsy_wander_target() -> Vector2:
 			return point
 	return position
 
-## The state a save records. A bee saved mid-wander is saved at the task it
-## broke off from, so a reload resumes the work rather than a wander with
-## nothing to walk back to.
+## The state and position a save records. A bee saved mid-wander is saved
+## at the task it broke off from and the spot it was doing it, so a reload
+## resumes the work in place rather than a wander with nothing to walk back
+## to, or an at-site task away from its site. No new save field: an older
+## save never holds a wander.
 func saved_state() -> int:
 	if state == State.TIPSY_WANDER and tipsy_resume_state != -1:
 		return tipsy_resume_state
 	return state
+
+func saved_position() -> Vector2:
+	if state == State.TIPSY_WANDER and tipsy_resume_state != -1:
+		return tipsy_resume_point
+	return position
 # --- foraging -----------------------------------------------------
 ## Moved to bee_foraging.gd -- see BEE_SPLIT_PLAN.md.
 # --- entering and leaving the hive --------------------------------
