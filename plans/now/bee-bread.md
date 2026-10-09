@@ -46,7 +46,9 @@ changes balance, so each is simulated first with PE-2's arc
 (`tools/pacing_gates.py`). Cross-plan: `plans/now/nectar-fermentation.md`
 NF-2 and `plans/now/tier-two.md` T2-3, which had to land first, have; BB-1
 shares `hive.gd`, `bee.gd`, `game_config.gd`, `settings_catalogue.gd` and
-the save files with NF-3 and T2-4b, all three in the Claude lane;
+the save files with NF-3, and `orders_zones.gd` and `hud.gd` with NF-5,
+all three in the Claude lane (T2-4b, which shared them too, landed 9 Oct
+2026);
 `plans/design/progression.md` step 13 (tier-3 content) waits for BB-3.
 
 **Reads.** A slice reads its own section here and `product-scope.md`
