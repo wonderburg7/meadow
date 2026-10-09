@@ -136,12 +136,18 @@ The skipped winter's losses die through `BeeSurvival.die` inside
 death; the death marker; `scripts/colony_diagnostics.gd` (Codex lane, CD-3),
 which keeps counting corpse cells only.
 
-**Measured** (9 Oct 2026, headless, no Cleaning, cap lifted). Over
+**Measured** (9 Oct 2026, headless, no Cleaning). Over
 `test_scenarios/col6_winter_skip_test.json` no bee died -- its stores and
 `winter_burn_factor` of 0.01 carry everyone through -- so the colony held
-0 bodies, which cannot set a cap. `colony_30_bees_test.json` (20 days,
-12 deaths) held at most 5. `GameConfig.max_hive_bodies` is 50, ten times
-that.
+0 bodies, which cannot set a cap. The most bodies one event lays is a
+winter the stores cannot pay, one per bee it takes, so the count was taken
+there instead: `tests/t2_4b_bodies_test.gd` grows the colony to 200 bees
+(the largest `docs/performance.md`'s canvas table runs within a 60 fps
+frame; 500 overruns it), empties the comb and skips winter: 200 lost, 200
+bodies (`T2-4B winter measured` in its output). `colony_30_bees_test.json`,
+an ordinary 20 days with 12 deaths, held at most 5. `GameConfig.max_hive_bodies`
+is 250, the whole 200-bee winter with a quarter's headroom; the test fails
+if that winter is trimmed.
 
 **Check.** `tests/t2_4b_bodies_test.gd`, run by `tests/test_t2_4b_bodies.py`
 in a headless Godot, prints `T2-4B PASS` when: an in-hive death leaves one

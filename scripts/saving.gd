@@ -227,9 +227,11 @@ func _restore_hive_state(state: Dictionary) -> void:
 	main.hive.clear_bodies()
 	for entry in state.get("bodies", []):
 		if entry is Dictionary:
-			main.hive.add_body(
+			var body = main.hive.add_body(
 				Vector2(float(entry.get("x", 0.0)), float(entry.get("y", 0.0))),
 				float(entry.get("died_at", 0.0)))
+			if body != null:
+				body.clear_progress = float(entry.get("clear", 0.0))
 
 func _cells_at(refs: Array) -> Array:
 	var out: Array = []

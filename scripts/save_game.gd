@@ -146,12 +146,16 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 	# SI-3: all-or-nothing -- a failed write leaves the old save in place.
 	return SaveSlots.write_atomic(path, JSON.stringify(data))
 
-## T2-4b: each body's place (hive-view coordinates) and time of death.
+## T2-4b: each body's place (hive-view coordinates), time of death and how
+## far a Comb worker has lifted it ("clear", as a cell saves "clean").
 static func _bodies_data(world) -> Array:
 	var out: Array = []
 	for body in world.hive.bodies:
 		if is_instance_valid(body):
-			out.append({"x": body.position.x, "y": body.position.y, "died_at": body.died_at})
+			out.append({
+				"x": body.position.x, "y": body.position.y,
+				"died_at": body.died_at, "clear": body.clear_progress,
+			})
 	return out
 
 static func _settings_dict() -> Dictionary:

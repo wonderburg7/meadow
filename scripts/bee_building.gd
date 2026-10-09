@@ -380,9 +380,10 @@ static func architect_clean(bee: Node2D, delta: float) -> void:
 ## T2-4b: a body on the floor. Walk to it; lifting it takes as long as
 ## clearing a dead larva (cell_clean_time); then it goes out the waste exit
 ## like one. A body that has gone (the cap, a restore) ends the job.
+## Checked before anything holds the body in a typed variable: one the cap
+## or a restore has freed must not be assigned to one.
 static func _body_present(bee: Node2D) -> bool:
-	var body: Node2D = bee.target_body
-	return body != null and is_instance_valid(body) and body.is_inside_tree()
+	return is_instance_valid(bee.target_body) and bee.target_body.is_inside_tree()
 
 
 static func _drop_body_job(bee: Node2D) -> void:
