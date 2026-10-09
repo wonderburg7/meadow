@@ -32,6 +32,7 @@ unblocker.
 - [C-115 -- Sending a gyne in mid summer wins; in early spring she is lost](ready/C-115.md)
 - [C-116 -- Meadow dies back over winter and regrows](ready/C-116.md)
 - [C-117 -- Rain skills in the Colony Run](ready/C-117.md)
+- [C-118 -- Shiver Cluster in a Colony Run: the Winter note and doubled figure, gone once the node is bought](ready/C-118.md)
 - [C-60 -- a chosen panel texture appears](ready/C-60.md)
 - [C-81 -- Nurse stays locked until Nurses is bought](ready/C-81.md)
 - [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)
