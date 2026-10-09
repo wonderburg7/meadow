@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-2 -- the sprite exporter and SP-3 -- cell colours follow the new sprites, both specified below with queue blocks (SP-1 landed 9 Oct 2026); SP-4 and SP-5 are specified here and get their blocks when their predecessor lands; SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; shares `scripts/hive_cell.gd`, `scripts/bee.gd` and `scripts/settings_catalogue.gd` with queued BB-2 and `scripts/hive.gd` with queued NF-4 (same lane, so they run in turn; SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: SP-2 -- the sprite exporter, specified below with a queue block (SP-1 and SP-3 landed 9 Oct 2026); SP-4 (waits for SP-2) and SP-5 are specified here and get their blocks when their predecessor lands; SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; shares `scripts/hive_cell.gd`, `scripts/bee.gd` and `scripts/settings_catalogue.gd` with queued BB-2 and `scripts/hive.gd` with queued NF-4 (same lane, so they run in turn; SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-09
 
 ## Objective
 
@@ -161,15 +161,6 @@ and measurements (`EMPTY_TEXTURE`, `EMPTY_TEXTURE_BASE_Y/_H`,
   bee bread once it exists.
 - Hands-on for Dave: a comb holding each content side by side, also in
   colour-blind mode.
-
-```queue
-**[Claude] SP-3 -- cell colours follow the new sprites**
-- Plan: `plans/now/sprites.md` -- "SP-3 -- cell colours follow the new sprites"
-- Files: `scripts/hive_cell.gd`, `scripts/bee.gd`, `tests/test_sp3_content_colours.py`
-- Check: `python -m unittest tests.test_sp3_content_colours` passes (nectar and pollen equal the sprite fills, and every pair of cell-content colours is at least 0.10 apart in OKLab); `tools/verify.ps1` is green
-- Proof: `present: scripts/hive_cell.gd :: const NECTAR_COLOR := Color(0.747, 0.834, 0.8525)`
-- Next after: SP-4 -- nectar and pollen fill levels drawn from the sprites
-```
 
 ## SP-4 -- nectar and pollen fill levels drawn from the sprites
 

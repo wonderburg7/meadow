@@ -74,31 +74,25 @@ const EMPTY_SILHOUETTE: Array = [
 	Vector2(0.0, 23.0), Vector2(0.0, 12.0),
 ]
 
-## Nectar is a clear liquid sitting in a yellow wax cell, so it's drawn as
-## a pale blue warmed slightly by the wax showing through, rather than a
-## flat pale blue on its own. Worked out as a pale-blue base lerped 15%
-## towards a wax yellow -- Color(0.72, 0.84, 0.95).lerp(Color(0.9, 0.8, 0.3), 0.15)
-## -- and written out as a literal so this stays an ordinary constant like
-## every other colour here. Nudge the two source colours or the 0.15 and
-## redo the lerp by hand if this needs retuning by eye.
-const NECTAR_COLOR := Color(0.747, 0.834, 0.8525)
+## SP-3. Nectar is the sprite lime (187, 248, 36), exactly.
+const NECTAR_COLOR := Color(0.73333, 0.97255, 0.14118)
 
 ## NF-2. Nectar left past GameConfig.nectar_ferment_hours turns a murky
 ## olive, so a fermented cell stands apart from fresh nectar, pollen and
 ## honey at a glance. Colour-blind mode adds a "sour" tag (see _refresh).
-const FERMENTED_NECTAR_COLOR := Color(0.56, 0.6, 0.36)
+const FERMENTED_NECTAR_COLOR := Color(0.55, 0.68, 0.39)
 
-## Pollen keeps the amber/gold that nectar used to be, nudged a little
-## lighter and further towards yellow so the two read as clearly
-## different resources sitting side by side.
-const POLLEN_COLOR := Color(0.97, 0.78, 0.22)
+## SP-3. Pollen is the sprite orange (255, 123, 0), exactly. Honey is a
+## darker amber so every cell content stays 0.10 apart in OKLab
+## (tests/test_sp3_content_colours.py).
+const POLLEN_COLOR := Color(1.0, 0.48235, 0.0)
 
-const HONEY_WET_COLOR := Color(0.78, 0.55, 0.18)
-const HONEY_COLOR := Color(0.85, 0.42, 0.05)
+const HONEY_WET_COLOR := Color(0.74, 0.45, 0.03)
+const HONEY_COLOR := Color(0.57, 0.19, 0.05)
 const BROOD_COLOR := Color(0.9, 0.9, 0.85)
-const CORPSE_COLOR := Color(0.34, 0.30, 0.30)
-const JELLY_COLOR := Color(0.97, 0.94, 0.82)
-const GYNE_BROOD_COLOR := Color(0.98, 0.80, 0.35)
+const CORPSE_COLOR := Color(0.24, 0.21, 0.14)
+const JELLY_COLOR := Color(1.0, 1.0, 0.68)
+const GYNE_BROOD_COLOR := Color(1.0, 0.86, 0.31)
 const SITE_COLOR := Color(0.42, 0.34, 0.16)
 
 ## BB-1. Bee bread in three states: a pale mauve while it is being packed,
