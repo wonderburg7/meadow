@@ -125,6 +125,16 @@ func _restore_soil(soil: Dictionary) -> void:
 		block.queue_free()
 		main.world_building._add_floor_tile(hex, centre_local, spacing)
 
+	# An in-place restore must also put back soil dug since the checkpoint.
+	# _add_soil_block refuses an occupied tile, so a fresh load adds nothing.
+	var added := false
+	for hex in still_there.keys():
+		if main.hive.tile_is_free(hex):
+			main.world_building._add_soil_block(hex, centre_local, spacing)
+			added = true
+	if added:
+		main.fog_of_war.notify_hive_open_space_changed()
+
 	for entry in soil.get("marked", []):
 		var hex = Vector2i(int(entry.q), int(entry.r))
 		var node = main.hive.occupied_tiles.get(hex)

@@ -1,7 +1,7 @@
 # Save integrity -- what a load must bring back, and a write that cannot half-finish
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SI-2 -- a checkpoint restore puts back soil dug since the checkpoint | Dependency: none (shares `scripts/save_game.gd` and `scripts/saving.gd` with NF-2 in `plans/now/nectar-fermentation.md`, so never in the other lane at the same time) | Verified: 2026-10-08
+Status: active | Owner: Dave / Claude Code | Next: SI-3 -- save, checkpoint and index writes are all-or-nothing | Dependency: none (shares `scripts/save_game.gd` and `scripts/saving.gd` with NF-2 in `plans/now/nectar-fermentation.md`, so never in the other lane at the same time) | Verified: 2026-10-08
 
 ## Objective
 
@@ -23,7 +23,6 @@ the live world instead. Writes go straight to the target path with
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SI-2 | a checkpoint restore puts back soil dug since the checkpoint | `scripts/saving.gd`, `tests/si2_exact_rollback_test.gd`, `tests/test_si2_exact_rollback.py` | after SI-1 (Codex lane, Dave 7 Oct 2026) | medium |
 | SI-3 | save, checkpoint and index writes are all-or-nothing | `scripts/save_slots.gd`, `scripts/save_game.gd`, `tests/si3_atomic_write_test.gd`, `tests/test_si3_atomic_write.py` | after SI-2 | medium |
 
 Dependencies: SI-1, SI-2 and SI-3 share `saving.gd`/`save_game.gd`, so they
@@ -36,60 +35,7 @@ itself. The GDScript test pattern to copy is
 
 SI-1 shipped 2026-10-08; its specification is `plans/archive/SI-1_2026-10-08.md`.
 
-## SI-2 -- a checkpoint restore puts back soil dug since the checkpoint
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one restore step and one headless test).
-
-**True now.** `saving.gd::_restore_soil` removes every live soil block the
-save does not list under `"soil"."present"`, but never creates one the save
-lists and the live world lacks. On a load that is harmless (the world is
-freshly built, so every block exists). On an in-place restore it is not:
-Challenge 2's rollback (`challenge_runner.gd`, nectar below
-`C2_FAILURE_FLOOR`) keeps every block dug since the stage's checkpoint, so
-in stage 2.8 ("raise a miner, dig new space, and build a cell in it")
-`_goal_check_miner_expansion`'s `soil_now < _c2_soil_blocks_at_stage_entry`
-is already true after a rollback.
-
-**True afterwards.** After its removal loop, `_restore_soil` walks
-`soil.get("present", [])` and, for each hex where
-`main.hive.tile_is_free(hex)`, calls
-`main.world_building._add_soil_block(hex, centre_local, spacing)` (it
-already refuses an occupied tile). If any block was added, it calls
-`main.fog_of_war.notify_hive_open_space_changed()` once. The floor polygon
-left under a re-added block stays; the block draws over it. An in-place
-restore of a checkpoint leaves the same soil count as when it was taken,
-so 2.8's dig has to be done again.
-
-**Must not change.** A load onto a fresh world (no block is added, because
-every listed tile is already soil); the order of `_restore`'s steps (soil,
-then cells); `challenge_runner.gd`; bedrock; the save's shape.
-
-**Check.** `tests/si2_exact_rollback_test.gd` boots level 3, counts
-`main.hive.occupied_tiles` entries in group `soil_blocks`, picks one soil
-block next to open floor, writes `main.TutorialCheckpoint.save(main)`,
-calls `main.world_building.finish_mining(block)`, then
-`main.TutorialCheckpoint.restore(main)`, and asserts that the count is back
-to the first one and that the mined hex holds a node in `soil_blocks`.
-Calls `main.TutorialCheckpoint.clear()` at the end. Register
-`tests.test_si2_exact_rollback` in `$unitModules`.
-`python -m unittest tests.test_si2_exact_rollback` passes with `SI2 PASS`,
-and `python tools/run_scenario.py test_scenarios/sv1_named_saves_test.json`
-still passes.
-
-**Escalate** if `_add_soil_block` on a mined hex leaves the hive's
-navigation or edge flags wrong after `_restore`'s own `build_navigation()`
-and `refresh_edge_flags()`.
-
-```queue
-**[Claude] SI-2 -- a checkpoint restore puts back soil dug since the checkpoint**
-- Plan: `plans/now/save-integrity.md` -- "SI-2 -- a checkpoint restore puts back soil dug since the checkpoint"
-- Files: `scripts/saving.gd`, `tests/si2_exact_rollback_test.gd`, `tests/test_si2_exact_rollback.py`
-- Check: `python -m unittest tests.test_si2_exact_rollback` passes with `SI2 PASS`; `python tools/run_scenario.py test_scenarios/sv1_named_saves_test.json` passes; `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/saving.gd :: _add_soil_block`
-- Next after: SI-3 -- save, checkpoint and index writes are all-or-nothing
-```
+SI-2 shipped 2026-10-09; its specification is `plans/archive/SI-2_2026-10-09.md`.
 
 ## SI-3 -- save, checkpoint and index writes are all-or-nothing
 
