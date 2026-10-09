@@ -46,5 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.claude/worktrees/run-queue-investigation-04d747` (`claude/run-queue-investigation-04d747`) | Claude (docs only) | queue steward: clear NF-3 gates and top up the Claude lane | Claude Code | in progress | none | `NEXTSTEPS.md` Claude lane and "Not in the queue, and why" |
 | `.worktrees/WC-2` (`codex/WC-2`) | Codex | a dry-lane warning names the missing deferral and the specified blocks that could serve the lane | Codex | in progress | none | `plans/now/workflow-checks.md` WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane |
