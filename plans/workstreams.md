@@ -46,3 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.` (`codex/wc4-successor-refill`) | Codex (docs only) | Queue WC-4 after WC-2 | Codex | in progress | WC-2 leads the Codex lane | `plans/now/workflow-checks.md` WC-4 |
