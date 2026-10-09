@@ -164,6 +164,8 @@ func _apply_mode(role_id: int, mode_key: String) -> void:
 				b.architect_mode = mode_key
 			main.Roles.MINER:
 				b.automine = not b.automine
+			main.Roles.HONEY:
+				b.fermenting = not b.fermenting
 	main.hud.update_selection(main.selected_bees)
 
 func _on_finish_first_requested(value: bool) -> void:

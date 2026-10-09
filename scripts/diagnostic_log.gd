@@ -1013,12 +1013,20 @@ func _snapshot(world: Node2D) -> Dictionary:
 	# key so JSON-object consumers do not need a special case for an empty
 	# property name.
 	by_contents["empty"] = hive.cells_holding("").size()
-	for content_type in ["nectar", "pollen", "honey", "jelly", "brood", "corpse"]:
+	for content_type in ["nectar", "pollen", "honey", "jelly", "bee_bread", "brood", "corpse"]:
 		by_contents[content_type] = hive.cells_holding(content_type).size()
 	var sealed := 0
 	for cell in hive.cells:
 		if is_instance_valid(cell) and cell.is_built and cell.is_closed:
 			sealed += 1
+	# BB-1: bee bread cells that have filled and sealed, and those ripe.
+	var bee_bread_sealed := 0
+	var bee_bread_ripe := 0
+	for cell in hive.cells_holding("bee_bread"):
+		if cell.is_ripe_bee_bread():
+			bee_bread_ripe += 1
+		elif cell.is_bee_bread_sealed():
+			bee_bread_sealed += 1
 
 	# Live, not cumulative -- how much diggable soil is left, split by
 	# whether a miner could reach it at all (is_edge) versus what the
@@ -1054,6 +1062,9 @@ func _snapshot(world: Node2D) -> Dictionary:
 			"total": hive.cells.size(),
 			"by_contents": by_contents,
 			"sealed": sealed,
+			"bee_bread_sealed": bee_bread_sealed,
+			"bee_bread_ripe": bee_bread_ripe,
+			"stored_bee_bread": hive.total("bee_bread"),
 			"unbuilt": hive.cells_holding("unbuilt").size(),
 		},
 		"environment": {

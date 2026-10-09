@@ -189,6 +189,8 @@ static func _cells_data(world) -> Array:
 			"ripen": cell.ripen_progress,
 			# NF-2: saving.gd reads it back for nectar cells only.
 			"nectar_since": cell.nectar_since if cell.content_type == "nectar" else -1.0,
+			# BB-1, additive: when a bee bread cell sealed (-1 while filling).
+			"bee_bread_sealed_at": cell.bee_bread_sealed_at if cell.content_type == "bee_bread" else -1.0,
 			"hatch_role": cell.hatch_role,
 			"hatch_focus": cell.hatch_focus,
 			"hatch_automine": cell.hatch_automine,
@@ -242,6 +244,9 @@ static func _bees_data(world) -> Array:
 			"load": b.current_load,
 			"load_type": b.current_load_type,
 			"honey_load": b.honey_load,
+			# BB-1, additive: the Fermenting mode and any bee bread carried.
+			"fermenting": b.fermenting,
+			"bee_bread_load": b.bee_bread_load,
 			"dirt": b.dirt_load,
 			"pollen_eaten": b.pollen_eaten,
 			"nurse_pollen": b.nurse_pollen,

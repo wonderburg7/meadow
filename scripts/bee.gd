@@ -259,6 +259,11 @@ var pollen_eaten: float = 0.0
 ## to a cell; `fan_target` is the cell currently being dried out.
 var honey_load: float = 0.0
 var fan_target: Node2D = null
+## BB-1. The Honey role's Fermenting mode, a toggle like `automine`: on, the
+## bee makes bee bread whenever it can (bee_honey.gd). `bee_bread_load` is
+## the bee bread it is carrying to a cell. Both are saved.
+var fermenting: bool = false
+var bee_bread_load: float = 0.0
 
 ## The wall of `target_cell` this bee has claimed while loading or
 ## unloading. -1 means it doesn't hold one. Only six bees can work a cell
@@ -1438,6 +1443,10 @@ func _process(delta: float) -> void:
 			BeeHoney.honey_deposit(self, delta)
 		State.FANNING:
 			BeeHoney.honey_fan(self, delta)
+		State.TO_BEE_BREAD_CELL:
+			BeeHoney.bee_bread_go_to_cell(self, delta)
+		State.DEPOSITING_BEE_BREAD:
+			BeeHoney.bee_bread_deposit(self, delta)
 
 		# --- egg layer ---
 		State.SEEK_POLLEN:
@@ -1509,6 +1518,7 @@ const TIPSY_WANDER_FROM := [
 	State.TO_HAUL_SOURCE, State.TO_HAUL_TARGET,
 	State.TO_MINE_SITE, State.MINING,
 	State.TO_NECTAR_CELL, State.TO_HONEY_CELL, State.DEPOSITING_HONEY, State.FANNING,
+	State.TO_BEE_BREAD_CELL, State.DEPOSITING_BEE_BREAD,
 	State.TO_POLLEN_CELL, State.TO_CELL_TO_LAY,
 ]
 ## How far one confused step strays, in hive cell spacings, and how many
@@ -1784,6 +1794,8 @@ func _action_mode_for_role(r: int) -> String:
 		return architect_mode
 	if r == Role.MINER:
 		return "automine" if automine else ""
+	if r == Role.HONEY_MAKER:
+		return "ferment" if fermenting else ""
 	return ""
 
 # --- building -----------------------------------------------------
@@ -2482,6 +2494,10 @@ func _task_line() -> String:
 			if fan_target and is_instance_valid(fan_target):
 				dried = int(fan_target.ripen_fraction() * 100.0)
 			return "fanning a honey cell dry (%d%%)" % dried
+		State.TO_BEE_BREAD_CELL:
+			return "carrying bee bread to a cell"
+		State.DEPOSITING_BEE_BREAD:
+			return "packing bee bread into a cell"
 		State.BUILD_IDLE:
 			return "looking for building work" + _idle_backup_note()
 		State.TO_BUILD_SITE:
@@ -2558,6 +2574,9 @@ func role_name_text() -> String:
 		Role.MINER:
 			if automine:
 				base += " (digging on its own)"
+		Role.HONEY_MAKER:
+			if fermenting:
+				base += " (%s)" % Roles.mode_label(Roles.HONEY, "ferment").to_lower()
 		Role.FORAGER:
 			base += " (%s)" % resource_type
 			if is_scouting:
@@ -2594,6 +2613,8 @@ func carrying_text() -> String:
 		return "Carrying: a dead %s, for disposal outside" % ("bee" if corpse_is_bee else "larva")
 	if role == Role.MINER:
 		return "Carrying: %d dirt (of %d)" % [int(dirt_load), int(GameConfig.miner_dirt_capacity)]
+	if bee_bread_load > 0.0:
+		return "Carrying: %d bee bread" % int(ceil(bee_bread_load))
 	if honey_load > 0.0:
 		return "Carrying: %d units of honey mix" % int(ceil(honey_load))
 	if nurse_pollen > 0.0 or nurse_carb > 0.0 or nurse_jelly > 0.0:

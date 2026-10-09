@@ -58,4 +58,7 @@ enum State {
 	# NF-3: a tipsy bee's confused wander away from its work and back --
 	# see bee.gd's "the tipsy wander" section. Appended, same reason.
 	TIPSY_WANDER,
+	# BB-1: a Fermenting honey maker carrying bee bread to its cell, and
+	# packing it in (bee_honey.gd). Appended, same reason.
+	TO_BEE_BREAD_CELL, DEPOSITING_BEE_BREAD,
 }

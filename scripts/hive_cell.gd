@@ -101,6 +101,16 @@ const JELLY_COLOR := Color(0.97, 0.94, 0.82)
 const GYNE_BROOD_COLOR := Color(0.98, 0.80, 0.35)
 const SITE_COLOR := Color(0.42, 0.34, 0.16)
 
+## BB-1. Bee bread in three states: a pale mauve while it is being packed,
+## a deep violet once the full cell seals, and a plum when it has ripened.
+## Each sits at least 0.10 (OKLab) from every other cell-content colour
+## above and from the other two (tests/test_bb1_bee_bread.py checks it), so
+## sealed and ripe read apart. Colour-blind mode spells the state out in
+## the cell's label. resources.gd's bee_bread row carries BEE_BREAD_COLOR.
+const BEE_BREAD_COLOR := Color(0.80, 0.58, 0.84)
+const BEE_BREAD_SEALED_COLOR := Color(0.46, 0.34, 0.64)
+const BEE_BREAD_RIPE_COLOR := Color(0.74, 0.24, 0.56)
+
 # --- cell state ---------------------------------------------------
 
 var content_type: String = ""
@@ -145,6 +155,11 @@ var ripen_progress: float = 0.0
 ## Saved per cell (NF-2); a save from before NF-2 restores the stamp at the
 ## restore time (saving.gd). See nectar_age() and is_fermented().
 var nectar_since: float = -1.0
+
+## BB-1. Session.sim_time at which this bee bread cell filled and sealed;
+## -1.0 while it is still filling, or holds no bee bread. Saved per cell.
+## See is_ripe_bee_bread().
+var bee_bread_sealed_at: float = -1.0
 
 # --- building state -----------------------------------------------
 
@@ -425,6 +440,7 @@ func _overlay_colour() -> Array:
 				"pollen": return [POLLEN_COLOR, "p"]
 				"honey": return [HONEY_COLOR, "h"]
 				"jelly": return [JELLY_COLOR, "j"]
+				"bee_bread": return [BEE_BREAD_COLOR, "b"]
 				"brood": return [GYNE_BROOD_COLOR if brood_is_gyne else BROOD_COLOR, "e"]
 				"corpse": return [CORPSE_COLOR, "x"]
 			return [Color(0.30, 0.30, 0.32), ""]
@@ -451,6 +467,7 @@ func _overlay_colour() -> Array:
 				"pollen": return [POLLEN_COLOR, "p"]
 				"honey": return [HONEY_COLOR, "h"]
 				"jelly": return [JELLY_COLOR, "j"]
+				"bee_bread": return [BEE_BREAD_COLOR, "b"]
 				"brood": return [Color(0.6, 1.0, 0.7), "e"]
 			return [Color(0.26, 0.26, 0.28), ""]
 	return []
@@ -764,6 +781,9 @@ func space_for(resource_type: String) -> float:
 		return 0.0
 	if content_type != "" and not Resources.entry(content_type).get("storable", false):
 		return 0.0
+	# BB-1: a sealed bee bread cell takes no more.
+	if content_type == Resources.BEE_BREAD and bee_bread_sealed_at >= 0.0:
+		return 0.0
 	if not accepts(resource_type):
 		return 0.0
 	if content_type == "":
@@ -818,6 +838,11 @@ func add_resource(resource_type: String, requested: float) -> float:
 	if fill_then_close and amount >= capacity - 0.001:
 		fill_then_close = false
 		is_closed = true
+	# BB-1: bee bread seals itself once the cell is full, and ripens from
+	# that moment (is_ripe_bee_bread).
+	if resource_type == Resources.BEE_BREAD and bee_bread_sealed_at < 0.0 and amount >= capacity - 0.001:
+		bee_bread_sealed_at = Session.sim_time
+		bump_display_epoch()
 	_invalidate_stock()
 	# A fresh deposit changes which content-type/ripe-honey bucket this
 	# cell belongs in either by switching content_type outright, or (for
@@ -848,9 +873,30 @@ func is_fermented() -> bool:
 	var hour: float = maxf(0.001, GameConfig.seconds_per_day / 24.0)
 	return Session.sim_time - nectar_since > GameConfig.nectar_ferment_hours * hour
 
+## BB-1. Has this bee bread cell filled and sealed?
+func is_bee_bread_sealed() -> bool:
+	return content_type == Resources.BEE_BREAD and bee_bread_sealed_at >= 0.0
+
+## BB-1. Has the sealed bee bread here sat GameConfig.bee_bread_ripen_hours?
+## Derived from the stamp on every call, as is_fermented() is, so ripening
+## costs no per-frame work. Until it is ripe it is neither food nor currency.
+func is_ripe_bee_bread() -> bool:
+	return is_bee_bread_sealed() and bee_bread_ripen_fraction() >= 1.0
+
+## How far a sealed bee bread cell is towards ripe, 0 to 1; 0 while filling.
+func bee_bread_ripen_fraction() -> float:
+	if not is_bee_bread_sealed():
+		return 0.0
+	var hour: float = maxf(0.001, GameConfig.seconds_per_day / 24.0)
+	var needed: float = maxf(0.001, GameConfig.bee_bread_ripen_hours * hour)
+	return clampf((Session.sim_time - bee_bread_sealed_at) / needed, 0.0, 1.0)
+
 ## Removes up to `requested`, returns how much came out.
 func take_resource(resource_type: String, requested: float) -> float:
 	if content_type != resource_type:
+		return 0.0
+	# BB-1: unripe bee bread stays put; nothing draws on it until it ripens.
+	if resource_type == Resources.BEE_BREAD and not is_ripe_bee_bread():
 		return 0.0
 	# Sealed, or being filled towards a seal. Emptying the cell on the
 	# player's own instruction still gets through -- otherwise a closed
@@ -865,6 +911,7 @@ func take_resource(resource_type: String, requested: float) -> float:
 		amount = 0.0
 		ripen_progress = 0.0
 		nectar_since = -1.0
+		bee_bread_sealed_at = -1.0
 		if not designation_is_explicit:
 			designated_type = ""
 		if evict_requested:
@@ -1015,6 +1062,7 @@ func clear_cell() -> void:
 	brood_is_gyne = false
 	brood_is_drone = false
 	ripen_progress = 0.0
+	bee_bread_sealed_at = -1.0
 	evict_requested = false
 	evict_mode = "move"
 	_invalidate_hive_index()
@@ -1033,6 +1081,8 @@ func _resource_outline_colour(resource_type: String) -> Color:
 			return Color(0.7, 0.65, 1.0)
 		"honey":
 			return Color(1.0, 0.55, 0.1)
+		"bee_bread":
+			return Color(0.62, 0.36, 0.78)
 		"brood":
 			return Color(0.6, 1.0, 0.7)
 	# A later content kind without its own outline colour remains visible
@@ -1113,6 +1163,18 @@ func _refresh() -> void:
 		"jelly":
 			color = JELLY_COLOR
 			info_label.text = "RJ%d" % int(round(amount))
+		"bee_bread":
+			# Filling, sealed and ripe each have a colour and a label of their
+			# own, so a glance tells the three apart.
+			if is_ripe_bee_bread():
+				color = BEE_BREAD_RIPE_COLOR
+				info_label.text = "BB%d ripe" % int(round(amount))
+			elif is_bee_bread_sealed():
+				color = BEE_BREAD_SEALED_COLOR
+				info_label.text = "BB sealed %d%%" % int(bee_bread_ripen_fraction() * 100.0)
+			else:
+				color = BEE_BREAD_COLOR
+				info_label.text = "bb%d" % int(round(amount))
 		"honey":
 			color = HONEY_WET_COLOR.lerp(HONEY_COLOR, ripen_fraction())
 			if is_ripe_honey():
@@ -1200,6 +1262,8 @@ func _designation_tag() -> String:
 			return "[h]"
 		"jelly":
 			return "[j]"
+		"bee_bread":
+			return "[b]"
 		"brood":
 			return "[e]"
 	return ""

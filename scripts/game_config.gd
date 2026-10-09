@@ -570,6 +570,20 @@ var jelly_make_time: float = 12.0
 var jelly_per_batch: float = 8.0
 var jelly_cell_capacity: float = 120.0
 
+# --- bee bread (BB-1) ---
+## A honey worker on the Fermenting mode takes bee_bread_pollen_per_load
+## pollen and bee_bread_honey_per_load ripe honey from the comb and packs
+## bee_bread_per_load bee bread into a cell. A cell that reaches
+## bee_bread_cell_capacity seals, and is ripe bee_bread_ripen_hours of game
+## time later (hive_cell.gd::is_ripe_bee_bread). Picked by BB-1's sweep
+## (plans/now/bee-bread.md): with two Fermenting workers the first cell fills
+## and seals within the first game-day and ripens by the third.
+var bee_bread_pollen_per_load: float = 3.0
+var bee_bread_honey_per_load: float = 1.0
+var bee_bread_per_load: float = 3.0
+var bee_bread_cell_capacity: float = 60.0
+var bee_bread_ripen_hours: float = 48.0
+
 # --- weather ---
 ## Rain grounds a colony. It waters down the nectar in open flowers, and
 ## a wet bee is a heavy bee, so flying costs more. Past

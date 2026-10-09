@@ -10,7 +10,7 @@ extends RefCounted
 ## `roles.gd::count_keys` iterates it to build forager tally keys, and a
 ## third entry there would invent a tally key no bee can have. `RESOURCES`
 ## itself, and `content_keys()`, now cover every cell-content kind (honey,
-## jelly, brood, corpse and the empty kind too). Read since B2/B3:
+## jelly, bee bread, brood, corpse and the empty kind too). Read since B2/B3:
 ## hive.gd builds its content index and energy draw from these rows,
 ## hive_cell.gd takes capacity_config, storable and evictable from them,
 ## and conditions.gd counts cells by content_keys().
@@ -27,6 +27,7 @@ const NECTAR := "nectar"
 const POLLEN := "pollen"
 const HONEY := "honey"
 const JELLY := "jelly"
+const BEE_BREAD := "bee_bread"
 const BROOD := "brood"
 const CORPSE := "corpse"
 const EMPTY := ""
@@ -93,6 +94,23 @@ const RESOURCES := [
 		"storable": true,
 		"designatable": true,
 		"evictable": true,
+		"config_flag": "",
+		"save_policy": "persisted_via_owner_fields",
+	},
+	{
+		# BB-1. Pollen and ripe honey a Fermenting honey worker packs into a
+		# cell; once full the cell seals and ripens (hive_cell.gd). Not
+		# energy: hungry adults never eat it (hive.gd::find_food_cell). Not
+		# evictable, because nothing moves it in BB-1 -- BB-2 and BB-3 spend
+		# it. The colour is hive_cell.gd's BEE_BREAD_COLOR.
+		"key": BEE_BREAD, "label": "Bee bread", "colour": Color(0.80, 0.58, 0.84),
+		"is_energy": false,
+		"energy_factor": 0.0,
+		"capacity_config": "bee_bread_cell_capacity",
+		"index_bucket": BEE_BREAD,
+		"storable": true,
+		"designatable": true,
+		"evictable": false,
 		"config_flag": "",
 		"save_policy": "persisted_via_owner_fields",
 	},
@@ -185,6 +203,6 @@ static func keys() -> Array:
 	return [NECTAR, POLLEN]
 
 ## Every cell-content kind: the two forager-selectable resources plus
-## honey, jelly, brood, corpse and the empty kind.
+## honey, jelly, bee bread, brood, corpse and the empty kind.
 static func content_keys() -> Array:
 	return RESOURCES.map(func(r): return r.key)
