@@ -46,5 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/WC-2` (`codex/WC-2`) | Codex | a dry-lane warning names the missing deferral and the specified blocks that could serve the lane | Codex | in progress | none | `plans/now/workflow-checks.md` WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane |
 | `.worktrees/BB-1` (`claude/BB-1`) | Claude | Fermenters make Bee Bread in a store cell | Claude | in progress | none | `plans/now/bee-bread.md` BB-1 -- Fermenters make Bee Bread in a store cell |
