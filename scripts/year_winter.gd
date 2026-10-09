@@ -213,10 +213,6 @@ func _refresh_signals(delta: float) -> void:
 		Perf.end("signals")
 		return
 
-	# Not part of ColonyDiagnostics.compute -- used only here, so left as a
-	# single direct read rather than moved.
-	var dead_cells: int = main.hive.cells_holding("corpse").size()
-
 	# A 4th element, where present, is a category used to sort a signal into
 	# the Colony/Nursery drawers' "needing attention" blocks. The 3rd element
 	# is the corner-strip click action; the catalogue preserves their distinct
@@ -226,8 +222,12 @@ func _refresh_signals(delta: float) -> void:
 		"starving": facts.starving, "hungry": facts.hungry,
 		"foragers": facts.foragers, "nurses": facts.nurses,
 		"comb_workers": facts.comb_workers, "hungry_brood": facts.hungry_brood,
-		"free_cells": facts.free_cells, "dead_cells": dead_cells,
-		"brood_cells": main.hive.cells_holding("brood").size(),
+		"free_cells": facts.free_cells, "dead_cells": facts.blocked_cells,
+		"brood_cells": facts.brood_cells,
+		"blocked_cells": facts.blocked_cells, "blocked_work": facts.blocked_work,
+		"missing_nurse_workforce": facts.missing_nurse_workforce,
+		"missing_comb_workforce": facts.missing_comb_workforce,
+		"missing_required_workforce": facts.missing_required_workforce,
 		"pollen": main.hive.total("pollen"), "nectar": main.hive.total("nectar"),
 		"honey": main.hive.total_honey(), "rain_intensity": Session.rain_intensity,
 	})

@@ -24,13 +24,24 @@ static func compute(main: Node2D, bees: Array, counts: Dictionary) -> Dictionary
 	# build/hatch/designation/load actually changed one, not once a second
 	# regardless.
 	var hungry_brood = 0
-	for cell in main.hive.cells_holding("brood"):
+	var brood_cells: Array = main.hive.cells_holding("brood")
+	for cell in brood_cells:
 		if cell.brood_fed_seconds <= 0.0:
 			hungry_brood += 1
+	var blocked_cells: int = main.hive.cells_holding("corpse").size()
 	var free_cells = 0
 	for cell in main.hive.cells_holding(""):
 		if not cell.keep_empty:
 			free_cells += 1
+
+	# A missing workforce is one required role with demand but no assigned
+	# worker. Blocked work counts affected cells, not bees: every brood cell
+	# stalls without a nurse, and every corpse cell needs a comb worker.
+	# These are observations only; they do not change role assignment or the
+	# existing warning policy (including the queen's nursing fallback).
+	var missing_nurse_workforce: int = int(brood_cells.size() > 0 and nurses == 0)
+	var missing_comb_workforce: int = int(blocked_cells > 0 and comb_workers == 0)
+	var blocked_work: int = brood_cells.size() * missing_nurse_workforce + blocked_cells * missing_comb_workforce
 
 	return {
 		"bees_count": bees.size(),
@@ -40,5 +51,11 @@ static func compute(main: Node2D, bees: Array, counts: Dictionary) -> Dictionary
 		"nurses": nurses,
 		"comb_workers": comb_workers,
 		"hungry_brood": hungry_brood,
+		"brood_cells": brood_cells.size(),
 		"free_cells": free_cells,
+		"blocked_cells": blocked_cells,
+		"missing_nurse_workforce": missing_nurse_workforce,
+		"missing_comb_workforce": missing_comb_workforce,
+		"missing_required_workforce": missing_nurse_workforce + missing_comb_workforce,
+		"blocked_work": blocked_work,
 	}

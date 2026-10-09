@@ -1,7 +1,7 @@
 # Diagnostic readiness -- make the colony state behind a player decision explicit
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: CD-2 -- missing workforce and blocked-work facts | Dependency: extends `plans/reference/colony-diagnostics.md`; no player-facing copy or balance change | Verified: 2026-10-08
+Status: active | Owner: Dave / Codex | Next: CD-3 -- waiting and travel diagnostic boundary | Dependency: extends `plans/reference/colony-diagnostics.md`; no player-facing copy or balance change | Verified: 2026-10-09
 
 ## Objective
 
@@ -20,7 +20,7 @@ diagnostics, but none has a named data contract.
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | CD-2 | missing workforce and blocked work become named, tested facts | `scripts/colony_diagnostics.gd`, `scripts/year_winter.gd`, `tests/test_colony_diagnostics.py` | yes | medium |
-| CD-3 | waiting and travel get a deterministic diagnostic boundary | same diagnostics files and focused tests | after CD-2 | medium |
+| CD-3 | waiting and travel get a deterministic diagnostic boundary | same diagnostics files and focused tests | yes | medium |
 
 **Must not change.** The one-Hz cadence, existing warning text and severity,
 or any simulation, role-assignment or balance rule.
@@ -55,7 +55,7 @@ Specify and test only the boundary between waiting/travel and no available
 work. It must reuse CD-2 facts and must not add a per-bee scan outside the
 existing refresh.
 
-```queue-gated
+```queue
 **[Codex] CD-3 -- waiting and travel get a deterministic diagnostic boundary**
 - Plan: `plans/now/diagnostic-readiness.md` -- "CD-3 -- waiting and travel get a deterministic diagnostic boundary"
 - Files: `scripts/colony_diagnostics.gd`, `scripts/year_winter.gd`, `tests/test_colony_diagnostics.py`
