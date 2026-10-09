@@ -150,12 +150,19 @@ in the loop, revisits that. The first sweep found that `find_cell_for`'s
 `hive.gd::find_bee_bread_target` tops an unsealed bee bread cell up to the
 brim before starting another.
 
-**Built beside the specification.** A mode that names a skill (Fermenting,
-and the Miner's "Dig on its own") is now offered on the Doing row only once
-the colony owns it (`hud.gd::_build_doing_row`); the Bee bread "Reserve for"
-button reads the skill from its `UI_GATES` row
-(`Availability.designation_owned`); and the cell popup's Raises menu offers a
-plain honey maker, never a Fermenting one.
+**Built beside the specification.** Fermenting is offered on the Doing row
+only once Bee bread is owned (`hud.gd::_build_doing_row`; the Miner's "Dig on
+its own" is left as it was); the Bee bread "Reserve for" button reads the
+skill from its `UI_GATES` row (`Availability.designation_owned`); and the
+cell popup's Raises menu offers a plain honey maker, never a Fermenting one.
+After review: a cell holding bee bread refuses re-reservation for another
+kind, emptying and keep-empty (`orders_zones.gd`, `bee.gd::command_empty_cell`),
+since nothing may move it yet; a bee bread cell's size is fixed by its first
+deposit, so a later capacity change cannot leave it unable to seal (restore
+re-sizes it and seals one already full); a honey maker leaving the role puts
+its carried bee bread back into the comb; one holding bee bread with no cell
+waits rather than fanning or fetching nectar; and pressing Fermenting sets
+every selected bee to the state the button showed.
 
 **Must not change.** Honey making for a honey worker not set to
 Fermenting, nursing (nurses still feed pollen; BB-2 changes that), adult

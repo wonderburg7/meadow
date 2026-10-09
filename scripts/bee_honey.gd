@@ -12,6 +12,8 @@ const BeeForaging = preload("res://scripts/bee_foraging.gd")
 ## Catalogue finders all take one bee and return whether they started work.
 
 ## BB-1. Any honey maker holding bee bread takes it to a cell with room.
+## With none, it waits in HONEY_IDLE holding the load: the honey rows below
+## refuse a bee carrying bee bread, so it never takes nectar on top of it.
 static func find_bee_bread_target(bee: Node2D) -> bool:
 	if bee.bee_bread_load <= 0.0:
 		return false
@@ -55,7 +57,7 @@ static func find_honey_target(bee: Node2D) -> bool:
 
 
 static func find_cell_needing_fanning(bee: Node2D) -> bool:
-	if bee.honey_load > 0.0:
+	if bee.honey_load > 0.0 or bee.bee_bread_load > 0.0:
 		return false
 	var drying = bee.hive.find_cell_needing_fanning()
 	if drying == null:
@@ -68,8 +70,8 @@ static func find_cell_needing_fanning(bee: Node2D) -> bool:
 static func find_cell_with(bee: Node2D) -> bool:
 	if bee.current_load > 0.0:
 		return false   # still holding a load (GC-2): never lift over it
-	if bee.honey_load > 0.0:
-		return false
+	if bee.honey_load > 0.0 or bee.bee_bread_load > 0.0:
+		return false   # BB-1: holding bee bread, it waits for a cell instead
 	var nectar_cell = bee.hive.find_honey_source()   # NF-2: never fermented nectar
 	if nectar_cell == null or bee.hive.find_honey_target() == null:
 		return false

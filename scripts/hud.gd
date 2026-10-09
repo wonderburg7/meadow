@@ -2871,9 +2871,10 @@ func _build_doing_row(common_role: int, first) -> void:
 		var gate_key: String = Availability.mode_gate_key(common_role, key)
 		if not allowed_mode_keys.is_empty() and not allowed_mode_keys.has(gate_key):
 			continue
-		# BB-1: a mode that names a skill (Fermenting, Dig on its own) is
-		# offered only once the colony owns it.
-		if not Availability.mode_query(common_role, key, null, Session.progression).available:
+		# BB-1: Fermenting is offered only once Bee bread is owned. Limited to
+		# the Honey role: the Miner's "Dig on its own" has shown regardless
+		# since T2-2 (its work row is what Automation gates).
+		if common_role == Roles.HONEY and not Availability.mode_query(common_role, key, null, Session.progression).available:
 			continue
 		var current: bool = _mode_is_active(common_role, first, key)
 		var command: String = mode_command(common_role, key)

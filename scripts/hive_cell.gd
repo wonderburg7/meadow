@@ -789,6 +789,9 @@ func space_for(resource_type: String) -> float:
 	if content_type == "":
 		return capacity_for(resource_type)
 	if content_type == resource_type:
+		# BB-1: a bee bread cell keeps the size it started with (add_resource).
+		if resource_type == Resources.BEE_BREAD:
+			return max(0.0, capacity - amount)
 		return max(0.0, capacity_for(resource_type) - amount)
 	return 0.0
 
@@ -831,7 +834,11 @@ func add_resource(resource_type: String, requested: float) -> float:
 	if resource_type == "nectar" and was_content_type != "nectar":
 		nectar_since = Session.sim_time
 	content_type = resource_type
-	capacity = capacity_for(resource_type)
+	# BB-1: a bee bread cell's size is fixed by its first deposit, so a
+	# later change to bee_bread_cell_capacity cannot leave a part-filled
+	# cell unable to reach full and seal. Every other kind reads it live.
+	if resource_type != Resources.BEE_BREAD or was_content_type != Resources.BEE_BREAD:
+		capacity = capacity_for(resource_type)
 	amount += added
 	# "Fill then close" seals itself the moment it tops out, so you don't
 	# have to be watching the cell at the right second to catch it.
@@ -873,6 +880,15 @@ func is_fermented() -> bool:
 	var hour: float = maxf(0.001, GameConfig.seconds_per_day / 24.0)
 	return Session.sim_time - nectar_since > GameConfig.nectar_ferment_hours * hour
 
+## BB-1. For the restore path, which writes a cell's fields directly: sizes
+## a bee bread cell from today's setting, and seals one already that full.
+func restore_bee_bread_seal() -> void:
+	if content_type != Resources.BEE_BREAD:
+		return
+	capacity = capacity_for(Resources.BEE_BREAD)
+	if bee_bread_sealed_at < 0.0 and amount >= capacity - 0.001:
+		bee_bread_sealed_at = Session.sim_time
+
 ## BB-1. Has this bee bread cell filled and sealed?
 func is_bee_bread_sealed() -> bool:
 	return content_type == Resources.BEE_BREAD and bee_bread_sealed_at >= 0.0
@@ -895,13 +911,16 @@ func bee_bread_ripen_fraction() -> float:
 func take_resource(resource_type: String, requested: float) -> float:
 	if content_type != resource_type:
 		return 0.0
-	# BB-1: unripe bee bread stays put; nothing draws on it until it ripens.
-	if resource_type == Resources.BEE_BREAD and not is_ripe_bee_bread():
-		return 0.0
 	# Sealed, or being filled towards a seal. Emptying the cell on the
 	# player's own instruction still gets through -- otherwise a closed
 	# cell could never be opened up and cleared again.
 	if (is_closed or fill_then_close) and not evict_requested:
+		return 0.0
+	# BB-1: unripe bee bread stays put; nothing draws on it until it ripens.
+	# The player's own emptying order is let through here too, though
+	# orders_zones.gd and bee.gd::command_empty_cell refuse to give one for
+	# bee bread in BB-1.
+	if resource_type == Resources.BEE_BREAD and not is_ripe_bee_bread() and not evict_requested:
 		return 0.0
 	var taken: float = min(requested, amount)
 	amount -= taken
@@ -951,7 +970,8 @@ func fill_fraction() -> float:
 		return clamp(brood_progress / max(0.001, develop_time()), 0.0, 1.0)
 	if content_type == "" or content_type == "corpse":
 		return 0.0
-	return clamp(amount / max(0.001, capacity_for(content_type)), 0.0, 1.0)
+	var full: float = capacity if content_type == Resources.BEE_BREAD else capacity_for(content_type)
+	return clamp(amount / max(0.001, full), 0.0, 1.0)
 
 func set_designation(resource_type: String, explicit: bool = true) -> void:
 	designated_type = resource_type

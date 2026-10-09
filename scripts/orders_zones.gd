@@ -63,6 +63,8 @@ func _undo_last_designation() -> void:
 		var cell = entry.cell
 		if not is_instance_valid(cell):
 			continue
+		if _holds_bee_bread(cell) and entry.designated != "" and entry.designated != "bee_bread":
+			continue   # BB-1: as _designate_one, bee bread keeps its cell
 		cell.set_designation(entry.designated, bool(entry.designation_explicit))
 		cell.keep_empty = entry.keep_empty
 		cell.nursery_priority = entry.priority
@@ -152,6 +154,14 @@ func _assign_role(role_id: int) -> void:
 	main.hud.update_selection(main.selected_bees)
 
 func _apply_mode(role_id: int, mode_key: String) -> void:
+	# BB-1: Fermenting is a toggle, but every selected bee takes the one state
+	# the HUD lit from the first, so a mixed selection never stays mixed.
+	var ferment_on := true
+	if role_id == main.Roles.HONEY:
+		for b in main.selected_bees:
+			if is_instance_valid(b):
+				ferment_on = not b.fermenting
+				break
 	for b in main.selected_bees:
 		if not is_instance_valid(b):
 			continue
@@ -165,7 +175,7 @@ func _apply_mode(role_id: int, mode_key: String) -> void:
 			main.Roles.MINER:
 				b.automine = not b.automine
 			main.Roles.HONEY:
-				b.fermenting = not b.fermenting
+				b.fermenting = ferment_on
 	main.hud.update_selection(main.selected_bees)
 
 func _on_finish_first_requested(value: bool) -> void:
@@ -199,8 +209,20 @@ func _on_cell_designation_requested(anchor: Node2D, type: String) -> void:
 	for cell in _cells_to_act_on(anchor):
 		_designate_one(cell, type)
 
+## BB-1: bee bread is not evictable and nothing moves it yet (BB-3 spends it),
+## so a cell holding any keeps it: re-reserving it for something else, or
+## asking for it to be emptied or kept empty, would strand it for good.
+func _holds_bee_bread(cell: Node2D) -> bool:
+	return cell.content_type == "bee_bread" and cell.amount > 0.0
+
+func _warn_bee_bread_stays() -> void:
+	main.hud.show_warning("That cell holds bee bread, which stays where it is. Reserve or empty another cell instead.", "bee_bread_stays", 2.0)
+
 func _designate_one(cell: Node2D, type: String) -> void:
 	if not is_instance_valid(cell):
+		return
+	if _holds_bee_bread(cell) and type != "" and type != "bee_bread":
+		_warn_bee_bread_stays()
 		return
 	if type == "":
 		cell.set_designation("")
@@ -247,6 +269,9 @@ func _on_cell_empty_requested(anchor: Node2D, method: String, keep_empty: bool) 
 func _empty_one(cell: Node2D, method: String, keep_empty: bool) -> void:
 	if not is_instance_valid(cell):
 		return
+	if _holds_bee_bread(cell):
+		_warn_bee_bread_stays()
+		return
 	_set_keep_empty(cell, keep_empty)
 
 	if cell.content_type == "" or cell.content_type == "brood":
@@ -269,6 +294,9 @@ func _on_cell_keep_empty_requested(anchor: Node2D, keep_empty: bool) -> void:
 
 func _set_keep_empty(cell: Node2D, keep_empty: bool) -> void:
 	if not is_instance_valid(cell):
+		return
+	if keep_empty and _holds_bee_bread(cell):
+		_warn_bee_bread_stays()
 		return
 	if keep_empty:
 		cell.set_designation("")

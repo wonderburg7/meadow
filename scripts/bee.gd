@@ -1677,6 +1677,20 @@ func _return_nurse_food() -> void:
 	nurse_carb_type = ""
 	nurse_jelly = 0.0
 
+## BB-1. Bee bread a honey maker was carrying goes back into the comb when
+## she leaves the Honey role, as a nurse's food does above, so the pollen and
+## honey it was made from are not lost. hive.deposit tops up an unsealed bee
+## bread cell first, then any spare cell; whatever finds no room is recorded.
+## Called only from _apply_role.
+func _return_bee_bread() -> void:
+	if bee_bread_load <= 0.0 or role == Role.HONEY_MAKER or hive == null:
+		return
+	var unplaced: float = bee_bread_load - hive.deposit("bee_bread", bee_bread_load)
+	if unplaced > 0.001:
+		DiagnosticLog.log_action("return_bee_bread", "bee %d" % bee_id, "partly lost",
+			"no cell had room for %.1f bee bread" % unplaced)
+	bee_bread_load = 0.0
+
 ## Is this bee partway through something worth finishing? Everything
 ## except the "waiting for work" states and standing idle.
 func _is_busy() -> bool:
@@ -2077,6 +2091,9 @@ func command_deposit_at(cell: Node2D) -> void:
 func command_empty_cell(cell: Node2D) -> void:
 	if not is_instance_valid(cell) or cell.content_type == "" or cell.content_type == "brood" or cell.content_type == "corpse":
 		return
+	# BB-1: bee bread is neither emptied nor moved (out of scope until BB-3).
+	if cell.content_type == "bee_bread":
+		return
 	_clear_pending_zone_command()
 	cell.evict_requested = true
 	cell.bump_display_epoch()
@@ -2234,6 +2251,7 @@ func _apply_role(new_role: int) -> void:
 	# GC-4. Brood food a nurse was carrying goes back into the comb before
 	# she takes up the new job, rather than vanishing.
 	_return_nurse_food()
+	_return_bee_bread()
 	nurse_fetching = ""
 	var now_indoors := BeeStatus.works_indoors(self)
 
