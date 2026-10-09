@@ -56,14 +56,26 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `absent: scripts/bee_status.gd :: WEATHER_SENSING`
    - Next after: T2-6 -- Associative learning
 
+4. **[Codex] WC-1 -- a deferral whose gate has cleared is flagged**
+   - Plan: `plans/now/workflow-checks.md` -- "WC-1 -- a deferral whose gate has cleared is flagged"
+   - Files: `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py`
+   - Check: `python -m unittest tests.test_wc1_stale_deferrals` passes (a stale gate warns, an unshipped gate and a "landed" clause do not); `python tools/check_docs.py` on master prints the warning for NF-2's COL-4 and NF-1; `tools/verify.ps1` is green
+   - Proof: `absent: tools/check_docs.py :: waits for an archived slice`
+   - Next after: WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane
+
+5. **[Codex] WC-3 -- Codex's hooks log its sessions**
+   - Plan: `plans/now/workflow-checks.md` -- "WC-3 -- Codex's hooks log its sessions"
+   - Files: `.codex/hooks.json`, `tests/test_wc3_codex_hooks.py`
+   - Check: `python -m unittest tests.test_wc3_codex_hooks` passes with `CLAUDE_PROJECT_DIR` unset; `tools/verify.ps1` is green
+   - Proof: `present: .codex/hooks.json :: $CLAUDE_PROJECT_DIR/tools/hook_log.py`
+   - Next after: WC-4 -- a queue id with whitespace fails the documentation check
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation, Bee Bread and the gyne route.
-- **WC-1** (`plans/now/workflow-checks.md`) -- a deferral whose gate has cleared is flagged; waits for room in the Codex lane.
 - **WC-2** (`plans/now/workflow-checks.md`) -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane; waits for WC-1 and room in the Codex lane.
-- **WC-3** (`plans/now/workflow-checks.md`) -- Codex's hooks log its sessions; waits for room in the Codex lane.
 - **WC-4** (`plans/now/workflow-checks.md`) -- a queue id with whitespace fails the documentation check; waits for WC-2 and room in the Codex lane.
 - **WC-5** (`plans/now/workflow-checks.md`) -- the two level-to-model tables are tested against each other; waits for room in the Codex lane.
 - **CD-3** (`plans/now/diagnostic-readiness.md`) -- waiting and travel get a deterministic diagnostic boundary; waits for CD-2.

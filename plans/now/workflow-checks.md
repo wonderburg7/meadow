@@ -1,7 +1,7 @@
 # Workflow checks -- say what a waiting lane is waiting for, and catch latent tooling drift
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: WC-1 -- a deferral whose gate has cleared is flagged, once the Codex lane has room | Dependency: none; WC-1 to WC-5 run in order in the Codex lane (WC-1, WC-2 and WC-4 share `tools/check_docs.py`) | Verified: 2026-10-07
+Status: active | Owner: Dave / Codex | Next: WC-1 -- a deferral whose gate has cleared is flagged, in the Codex lane | Dependency: none; WC-1 to WC-5 run in order in the Codex lane (WC-1, WC-2 and WC-4 share `tools/check_docs.py`) | Verified: 2026-10-07
 
 ## Objective
 
@@ -50,9 +50,9 @@ Verified 7 Oct 2026 against master `27b645e`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| WC-1 | a deferral whose gate has cleared is flagged | `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py` | waits for room in the Codex lane | medium |
+| WC-1 | a deferral whose gate has cleared is flagged | `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py` | in the Codex lane (queued 9 Oct 2026, after T2-4a landed) | medium |
 | WC-2 | a dry-lane warning names the missing deferral and the specified blocks that could serve the lane | `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_wc2_dry_lane_report.py` | after WC-1 and room in the Codex lane | medium |
-| WC-3 | Codex's hooks log its sessions | `.codex/hooks.json`, `tests/test_wc3_codex_hooks.py` | waits for room in the Codex lane | medium |
+| WC-3 | Codex's hooks log its sessions | `.codex/hooks.json`, `tests/test_wc3_codex_hooks.py` | in the Codex lane (queued 9 Oct 2026, after T2-4a landed) | medium |
 | WC-4 | a queue id with whitespace fails the documentation check | `tools/check_docs.py`, `tests/test_wc4_spaced_ids.py` | after WC-2 and room in the Codex lane | low |
 | WC-5 | the two level-to-model tables are tested against each other | `tools/session_cost.py`, `tests/test_wc5_level_model_parity.py` | waits for room in the Codex lane | low |
 
@@ -96,7 +96,7 @@ still be a correct historical pointer in a sentence this rule cannot read.
 Do not edit the existing bullets to make the warning quiet; their owning
 plans re-verify their gates.
 
-```queue-gated
+```queue
 **[Codex] WC-1 -- a deferral whose gate has cleared is flagged**
 - Plan: `plans/now/workflow-checks.md` -- "WC-1 -- a deferral whose gate has cleared is flagged"
 - Files: `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py`
@@ -170,7 +170,7 @@ leave the file unchanged.
 **Must not change.** `.claude/settings.json`'s hooks; `tools/hook_log.py`'s
 event shape; what is logged (one command token, never a command line).
 
-```queue-gated
+```queue
 **[Codex] WC-3 -- Codex's hooks log its sessions**
 - Plan: `plans/now/workflow-checks.md` -- "WC-3 -- Codex's hooks log its sessions"
 - Files: `.codex/hooks.json`, `tests/test_wc3_codex_hooks.py`
