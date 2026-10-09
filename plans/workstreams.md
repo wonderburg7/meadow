@@ -47,4 +47,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/SI-2` (`claude/SI-2`) | Claude | a checkpoint restore puts back soil dug since the checkpoint | Claude | in progress | none | `plans/now/save-integrity.md` SI-2 -- a checkpoint restore puts back soil dug since the checkpoint |
-| `.worktrees/T2-5` (`codex/T2-5`) | Codex | Weather sensing's rain half, Rain recall, and rain on in the Colony Run | Codex | in progress | none | `plans/now/tier-two.md` T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run |
