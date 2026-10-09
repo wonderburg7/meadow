@@ -14,6 +14,12 @@ import godot_compile_check as gcc  # noqa: E402
 
 
 class RainSkillsTest(unittest.TestCase):
+    def test_active_nuptial_flight_keeps_its_own_return(self):
+        text = (ROOT / "scripts" / "bee.gd").read_text(encoding="utf-8")
+        call = text.index("BeeForaging.recall_for_rain(self)")
+        guard = text[:call].splitlines()[-2]
+        self.assertIn("nuptial_phase == NUPTIAL_NONE", guard)
+
     def test_skill_entries_enable_the_live_behaviours(self):
         text = (ROOT / "scripts" / "skills.gd").read_text(encoding="utf-8")
         for skill, key in (("WEATHER_SENSING", "weather_sensing_on"),
