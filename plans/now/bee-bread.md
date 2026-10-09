@@ -194,4 +194,6 @@ which waits for this slice), Priority Cells, and any price change.
 - **BB-4.** With the rule in every run, Challenges 1 and 2's stage pacing
   and the Colony Run's arc are re-simulated; stage thresholds move only
   where the evidence says a stage became unreachable, and the affected
-  hands-on checks are filed again.
+  hands-on checks are filed again. It never changes a skill price: T2-7
+  (`plans/now/tier-two.md`, queued after BB-2) prices tier two against
+  BB-2's rule (Dave, 10 Oct 2026).
