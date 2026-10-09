@@ -140,6 +140,10 @@ static func builder_go_to_haul_source(bee: Node2D, delta: float) -> void:
 	BeeMovement.move_towards(bee, bee.target_cell.position, delta)
 	if bee.position.distance_to(bee.target_cell.position) < 10.0:
 		var moving_type: String = bee.target_cell.content_type
+		# NF-5: checked before the take, since a take that empties the
+		# cell clears its stamp. Fermented nectar is never moved to
+		# another cell, which would stamp it fresh.
+		var was_fermented: bool = bee.target_cell.is_fermented()
 		var lifted: float = bee.target_cell.take_resource(moving_type, bee.nectar_stomach_capacity)
 		if lifted <= 0.0:
 			bee.target_cell = null
@@ -154,7 +158,7 @@ static func builder_go_to_haul_source(bee: Node2D, delta: float) -> void:
 		# them. Discarding used to happen the instant the button was
 		# pressed, with the resource simply vanishing and no bee doing
 		# any of the work.
-		if bee.target_cell.evict_mode == "discard":
+		if bee.target_cell.evict_mode == "discard" or was_fermented:
 			BeeForaging.release_cell_slot(bee)
 			bee.state = State.TO_WASTE_EXIT
 			return

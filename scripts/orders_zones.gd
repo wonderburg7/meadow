@@ -266,6 +266,20 @@ func _on_cell_empty_requested(anchor: Node2D, method: String, keep_empty: bool) 
 	for cell in _cells_to_act_on(anchor):
 		_empty_one(cell, method, keep_empty)
 
+## NF-5. Marks every fermented cell in the hive for discard, using the same
+## saved eviction fields as the Discard button. One pass on a button press;
+## cells that ferment later are not marked. Returns how many it marked.
+func _on_clear_fermented_requested() -> int:
+	var marked := 0
+	for cell in main.hive.cells:
+		if not is_instance_valid(cell) or not cell.is_fermented():
+			continue
+		cell.evict_mode = "discard"
+		cell.evict_requested = true
+		cell.bump_display_epoch()
+		marked += 1
+	return marked
+
 func _empty_one(cell: Node2D, method: String, keep_empty: bool) -> void:
 	if not is_instance_valid(cell):
 		return

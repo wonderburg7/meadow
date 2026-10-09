@@ -261,6 +261,8 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_set_cell_contents(main, action)
 		"empty_cell":
 			_do_empty_cell(main, action)
+		"clear_fermented":
+			_do_clear_fermented(main)
 		"watch_queen_states":
 			_do_watch_queen_states(main, action)
 		"save_run":
@@ -1053,6 +1055,12 @@ static func _do_empty_cell(main: Node2D, action: Dictionary) -> void:
 		_log("empty_cell", str(action), "rejected", "the queen did not take the order")
 		return
 	_log("empty_cell", str(action), "accepted", "")
+
+## NF-5. {"do": "clear_fermented"} -- the cell popup's "Discard all sour
+## nectar" button, through the same handler. Logs how many cells it marked.
+static func _do_clear_fermented(main: Node2D) -> void:
+	var marked: int = main.orders_zones._on_clear_fermented_requested()
+	_log("clear_fermented", "", "accepted", "marked %d cells" % marked)
 
 ## C1F-2. {"states": ["SEEK_FLOWER", ...]} arms a count of the ticks the queen
 ## spends in any of those states while indoors; {"states": []} disarms it.
