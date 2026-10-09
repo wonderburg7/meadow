@@ -19,6 +19,7 @@ extends RefCounted
 const SaveMigrations = preload("res://scripts/save_migrations.gd")
 const SettingsCatalogue = preload("res://scripts/settings_catalogue.gd")
 const Availability = preload("res://scripts/availability.gd")
+const SaveSlots = preload("res://scripts/save_slots.gd")
 
 const SAVE_PATH := "user://meadow_save.json"
 ## Bumped 24 Sep 2026 (AP-4, plans/now/alpha-progression-spine.md): a save
@@ -139,13 +140,8 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 	if Session.run_developer_changes:
 		data["developer_changes"] = true
 
-	var file := FileAccess.open(path, FileAccess.WRITE)
-	if file == null:
-		push_error("Could not open the save file for writing: %s" % path)
-		return false
-	file.store_string(JSON.stringify(data))
-	file.close()
-	return true
+	# SI-3: all-or-nothing -- a failed write leaves the old save in place.
+	return SaveSlots.write_atomic(path, JSON.stringify(data))
 
 static func _settings_dict() -> Dictionary:
 	var out := {}
@@ -335,8 +331,11 @@ static func _flowers_data(world) -> Array:
 ## the hive geometry is laid out. `path` defaults to the player's own
 ## save slot, same as save() above.
 static func read(path: String = SAVE_PATH) -> Dictionary:
+	# SI-3: a crash between the replace's remove and rename leaves only .tmp.
 	if not has_save(path):
-		return {}
+		if not FileAccess.file_exists(path + ".tmp"):
+			return {}
+		path = path + ".tmp"
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		return {}

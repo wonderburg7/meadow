@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] SI-3 -- save, checkpoint and index writes are all-or-nothing**
-   - Plan: `plans/now/save-integrity.md` -- "SI-3 -- save, checkpoint and index writes are all-or-nothing"
-   - Files: `scripts/save_slots.gd`, `scripts/save_game.gd`, `tests/si3_atomic_write_test.gd`, `tests/test_si3_atomic_write.py`
-   - Check: `python -m unittest tests.test_si3_atomic_write` passes with `SI3 PASS`; `python tools/run_scenario.py test_scenarios/sv1_named_saves_test.json` passes; `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/save_slots.gd :: write_atomic`
-   - Next after: none -- plans/now/save-integrity.md is complete once SI-3 lands
-
-2. **[Claude] NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers**
+1. **[Claude] NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers**
    - Plan: `plans/now/nectar-fermentation.md` -- "NF-2 -- nectar ferments past an age, changes colour, and is lost to honey makers"
    - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_nf2_fermentation.py`, `test_scenarios/nf2_fermentation.json`
    - Check: `python -m unittest tests.test_nf2_fermentation` passes (a cell ferments, honey makers skip it, a top-up leaves it fermented, its stamp survives save and restore); `tools/verify.ps1` is green
    - Proof: `absent: scripts/hive_cell.gd :: func is_fermented`
    - Next after: NF-3 -- a bee that drinks fermented nectar goes tipsy
 
-3. **[Claude] T2-4b -- Bees that die in the hive leave bodies; winter's dead appear at spring**
+2. **[Claude] T2-4b -- Bees that die in the hive leave bodies; winter's dead appear at spring**
    - Plan: `plans/now/tier-two.md` -- "T2-4b -- Bees that die in the hive leave bodies; winter's dead appear at spring"
    - Files: `scripts/hive_body.gd`, `scripts/hive.gd`, `scripts/bee_survival.gd`, `scripts/season.gd`, `scripts/bee_building.gd`, `scripts/bee.gd`, `scripts/actions.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/t2_4b_bodies_test.gd`, `tests/test_t2_4b_bodies.py`
    - Check: `python -m unittest tests.test_t2_4b_bodies` passes with `T2-4B PASS`; `python tools/run_scenario.py test_scenarios/col6_winter_skip_test.json` passes; `.\tools\verify.ps1` is green
