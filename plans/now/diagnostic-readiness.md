@@ -19,33 +19,12 @@ diagnostics, but none has a named data contract.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CD-2 | missing workforce and blocked work become named, tested facts | `scripts/colony_diagnostics.gd`, `scripts/year_winter.gd`, `tests/test_colony_diagnostics.py` | yes | medium |
 | CD-3 | waiting and travel get a deterministic diagnostic boundary | same diagnostics files and focused tests | yes | medium |
 
 **Must not change.** The one-Hz cadence, existing warning text and severity,
 or any simulation, role-assignment or balance rule.
 
-## CD-2 -- missing workforce and blocked work become named, tested facts
-
-<!-- LAYER: immediate-task -->
-
-**True now.** `year_winter.gd` computes role facts and lets
-`problem_messages.gd` infer a few warnings, but there is no reusable answer
-to whether work is blocked because its workforce is absent.
-
-**True afterwards.** `ColonyDiagnostics` returns documented, non-negative
-facts for a missing required workforce and blocked cells/work, and
-`year_winter.gd` passes them through its existing one-Hz snapshot. Focused
-tests cover empty and populated colonies without adding UI copy.
-
-```queue
-**[Codex] CD-2 -- missing workforce and blocked work become named, tested facts**
-- Plan: `plans/now/diagnostic-readiness.md` -- "CD-2 -- missing workforce and blocked work become named, tested facts"
-- Files: `scripts/colony_diagnostics.gd`, `scripts/year_winter.gd`, `tests/test_colony_diagnostics.py`
-- Check: `python -m unittest tests.test_colony_diagnostics` passes with empty, staffed and blocked-cell fixtures; `tools/verify.ps1` is green
-- Proof: `present: scripts/colony_diagnostics.gd :: static func compute`
-- Next after: CD-3 -- waiting and travel get a deterministic diagnostic boundary
-```
+CD-2 shipped 2026-10-09; its specification is `plans/archive/CD-2_2026-10-09.md`.
 
 ## CD-3 -- waiting and travel get a deterministic diagnostic boundary
 
