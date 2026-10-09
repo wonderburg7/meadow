@@ -13,7 +13,7 @@ import refill_lane  # noqa: E402
 
 class DryLaneReportTest(unittest.TestCase):
     def test_successor_and_borrowable_blocks(self):
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]) as directory:
             root = Path(directory)
             (root / "plans").mkdir()
             queue = (
@@ -44,7 +44,8 @@ class DryLaneReportTest(unittest.TestCase):
             for slice_id, level, path, proof, gated in specs:
                 plan = root / "plans" / f"{slice_id}.md"
                 plan.write_text(
-                    f"## {slice_id} -- example\n\nLevel: {level}\n\n"
+                    f"## {slice_id} -- example\n\n"
+                    f"{'**Level:**' if slice_id == 'B-1' else 'Level:'} {level}\n\n"
                     f"```queue{'-gated' if gated else ''}\n"
                     f"**[Claude] {slice_id} -- example**\n"
                     f"- Plan: `plans/{slice_id}.md` -- example\n"

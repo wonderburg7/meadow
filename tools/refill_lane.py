@@ -324,14 +324,17 @@ def _successor(text: str, slice_id: str) -> str:
 
 def _entry_level(entry: backlog.Entry, root: Path) -> str:
     """Read the level stated in a block's own plan section or open-slices row."""
-    plan = (root / entry.plan).read_text(encoding="utf-8")
+    plan_path = root / entry.plan
+    if not plan_path.is_file():
+        return ""
+    plan = plan_path.read_text(encoding="utf-8")
     heading = re.search(rf"(?m)^#{{1,6}}\s+{re.escape(entry.slice_id)}\s+--.*$", plan)
     if heading:
         depth = len(heading.group().split()[0])
         rest = plan[heading.end():]
         end = re.search(rf"(?m)^#{{1,{depth}}}\s", rest)
         section = rest[:end.start()] if end else rest
-        level = re.search(r"(?im)^Level:\s*(low|medium|high)\b", section)
+        level = re.search(r"(?im)^(?:\*\*)?Level:(?:\*\*)?\s*(low|medium|high)\b", section)
         if level:
             return level.group(1).lower()
     row = re.search(rf"(?m)^\|\s*{re.escape(entry.slice_id)}\s*\|[^\n]*\|\s*(low|medium|high)\s*\|", plan)
