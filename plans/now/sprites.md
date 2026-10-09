@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-2 -- the sprite exporter and SP-3 -- cell colours follow the new sprites, both specified below with queue blocks (SP-1 landed 9 Oct 2026); SP-4 and SP-5 are specified here and get their blocks when their predecessor lands; SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; shares `scripts/hive_cell.gd`, `scripts/bee.gd`, `scripts/hive.gd` and `scripts/settings_catalogue.gd` with queued BB-1 (same lane, so they run in turn; NF-3 landed 9 Oct 2026) | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: SP-2 -- the sprite exporter and SP-3 -- cell colours follow the new sprites, both specified below with queue blocks (SP-1 landed 9 Oct 2026); SP-4 and SP-5 are specified here and get their blocks when their predecessor lands; SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; shares `scripts/hive_cell.gd`, `scripts/bee.gd` and `scripts/settings_catalogue.gd` with queued BB-2 and `scripts/hive.gd` with queued NF-4 (same lane, so they run in turn; SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-09
 
 ## Objective
 
@@ -76,16 +76,16 @@ Verified 9 Oct 2026 against master and the main checkout:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-2 | the sprite exporter, the sprite table and the generated catalogue; art moves into the new folders | tools/sprites.py and its test, assets/sprites/, scripts/sprite_catalogue.gd, `scripts/hive_cell.gd`, `tools/verify.ps1` | after SP-1 | medium |
-| SP-3 | cell colours follow the new sprites; honey moves off orange | `scripts/hive_cell.gd`, `scripts/bee.gd`, `tests/test_sp3_content_colours.py` | yes | medium |
+| SP-2 | the sprite exporter, the sprite table and the generated catalogue; art moves into the new folders | tools/sprites.py and its test, assets/sprites/, scripts/sprite_catalogue.gd, `scripts/hive_cell.gd`, `tools/verify.ps1` | yes -- SP-1 landed 9 Oct 2026; queued in the Claude lane | medium |
+| SP-3 | cell colours follow the new sprites; honey moves off orange | `scripts/hive_cell.gd`, `scripts/bee.gd`, `tests/test_sp3_content_colours.py` | yes -- queued in the Claude lane | medium |
 | SP-4 | nectar and pollen fill levels drawn from the sprites | `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, the sprite table and catalogue, tests | after SP-2 and SP-3 | medium |
 | SP-5 | the skep in the meadow, and the rival hive as a recoloured skep | `scripts/hive.gd`, `scripts/rival_hive.gd`, the sprite table and catalogue, tests | after SP-2 | medium |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for Dave's repacked sheet | high (per-bee hot path) |
 
-Dependencies: SP-1 -> SP-2 -> SP-4 -> SP-5 -> SP-6. SP-3 can land at any
-time before SP-4. **BB-1** (`plans/now/bee-bread.md`) adds a bee bread
-colour to `hive_cell.gd`: whichever of BB-1 and SP-3 lands second checks
-that colour against SP-3's distinct-colour test.
+Dependencies: SP-2 -> SP-4 -> SP-5 -> SP-6 (SP-1 landed 9 Oct 2026). SP-3
+can land at any time before SP-4. **BB-1** (`plans/now/bee-bread.md`)
+landed 9 Oct 2026 with a bee bread colour in `hive_cell.gd`, so SP-3 checks
+that colour against its distinct-colour test.
 
 SP-1 shipped 2026-10-09; its specification is `plans/archive/SP-1_2026-10-09.md`.
 
