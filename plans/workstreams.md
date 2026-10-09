@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/T2-4b` (`claude/T2-4b`) | Claude | Bees that die in the hive leave bodies; winter's dead appear at spring | Claude | in progress | none | `plans/now/tier-two.md` T2-4b -- Bees that die in the hive leave bodies; winter's dead appear at spring |
+| `.worktrees/CD-3` (`codex/CD-3`) | Codex | waiting and travel get a deterministic diagnostic boundary | Codex | in progress | none | `plans/now/diagnostic-readiness.md` CD-3 -- waiting and travel get a deterministic diagnostic boundary |
