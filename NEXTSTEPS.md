@@ -42,35 +42,28 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] WC-1 -- a deferral whose gate has cleared is flagged**
-   - Plan: `plans/now/workflow-checks.md` -- "WC-1 -- a deferral whose gate has cleared is flagged"
-   - Files: `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py`
-   - Check: `python -m unittest tests.test_wc1_stale_deferrals` passes (a stale gate warns, an unshipped gate and a "landed" clause do not); `python tools/check_docs.py` on master prints the warning for NF-2's COL-4 and NF-1; `tools/verify.ps1` is green
-   - Proof: `absent: tools/check_docs.py :: waits for an archived slice`
-   - Next after: WC-2 -- a dry-lane warning names the missing deferral and the specified blocks that could serve the lane
-
-2. **[Codex] WC-3 -- Codex's hooks log its sessions**
+1. **[Codex] WC-3 -- Codex's hooks log its sessions**
    - Plan: `plans/now/workflow-checks.md` -- "WC-3 -- Codex's hooks log its sessions"
    - Files: `.codex/hooks.json`, `tests/test_wc3_codex_hooks.py`
    - Check: `python -m unittest tests.test_wc3_codex_hooks` passes with `CLAUDE_PROJECT_DIR` unset; `tools/verify.ps1` is green
    - Proof: `present: .codex/hooks.json :: $CLAUDE_PROJECT_DIR/tools/hook_log.py`
    - Next after: WC-4 -- a queue id with whitespace fails the documentation check
 
-3. **[Codex] FC-1 -- define the first-crisis readiness and evidence contract**
+2. **[Codex] FC-1 -- define the first-crisis readiness and evidence contract**
    - Plan: `plans/now/crisis-readiness.md` -- "FC-1 -- define the first-crisis readiness and evidence contract"
    - Files: `plans/now/crisis-readiness.md`, `plans/design/product-scope.md`
    - Check: `python tools/check_docs.py` passes and FC-1 names a trigger, readiness input, visible cause and deterministic scenario boundary
    - Proof: `present: scripts/main.gd :: func _advance_weather`
    - Next after: FC-2 -- implement the accepted crisis and deterministic scenario
 
-4. **[Codex] CD-3 -- waiting and travel get a deterministic diagnostic boundary**
+3. **[Codex] CD-3 -- waiting and travel get a deterministic diagnostic boundary**
    - Plan: `plans/now/diagnostic-readiness.md` -- "CD-3 -- waiting and travel get a deterministic diagnostic boundary"
    - Files: `scripts/colony_diagnostics.gd`, `scripts/year_winter.gd`, `tests/test_colony_diagnostics.py`
    - Check: `python -m unittest tests.test_colony_diagnostics` passes with waiting, travelling and no-work fixtures; `tools/verify.ps1` is green
    - Proof: `present: scripts/year_winter.gd :: func _refresh_signals`
    - Next after: none -- diagnostic readiness is complete
 
-5. **[Codex] WC-5 -- the two level-to-model tables are tested against each other**
+4. **[Codex] WC-5 -- the two level-to-model tables are tested against each other**
    - Plan: `plans/now/workflow-checks.md` -- "WC-5 -- the two level-to-model tables are tested against each other"
    - Files: `tools/session_cost.py`, `tests/test_wc5_level_model_parity.py`
    - Check: `python -m unittest tests.test_wc5_level_model_parity` passes, and fails when one `LEVEL_MODELS` entry is edited by hand; `tools/verify.ps1` is green
