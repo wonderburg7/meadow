@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/WC-1` (`codex/WC-1`) | Codex | a deferral whose gate has cleared is flagged | Codex | in progress | none | `plans/now/workflow-checks.md` WC-1 -- a deferral whose gate has cleared is flagged |
+| `.worktrees/SI-2` (`claude/SI-2`) | Claude | a checkpoint restore puts back soil dug since the checkpoint | Claude | in progress | none | `plans/now/save-integrity.md` SI-2 -- a checkpoint restore puts back soil dug since the checkpoint |
