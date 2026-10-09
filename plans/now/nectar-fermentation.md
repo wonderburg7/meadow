@@ -92,14 +92,15 @@ Verified 6 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| NF-4 | the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; without it, closest first (decisions 4-5) | specified after NF-3 | no -- after NF-3 | high |
+| NF-4 | the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; without it, closest first (decisions 4-5) | see its `Files:` line below | no -- outlined and fenced `queue-gated`; waits for Dave's nurse and Restocking answers under "Still open" (NF-3 landed 9 Oct 2026) | high |
 | NF-5 | an order to clear fermented cells, built on the cell popup's eviction orders (decision 6) | `scripts/bee_building.gd`, `scripts/orders_zones.gd`, `scripts/hud.gd`, `scripts/main.gd`, `scripts/scenario_actions.gd`, `tests/test_nf5_clear_fermented.py`, `test_scenarios/nf5_clear_fermented.json` | yes -- queued in the Claude lane (specified 9 Oct 2026) | medium |
 
 **Dependencies.** NF-1, then NF-2, both landed. NF-3 and NF-5 each follow
 NF-2, and NF-4 follows NF-3. Bee Bread's BB-1 (`plans/now/bee-bread.md`)
-shares `hive.gd`, `game_config.gd`, `settings_catalogue.gd` and the save
-files with NF-3, and `orders_zones.gd` and `hud.gd` with NF-5; all three
-are in the Claude lane, which runs them one branch at a time, so none may
+shared `hive.gd`, `game_config.gd`, `settings_catalogue.gd` and the save
+files with NF-3 (landed 9 Oct 2026), and shares `orders_zones.gd` and
+`hud.gd` with NF-5 and `hive.gd` and `bee_honey.gd` with NF-4; all are
+in the Claude lane, which runs them one branch at a time, so none may
 move to the Codex lane while another is queued (T2-4b, which shared them
 too, landed 9 Oct 2026). NF-5's `hud.gd`, `main.gd` and
 `scenario_actions.gd` are also in `plans/now/crisis-readiness.md` FC-2's

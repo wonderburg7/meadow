@@ -37,6 +37,20 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/orders_zones.gd :: is_fermented`
    - Next after: NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first
 
+3. **[Claude] SP-1 -- crisp pixels on the comb cell**
+   - Plan: `plans/now/sprites.md` -- "SP-1 -- crisp pixels on the comb cell"
+   - Files: `assets/shaders/pixel_sharp.gdshader`, `scripts/pixel_sprite.gd`, `scripts/hive_cell.gd`, `tests/sp1_pixel_sprite_test.gd`, `tests/test_sp1_pixel_sprite.py`
+   - Check: `python -m unittest tests.test_sp1_pixel_sprite` passes (an empty HiveCell's sprite carries PixelSprite's shared material, linear filtering and the hive pixel scale); `tools/verify.ps1` is green
+   - Proof: `absent: scripts/hive_cell.gd :: PixelSprite`
+   - Next after: SP-2 -- the sprite exporter, the sprite table and the generated catalogue
+
+4. **[Claude] SP-3 -- cell colours follow the new sprites**
+   - Plan: `plans/now/sprites.md` -- "SP-3 -- cell colours follow the new sprites"
+   - Files: `scripts/hive_cell.gd`, `scripts/bee.gd`, `tests/test_sp3_content_colours.py`
+   - Check: `python -m unittest tests.test_sp3_content_colours` passes (nectar and pollen equal the sprite fills, and every pair of cell-content colours is at least 0.10 apart in OKLab); `tools/verify.ps1` is green
+   - Proof: `present: scripts/hive_cell.gd :: const NECTAR_COLOR := Color(0.747, 0.834, 0.8525)`
+   - Next after: SP-4 -- nectar and pollen fill levels drawn from the sprites
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -61,12 +75,12 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation, Bee Bread and the gyne route.
-- **CD-3** (`plans/now/diagnostic-readiness.md`) -- waiting and travel get a deterministic diagnostic boundary; waits for NF-3 and BB-1 to release `scripts/bee.gd`.
+- **CD-3** (`plans/now/diagnostic-readiness.md`) -- waiting and travel get a deterministic diagnostic boundary; waits for BB-1, queued in the Claude lane, to release `scripts/bee.gd` (NF-3 landed 9 Oct 2026).
 - **GD-2** (`plans/now/guidance-explanations.md`) -- implement the accepted persistent entry point and first explanations; waits for Dave's GD-1 decision.
-- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for NF-3, BB-1 and NF-5 (Claude lane) to release the save, HUD and scenario files and for CD-3 to release diagnostics.
+- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for BB-1 and NF-5 (Claude lane) to release the save, HUD and scenario files and for CD-3 to release diagnostics (NF-3 landed 9 Oct 2026).
 - **T2-6 and T2-7** (`plans/now/tier-two.md`) -- the rest of progression step 8: T2-6 (Associative learning) is specified and fenced `queue-gated`, and waits for Dave's decision on its familiarity rates, handling-speed cap and old-save default; T2-7 (tier-2 prices) is still to be specified, and T2-6's block names it next. T2-8b and T2-4b (bodies) landed 9 Oct 2026.
 - **BB-2 to BB-4** (`plans/now/bee-bread.md`) -- the rest of Bee Bread; BB-2 and BB-3 wait for BB-1, queued in the Claude lane, and BB-4 for BB-2.
-- **NF-4** (`plans/now/nectar-fermentation.md`) -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; waits for NF-3, queued in the Claude lane, and is specified when it lands.
+- **NF-4** (`plans/now/nectar-fermentation.md`) -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; outlined and fenced `queue-gated` now that NF-3 has landed (9 Oct 2026); waits for Dave's answers on whether nurses may carry fermented nectar to brood and whether Restocking may draw from a fermented cell (the plan's "Still open").
 - **Dr Gallerin guidance and the event director** (`plans/design/product-scope.md` §6.2) -- each needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Gallerin guidance is the next design pass, now that step 8's ran on 6-7 Oct 2026 (booked by Dave, 5 Oct 2026); the event director's wait on the Colony Run's year (COL-4, COL-6) has cleared; it still needs its design pass. The four goal layers now belong to the Colony Run definition (Dave, 30 Sep 2026; `plans/archive/colony-run_2026-10-08.md`).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
