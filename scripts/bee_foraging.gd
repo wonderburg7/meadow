@@ -561,6 +561,18 @@ static func shelter(bee: Node2D, _delta: float) -> void:
 		bee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT if bee._is_inside_hive() else State.SEEK_FLOWER)
 
 
+## Rain recall interrupts any outdoor task once heavy rain has arrived.
+## Keep this on the bee's think tick; it need not scan the meadow per frame.
+static func recall_for_rain(bee: Node2D) -> void:
+	if bee._is_inside_hive() or bee.state in [State.TO_HIVE]:
+		return
+	if BeeStatus.rain_recall_on():
+		if bee.current_flower != null and is_instance_valid(bee.current_flower):
+			bee.current_flower.release(bee)
+			bee.current_flower = null
+		bee.state = autonomous_state(bee, State.TO_HIVE)
+
+
 # --- skill-or-setting behaviour switches ---------------------------
 ## AP-2: a behaviour is on when its setting is on OR an owned skill enables
 ## it (plans/design/progression.md section 11). Session.progression is null
@@ -1069,7 +1081,7 @@ static func _score_trip(bee: Node2D) -> void:
 static func go_to_exit(bee: Node2D, delta: float) -> void:
 	# No point walking out into weather that costs more to fly in than the
 	# trip would bring back. Wait inside, where the food is.
-	if bee.role == Role.FORAGER and BeeStatus.grounded(bee):
+	if bee.role == Role.FORAGER and BeeStatus.grounded_for_departure(bee):
 		bee.state = State.SHELTERING
 		return
 

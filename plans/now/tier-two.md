@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-5 -- Weather sensing's rain half, Rain recall, and rain on in the Colony Run | Dependency: COL-4 and COL-6 landed; T2-4b follows T2-4a; T2-6 follows T2-5 | Verified: 2026-10-08
+Status: active | Owner: Dave / Claude Code | Next: T2-6 -- Associative learning (specification needed) | Dependency: COL-4 and COL-6 landed; T2-4b follows T2-4a; T2-6 follows T2-5 | Verified: 2026-10-09
 
 ## Objective
 
@@ -54,7 +54,7 @@ Verified 7 Oct 2026 against master:
 | --- | --- | --- | --- | --- |
 | T2-4b | Bees that die in the hive leave bodies; winter's dead appear at spring | to be specified now T2-4a has landed (8 Oct 2026) | no -- not yet specified; T2-4a and COL-6 have landed | high |
 | T2-5 | Weather sensing's rain half, Rain recall, and rain on in the Colony Run | `scripts/skills.gd`, `scripts/bee_status.gd`, `scripts/bee_foraging.gd`, `scripts/bee.gd`, `scripts/main.gd`, `scripts/levels.gd`, `tests/test_t2_5_rain_skills.py`, `tests/t2_5_rain_skills_test.gd` | yes -- COL-4 and T2-3 landed | medium |
-| T2-6 | Associative learning: per-bee, per-species familiarity, saved | specified when T2-5 lands | no -- after COL-4 (`game_config.gd`, `settings_catalogue.gd`) | high |
+| T2-6 | Associative learning: per-bee, per-species familiarity, saved | `scripts/skills.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd` | no -- rate and save acceptance need specification | high |
 | T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | specified when T2-1 to T2-3 and COL-4 have landed | no -- needs COL-4's year and the gates | medium |
 | T2-8b | Shiver Cluster, the skill: the node, and owned at run start outside the Colony Run | `scripts/skills.gd`, `scripts/run_availability.gd`, `tests/test_t2_8a_shiver_bill.py`, `tests/test_t2_8b_shiver_skill.py` | no -- after T2-5 (Codex lane, `skills.gd`; T2-4a landed 8 Oct 2026); specified, fenced `queue-gated` | medium |
 
@@ -91,7 +91,9 @@ T2-4a shipped 2026-10-08; its specification is `plans/archive/T2-4a_2026-10-08.m
 Level: medium (bounded rain behaviour and run-specific weather policy).
 
 **True now.** `bee_status.gd::grounded` stops new trips only when current rain
-intensity passes `rain_forage_limit`. Bees already outside continue their work.
+intensity passes `rain_forage_limit`. Outdoor bees in `SEEK_FLOWER` or
+`SEARCHING` already turn home at that intensity; bees in other outdoor tasks
+continue their work.
 `main.gd::_advance_weather` requires `GameConfig.weather_on`, so the Colony
 Run's level row cannot turn rain on when the global setting is off. Weather
 sensing and Rain recall are authored in `skills.gd` but have no effect.
@@ -99,7 +101,8 @@ sensing and Rain recall are authored in `skills.gd` but have no effect.
 **True afterwards.** With Weather sensing owned, the departure check reads
 the approaching `main.gd::rain_target` at the same forage limit; without it,
 the check still reads current intensity. With Rain recall owned, bees already
-outside head home when current intensity passes that limit. Neither skill
+outside in other tasks, including travel, inspection and collection, head
+home when current intensity passes that limit. Neither skill
 changes nectar dilution or flight cost. The Colony Run row explicitly enables
 rain even if `GameConfig.weather_on` is false. Challenge rows keep rain off;
 Scenario rows without a weather override still follow the setting. The two
@@ -118,7 +121,38 @@ weather, and the existing weather behaviour of Challenges and Scenarios.
 - Next after: T2-6 -- Associative learning
 ```
 
+**PE-2 three-seed arc (2026-10-09).** `python tools/pacing_gates.py`
+was started before the edits and repeated after them. Both invocations
+reported first worker median day 16.87 (target 1.50, out of band), first
+automation/crisis/winter survival/gyne unavailable, and per-seed first
+workers on days 16.87, 22.27 and 16.87; seeds 20260924 and 20260925
+survived winter with 9 and 3 bees, while 20260923 died. The first invocation
+overlapped the edits, so it is not a clean pre-change baseline; the repeated
+final-state run is the reliable measurement. C-117 is filed for the visible
+rain timing in the Colony Run.
+
 T2-8a shipped 2026-10-08; its specification is `plans/archive/T2-8a_2026-10-08.md`.
+
+## T2-6 -- Associative learning
+
+<!-- LAYER: immediate-task -->
+
+This successor needs its per-species gain and fade rates, handling-speed cap,
+and old-save default specified before implementation. The intended behaviour
+is recorded in "Later slices" below; T2-5 does not choose those values.
+
+```queue-gated
+**[Codex] T2-6 -- Associative learning**
+- Plan: `plans/now/tier-two.md` -- "T2-6 -- Associative learning"
+- Files: `scripts/skills.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd`
+- Check: a headless run shows per-bee, per-species familiarity rising on visits, fading while working other species, changing handling speed only when owned, and surviving save/load; `tools/verify.ps1` is green
+- Proof: `absent: scripts/bee.gd :: species_familiarity`
+- Next after: T2-7 -- Tier-2 costs tuned so the first purchase lands around day 5
+```
+
+## Not in the queue, and why
+
+- T2-6 waits for its rates, cap, and old-save acceptance to be specified before the high-risk save change starts.
 
 ## T2-8b -- Shiver Cluster, the skill
 

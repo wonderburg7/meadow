@@ -466,8 +466,8 @@ const SKILLS := [
 		"sector": "ecology", "tier": 1, "axial": Vector2i(-3, 3),
 		"max_rank": 1, "cost": {NECTAR: 120, POLLEN: 50},
 		"requires_previous_tier": true, "all_of": [], "any_of": [],
-		"feature": Features.WEATHER, "introduced_by": "", "effects": [], "icon": "",
-		"status": "existing_foundation", "baseline": false, "open": false,
+		"feature": Features.WEATHER, "introduced_by": "", "effects": [{"type": "enable_behaviour", "key": "weather_sensing_on"}], "icon": "",
+		"status": "existing", "baseline": false, "open": false,
 	},
 	{
 		"id": RAIN_RECALL, "name": "Rain recall",
@@ -475,8 +475,8 @@ const SKILLS := [
 		"sector": "ecology", "tier": 2, "axial": Vector2i(-5, 5),
 		"max_rank": 1, "cost": {HONEY: 20, NECTAR: 170},
 		"requires_previous_tier": true, "all_of": [WEATHER_SENSING], "any_of": [],
-		"feature": Features.WEATHER, "introduced_by": "", "effects": [], "icon": "",
-		"status": "new", "baseline": false, "open": false,
+		"feature": Features.WEATHER, "introduced_by": "", "effects": [{"type": "enable_behaviour", "key": "rain_recall_on"}], "icon": "",
+		"status": "existing", "baseline": false, "open": false,
 	},
 
 	# --- Hive Mind ------------------------------------------------

@@ -2692,24 +2692,27 @@ def check_progression_tier_and_cost(problems):
 
 # --- progression transcribed effects (section 11 Phase A step 4) ---
 
-# The only two skills this step may give a non-empty effects list, and
-# exactly what each must contain -- the enable_behaviour transcription of
-# a GameConfig toggle that already ships, not a guessed magnitude.
+# Skill effects admitted by their named content steps. The first three
+# transcribe GameConfig toggles; T2-5's two keys are owned-skill behaviours.
 TRANSCRIBED_EFFECTS = {
     "skill.foraging.tarsal_secretions": ("enable_behaviour", "tarsal_markers_on"),
     "skill.foraging.orientation_flight": ("enable_behaviour", "orientation_flight_on"),
     # T2-3: adaptive constancy is a bought behaviour, its own content step.
     "skill.foraging.adaptive_constancy": ("enable_behaviour", "adaptive_constancy_on"),
+    # T2-5: weather sensing and rain recall use live rain values, not toggles.
+    "skill.ecology.weather_sensing": ("enable_behaviour", "weather_sensing_on"),
+    "skill.ecology.rain_recall": ("enable_behaviour", "rain_recall_on"),
 }
+SKILL_ONLY_BEHAVIOURS = {"weather_sensing_on", "rain_recall_on"}
 
 
 def check_progression_transcribed_effects(problems):
-    """Section 11 Phase A step 4: Tarsal secretions and Orientation
-    flight carry exactly the enable_behaviour transcription of the
-    GameConfig toggle already shipping as tarsal_markers_on/
-    orientation_flight_on, every other skill's effects stays [], and the
-    toggle each one names still exists in game_config.gd -- otherwise
-    is_behaviour_enabled() would resolve a key nothing sets any more."""
+    """Check named enable_behaviour effects from their content steps.
+
+    The first three keys transcribe GameConfig toggles. T2-5's weather
+    keys are meaningful only through owned skills and live rain values.
+    Unlisted skills still keep an empty effects list.
+    """
     data = _progression_catalogue_data(problems)
     if data is None:
         return
@@ -2733,8 +2736,7 @@ def check_progression_transcribed_effects(problems):
             if effects:
                 problems.append(
                     "skills.gd: %s has a non-empty effects list -- section 11 "
-                    "Phase A step 4 authors effects only for Tarsal secretions, "
-                    "Orientation flight and Adaptive constancy, everything else stays [] until "
+                    "only named content steps author effects; everything else stays [] until "
                     "its own content step reaches it" % owner
                 )
             continue
@@ -2753,7 +2755,7 @@ def check_progression_transcribed_effects(problems):
                 "of its existing GameConfig toggle"
                 % (owner, effect_type, effect_key, expected_type, expected_key)
             )
-        elif expected_key not in config_vars:
+        elif expected_key not in config_vars and expected_key not in SKILL_ONLY_BEHAVIOURS:
             problems.append(
                 "game_config.gd: no var %s -- skills.gd's %s effect names a "
                 "toggle that no longer exists" % (expected_key, owner)

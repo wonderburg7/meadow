@@ -913,8 +913,7 @@ func _sample_day_stores() -> void:
 ## and past `rain_forage_limit` makes a trip cost more than it returns,
 ## at which point foragers stay in.
 func _advance_weather(delta: float) -> void:
-	var level: Dictionary = Levels.get_level(Session.starting_level)
-	if not GameConfig.weather_on or not level.get("weather", true):
+	if not Levels.weather_enabled(Session.starting_level):
 		Session.rain_intensity = 0.0
 		_apply_rain_overlay()
 		return
