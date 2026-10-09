@@ -1144,7 +1144,7 @@ func _update_role_marker() -> void:
 	match role:
 		Role.FORAGER:
 			centre_dot.visible = true
-			centre_dot.color = Color(1.0, 1.0, 0.6) if resource_type == "pollen" else Color(0.6, 0.85, 1.0)
+			centre_dot.color = Color(1.0, 0.48235, 0.0) if resource_type == "pollen" else Color(0.73333, 0.97255, 0.14118)
 		Role.MINER:
 			outline_ring.visible = true
 			outline_ring.color = Color(0.55, 0.35, 0.18)   # brown
