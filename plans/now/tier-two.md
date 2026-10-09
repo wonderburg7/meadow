@@ -122,14 +122,13 @@ weather, and the existing weather behaviour of Challenges and Scenarios.
 ```
 
 **PE-2 three-seed arc (2026-10-09).** `python tools/pacing_gates.py`
-was started before the edits and repeated after them. Both invocations
-reported first worker median day 16.87 (target 1.50, out of band), first
-automation/crisis/winter survival/gyne unavailable, and per-seed first
-workers on days 16.87, 22.27 and 16.87; seeds 20260924 and 20260925
-survived winter with 9 and 3 bees, while 20260923 died. The first invocation
-overlapped the edits, so it is not a clean pre-change baseline; the repeated
-final-state run is the reliable measurement. C-117 is filed for the visible
-rain timing in the Colony Run.
+was run from clean master (`594c3c6`) for the before baseline and from this
+branch after the rain changes. Both runs reported first worker median day
+16.87 (target 1.50, out of band), first automation/crisis/winter
+survival/gyne unavailable, and per-seed first workers on days 16.87, 22.27
+and 16.87. Seeds 20260924 and 20260925 survived winter with 9 and 3 bees;
+20260923 died. No measured pacing gate changed. C-117 is filed for the
+visible rain timing in the Colony Run.
 
 T2-8a shipped 2026-10-08; its specification is `plans/archive/T2-8a_2026-10-08.md`.
 
