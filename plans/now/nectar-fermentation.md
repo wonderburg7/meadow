@@ -1,7 +1,7 @@
 # Nectar fermentation -- unprocessed nectar ferments, and tipsy bees pay for it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: NF-5 -- clear fermented cells, queued in the Claude lane; NF-4 -- the detection skill, outlined below and gated on Dave's nurse and Restocking answers (NF-3 built 9 Oct 2026; its tipsy duration awaits Dave's choice, see its sweep) | Dependency: none (NF-2 landed 9 Oct 2026); NF-4 follows NF-3 | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: NF-5 -- clear fermented cells, queued in the Claude lane; NF-4 -- the detection skill, outlined below and gated on Dave's nurse and Restocking answers (NF-3 built 9 Oct 2026, with Dave's 300-second tipsiness from its sweep) | Dependency: none (NF-2 landed 9 Oct 2026); NF-4 follows NF-3 | Verified: 2026-10-09
 
 ## Objective
 
@@ -173,11 +173,10 @@ Strength barely matters, because a forager is tipsy for only one trip in
 six; duration does. The two targets conflict: one sip costing a single
 trip (about 60 s) loses about 2% of forage a day, which is not visible,
 while a visible loss (5% or more) needs 180-300 s, three to five trips per
-sip. Built with the single-trip reading: `tipsy_seconds` 60, speed 0.6,
-vision 0.5, wobble 35 degrees, wander 0.05 a second for 6 s. Dave chooses
-which target wins before NF-3 merges; the other reading is a one-line change
-to `tipsy_seconds` in `game_config.gd`. Indoor workers carry the visible
-cost either way: a tipsy nurse, builder or honey maker walks at 0.6 and
+sip. Dave chose the visible loss (9 Oct 2026): built with `tipsy_seconds`
+300 (about five trips per sip, -6.4% forage a day), speed 0.6, vision 0.5,
+wobble 35 degrees, wander 0.05 a second for 6 s. Indoor workers carry a
+visible cost too: a tipsy nurse, builder or honey maker walks at 0.6 and
 breaks off into a wander about three times a minute.
 
 **Must not change.** Eating order, honey ripening, fermentation itself, and

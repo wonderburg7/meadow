@@ -631,8 +631,10 @@ var nectar_ferment_hours: float = 96.0
 ## it breaks off at tipsy_wander_chance per second into a confused wander
 ## of tipsy_wander_seconds before walking back to the task.
 ## Set from NF-3's headless sweep -- see plans/now/nectar-fermentation.md,
-## "NF-3 -- a bee that drinks fermented nectar goes tipsy".
-var tipsy_seconds: float = 60.0
+## "NF-3 -- a bee that drinks fermented nectar goes tipsy". Dave chose 300 s
+## (9 Oct 2026): about five forager trips per sip, for a visible loss of
+## about 6% of forage a day in a colony eating mostly fermented nectar.
+var tipsy_seconds: float = 300.0
 var tipsy_speed_factor: float = 0.6
 var tipsy_vision_factor: float = 0.5
 var tipsy_wobble_degrees: float = 35.0
