@@ -46,4 +46,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/T2-8b` (`claude/T2-8b`) | Claude | Shiver Cluster, the skill | Claude | in progress | none | `plans/now/tier-two.md` T2-8b -- Shiver Cluster, the skill |
