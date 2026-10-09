@@ -15,9 +15,12 @@ the top-up keeps the old stamp, and that the stamp survives save and restore.
 from __future__ import annotations
 
 import json
+import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
 TOOLS = ROOT / "tools"
@@ -48,17 +51,22 @@ class FermentationTest(unittest.TestCase):
         scenario = json.loads(FIXTURE.read_text(encoding="utf-8"))
         cls.hour = float(scenario["config_overrides"]["seconds_per_day"]) / 24.0
         cls.threshold = float(scenario["config_overrides"]["nectar_ferment_hours"]) * cls.hour
-        session_file = run_once(FIXTURE, godot_path, timeout=300, fixed_fps=30)
-        if session_file is None:
-            raise AssertionError("scenario run produced no session log")
-        cls.rejected = [e for e in load_entries(session_file)
-                        if e.get("type") == "action" and e.get("result") == "rejected"]
-        scratch = log_dir().parent / "scenario_saves"
-        cls.saves = {}
-        for name in SAVES:
-            path = scratch / ("nf2-%s.json" % name)
-            if path.exists():
-                cls.saves[name] = json.loads(path.read_text(encoding="utf-8"))
+        # Keep Godot's user:// files in the writable worktree. The Windows
+        # sandbox's temporary APPDATA can hide saved slots from Python after
+        # the Godot child process exits, despite a readable session log.
+        with tempfile.TemporaryDirectory(prefix="nf2-godot-", dir=ROOT) as appdata:
+            with patch.dict(os.environ, {"APPDATA": appdata}):
+                session_file = run_once(FIXTURE, godot_path, timeout=300, fixed_fps=30)
+                if session_file is None:
+                    raise AssertionError("scenario run produced no session log")
+                cls.rejected = [e for e in load_entries(session_file)
+                                if e.get("type") == "action" and e.get("result") == "rejected"]
+                scratch = log_dir().parent / "scenario_saves"
+                cls.saves = {}
+                for name in SAVES:
+                    path = scratch / ("nf2-%s.json" % name)
+                    if path.exists():
+                        cls.saves[name] = json.loads(path.read_text(encoding="utf-8"))
 
     def setUp(self):
         self.assertEqual(self.rejected, [], "a scenario action was rejected")

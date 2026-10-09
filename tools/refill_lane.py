@@ -311,6 +311,71 @@ def gated_reason(text: str, slice_id: str) -> str:
     return "no bullet under '## Not in the queue, and why' says what it waits for"
 
 
+def _successor(text: str, slice_id: str) -> str:
+    """The closing item's named next slice, if it has one."""
+    for _, chunk in check_docs.queue_item_chunks(text) or []:
+        if not re.match(rf"\*\*\[\w+\]\s+{re.escape(slice_id)}\s+--", chunk):
+            continue
+        line = check_docs.NO_SUCCESSOR.search(chunk)
+        if line and not line.group(1).lower().startswith("none"):
+            return line.group(1).split("--", 1)[0].strip()
+    return ""
+
+
+def _entry_level(entry: backlog.Entry, root: Path) -> str:
+    """Read the level stated in a block's own plan section or open-slices row."""
+    plan_path = root / entry.plan
+    if not plan_path.is_file():
+        return ""
+    plan = plan_path.read_text(encoding="utf-8")
+    heading = re.search(rf"(?m)^#{{1,6}}\s+{re.escape(entry.slice_id)}\s+--.*$", plan)
+    if heading:
+        depth = len(heading.group().split()[0])
+        rest = plan[heading.end():]
+        end = re.search(rf"(?m)^#{{1,{depth}}}\s", rest)
+        section = rest[:end.start()] if end else rest
+        level = re.search(r"(?im)^(?:\*\*)?Level:(?:\*\*)?\s*(low|medium|high)\b", section)
+        if level:
+            return level.group(1).lower()
+    row = re.search(rf"(?m)^\|\s*{re.escape(entry.slice_id)}\s*\|[^\n]*\|\s*(low|medium|high)\s*\|", plan)
+    return row.group(1).lower() if row else ""
+
+
+def borrowable_blocks(text: str, lane: str, root: Path,
+                      entries: list[backlog.Entry]) -> list[dict[str, str]]:
+    """Ready blocks in the other lane whose files do not touch this lane."""
+    queued = {slice_id for _, slice_id in queued_ids(text)}
+    deferred = deferred_ids(text)
+    owned = lane_files(text, lane)
+    found: list[dict[str, str]] = []
+    for entry in entries:
+        if entry.lane == lane or entry.gated or entry.slice_id in queued | deferred:
+            continue
+        level = _entry_level(entry, root)
+        if level not in {"low", "medium"} or check_docs._item_files(entry.body) & owned:
+            continue
+        proof_errors: list[str] = []
+        check_docs.validate_queue_proof(entry.body, 0, root, proof_errors)
+        if not proof_errors:
+            found.append({"id": entry.slice_id, "plan": entry.plan, "level": level})
+    return found
+
+
+def dry_lane_advice(report: dict, queued: set[str] | None = None) -> list[str]:
+    """Actionable human wording for both the refill log and lookahead."""
+    advice = []
+    if (report["successor"] and not report["successor_deferred"]
+            and report["successor"] not in (queued or set())):
+        advice.append(f"{report['successor']} is neither queued nor deferred -- add its bullet "
+                      "under '## Not in the queue, and why'")
+    for entry in report["borrowable"]:
+        other_lane = next(lane for lane in check_docs.LANES if lane != report["lane"])
+        advice.append(f"the {other_lane} backlog holds {entry['id']} "
+                      f"({entry['level']}, {entry['plan']}) that this lane could take "
+                      "if Dave reassigns it")
+    return advice
+
+
 def top_up(text: str, lane: str, root: Path, prefer: list[str],
            entries: list[backlog.Entry], log: list[str],
            closed: set[str] | None = None) -> str:
@@ -357,6 +422,11 @@ def top_up(text: str, lane: str, root: Path, prefer: list[str],
                        f"blames a full {lane} lane, which has a free slot; keep only its other reason")
         log.append(f"  the {lane} lane holds {held} of {check_docs.LANE_SIZE_MAX}; the backlog "
                    "has no further admissible block for it.")
+        report = {"lane": lane, "successor": prefer[0] if prefer else "",
+                  "successor_deferred": bool(prefer and prefer[0] in deferred_ids(text)),
+                  "borrowable": borrowable_blocks(text, lane, root, entries)}
+        log.extend(f"    {line}" for line in
+                   dry_lane_advice(report, {slice_id for _, slice_id in queued_ids(text)}))
         gated = [e for e in entries if e.lane == lane and e.gated]
         for entry in gated:
             log.append(f"    gated: {entry.slice_id} ({entry.plan}) -- {gated_reason(text, entry.slice_id)}")
@@ -387,9 +457,13 @@ def dry_after_report(text: str, lane: str, slice_id: str, root: Path,
     queue_after = len(queued_ids(after))
     gated = [e.slice_id for e in entries if e.lane == lane and e.gated]
     short = lane_after == 0 or queue_after < check_docs.QUEUE_SIZE_MIN
+    successor = _successor(text, slice_id)
+    borrowable = borrowable_blocks(after, lane, root, entries)
     return {"id": slice_id, "lane": lane, "lane_after": lane_after,
             "queue_after": queue_after, "would_add": added, "gated": gated,
-            "dry_after": bool(short and not added)}
+            "dry_after": bool(short and not added), "successor": successor,
+            "successor_deferred": bool(successor and successor in deferred_ids(text)),
+            "borrowable": borrowable}
 
 
 # --- the lifecycle lock (L-19) ---

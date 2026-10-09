@@ -456,9 +456,12 @@ def check_queue_lookahead(warnings: list[str], text: str | None = None,
             continue
         report = refill_lane.dry_after_report(text, lane, first, root, entries)
         if report["dry_after"]:
+            advice = refill_lane.dry_lane_advice(
+                report, {slice_id for _, slice_id in queued})
             warnings.append(
                 f"lookahead: closing {first} would leave the {lane} lane short with "
                 "nothing admissible behind it; specify the owning plan's next slice"
+                + ("; " + "; ".join(advice) if advice else "")
             )
 
 

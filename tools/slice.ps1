@@ -2381,7 +2381,10 @@ function Invoke-SliceFinish {
         # broke when handed to git as a command-line argument, failing the
         # merge with a mangled ref-like error ("not something we can merge").
         # A file sidesteps command-line quoting entirely.
-        $mergeMessageFile = New-TemporaryFile
+        # `New-TemporaryFile` is not a PowerShell cmdlet.  Use the .NET
+        # equivalent so the closeout works in both Windows PowerShell 5.1 and
+        # PowerShell 7, which the lifecycle fixtures exercise.
+        $mergeMessageFile = [System.IO.Path]::GetTempFileName()
         try {
             # Set-Content's UTF8 always writes a BOM in Windows PowerShell 5.1
             # (no utf8NoBOM encoding exists here), which git would fold into
