@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/WC-1` (`codex/WC-1`) | Codex | a deferral whose gate has cleared is flagged | Codex | in progress | none | `plans/now/workflow-checks.md` WC-1 -- a deferral whose gate has cleared is flagged |
+| `.worktrees/T2-8b` (`claude/T2-8b`) | Claude | Shiver Cluster, the skill | Claude | in progress | none | `plans/now/tier-two.md` T2-8b -- Shiver Cluster, the skill |
