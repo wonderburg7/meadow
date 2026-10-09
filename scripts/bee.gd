@@ -240,6 +240,10 @@ var automine: bool = false
 var architect_mode: String = "both"
 ## True while carrying a dead larva out of the hive to throw away.
 var carrying_corpse: bool = false
+## T2-4b: the body on the floor (hive_body.gd) this Comb worker is going to
+## carry out, and whether what she carries is a dead bee, not a larva.
+var target_body: Node2D = null
+var corpse_is_bee: bool = false
 
 ## Whether a change of job waits for the current one to finish. Off means
 ## the bee drops what it's doing the instant you reassign it; on means it
@@ -2356,18 +2360,25 @@ func task_description() -> String:
 		State.TO_HAUL_TARGET:
 			return "moving %s to another cell" % current_load_type
 		State.TO_CLEAN_CELL:
+			if target_body != null:
+				return "going to carry a dead bee out of the hive"
 			return "going to clear a dead larva out of a cell"
 		State.CLEANING:
+			if target_body != null and is_instance_valid(target_body):
+				var lifted := int(clampf(target_body.clear_progress / maxf(0.001, GameConfig.cell_clean_time), 0.0, 1.0) * 100.0)
+				return "lifting a dead bee to carry out (%d%%)" % lifted
 			var cleaned := 0
 			if target_cell and is_instance_valid(target_cell):
 				cleaned = int(target_cell.clean_fraction() * 100.0)
 			return "clearing a dead larva out of a cell (%d%%)" % cleaned
 		State.TO_WASTE_EXIT:
 			if carrying_corpse:
-				return "carrying a dead larva out of the hive"
+				return "carrying a dead %s out of the hive" % ("bee" if corpse_is_bee else "larva")
 			return "carrying %s out of the hive to dump it" % current_load_type
 		State.DUMPING_WASTE:
-			return "disposing of a dead larva" if carrying_corpse else "throwing out unwanted stores"
+			if carrying_corpse:
+				return "disposing of a dead %s" % ("bee" if corpse_is_bee else "larva")
+			return "throwing out unwanted stores"
 		State.SEEK_POLLEN:
 			if not hive.has_room_for_egg():
 				return "waiting -- no free cell to lay in"
@@ -2438,7 +2449,7 @@ func architect_mode_name() -> String:
 
 func carrying_text() -> String:
 	if carrying_corpse:
-		return "Carrying: a dead larva, for disposal outside"
+		return "Carrying: a dead %s, for disposal outside" % ("bee" if corpse_is_bee else "larva")
 	if role == Role.MINER:
 		return "Carrying: %d dirt (of %d)" % [int(dirt_load), int(GameConfig.miner_dirt_capacity)]
 	if honey_load > 0.0:

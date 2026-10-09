@@ -744,6 +744,12 @@ const TUNABLES := [
 	},
 	{
 		"persist": "none",
+		"key": "max_hive_bodies", "label": "Most bodies", "step": 1.0, "min": 0.0,
+		"category": "Seasons & health",
+		"tip": "The most dead bees that can lie on the hive floor at once; past it the oldest goes. Each counts towards disease like a dead larva until a Comb worker with Cleaning carries it out. A safety cap, set well above what a colony normally holds.",
+	},
+	{
+		"persist": "none",
 		"key": "disease_recovery", "label": "Recovery/s", "step": 0.0002, "min": 0.0,
 		"category": "Seasons & health",
 		"tip": "How fast pressure falls once the cause is dealt with. If clearing a backlog feels like it never helps, raise this.",

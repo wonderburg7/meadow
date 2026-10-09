@@ -108,6 +108,9 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 			"keep_clear": _hex_list(world.hive.keep_clear_tiles.keys()),
 			"tier_credit": world.hive._tier_credit,
 			"brood_pointer": world.hive._brood_pointer,
+			# T2-4b: dead bees on the floor, oldest first. Additive: an
+			# older save has none and loads with none.
+			"bodies": _bodies_data(world),
 		},
 		"session": {
 			"winter_coming": Session.winter_coming,
@@ -142,6 +145,14 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 
 	# SI-3: all-or-nothing -- a failed write leaves the old save in place.
 	return SaveSlots.write_atomic(path, JSON.stringify(data))
+
+## T2-4b: each body's place (hive-view coordinates) and time of death.
+static func _bodies_data(world) -> Array:
+	var out: Array = []
+	for body in world.hive.bodies:
+		if is_instance_valid(body):
+			out.append({"x": body.position.x, "y": body.position.y, "died_at": body.died_at})
+	return out
 
 static func _settings_dict() -> Dictionary:
 	var out := {}

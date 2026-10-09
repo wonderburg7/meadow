@@ -391,6 +391,11 @@ static func die(bee: Node2D, cause: String) -> void:
 		bee.target_block.release_miner(bee)
 	BeeForaging.release_cell_slot(bee)
 	DiagnosticLog.log_death(bee)
+	# T2-4b: a bee who dies inside the hive leaves her body where she fell;
+	# one who dies in the meadow leaves none. Winter's dead who were outside
+	# are laid inside by season.gd before they reach here.
+	if bee.hive != null and is_instance_valid(bee.hive) and bee._is_inside_hive():
+		bee.hive.add_body(bee.position, Session.sim_time)
 	# A mark is left where it fell, so losses show up in the place they
 	# happened rather than only as a number going down.
 	if bee.world != null and is_instance_valid(bee.world):

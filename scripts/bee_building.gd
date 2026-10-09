@@ -16,11 +16,21 @@ const BeeMovement = preload("res://scripts/bee_movement.gd")
 const BeeForaging = preload("res://scripts/bee_foraging.gd")
 
 ## Catalogue finders all take one bee and return whether they started work.
+## The cleaning row (actions.gd `comb_clean_cell`, gated on Cleaning) clears
+## dead larvae first and, with none waiting, carries out the oldest body no
+## other Comb worker is on (T2-4b). Both walk out the same waste exit.
 static func find_cell_needing_cleaning(bee: Node2D) -> bool:
 	var dead = bee.hive.find_cell_needing_cleaning()
-	if dead == null:
+	if dead != null:
+		bee.target_body = null
+		bee.target_cell = dead
+		bee.state = State.TO_CLEAN_CELL
+		return true
+	var body: Node2D = bee.hive.find_body_to_clear()
+	if body == null:
 		return false
-	bee.target_cell = dead
+	bee.target_body = body
+	body.claimant = bee
 	bee.state = State.TO_CLEAN_CELL
 	return true
 
@@ -328,6 +338,9 @@ static func builder_go_to_haul_target(bee: Node2D, delta: float) -> void:
 ## can be stored there and no egg can be laid in it -- so this is the
 ## first thing a comb worker on maintenance picks up.
 static func architect_go_to_clean(bee: Node2D, delta: float) -> void:
+	if bee.target_body != null:
+		_go_to_body(bee, delta)
+		return
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or not bee.target_cell.needs_cleaning():
 		BeeForaging.release_cell_slot(bee)
 		bee.target_cell = null
@@ -344,6 +357,9 @@ static func architect_go_to_clean(bee: Node2D, delta: float) -> void:
 
 
 static func architect_clean(bee: Node2D, delta: float) -> void:
+	if bee.target_body != null:
+		_lift_body(bee, delta)
+		return
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or not bee.target_cell.needs_cleaning():
 		BeeForaging.release_cell_slot(bee)
 		bee.target_cell = null
@@ -359,6 +375,43 @@ static func architect_clean(bee: Node2D, delta: float) -> void:
 		# the body goes out of the hive rather than back into the comb
 		bee.carrying_corpse = true
 		bee.state = State.TO_WASTE_EXIT
+
+
+## T2-4b: a body on the floor. Walk to it; lifting it takes as long as
+## clearing a dead larva (cell_clean_time); then it goes out the waste exit
+## like one. A body that has gone (the cap, a restore) ends the job.
+static func _body_present(bee: Node2D) -> bool:
+	var body: Node2D = bee.target_body
+	return body != null and is_instance_valid(body) and body.is_inside_tree()
+
+
+static func _drop_body_job(bee: Node2D) -> void:
+	bee.target_body = null
+	bee.state = State.BUILD_IDLE
+
+
+static func _go_to_body(bee: Node2D, delta: float) -> void:
+	if not _body_present(bee):
+		_drop_body_job(bee)
+		return
+	BeeMovement.move_towards(bee, bee.target_body.position, delta)
+	if bee.position.distance_to(bee.target_body.position) < 8.0:
+		bee.state = State.CLEANING
+
+
+static func _lift_body(bee: Node2D, delta: float) -> void:
+	if not _body_present(bee):
+		_drop_body_job(bee)
+		return
+	var body: Node2D = bee.target_body
+	body.clear_progress += delta
+	if body.clear_progress < GameConfig.cell_clean_time:
+		return
+	bee.hive.remove_body(body)
+	bee.target_body = null
+	bee.carrying_corpse = true
+	bee.corpse_is_bee = true
+	bee.state = State.TO_WASTE_EXIT
 
 
 ## Carrying unwanted stores out of the hive to throw away. Same shape as
@@ -381,6 +434,7 @@ static func builder_dump_waste(bee: Node2D, delta: float) -> void:
 	bee.current_load = 0.0
 	bee.current_load_type = ""
 	bee.carrying_corpse = false
+	bee.corpse_is_bee = false
 	if bee.world:
 		bee.world.move_bee_into_hive(bee)
 	# An "Empty this cell" order ends when the cell is empty, not after one

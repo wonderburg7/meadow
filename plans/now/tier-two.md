@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-4b -- bodies, queued in the Claude lane (specified 9 Oct 2026, after T2-8b landed); T2-6 -- Associative learning waits for Dave's decision | Dependency: COL-4, COL-6 and T2-4a landed; T2-6 waits for Dave; T2-7 is still to be specified | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: T2-6 -- Associative learning waits for Dave's decision (T2-4b, bodies, built 9 Oct 2026); T2-7 is still to be specified | Dependency: COL-4, COL-6, T2-4a and T2-4b landed; T2-6 waits for Dave; T2-7 is still to be specified | Verified: 2026-10-09
 
 ## Objective
 
@@ -41,9 +41,11 @@ Verified 7 Oct 2026 against master:
   permitted. A tier opens only when every node of the tier below in that
   branch is owned (`progression.gd::branch_tier_open`), so Hive Mind tier 2
   needs Backup roles owned.
-- Clearing (`comb_clean_cell`, Comb worker "maintain" mode) is today's only
-  cleaning; a "corpse" is a dead larva in a cell. Adult bees vanish on
-  death (`main.gd::_on_bee_died` places a presentation-only death marker).
+- Clearing (`comb_clean_cell`, Comb worker "maintain" mode, gated on
+  Cleaning) clears dead larvae first and then, since T2-4b, carries out the
+  bodies of bees who died inside the hive (`hive.gd`'s `bodies`,
+  `scripts/hive_body.gd`), which count towards disease like dead larvae.
+  A meadow death still leaves only the presentation-only death marker.
 - Rain runs only while `GameConfig.weather_on` (false by default) and the
   level row allow it (`main.gd`, weather advance). `bee_status.gd` keeps
   bees in above `rain_forage_limit`.
@@ -133,6 +135,13 @@ The skipped winter's losses die through `BeeSurvival.die` inside
 **Must not change.** Dead-larva cells and their clearing order; a meadow
 death; the death marker; `scripts/colony_diagnostics.gd` (Codex lane, CD-3),
 which keeps counting corpse cells only.
+
+**Measured** (9 Oct 2026, headless, no Cleaning, cap lifted). Over
+`test_scenarios/col6_winter_skip_test.json` no bee died -- its stores and
+`winter_burn_factor` of 0.01 carry everyone through -- so the colony held
+0 bodies, which cannot set a cap. `colony_30_bees_test.json` (20 days,
+12 deaths) held at most 5. `GameConfig.max_hive_bodies` is 50, ten times
+that.
 
 **Check.** `tests/t2_4b_bodies_test.gd`, run by `tests/test_t2_4b_bodies.py`
 in a headless Godot, prints `T2-4B PASS` when: an in-hive death leaves one

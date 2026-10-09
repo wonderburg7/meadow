@@ -864,6 +864,14 @@ var disease_threshold: float = 0.35
 ## live this much less long.
 var disease_brood_penalty: float = 0.55
 var disease_lifespan_penalty: float = 0.4
+## T2-4b: the most bodies of dead bees the hive floor holds (hive.gd's
+## `bodies`); past it the oldest goes. A guard against unbounded growth, not
+## a balance lever, set well above what a colony holds so it never changes
+## an ordinary run. Measured headless (9 Oct 2026, no Cleaning):
+## test_scenarios/col6_winter_skip_test.json lost no bee and held 0 bodies;
+## colony_30_bees_test.json held at most 5 over its 20 days. 50 is ten
+## times that (plans/now/tier-two.md, T2-4b).
+var max_hive_bodies: float = 50.0
 
 # --- gynes leaving ---
 ## COL-7: no gyne leaves by herself. The player sends one
