@@ -63,21 +63,14 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] WC-4 -- a queue id with whitespace fails the documentation check**
-   - Plan: `plans/now/workflow-checks.md` -- "WC-4 -- a queue id with whitespace fails the documentation check"
-   - Files: `tools/backlog.py`, `tools/check_docs.py`, `tests/test_wc4_spaced_ids.py`
-   - Check: `python -m unittest tests.test_wc4_spaced_ids` passes; `python tools/check_docs.py` passes on master; `tools/verify.ps1` is green
-   - Proof: `absent: tools/check_docs.py :: id contains whitespace`
-   - Next after: none -- workflow checks are complete
-
-2. **[Codex] GD-2a -- the guidance policy, the first two explanations and the Why list**
+1. **[Codex] GD-2a -- the guidance policy, the first two explanations and the Why list**
    - Plan: `plans/now/guidance-explanations.md` -- "GD-2a -- the guidance policy, the first two explanations and the Why list"
    - Files: `scripts/guidance_policy.gd`, `scripts/guidance_catalogue.gd`, `scripts/gallerin_panel.gd`, `scripts/year_winter.gd`, `tests/test_gd2a_guidance.py`, `test_scenarios/gd2a_guidance.json`
    - Check: `python -m unittest tests.test_gd2a_guidance` passes (a colony with brood and no nurse gets the missing-nurse explanation once, only after it renders; it stays eligible while a Challenge prompt is due; the Why list holds it after the fact clears; a warning without a CD-2 fact starts nothing); `tools/verify.ps1` is green
    - Proof: `absent: scripts/gallerin_panel.gd :: guidance_policy`
    - Next after: GD-2b -- the shown ledger and Why history saved with the run
 
-3. **[Codex] PP-3 -- Gyne rearing gates gyne cells and Royal jelly gates jelly**
+2. **[Codex] PP-3 -- Gyne rearing gates gyne cells and Royal jelly gates jelly**
    - Plan: `plans/now/pollination.md` -- "PP-3 -- Gyne rearing gates gyne cells and Royal jelly gates jelly"
    - Files: `scripts/roles.gd`, `scripts/actions.gd`, `scripts/orders_zones.gd`, `scripts/run_availability.gd`, `tests/test_pp3_gyne_gate.py`, `test_scenarios/pp3_gyne_gate.json`
    - Check: `python -m unittest tests.test_pp3_gyne_gate` passes (in a Colony Run a gyne-cell request is refused until Gyne rearing is owned and accepted after; nurses make no jelly until Royal jelly is owned; a Scenario run owns both from the start and raises a gyne as today); `tools/verify.ps1` is green
