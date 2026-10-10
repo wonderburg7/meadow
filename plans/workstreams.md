@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/WC-4` (`codex/WC-4`) | Codex | a queue id with whitespace fails the documentation check | Codex | in progress | none | `plans/now/workflow-checks.md` WC-4 -- a queue id with whitespace fails the documentation check |
+| `.worktrees/BB-3` (`claude/BB-3`) | Claude | Bee Bread is spendable on tier-3 recipes, from the cells that hold it | Claude | in progress | none | `plans/now/bee-bread.md` BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it |
