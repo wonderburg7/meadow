@@ -36,6 +36,7 @@ unblocker.
 - [C-119 -- Fermented nectar shows its own colour in the comb](ready/C-119.md)
 - [C-120 -- Zoom the comb from minimum to maximum and check the cell pixels stay sharp](ready/C-120.md)
 - [C-121 -- Comb holding every content side by side, also in colour-blind mode](ready/C-121.md)
+- [C-122 -- Dr Gallerin explains a missing nurse and a missing comb worker, and Why keeps both](ready/C-122.md)
 - [C-60 -- a chosen panel texture appears](ready/C-60.md)
 - [C-81 -- Nurse stays locked until Nurses is bought](ready/C-81.md)
 - [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)

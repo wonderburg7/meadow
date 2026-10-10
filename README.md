@@ -72,6 +72,12 @@ at the only thing a season is for.
 Drag to select bees. Right-click to send them somewhere. Click any
 warning in the corner and it selects whatever it's about.
 
+Dr Gallerin explains two workforce shortages: brood without an assigned
+nurse, and blocked comb without a comb worker. His **Why?** button beside
+the moth icon lists current explanations and up to 20 shown this run,
+including their original evidence after a shortage clears. Challenge
+prompts keep priority over these explanations.
+
 There's a settings window behind the cog icon in the top-right corner:
 every balance number in the game, editable while it runs, plus
 save/load and restart.

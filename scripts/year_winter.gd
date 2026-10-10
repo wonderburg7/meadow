@@ -198,6 +198,7 @@ func _refresh_signals(delta: float) -> void:
 	var bees: Array = get_tree().get_nodes_in_group("bees")
 	var counts: Dictionary = main._role_counts()
 	var facts: Dictionary = ColonyDiagnostics.compute(main, bees, counts)
+	main.gallerin_panel.update_guidance_facts(facts)
 
 	# A Challenge already tells the player what's wrong and what to do
 	# about it, one stage at a time, through Dr Gallerin -- this generic
