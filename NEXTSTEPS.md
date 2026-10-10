@@ -51,12 +51,12 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `present: scripts/hive_cell.gd :: const EMPTY_TEXTURE :=`
    - Next after: SP-4 -- nectar and pollen fill levels drawn from the sprites
 
-5. **[Claude] T2-6 -- Associative learning**
-   - Plan: `plans/now/tier-two.md` -- "T2-6 -- Associative learning"
-   - Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd`
-   - Check: `python -m unittest tests.test_t2_6_associative_learning` passes (with the toggle off, a bee's handling time and experience stay unchanged until Associative learning is bought; once owned, ten visits to one species bring its handling to 0.75 of a first-timer's, and fifteen visits to another species then erase that experience; experience survives save and restore); `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/bee_foraging.gd :: static func handling_experience_on`
-   - Next after: T2-7 -- Tier-2 costs tuned so the first purchase lands around day 5
+5. **[Claude] T2-7 -- Tier-2 costs tuned so the first purchase lands around day 5**
+   - Plan: `plans/now/tier-two.md` -- "T2-7 -- Tier-2 costs tuned so the first purchase lands around day 5"
+   - Files: `scripts/skills.gd`, `scripts/progression.gd`, `scripts/diagnostic_log.gd`, `tools/analyze_session.py`, `tools/pacing_gates.py`, `plans/design/progression.md`, `tests/test_t2_7_tier_two_prices.py`
+   - Check: `python -m unittest tests.test_t2_7_tier_two_prices` passes (a snapshot whose stores cover the cheapest first-tier-2 path sets `first_tier2_day`, one that falls short by one unit of any resource does not, and pacing_gates prints the row against day 5 without changing the five gate rows); `python tools/pacing_gates.py` shows the median `first_tier2_day` in band, recorded before and after in the plan; `tools/verify.ps1` is green
+   - Proof: `absent: tools/analyze_session.py :: first_tier2_day`
+   - Next after: T2-6 -- Associative learning
 
 ### Codex lane
 
@@ -92,7 +92,8 @@ One line each: the id, its plan, and the single thing it waits for.
 - **CD-3** (`plans/now/diagnostic-readiness.md`) -- waiting and travel get a deterministic diagnostic boundary; waits for BB-2, queued in the Claude lane, to release `scripts/bee.gd` (BB-1, NF-3 and SP-3 landed 9 Oct 2026).
 - **GD-2b** (`plans/now/guidance-explanations.md`) -- the shown ledger and Why history saved with the run; waits for GD-2a, and for the save files to be free of Claude-lane slices (BB-2 now; PP-1, PP-4 and PP-5 later).
 - **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for BB-2 (Claude lane) to release the save and HUD files and for CD-3 to release diagnostics (BB-1, NF-3 and NF-5 landed 9 Oct 2026).
-- **T2-7** (`plans/now/tier-two.md`) -- tier-2 costs tuned so the first purchase lands around day 5; waits for BB-4, which re-paces the Colony Run, and for T2-6 and NF-4, whose nodes it prices.
+- **T2-6** (`plans/now/tier-two.md`) -- Associative learning, specified with Dave's 10 Oct 2026 decisions; admissible, and waits only for room in the Claude lane behind T2-7.
+- **PP-1** (`plans/now/pollination.md`) -- bees earn Pollinator Points; admissible, and waits for room in the Claude lane behind T2-6, which it needs owned.
 - **PP-2 and PP-4** (`plans/now/pollination.md`) -- Pollinator Points made spendable, and seed set; wait for PP-1's ledger (`scripts/pollination.gd`).
 - **PP-5** (`plans/now/pollination.md`) -- Priority cells; waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`.
 - **PP-6** (`plans/now/pollination.md`) -- the route's pricing sweep; waits for PP-1 to PP-5 and T2-7, and is specified when they land.

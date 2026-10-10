@@ -55,3 +55,30 @@ Claude Project and Claude Code should continue to use `CLAUDE.md` and
 queue. Claude integrates a Codex branch only when its hand-off claims the
 high-risk tier, and then reviews the full diff; the lower tiers Codex lands
 itself. Record the resulting state only after integration.
+
+## When a Codex slice needs Claude
+
+If a specific Claude-owned action blocks Codex from continuing or closing an
+assigned slice, first finish any independent work and verify the blocker. Do
+not hand Claude work that Codex can complete within its own lane and authority.
+In the chat, give Dave a **Prompt for Claude** in a copy-paste code block,
+including for a high-risk review/integration hand-off. Keep the required
+high-risk hand-off block as well.
+
+The prompt must name the slice, branch/worktree and relevant commit; the exact
+blocker and evidence; the action Claude should take and its ownership bounds;
+the check that proves Codex can resume; and what Claude should report back.
+Ask Claude to find the cause and, where feasible, apply and verify a durable
+change (such as a check, guard or workflow/documentation fix) that prevents the
+same blocker recurring, rather than only clearing this instance. If a decision
+belongs to Dave under `docs/agent-rules.md`, rule 5, ask Dave in this session
+instead of asking Claude to make that decision.
+
+Immediately above the prompt, recommend an **exact Claude model and effort
+level** available at hand-off time, with a one-line reason based on the work:
+the current Haiku with low effort for mechanical changes, Sonnet with medium
+effort for bounded diagnosis or integration, and Opus with high effort for
+ambiguous debugging, architecture or high-risk changes. Adjust this mapping
+when the actual task warrants it; name the exact available model version and a
+supported effort setting. State what Codex is waiting for so the slice can
+resume when Claude reports completion.

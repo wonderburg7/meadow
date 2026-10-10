@@ -46,6 +46,6 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.claude/worktrees/run-queue-investigation-04d747` (`claude/run-queue-investigation-04d747`) | Claude (docs only) | queue steward: clear the gates SP-3 held and refill the Claude lane | Claude Code | in progress | none | `NEXTSTEPS.md`, `plans/now/diagnostic-readiness.md`, `plans/now/sprites.md`, `plans/now/bee-bread.md` |
 | `.claude/worktrees/plan-ahead-ab9b67` (`claude/plan-ahead-ab9b67`) | Claude (docs only) | plan-ahead: the gyne route (Pollinator Points), T2-6 and T2-7 decisions, GD-1 acceptance | Claude Code | in progress | none | `plans/design/product-scope.md`, `plans/now/pollination.md`, `plans/now/tier-two.md`, `plans/now/guidance-explanations.md`, `plans/README.md`, `NEXTSTEPS.md` |
 | `.worktrees/WC-4` (`codex/WC-4`) | Codex | a queue id with whitespace fails the documentation check | Codex | in progress | none | `plans/now/workflow-checks.md` WC-4 -- a queue id with whitespace fails the documentation check |
+| `.worktrees/BB-2` (`claude/BB-2`) | Claude | Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved | Claude | in progress | none | `plans/now/bee-bread.md` BB-2 -- Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved |
