@@ -169,7 +169,7 @@ static func restock_possible(bee: Node2D, for_gyne: bool, bread: Node2D) -> bool
 	if pollen_needed and bee.nurse_pollen < GameConfig.brood_feed_pollen and bee.hive.find_cell_with("pollen") != null:
 		return true
 	if bee.nurse_carb < carb_per_feed(bee):
-		if bee.hive.find_cell_with("honey") != null or bee.hive.find_cell_with("nectar") != null:
+		if bee.hive.find_cell_with("honey") != null or bee.hive.find_brood_nectar() != null:
 			return true
 	if bee.nurse_jelly < GameConfig.brood_feed_jelly and bee.hive.find_cell_with("jelly") != null:
 		return true
@@ -349,7 +349,7 @@ static func nurse_restock_errand(bee: Node2D, for_gyne: bool, bread: Node2D) -> 
 		var carb_cell = bee.hive.find_cell_with("honey")
 		if carb_cell == null and not for_gyne:
 			carb_type = "nectar"
-			carb_cell = bee.hive.find_cell_with("nectar")
+			carb_cell = bee.hive.find_brood_nectar()   # NF-4: fresh only with the sense
 		if carb_cell != null:
 			start_food_errand(bee, carb_cell, carb_type)
 			return true
@@ -387,6 +387,10 @@ static func nurse_go_to_food(bee: Node2D, delta: float) -> void:
 		abandon_food_errand(bee)
 		return
 	if bee.nurse_fetching == "honey" and not bee.target_cell.is_ripe_honey():
+		abandon_food_errand(bee)
+		return
+	# NF-4: nectar that fermented on her way over is left, with the sense.
+	if bee.nurse_fetching == "nectar" and bee.target_cell.is_fermented() and bee.hive.senses_fermentation():
 		abandon_food_errand(bee)
 		return
 	var for_bread: bool = bee.nurse_fetching == Resources.BEE_BREAD

@@ -2,8 +2,9 @@
 
 Runs test_scenarios/bb3_bee_bread_currency.json once. The fixture seals one
 cell of 60 bee bread (ripe after one game hour), stocks nectar, pollen and
-ripe honey, buys the colony branch's prerequisites for Restocking (a tier-3
-skill priced 12 bee bread, 40 honey, 150 nectar), and tries Restocking while
+ripe honey, buys the colony branch's prerequisites for Restocking (every
+Colony tier-2 node, Fermentation sense included since NF-4; Restocking is a
+tier-3 skill priced 12 bee bread, 40 honey, 150 nectar), and tries Restocking while
 the only bee bread is unripe (refused), then again after it ripens (bought).
 
 From the run: the refused attempt leaves the unripe cell untouched; the

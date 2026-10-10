@@ -1,7 +1,7 @@
 # Nectar fermentation -- unprocessed nectar ferments, and tipsy bees pay for it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: NF-4 -- the detection skill, specified below and queued in the Claude lane now that Dave has answered its nurse and Restocking questions (9 Oct 2026; NF-3 built 9 Oct 2026, with Dave's 300-second tipsiness from its sweep; NF-5 built 9 Oct 2026) | Dependency: none (NF-2 landed 9 Oct 2026); NF-4 follows NF-3 | Verified: 2026-10-09
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete; NF-4, its last slice, built 10 Oct 2026; no follow-ups filed | Dependency: none | Verified: 2026-10-10
 
 ## Objective
 
@@ -51,8 +51,9 @@ happening.
 
 - **How long tipsiness lasts, and how strong it is** (NF-3): set from a
   headless sweep in NF-3, not guessed.
-- **What the detection skill costs** (NF-4): set by simulation when NF-4
-  is specified; its slot is decision 9.
+- **What the detection skill costs** (NF-4) -- answered by NF-4's
+  comparison run, 10 Oct 2026: 20 honey and 140 nectar (see NF-4's
+  "Cost" paragraph).
 - **Whether nurses may carry fermented nectar to brood** (NF-4) --
   answered by Dave, 9 Oct 2026: **only without the skill.** Nurses use
   fermented nectar until the detection skill is bought, then avoid it.
@@ -164,6 +165,22 @@ and is not yet in `scripts/skills.gd`.
 
 **Must not change.** Fermentation itself, tipsiness (NF-3), honey ripening,
 and what a colony without the skill eats.
+
+**Cost (comparison run, 10 Oct 2026).** The same fermenting colony with and
+without the skill: 30 cells, 8 nectar and 3 pollen foragers, 2 nurses, one
+honey maker, `nectar_ferment_hours` 24, four days, saved every half day.
+Seed 6101: on day 4 the colony with the skill held 170 honey against 140,
+and 1,184 fermented nectar against 1,393. Seed 6202: 162 honey against 174,
+and 2,000 fermented nectar against 1,999. No bee was tipsy in any save of
+either run, because ripe honey was always stored and hungry bees eat it
+first. So the skill pays back at most about 30 honey over four days, and
+often nothing: one honey maker cannot keep up with eight foragers, so the
+nectar ferments whichever cell she takes first. Its value is the tipsiness
+and brood feeding it prevents when honey runs out. It is priced at the
+bottom of Colony tier 2: 20 honey (the same as Comb worker and Miner) and
+140 nectar (less than their 200 and 180). Buying Restocking now needs it too
+(section 4.3), so `test_scenarios/bb3_bee_bread_currency.json` buys it and
+stocks 20 more honey.
 
 ```queue
 **[Claude] NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first**

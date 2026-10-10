@@ -210,10 +210,16 @@ static func go_to_feed_cell(bee: Node2D, delta: float) -> void:
 		bee.state = State.FEEDING
 
 
-static func is_edible(_bee: Node2D, cell: Node2D) -> bool:
+static func is_edible(bee: Node2D, cell: Node2D) -> bool:
 	if cell.amount <= 0.0:
 		return false
 	if cell.content_type == "nectar":
+		# NF-4: with fermentation sense a fermented cell is food only while
+		# nothing else is, so a bee that set off for it (or is mid-meal)
+		# turns to fresh food as soon as some is stored.
+		if cell.is_fermented() and bee.hive.senses_fermentation():
+			var best: Node2D = bee.hive.find_food_cell()
+			return best == null or best.is_fermented()
 		return true
 	return cell.is_ripe_honey()
 

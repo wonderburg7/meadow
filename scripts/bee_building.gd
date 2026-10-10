@@ -206,6 +206,10 @@ static func may_draw_from(bee: Node2D, cell: Node2D) -> bool:
 		return false          # sealed
 	if bee.restock_blocked.has(cell):
 		return false
+	# NF-4: with fermentation sense, fermented nectar stays where it is
+	# (Dave, 9 Oct 2026); without it, a restock order still takes it.
+	if cell.is_fermented() and bee.hive.senses_fermentation():
+		return false
 	if bee.restock_sources.is_empty():
 		return true
 	return bee.restock_sources.has(cell)
@@ -258,6 +262,13 @@ static func restock_go_to_source(bee: Node2D, delta: float) -> void:
 		bee.state = State.BUILD_IDLE
 		return
 	if bee.haul_target == null or not is_instance_valid(bee.haul_target):
+		bee.target_cell = null
+		bee.state = State.BUILD_IDLE
+		return
+
+	# NF-4: a source that fermented while she walked over is no longer one.
+	if bee.target_cell.is_fermented() and bee.hive.senses_fermentation():
+		BeeForaging.release_cell_slot(bee)
 		bee.target_cell = null
 		bee.state = State.BUILD_IDLE
 		return
