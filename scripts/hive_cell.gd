@@ -155,6 +155,14 @@ var nectar_since: float = -1.0
 ## See is_ripe_bee_bread().
 var bee_bread_sealed_at: float = -1.0
 
+## BB-2. What the larva in here has been raised on: Resources.POLLEN from the
+## moment the egg goes in, Resources.BEE_BREAD once any feed of bee bread has
+## gone in (feed_brood), "" when no larva is being raised. clear_cell() leaves
+## it alone, because main.gd's hatch clears the cell before
+## world_building.gd::_spawn_hatched_bee reads it to fix the new worker's
+## outcome; that spawn resets it. Saved per cell.
+var brood_food: String = ""
+
 # --- building state -----------------------------------------------
 
 ## Building state. Cells the hive starts with are already finished.
@@ -620,6 +628,7 @@ func _larva_dies() -> void:
 	clean_progress = 0.0
 	brood_is_gyne = false
 	brood_is_drone = false
+	brood_food = ""
 	DiagnosticLog.count_larval_death()
 	_invalidate_hive_index()
 	_invalidate_stock()
@@ -882,6 +891,40 @@ func restore_bee_bread_seal() -> void:
 	if bee_bread_sealed_at < 0.0 and amount >= capacity - 0.001:
 		bee_bread_sealed_at = Session.sim_time
 
+## BB-2. Takes back ripe bee bread a nurse was carrying without losing its
+## ripeness. It tops up a ripe cell to the size it started at, keeping the
+## seal stamp, or starts an empty cell that takes bee bread as already sealed
+## and ripe (stamped bee_bread_ripen_hours ago, never before 0). It never
+## touches a cell still filling or fermenting, which hive.deposit would pick.
+## Returns what it took.
+func return_ripe_bee_bread(requested: float) -> float:
+	if requested <= 0.0 or not accepts(Resources.BEE_BREAD):
+		return 0.0
+	var added: float = 0.0
+	if content_type == Resources.BEE_BREAD:
+		if not is_ripe_bee_bread() or not can_withdraw():
+			return 0.0
+		added = minf(requested, maxf(0.0, capacity - amount))
+		if added <= 0.0:
+			return 0.0
+		amount += added
+		_invalidate_stock()
+		return added
+	if content_type != "":
+		return 0.0
+	var size: float = capacity_for(Resources.BEE_BREAD)
+	added = minf(requested, size)
+	if designated_type == "":
+		designated_type = Resources.BEE_BREAD
+	content_type = Resources.BEE_BREAD
+	capacity = size
+	amount = added
+	var hour: float = maxf(0.001, GameConfig.seconds_per_day / 24.0)
+	bee_bread_sealed_at = maxf(0.0, Session.sim_time - GameConfig.bee_bread_ripen_hours * hour - 0.001)
+	_invalidate_stock()
+	_invalidate_hive_index()
+	return added
+
 ## BB-1. Has this bee bread cell filled and sealed?
 func is_bee_bread_sealed() -> bool:
 	return content_type == Resources.BEE_BREAD and bee_bread_sealed_at >= 0.0
@@ -1007,6 +1050,7 @@ func start_brood(as_gyne: bool = false, as_drone: bool = false) -> void:
 	brood_fed_seconds = 0.0
 	unfed_seconds = 0.0
 	fed_on_honey = false
+	brood_food = Resources.POLLEN
 	brood_is_drone = as_drone
 	brood_is_gyne = as_gyne and not as_drone
 	_invalidate_hive_index()
@@ -1030,10 +1074,13 @@ func develop_time() -> float:
 
 ## Called by a nurse that has just dropped food in. `seconds` is what the
 ## feed buys; feeds don't stack up indefinitely, they just top the larva
-## back to a full feed's worth.
-func feed_brood(seconds: float, on_honey: bool) -> void:
+## back to a full feed's worth. `on_bee_bread` (BB-2) marks the larva as
+## raised on bee bread for the rest of its development.
+func feed_brood(seconds: float, on_honey: bool, on_bee_bread: bool = false) -> void:
 	brood_fed_seconds = max(brood_fed_seconds, seconds)
 	fed_on_honey = on_honey
+	if on_bee_bread:
+		brood_food = Resources.BEE_BREAD
 
 ## True when the larva is running out of food and a nurse should visit.
 func needs_feeding() -> bool:

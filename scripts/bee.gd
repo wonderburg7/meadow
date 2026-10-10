@@ -164,6 +164,15 @@ var bee_name: String = ""
 var bee_fact: String = ""
 var trait_stat: String = ""
 var trait_percent: float = 0.0
+## BB-2. What this worker was raised on, fixed when she emerges
+## (world_building.gd::_spawn_hatched_bee, from her cell's brood_food) and
+## saved with her: "bee_bread" or "pollen". "" for a founding bee, a gyne, a
+## drone, and every bee from a save made before BB-2 -- today's worker, at
+## bee_lifespan_days and 100%. See outcome_stat_factor() and
+## outcome_lifespan_days().
+const OUTCOME_BEE_BREAD := "bee_bread"
+const OUTCOME_POLLEN := "pollen"
+var brood_outcome: String = ""
 ## Set from the single-bee selection panel, or from the colony window's
 ## Favourites list, which is how the player finds this bee again in a
 ## colony of hundreds.
@@ -278,6 +287,15 @@ var slot_cell: Node2D = null
 var nurse_pollen: float = 0.0
 var nurse_carb: float = 0.0
 var nurse_carb_type: String = ""
+## BB-2. Ripe bee bread a nurse carries, fed to worker larvae in place of
+## pollen while the colony holds any (bee_nursery.gd). Saved.
+var nurse_bee_bread: float = 0.0
+## BB-2, not saved: until this Session.sim_time a nurse who could not get
+## at the ripe bee bread feeds pollen instead
+## (bee_nursery.gd::bee_bread_source), and when her current errand to a
+## food cell began.
+var nurse_bee_bread_retry_at: float = -1.0
+var nurse_errand_started_at: float = 0.0
 var nurse_fetching: String = ""      # what this trip to a cell is for
 
 ## Stall watchdog. A bee that hasn't moved for a few seconds while it is
@@ -868,6 +886,9 @@ func become_drone() -> void:
 	is_drone = true
 	pending_role = -1
 	secondary_role = -1
+	# BB-2: the outcome is a worker's; a drone ages out as today's worker.
+	if brood_outcome != "":
+		set_brood_outcome("")
 	if role != Role.IDLE:
 		_apply_role(Role.IDLE)
 	if visual_root != null and is_instance_valid(visual_root):
@@ -1124,6 +1145,54 @@ func _apply_stats() -> void:
 		speed *= GameConfig.gyne_speed_factor
 	if is_queen:
 		speed *= GameConfig.queen_speed_factor
+	# BB-2: what she was raised on scales her speed and carrying capacity
+	# (bee_foraging.gd::max_capacity reads the two stomach capacities).
+	var outcome: float = outcome_stat_factor()
+	speed *= outcome
+	nectar_stomach_capacity *= outcome
+	pollen_stomach_capacity *= outcome
+
+## BB-2. Fixes this worker's outcome at emergence and re-derives her stats.
+## Anything but the two outcomes leaves her today's worker.
+func set_brood_outcome(outcome: String) -> void:
+	brood_outcome = outcome if outcome in [OUTCOME_BEE_BREAD, OUTCOME_POLLEN] else ""
+	_apply_stats()
+
+## BB-2. The factor on speed and carrying capacity her outcome gives.
+func outcome_stat_factor() -> float:
+	match brood_outcome:
+		OUTCOME_BEE_BREAD:
+			return GameConfig.bee_bread_raised_stat_factor
+		OUTCOME_POLLEN:
+			return GameConfig.pollen_raised_stat_factor
+	return 1.0
+
+## BB-2. Her lifespan in game-days before disease and winter
+## (bee_survival.gd::lifespan_seconds applies those): bee_lifespan_days,
+## scaled by her outcome's factor, so a scenario that sets
+## bee_lifespan_days still governs every bee.
+func outcome_lifespan_days() -> float:
+	match brood_outcome:
+		OUTCOME_BEE_BREAD:
+			return GameConfig.bee_lifespan_days * GameConfig.bee_bread_raised_lifespan_factor
+		OUTCOME_POLLEN:
+			return GameConfig.bee_lifespan_days * GameConfig.pollen_raised_lifespan_factor
+	return GameConfig.bee_lifespan_days
+
+## BB-2. The selection panel's line for her outcome, or "" for a bee that
+## has none (a founder, a gyne, a drone, a bee from a pre-BB-2 save).
+func brood_outcome_text() -> String:
+	var raised: String
+	match brood_outcome:
+		OUTCOME_BEE_BREAD:
+			raised = "Raised on bee bread"
+		OUTCOME_POLLEN:
+			raised = "Raised on pollen only"
+		_:
+			return ""
+	return "%s: %d-day life, %d%% speed and load" % [
+		raised, int(round(outcome_lifespan_days())), int(round(outcome_stat_factor() * 100.0)),
+	]
 
 ## A short readout of this bee's trait, e.g. "Speed +7%", or "" if
 ## somehow unrolled.
@@ -1669,6 +1738,9 @@ func _return_nurse_food() -> void:
 			var unplaced: float = amount - hive.deposit(item[0], amount)
 			if unplaced > 0.001:
 				lost.append("%.1f %s" % [unplaced, item[0]])
+		var bread_unplaced: float = _return_ripe_bee_bread(nurse_bee_bread)
+		if bread_unplaced > 0.001:
+			lost.append("%.1f bee_bread" % bread_unplaced)
 		if not lost.is_empty():
 			DiagnosticLog.log_action("return_nurse_food", "bee %d" % bee_id, "partly lost",
 				"no cell had room for " + ", ".join(lost))
@@ -1676,6 +1748,28 @@ func _return_nurse_food() -> void:
 	nurse_carb = 0.0
 	nurse_carb_type = ""
 	nurse_jelly = 0.0
+	nurse_bee_bread = 0.0
+
+## BB-2. A nurse's bee bread was ripe when she loaded it, so it goes back
+## ripe (hive_cell.gd::return_ripe_bee_bread): topping up a ripe cell with
+## room first, then into an empty cell that takes bee bread. hive.deposit
+## would put it in a cell still filling, to ferment all over again. Returns
+## what found no room. Called only from _return_nurse_food.
+func _return_ripe_bee_bread(amount: float) -> float:
+	var left: float = amount
+	for cell in hive.cells_holding("bee_bread"):
+		if left <= 0.001:
+			break
+		left -= cell.return_ripe_bee_bread(left)
+	for cell in hive.cells:
+		if left <= 0.001:
+			break
+		if cell.content_type == "":
+			left -= cell.return_ripe_bee_bread(left)
+	if left > 0.001:
+		return left
+	hive.announce()
+	return 0.0
 
 ## BB-1. Bee bread a honey maker was carrying goes back into the comb when
 ## she leaves the Honey role, as a nurse's food does above, so the pollen and
@@ -2485,9 +2579,9 @@ func _task_line() -> String:
 		State.DEPOSITING_JELLY:
 			return "storing royal jelly"
 		State.TO_FOOD_CELL:
-			return "going to collect %s for the brood" % nurse_fetching
+			return "going to collect %s for the brood" % nurse_fetching.replace("_", " ")
 		State.LOADING_FOOD:
-			return "loading up with %s to feed the brood" % nurse_fetching
+			return "loading up with %s to feed the brood" % nurse_fetching.replace("_", " ")
 		State.TO_FEED_CELL:
 			return "hungry -- heading to a cell to eat"
 		State.FEEDING:
@@ -2635,10 +2729,13 @@ func carrying_text() -> String:
 		return "Carrying: %d bee bread" % int(ceil(bee_bread_load))
 	if honey_load > 0.0:
 		return "Carrying: %d units of honey mix" % int(ceil(honey_load))
-	if nurse_pollen > 0.0 or nurse_carb > 0.0 or nurse_jelly > 0.0:
+	if nurse_pollen > 0.0 or nurse_carb > 0.0 or nurse_jelly > 0.0 or nurse_bee_bread > 0.0:
 		var carb_name: String = nurse_carb_type if nurse_carb_type != "" else "nectar"
-		var carried := "Carrying: %d pollen and %d %s for the brood (%d feeds)" % [
-			int(nurse_pollen), int(nurse_carb), carb_name, int(BeeNursery.feeds_carried(self)),
+		var protein: String = "%d pollen" % int(nurse_pollen)
+		if nurse_bee_bread > 0.0:
+			protein = "%d bee bread, %s" % [int(ceil(nurse_bee_bread)), protein]
+		var carried := "Carrying: %s and %d %s for the brood (%d feeds)" % [
+			protein, int(nurse_carb), carb_name, int(BeeNursery.feeds_carried(self)),
 		]
 		if nurse_jelly > 0.0:
 			carried += ", plus %d royal jelly" % int(nurse_jelly)

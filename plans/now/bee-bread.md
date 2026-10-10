@@ -1,7 +1,7 @@
 # Bee Bread -- fermented larval food, the tier-3 currency, and what it makes of a worker
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BB-2 -- Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved, then BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it, both specified below and queued in the Claude lane now BB-1 has landed (9 Oct 2026); BB-4 is specified when BB-2 lands | Dependency: none -- COL-4, NF-2, T2-2, T2-3 and BB-1 have landed | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it, specified below and queued in the Claude lane; BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers is to be specified now that BB-2 has landed (10 Oct 2026) | Dependency: none -- COL-4, NF-2, T2-2, T2-3, BB-1 and BB-2 have landed | Verified: 2026-10-10
 
 ## Objective
 
@@ -27,6 +27,8 @@ Verified 7 Oct 2026 against master; BB-1 (9 Oct 2026) has since built Bee Bread 
   deposit.
 - Nurses (`bee_nursery.gd`) feed larvae pollen (`brood_feed_pollen`).
   Every worker lives `bee_lifespan_days` (25) at full speed and capacity.
+  (BB-2, 10 Oct 2026, has since made nurses feed ripe Bee Bread in place of
+  pollen and fixed each new worker's outcome at emergence.)
 - Nectar fermentation (`plans/now/nectar-fermentation.md`) is a different
   mechanism -- raw nectar spoiling with age -- and shares only files.
 
@@ -34,7 +36,6 @@ Verified 7 Oct 2026 against master; BB-1 (9 Oct 2026) has since built Bee Bread 
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BB-2 | Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved; every run | `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_foraging.gd`, `scripts/world_building.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `tests/test_bb2_bee_bread_nursing.py`, `test_scenarios/bb2_bee_bread_nursing.json` | yes -- BB-1 has landed; queued in the Claude lane | high |
 | BB-3 | Bee Bread is spendable on tier-3 recipes, from the cells that hold it | `scripts/skill_tree_panel.gd`, `tests/test_bb3_bee_bread_currency.py`, `test_scenarios/bb3_bee_bread_currency.json` | yes -- BB-1 has landed; queued in the Claude lane after BB-2 | medium |
 | BB-4 | Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers | specified when BB-2 lands | no -- after BB-2 | medium |
 
@@ -61,63 +62,7 @@ Bread"`).
 
 BB-1 shipped 2026-10-09; its specification is `plans/archive/BB-1_2026-10-09.md`.
 
-## BB-2 -- Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved
-
-<!-- LAYER: immediate-task -->
-
-Level: high (a balance rule in every run, a per-bee save field with an
-old-save rule, and the hatch path). Specified 9 Oct 2026 by BB-1's worker,
-from this plan's outline and `product-scope.md` section 9's decisions.
-
-**True now.** BB-1 makes Bee Bread: `hive_cell.gd::is_ripe_bee_bread()`
-says when a sealed cell is ready, and `take_resource("bee_bread", ...)`
-refuses anything unripe. Nurses (`bee_nursery.gd`) load pollen and nectar or
-honey from the comb and feed larvae `brood_feed_pollen` per feed. Every
-worker lives `bee_lifespan_days` (`bee_survival.gd`) at the speed and carrying
-capacity `bee.gd::_apply_stats` and `bee_foraging.gd::max_capacity` give it.
-A larva becomes a bee in `world_building.gd::_spawn_hatched_bee`, which is
-handed its cell.
-
-**True afterwards.**
-
-- **Nursing.** When the colony holds ripe Bee Bread, a nurse loads
-  `GameConfig.brood_feed_bee_bread` per feed from a ripe cell and feeds it in
-  place of pollen; with none ripe she feeds pollen as today. The queen's
-  backup nursing follows the same rule. Gyne larvae still take royal jelly as
-  well. The larva's cell records that it was fed Bee Bread (an additive
-  per-cell save field).
-- **The outcome.** At emergence the new worker's outcome is fixed from its
-  cell and saved with it: raised with Bee Bread, it lives 25 days at 105%
-  speed and carrying capacity; raised without, 15 days at 95%. The numbers
-  are `GameConfig` values in `settings_catalogue.gd`. The selection panel
-  says which (`hud.gd`).
-- **Saves.** The per-bee outcome is additive; a save from before BB-2 loads
-  its adults as today's workers (25 days, 100%) for the rest of their lives,
-  and only larvae raised after loading follow the rule.
-- **The ration, from a sweep run in this slice and recorded here.**
-  `test_scenarios/bb2_bee_bread_nursing.json` raises brood beside a ripe Bee
-  Bread cell and beside none; the sweep sets `brood_feed_bee_bread` so a
-  ripe 60-unit cell raises a useful handful of larvae.
-  `tests/test_bb2_bee_bread_nursing.py` asserts from that run that a larva
-  fed Bee Bread emerges "with" and one fed only pollen "without", that each
-  outcome's lifespan, speed and capacity apply, and that the outcome survives
-  a save and restore while a pre-BB-2 save loads its adults unchanged.
-
-**Must not change.** Nursing with no ripe Bee Bread, gyne feeding, the stores
-the skills window prices against (BB-3), and Bee Bread making (BB-1).
-
-**Out of scope.** Priority Cells (tier 3), spending Bee Bread (BB-3), and
-re-pacing the Challenges and the Colony Run (BB-4), which this rule makes
-necessary.
-
-```queue
-**[Claude] BB-2 -- Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved**
-- Plan: `plans/now/bee-bread.md` -- "BB-2 -- Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved"
-- Files: `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_foraging.gd`, `scripts/world_building.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `tests/test_bb2_bee_bread_nursing.py`, `test_scenarios/bb2_bee_bread_nursing.json`
-- Check: `python -m unittest tests.test_bb2_bee_bread_nursing` passes (a larva fed Bee Bread emerges with the 25-day, 105% outcome and one fed only pollen with the 15-day, 95% one; the outcome survives save and restore; a pre-BB-2 save loads its adults unchanged); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/game_config.gd :: brood_feed_bee_bread`
-- Next after: BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it
-```
+BB-2 shipped 2026-10-10; its specification is `plans/archive/BB-2_2026-10-10.md`.
 
 ## BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it
 

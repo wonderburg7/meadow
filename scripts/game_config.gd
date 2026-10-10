@@ -584,6 +584,25 @@ var bee_bread_per_load: float = 3.0
 var bee_bread_cell_capacity: float = 60.0
 var bee_bread_ripen_hours: float = 48.0
 
+# --- bee bread nursing and a worker's outcome (BB-2) ---
+## While the colony holds ripe bee bread, a nurse feeding a worker larva
+## loads brood_feed_bee_bread of it per feed and feeds it in place of
+## brood_feed_pollen (bee_nursery.gd); with none ripe she feeds pollen. A
+## larva given any feed of bee bread emerges raised on bee bread, one fed
+## only pollen raised on pollen (world_building.gd::_spawn_hatched_bee), and
+## the outcome is saved with her: a factor on bee_lifespan_days (so 25 and
+## 15 days by default, and a scenario that changes bee_lifespan_days moves
+## both) and a factor on her speed and carrying capacity
+## (bee.gd::_apply_stats, bee_survival.gd::lifespan_seconds). Founding bees,
+## gynes, drones and bees from a save made before BB-2 keep
+## bee_lifespan_days at 100%. The ration is from BB-2's sweep
+## (plans/now/bee-bread.md).
+var brood_feed_bee_bread: float = 3.0
+var bee_bread_raised_lifespan_factor: float = 1.0
+var bee_bread_raised_stat_factor: float = 1.05
+var pollen_raised_lifespan_factor: float = 0.6
+var pollen_raised_stat_factor: float = 0.95
+
 # --- weather ---
 ## Rain grounds a colony. It waters down the nectar in open flowers, and
 ## a wet bee is a heavy bee, so flying costs more. Past

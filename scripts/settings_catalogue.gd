@@ -501,6 +501,12 @@ const TUNABLES := [
 		"tip": "Nectar used per feed when the colony has no honey to hand.",
 	},
 	{
+		"persist": "none",
+		"key": "brood_feed_bee_bread", "label": "Bee bread per feed", "step": 0.5, "min": 0.5,
+		"category": "Brood & the queen",
+		"tip": "Ripe bee bread a nurse feeds a worker larva in place of pollen, per feed. Nurses use it whenever the colony has some ripe; a larva given any emerges raised on bee bread.",
+	},
+	{
 		"persist": "run",
 		"key": "brood_feed_honey", "label": "Honey per feed", "step": 0.5, "min": 0.0,
 		"category": "Brood & the queen",
@@ -1041,6 +1047,31 @@ const TUNABLES := [
 		"key": "bee_lifespan_days", "label": "Lifespan days", "step": 5.0, "min": 1.0,
 		"category": "Bee life",
 		"tip": "In-game days a bee lives before dying of old age. The queen is exempt -- losing her would silently end the colony.",
+	},
+	# --- a worker's outcome (BB-2): fixed when she emerges, saved with her ---
+	{
+		"persist": "none",
+		"key": "bee_bread_raised_lifespan_factor", "label": "Bee bread: lifespan x", "step": 0.05, "min": 0.05,
+		"category": "Bee life",
+		"tip": "Multiplies Lifespan days for a worker raised on bee bread. 1.0 is the full 25 days. Founding bees, and bees from a save made before bee bread nursing, live Lifespan days.",
+	},
+	{
+		"persist": "none",
+		"key": "bee_bread_raised_stat_factor", "label": "Bee bread: speed and load", "step": 0.05, "min": 0.1,
+		"category": "Bee life",
+		"tip": "Multiplies the speed and carrying capacity of a worker raised on bee bread. 1.05 is 105%.",
+	},
+	{
+		"persist": "none",
+		"key": "pollen_raised_lifespan_factor", "label": "Pollen only: lifespan x", "step": 0.05, "min": 0.05,
+		"category": "Bee life",
+		"tip": "Multiplies Lifespan days for a worker raised only on pollen. 0.6 is 15 of the 25 days.",
+	},
+	{
+		"persist": "none",
+		"key": "pollen_raised_stat_factor", "label": "Pollen only: speed and load", "step": 0.05, "min": 0.1,
+		"category": "Bee life",
+		"tip": "Multiplies the speed and carrying capacity of a worker raised only on pollen. 0.95 is 95%.",
 	},
 	{
 		"persist": "run",

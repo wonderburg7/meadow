@@ -533,6 +533,17 @@ func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false, focus_ov
 		bee.setup(main.hive, focus, main.next_bee_id, role, main)
 	if role == main.Bee.Role.MINER:
 		bee.automine = cell.hatch_automine
+	# BB-2: a worker's outcome is fixed here, from what her cell fed her
+	# (main.gd's hatch has already cleared the cell, which leaves brood_food
+	# alone), and saved with her; the cell then forgets it. A gyne has none;
+	# main.gd's become_drone clears a drone's. A cell still holding a live
+	# larva is not the one she hatched from (challenge_stage_setup's new
+	# worker is handed the first built cell), so its larva keeps its food and
+	# she gets no outcome.
+	if cell.content_type != "brood":
+		if not as_gyne:
+			bee.set_brood_outcome(cell.brood_food)
+		cell.brood_food = ""
 	var hatch_mode: String = bee.architect_mode if role == main.Bee.Role.BUILDER else focus
 	DiagnosticLog.count_brood_hatch(role, hatch_mode)
 	main.next_bee_id += 1

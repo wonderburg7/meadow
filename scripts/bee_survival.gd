@@ -84,9 +84,11 @@ static func age_and_burn(bee: Node2D, delta: float) -> void:
 
 ## How long this bee lives. Shortened by disease, which is most of what
 ## makes pathogen pressure hurt: the colony doesn't visibly sicken, it
-## just quietly stops replacing itself fast enough.
+## just quietly stops replacing itself fast enough. BB-2: the days are her
+## outcome's (bee.gd::outcome_lifespan_days) -- bee_lifespan_days for a bee
+## with none.
 static func lifespan_seconds(bee: Node2D) -> float:
-	var base: float = GameConfig.bee_lifespan_days * GameConfig.seconds_per_day
+	var base: float = bee.outcome_lifespan_days() * GameConfig.seconds_per_day
 	if bee.world != null and is_instance_valid(bee.world) and bee.world.season != null:
 		base *= bee.world.season.lifespan_factor()
 	return max(GameConfig.seconds_per_day, base)
