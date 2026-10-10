@@ -46,4 +46,5 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.claude/worktrees/run-queue-investigation-04d747` (`claude/run-queue-investigation-04d747`) | Claude (docs only) | queue steward: clear the gates BB-2 held and top up the Claude lane | Claude Code | in progress | none | `NEXTSTEPS.md`, `plans/now/diagnostic-readiness.md`, `plans/now/crisis-readiness.md`, `plans/now/guidance-explanations.md`, `plans/now/bee-bread.md` |
 | `.worktrees/WC-4` (`codex/WC-4`) | Codex | a queue id with whitespace fails the documentation check | Codex | in progress | none | `plans/now/workflow-checks.md` WC-4 -- a queue id with whitespace fails the documentation check |
