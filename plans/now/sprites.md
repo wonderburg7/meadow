@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-2 -- the sprite exporter, specified below with a queue block (SP-1 and SP-3 landed 9 Oct 2026); SP-4 (waits for SP-2) and SP-5 are specified here and get their blocks when their predecessor lands; SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: SP-4 -- nectar and pollen fill levels, specified below with a queue block (SP-1, SP-2 and SP-3 landed); SP-5 is specified here and gets its block when SP-4 lands; SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-10
 
 ## Objective
 
@@ -76,8 +76,7 @@ Verified 9 Oct 2026 against master and the main checkout:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-2 | the sprite exporter, the sprite table and the generated catalogue; art moves into the new folders | tools/sprites.py and its test, assets/sprites/, scripts/sprite_catalogue.gd, `scripts/hive_cell.gd`, `tools/verify.ps1` | yes -- SP-1 landed 9 Oct 2026; queued in the Claude lane | medium |
-| SP-4 | nectar and pollen fill levels drawn from the sprites | `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, the sprite table and catalogue, tests | after SP-2 (SP-3 landed 9 Oct 2026) | medium |
+| SP-4 | nectar and pollen fill levels drawn from the sprites | `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, the sprite table and catalogue, tests | yes -- SP-2 landed 10 Oct 2026; queued in the Claude lane | medium |
 | SP-5 | the skep in the meadow, and the rival hive as a recoloured skep | `scripts/hive.gd`, `scripts/rival_hive.gd`, the sprite table and catalogue, tests | after SP-2 | medium |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for Dave's repacked sheet | high (per-bee hot path) |
 
@@ -85,55 +84,7 @@ Dependencies: SP-2 -> SP-4 -> SP-5 -> SP-6 (SP-1 and SP-3 landed 9 Oct 2026).
 
 SP-1 shipped 2026-10-09; its specification is `plans/archive/SP-1_2026-10-09.md`.
 
-## SP-2 -- the sprite exporter, the sprite table and the generated catalogue
-
-**True now.** Art is in `assets/sprites/environment/`, partly untracked
-(see current state). `hive_cell.gd` hard-codes the empty sprite's path
-and measurements (`EMPTY_TEXTURE`, `EMPTY_TEXTURE_BASE_Y/_H`,
-`EMPTY_SILHOUETTE`).
-
-**True afterwards.**
-
-- A new tools/sprites.py uses the standard library only. It reads every
-  `.aseprite` (plus plain `.png` single sprites) under assets/sprites/
-  and the sprite table (assets/sprites/SPRITES.md), then writes one PNG
-  sheet per family beside its source:
-  - each frame gets a 1-px transparent gutter, because the shader samples
-    across texel edges;
-  - layer sprites are flattened, base plus state;
-  - recolour variants are applied.
-- It also validates each sheet against the design doc's conventions:
-  frame sizes are equal, art stays inside its grid cell, there are no
-  part-transparent pixels, and the frame count matches the table.
-- It writes scripts/sprite_catalogue.gd (generated, do not edit). For
-  each family it holds a preload, frame size, hframes/vframes, frame
-  names, anchor, view and level bounds.
-- It prints one line per family. `--check` fails on any stale PNG or
-  catalogue, and `verify.ps1` runs `--check`.
-- Folders and files:
-  - comb/ holds `wax_cell_nectar` and `wax_cell_pollen`. The empty cup is
-    their base layer, so `wax.cell.empty.png` and its `.resprite` retire.
-  - meadow/ holds `hive_skep` and `grass_base`.
-  - bees/ holds `bee_forager_meadow`, unexported until SP-6.
-  - The sprite table replaces `Sprite details.md` and links to the
-    design doc for conventions rather than copying them.
-- The six untracked files are copied from the main checkout into the new
-  paths on this branch. The paths differ, so the merge cannot collide
-  with the untracked originals, which are deleted once their hashes match.
-- Run `godot --headless --import` and commit the `.import` files.
-- `hive_cell.gd` reads the empty frame and its measurements from the
-  catalogue.
-
-```queue
-**[Claude] SP-2 -- the sprite exporter, the sprite table and the generated catalogue**
-- Plan: `plans/now/sprites.md` -- "SP-2 -- the sprite exporter, the sprite table and the generated catalogue"
-- Files: `tools/sprites.py`, `tests/test_sp2_sprites.py`, `assets/sprites/SPRITES.md`, `assets/sprites/comb/wax_cell_nectar.aseprite`, `assets/sprites/comb/wax_cell_pollen.aseprite`, `assets/sprites/meadow/hive_skep.png`, `assets/sprites/meadow/grass_base.png`, `assets/sprites/bees/bee_forager_meadow.aseprite`, `assets/sprites/environment/wax.cell.empty.png`, `scripts/sprite_catalogue.gd`, `scripts/hive_cell.gd`, `tools/verify.ps1`
-- Check: `python -m unittest tests.test_sp2_sprites` passes and `python tools/sprites.py --check` is clean; `tools/verify.ps1` is green
-- Proof: `present: scripts/hive_cell.gd :: const EMPTY_TEXTURE :=`
-- Next after: SP-4 -- nectar and pollen fill levels drawn from the sprites
-```
-
-SP-3 shipped 2026-10-09; its specification is `plans/archive/SP-3_2026-10-09.md`.
+SP-2 shipped 2026-10-10; its specification is `plans/archive/SP-2_2026-10-10.md`.
 
 ## SP-4 -- nectar and pollen fill levels drawn from the sprites
 
@@ -153,6 +104,15 @@ SP-3 shipped 2026-10-09; its specification is `plans/archive/SP-3_2026-10-09.md`
   table, not `GameConfig`.
 - The setting's tip text names filled cells too.
 - Runtime: the frame is set in `_refresh`, and only when it changes.
+
+```queue
+**[Claude] SP-4 -- nectar and pollen fill levels drawn from the sprites**
+- Plan: `plans/now/sprites.md` -- "SP-4 -- nectar and pollen fill levels drawn from the sprites"
+- Files: `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, `assets/sprites/SPRITES.md`, `scripts/sprite_catalogue.gd`, `tests/test_sp4_fill_sprites.py`
+- Check: `python -m unittest tests.test_sp4_fill_sprites` passes and `python tools/sprites.py --check` is clean; `tools/verify.ps1` is green
+- Proof: `present: scripts/hive_cell.gd :: const NECTAR_COLOR :=`
+- Next after: SP-5 -- the skep in the meadow, and the rival hive as a recoloured skep
+```
 
 ## SP-5 -- the skep in the meadow, and the rival hive
 

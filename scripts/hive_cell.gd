@@ -27,26 +27,27 @@ extends Polygon2D
 const Shapes = preload("res://scripts/shapes.gd")
 const Roles = preload("res://scripts/roles.gd")
 const Resources = preload("res://scripts/resources.gd")
+const SpriteCatalogue = preload("res://scripts/sprite_catalogue.gd")
 
 const EMPTY_COLOR := Color(0.85, 0.78, 0.55)
 
-## The empty-cell resprite: a 32x32 canvas holding a 32-wide, 16-tall
-## hex "cup" already alpha-masked to its own outline (exported from the
-## Resprite project alongside this file, `wax.cell.empty.resprite`), so a
-## plain Sprite2D shows it correctly with no risk of a square corner
-## spilling onto a neighbouring cell. Toggled by `Session.use_cell_sprites`
-## -- see `_refresh`.
-const EMPTY_TEXTURE := preload("res://assets/sprites/environment/wax.cell.empty.png")
+## The empty-cell cup: frame 0 of the nectar cell sheet (the cup is the base
+## layer of `wax_cell_nectar.aseprite`), a 32x32 canvas holding a 32-wide,
+## 16-tall hex "cup" already alpha-masked to its own outline, so a plain
+## Sprite2D shows it correctly with no risk of a square corner spilling
+## onto a neighbouring cell. Sheet, frame size and anchor come from the
+## generated catalogue (`tools/sprites.py`, `assets/sprites/SPRITES.md`).
+## Toggled by `Session.use_cell_sprites` -- see `_refresh`.
+const EMPTY_TEXTURE := SpriteCatalogue.WAX_CELL_NECTAR_SHEET
+const EMPTY_FRAME_SIZE := SpriteCatalogue.WAX_CELL_NECTAR_FRAME_SIZE
 
 ## Where the actual hex "floor" -- the silhouette that has to land on the
-## grid's own hex, three-sided front wall included -- sits within
-## EMPTY_TEXTURE's 32x32 canvas: a 32-wide, 16-tall slice starting 14px
-## down. Read straight off the Tileset-properties slice used to export
-## `wax.cell.empty.resprite` (Base W 32, Base H 16, Base Y 14). The 14px
-## left above the floor is the cup's back wall, drawn there so it
-## overlaps whichever cell is behind this one -- see `_ready`'s z_index.
-const EMPTY_TEXTURE_BASE_Y := 14.0
-const EMPTY_TEXTURE_BASE_H := 16.0
+## grid's own hex, three-sided front wall included -- is centred within
+## the 32x32 frame: the table's anchor row (y 22, the middle of the 16-tall
+## slice that starts 14px down). The 14px left above the floor is the
+## cup's back wall, drawn there so it overlaps whichever cell is behind
+## this one -- see `_ready`'s z_index.
+const EMPTY_FLOOR_MID_Y: float = SpriteCatalogue.WAX_CELL_NECTAR_ANCHOR.y
 
 ## Fine visual nudge on top of the derived offset below, in screen pixels
 ## (negative = up). This stays separate from the export measurements so a
@@ -63,11 +64,11 @@ const RING_Y_NUDGE := 2.0
 const EMPTY_SPRITE_SCALE_NUDGE := 1.0
 
 ## The empty-cell sprite's own outline, in pixels on its 32x32 canvas.
-## Measured off EMPTY_TEXTURE's alpha: opaque rows 4..30, a 16px flat top
+## Measured off the empty frame's alpha: opaque rows 4..30, a 16px flat top
 ## edge at y=4 (x=8..23), a 16px flat bottom edge at y=30, and the full
 ## 32px width held between y=12 and y=22. Eight corners, not six -- the
 ## cup has vertical sides, which is why a hexagon can never trace it.
-## Re-measure this if wax.cell.empty.png is redrawn.
+## Re-measure this if the cup layer of wax_cell_nectar.aseprite is redrawn.
 const EMPTY_SILHOUETTE: Array = [
 	Vector2(8.0, 4.0), Vector2(24.0, 4.0), Vector2(32.0, 12.0),
 	Vector2(32.0, 23.0), Vector2(24.0, 31.0), Vector2(8.0, 31.0),
@@ -315,7 +316,7 @@ func _ready() -> void:
 
 	# Cells are built one at a time as the comb grows, in whatever order
 	# the player or the queen happens to add them, but the resprite's cup
-	# wall (see EMPTY_TEXTURE_BASE_Y below) has to paint over the cell
+	# wall (see EMPTY_FLOOR_MID_Y) has to paint over the cell
 	# behind it -- so draw order needs to run screen-top to screen-bottom
 	# regardless of build order. `Shapes.hex_to_pixel`'s y is always a
 	# positive multiple of (2r + q), squashed or not, so that alone gives
@@ -335,18 +336,22 @@ func _ready() -> void:
 	# radius.
 	empty_sprite = Sprite2D.new()
 	empty_sprite.texture = EMPTY_TEXTURE
+	# Frame 0 of the sheet; the gutter around it is symmetric, so the cup
+	# stays centred exactly where the bare 32x32 canvas put it.
+	empty_sprite.hframes = SpriteCatalogue.WAX_CELL_NECTAR_HFRAMES
+	empty_sprite.vframes = SpriteCatalogue.WAX_CELL_NECTAR_VFRAMES
+	empty_sprite.frame = 0
 	empty_scale = PixelSprite.hive_scale()
 	PixelSprite.apply(empty_sprite, empty_scale * EMPTY_SPRITE_SCALE_NUDGE)
 	# The floor slice sits low in its 32-tall canvas (see
-	# EMPTY_TEXTURE_BASE_Y), so shift up until the floor's own centre --
+	# EMPTY_FLOOR_MID_Y), so shift up until the floor's own centre --
 	# not the canvas's -- lands on this cell's actual centre; otherwise
 	# the cup reads as floating above (or sunk below) where the hex grid,
 	# and every filled-cell fill, actually put this tile.
-	var canvas_mid: float = EMPTY_TEXTURE.get_height() * 0.5
-	var base_mid: float = EMPTY_TEXTURE_BASE_Y + EMPTY_TEXTURE_BASE_H * 0.5
+	var canvas_mid: float = EMPTY_FRAME_SIZE.y * 0.5
 	empty_sprite.offset = Vector2(
 		0.0,
-		canvas_mid - base_mid + EMPTY_SPRITE_Y_NUDGE / empty_scale
+		canvas_mid - EMPTY_FLOOR_MID_Y + EMPTY_SPRITE_Y_NUDGE / empty_scale
 	)
 	empty_sprite.visible = false
 	add_child(empty_sprite)
@@ -503,16 +508,15 @@ func _set_outline_points(line: Line2D, size: float) -> void:
 		line.add_point(p)
 	line.add_point(pts[0])   # close the loop
 
-## Converts one point of EMPTY_SILHOUETTE (in EMPTY_TEXTURE's own pixel
+## Converts one point of EMPTY_SILHOUETTE (in the empty frame's own pixel
 ## space) into this cell's local space, using exactly the arithmetic
 ## `_ready()` uses to place `empty_sprite` -- so a ring built from this can
 ## never drift away from the sprite it is meant to trace.
 func _silhouette_point_to_local(p: Vector2) -> Vector2:
 	var s: float = empty_scale * EMPTY_SPRITE_SCALE_NUDGE
-	var base_mid: float = EMPTY_TEXTURE_BASE_Y + EMPTY_TEXTURE_BASE_H * 0.5
 	return Vector2(
-		(p.x - EMPTY_TEXTURE.get_width() * 0.5) * s,
-		(p.y - base_mid) * s + EMPTY_SPRITE_Y_NUDGE + RING_Y_NUDGE
+		(p.x - EMPTY_FRAME_SIZE.x * 0.5) * s,
+		(p.y - EMPTY_FLOOR_MID_Y) * s + EMPTY_SPRITE_Y_NUDGE + RING_Y_NUDGE
 	)
 
 ## Cell art's cup sprite has vertical sides and a flat top and bottom, not

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://s0mpjktvs5rg"
-path="res://.godot/imported/wax.cell.empty.png-61e4c69ec74a4a8b40fc7e1246128595.ctex"
+uid="uid://ct5d3aox3kitu"
+path="res://.godot/imported/hive_skep.png-daa0b2a4115c0f9930af4de991469cb7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/environment/wax.cell.empty.png"
-dest_files=["res://.godot/imported/wax.cell.empty.png-61e4c69ec74a4a8b40fc7e1246128595.ctex"]
+source_file="res://assets/sprites/meadow/hive_skep.png"
+dest_files=["res://.godot/imported/hive_skep.png-daa0b2a4115c0f9930af4de991469cb7.ctex"]
 
 [params]
 

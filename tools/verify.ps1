@@ -428,6 +428,14 @@ if ($runBranchScope) {
     if ($lastStageExit -ne 0) {
         exit $lastStageExit
     }
+
+    # SP-2: the sprite sheets and scripts/sprite_catalogue.gd are generated
+    # from the .aseprite files and assets/sprites/SPRITES.md. A stale one
+    # fails here; `python tools/sprites.py` regenerates them.
+    Invoke-PythonStage -Name "sprite sheets" -ScriptPath (Join-Path $repoRoot "tools/sprites.py") -ScriptArgs @("--check") -FailureNote "run python tools/sprites.py to regenerate"
+    if ($lastStageExit -ne 0) {
+        exit $lastStageExit
+    }
 }
 
 if ($runPrimaryScope) {
