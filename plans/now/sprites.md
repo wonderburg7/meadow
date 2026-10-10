@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-2 -- the sprite exporter, specified below with a queue block (SP-1 and SP-3 landed 9 Oct 2026); SP-4 (waits for SP-2) and SP-5 are specified here and get their blocks when their predecessor lands; SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; shares `scripts/hive_cell.gd`, `scripts/bee.gd` and `scripts/settings_catalogue.gd` with queued BB-2 and `scripts/hive.gd` with queued NF-4 (same lane, so they run in turn; SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: SP-2 -- the sprite exporter, specified below with a queue block (SP-1 and SP-3 landed 9 Oct 2026); SP-4 (waits for SP-2) and SP-5 are specified here and get their blocks when their predecessor lands; SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-10
 
 ## Objective
 

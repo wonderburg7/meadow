@@ -51,6 +51,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `present: scripts/challenge_stages.gd :: the rescue threshold -- first guesses`
    - Next after: none -- Bee Bread is complete
 
+5. **[Claude] PP-1 -- bees earn Pollinator Points and Contribution**
+   - Plan: `plans/now/pollination.md` -- "PP-1 -- bees earn Pollinator Points and Contribution"
+   - Files: `scripts/pollination.gd`, `scripts/main.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/debug_panel.gd`, `tests/test_pp1_pollination_ledger.py`, `test_scenarios/pp1_pollination_ledger.json`
+   - Check: `python -m unittest tests.test_pp1_pollination_ledger` passes (two same-species flowers in one trip earn one point only once Pollinator points is owned and not again from that flower until it has refilled; a trip's first flower earns nothing; arriving from another species counts one incompatible delivery; Contribution rises whether or not the skill is owned; the counters and flower counts survive save and restore); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/flower.gd :: compatible_visits`
+   - Next after: PP-2 -- points are spendable and shown, with a +1 at the flower
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -75,9 +82,8 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation, Bee Bread and the gyne route.
-- **GD-2b** (`plans/now/guidance-explanations.md`) -- the shown ledger and Why history saved with the run; waits for GD-2a (Codex lane), and for the save files to be free of Claude-lane slices when it is admitted: they are free since 10 Oct 2026, and PP-1, PP-4 and PP-5 hold them later.
-- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits only for CD-3 (Codex backlog, behind GD-2a) to release `scripts/colony_diagnostics.gd`; its save and HUD files are free since 10 Oct 2026.
-- **PP-1** (`plans/now/pollination.md`) -- bees earn Pollinator Points; admissible, and waits for room in the Claude lane behind T2-6 (queued fourth), which it needs owned, and BB-4 (queued fifth).
+- **GD-2b** (`plans/now/guidance-explanations.md`) -- the shown ledger and Why history saved with the run; waits for GD-2a (Codex lane), and for the save files to be free of Claude-lane slices when it is admitted: PP-1 (Claude lane, fifth) holds them now, and PP-4 and PP-5 hold them later.
+- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for CD-3 (Codex backlog, behind GD-2a) to release `scripts/colony_diagnostics.gd`, and for PP-1 (Claude lane, fifth) to release `scripts/main.gd` and the save files; `scripts/hud.gd` is free since 10 Oct 2026.
 - **PP-2 and PP-4** (`plans/now/pollination.md`) -- Pollinator Points made spendable, and seed set; wait for PP-1's ledger (`scripts/pollination.gd`).
 - **PP-5** (`plans/now/pollination.md`) -- Priority cells; waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`.
 - **PP-6** (`plans/now/pollination.md`) -- the route's pricing sweep; waits for PP-1 to PP-5 and T2-7, and is specified when they land.

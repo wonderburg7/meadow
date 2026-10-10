@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-7 -- tier-2 costs tuned so the first purchase lands around day 5, queued in the Claude lane behind NF-4 (Dave, 10 Oct 2026; BB-2 landed 10 Oct 2026); then T2-6 -- Associative learning, specified below with Dave's 10 Oct 2026 decisions and queued in the Claude lane behind T2-7 | Dependency: COL-4, COL-6, T2-4a and T2-4b landed; T2-7 follows NF-4 (BB-2 landed 10 Oct 2026); T2-6 follows T2-7 (shared `skills.gd`) | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: T2-7 -- tier-2 costs tuned so the first purchase lands around day 5, queued in the Claude lane behind SP-2 (Dave, 10 Oct 2026; BB-2 and NF-4 landed 10 Oct 2026); then T2-6 -- Associative learning, specified below with Dave's 10 Oct 2026 decisions and queued in the Claude lane behind T2-7 | Dependency: COL-4, COL-6, T2-4a and T2-4b landed; T2-7's predecessors BB-2 and NF-4 landed 10 Oct 2026; T2-6 follows T2-7 (shared `skills.gd`) | Verified: 2026-10-10
 
 ## Objective
 
@@ -55,7 +55,7 @@ Verified 7 Oct 2026 against master:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | T2-6 | Associative learning: the existing handling experience, gated by the skill, with a fade | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd` | yes -- queued in the Claude lane behind T2-7 | medium |
-| T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | `scripts/skills.gd`, `scripts/progression.gd`, `scripts/diagnostic_log.gd`, `tools/analyze_session.py`, `tools/pacing_gates.py`, `plans/design/progression.md`, its test | yes -- queued in the Claude lane behind NF-4 (BB-2 landed 10 Oct 2026) | medium |
+| T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | `scripts/skills.gd`, `scripts/progression.gd`, `scripts/diagnostic_log.gd`, `tools/analyze_session.py`, `tools/pacing_gates.py`, `plans/design/progression.md`, its test | yes -- queued in the Claude lane behind SP-2 (BB-2 and NF-4 landed 10 Oct 2026) | medium |
 
 **Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
 T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
@@ -65,12 +65,12 @@ T2-4b landed 9 Oct 2026, so it no longer shares files with NF-3
 (`plans/archive/nectar-fermentation_2026-10-10.md`) or Bee Bread's BB-1
 (`plans/now/bee-bread.md`).
 T2-7 prices the gates T2-1 to T2-3 built. T2-6 shares `skills.gd` with
-T2-7 and NF-4 and `bee_foraging.gd`, `game_config.gd` and
-`settings_catalogue.gd` with BB-2, so it runs after them in the Claude lane.
+T2-7, so it runs after it in the Claude lane (NF-4 and BB-2, which shared
+`skills.gd`, `bee_foraging.gd`, `game_config.gd` and `settings_catalogue.gd`, landed 10 Oct 2026).
 Pollinator Points (`plans/now/pollination.md` PP-1) needs T2-6: foraging
 tier 3 opens only when Associative learning is owned. T2-8 multiplies COL-6's one-step winter (landed 7 Oct 2026).
-NF-4 (`plans/archive/nectar-fermentation_2026-10-10.md`) adds a Colony tier-2 node and
-shares `skills.gd`; it lands before T2-7, which prices it. T2-7 runs after
+NF-4 (`plans/archive/nectar-fermentation_2026-10-10.md`) added a Colony tier-2 node in
+`skills.gd` and landed 10 Oct 2026, before T2-7, which prices it. T2-7 runs after
 BB-2 (`plans/now/bee-bread.md`) so its sweep includes the 15-day
 unfed-worker rule; BB-4 then moves stage thresholds only, never prices.
 T2-7 shares `tools/pacing_gates.py` with gated AR-4
