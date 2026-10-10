@@ -50,8 +50,8 @@ Verified 10 Oct 2026 against master:
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
 once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
 `skills.gd` and the save files with BB-2, NF-4 and T2-6, so it runs after
-them in the Claude lane. PP-2 and PP-4 build on PP-1's ledger; PP-2 also
-follows BB-3 (`skill_tree_panel.gd`). PP-3 shares no file with the Claude
+them in the Claude lane. PP-2 and PP-4 build on PP-1's ledger; PP-2's
+`skill_tree_panel.gd` is free since BB-3 landed (10 Oct 2026). PP-3 shares no file with the Claude
 lane and runs in the Codex lane now. PP-5 shares `orders_zones.gd` with PP-3
 and `bee_nursery.gd` with BB-2 and NF-4. PP-6 balances everything above and
 also follows T2-7 (`plans/now/tier-two.md`), which prices tier 2 on the same
