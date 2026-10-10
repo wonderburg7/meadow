@@ -50,7 +50,7 @@ SOURCE_SUFFIXES = {
 }
 
 # A boot line that means the cache, not the code, is the likely fault.
-CACHE_FAILURE = re.compile(r"Could not (resolve script|preload resource)")
+CACHE_FAILURE = re.compile(r"Could not (resolve script|preload resource|resolve external class member)|Failed loading resource")
 
 IMPORT_TIMEOUT_SECONDS = 180
 
