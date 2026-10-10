@@ -47,4 +47,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/WC-4` (`codex/WC-4`) | Codex | a queue id with whitespace fails the documentation check | Codex | in progress | none | `plans/now/workflow-checks.md` WC-4 -- a queue id with whitespace fails the documentation check |
-| `.worktrees/BB-2` (`claude/BB-2`) | Claude | Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved | Claude | in progress | none | `plans/now/bee-bread.md` BB-2 -- Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved |
