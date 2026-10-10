@@ -47,4 +47,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/GD-2a` (`codex/GD-2a`) | Codex | the guidance policy, the first two explanations and the Why list | Codex | in progress | none | `plans/now/guidance-explanations.md` GD-2a -- the guidance policy, the first two explanations and the Why list |
-| `.claude/worktrees/run-queue-3-b5fefa` (`claude/run-queue-3-b5fefa`) | Claude (docs only) | queue steward: clear the gates NF-4 held and queue PP-1 fifth in the Claude lane | Claude Code | in progress | none | `NEXTSTEPS.md`, `plans/now/pollination.md`, `plans/now/tier-two.md`, `plans/now/sprites.md` |
