@@ -59,7 +59,7 @@ folder holds a `slice-worker-*` dispatch.
 **Dependencies.** CX-2 after CX-1: CX-1 records the baseline that CX-2's
 "Done when" is measured against, and both edit the run-queue skill.
 `tools/session_cost.py` is also named by WC-5 in
-`plans/now/workflow-checks.md` (Codex lane, gated); `refill_lane.py` refuses
+`plans/archive/workflow-checks_2026-10-10.md` (Codex lane, gated); `refill_lane.py` refuses
 to queue both at once, so whichever is queued second waits.
 
 **Reads.** A slice reads its own section below and the functions it names

@@ -165,7 +165,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | PE-1 -- the headless pacing gates timed to the hour | `plans/archive/pacing-evidence_2026-10-01.md` |
 | AR-1 to AR-4 -- alpha-route evidence: recorded gates, their diagnostic boundary, then an end-to-end scripted route | `plans/now/alpha-route-evidence.md` |
 | CX-1, CX-2 -- coordinator context: a per-run cost report, then a queue-steward subagent for the /run-queue housekeeping | `plans/now/coordinator-context.md` |
-| WC-1 to WC-5 -- workflow checks: stale deferrals, the dry-lane report, Codex's hooks, spaced ids, level-to-model parity | `plans/now/workflow-checks.md` |
+| WC-1 to WC-5 -- workflow checks: stale deferrals, the dry-lane report, Codex's hooks, spaced ids, level-to-model parity | `plans/archive/workflow-checks_2026-10-10.md` |
 | WO-1 -- winter's countdown opens by itself on a set day | `plans/archive/winter-onset_2026-10-01.md` |
 | UI-F-1, UI-F-2, UI-F-3 -- the game-over screen's theme, warning severity, comb label scale | `plans/archive/ui-feedback_2026-10-01.md` |
 | FBB-1 -- the skill tree hides the cut skills and says which are not built | `plans/archive/feedback-build_2026-10-05.md` |

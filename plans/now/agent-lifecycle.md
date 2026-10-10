@@ -51,7 +51,7 @@ slice until the next measurement says what those sessions were doing.
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
 
-WC-1 to WC-5 (`plans/now/workflow-checks.md`, Codex lane, 7 Oct 2026) extend
+WC-1 to WC-5 (`plans/archive/workflow-checks_2026-10-10.md`, Codex lane, 7 Oct 2026) extend
 this plan's `tools/check_docs.py` and `tools/refill_lane.py` without changing
 `tools/slice.ps1` or any format: stale deferrals, the dry-lane report,
 Codex's hooks, spaced ids and level-to-model parity.
