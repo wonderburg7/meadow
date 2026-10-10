@@ -2702,8 +2702,10 @@ TRANSCRIBED_EFFECTS = {
     # T2-5: weather sensing and rain recall use live rain values, not toggles.
     "skill.ecology.weather_sensing": ("enable_behaviour", "weather_sensing_on"),
     "skill.ecology.rain_recall": ("enable_behaviour", "rain_recall_on"),
+    # NF-4: fermentation sense is an owned-skill behaviour (hive.gd).
+    "skill.colony.fermentation_sense": ("enable_behaviour", "fermentation_sense_on"),
 }
-SKILL_ONLY_BEHAVIOURS = {"weather_sensing_on", "rain_recall_on"}
+SKILL_ONLY_BEHAVIOURS = {"weather_sensing_on", "rain_recall_on", "fermentation_sense_on"}
 
 
 def check_progression_transcribed_effects(problems):

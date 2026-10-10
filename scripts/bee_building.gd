@@ -206,6 +206,10 @@ static func may_draw_from(bee: Node2D, cell: Node2D) -> bool:
 		return false          # sealed
 	if bee.restock_blocked.has(cell):
 		return false
+	# NF-4: with fermentation sense, fermented nectar stays where it is
+	# (Dave, 9 Oct 2026); without it, a restock order still takes it.
+	if bee.hive.avoids_as_sour(cell):
+		return false
 	if bee.restock_sources.is_empty():
 		return true
 	return bee.restock_sources.has(cell)
@@ -224,6 +228,10 @@ static func find_restock_job(bee: Node2D) -> bool:
 	var least: float = INF
 	for cell in bee.restock_targets:
 		if not is_instance_valid(cell) or cell.space_for(bee.restock_resource) <= 0.0:
+			continue
+		# NF-4: with the sense, fresh nectar is never poured into a sour
+		# target, where it would keep the old stamp and be sour at once.
+		if bee.hive.avoids_as_sour(cell):
 			continue
 		var held: float = cell.amount if cell.content_type == bee.restock_resource else 0.0
 		if held < least:
@@ -258,6 +266,13 @@ static func restock_go_to_source(bee: Node2D, delta: float) -> void:
 		bee.state = State.BUILD_IDLE
 		return
 	if bee.haul_target == null or not is_instance_valid(bee.haul_target):
+		bee.target_cell = null
+		bee.state = State.BUILD_IDLE
+		return
+
+	# NF-4: a source that fermented while she walked over is no longer one.
+	if bee.hive.avoids_as_sour(bee.target_cell):
+		BeeForaging.release_cell_slot(bee)
 		bee.target_cell = null
 		bee.state = State.BUILD_IDLE
 		return
