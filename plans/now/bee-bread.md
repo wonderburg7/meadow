@@ -36,7 +36,6 @@ Verified 7 Oct 2026 against master; BB-1 (9 Oct 2026) has since built Bee Bread 
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BB-3 | Bee Bread is spendable on tier-3 recipes, from the cells that hold it | `scripts/skill_tree_panel.gd`, `tests/test_bb3_bee_bread_currency.py`, `test_scenarios/bb3_bee_bread_currency.json` | landed 10 Oct 2026 | medium |
 | BB-4 | Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers | to be specified (BB-2 landed 10 Oct 2026) | not yet -- needs its `queue` block | medium |
 
 **Dependencies.** BB-1 and BB-2 have landed; BB-3 owns the skill window's
@@ -61,58 +60,7 @@ BB-1 shipped 2026-10-09; its specification is `plans/archive/BB-1_2026-10-09.md`
 
 BB-2 shipped 2026-10-10; its specification is `plans/archive/BB-2_2026-10-10.md`.
 
-## BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it
-
-<!-- LAYER: immediate-task -->
-
-Level: medium (one file and an acceptance check; the recipes and the
-spending rule are already decided). Specified 9 Oct 2026 by the queue
-steward, from this plan's outline, after reading the files named below.
-
-**True now.** `skills.gd` already prices tier-3 and later skills in
-`Skills.BEE_BREAD` (for example 12 to 30 per skill), so the resolver
-(`progression.gd::can_afford` / `purchase`) asks for it, but nothing ever
-supplies it: `skill_tree_panel.gd::_stores()` builds the snapshot the window
-prices against from `STORE_CONTENT`, which maps only nectar, pollen, honey
-and royal jelly to cell contents. Every Bee Bread recipe is therefore
-unaffordable, however much the comb holds. `buy_skill` takes exactly what
-`purchase` deducted from the comb with `hive.gd::take()`, which walks the
-cells; BB-1's `hive_cell.gd::take_resource("bee_bread", ...)` already
-refuses an unripe cell, and `is_ripe_bee_bread()` says when one is ripe.
-
-**True afterwards.**
-
-- `STORE_CONTENT` maps `Skills.BEE_BREAD` to `Resources.BEE_BREAD`, and
-  `_stores()` counts a Bee Bread cell only when `is_ripe_bee_bread()` (as it
-  counts honey only when ripe), so the snapshot holds exactly what `take()`
-  can reach and the take cannot fall short.
-- Buying a skill with Bee Bread in its recipe spends it from the ripe cells
-  (section 4.2: the recipe is spent); the stores list in the window shows
-  "Bee bread" with the rest.
-- `test_scenarios/bb3_bee_bread_currency.json` makes or seeds a sealed Bee
-  Bread cell with the prerequisites of one Bee Bread-priced skill in place:
-  buying it while the cell is unripe is refused (`buy_skill` with
-  `expect_refused`); after `bee_bread_ripen_hours` it is bought, and the
-  cell holds that recipe's Bee Bread less. `tests/test_bb3_bee_bread_currency.py`
-  asserts both from the run.
-
-**Runtime.** None added: `_stores()` runs on opening the window and per
-purchase, as now, and ripeness is read from BB-1's stamp on demand.
-
-**Must not change.** The recipes in `skills.gd`, Bee Bread making (BB-1),
-nursing (BB-2), and the other currencies' counting.
-
-**Out of scope.** New tier-3 content (`plans/design/progression.md` step 13,
-which waits for this slice), Priority Cells, and any price change.
-
-```queue
-**[Claude] BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it**
-- Plan: `plans/now/bee-bread.md` -- "BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it"
-- Files: `scripts/skill_tree_panel.gd`, `tests/test_bb3_bee_bread_currency.py`, `test_scenarios/bb3_bee_bread_currency.json`
-- Check: `python -m unittest tests.test_bb3_bee_bread_currency` passes (a Bee Bread-priced skill is refused while the colony's only Bee Bread is unripe, is bought once it ripens, and the ripe cell loses exactly the recipe's Bee Bread); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/skill_tree_panel.gd :: Skills.BEE_BREAD`
-- Next after: BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers
-```
+BB-3 shipped 2026-10-10; its specification is `plans/archive/BB-3_2026-10-10.md`.
 
 ## Outline
 
