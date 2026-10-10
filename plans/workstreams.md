@@ -46,4 +46,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.claude/worktrees/run-queue-3-b5fefa` (`claude/run-queue-3-b5fefa`) | Claude (docs only) | queue steward: clear the gates SP-2 held and queue SP-4 fifth in the Claude lane | Claude Code | in progress | none | `NEXTSTEPS.md`, `plans/now/sprites.md`, `plans/now/tier-two.md` |
