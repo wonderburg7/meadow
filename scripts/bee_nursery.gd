@@ -9,6 +9,7 @@ const BeeEnums = preload("res://scripts/bee_enums.gd")
 const Role = BeeEnums.Role
 const State = BeeEnums.State
 const BeeForaging = preload("res://scripts/bee_foraging.gd")
+const Resources = preload("res://scripts/resources.gd")
 
 static func nurse_go_to_brood(bee: Node2D, delta: float) -> void:
 	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or bee.target_cell.content_type != "brood":
@@ -39,7 +40,7 @@ static func nurse_tend(bee: Node2D, _delta: float) -> void:
 		# if there is actually something in the comb to fetch -- otherwise
 		# stay put, since standing over the larva at least speeds up
 		# whatever food it has left.
-		if restock_possible(bee):
+		if restock_possible(bee, bee.target_cell.brood_is_gyne):
 			BeeForaging.release_cell_slot(bee)
 			bee.target_cell = null
 			bee.state = State.NURSE_IDLE
@@ -80,29 +81,55 @@ static func carb_per_feed(bee: Node2D) -> float:
 	return GameConfig.brood_feed_honey if bee.nurse_carb_type == "honey" else GameConfig.brood_feed_nectar
 
 
+## BB-2. A ripe bee bread cell a nurse can load from, or null. Only ripe
+## bee bread is food (hive_cell.gd::is_ripe_bee_bread); a cell still filling
+## or fermenting is passed over.
+static func ripe_bee_bread_cell(bee: Node2D) -> Node2D:
+	for cell in bee.hive.cells_holding(Resources.BEE_BREAD):
+		if cell.amount > 0.0 and cell.can_withdraw() and cell.is_ripe_bee_bread():
+			return cell
+	return null
+
+
+## BB-2. Is this nurse carrying a whole feed of bee bread?
+static func carries_bee_bread_feed(bee: Node2D) -> bool:
+	return bee.nurse_bee_bread > 0.0 and bee.nurse_bee_bread >= GameConfig.brood_feed_bee_bread
+
+
+## BB-2. The protein half of a worker larva's meal. Bee bread when she
+## carries a feed of it; pollen only while the colony holds no ripe bee
+## bread, since with some ripe she goes and loads that first.
+static func _worker_protein_ready(bee: Node2D) -> bool:
+	if carries_bee_bread_feed(bee):
+		return true
+	return bee.nurse_pollen >= GameConfig.brood_feed_pollen and ripe_bee_bread_cell(bee) == null
+
+
 ## Can this nurse feed that particular larva right now, from what she is
-## carrying? A gyne is fussier: royal jelly and honey specifically, where
-## a worker larva will take nectar.
+## carrying? A gyne is fussier: royal jelly, pollen and honey specifically,
+## where a worker larva will take nectar, and bee bread in place of pollen.
 static func can_feed(bee: Node2D, cell: Node2D) -> bool:
-	if bee.nurse_pollen < GameConfig.brood_feed_pollen:
-		return false
 	if cell != null and is_instance_valid(cell) and cell.brood_is_gyne:
+		if bee.nurse_pollen < GameConfig.brood_feed_pollen:
+			return false
 		if bee.nurse_jelly < GameConfig.brood_feed_jelly:
 			return false
 		return bee.nurse_carb_type == "honey" and bee.nurse_carb >= GameConfig.brood_feed_honey
-	return bee.nurse_carb >= carb_per_feed(bee)
+	return can_feed_brood(bee)
 
 
 static func can_feed_brood(bee: Node2D) -> bool:
-	return bee.nurse_pollen >= GameConfig.brood_feed_pollen and bee.nurse_carb >= carb_per_feed(bee)
+	return _worker_protein_ready(bee) and bee.nurse_carb >= carb_per_feed(bee)
 
 
 ## How many complete meals this nurse is carrying, for the info panel --
-## whichever half runs out first is the limit.
+## whichever half runs out first is the limit. Bee bread and pollen are
+## both the protein half.
 static func feeds_carried(bee: Node2D) -> float:
-	var from_pollen: float = bee.nurse_pollen / max(0.001, GameConfig.brood_feed_pollen)
+	var from_protein: float = floor(bee.nurse_pollen / max(0.001, GameConfig.brood_feed_pollen))
+	from_protein += floor(bee.nurse_bee_bread / max(0.001, GameConfig.brood_feed_bee_bread))
 	var from_carb: float = bee.nurse_carb / max(0.001, carb_per_feed(bee))
-	return floor(min(from_pollen, from_carb))
+	return floor(min(from_protein, from_carb))
 
 
 ## Could a trip to the stores actually improve what this nurse is
@@ -110,8 +137,12 @@ static func feeds_carried(bee: Node2D) -> float:
 ## the two disagreed, a nurse short of pollen with none in the comb would
 ## bounce between the brood nest and her idle state every frame, being
 ## told to restock and finding nothing to restock with.
-static func restock_possible(bee: Node2D) -> bool:
-	if bee.nurse_pollen < GameConfig.brood_feed_pollen and bee.hive.find_cell_with("pollen") != null:
+static func restock_possible(bee: Node2D, for_gyne: bool = false) -> bool:
+	# BB-2: a worker larva's protein is bee bread while any is ripe.
+	if not for_gyne and not carries_bee_bread_feed(bee) and ripe_bee_bread_cell(bee) != null:
+		return true
+	var pollen_needed: bool = for_gyne or not carries_bee_bread_feed(bee)
+	if pollen_needed and bee.nurse_pollen < GameConfig.brood_feed_pollen and bee.hive.find_cell_with("pollen") != null:
 		return true
 	if bee.nurse_carb < carb_per_feed(bee):
 		if bee.hive.find_cell_with("honey") != null or bee.hive.find_cell_with("nectar") != null:
@@ -143,14 +174,23 @@ static func feed_brood(bee: Node2D, cell: Node2D) -> void:
 		return
 
 	var on_honey: bool = bee.nurse_carb_type == "honey"
-	bee.nurse_pollen -= GameConfig.brood_feed_pollen
+	# BB-2: bee bread in place of pollen whenever she carries a feed of it.
+	# can_feed only let her get here on pollen if none was ripe.
+	var on_bee_bread: bool = carries_bee_bread_feed(bee)
+	if on_bee_bread:
+		bee.nurse_bee_bread -= GameConfig.brood_feed_bee_bread
+		if bee.nurse_bee_bread <= 0.001:
+			bee.nurse_bee_bread = 0.0
+	else:
+		bee.nurse_pollen -= GameConfig.brood_feed_pollen
 	bee.nurse_carb -= carb_per_feed(bee)
 	if bee.nurse_carb <= 0.001:
 		bee.nurse_carb = 0.0
 		bee.nurse_carb_type = ""
 	cell.feed_brood(
 		GameConfig.brood_feed_seconds_honey if on_honey else GameConfig.brood_feed_seconds,
-		on_honey
+		on_honey,
+		on_bee_bread
 	)
 	DiagnosticLog.count_brood_feed()
 
@@ -263,7 +303,14 @@ static func nurse_deposit_jelly(bee: Node2D, delta: float) -> void:
 ## meal. Returns true when an errand was started. Honey is preferred over
 ## nectar because a honey feed carries a larva further.
 static func nurse_restock_errand(bee: Node2D, for_gyne: bool = false) -> bool:
-	if bee.nurse_pollen < GameConfig.brood_feed_pollen:
+	# BB-2: while the colony holds ripe bee bread, a worker larva's protein
+	# comes from it rather than from pollen. A gyne still takes pollen.
+	if not for_gyne and not carries_bee_bread_feed(bee):
+		var bread_cell = ripe_bee_bread_cell(bee)
+		if bread_cell != null:
+			start_food_errand(bee, bread_cell, Resources.BEE_BREAD)
+			return true
+	if bee.nurse_pollen < GameConfig.brood_feed_pollen and (for_gyne or not carries_bee_bread_feed(bee)):
 		var pollen_cell = bee.hive.find_cell_with("pollen")
 		if pollen_cell != null:
 			start_food_errand(bee, pollen_cell, "pollen")
@@ -311,6 +358,9 @@ static func nurse_go_to_food(bee: Node2D, delta: float) -> void:
 	if bee.nurse_fetching == "honey" and not bee.target_cell.is_ripe_honey():
 		abandon_food_errand(bee)
 		return
+	if bee.nurse_fetching == Resources.BEE_BREAD and not bee.target_cell.is_ripe_bee_bread():
+		abandon_food_errand(bee)
+		return
 
 	var approach := BeeForaging.approach_cell(bee, bee.target_cell, delta)
 	if approach < 0:
@@ -334,6 +384,8 @@ static func nurse_load_food(bee: Node2D, delta: float) -> void:
 			bee.nurse_pollen += bee.target_cell.take_resource("pollen", GameConfig.brood_feed_pollen * feeds)
 		elif bee.nurse_fetching == "jelly":
 			bee.nurse_jelly += bee.target_cell.take_resource("jelly", GameConfig.brood_feed_jelly * feeds)
+		elif bee.nurse_fetching == Resources.BEE_BREAD:
+			bee.nurse_bee_bread += bee.target_cell.take_resource(Resources.BEE_BREAD, GameConfig.brood_feed_bee_bread * feeds)
 		else:
 			var per_feed: float = GameConfig.brood_feed_honey if bee.nurse_fetching == "honey" else GameConfig.brood_feed_nectar
 			var got: float = bee.target_cell.take_resource(bee.nurse_fetching, per_feed * feeds)

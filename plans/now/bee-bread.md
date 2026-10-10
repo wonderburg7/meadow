@@ -1,7 +1,7 @@
 # Bee Bread -- fermented larval food, the tier-3 currency, and what it makes of a worker
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BB-2 -- Nurses feed Bee Bread; a worker's outcome is fixed at emergence and saved, then BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it, both specified below and queued in the Claude lane now BB-1 has landed (9 Oct 2026); BB-4 is specified when BB-2 lands | Dependency: none -- COL-4, NF-2, T2-2, T2-3 and BB-1 have landed | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it, specified below and queued in the Claude lane; BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers is to be specified now that BB-2 has landed (10 Oct 2026) | Dependency: none -- COL-4, NF-2, T2-2, T2-3, BB-1 and BB-2 have landed | Verified: 2026-10-10
 
 ## Objective
 
@@ -27,6 +27,8 @@ Verified 7 Oct 2026 against master; BB-1 (9 Oct 2026) has since built Bee Bread 
   deposit.
 - Nurses (`bee_nursery.gd`) feed larvae pollen (`brood_feed_pollen`).
   Every worker lives `bee_lifespan_days` (25) at full speed and capacity.
+  (BB-2, 10 Oct 2026, has since made nurses feed ripe Bee Bread in place of
+  pollen and fixed each new worker's outcome at emergence.)
 - Nectar fermentation (`plans/now/nectar-fermentation.md`) is a different
   mechanism -- raw nectar spoiling with age -- and shares only files.
 
@@ -99,6 +101,24 @@ handed its cell.
   fed Bee Bread emerges "with" and one fed only pollen "without", that each
   outcome's lifespan, speed and capacity apply, and that the outcome survives
   a save and restore while a pre-BB-2 save loads its adults unchanged.
+
+**Sweep result (10 Oct 2026, BB-2's worker).** The fixture (queen, two
+nurses, five nursery cells, one ripe 60-unit cell, ten game-minutes) raised
+this many workers on Bee Bread per cell: ration 1.5 -- 10, 2.0 -- 8, 3.0 -- 4,
+5.0 -- 4 (at 5.0 the three nurses take the whole cell in one load each and
+hoard it). `brood_feed_bee_bread` is **3.0**, the same as
+`brood_feed_pollen`: Bee Bread replaces pollen unit for unit, and a cell
+raises a handful (four) of larvae in under a game-day.
+
+**As built.** A larva given *any* feed of Bee Bread emerges raised on it
+(`hive_cell.gd::brood_food`); with ripe Bee Bread in the comb a nurse loads it
+before feeding a worker larva even if she carries pollen. Gyne feeding is
+unchanged (pollen, royal jelly and honey) and a gyne or drone gets no outcome,
+nor does a founding bee: all three stay today's worker. The save's per-bee
+`stats` readout (speed, both capacities, lifespan) is written for tests and
+never read back; `brood_outcome` is written only for a bee that has one, so a
+founder's entry has the pre-BB-2 shape. PE-2's pacing arc was not rerun:
+BB-4 re-paces for this rule.
 
 **Must not change.** Nursing with no ripe Bee Bread, gyne feeding, the stores
 the skills window prices against (BB-3), and Bee Bread making (BB-1).

@@ -155,6 +155,14 @@ var nectar_since: float = -1.0
 ## See is_ripe_bee_bread().
 var bee_bread_sealed_at: float = -1.0
 
+## BB-2. What the larva in here has been raised on: Resources.POLLEN from the
+## moment the egg goes in, Resources.BEE_BREAD once any feed of bee bread has
+## gone in (feed_brood), "" when no larva is being raised. clear_cell() leaves
+## it alone, because main.gd's hatch clears the cell before
+## world_building.gd::_spawn_hatched_bee reads it to fix the new worker's
+## outcome; that spawn resets it. Saved per cell.
+var brood_food: String = ""
+
 # --- building state -----------------------------------------------
 
 ## Building state. Cells the hive starts with are already finished.
@@ -620,6 +628,7 @@ func _larva_dies() -> void:
 	clean_progress = 0.0
 	brood_is_gyne = false
 	brood_is_drone = false
+	brood_food = ""
 	DiagnosticLog.count_larval_death()
 	_invalidate_hive_index()
 	_invalidate_stock()
@@ -1007,6 +1016,7 @@ func start_brood(as_gyne: bool = false, as_drone: bool = false) -> void:
 	brood_fed_seconds = 0.0
 	unfed_seconds = 0.0
 	fed_on_honey = false
+	brood_food = Resources.POLLEN
 	brood_is_drone = as_drone
 	brood_is_gyne = as_gyne and not as_drone
 	_invalidate_hive_index()
@@ -1030,10 +1040,13 @@ func develop_time() -> float:
 
 ## Called by a nurse that has just dropped food in. `seconds` is what the
 ## feed buys; feeds don't stack up indefinitely, they just top the larva
-## back to a full feed's worth.
-func feed_brood(seconds: float, on_honey: bool) -> void:
+## back to a full feed's worth. `on_bee_bread` (BB-2) marks the larva as
+## raised on bee bread for the rest of its development.
+func feed_brood(seconds: float, on_honey: bool, on_bee_bread: bool = false) -> void:
 	brood_fed_seconds = max(brood_fed_seconds, seconds)
 	fed_on_honey = on_honey
+	if on_bee_bread:
+		brood_food = Resources.BEE_BREAD
 
 ## True when the larva is running out of food and a nurse should visit.
 func needs_feeding() -> bool:

@@ -185,6 +185,8 @@ static func _cells_data(world) -> Array:
 			"unfed": cell.unfed_seconds,
 			"gyne": cell.brood_is_gyne,
 			"drone": cell.brood_is_drone,
+			# BB-2, additive: what the larva has been raised on so far.
+			"brood_food": cell.brood_food if cell.content_type == "brood" else "",
 			"clean": cell.clean_progress,
 			"ripen": cell.ripen_progress,
 			# NF-2: saving.gd reads it back for nectar cells only.
@@ -253,6 +255,8 @@ static func _bees_data(world) -> Array:
 			"nurse_carb": b.nurse_carb,
 			"nurse_carb_type": b.nurse_carb_type,
 			"nurse_jelly": b.nurse_jelly,
+			# BB-2, additive: ripe bee bread a nurse carries.
+			"nurse_bee_bread": b.nurse_bee_bread,
 			"nurse_mode": b.nurse_mode,
 			"architect_mode": b.architect_mode,
 			"automine": b.automine,
@@ -282,6 +286,15 @@ static func _bees_data(world) -> Array:
 			"fact": b.bee_fact,
 			"trait_stat": b.trait_stat,
 			"trait_pct": b.trait_percent,
+			# BB-2: the stats her trait and outcome give her. A readout for
+			# diagnostics and tests only -- never read back, since
+			# _apply_stats re-derives them on restore.
+			"stats": {
+				"speed": b.speed,
+				"nectar_capacity": b.nectar_stomach_capacity,
+				"pollen_capacity": b.pollen_stomach_capacity,
+				"lifespan_days": b.BeeSurvival.lifespan_seconds(b) / GameConfig.seconds_per_day,
+			},
 			"favourite": b.is_favourite,
 			# A bee's own orders. These were being lost on save, so a
 			# player who had spent time laying out a build order or a
@@ -308,6 +321,11 @@ static func _bees_data(world) -> Array:
 		if b.local_search_anchor.x != INF:
 			entry["search_anchor_x"] = b.local_search_anchor.x
 			entry["search_anchor_y"] = b.local_search_anchor.y
+		# BB-2, additive: written only for a worker raised since BB-2. A bee
+		# with no outcome is saved exactly as a pre-BB-2 save holds her, so
+		# every load of one goes through saving.gd's old-save default.
+		if b.brood_outcome != "":
+			entry["brood_outcome"] = b.brood_outcome
 		out.append(entry)
 	return out
 

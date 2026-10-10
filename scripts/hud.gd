@@ -3341,6 +3341,10 @@ func _refresh_selection_text() -> void:
 		# trait/mixin feature), so this can't be called that even though
 		# it holds a bee's rolled trait line.
 		var trait_line: String = b.trait_text()
+		# BB-2: what she was raised on, and what it gave her.
+		var outcome_line: String = b.brood_outcome_text()
+		if outcome_line != "":
+			trait_line += ("\n" if trait_line != "" else "") + outcome_line
 		if b.bee_fact != "":
 			trait_line += ("\n" if trait_line != "" else "") + "\"%s\"" % b.bee_fact
 		trait_label.text = trait_line

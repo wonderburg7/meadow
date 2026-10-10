@@ -186,6 +186,11 @@ func _restore_cells(cells: Array) -> void:
 		# COL-9, additive: a save from before drones has none, and a cell
 		# is never both.
 		cell.brood_is_drone = bool(entry.get("drone", false)) and not cell.brood_is_gyne
+		# BB-2, additive: a larva in a save from before BB-2 has been fed
+		# pollen so far, and follows the rule from here on.
+		cell.brood_food = ""
+		if cell.content_type == "brood":
+			cell.brood_food = str(entry.get("brood_food", "pollen"))
 		cell.clean_progress = float(entry.get("clean", 0.0))
 		cell.ripen_progress = float(entry.get("ripen", 0.0))
 		# NF-2, additive: Session.sim_time is restored above, so a save from
@@ -323,7 +328,10 @@ func _restore_bees(bees: Array) -> Array:
 		bee.bee_name = str(entry.get("name", bee.bee_name))
 		bee.trait_stat = str(entry.get("trait_stat", bee.trait_stat))
 		bee.trait_percent = float(entry.get("trait_pct", bee.trait_percent))
-		bee._apply_stats()
+		# BB-2, additive: a bee from a save made before BB-2 has no outcome,
+		# so she lives out her life as today's worker (25 days, 100%).
+		# set_brood_outcome runs _apply_stats.
+		bee.set_brood_outcome(str(entry.get("brood_outcome", "")))
 		bee.bee_fact = str(entry.get("fact", bee.bee_fact))
 		bee.is_favourite = bool(entry.get("favourite", false))
 
@@ -344,6 +352,7 @@ func _restore_bees(bees: Array) -> Array:
 		bee.nurse_carb = float(entry.get("nurse_carb", 0.0))
 		bee.nurse_carb_type = str(entry.get("nurse_carb_type", ""))
 		bee.nurse_jelly = float(entry.get("nurse_jelly", 0.0))
+		bee.nurse_bee_bread = float(entry.get("nurse_bee_bread", 0.0))
 		bee.nurse_mode = str(entry.get("nurse_mode", "feed"))
 		bee.architect_mode = str(entry.get("architect_mode", "both"))
 		bee.automine = bool(entry.get("automine", false))
