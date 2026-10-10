@@ -136,6 +136,7 @@ LANE_SIZE_MAX = 5
 LANES = ("Claude", "Codex")
 NEXT_UP_SECTION = re.compile(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", re.MULTILINE)
 LANE_HEADING = re.compile(r"^###\s+(\w+)\s+lane\s*$", re.MULTILINE)
+QUEUE_ITEM_HEAD = re.compile(r"^\*\*\[(\w+)\]\s+(.+?)\s+--")
 
 
 def queue_item_chunks(text: str) -> list[tuple[str | None, str]] | None:
@@ -313,6 +314,11 @@ def check_next_steps(errors: list[str], warnings: list[str], text: str | None = 
                 + ", ".join(f"**[{lane}]" for lane in LANES)
             )
             continue
+        item_head = QUEUE_ITEM_HEAD.match(chunk)
+        if item_head and any(character.isspace() for character in item_head.group(2)):
+            errors.append(
+                f"NEXTSTEPS.md item {index}: id contains whitespace: {item_head.group(2)!r}"
+            )
         if heading_lane is not None and heading_lane != lane_match.group(1):
             errors.append(
                 f"NEXTSTEPS.md item {index}: tagged [{lane_match.group(1)}] but listed "

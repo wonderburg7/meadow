@@ -65,7 +65,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 1. **[Codex] WC-4 -- a queue id with whitespace fails the documentation check**
    - Plan: `plans/now/workflow-checks.md` -- "WC-4 -- a queue id with whitespace fails the documentation check"
-   - Files: `tools/check_docs.py`, `tests/test_wc4_spaced_ids.py`
+   - Files: `tools/backlog.py`, `tools/check_docs.py`, `tests/test_wc4_spaced_ids.py`
    - Check: `python -m unittest tests.test_wc4_spaced_ids` passes; `python tools/check_docs.py` passes on master; `tools/verify.ps1` is green
    - Proof: `absent: tools/check_docs.py :: id contains whitespace`
    - Next after: none -- workflow checks are complete
