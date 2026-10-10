@@ -77,7 +77,7 @@ const ROLES := [
 		"tip": "Keeps bees indoors feeding the brood.\n\nLarvae do not develop on their own: a nurse collects pollen and either nectar or honey from the comb, carries it to the cell, and each feed buys the larva a short stretch of growth before it stalls again. Honey feeds last longer. With no nurse, the colony cannot grow.",
 		"modes": [
 			{"key": "feed", "label": "Feeding", "tip": "Carry pollen and nectar or honey to the larvae. Without this nothing in the comb develops at all."},
-			{"key": "jelly", "label": "Making jelly", "tip": "Eat pollen and honey and work them into royal jelly, which is the one thing a gyne larva cannot be raised without. Dead weight for a colony not raising any."},
+			{"key": "jelly", "skill": "skill.brood.royal_jelly", "label": "Making jelly", "tip": "Eat pollen and honey and work them into royal jelly, which is the one thing a gyne larva cannot be raised without. Dead weight for a colony not raising any."},
 			{"key": "both", "label": "Anything", "tip": "Take whichever of the two comes up, feeding first."},
 		],
 	},

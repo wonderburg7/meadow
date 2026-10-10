@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-1 -- bees earn Pollinator Points, queued fifth in the Claude lane behind T2-6 and BB-4; PP-3 -- Gyne rearing and Royal jelly become real gates, in the Codex lane | Dependency: T2-6 (`plans/now/tier-two.md`), because foraging tier 3 opens only when Associative learning is owned; PP-1 follows T2-6 in the Claude lane (shared files; BB-2 and NF-4 landed 10 Oct 2026); AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: PP-1 -- bees earn Pollinator Points, queued fifth in the Claude lane behind T2-6 and BB-4; PP-3 landed 10 Oct 2026, releasing `orders_zones.gd` for PP-5 | Dependency: T2-6 (`plans/now/tier-two.md`), because foraging tier 3 opens only when Associative learning is owned; PP-1 follows T2-6 in the Claude lane (shared files; BB-2 and NF-4 landed 10 Oct 2026); AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-10
 
 ## Objective
 
@@ -24,9 +24,10 @@ Verified 10 Oct 2026 against master:
 - A bee's per-flower recharge wait is `bee.flower_cooldowns`, set in
   `bee_foraging.gd::finish_collecting` from `flower.seconds_until_full`.
 - Gyne cells are marked from the HUD cell menu (`hud.gd`
-  `cell_gyne_requested` -> `orders_zones.gd::_on_cell_gyne_requested`)
-  with no skill check. Nurses' "Making jelly" mode (`roles.gd`) and the
-  jelly rows in `actions.gd` carry no skill either.
+  `cell_gyne_requested` -> `orders_zones.gd::_on_cell_gyne_requested`) only
+  after Gyne rearing is owned. Nurses' "Making jelly" mode (`roles.gd`) and
+  both jelly rows in `actions.gd` require Royal jelly; non-Colony runs own
+  both skills from the start.
 - Brood tier 4 opens only when every Brood tier-3 node is owned
   (`progression.gd::branch_tier_open`): Royal jelly and Priority cells.
   Priority cells has no behaviour. An unbuilt node can still be bought.
@@ -42,7 +43,7 @@ Verified 10 Oct 2026 against master:
 | --- | --- | --- | --- | --- |
 | PP-1 | bees earn Pollinator Points and Contribution; flowers count compatible and incompatible pollen | `scripts/pollination.gd`, `scripts/main.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/debug_panel.gd`, tests | yes -- queued in the Claude lane behind T2-6 and BB-4 | high |
 | PP-2 | points are spendable and shown, with a +1 at the flower | `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, tests | no -- after PP-1 | medium |
-| PP-3 | Gyne rearing gates gyne cells and Royal jelly gates jelly | `scripts/roles.gd`, `scripts/actions.gd`, `scripts/orders_zones.gd`, `scripts/run_availability.gd`, tests | yes -- Codex lane | medium |
+| PP-3 | Gyne rearing gates gyne cells and Royal jelly gates jelly | `scripts/roles.gd`, `scripts/actions.gd`, `scripts/orders_zones.gd`, `scripts/run_availability.gd`, tests | landed 10 Oct 2026 | medium |
 | PP-4 | seed set: pollinated flowers replant nearby and the meadow remembers through winter | `scripts/flower.gd`, `scripts/world_building.gd`, `scripts/flower_species.gd`, `scripts/pollination.gd`, `scripts/levels.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | no -- after PP-1 | high |
 | PP-5 | Priority cells: marked brood cells are fed first | `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | no -- after PP-3 releases `orders_zones.gd` | high |
 | PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after PP-1 to PP-5 and T2-7 | medium |
@@ -52,7 +53,7 @@ once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
 `skills.gd` and the save files with T2-6, so it runs after
 it in the Claude lane (BB-2 and NF-4, which shared them too, landed 10 Oct 2026). PP-2 and PP-4 build on PP-1's ledger; PP-2's
 `skill_tree_panel.gd` is free since BB-3 landed (10 Oct 2026). PP-3 shares no file with the Claude
-lane and runs in the Codex lane now. PP-5 shares `orders_zones.gd` with PP-3
+lane and ran in the Codex lane. PP-5 shares `orders_zones.gd` with PP-3
 and `bee_nursery.gd` with BB-2 and NF-4, both landed 10 Oct 2026. PP-6 balances everything above and
 also follows T2-7 (`plans/now/tier-two.md`), which prices tier 2 on the same
 arc. AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6.

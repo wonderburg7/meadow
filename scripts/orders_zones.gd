@@ -296,11 +296,18 @@ func _empty_one(cell: Node2D, method: String, keep_empty: bool) -> void:
 	cell.bump_display_epoch()
 
 func _on_cell_gyne_requested(anchor: Node2D, as_gyne: bool) -> void:
+	if as_gyne and Session.progression != null and not Session.progression.is_owned(Skills.GYNE_REARING):
+		_warn_gyne_rearing_required()
+		return
 	for cell in _cells_to_act_on(anchor):
 		cell.hatch_gyne = as_gyne
 		cell.bump_display_epoch()
 		if as_gyne and cell.designated_type != "brood":
 			_designate_one(cell, "brood")
+
+
+func _warn_gyne_rearing_required() -> void:
+	main.hud.show_warning("Buy Gyne rearing before marking a cell to raise a gyne.", "gyne_rearing_required", 2.0)
 
 func _on_cell_keep_empty_requested(anchor: Node2D, keep_empty: bool) -> void:
 	for cell in _cells_to_act_on(anchor):
