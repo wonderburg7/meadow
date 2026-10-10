@@ -3,17 +3,13 @@ extends GamePanel
 ## TUTORIAL_PLAN.md's "Dr Gallerin" section for the character brief and
 ## the prompt-type list this scheduler works from.
 ##
-## This is the UI half (a small bottom-right icon plus a speech bubble)
-## and the small prompt scheduler that decides when a queued prompt
-## actually appears. Nothing feeds it real prompts yet -- no Challenge
-## sub-stage script exists to call queue_prompts()/show_now() -- so this
-## is infrastructure the same way stage_gate.gd and tutorial_checkpoint.gd
-## are: built and ready, not yet wired to a live Challenge.
+## This is the UI half (a small bottom-right icon, speech bubble and Why
+## list) and the prompt scheduler. Challenge stages supply authored prompts;
+## colony diagnostics supplies evidenced explanations through GuidancePolicy.
 ##
-## Never pauses the game and never blocks anything else on screen -- the
-## icon and bubble are the only two controls here, both small, both in
-## the bottom-right corner, and clicking through either is always
-## possible. process_mode is ALWAYS so a bubble's countdown (and a
+## Never pauses the game. The icon, Why button and speech bubble sit in
+## the bottom-right corner; Why opens a dismissible list. process_mode is
+## ALWAYS so a bubble's countdown (and a
 ## welcome prompt firing right as a sub-stage starts) doesn't stall
 ## if something else has paused the tree.
 ##
@@ -23,6 +19,8 @@ extends GamePanel
 ## shapes.gd's circle_points, not a sprite.
 
 const Shapes = preload("res://scripts/shapes.gd")
+const GuidancePolicy = preload("res://scripts/guidance_policy.gd")
+const GuidanceCatalogue = preload("res://scripts/guidance_catalogue.gd")
 
 const ICON_SIZE := Vector2(60, 60)
 const ICON_MARGIN := 16.0
@@ -36,6 +34,12 @@ const BUBBLE_GAP := 8.0
 const TYPE_CHARACTERS_PER_SECOND := 45.0
 
 var _icon_button: Button
+var _why_button: Button
+var _why_popup: PopupPanel
+var _why_list: ItemList
+var _why_detail: Label
+var _why_entries: Array[Dictionary] = []
+var guidance_policy = GuidancePolicy.new()
 var bubble: PanelContainer
 var _bubble_scroll: ScrollContainer
 var _bubble_label: Label
@@ -126,6 +130,7 @@ func _process(delta: float) -> void:
 			_finish_typing()
 		else:
 			_bubble_label.visible_characters = int(_typed_characters)
+	_offer_guidance()
 
 # --- building the UI -------------------------------------------------
 
@@ -144,6 +149,7 @@ func _build_icon() -> void:
 	_icon_button.mouse_entered.connect(func(): _hovering_icon = true)
 	_icon_button.mouse_exited.connect(func(): _hovering_icon = false)
 	add_child(_icon_button)
+	_build_why()
 
 	var centre := ICON_SIZE / 2.0
 
@@ -170,6 +176,98 @@ func _build_icon() -> void:
 	body.color = Color(0.34, 0.27, 0.20)
 	body.position = centre
 	_icon_button.add_child(body)
+
+func _build_why() -> void:
+	_why_button = Button.new()
+	_why_button.name = "WhyButton"
+	_why_button.text = "Why?"
+	_why_button.tooltip_text = "See what Dr Gallerin has explained about this colony."
+	_why_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_why_button.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_why_button.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_why_button.offset_right = -ICON_MARGIN
+	_why_button.offset_bottom = -ICON_MARGIN - ICON_SIZE.y - BUBBLE_GAP
+	_why_button.custom_minimum_size = Vector2(64, ICON_SIZE.y)
+	_why_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_why_button.pressed.connect(_on_why_pressed)
+	add_child(_why_button)
+
+	_why_popup = PopupPanel.new()
+	_why_popup.name = "Why"
+	_why_popup.theme = UiTheme.build_theme()
+	add_child(_why_popup)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 8)
+	_why_popup.add_child(column)
+	var heading := Label.new()
+	heading.text = "Why is this happening?"
+	heading.theme_type_variation = "Heading"
+	column.add_child(heading)
+	_why_list = ItemList.new()
+	_why_list.custom_minimum_size = Vector2(450, 130)
+	_why_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_why_list.item_selected.connect(_on_why_selected)
+	column.add_child(_why_list)
+	var detail_scroll := ScrollContainer.new()
+	detail_scroll.custom_minimum_size = Vector2(450, 170)
+	detail_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(detail_scroll)
+	_why_detail = Label.new()
+	_why_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_why_detail.custom_minimum_size.x = 430
+	detail_scroll.add_child(_why_detail)
+	var close_btn := Button.new()
+	close_btn.text = "Close"
+	close_btn.pressed.connect(func(): _why_popup.hide())
+	column.add_child(close_btn)
+
+func update_guidance_facts(facts: Dictionary) -> void:
+	guidance_policy.update_facts(facts)
+
+func _offer_guidance() -> void:
+	if not Session.gallerin_enabled or not visible or bubble.visible:
+		return
+	if _history_index != _history.size() - 1 or _why_popup.visible:
+		return
+	# Authored Challenge prompts are always processed first in _process(). A
+	# due prompt must never lose this frame to a diagnostic explanation.
+	for prompt in _queue:
+		if float(prompt.get("delay", 0.0)) <= _stage_elapsed:
+			return
+	var fact_id: String = guidance_policy.eligible_id()
+	if fact_id.is_empty():
+		return
+	var entry: Dictionary = GuidanceCatalogue.explanation(fact_id, guidance_policy.facts)
+	_show_bubble(entry.text)
+	if bubble.visible:
+		guidance_policy.mark_rendered(entry)
+
+func _on_why_pressed() -> void:
+	_refresh_why_list()
+	var viewport_size := get_viewport().get_visible_rect().size
+	_why_popup.popup_centered(Vector2i(mini(500, int(viewport_size.x) - 24), mini(440, int(viewport_size.y) - 24)))
+
+func _refresh_why_list() -> void:
+	_why_entries.clear()
+	_why_list.clear()
+	for entry in guidance_policy.current_entries():
+		_why_entries.append({"entry": entry, "past": false})
+		_why_list.add_item("Now: " + str(entry.title))
+	for entry in guidance_policy.shown_entries():
+		_why_entries.append({"entry": entry, "past": true})
+		_why_list.add_item("Shown: " + str(entry.title))
+	if _why_entries.is_empty():
+		_why_detail.text = "No explanation is available yet."
+	else:
+		_why_detail.text = "Choose an explanation to read its evidence and possible responses."
+
+func _on_why_selected(index: int) -> void:
+	var item: Dictionary = _why_entries[index]
+	var entry: Dictionary = item.entry
+	_why_detail.text = str(entry.text) + "\n\nCurrent state: " + GuidanceCatalogue.current_state(str(entry.id), guidance_policy.facts)
+	# An item in a list is only a title. Selecting it renders the full line.
+	if not bool(item.past):
+		guidance_policy.mark_rendered(entry)
 
 ## The bubble, not a themed panel, is what layout assertions measure.
 func rect_control() -> Control:
@@ -351,6 +449,7 @@ func _on_icon_pressed() -> void:
 
 func _on_disable_pressed() -> void:
 	Session.gallerin_enabled = false
+	_why_popup.hide()
 	visible = false
 
 func _on_history_back_pressed() -> void:
