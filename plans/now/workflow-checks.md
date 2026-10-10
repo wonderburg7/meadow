@@ -1,7 +1,7 @@
 # Workflow checks -- say what a waiting lane is waiting for, and catch latent tooling drift
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: WC-4 -- a queue id with whitespace fails the documentation check, in the Codex lane | Dependency: WC-1, WC-3 and WC-5 landed; WC-4 follows WC-2 because both edit `tools/check_docs.py` | Verified: 2026-10-09
+Status: complete | Owner: Dave / Codex | Next: None — plan complete | Dependency: none | Verified: 2026-10-10
 
 ## Objective
 
@@ -48,7 +48,6 @@ Verified 9 Oct 2026 against master `4ca584c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| WC-4 | a queue id with whitespace fails the documentation check | `tools/check_docs.py`, `tests/test_wc4_spaced_ids.py` | after WC-2 and room in the Codex lane | low |
 
 **Dependencies.** WC-1, WC-2 and WC-4 edit `tools/check_docs.py` and run in
 that order; WC-3 and WC-5 depend on nothing. None edits `tools/slice.ps1`,
@@ -67,30 +66,4 @@ WC-1 shipped 2026-10-09; its specification is `plans/archive/WC-1_2026-10-09.md`
 
 WC-2 shipped 2026-10-09; its specification is `plans/archive/WC-2_2026-10-09.md`.
 
-## WC-4 -- a queue id with whitespace fails the documentation check
-
-<!-- LAYER: immediate-task -->
-
-Level: low (one validation and its test).
-
-**True now.** `check_docs.py` accepts a `**[Lane] <id> -- <title>**` line
-whose id contains a space, in `NEXTSTEPS.md` and in a plan's `queue` or
-`queue-gated` block; `slice.ps1 start` would build `git branch <lane>/<id>`
-and `.worktrees/<id>` from it (signal of 7 Oct 2026).
-
-**True afterwards.** Both places fail with an error containing
-`id contains whitespace`, naming the item or the plan. The test covers a
-spaced id in each place and a hyphenated one that passes.
-
-**Must not change.** `Get-NextUpItems`'s parsing in `tools/slice.ps1`.
-
-```queue
-**[Codex] WC-4 -- a queue id with whitespace fails the documentation check**
-- Plan: `plans/now/workflow-checks.md` -- "WC-4 -- a queue id with whitespace fails the documentation check"
-- Files: `tools/check_docs.py`, `tests/test_wc4_spaced_ids.py`
-- Check: `python -m unittest tests.test_wc4_spaced_ids` passes; `python tools/check_docs.py` passes on master; `tools/verify.ps1` is green
-- Proof: `absent: tools/check_docs.py :: id contains whitespace`
-- Next after: none -- workflow checks are complete
-```
-
-WC-5 shipped 2026-10-09; its specification is `plans/archive/WC-5_2026-10-09.md`.
+WC-4 shipped 2026-10-10; its specification is `plans/archive/WC-4_2026-10-10.md`.

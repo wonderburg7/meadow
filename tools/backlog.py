@@ -42,6 +42,9 @@ FENCE = re.compile(
 # The first line of a block is the queue's own item line, so that a refill is a
 # copy: `**[Claude] V-3 -- the routing rule's section headers actually exist**`.
 ITEM_HEAD = re.compile(r"^\*\*\[(?P<lane>\w+)\]\s+(?P<id>[\w.-]+)\s+--\s+(?P<title>.+?)\*\*\s*$")
+ITEM_HEAD_WITH_ANY_ID = re.compile(
+    r"^\*\*\[(?P<lane>\w+)\]\s+(?P<id>.+?)\s+--\s+(?P<title>.+?)\*\*\s*$"
+)
 FIELD = re.compile(r"^-\s+(Plan|Files|Check|Proof|Next after):", re.MULTILINE)
 REQUIRED_FIELDS = ("Plan", "Files", "Check", "Proof", "Next after")
 # Indentation the queue gives an item's field lines under its number.
@@ -83,7 +86,14 @@ def parse_blocks(text: str, plan: str) -> tuple[list[Entry], list[str]]:
         if not body.strip():
             problems.append(f"{where}: empty queue block")
             continue
-        head = ITEM_HEAD.match(body.split("\n", 1)[0])
+        first_line = body.split("\n", 1)[0]
+        broad_head = ITEM_HEAD_WITH_ANY_ID.match(first_line)
+        if broad_head and any(character.isspace() for character in broad_head.group("id")):
+            problems.append(
+                f"{where}: id contains whitespace: {broad_head.group('id')!r}"
+            )
+            continue
+        head = ITEM_HEAD.match(first_line)
         if not head:
             problems.append(
                 f"{where}: a queue block's first line must be the queue's own item line, "

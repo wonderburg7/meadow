@@ -39,6 +39,21 @@ def plan_is_terminal(text: str) -> bool:
     return bool(match) and any(state in match.group(1).lower() for state in TERMINAL_STATES)
 
 
+def terminal_plan_awaits_closeout(plan: Path) -> bool:
+    """A finishing worktree retains its last plan until its ledger row is removed."""
+    checkout = primary_checkout()
+    if ROOT == checkout:
+        return False
+    ledger = checkout / "plans" / "workstreams.md"
+    if not ledger.exists():
+        return False
+    reference = f"`{plan.relative_to(ROOT).as_posix()}`"
+    return any(
+        line.startswith("|") and reference in line
+        for line in ledger.read_text(encoding="utf-8").splitlines()
+    )
+
+
 def check_plan_metadata(errors: list[str], warnings: list[str]) -> None:
     for plan in current_plans():
         text = plan.read_text(encoding="utf-8")
@@ -49,7 +64,7 @@ def check_plan_metadata(errors: list[str], warnings: list[str]) -> None:
             continue
 
         metadata = first_lines.lower()
-        if plan_is_terminal(text):
+        if plan_is_terminal(text) and not terminal_plan_awaits_closeout(plan):
             errors.append(f"{plan.relative_to(ROOT)}: terminal plan belongs in plans/archive, not a live layer")
 
         missing = [field[:-1].title() for field in REQUIRED_STATUS_FIELDS if field not in metadata]
@@ -136,6 +151,7 @@ LANE_SIZE_MAX = 5
 LANES = ("Claude", "Codex")
 NEXT_UP_SECTION = re.compile(r"^## Next up\s*$([\s\S]*?)(?=^## |\Z)", re.MULTILINE)
 LANE_HEADING = re.compile(r"^###\s+(\w+)\s+lane\s*$", re.MULTILINE)
+QUEUE_ITEM_HEAD = re.compile(r"^\*\*\[(\w+)\]\s+(.+?)\s+--")
 
 
 def queue_item_chunks(text: str) -> list[tuple[str | None, str]] | None:
@@ -313,6 +329,11 @@ def check_next_steps(errors: list[str], warnings: list[str], text: str | None = 
                 + ", ".join(f"**[{lane}]" for lane in LANES)
             )
             continue
+        item_head = QUEUE_ITEM_HEAD.match(chunk)
+        if item_head and any(character.isspace() for character in item_head.group(2)):
+            errors.append(
+                f"NEXTSTEPS.md item {index}: id contains whitespace: {item_head.group(2)!r}"
+            )
         if heading_lane is not None and heading_lane != lane_match.group(1):
             errors.append(
                 f"NEXTSTEPS.md item {index}: tagged [{lane_match.group(1)}] but listed "
