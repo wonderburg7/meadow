@@ -562,6 +562,12 @@ const FERMENTATION_SENSE_BEHAVIOUR := "fermentation_sense_on"
 func senses_fermentation() -> bool:
 	return Session.progression != null and Session.progression.is_behaviour_enabled(FERMENTATION_SENSE_BEHAVIOUR)
 
+## NF-4. Do bees here leave `cell` alone as sour? Only with fermentation
+## sense, and only while its nectar has fermented. The one place the bee
+## files (eating, nursing, restocking) ask it.
+func avoids_as_sour(cell: Node2D) -> bool:
+	return cell.is_fermented() and senses_fermentation()
+
 func has_room_for_egg() -> bool:
 	return find_empty_cell() != null
 
@@ -577,8 +583,10 @@ func find_cell_with(resource_type: String) -> Node2D:
 ## NF-2. The nectar a honey maker may take: never a fermented cell, since
 ## fermented nectar cannot be made into honey (decision 2). NF-4, decision
 ## 5: without fermentation sense the closest fresh cell to `from` (the
-## honey maker's global position); with it the oldest, so less nectar sits
-## long enough to ferment. Ties keep index order. Only bee_honey.gd asks.
+## honey maker's global position); with it the oldest (earliest stamp), so
+## less nectar sits long enough to ferment. The stamp is read, never set
+## here: an unstamped cell counts as stocked now, the youngest. Ties keep
+## index order. Only bee_honey.gd asks.
 func find_honey_source(from: Vector2) -> Node2D:
 	var oldest_first: bool = senses_fermentation()
 	var best: Node2D = null
@@ -586,7 +594,11 @@ func find_honey_source(from: Vector2) -> Node2D:
 	for cell in cells_holding("nectar"):
 		if cell.amount <= 0.0 or not cell.can_withdraw() or cell.is_fermented():
 			continue
-		var score: float = -cell.nectar_age() if oldest_first else from.distance_squared_to(cell.global_position)
+		var score: float
+		if oldest_first:
+			score = cell.nectar_since if cell.nectar_since >= 0.0 else Session.sim_time
+		else:
+			score = from.distance_squared_to(cell.global_position)
 		if score < best_score:
 			best_score = score
 			best = cell

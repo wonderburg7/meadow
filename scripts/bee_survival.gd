@@ -202,24 +202,35 @@ static func go_to_feed_cell(bee: Node2D, delta: float) -> void:
 	var approach := BeeForaging.approach_cell(bee, bee.target_cell, delta)
 	if approach < 0:
 		# all six walls in use -- eat somewhere else rather than queueing
-		bee.target_cell = bee.hive.find_food_cell(bee.target_cell)
+		var elsewhere: Node2D = bee.hive.find_food_cell(bee.target_cell)
+		# NF-4: with fermentation sense, a bee wanting a wall at fresh food
+		# waits for one rather than drinking sour nectar instead.
+		if elsewhere != null and bee.hive.avoids_as_sour(elsewhere) and not bee.hive.avoids_as_sour(bee.target_cell):
+			return
+		bee.target_cell = elsewhere
 		if bee.target_cell == null:
 			after_feeding(bee)
 		return
 	if approach == 1:
+		# NF-4: she chose sour nectar because nothing else was left; if fresh
+		# food has been stored since, she eats that instead. Asked once, on
+		# arrival, so a meal costs one scan rather than one a frame.
+		if bee.hive.avoids_as_sour(bee.target_cell):
+			var fresher: Node2D = bee.hive.find_food_cell()
+			if fresher != null and fresher != bee.target_cell and not bee.hive.avoids_as_sour(fresher):
+				BeeForaging.release_cell_slot(bee)
+				bee.target_cell = fresher
+				return
 		bee.state = State.FEEDING
 
 
-static func is_edible(bee: Node2D, cell: Node2D) -> bool:
+## NF-4: fermentation is not judged here (this runs every frame of a meal);
+## find_food_cell ranks sour nectar last and go_to_feed_cell re-checks it on
+## arrival.
+static func is_edible(_bee: Node2D, cell: Node2D) -> bool:
 	if cell.amount <= 0.0:
 		return false
 	if cell.content_type == "nectar":
-		# NF-4: with fermentation sense a fermented cell is food only while
-		# nothing else is, so a bee that set off for it (or is mid-meal)
-		# turns to fresh food as soon as some is stored.
-		if cell.is_fermented() and bee.hive.senses_fermentation():
-			var best: Node2D = bee.hive.find_food_cell()
-			return best == null or best.is_fermented()
 		return true
 	return cell.is_ripe_honey()
 

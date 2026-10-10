@@ -1,6 +1,6 @@
 {
   "cells": 19, "nectar_foragers": 0, "pollen_foragers": 0,
-  "nurses": 2, "builders": 1, "miners": 0, "honey_makers": 2,
+  "nurses": 2, "builders": 7, "miners": 0, "honey_makers": 2,
   "weather": false, "disease": false, "rival_hive": false, "winter": false,
   "random_seed": 5404,
   "config_overrides": {

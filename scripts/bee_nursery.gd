@@ -390,7 +390,7 @@ static func nurse_go_to_food(bee: Node2D, delta: float) -> void:
 		abandon_food_errand(bee)
 		return
 	# NF-4: nectar that fermented on her way over is left, with the sense.
-	if bee.nurse_fetching == "nectar" and bee.target_cell.is_fermented() and bee.hive.senses_fermentation():
+	if bee.nurse_fetching == "nectar" and bee.hive.avoids_as_sour(bee.target_cell):
 		abandon_food_errand(bee)
 		return
 	var for_bread: bool = bee.nurse_fetching == Resources.BEE_BREAD

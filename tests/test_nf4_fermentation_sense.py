@@ -15,7 +15,8 @@ as test_nf5_clear_fermented.py does. The fixture has three phases:
    low, the honey makers are fanning for good, and the order draws from F2
    only, so anything F1 loses went to a nurse.
 3. Eating. Fresh nectar E is stocked after F1 in index order, and hunger is
-   raised to 98% so every bee eats.
+   raised to 98% so every bee eats. Seven comb workers make twelve bees, more
+   than E's six walls, so some find E full while F1 and F2 have room.
 
 From the saves: with the skill, honey makers take the oldest nectar (O) first,
 no nurse carries nectar while only fermented nectar is stored, F1 and F2 are
@@ -201,6 +202,18 @@ class FermentationSenseTest(unittest.TestCase):
         self.assertGreater(_nectar(self.sense[EAT[0]], E), 0.0)
         self.assertGreater(after, 0.0, "fresh food ran out, so the phase proves nothing")
         self.assertLess(after, 200.0, "nobody ate the fresh nectar")
+
+    def test_with_the_skill_a_bee_waits_for_fresh_food_rather_than_drink_sour(self):
+        # Twelve hungry bees and one fresh cell with six walls: those that
+        # find it full wait for a wall (no tipsiness, above) and still eat,
+        # rather than starving while switching between it and a sour cell.
+        bees = self.sense[EAT[-1]]["bees"]
+        self.assertGreater(len(bees), 6, "too few bees to fill the fresh cell's walls")
+        hungry = [b for b in self.sense["nr-14"]["bees"] if float(b["energy"]) < 95.0]
+        self.assertGreater(len(hungry), 6, "too few hungry bees to fill the fresh cell's walls")
+        fed = {b["id"]: float(b["energy"]) for b in bees}
+        for bee in hungry:
+            self.assertGreaterEqual(fed.get(bee["id"], 0.0), 95.0, "bee %s never got to eat" % bee["id"])
 
     def test_without_it_hungry_bees_eat_fermented_nectar_and_go_tipsy(self):
         self.assertTrue(any(_tipsy(self.plain[name]) for name in EAT), "no bee went tipsy")
