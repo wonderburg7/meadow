@@ -419,6 +419,21 @@ indicators handle overlapping states to avoid a combinatorial asset set.
   window (§12 rule 5). A PE-2 arc sweep (`tools/pacing_gates.py`) sets the
   point awards and tier-3/4 costs to that intent; the amounts in
   `skills.gd` remain guesses until it does.
+- **Seed set replants nearby and carries over winter.** A flower sets seed
+  when it had at least one compatible visit and more compatible than
+  incompatible ones. When it dies, a flower that set seed is replaced by its
+  own species close by, so the patches the colony works thicken; one that
+  did not is replaced by today's random seasonal draw, which is the
+  background floor. Each species' seed count is saved and carries over
+  winter, weighting spring's regrowth (COL-8's `regrowth_factor`), so the
+  meadow the colony pollinated comes back.
+- **Points show in the stores readout, the skill tree and at the flower.**
+  Once the Pollinator points skill is owned, points appear beside the
+  colony's other spendable stores and in tier-4 costs, and a small "+1"
+  rises from the flower each time one is earned. The "+1" is
+  presentation only, pooled and cheap on the per-visit path, and measured
+  before it ships (`.claude/rules/performance.md`). Pollination
+  Contribution shows only in the developer panel.
 
 ## 11. Difficulty, failure and recovery
 
