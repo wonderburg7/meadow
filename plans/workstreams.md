@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/BB-3` (`claude/BB-3`) | Claude | Bee Bread is spendable on tier-3 recipes, from the cells that hold it | Claude | in progress | none | `plans/now/bee-bread.md` BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it |
+| `.worktrees/GD-2a` (`codex/GD-2a`) | Codex | the guidance policy, the first two explanations and the Why list | Codex | in progress | none | `plans/now/guidance-explanations.md` GD-2a -- the guidance policy, the first two explanations and the Why list |
