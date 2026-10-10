@@ -39,6 +39,21 @@ def plan_is_terminal(text: str) -> bool:
     return bool(match) and any(state in match.group(1).lower() for state in TERMINAL_STATES)
 
 
+def terminal_plan_awaits_closeout(plan: Path) -> bool:
+    """A finishing worktree retains its last plan until its ledger row is removed."""
+    checkout = primary_checkout()
+    if ROOT == checkout:
+        return False
+    ledger = checkout / "plans" / "workstreams.md"
+    if not ledger.exists():
+        return False
+    reference = f"`{plan.relative_to(ROOT).as_posix()}`"
+    return any(
+        line.startswith("|") and reference in line
+        for line in ledger.read_text(encoding="utf-8").splitlines()
+    )
+
+
 def check_plan_metadata(errors: list[str], warnings: list[str]) -> None:
     for plan in current_plans():
         text = plan.read_text(encoding="utf-8")
@@ -49,7 +64,7 @@ def check_plan_metadata(errors: list[str], warnings: list[str]) -> None:
             continue
 
         metadata = first_lines.lower()
-        if plan_is_terminal(text):
+        if plan_is_terminal(text) and not terminal_plan_awaits_closeout(plan):
             errors.append(f"{plan.relative_to(ROOT)}: terminal plan belongs in plans/archive, not a live layer")
 
         missing = [field[:-1].title() for field in REQUIRED_STATUS_FIELDS if field not in metadata]
