@@ -46,5 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/GD-2a` (`codex/GD-2a`) | Codex | the guidance policy, the first two explanations and the Why list | Codex | in progress | none | `plans/now/guidance-explanations.md` GD-2a -- the guidance policy, the first two explanations and the Why list |
 | `.worktrees/SP-2` (`claude/SP-2`) | Claude | the sprite exporter, the sprite table and the generated catalogue | Claude | in progress | none | `plans/now/sprites.md` SP-2 -- the sprite exporter, the sprite table and the generated catalogue |

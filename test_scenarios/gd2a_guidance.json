@@ -1,0 +1,11 @@
+{
+  "random_seed": 621,
+  "actions": [
+    {"do": "viewport_size", "w": 1280, "h": 720},
+    {"do": "show_gallerin_prompt", "text": "A colony fact and its possible responses."},
+    {"do": "settle", "ticks": 2},
+    {"do": "assert", "condition": {"control": "gallerin_panel/WhyButton", "visible": true, "not_overlapping": "gallerin_bubble"}},
+    {"do": "assert", "condition": {"root": "gallerin_panel"}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 1}
+}
