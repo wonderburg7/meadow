@@ -176,7 +176,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | CR-1, CR-2, PE-2, COL-1 to COL-8 -- the Colony Run: started from the menu and remembered by a save, its milestones, the played arc, the milestone shelf, victory, restore, the year and the unread level keys | `plans/archive/colony-run_2026-10-08.md` |
 | L-16, L-17 -- the slice lifecycle in `tools/slice.ps1` (L-1 to L-15 are archived) | `plans/now/agent-lifecycle.md` |
 | SPR-1 -- a windowed render baseline for the procedural bees, before any sprite pass | `plans/archive/sprites_2026-10-06.md` |
-| NF-1, NF-2 -- unprocessed nectar ferments, and tipsy bees pay for it | `plans/now/nectar-fermentation.md` |
+| NF-1, NF-2 -- unprocessed nectar ferments, and tipsy bees pay for it | `plans/archive/nectar-fermentation_2026-10-10.md` |
 | SPR-2 -- the windowed render baseline at 500 and 1,000 bees | `plans/archive/render-scale_2026-10-07.md` |
 | SI-1 to SI-3 -- save integrity: run state a load misses, exact Challenge rollback, all-or-nothing writes | `plans/archive/save-integrity_2026-10-09.md` |
 | T2-1 to T2-8 -- progression step 8: tier-2 skills gated and built, bodies, rain in the Colony Run, Shiver Cluster | `plans/now/tier-two.md` |

@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it**
-   - Plan: `plans/now/bee-bread.md` -- "BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it"
-   - Files: `scripts/skill_tree_panel.gd`, `tests/test_bb3_bee_bread_currency.py`, `test_scenarios/bb3_bee_bread_currency.json`
-   - Check: `python -m unittest tests.test_bb3_bee_bread_currency` passes (a Bee Bread-priced skill is refused while the colony's only Bee Bread is unripe, is bought once it ripens, and the ripe cell loses exactly the recipe's Bee Bread); `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/skill_tree_panel.gd :: Skills.BEE_BREAD`
-   - Next after: BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers
-
-2. **[Claude] NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first**
-   - Plan: `plans/now/nectar-fermentation.md` -- "NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first"
-   - Files: `scripts/skills.gd`, `scripts/hive.gd`, `scripts/bee_honey.gd`, `scripts/bee_survival.gd`, `scripts/bee_nursery.gd`, `scripts/bee_building.gd`, `plans/design/progression.md`, `tests/test_nf4_fermentation_sense.py`, `test_scenarios/nf4_fermentation_sense.json`
-   - Check: `python -m unittest tests.test_nf4_fermentation_sense` passes (with the skill no bee goes tipsy while fresh food is left, nurses and restock orders never take from a fermented cell, and honey makers take the oldest nectar first; without it nurses and restock orders still take fermented nectar and honey makers take the closest); `tools/verify.ps1` is green
-   - Proof: `absent: scripts/skills.gd :: skill.colony.fermentation_sense`
-   - Next after: none -- nectar fermentation is complete
-
-3. **[Claude] SP-2 -- the sprite exporter, the sprite table and the generated catalogue**
+1. **[Claude] SP-2 -- the sprite exporter, the sprite table and the generated catalogue**
    - Plan: `plans/now/sprites.md` -- "SP-2 -- the sprite exporter, the sprite table and the generated catalogue"
    - Files: `tools/sprites.py`, `tests/test_sp2_sprites.py`, `assets/sprites/SPRITES.md`, `assets/sprites/comb/wax_cell_nectar.aseprite`, `assets/sprites/comb/wax_cell_pollen.aseprite`, `assets/sprites/meadow/hive_skep.png`, `assets/sprites/meadow/grass_base.png`, `assets/sprites/bees/bee_forager_meadow.aseprite`, `assets/sprites/environment/wax.cell.empty.png`, `scripts/sprite_catalogue.gd`, `scripts/hive_cell.gd`, `tools/verify.ps1`
    - Check: `python -m unittest tests.test_sp2_sprites` passes and `python tools/sprites.py --check` is clean; `tools/verify.ps1` is green
    - Proof: `present: scripts/hive_cell.gd :: const EMPTY_TEXTURE :=`
    - Next after: SP-4 -- nectar and pollen fill levels drawn from the sprites
 
-4. **[Claude] T2-7 -- Tier-2 costs tuned so the first purchase lands around day 5**
+2. **[Claude] T2-7 -- Tier-2 costs tuned so the first purchase lands around day 5**
    - Plan: `plans/now/tier-two.md` -- "T2-7 -- Tier-2 costs tuned so the first purchase lands around day 5"
    - Files: `scripts/skills.gd`, `scripts/progression.gd`, `scripts/diagnostic_log.gd`, `tools/analyze_session.py`, `tools/pacing_gates.py`, `plans/design/progression.md`, `tests/test_t2_7_tier_two_prices.py`
    - Check: `python -m unittest tests.test_t2_7_tier_two_prices` passes (a snapshot whose stores cover the cheapest first-tier-2 path sets `first_tier2_day`, one that falls short by one unit of any resource does not, and pacing_gates prints the row against day 5 without changing the five gate rows); `python tools/pacing_gates.py` shows the median `first_tier2_day` in band, recorded before and after in the plan; `tools/verify.ps1` is green
    - Proof: `absent: tools/analyze_session.py :: first_tier2_day`
    - Next after: T2-6 -- Associative learning
 
-5. **[Claude] T2-6 -- Associative learning**
+3. **[Claude] T2-6 -- Associative learning**
    - Plan: `plans/now/tier-two.md` -- "T2-6 -- Associative learning"
    - Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd`
    - Check: `python -m unittest tests.test_t2_6_associative_learning` passes (with the toggle off, a bee's handling time and experience stay unchanged until Associative learning is bought; once owned, ten visits to one species bring its handling to 0.75 of a first-timer's, and fifteen visits to another species then erase that experience; experience survives save and restore); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/bee_foraging.gd :: static func handling_experience_on`
    - Next after: PP-1 -- bees earn Pollinator Points and Contribution
+
+4. **[Claude] BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers**
+   - Plan: `plans/now/bee-bread.md` -- "BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers"
+   - Files: `scripts/challenge_stages.gd`, `docs/challenge-stages.md`, `scripts/scenario_actions.gd`, `test_scenarios/bb4_challenge1_route.json`, `test_scenarios/bb4_challenge2_route.json`, `tests/test_bb4_challenge_pacing.py`
+   - Check: `python -m unittest tests.test_bb4_challenge_pacing` passes (each route, run once on its pinned seed, reaches its Challenge's completion under BB-2's rule with no stage jumped after its start, and the test reads the thresholds from `scripts/challenge_stages.gd` rather than restating them); the three-seed reach days under the rule and with both pollen-raised factors at 1.0, and `python tools/pacing_gates.py`'s five rows, are recorded in the plan; `python tools/stage_reference.py --check` is clean; `.\tools\verify.ps1` is green
+   - Proof: `present: scripts/challenge_stages.gd :: the rescue threshold -- first guesses`
+   - Next after: none -- Bee Bread is complete
+
+5. **[Claude] PP-1 -- bees earn Pollinator Points and Contribution**
+   - Plan: `plans/now/pollination.md` -- "PP-1 -- bees earn Pollinator Points and Contribution"
+   - Files: `scripts/pollination.gd`, `scripts/main.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/debug_panel.gd`, `tests/test_pp1_pollination_ledger.py`, `test_scenarios/pp1_pollination_ledger.json`
+   - Check: `python -m unittest tests.test_pp1_pollination_ledger` passes (two same-species flowers in one trip earn one point only once Pollinator points is owned and not again from that flower until it has refilled; a trip's first flower earns nothing; arriving from another species counts one incompatible delivery; Contribution rises whether or not the skill is owned; the counters and flower counts survive save and restore); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/flower.gd :: compatible_visits`
+   - Next after: PP-2 -- points are spendable and shown, with a +1 at the flower
 
 ### Codex lane
 
@@ -82,13 +82,11 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation, Bee Bread and the gyne route.
-- **GD-2b** (`plans/now/guidance-explanations.md`) -- the shown ledger and Why history saved with the run; waits for GD-2a (Codex lane), and for the save files to be free of Claude-lane slices when it is admitted: they are free since 10 Oct 2026, and PP-1, PP-4 and PP-5 hold them later.
-- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits only for CD-3 (Codex backlog, behind GD-2a) to release `scripts/colony_diagnostics.gd`; its save and HUD files are free since 10 Oct 2026.
-- **PP-1** (`plans/now/pollination.md`) -- bees earn Pollinator Points; admissible, and waits for room in the Claude lane behind T2-6 (queued fifth), which it needs owned.
+- **GD-2b** (`plans/now/guidance-explanations.md`) -- the shown ledger and Why history saved with the run; waits for GD-2a (Codex lane), and for the save files to be free of Claude-lane slices when it is admitted: PP-1 (Claude lane, fifth) holds them now, and PP-4 and PP-5 hold them later.
+- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for CD-3 (Codex backlog, behind GD-2a) to release `scripts/colony_diagnostics.gd`, and for PP-1 (Claude lane, fifth) to release `scripts/main.gd` and the save files; `scripts/hud.gd` is free since 10 Oct 2026.
 - **PP-2 and PP-4** (`plans/now/pollination.md`) -- Pollinator Points made spendable, and seed set; wait for PP-1's ledger (`scripts/pollination.gd`).
 - **PP-5** (`plans/now/pollination.md`) -- Priority cells; waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`.
 - **PP-6** (`plans/now/pollination.md`) -- the route's pricing sweep; waits for PP-1 to PP-5 and T2-7, and is specified when they land.
-- **BB-4** (`plans/now/bee-bread.md`) -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers; waits only for its `queue` block: BB-2 landed 10 Oct 2026, so it is specified when the Claude lane next has room for it (BB-1 landed 9 Oct 2026; BB-3 is queued).
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Dr Gallerin guidance now has its plan, `plans/now/guidance-explanations.md`.
 - **SP-4** (`plans/now/sprites.md`) -- nectar and pollen fill levels drawn from the sprites; waits for SP-2, queued in the Claude lane, and gets its block when it lands (SP-3 landed 9 Oct 2026).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).

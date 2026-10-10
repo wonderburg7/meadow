@@ -996,6 +996,8 @@ def _owner_plan(line: str) -> str | None:
 
 
 TEMPLATE_MARKERS = ("<what Dave does", "<the single condition", "<what a failure would change")
+# Who runs a ready check in a pass (plans/reference/check-runner.md, "Choosing a runner").
+CHECK_RUNNER = re.compile(r"^Runner: (haiku|sonnet|opus|dave)(?: -- \S.*)?$")
 
 
 def check_checks(errors: list[str]) -> None:
@@ -1055,6 +1057,14 @@ def check_checks(errors: list[str]) -> None:
                 errors.append(
                     f"{rel}: {check_id} still holds new_check.py's template text -- write what Dave does, "
                     "its PASS line and what a failure changes before filing it"
+                )
+            runners = [line for line in lines if line.startswith("Runner:")]
+            if rel.startswith("checks/ready/") and (
+                len(runners) != 1 or not CHECK_RUNNER.match(runners[0])
+            ):
+                errors.append(
+                    f"{rel}: {check_id} needs one 'Runner: haiku|sonnet|opus|dave' line -- a check pass "
+                    "dispatches by it (plans/reference/check-runner.md, \"Choosing a runner\")"
                 )
 
             owners = [line for line in lines if line.startswith("Owner:")]

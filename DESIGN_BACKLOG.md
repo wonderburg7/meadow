@@ -30,7 +30,7 @@ home per fact: read the plan.
 | The headless smoke scenario | `plans/archive/SMOKE_SCENARIO_2026-09-19.md` |
 | Agent lifecycle and closeout | `plans/now/agent-lifecycle.md` |
 | Alpha-route evidence and pacing gates | `plans/now/alpha-route-evidence.md` |
-| Nectar fermentation and stocking | plans/now/nectar-fermentation.md |
+| Nectar fermentation and stocking | plans/archive/nectar-fermentation_2026-10-10.md |
 | Render cost by colony size (sprites) | plans/archive/render-scale_2026-10-07.md |
 | When winter comes in a run | `plans/archive/winter-onset_2026-10-01.md` |
 

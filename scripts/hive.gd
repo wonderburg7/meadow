@@ -526,6 +526,9 @@ func brood_stage_counts() -> Dictionary:
 ## What a hungry bee walks to when it needs feeding. Ripe honey first --
 ## it carries several times the energy per unit, so a bee spends less
 ## time at the cell and the same comb feeds far more of them.
+## NF-4: with fermentation sense a fermented nectar cell comes last, eaten
+## only once no other food is left; without it nectar is taken in index
+## order, fermented or not (decision 4).
 func find_food_cell(except: Node2D = null) -> Node2D:
 	Perf.begin("hive_find_food")
 	for cell in cells_holding("ripe_honey"):
@@ -534,14 +537,36 @@ func find_food_cell(except: Node2D = null) -> Node2D:
 		if cell.amount > 0.0:
 			Perf.end("hive_find_food")
 			return cell
+	var sense: bool = senses_fermentation()
+	var sour: Node2D = null
 	for cell in cells_holding("nectar"):
 		if cell == except or not is_instance_valid(cell) or not cell.can_withdraw():
 			continue
 		if cell.amount > 0.0:
+			if sense and cell.is_fermented():
+				if sour == null:
+					sour = cell
+				continue
 			Perf.end("hive_find_food")
 			return cell
 	Perf.end("hive_find_food")
-	return null
+	return sour
+
+## NF-4. skills.gd's enable_behaviour key for skill.colony.fermentation_sense.
+const FERMENTATION_SENSE_BEHAVIOUR := "fermentation_sense_on"
+
+## NF-4. Has the colony bought skill.colony.fermentation_sense? Read through
+## its enable_behaviour effect, which progression.gd caches until ownership
+## changes, so the hot callers (find_food_cell, every eating bee) pay one
+## dictionary lookup. False with no resolver, as in a bare test hive.
+func senses_fermentation() -> bool:
+	return Session.progression != null and Session.progression.is_behaviour_enabled(FERMENTATION_SENSE_BEHAVIOUR)
+
+## NF-4. Do bees here leave `cell` alone as sour? Only with fermentation
+## sense, and only while its nectar has fermented. The one place the bee
+## files (eating, nursing, restocking) ask it.
+func avoids_as_sour(cell: Node2D) -> bool:
+	return cell.is_fermented() and senses_fermentation()
 
 func has_room_for_egg() -> bool:
 	return find_empty_cell() != null
@@ -555,11 +580,37 @@ func find_cell_with(resource_type: String) -> Node2D:
 			return cell
 	return null
 
-## NF-2. The nectar a honey maker may take: find_cell_with("nectar") less
-## fermented cells, since fermented nectar cannot be made into honey
-## (decision 2). Only bee_honey.gd asks this; hungry bees (find_food_cell)
-## and nurses (find_cell_with) still take fermented nectar (decision 4).
-func find_honey_source() -> Node2D:
+## NF-2. The nectar a honey maker may take: never a fermented cell, since
+## fermented nectar cannot be made into honey (decision 2). NF-4, decision
+## 5: without fermentation sense the closest fresh cell to `from` (the
+## honey maker's global position); with it the oldest (earliest stamp), so
+## less nectar sits long enough to ferment. The stamp is read, never set
+## here: an unstamped cell counts as stocked now, the youngest. Ties keep
+## index order. Only bee_honey.gd asks.
+func find_honey_source(from: Vector2) -> Node2D:
+	var oldest_first: bool = senses_fermentation()
+	var best: Node2D = null
+	var best_score: float = INF
+	for cell in cells_holding("nectar"):
+		if cell.amount <= 0.0 or not cell.can_withdraw() or cell.is_fermented():
+			continue
+		var score: float
+		if oldest_first:
+			score = cell.nectar_since if cell.nectar_since >= 0.0 else Session.sim_time
+		else:
+			score = from.distance_squared_to(cell.global_position)
+		if score < best_score:
+			best_score = score
+			best = cell
+	return best
+
+## NF-4. The nectar a nurse may carry to brood. Without fermentation sense,
+## any nectar cell, fermented or not (find_cell_with). With it, fresh
+## nectar only: when every nectar cell has fermented the nurse acts as if
+## none were stored (Dave, 9 Oct 2026).
+func find_brood_nectar() -> Node2D:
+	if not senses_fermentation():
+		return find_cell_with("nectar")
 	for cell in cells_holding("nectar"):
 		if cell.amount > 0.0 and cell.can_withdraw() and not cell.is_fermented():
 			return cell

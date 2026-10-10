@@ -117,8 +117,10 @@ evidence supports:
 
 Every needed hands-on check is one `C-<n>.md` record in `checks/ready/`, surfaced in
 `checks/ready.md`, in that format: `### C-<n> -- <name>`, the action in a
-sentence or two, one `PASS:` line stating the single condition, one `Owner:`
-line naming the plan; `python tools/new_check.py --name "<name>" --owner <plan>`
+sentence or two, one `PASS:` line stating the single condition, one `Runner:`
+line (who runs it in a pass: `plans/reference/check-runner.md`, "Choosing a
+runner"), one `Owner:` line naming the plan;
+`python tools/new_check.py --name "<name>" --owner <plan> --runner <runner>`
 writes the skeleton with the next free id. Dave replies by id. Move blocked
 checks to `checks/blocked.md`; archive confirmed ones with
 `python tools/new_check.py --confirm C-<n>`, which also regenerates the

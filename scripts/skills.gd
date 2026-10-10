@@ -114,6 +114,7 @@ const DRONES := "skill.brood.drones"
 const CELL_CAPACITY := "skill.colony.cell_capacity"
 const COMB_WORKER := "skill.colony.comb_worker"
 const MINER := "skill.colony.miner"
+const FERMENTATION_SENSE := "skill.colony.fermentation_sense"
 const RESTOCKING := "skill.colony.restocking"
 const WORK_PRIORITIES := "skill.colony.work_priorities"
 
@@ -364,6 +365,18 @@ const SKILLS := [
 		"max_rank": 1, "cost": {HONEY: 20, NECTAR: 180, POLLEN: 60},
 		"requires_previous_tier": true, "all_of": [], "any_of": [],
 		"feature": "", "introduced_by": "", "effects": [], "icon": "",
+		"status": "existing", "baseline": false, "open": false,
+	},
+	{
+		# NF-4 (plans/now/nectar-fermentation.md decisions 4, 5 and 9). The
+		# Brood-facing side of the wedge, clear of Comb worker's and Miner's
+		# connect lines. Its price comes from NF-4's comparison run.
+		"id": FERMENTATION_SENSE, "name": "Fermentation sense",
+		"description": "Bees smell nectar that has sat too long and gone sour. They eat and feed brood from fresh stores instead, leave sour cells out of restocking, and honey makers work the oldest nectar first so less of it turns.",
+		"sector": "colony", "tier": 2, "axial": Vector2i(2, -5),
+		"max_rank": 1, "cost": {HONEY: 20, NECTAR: 140},
+		"requires_previous_tier": true, "all_of": [], "any_of": [],
+		"feature": "", "introduced_by": "", "effects": [{"type": "enable_behaviour", "key": "fermentation_sense_on"}], "icon": "",
 		"status": "existing", "baseline": false, "open": false,
 	},
 	{

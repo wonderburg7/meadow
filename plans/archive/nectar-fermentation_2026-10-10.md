@@ -1,7 +1,7 @@
 # Nectar fermentation -- unprocessed nectar ferments, and tipsy bees pay for it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: NF-4 -- the detection skill, specified below and queued in the Claude lane now that Dave has answered its nurse and Restocking questions (9 Oct 2026; NF-3 built 9 Oct 2026, with Dave's 300-second tipsiness from its sweep; NF-5 built 9 Oct 2026) | Dependency: none (NF-2 landed 9 Oct 2026); NF-4 follows NF-3 | Verified: 2026-10-09
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete; NF-4, its last slice, built 10 Oct 2026; no follow-ups filed | Dependency: none | Verified: 2026-10-10
 
 ## Objective
 
@@ -51,8 +51,9 @@ happening.
 
 - **How long tipsiness lasts, and how strong it is** (NF-3): set from a
   headless sweep in NF-3, not guessed.
-- **What the detection skill costs** (NF-4): set by simulation when NF-4
-  is specified; its slot is decision 9.
+- **What the detection skill costs** (NF-4) -- answered by NF-4's
+  comparison run, 10 Oct 2026: 20 honey and 140 nectar (see NF-4's
+  "Cost" paragraph).
 - **Whether nurses may carry fermented nectar to brood** (NF-4) --
   answered by Dave, 9 Oct 2026: **only without the skill.** Nurses use
   fermented nectar until the detection skill is bought, then avoid it.
@@ -93,7 +94,6 @@ Verified 6 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| NF-4 | the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; without it, closest first (decisions 4-5) | see its `Files:` line below | yes -- queued in the Claude lane; BB-2, which shared `bee_nursery.gd` and `bee_survival.gd`, landed 10 Oct 2026 (NF-3 and NF-5 landed 9 Oct 2026; Dave answered its questions 9 Oct 2026) | high |
 
 **Dependencies.** NF-1, then NF-2, both landed. NF-3 and NF-5 each follow
 NF-2, and NF-4 follows NF-3. Bee Bread's BB-1 (`plans/now/bee-bread.md`)
@@ -114,64 +114,4 @@ NF-2 shipped 2026-10-09; its specification is `plans/archive/NF-2_2026-10-09.md`
 
 NF-3 shipped 2026-10-09; its specification is `plans/archive/NF-3_2026-10-09.md`.
 
-## NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first
-
-<!-- LAYER: immediate-task -->
-
-Level: high (a new skill node, which cells every eater and honey maker
-chooses, and a cost set by simulation). Outlined 9 Oct 2026 when NF-3
-landed; specified and queued 9 Oct 2026 once Dave answered its nurse and
-Restocking questions under "Still open" (only without the skill, both).
-
-**True now.** Bees cannot tell fermented nectar from fresh (decision 4):
-`hive.find_food_cell` and `hive.find_cell_with("nectar")` both offer a
-fermented cell, so a hungry bee eats there and goes tipsy (NF-3), and a
-nurse can carry it to brood. Only honey makers skip it, through NF-2's
-`hive.find_honey_source()`, which takes the first indexed fresh cell rather
-than the closest (decision 5 wants closest). `skill.colony.fermentation_sense`
-is a working id in `plans/design/progression.md` section 5.3, Colony tier 2,
-and is not yet in `scripts/skills.gd`.
-
-**True afterwards.**
-
-- `skill.colony.fermentation_sense` is a Colony tier 2 node in
-  `scripts/skills.gd` beside Comb worker and Miner, costing honey at the
-  figure the simulation below sets, and its row in
-  `plans/design/progression.md` section 5.3 loses "working id".
-- Without the skill, honey makers take the closest fresh nectar cell to
-  where they stand (decision 5); hungry bees eat as they do now.
-- With the skill, hungry bees skip fermented cells while any other food is
-  left, so a colony with sense eats fresh nectar or honey first; honey
-  makers take the oldest fresh nectar first, so less of it reaches the
-  threshold.
-- Without the skill, nurses and restock orders take fermented nectar as
-  they do now. With it, nurses never fetch carbohydrate from a fermented
-  cell: they take honey, then fresh nectar, and when only fermented nectar
-  is stored they act as if no nectar were stored (`bee_nursery.gd`'s
-  errand check and `nurse_restock_errand` both). With it, a restock order
-  never draws from a fermented cell (`bee_building.gd::may_draw_from`), so
-  fermented nectar stays where it is until a clear order (NF-5) or an
-  eater empties it. What fermented nectar does to a larva is unchanged:
-  nothing, today.
-- The skill's cost comes from a headless comparison run in this slice and
-  recorded here: the same fermenting colony with and without the skill.
-- `test_scenarios/nf4_fermentation_sense.json` and
-  `tests/test_nf4_fermentation_sense.py` show from the run that, with the
-  skill, no bee goes tipsy while fresh food is left, no nurse or restock
-  order takes from a fermented cell, and honey makers empty the oldest
-  cell first, and, without it, nurses and restock orders still take
-  fermented nectar and honey makers take the closest.
-
-**Must not change.** Fermentation itself, tipsiness (NF-3), honey ripening,
-and what a colony without the skill eats.
-
-```queue
-**[Claude] NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first**
-- Plan: `plans/now/nectar-fermentation.md` -- "NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first"
-- Files: `scripts/skills.gd`, `scripts/hive.gd`, `scripts/bee_honey.gd`, `scripts/bee_survival.gd`, `scripts/bee_nursery.gd`, `scripts/bee_building.gd`, `plans/design/progression.md`, `tests/test_nf4_fermentation_sense.py`, `test_scenarios/nf4_fermentation_sense.json`
-- Check: `python -m unittest tests.test_nf4_fermentation_sense` passes (with the skill no bee goes tipsy while fresh food is left, nurses and restock orders never take from a fermented cell, and honey makers take the oldest nectar first; without it nurses and restock orders still take fermented nectar and honey makers take the closest); `tools/verify.ps1` is green
-- Proof: `absent: scripts/skills.gd :: skill.colony.fermentation_sense`
-- Next after: none -- nectar fermentation is complete
-```
-
-NF-5 shipped 2026-10-09; its specification is `plans/archive/NF-5_2026-10-09.md`.
+NF-4 shipped 2026-10-10; its specification is `plans/archive/NF-4_2026-10-10.md`.

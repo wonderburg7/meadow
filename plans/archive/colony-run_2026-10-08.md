@@ -133,7 +133,7 @@ PE-2's arc (`tools/pacing_gates.py`).
 **Dependencies.** COL-4 then COL-6: both edit `scripts/season.gd`, and
 COL-6 needs COL-4's year clock. COL-4 runs in the Codex lane after GC-3
 (`plans/archive/gameplay-consistency_2026-10-06.md`), which shares `scripts/game_config.gd`
-and `scripts/settings_catalogue.gd`. NF-2 (`plans/now/nectar-fermentation.md`)
+and `scripts/settings_catalogue.gd`. NF-2 (`plans/archive/nectar-fermentation_2026-10-10.md`)
 also waits for COL-4, for the same two files. COL-9 then COL-10 then COL-11, one after
 the other in the Claude lane: each needs the one before, and COL-11 also
 waits for COL-4.

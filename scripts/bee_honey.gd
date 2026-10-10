@@ -72,7 +72,8 @@ static func find_cell_with(bee: Node2D) -> bool:
 		return false   # still holding a load (GC-2): never lift over it
 	if bee.honey_load > 0.0 or bee.bee_bread_load > 0.0:
 		return false   # BB-1: holding bee bread, it waits for a cell instead
-	var nectar_cell = bee.hive.find_honey_source()   # NF-2: never fermented nectar
+	# NF-2: never fermented nectar. NF-4: closest to her, or oldest with the sense.
+	var nectar_cell = bee.hive.find_honey_source(bee.global_position)
 	if nectar_cell == null or bee.hive.find_honey_target() == null:
 		return false
 	bee.target_cell = nectar_cell

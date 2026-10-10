@@ -1,7 +1,7 @@
 # Bee Bread -- fermented larval food, the tier-3 currency, and what it makes of a worker
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it, specified below and queued in the Claude lane; BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers is to be specified now that BB-2 has landed (10 Oct 2026) | Dependency: none -- COL-4, NF-2, T2-2, T2-3, BB-1 and BB-2 have landed | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers, specified below and queued fifth in the Claude lane, after T2-7 sets the tier-2 prices it plays against | Dependency: none -- COL-4, NF-2, T2-2, T2-3, BB-1, BB-2 and BB-3 have landed | Verified: 2026-10-10
 
 ## Objective
 
@@ -29,29 +29,30 @@ Verified 7 Oct 2026 against master; BB-1 (9 Oct 2026) has since built Bee Bread 
   Every worker lives `bee_lifespan_days` (25) at full speed and capacity.
   (BB-2, 10 Oct 2026, has since made nurses feed ripe Bee Bread in place of
   pollen and fixed each new worker's outcome at emergence.)
-- Nectar fermentation (`plans/now/nectar-fermentation.md`) is a different
+- Nectar fermentation (`plans/archive/nectar-fermentation_2026-10-10.md`) is a different
   mechanism -- raw nectar spoiling with age -- and shares only files.
 
 ## Open slices
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BB-3 | Bee Bread is spendable on tier-3 recipes, from the cells that hold it | `scripts/skill_tree_panel.gd`, `tests/test_bb3_bee_bread_currency.py`, `test_scenarios/bb3_bee_bread_currency.json` | yes -- BB-1 and BB-2 have landed; queued first in the Claude lane | medium |
-| BB-4 | Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers | to be specified (BB-2 landed 10 Oct 2026) | not yet -- needs its `queue` block | medium |
+| BB-4 | Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers | `scripts/challenge_stages.gd`, `docs/challenge-stages.md`, `scripts/scenario_actions.gd`, `test_scenarios/bb4_challenge1_route.json`, `test_scenarios/bb4_challenge2_route.json`, tests | yes -- queued in the Claude lane behind T2-7 and T2-6 | medium |
 
-**Dependencies.** BB-1 and BB-2 have landed; BB-3 owns the skill window's
-stores in `skill_tree_panel.gd`. BB-4 follows BB-2, whose rule it balances around. Every slice
+**Dependencies.** BB-1, BB-2 and BB-3 have landed (BB-3 on 10 Oct 2026,
+releasing `skill_tree_panel.gd`). BB-4 follows BB-2, whose rule it balances around, and T2-7
+(`plans/now/tier-two.md`), whose tier-two prices the Challenges are played at. Every slice
 changes balance, so each is simulated first with PE-2's arc
-(`tools/pacing_gates.py`). Cross-plan: `plans/now/nectar-fermentation.md`
+(`tools/pacing_gates.py`). Cross-plan: `plans/archive/nectar-fermentation_2026-10-10.md`
 NF-2 and `plans/now/tier-two.md` T2-3, which had to land first, have, and
-NF-5 (`plans/now/nectar-fermentation.md`), which shared `hud.gd`, landed
+NF-5 (`plans/archive/nectar-fermentation_2026-10-10.md`), which shared `hud.gd`, landed
 9 Oct 2026, and so did SP-3 (`plans/now/sprites.md`), which shared
 `hive_cell.gd` and `bee.gd`. BB-2 released
 `bee_nursery.gd` and `bee_survival.gd` to NF-4, `bee.gd` to CD-3
 (`plans/now/diagnostic-readiness.md`) and the save files and `hud.gd` to
 FC-2 (`plans/now/crisis-readiness.md`) on 10 Oct 2026;
-`plans/design/progression.md` step 13 (tier-3 content) waits for BB-3;
-`plans/now/pollination.md` PP-2 follows BB-3 (`skill_tree_panel.gd`).
+`plans/design/progression.md` step 13 (tier-3 content) no longer waits on
+this plan, and `plans/now/pollination.md` PP-2 waits only for PP-1, since
+BB-3 landed 10 Oct 2026.
 
 **Reads.** A slice reads its own section here and `product-scope.md`
 section 9 (`python tools/heading.py plans/design/product-scope.md "9. Bee
@@ -61,57 +62,70 @@ BB-1 shipped 2026-10-09; its specification is `plans/archive/BB-1_2026-10-09.md`
 
 BB-2 shipped 2026-10-10; its specification is `plans/archive/BB-2_2026-10-10.md`.
 
-## BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it
+BB-3 shipped 2026-10-10; its specification is `plans/archive/BB-3_2026-10-10.md`.
+
+## BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers
 
 <!-- LAYER: immediate-task -->
 
-Level: medium (one file and an acceptance check; the recipes and the
-spending rule are already decided). Specified 9 Oct 2026 by the queue
-steward, from this plan's outline, after reading the files named below.
-
-**True now.** `skills.gd` already prices tier-3 and later skills in
-`Skills.BEE_BREAD` (for example 12 to 30 per skill), so the resolver
-(`progression.gd::can_afford` / `purchase`) asks for it, but nothing ever
-supplies it: `skill_tree_panel.gd::_stores()` builds the snapshot the window
-prices against from `STORE_CONTENT`, which maps only nectar, pollen, honey
-and royal jelly to cell contents. Every Bee Bread recipe is therefore
-unaffordable, however much the comb holds. `buy_skill` takes exactly what
-`purchase` deducted from the comb with `hive.gd::take()`, which walks the
-cells; BB-1's `hive_cell.gd::take_resource("bee_bread", ...)` already
-refuses an unripe cell, and `is_ripe_bee_bread()` says when one is ripe.
+**True now** (verified 10 Oct 2026 against master). A worker raised on
+pollen alone lives `pollen_raised_lifespan_factor` (0.6: 15 of 25 days) at
+`pollen_raised_stat_factor` (0.95) of speed and load
+(`bee.gd::outcome_lifespan_days`); founders keep 25 days. Bee Bread needs
+`skill.brood.bee_bread`, so every worker the Challenges raise is pollen-only.
+Challenge 2's interim, completion, stability, failure and rescue thresholds
+are the `C2_*` constants in `scripts/challenge_stages.gd`, whose comment
+calls them "first guesses" made before BB-2; Challenge 1's are the `C1_*`
+constants beside them. No fixture plays either Challenge through: the
+Challenge fixtures jump stages with `advance_challenge_stage`, so nothing yet
+says whether a stage is still reachable with 15-day workers. The Colony
+Run's arc is `tools/pacing_gates.py` (PE-2), which T2-7 runs under BB-2's
+rule when it prices tier two.
 
 **True afterwards.**
 
-- `STORE_CONTENT` maps `Skills.BEE_BREAD` to `Resources.BEE_BREAD`, and
-  `_stores()` counts a Bee Bread cell only when `is_ripe_bee_bread()` (as it
-  counts honey only when ripe), so the snapshot holds exactly what `take()`
-  can reach and the take cannot fall short.
-- Buying a skill with Bee Bread in its recipe spends it from the ripe cells
-  (section 4.2: the recipe is spent); the stores list in the window shows
-  "Bee bread" with the rest.
-- `test_scenarios/bb3_bee_bread_currency.json` makes or seeds a sealed Bee
-  Bread cell with the prerequisites of one Bee Bread-priced skill in place:
-  buying it while the cell is unripe is refused (`buy_skill` with
-  `expect_refused`); after `bee_bread_ripen_hours` it is bought, and the
-  cell holds that recipe's Bee Bread less. `tests/test_bb3_bee_bread_currency.py`
-  asserts both from the run.
+- Two routes play the Challenges as a player would, with no
+  `advance_challenge_stage` after their start: Challenge 1 from its first
+  egg (1.16, where the queen lays the colony's first egg) to completion, and
+  Challenge 2 from 2.1 (the nectar stores fall, then recover) to 2.9 (the
+  full colony goal), hatching roles, buying Nurses, designating cells and
+  mining with the actions `scripts/scenario_actions.gd` already has (it gains
+  one only if a stage needs an action it lacks). Each route runs on three
+  seeds under BB-2's rule, and as a control with both pollen-raised factors
+  set to 1.0 by `set_config`, which is the colony from before BB-2. Each
+  stage's reach day, for both, is recorded in this section.
+- A stage is unreachable when the route under the rule has not reached it
+  by twice the day the control did. Only such a stage's threshold moves, by
+  the least that lets the route reach it on all three seeds; its goal text,
+  `docs/challenge-stages.md` (`python tools/stage_reference.py`) and the
+  "first guesses" comment then cite this evidence. If no stage is
+  unreachable, no threshold moves and the comment says so.
+- The Colony Run: `python tools/pacing_gates.py` is run once and its five
+  rows recorded here. BB-4 changes nothing the Colony Run reads, so a gate
+  out of band goes to Dave with its options (T2-7's or PP-6's prices, BB-2's
+  factors) rather than being tuned here.
+- Runtime: no repeating work is added; the slice adds fixtures, a test and
+  constants.
 
-**Runtime.** None added: `_stores()` runs on opening the window and per
-purchase, as now, and ripeness is read from BB-1's stamp on demand.
+**Must not change.** Any skill price (T2-7 and PP-6 own them; Dave, 10 Oct
+2026); BB-2's five tunables and product-scope section 9's decisions behind
+them; a threshold whose stage the route still reaches; the Colony Run's
+gates.
 
-**Must not change.** The recipes in `skills.gd`, Bee Bread making (BB-1),
-nursing (BB-2), and the other currencies' counting.
-
-**Out of scope.** New tier-3 content (`plans/design/progression.md` step 13,
-which waits for this slice), Priority Cells, and any price change.
+**Out of scope.** Making BB-2's five tunables run settings. They are
+`persist: "none"`; changing that adds them to `tests/source_checks.py`'s
+`ORIGINAL_SAVED_SETTINGS`, which that file allows only as a deliberate
+reclassification with its own save `FORMAT_VERSION` bump. That is a save
+decision for Dave, open as of 10 Oct 2026, not part of a pacing slice.
+Stage prompts and the Challenge UI are untouched.
 
 ```queue
-**[Claude] BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it**
-- Plan: `plans/now/bee-bread.md` -- "BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it"
-- Files: `scripts/skill_tree_panel.gd`, `tests/test_bb3_bee_bread_currency.py`, `test_scenarios/bb3_bee_bread_currency.json`
-- Check: `python -m unittest tests.test_bb3_bee_bread_currency` passes (a Bee Bread-priced skill is refused while the colony's only Bee Bread is unripe, is bought once it ripens, and the ripe cell loses exactly the recipe's Bee Bread); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/skill_tree_panel.gd :: Skills.BEE_BREAD`
-- Next after: BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers
+**[Claude] BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers**
+- Plan: `plans/now/bee-bread.md` -- "BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers"
+- Files: `scripts/challenge_stages.gd`, `docs/challenge-stages.md`, `scripts/scenario_actions.gd`, `test_scenarios/bb4_challenge1_route.json`, `test_scenarios/bb4_challenge2_route.json`, `tests/test_bb4_challenge_pacing.py`
+- Check: `python -m unittest tests.test_bb4_challenge_pacing` passes (each route, run once on its pinned seed, reaches its Challenge's completion under BB-2's rule with no stage jumped after its start, and the test reads the thresholds from `scripts/challenge_stages.gd` rather than restating them); the three-seed reach days under the rule and with both pollen-raised factors at 1.0, and `python tools/pacing_gates.py`'s five rows, are recorded in the plan; `python tools/stage_reference.py --check` is clean; `.\tools\verify.ps1` is green
+- Proof: `present: scripts/challenge_stages.gd :: the rescue threshold -- first guesses`
+- Next after: none -- Bee Bread is complete
 ```
 
 ## Outline
@@ -146,5 +160,5 @@ which waits for this slice), Priority Cells, and any price change.
   `bee_bread_raised_stat_factor`, `pollen_raised_lifespan_factor`,
   `pollen_raised_stat_factor`) are `persist: "none"` rather than `"run"`,
   because `"run"` needs each key added to `tests/source_checks.py`'s
-  `ORIGINAL_SAVED_SETTINGS`; BB-4, which retunes around them, is the
-  natural slice to make them run settings.
+  `ORIGINAL_SAVED_SETTINGS`. BB-4's section leaves that reclassification
+  out as a save decision for Dave.

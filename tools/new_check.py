@@ -62,9 +62,11 @@ def next_free_id() -> int:
     return max(used) + 1 if used else 1
 
 
-def record_text(check_id: int, name: str, owner: str) -> str:
+def record_text(check_id: int, name: str, owner: str, runner: str) -> str:
     """The exact shape check_docs.py::check_checks accepts: one '# C-<n> -- <name>'
-    heading, one PASS: line, one Owner: line naming a plan that exists."""
+    heading, one PASS: line, one Owner: line naming a plan that exists. The
+    Runner: line tells a check pass who runs it
+    (`plans/reference/check-runner.md`, "Choosing a runner")."""
     return (
         f"# C-{check_id} -- {name}\n"
         "\n"
@@ -78,11 +80,14 @@ def record_text(check_id: int, name: str, owner: str) -> str:
         "slice it reopens. A check whose failure changes nothing does not belong\n"
         "here.>\n"
         "\n"
+        f"Runner: {runner}\n"
+        "\n"
         f"Owner: `{owner}`\n"
     )
 
 
 ARCHIVE_REL = "docs/archive/HANDS_ON_CHECKS_ARCHIVE.md"
+RUNNERS = ("haiku", "sonnet", "opus", "dave")
 
 
 def parse_check_id(raw: str) -> int:
@@ -210,6 +215,12 @@ def main() -> int:
         help="repository-relative path of the plan that owns the check, e.g. plans/now/ui.md",
     )
     parser.add_argument(
+        "--runner",
+        choices=RUNNERS,
+        help="who runs it in a check pass: a haiku, sonnet or opus check-runner subagent, or dave "
+        "when only his keyboard or eye can judge it (plans/reference/check-runner.md)",
+    )
+    parser.add_argument(
         "--id", type=int, default=None, help="force a specific number instead of the next free one"
     )
     parser.add_argument(
@@ -224,13 +235,13 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.confirm:
-        if args.name or args.owner or args.id is not None:
-            parser.error("--confirm cannot be combined with --name, --owner or --id")
+        if args.name or args.owner or args.runner or args.id is not None:
+            parser.error("--confirm cannot be combined with --name, --owner, --runner or --id")
         return confirm_main(args.confirm, args.note)
     if args.note:
         parser.error("--note only goes with --confirm")
-    if not args.name or not args.owner:
-        parser.error("--name and --owner are required to file a check")
+    if not args.name or not args.owner or not args.runner:
+        parser.error("--name, --owner and --runner are required to file a check")
 
     owner = args.owner.replace("\\", "/").strip().strip("`")
     if not (ROOT / owner).is_file():
@@ -247,7 +258,7 @@ def main() -> int:
     if path.exists():
         print(f"{path.relative_to(ROOT)} already exists", file=sys.stderr)
         return 1
-    path.write_text(record_text(check_id, args.name.strip(), owner), encoding="utf-8")
+    path.write_text(record_text(check_id, args.name.strip(), owner, args.runner), encoding="utf-8")
 
     # The path, so the caller can open it and fill the three placeholders;
     # the id, because that is what Dave replies with.
