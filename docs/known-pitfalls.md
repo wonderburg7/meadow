@@ -529,6 +529,24 @@ container has no profile, so it never saw it.
 profile and write none. Any new `user://` state a headless run could read
 back needs the same guard.
 
+## Environment quirk: parallel headless runs shared one user://
+
+Every `--scenario=` run empties `user://scenario_saves/` as it starts
+(`save_slots.gd::use_scratch_root`) and keeps only the newest five session
+logs (`diagnostic_log.gd::_prune_old_sessions`). With one `app_userdata`
+folder for every Godot on the machine, a run that started while another was
+between `save_slot` and `restore_slot` wiped that save, and the restore was
+rejected ("no readable save for that name"). On 9 Oct 2026
+`tests.test_bb1_bee_bread` failed this way beside
+`tests.test_nf2_fermentation` under `verify.ps1`'s parallel modules.
+
+`run_scenario.private_user_env` now launches every `run_once` and verdict run
+with `APPDATA` (`XDG_DATA_HOME` off Windows) pointed at
+`.headless_user/<run id>/` in the worktree, so each has its own user://.
+A test reads its saves with `scenario_saves_dir(session_file)`, never
+`log_dir().parent`, which is this process's user://, not the run's. A new
+launcher of `--scenario=` runs needs the same environment.
+
 ## Agent cost: a `cd … && …` prefix turns one denial into a wasted turn
 
 The Bash tool already runs in the right working directory, so prefixing a

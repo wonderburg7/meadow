@@ -41,6 +41,16 @@ MANIFEST = {
 }
 
 
+def setUpModule():
+    # The runner's per-run user:// folders go to a temporary root, not the
+    # worktree's .headless_user/.
+    folder = tempfile.TemporaryDirectory()
+    unittest.addModuleCleanup(folder.cleanup)
+    patch = mock.patch("run_scenario.PRIVATE_USER_ROOT", Path(folder.name))
+    patch.start()
+    unittest.addModuleCleanup(patch.stop)
+
+
 class HeadlessExperimentTest(unittest.TestCase):
     def test_manifest_allows_only_config_overlays_and_preserves_base_setup(self):
         manifest = validate_manifest(MANIFEST)
@@ -82,7 +92,7 @@ class HeadlessExperimentTest(unittest.TestCase):
             manifest_path.write_text(json.dumps(MANIFEST), encoding="utf-8")
             commands: list[list[str]] = []
 
-            def fake_godot(command, _timeout):
+            def fake_godot(command, _timeout, **_kwargs):
                 commands.append(command)
                 session_arg = next(item for item in command if item.startswith("--headless-session-path="))
                 session = Path(session_arg.split("=", 1)[1])
@@ -133,7 +143,7 @@ class HeadlessExperimentTest(unittest.TestCase):
             manifest_path = root / "experiment.json"
             manifest_path.write_text(json.dumps(failing), encoding="utf-8")
 
-            def fake_godot(command, _timeout):
+            def fake_godot(command, _timeout, **_kwargs):
                 session_arg = next(item for item in command if item.startswith("--headless-session-path="))
                 session = Path(session_arg.split("=", 1)[1])
                 session.write_text(fixture, encoding="utf-8")
