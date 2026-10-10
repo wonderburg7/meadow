@@ -94,7 +94,8 @@ that rewrites every line of a file means an edit dropped the `\r`.
    `git show master:<file> | grep -F '<text>'` (`present:` must match,
    `absent:` must not), or `finish` stops at the refill gate. File a
    hands-on check with `python tools/new_check.py --name "<what Dave
-   checks>" --owner <the plan path>` when the plan section has a
+   checks>" --owner <the plan path> --runner <haiku|sonnet|opus|dave>`
+   (`plans/reference/check-runner.md`, "Choosing a runner") when the plan section has a
    **Hands-on.** paragraph, or the slice is click-driven, visual or
    feel-sensitive and the plan's acceptance says so. Whether the `check`
    line mentions it makes no difference (T2-1, 7 Oct 2026). Write it in

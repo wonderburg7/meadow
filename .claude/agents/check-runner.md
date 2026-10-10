@@ -1,7 +1,7 @@
 ---
 name: check-runner
-description: Runs one filed hands-on check from checks/ready/ with computer use and returns a verdict. Dispatched by a hands-on check pass with a check id; not for direct invocation.
-model: claude-opus-5-5
+description: Runs one filed hands-on check whose Runner line says sonnet, with computer use, and returns a verdict. Dispatched by a hands-on check pass with a check id; not for direct invocation.
+model: claude-sonnet-5-5
 effort: medium
 ---
 
