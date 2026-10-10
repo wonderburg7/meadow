@@ -1,7 +1,7 @@
 # Bee Bread -- fermented larval food, the tier-3 currency, and what it makes of a worker
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BB-3 -- Bee Bread is spendable on tier-3 recipes, from the cells that hold it, specified below and queued in the Claude lane; BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers is to be specified now that BB-2 has landed (10 Oct 2026) | Dependency: none -- COL-4, NF-2, T2-2, T2-3, BB-1 and BB-2 have landed | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers is to be specified now that BB-2 and BB-3 have landed (10 Oct 2026) | Dependency: none -- COL-4, NF-2, T2-2, T2-3, BB-1, BB-2 and BB-3 have landed | Verified: 2026-10-10
 
 ## Objective
 
@@ -36,7 +36,7 @@ Verified 7 Oct 2026 against master; BB-1 (9 Oct 2026) has since built Bee Bread 
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BB-3 | Bee Bread is spendable on tier-3 recipes, from the cells that hold it | `scripts/skill_tree_panel.gd`, `tests/test_bb3_bee_bread_currency.py`, `test_scenarios/bb3_bee_bread_currency.json` | yes -- BB-1 and BB-2 have landed; queued first in the Claude lane | medium |
+| BB-3 | Bee Bread is spendable on tier-3 recipes, from the cells that hold it | `scripts/skill_tree_panel.gd`, `tests/test_bb3_bee_bread_currency.py`, `test_scenarios/bb3_bee_bread_currency.json` | landed 10 Oct 2026 | medium |
 | BB-4 | Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers | to be specified (BB-2 landed 10 Oct 2026) | not yet -- needs its `queue` block | medium |
 
 **Dependencies.** BB-1 and BB-2 have landed; BB-3 owns the skill window's

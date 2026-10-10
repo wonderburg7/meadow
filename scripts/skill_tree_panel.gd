@@ -28,13 +28,14 @@ const Resources = preload("res://scripts/resources.gd")
 const Availability = preload("res://scripts/availability.gd")
 
 ## skills.gd prices in these keys; the comb holds them under these content
-## types. Bee bread and pollinator points are not held anywhere yet, so a
-## skill costing either cannot be afforded.
+## types. Pollinator points are not held anywhere yet, so a skill costing
+## them cannot be afforded. Bee bread (BB-3) is held by sealed, ripe cells.
 const STORE_CONTENT := {
 	Skills.NECTAR: Resources.NECTAR,
 	Skills.POLLEN: Resources.POLLEN,
 	Skills.HONEY: Resources.HONEY,
 	Skills.ROYAL_JELLY: Resources.JELLY,
+	Skills.BEE_BREAD: Resources.BEE_BREAD,
 }
 
 ## shapes.gd's axial direction order, which is also skills.gd's SECTORS
@@ -245,7 +246,7 @@ func _on_buy_pressed() -> void:
 
 ## What the colony could spend right now, keyed the way skills.gd prices
 ## things: every cell's contents that hive.take() would actually hand over
-## -- not sealed or filling towards a seal, and honey only once ripe. A
+## -- not sealed or filling towards a seal, and honey and bee bread only once ripe. A
 ## snapshot, taken on open and per purchase; the comb stays the owner.
 func _stores() -> Dictionary:
 	var stores: Dictionary = {}
@@ -258,6 +259,8 @@ func _stores() -> Dictionary:
 			if cell.content_type != STORE_CONTENT[key]:
 				continue
 			if key == Skills.HONEY and not cell.is_ripe_honey():
+				continue
+			if key == Skills.BEE_BREAD and not cell.is_ripe_bee_bread():
 				continue
 			stores[key] = float(stores.get(key, 0.0)) + cell.amount
 	return stores
