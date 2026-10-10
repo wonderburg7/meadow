@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-1 -- bees earn Pollinator Points, after T2-6 in the Claude lane; PP-3 -- Gyne rearing and Royal jelly become real gates, in the Codex lane | Dependency: T2-6 (`plans/now/tier-two.md`), because foraging tier 3 opens only when Associative learning is owned; PP-1 follows BB-2 and T2-6 in the Claude lane (shared files); AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: PP-1 -- bees earn Pollinator Points, after T2-6 in the Claude lane; PP-3 -- Gyne rearing and Royal jelly become real gates, in the Codex lane | Dependency: T2-6 (`plans/now/tier-two.md`), because foraging tier 3 opens only when Associative learning is owned; PP-1 follows T2-6 in the Claude lane (shared files; BB-2 landed 10 Oct 2026); AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-10
 
 ## Objective
 

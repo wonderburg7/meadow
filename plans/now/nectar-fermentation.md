@@ -1,7 +1,7 @@
 # Nectar fermentation -- unprocessed nectar ferments, and tipsy bees pay for it
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: NF-4 -- the detection skill, specified below and queued in the Claude lane after BB-2 now that Dave has answered its nurse and Restocking questions (9 Oct 2026; NF-3 built 9 Oct 2026, with Dave's 300-second tipsiness from its sweep; NF-5 built 9 Oct 2026) | Dependency: none (NF-2 landed 9 Oct 2026); NF-4 follows NF-3 | Verified: 2026-10-09
+Status: active | Owner: Dave / Claude Code | Next: NF-4 -- the detection skill, specified below and queued in the Claude lane now that Dave has answered its nurse and Restocking questions (9 Oct 2026; NF-3 built 9 Oct 2026, with Dave's 300-second tipsiness from its sweep; NF-5 built 9 Oct 2026) | Dependency: none (NF-2 landed 9 Oct 2026); NF-4 follows NF-3 | Verified: 2026-10-09
 
 ## Objective
 
@@ -93,15 +93,15 @@ Verified 6 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| NF-4 | the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; without it, closest first (decisions 4-5) | see its `Files:` line below | yes -- queued in the Claude lane after BB-2, which shares `bee_nursery.gd` and `bee_survival.gd` (NF-3 and NF-5 landed 9 Oct 2026; Dave answered its questions 9 Oct 2026) | high |
+| NF-4 | the detection skill: bees avoid fermented nectar, and honey makers take the oldest first; without it, closest first (decisions 4-5) | see its `Files:` line below | yes -- queued in the Claude lane; BB-2, which shared `bee_nursery.gd` and `bee_survival.gd`, landed 10 Oct 2026 (NF-3 and NF-5 landed 9 Oct 2026; Dave answered its questions 9 Oct 2026) | high |
 
 **Dependencies.** NF-1, then NF-2, both landed. NF-3 and NF-5 each follow
 NF-2, and NF-4 follows NF-3. Bee Bread's BB-1 (`plans/now/bee-bread.md`)
 shared `hive.gd`, `game_config.gd`, `settings_catalogue.gd` and the save
 files with NF-3 and `orders_zones.gd` and `hud.gd` with NF-5 (both
 landed 9 Oct 2026), and shares `hive.gd` and `bee_honey.gd` with NF-4.
-Bee Bread's BB-2 shares `bee_nursery.gd` and `bee_survival.gd` with NF-4
-and is queued ahead of it. All are in the Claude lane, which runs them one
+Bee Bread's BB-2, which shared `bee_nursery.gd` and `bee_survival.gd` with
+NF-4, landed 10 Oct 2026. All are in the Claude lane, which runs them one
 branch at a time, so none may move to the Codex lane while another is
 queued (T2-4b, which shared them too, landed 9 Oct 2026). NF-5 has
 released `hud.gd`, `main.gd` and `scenario_actions.gd` to

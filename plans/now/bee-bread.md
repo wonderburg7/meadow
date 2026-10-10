@@ -36,25 +36,22 @@ Verified 7 Oct 2026 against master; BB-1 (9 Oct 2026) has since built Bee Bread 
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BB-3 | Bee Bread is spendable on tier-3 recipes, from the cells that hold it | `scripts/skill_tree_panel.gd`, `tests/test_bb3_bee_bread_currency.py`, `test_scenarios/bb3_bee_bread_currency.json` | yes -- BB-1 has landed; queued in the Claude lane after BB-2 | medium |
-| BB-4 | Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers | specified when BB-2 lands | no -- after BB-2 | medium |
+| BB-3 | Bee Bread is spendable on tier-3 recipes, from the cells that hold it | `scripts/skill_tree_panel.gd`, `tests/test_bb3_bee_bread_currency.py`, `test_scenarios/bb3_bee_bread_currency.json` | yes -- BB-1 and BB-2 have landed; queued first in the Claude lane | medium |
+| BB-4 | Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers | to be specified (BB-2 landed 10 Oct 2026) | not yet -- needs its `queue` block | medium |
 
-**Dependencies.** BB-1 has landed; BB-2 and BB-3 may run in either order
-(BB-2 owns nursing and `bee.gd`, BB-3 the skill window's stores in
-`skill_tree_panel.gd`; they share no file). BB-4 follows BB-2, whose rule it balances around. Every slice
+**Dependencies.** BB-1 and BB-2 have landed; BB-3 owns the skill window's
+stores in `skill_tree_panel.gd`. BB-4 follows BB-2, whose rule it balances around. Every slice
 changes balance, so each is simulated first with PE-2's arc
 (`tools/pacing_gates.py`). Cross-plan: `plans/now/nectar-fermentation.md`
 NF-2 and `plans/now/tier-two.md` T2-3, which had to land first, have, and
 NF-5 (`plans/now/nectar-fermentation.md`), which shared `hud.gd`, landed
 9 Oct 2026, and so did SP-3 (`plans/now/sprites.md`), which shared
-`hive_cell.gd` and `bee.gd`. BB-2 shares
-`bee_nursery.gd` and `bee_survival.gd` with NF-4, queued after it; CD-3 (`plans/now/diagnostic-readiness.md`, for
-`bee.gd`) and FC-2 (`plans/now/crisis-readiness.md`, for the save files and
-`hud.gd`) wait for BB-2 to release them;
+`hive_cell.gd` and `bee.gd`. BB-2 released
+`bee_nursery.gd` and `bee_survival.gd` to NF-4, `bee.gd` to CD-3
+(`plans/now/diagnostic-readiness.md`) and the save files and `hud.gd` to
+FC-2 (`plans/now/crisis-readiness.md`) on 10 Oct 2026;
 `plans/design/progression.md` step 13 (tier-3 content) waits for BB-3;
-`plans/now/pollination.md` PP-1 follows BB-2 (`bee_foraging.gd`, `bee.gd`,
-the save files), PP-2 follows BB-3 (`skill_tree_panel.gd`), and PP-5 shares
-`bee_nursery.gd` with BB-2.
+`plans/now/pollination.md` PP-2 follows BB-3 (`skill_tree_panel.gd`).
 
 **Reads.** A slice reads its own section here and `product-scope.md`
 section 9 (`python tools/heading.py plans/design/product-scope.md "9. Bee
@@ -144,4 +141,10 @@ which waits for this slice), Priority Cells, and any price change.
   where the evidence says a stage became unreachable, and the affected
   hands-on checks are filed again. It never changes a skill price: T2-7
   (`plans/now/tier-two.md`, queued after BB-2) prices tier two against
-  BB-2's rule (Dave, 10 Oct 2026).
+  BB-2's rule (Dave, 10 Oct 2026). Follow-up from BB-2: its five tunables
+  (`brood_feed_bee_bread`, `bee_bread_raised_lifespan_factor`,
+  `bee_bread_raised_stat_factor`, `pollen_raised_lifespan_factor`,
+  `pollen_raised_stat_factor`) are `persist: "none"` rather than `"run"`,
+  because `"run"` needs each key added to `tests/source_checks.py`'s
+  `ORIGINAL_SAVED_SETTINGS`; BB-4, which retunes around them, is the
+  natural slice to make them run settings.

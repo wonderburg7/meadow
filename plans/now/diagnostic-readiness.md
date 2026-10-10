@@ -1,7 +1,7 @@
 # Diagnostic readiness -- make the colony state behind a player decision explicit
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: CD-3 -- waiting and travel diagnostic boundary, after the `scripts/bee.gd` owners land | Dependency: extends `plans/reference/colony-diagnostics.md`; waits for BB-2 (Claude lane) to release `scripts/bee.gd` (BB-1, NF-3 and SP-3 landed 9 Oct 2026); no player-facing copy or balance change | Verified: 2026-10-10
+Status: active | Owner: Dave / Codex | Next: CD-3 -- waiting and travel diagnostic boundary, in the Codex backlog behind GD-2a | Dependency: extends `plans/reference/colony-diagnostics.md`; BB-2 released `scripts/bee.gd` 10 Oct 2026, and CD-3 shares `scripts/year_winter.gd` with GD-2a (Codex lane), so it runs after it; no player-facing copy or balance change | Verified: 2026-10-10
 
 ## Objective
 
@@ -19,7 +19,7 @@ diagnostics, but none has a named data contract.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CD-3 | waiting and travel get a deterministic diagnostic boundary | diagnostics, existing bee work dispatch and focused tests | after BB-2 releases `scripts/bee.gd` (BB-1, NF-3 and SP-3 have) | high |
+| CD-3 | waiting and travel get a deterministic diagnostic boundary | diagnostics, existing bee work dispatch and focused tests | yes -- BB-2 released `scripts/bee.gd` 10 Oct 2026; after GD-2a (Codex lane), which shares `scripts/year_winter.gd` | high |
 
 **Must not change.** The one-Hz cadence, existing warning text and severity,
 or any simulation, role-assignment or balance rule.
@@ -36,11 +36,12 @@ where `bee.gd::_idle_dispatch` / `_try_role_work` already search for work,
 then let diagnostics read that result. A bee state alone can mistake an idle
 bee with available work for a bee waiting on work. Do not repeat a mutable
 work search in diagnostics or add a per-bee scan outside the existing refresh.
-`scripts/bee.gd` is owned by BB-2 (`plans/now/bee-bread.md`), in the
-Claude lane (BB-1, NF-3 and SP-3 landed 9 Oct 2026); recheck ownership and
-the file list after it lands.
+BB-2 (`plans/now/bee-bread.md`) released `scripts/bee.gd` on 10 Oct 2026.
+Rechecked then, the file list stands; `scripts/year_winter.gd` is shared
+with GD-2a (`plans/now/guidance-explanations.md`), queued in the Codex lane,
+so CD-3 runs after it.
 
-```queue-gated
+```queue
 **[Codex] CD-3 -- waiting and travel get a deterministic diagnostic boundary**
 - Plan: `plans/now/diagnostic-readiness.md` -- "CD-3 -- waiting and travel get a deterministic diagnostic boundary"
 - Files: `scripts/bee.gd`, `scripts/colony_diagnostics.gd`, `scripts/year_winter.gd`, `tests/test_colony_diagnostics.py`
@@ -51,4 +52,4 @@ the file list after it lands.
 
 ## Not in the queue, and why
 
-- **CD-3** waits for BB-2 (Claude lane) to release `scripts/bee.gd` (BB-1, NF-3 and SP-3 landed 9 Oct 2026); its file list and ownership must be rechecked before admission.
+- None: CD-3's gate cleared when BB-2 landed (10 Oct 2026).

@@ -58,8 +58,8 @@ save boundary stand as written above. With them:
 GD-1 shipped 2026-10-09; its specification is `plans/archive/GD-1_2026-10-09.md`.
 
 **Dependencies.** GD-2a shares no file with the Claude lane. GD-2b needs
-`save_game.gd` and `saving.gd`, which BB-2 holds now and PP-1, PP-4 and PP-5
-(`plans/now/pollination.md`) will hold after it; it is admissible only in a
+`save_game.gd` and `saving.gd`, which BB-2 released on 10 Oct 2026 and PP-1,
+PP-4 and PP-5 (`plans/now/pollination.md`) will hold later; it is admissible only in a
 gap between them, or moves to the Claude lane if none opens.
 
 **Reads.** A slice reads its own section and the decision record above;
@@ -126,4 +126,4 @@ loses history (row 2, row 3). A save without them loads an empty ledger.
 
 ## Not in the queue, and why
 
-- **GD-2b** waits for GD-2a, and for the save files to be free of Claude-lane slices (BB-2 now; PP-1, PP-4 and PP-5 later).
+- **GD-2b** waits for GD-2a, and for the save files to be free of Claude-lane slices (BB-2 released them 10 Oct 2026; PP-1, PP-4 and PP-5 hold them later).

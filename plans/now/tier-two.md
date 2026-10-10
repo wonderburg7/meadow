@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-7 -- tier-2 costs tuned so the first purchase lands around day 5, queued in the Claude lane behind BB-2 and NF-4 (Dave, 10 Oct 2026); then T2-6 -- Associative learning, specified below with Dave's 10 Oct 2026 decisions and waiting in its `queue` block for room in the lane | Dependency: COL-4, COL-6, T2-4a and T2-4b landed; T2-7 follows BB-2 and NF-4; T2-6 follows T2-7 (shared `skills.gd`) | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: T2-7 -- tier-2 costs tuned so the first purchase lands around day 5, queued in the Claude lane behind NF-4 (Dave, 10 Oct 2026; BB-2 landed 10 Oct 2026); then T2-6 -- Associative learning, specified below with Dave's 10 Oct 2026 decisions and waiting in its `queue` block for room in the lane | Dependency: COL-4, COL-6, T2-4a and T2-4b landed; T2-7 follows NF-4 (BB-2 landed 10 Oct 2026); T2-6 follows T2-7 (shared `skills.gd`) | Verified: 2026-10-10
 
 ## Objective
 
@@ -55,7 +55,7 @@ Verified 7 Oct 2026 against master:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | T2-6 | Associative learning: the existing handling experience, gated by the skill, with a fade | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd` | yes -- after T2-7 in the Claude lane | medium |
-| T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | `scripts/skills.gd`, `scripts/progression.gd`, `scripts/diagnostic_log.gd`, `tools/analyze_session.py`, `tools/pacing_gates.py`, `plans/design/progression.md`, its test | yes -- queued in the Claude lane behind BB-2 and NF-4 | medium |
+| T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | `scripts/skills.gd`, `scripts/progression.gd`, `scripts/diagnostic_log.gd`, `tools/analyze_session.py`, `tools/pacing_gates.py`, `plans/design/progression.md`, its test | yes -- queued in the Claude lane behind NF-4 (BB-2 landed 10 Oct 2026) | medium |
 
 **Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
 T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
