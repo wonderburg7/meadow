@@ -538,14 +538,21 @@ folder for every Godot on the machine, a run that started while another was
 between `save_slot` and `restore_slot` wiped that save, and the restore was
 rejected ("no readable save for that name"). On 9 Oct 2026
 `tests.test_bb1_bee_bread` failed this way beside
-`tests.test_nf2_fermentation` under `verify.ps1`'s parallel modules.
+`tests.test_nf2_fermentation` under `verify.ps1`'s parallel modules. On
+10 Oct 2026 it stopped GD-2a's `slice.ps1 finish` (five
+`tests.test_nf3_tipsy` failures), and a run in another worktree or session
+can cause it just as well. BB-1, BB-2, BB-3, NF-2, NF-4 and NF-5 had each
+worked around it by pointing `APPDATA` at a temporary folder for their own
+run.
 
 `run_scenario.private_user_env` now launches every `run_once` and verdict run
 with `APPDATA` (`XDG_DATA_HOME` off Windows) pointed at
-`.headless_user/<run id>/` in the worktree, so each has its own user://.
-A test reads its saves with `scenario_saves_dir(session_file)`, never
-`log_dir().parent`, which is this process's user://, not the run's. A new
-launcher of `--scenario=` runs needs the same environment.
+`.headless_user/<run id>/` in the worktree, so each has its own user://, and
+the per-test workarounds are gone. A test reads its saves with
+`scenario_saves_dir(session_file)`, never `log_dir().parent`, which is this
+process's user://, not the run's; `tests.test_run_scenario_launch` fails any
+test that does. A new launcher of `--scenario=` runs needs the same
+environment.
 
 ## Agent cost: a `cd … && …` prefix turns one denial into a wasted turn
 

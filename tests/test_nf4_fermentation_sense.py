@@ -2,8 +2,7 @@
 
 Runs test_scenarios/nf4_fermentation_sense.json twice: as written (no skill),
 then from a copy that adds skill.colony.fermentation_sense to skill_grants.
-Each run gets a user:// of its own (APPDATA pointed at a temporary folder),
-as test_nf5_clear_fermented.py does. The fixture has three phases:
+Each run's saves are read from its own user:// (scenario_saves_dir). The fixture has three phases:
 
 1. Honey. W, beside the designated honey cell HP, is the only nectar, so both
    honey makers lift from it and end up fanning HP. O (far from HP) is stocked
@@ -29,19 +28,17 @@ bees eat fermented nectar and go tipsy.
 from __future__ import annotations
 
 import json
-import os
 import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 
 from analyze_session import load_entries  # noqa: E402
 from godot_compile_check import find_godot  # noqa: E402
-from run_scenario import log_dir, run_once  # noqa: E402
+from run_scenario import run_once, scenario_saves_dir  # noqa: E402
 
 FIXTURE = ROOT / "test_scenarios" / "nf4_fermentation_sense.json"
 SKILL = "skill.colony.fermentation_sense"
@@ -57,21 +54,20 @@ FERMENT_SECONDS = float(CONFIG["nectar_ferment_hours"]) * float(CONFIG["seconds_
 
 
 def _run(fixture: dict) -> tuple[list, dict]:
-    with tempfile.TemporaryDirectory(prefix="nf4-godot-", dir=ROOT) as appdata:
-        path = Path(appdata) / "nf4_fixture.json"
+    with tempfile.TemporaryDirectory(prefix="nf4-fixture-", dir=ROOT) as folder:
+        path = Path(folder) / "nf4_fixture.json"
         path.write_text(json.dumps(fixture), encoding="utf-8")
-        with patch.dict(os.environ, {"APPDATA": appdata}):
-            session_file = run_once(path, find_godot(), timeout=900, fixed_fps=30)
-            if session_file is None:
-                raise AssertionError("scenario run produced no session log")
-            rejected = [e for e in load_entries(session_file)
-                        if e.get("type") == "action" and e.get("result") == "rejected"]
-            scratch = log_dir().parent / "scenario_saves"
-            saves = {}
-            for name in SAVES:
-                save = scratch / ("nf4-%s.json" % name)
-                if save.exists():
-                    saves[name] = json.loads(save.read_text(encoding="utf-8"))
+        session_file = run_once(path, find_godot(), timeout=900, fixed_fps=30)
+        if session_file is None:
+            raise AssertionError("scenario run produced no session log")
+        rejected = [e for e in load_entries(session_file)
+                    if e.get("type") == "action" and e.get("result") == "rejected"]
+        scratch = scenario_saves_dir(session_file)
+        saves = {}
+        for name in SAVES:
+            save = scratch / ("nf4-%s.json" % name)
+            if save.exists():
+                saves[name] = json.loads(save.read_text(encoding="utf-8"))
     return rejected, saves
 
 

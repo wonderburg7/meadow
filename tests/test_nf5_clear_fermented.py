@@ -5,19 +5,16 @@ comb workers, no honey makers). It ferments three nectar cells, stocks a fresh
 control cell, runs clear_fermented, saves while the workers are partway
 through, restores that save and lets them finish. It then ferments one more
 cell and empties it with empty_cell (the move path). The saves, read back from
-the scenario scratch root, show the marks, their survival, the three cells
+the run's own scenario scratch root (scenario_saves_dir), show the marks, their survival, the three cells
 ending empty, the control untouched, and nothing laundered into another cell.
 """
 
 from __future__ import annotations
 
 import json
-import os
 import sys
-import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
 TOOLS = ROOT / "tools"
@@ -25,7 +22,7 @@ sys.path.insert(0, str(TOOLS))
 
 from analyze_session import load_entries  # noqa: E402
 from godot_compile_check import find_godot  # noqa: E402
-from run_scenario import log_dir, run_once  # noqa: E402
+from run_scenario import run_once, scenario_saves_dir  # noqa: E402
 
 FIXTURE = ROOT / "test_scenarios" / "nf5_clear_fermented.json"
 SAVES = ("before", "marked", "partway", "restored", "done", "moved")
@@ -45,19 +42,17 @@ class ClearFermentedTest(unittest.TestCase):
         godot_path = find_godot()
         if not godot_path:
             raise unittest.SkipTest("no Godot executable found -- this test needs a real headless boot")
-        with tempfile.TemporaryDirectory(prefix="nf5-godot-", dir=ROOT) as appdata:
-            with patch.dict(os.environ, {"APPDATA": appdata}):
-                session_file = run_once(FIXTURE, godot_path, timeout=300, fixed_fps=30)
-                if session_file is None:
-                    raise AssertionError("scenario run produced no session log")
-                cls.rejected = [e for e in load_entries(session_file)
-                                if e.get("type") == "action" and e.get("result") == "rejected"]
-                scratch = log_dir().parent / "scenario_saves"
-                cls.saves = {}
-                for name in SAVES:
-                    path = scratch / ("nf5-%s.json" % name)
-                    if path.exists():
-                        cls.saves[name] = json.loads(path.read_text(encoding="utf-8"))
+        session_file = run_once(FIXTURE, godot_path, timeout=300, fixed_fps=30)
+        if session_file is None:
+            raise AssertionError("scenario run produced no session log")
+        cls.rejected = [e for e in load_entries(session_file)
+                        if e.get("type") == "action" and e.get("result") == "rejected"]
+        scratch = scenario_saves_dir(session_file)
+        cls.saves = {}
+        for name in SAVES:
+            path = scratch / ("nf5-%s.json" % name)
+            if path.exists():
+                cls.saves[name] = json.loads(path.read_text(encoding="utf-8"))
 
     def setUp(self):
         self.assertEqual(self.rejected, [], "a scenario action was rejected")

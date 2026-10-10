@@ -10,17 +10,15 @@ the only bee bread is unripe (refused), then again after it ripens (bought).
 From the run: the refused attempt leaves the unripe cell untouched; the
 bought one leaves the cell holding exactly the recipe's bee bread less.
 
-The run gets a user:// of its own (APPDATA pointed at a temporary folder),
-for the reason test_bb1_bee_bread.py gives.
+The saves are read from the run's own user:// (scenario_saves_dir), for the
+reason test_bb1_bee_bread.py gives.
 """
 
 from __future__ import annotations
 
 import json
-import os
 import re
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
@@ -29,7 +27,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 from analyze_session import load_entries  # noqa: E402
 from godot_compile_check import find_godot  # noqa: E402
-from run_scenario import log_dir, run_once  # noqa: E402
+from run_scenario import run_once, scenario_saves_dir  # noqa: E402
 
 FIXTURE = ROOT / "test_scenarios" / "bb3_bee_bread_currency.json"
 SKILLS = ROOT / "scripts" / "skills.gd"
@@ -56,25 +54,16 @@ class BeeBreadCurrencyRunTest(unittest.TestCase):
         godot_path = find_godot()
         if not godot_path:
             raise unittest.SkipTest("no Godot executable found -- this test needs a real headless boot")
-        old_appdata = os.environ.get("APPDATA")
-        with tempfile.TemporaryDirectory(prefix="meadow-bb3-") as appdata:
-            os.environ["APPDATA"] = appdata
-            try:
-                session_file = run_once(FIXTURE, godot_path, timeout=600, fixed_fps=30)
-                if session_file is None:
-                    raise AssertionError("scenario run produced no session log")
-                entries = load_entries(session_file)
-                scratch = log_dir().parent / "scenario_saves"
-                cls.saves = {}
-                for name in ("unripe", "bought"):
-                    path = scratch / ("bb3-%s.json" % name)
-                    if path.exists():
-                        cls.saves[name] = json.loads(path.read_text(encoding="utf-8"))
-            finally:
-                if old_appdata is None:
-                    os.environ.pop("APPDATA", None)
-                else:
-                    os.environ["APPDATA"] = old_appdata
+        session_file = run_once(FIXTURE, godot_path, timeout=600, fixed_fps=30)
+        if session_file is None:
+            raise AssertionError("scenario run produced no session log")
+        entries = load_entries(session_file)
+        scratch = scenario_saves_dir(session_file)
+        cls.saves = {}
+        for name in ("unripe", "bought"):
+            path = scratch / ("bb3-%s.json" % name)
+            if path.exists():
+                cls.saves[name] = json.loads(path.read_text(encoding="utf-8"))
         cls.actions = [e for e in entries if e.get("type") == "action"]
 
     def setUp(self):

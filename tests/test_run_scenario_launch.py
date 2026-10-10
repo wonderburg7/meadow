@@ -119,6 +119,15 @@ class PrivateUserDirTest(unittest.TestCase):
         self.assertTrue((self.root / "recent").is_dir())
         self.assertTrue((self.root / "new").is_dir())
 
+    def test_no_test_reads_saves_from_its_own_user_dir(self):
+        # log_dir().parent is this process's user://, not the run's: saves
+        # read from there are missing, or another run's (10 Oct 2026, NF-3).
+        tests = Path(__file__).resolve().parent
+        readers = sorted(p.name for p in tests.glob("test_*.py")
+                         if "log_dir().parent" in p.read_text(encoding="utf-8")
+                         and p.name != Path(__file__).name)
+        self.assertEqual([], readers, "read saves with run_scenario.scenario_saves_dir(session_file)")
+
 
 class WindowedLaunchTest(unittest.TestCase):
     """SPR-1: --windowed swaps --headless for --disable-vsync, nothing else."""
