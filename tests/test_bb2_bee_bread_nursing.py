@@ -17,17 +17,15 @@ the outcomes and stats survive save and restore; and the founding bees, whose
 save entries carry no outcome at all -- the shape of every bee in a save made
 before BB-2 -- load as today's workers, 25 days at 100%.
 
-The run gets a user:// of its own (APPDATA pointed at a temporary folder),
-for the reason test_bb1_bee_bread.py gives.
+The saves are read from the run's own user:// (scenario_saves_dir), for the
+reason test_bb1_bee_bread.py gives.
 """
 
 from __future__ import annotations
 
 import json
-import os
 import re
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
@@ -37,7 +35,7 @@ sys.path.insert(0, str(TOOLS))
 
 from analyze_session import load_entries  # noqa: E402
 from godot_compile_check import find_godot  # noqa: E402
-from run_scenario import log_dir, run_once  # noqa: E402
+from run_scenario import run_once, scenario_saves_dir  # noqa: E402
 
 FIXTURE = ROOT / "test_scenarios" / "bb2_bee_bread_nursing.json"
 GAME_CONFIG = ROOT / "scripts" / "game_config.gd"
@@ -77,25 +75,16 @@ class BeeBreadNursingRunTest(unittest.TestCase):
             "pollen_capacity": ("pollen_stomach_capacity", _config("pollen_stomach_capacity")),
         }
         cls.standard_days = _config("bee_lifespan_days")
-        old_appdata = os.environ.get("APPDATA")
-        with tempfile.TemporaryDirectory(prefix="meadow-bb2-") as appdata:
-            os.environ["APPDATA"] = appdata
-            try:
-                session_file = run_once(FIXTURE, godot_path, timeout=600, fixed_fps=30)
-                if session_file is None:
-                    raise AssertionError("scenario run produced no session log")
-                entries = load_entries(session_file)
-                scratch = log_dir().parent / "scenario_saves"
-                cls.saves = {}
-                for name in SAVES:
-                    path = scratch / ("bb2-%s.json" % name)
-                    if path.exists():
-                        cls.saves[name] = json.loads(path.read_text(encoding="utf-8"))
-            finally:
-                if old_appdata is None:
-                    os.environ.pop("APPDATA", None)
-                else:
-                    os.environ["APPDATA"] = old_appdata
+        session_file = run_once(FIXTURE, godot_path, timeout=600, fixed_fps=30)
+        if session_file is None:
+            raise AssertionError("scenario run produced no session log")
+        entries = load_entries(session_file)
+        scratch = scenario_saves_dir(session_file)
+        cls.saves = {}
+        for name in SAVES:
+            path = scratch / ("bb2-%s.json" % name)
+            if path.exists():
+                cls.saves[name] = json.loads(path.read_text(encoding="utf-8"))
         cls.rejected = [e for e in entries if e.get("type") == "action" and e.get("result") == "rejected"]
         cls.snapshots = [e for e in entries if e.get("type") == "snapshot"]
 

@@ -32,7 +32,7 @@ sys.path.insert(0, str(TOOLS))
 
 from analyze_session import load_entries  # noqa: E402
 from godot_compile_check import find_godot  # noqa: E402
-from run_scenario import log_dir, run_once  # noqa: E402
+from run_scenario import run_once, scenario_saves_dir  # noqa: E402
 
 FIXTURE = ROOT / "test_scenarios" / "nf3_tipsy.json"
 SOBER = ["sober-%d" % i for i in range(30)]
@@ -95,7 +95,7 @@ class TipsyTest(unittest.TestCase):
         entries = load_entries(session_file)
         cls.rejected = [e for e in entries if e.get("type") == "action" and e.get("result") == "rejected"]
         cls.snapshots = [e for e in entries if e.get("type") == "snapshot"]
-        scratch = log_dir().parent / "scenario_saves"
+        scratch = scenario_saves_dir(session_file)
         cls.saves = {}
         for name in SAVES:
             path = scratch / ("nf3-%s.json" % name)

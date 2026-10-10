@@ -21,7 +21,7 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 
 DEFAULT_JOB_ROOT = Path(tempfile.gettempdir()) / "meadow-headless-jobs"
@@ -68,8 +68,12 @@ def _terminate_process_tree(process: subprocess.Popen[str]) -> None:
         pass
 
 
-def run_headless_process(command: list[str], timeout: int) -> HeadlessRunOutcome:
+def run_headless_process(command: list[str], timeout: int,
+                         env: Mapping[str, str] | None = None) -> HeadlessRunOutcome:
     """Run one Godot command, returning a typed result within ``timeout``.
+
+    ``env`` is the child's environment (default: this process's own); the
+    scenario runner passes one that gives the run a private user://.
 
     A distinct process group/session lets timeout cleanup include helpers Godot
     may have started.  ``communicate`` after cleanup reaps the direct child so
@@ -78,7 +82,7 @@ def run_headless_process(command: list[str], timeout: int) -> HeadlessRunOutcome
     started_at = time.monotonic()
     kwargs: dict[str, Any] = {
         "stdin": subprocess.DEVNULL, "stdout": subprocess.PIPE,
-        "stderr": subprocess.PIPE, "text": True,
+        "stderr": subprocess.PIPE, "text": True, "env": env,
     }
     if os.name == "nt":
         kwargs["creationflags"] = (getattr(subprocess, "CREATE_NO_WINDOW", 0) |

@@ -31,6 +31,16 @@ ANALYSIS = {
 }
 
 
+def setUpModule():
+    # The runner's per-run user:// folders go to a temporary root, not the
+    # worktree's .headless_user/.
+    folder = tempfile.TemporaryDirectory()
+    unittest.addModuleCleanup(folder.cleanup)
+    patch = mock.patch.dict(run_once.__globals__, {"PRIVATE_USER_ROOT": Path(folder.name)})
+    patch.start()
+    unittest.addModuleCleanup(patch.stop)
+
+
 class HeadlessVerdictTest(unittest.TestCase):
     def test_analysis_derives_each_milestone_in_one_day_series(self):
         settings = {
@@ -162,7 +172,7 @@ class HeadlessVerdictTest(unittest.TestCase):
             return mock.Mock(returncode=0, stdout="", stderr="")
 
         with mock.patch("run_scenario.subprocess.run", side_effect=fake_godot), \
-             mock.patch.dict(run_once.__globals__, {"session_file_for_run_id": lambda _run_id: session}), \
+             mock.patch.dict(run_once.__globals__, {"session_file_for_run_id": lambda _run_id, _env=None: session}), \
              contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(session, run_once(scenario, "unused", 1))
 
@@ -219,7 +229,7 @@ class HeadlessVerdictTest(unittest.TestCase):
                 encoding="utf-8"
             )
 
-            def fake_godot(command, _timeout):
+            def fake_godot(command, _timeout, **_kwargs):
                 self.assertIn("--disable-crash-handler", command)
                 session_arg = next(item for item in command if item.startswith("--headless-session-path="))
                 session = Path(session_arg.split("=", 1)[1])
@@ -261,7 +271,7 @@ class HeadlessVerdictTest(unittest.TestCase):
             script_error = "SCRIPT ERROR: Parse Error: Could not resolve class \\\"Broken\\\"."
             script_path = "res://scripts/broken.gd"
 
-            def fake_godot(command, _timeout):
+            def fake_godot(command, _timeout, **_kwargs):
                 session_arg = next(item for item in command if item.startswith("--headless-session-path="))
                 session = Path(session_arg.split("=", 1)[1])
                 session.write_text(zero_session, encoding="utf-8")

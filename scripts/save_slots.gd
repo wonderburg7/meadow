@@ -129,6 +129,8 @@ static func delete(slug: String) -> void:
 
 ## Headless scenario runs: points the catalogue at SCRATCH_ROOT and empties
 ## it, so each run starts from no saves and never touches the player's.
+## tools/run_scenario.py launches every run with a user:// of its own
+## (private_user_env), so this never empties a run going on alongside.
 static func use_scratch_root() -> void:
 	root = SCRATCH_ROOT
 	_prepared_root = ""

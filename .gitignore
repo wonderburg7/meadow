@@ -17,3 +17,6 @@ __pycache__/
 
 # Packaged alpha builds are reproducible artifacts.
 build/
+
+# Each headless scenario run's private user:// (run_scenario.private_user_env).
+.headless_user/
