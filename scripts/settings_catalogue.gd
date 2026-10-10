@@ -1051,9 +1051,9 @@ const TUNABLES := [
 	# --- a worker's outcome (BB-2): fixed when she emerges, saved with her ---
 	{
 		"persist": "none",
-		"key": "bee_bread_raised_lifespan_days", "label": "Bee bread: lifespan", "step": 1.0, "min": 1.0,
+		"key": "bee_bread_raised_lifespan_factor", "label": "Bee bread: lifespan x", "step": 0.05, "min": 0.05,
 		"category": "Bee life",
-		"tip": "In-game days a worker raised on bee bread lives. Founding bees, and bees from a save made before bee bread nursing, use Lifespan days instead.",
+		"tip": "Multiplies Lifespan days for a worker raised on bee bread. 1.0 is the full 25 days. Founding bees, and bees from a save made before bee bread nursing, live Lifespan days.",
 	},
 	{
 		"persist": "none",
@@ -1063,9 +1063,9 @@ const TUNABLES := [
 	},
 	{
 		"persist": "none",
-		"key": "pollen_raised_lifespan_days", "label": "Pollen only: lifespan", "step": 1.0, "min": 1.0,
+		"key": "pollen_raised_lifespan_factor", "label": "Pollen only: lifespan x", "step": 0.05, "min": 0.05,
 		"category": "Bee life",
-		"tip": "In-game days a worker raised only on pollen lives.",
+		"tip": "Multiplies Lifespan days for a worker raised only on pollen. 0.6 is 15 of the 25 days.",
 	},
 	{
 		"persist": "none",

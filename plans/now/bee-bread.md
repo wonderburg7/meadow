@@ -112,13 +112,21 @@ raises a handful (four) of larvae in under a game-day.
 
 **As built.** A larva given *any* feed of Bee Bread emerges raised on it
 (`hive_cell.gd::brood_food`); with ripe Bee Bread in the comb a nurse loads it
-before feeding a worker larva even if she carries pollen. Gyne feeding is
+before feeding a worker larva even if she carries pollen, unless she could
+not get at it (every wall of the cell taken, or 20 s without arriving), when
+she feeds pollen for 10 s before trying again. A remainder short of a full
+ration is fed as a part feed. A nurse leaving the role hands her Bee Bread
+back ripe (`hive_cell.gd::return_ripe_bee_bread`). The outcome lifespans are
+factors on `bee_lifespan_days` (1.0 and 0.6, so 25 and 15 days), which keeps
+scenarios that set `bee_lifespan_days` meaning what they did. Gyne feeding is
 unchanged (pollen, royal jelly and honey) and a gyne or drone gets no outcome,
 nor does a founding bee: all three stay today's worker. The save's per-bee
 `stats` readout (speed, both capacities, lifespan) is written for tests and
 never read back; `brood_outcome` is written only for a bee that has one, so a
-founder's entry has the pre-BB-2 shape. PE-2's pacing arc was not rerun:
-BB-4 re-paces for this rule.
+founder's entry has the pre-BB-2 shape. The five new tunables are
+`persist: "none"`: making them `"run"` like their siblings needs
+`tests/source_checks.py`'s `ORIGINAL_SAVED_SETTINGS` extended, which BB-2 does
+not own. PE-2's pacing arc was not rerun: BB-4 re-paces for this rule.
 
 **Must not change.** Nursing with no ripe Bee Bread, gyne feeding, the stores
 the skills window prices against (BB-3), and Bee Bread making (BB-1).

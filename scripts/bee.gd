@@ -290,6 +290,12 @@ var nurse_carb_type: String = ""
 ## BB-2. Ripe bee bread a nurse carries, fed to worker larvae in place of
 ## pollen while the colony holds any (bee_nursery.gd). Saved.
 var nurse_bee_bread: float = 0.0
+## BB-2, not saved: until this Session.sim_time a nurse who could not get
+## at the ripe bee bread feeds pollen instead
+## (bee_nursery.gd::bee_bread_source), and when her current errand to a
+## food cell began.
+var nurse_bee_bread_retry_at: float = -1.0
+var nurse_errand_started_at: float = 0.0
 var nurse_fetching: String = ""      # what this trip to a cell is for
 
 ## Stall watchdog. A bee that hasn't moved for a few seconds while it is
@@ -1162,13 +1168,15 @@ func outcome_stat_factor() -> float:
 	return 1.0
 
 ## BB-2. Her lifespan in game-days before disease and winter
-## (bee_survival.gd::lifespan_seconds applies those).
+## (bee_survival.gd::lifespan_seconds applies those): bee_lifespan_days,
+## scaled by her outcome's factor, so a scenario that sets
+## bee_lifespan_days still governs every bee.
 func outcome_lifespan_days() -> float:
 	match brood_outcome:
 		OUTCOME_BEE_BREAD:
-			return GameConfig.bee_bread_raised_lifespan_days
+			return GameConfig.bee_lifespan_days * GameConfig.bee_bread_raised_lifespan_factor
 		OUTCOME_POLLEN:
-			return GameConfig.pollen_raised_lifespan_days
+			return GameConfig.bee_lifespan_days * GameConfig.pollen_raised_lifespan_factor
 	return GameConfig.bee_lifespan_days
 
 ## BB-2. The selection panel's line for her outcome, or "" for a bee that
@@ -1723,13 +1731,16 @@ func _return_nurse_food() -> void:
 	if not is_queen and hive != null:
 		var carb_type: String = nurse_carb_type if nurse_carb_type != "" else "nectar"
 		var lost := PackedStringArray()
-		for item in [["pollen", nurse_pollen], [carb_type, nurse_carb], ["jelly", nurse_jelly], ["bee_bread", nurse_bee_bread]]:
+		for item in [["pollen", nurse_pollen], [carb_type, nurse_carb], ["jelly", nurse_jelly]]:
 			var amount: float = item[1]
 			if amount <= 0.0:
 				continue
 			var unplaced: float = amount - hive.deposit(item[0], amount)
 			if unplaced > 0.001:
 				lost.append("%.1f %s" % [unplaced, item[0]])
+		var bread_unplaced: float = _return_ripe_bee_bread(nurse_bee_bread)
+		if bread_unplaced > 0.001:
+			lost.append("%.1f bee_bread" % bread_unplaced)
 		if not lost.is_empty():
 			DiagnosticLog.log_action("return_nurse_food", "bee %d" % bee_id, "partly lost",
 				"no cell had room for " + ", ".join(lost))
@@ -1738,6 +1749,27 @@ func _return_nurse_food() -> void:
 	nurse_carb_type = ""
 	nurse_jelly = 0.0
 	nurse_bee_bread = 0.0
+
+## BB-2. A nurse's bee bread was ripe when she loaded it, so it goes back
+## ripe (hive_cell.gd::return_ripe_bee_bread): topping up a ripe cell with
+## room first, then into an empty cell that takes bee bread. hive.deposit
+## would put it in a cell still filling, to ferment all over again. Returns
+## what found no room. Called only from _return_nurse_food.
+func _return_ripe_bee_bread(amount: float) -> float:
+	var left: float = amount
+	for cell in hive.cells_holding("bee_bread"):
+		if left <= 0.001:
+			break
+		left -= cell.return_ripe_bee_bread(left)
+	for cell in hive.cells:
+		if left <= 0.001:
+			break
+		if cell.content_type == "":
+			left -= cell.return_ripe_bee_bread(left)
+	if left > 0.001:
+		return left
+	hive.announce()
+	return 0.0
 
 ## BB-1. Bee bread a honey maker was carrying goes back into the comb when
 ## she leaves the Honey role, as a nurse's food does above, so the pollen and

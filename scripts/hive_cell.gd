@@ -891,6 +891,40 @@ func restore_bee_bread_seal() -> void:
 	if bee_bread_sealed_at < 0.0 and amount >= capacity - 0.001:
 		bee_bread_sealed_at = Session.sim_time
 
+## BB-2. Takes back ripe bee bread a nurse was carrying without losing its
+## ripeness. It tops up a ripe cell to the size it started at, keeping the
+## seal stamp, or starts an empty cell that takes bee bread as already sealed
+## and ripe (stamped bee_bread_ripen_hours ago, never before 0). It never
+## touches a cell still filling or fermenting, which hive.deposit would pick.
+## Returns what it took.
+func return_ripe_bee_bread(requested: float) -> float:
+	if requested <= 0.0 or not accepts(Resources.BEE_BREAD):
+		return 0.0
+	var added: float = 0.0
+	if content_type == Resources.BEE_BREAD:
+		if not is_ripe_bee_bread() or not can_withdraw():
+			return 0.0
+		added = minf(requested, maxf(0.0, capacity - amount))
+		if added <= 0.0:
+			return 0.0
+		amount += added
+		_invalidate_stock()
+		return added
+	if content_type != "":
+		return 0.0
+	var size: float = capacity_for(Resources.BEE_BREAD)
+	added = minf(requested, size)
+	if designated_type == "":
+		designated_type = Resources.BEE_BREAD
+	content_type = Resources.BEE_BREAD
+	capacity = size
+	amount = added
+	var hour: float = maxf(0.001, GameConfig.seconds_per_day / 24.0)
+	bee_bread_sealed_at = maxf(0.0, Session.sim_time - GameConfig.bee_bread_ripen_hours * hour - 0.001)
+	_invalidate_stock()
+	_invalidate_hive_index()
+	return added
+
 ## BB-1. Has this bee bread cell filled and sealed?
 func is_bee_bread_sealed() -> bool:
 	return content_type == Resources.BEE_BREAD and bee_bread_sealed_at >= 0.0

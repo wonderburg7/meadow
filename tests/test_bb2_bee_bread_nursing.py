@@ -64,9 +64,12 @@ class BeeBreadNursingRunTest(unittest.TestCase):
         godot_path = find_godot()
         if not godot_path:
             raise unittest.SkipTest("no Godot executable found -- this test needs a real headless boot")
+        # An outcome's lifespan is a factor on bee_lifespan_days (25 and 15
+        # days by default), so a scenario's bee_lifespan_days still governs.
+        days = _config("bee_lifespan_days")
         cls.outcomes = {
-            "bee_bread": (_config("bee_bread_raised_lifespan_days"), _config("bee_bread_raised_stat_factor")),
-            "pollen": (_config("pollen_raised_lifespan_days"), _config("pollen_raised_stat_factor")),
+            "bee_bread": (days * _config("bee_bread_raised_lifespan_factor"), _config("bee_bread_raised_stat_factor")),
+            "pollen": (days * _config("pollen_raised_lifespan_factor"), _config("pollen_raised_stat_factor")),
         }
         cls.base = {
             "speed": ("speed", _config("bee_speed")),
@@ -140,7 +143,8 @@ class BeeBreadNursingRunTest(unittest.TestCase):
         for bee in early:
             self.assertEqual(bee["brood_outcome"], "bee_bread", "bee %s emerged beside bee bread" % bee["id"])
         days, factor = self.outcomes["bee_bread"]
-        self.assertEqual((days, factor), (25.0, 1.05))
+        self.assertAlmostEqual(days, 25.0, places=6)
+        self.assertAlmostEqual(factor, 1.05, places=6)
         for bee in _raised(self.saves["late"], "bee_bread").values():
             self._assert_stats(bee, days, factor)
 
@@ -152,7 +156,8 @@ class BeeBreadNursingRunTest(unittest.TestCase):
             self.assertGreater(self._emerged_at(bee, "late"), ran_out,
                                "bee %s was raised on pollen while bee bread was ripe" % bee["id"])
         days, factor = self.outcomes["pollen"]
-        self.assertEqual((days, factor), (15.0, 0.95))
+        self.assertAlmostEqual(days, 15.0, places=6)
+        self.assertAlmostEqual(factor, 0.95, places=6)
         for bee in pollen.values():
             self._assert_stats(bee, days, factor)
 
