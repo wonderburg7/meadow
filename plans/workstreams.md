@@ -46,4 +46,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/SP-2` (`claude/SP-2`) | Claude | the sprite exporter, the sprite table and the generated catalogue | Claude | in progress | none | `plans/now/sprites.md` SP-2 -- the sprite exporter, the sprite table and the generated catalogue |
