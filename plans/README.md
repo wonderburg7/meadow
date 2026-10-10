@@ -181,6 +181,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | SI-1 to SI-3 -- save integrity: run state a load misses, exact Challenge rollback, all-or-nothing writes | `plans/archive/save-integrity_2026-10-09.md` |
 | T2-1 to T2-8 -- progression step 8: tier-2 skills gated and built, bodies, rain in the Colony Run, Shiver Cluster | `plans/now/tier-two.md` |
 | BB-1 to BB-4 -- Bee Bread: Fermenters, larval feeding, the tier-3 currency, re-pacing | `plans/now/bee-bread.md` |
+| PP-1 to PP-6 -- pollination: Pollinator Points, the gyne and jelly gates, seed set, Priority cells, the route's pricing | `plans/now/pollination.md` |
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates (the Colony Run definition itself is `plans/archive/colony-run_2026-10-08.md`) | `plans/design/product-scope.md` |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |

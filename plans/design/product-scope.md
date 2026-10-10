@@ -434,6 +434,21 @@ indicators handle overlapping states to avoid a combinatorial asset set.
   presentation only, pooled and cheap on the per-visit path, and measured
   before it ships (`.claude/rules/performance.md`). Pollination
   Contribution shows only in the developer panel.
+- **A pollinating move happens within one trip.** Only consecutive flowers
+  on the same foraging trip count; a bee grooms her pollen off at the hive,
+  so a trip's first flower is neither compatible nor incompatible.
+  Arriving straight from another species delivers incompatible pollen.
+  Points accrue only while the colony owns the Pollinator points skill;
+  pollination itself, and so seed set and Contribution, happens whether or
+  not it is owned.
+- **Seed set runs in the Colony Run and Scenarios, not Challenges.** A
+  level-row flag, as rain's is; Challenges 1 and 2 keep today's random
+  replanting, so their authored balance and hands-on checks stand.
+- **Priority cells is built for all brood food** (§9's "deliberate
+  allocation", widened). Once owned, the player marks brood cells that
+  nurses feed before any others, for every food a larva takes, not only
+  Bee Bread. It is on the gyne route: Brood tier 4 opens only when Royal
+  jelly and Priority cells are both owned.
 
 ## 11. Difficulty, failure and recovery
 

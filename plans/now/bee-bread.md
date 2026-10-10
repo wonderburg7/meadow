@@ -50,7 +50,10 @@ NF-5 (`plans/now/nectar-fermentation.md`), which shared `hud.gd`, landed
 `bee_nursery.gd` and `bee_survival.gd` with NF-4, queued after it; CD-3 (`plans/now/diagnostic-readiness.md`, for
 `bee.gd`) and FC-2 (`plans/now/crisis-readiness.md`, for the save files and
 `hud.gd`) wait for BB-2 to release them;
-`plans/design/progression.md` step 13 (tier-3 content) waits for BB-3.
+`plans/design/progression.md` step 13 (tier-3 content) waits for BB-3;
+`plans/now/pollination.md` PP-1 follows BB-2 (`bee_foraging.gd`, `bee.gd`,
+the save files), PP-2 follows BB-3 (`skill_tree_panel.gd`), and PP-5 shares
+`bee_nursery.gd` with BB-2.
 
 **Reads.** A slice reads its own section here and `product-scope.md`
 section 9 (`python tools/heading.py plans/design/product-scope.md "9. Bee
