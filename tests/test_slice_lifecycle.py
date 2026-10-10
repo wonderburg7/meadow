@@ -593,6 +593,9 @@ class SliceDoctorTest(unittest.TestCase):
         (self.root / "tools" / "stage_reference.py").write_text(
             stub_exit_zero, encoding="utf-8"
         )
+        (self.root / "tools" / "sprites.py").write_text(
+            stub_exit_zero, encoding="utf-8"
+        )
 
         # A row naming a worktree that was never created with 'git worktree
         # add' -- exactly what a killed session, or a lane mid-closeout,
