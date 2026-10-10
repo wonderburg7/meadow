@@ -47,4 +47,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/GD-2a` (`codex/GD-2a`) | Codex | the guidance policy, the first two explanations and the Why list | Codex | in progress | none | `plans/now/guidance-explanations.md` GD-2a -- the guidance policy, the first two explanations and the Why list |
-| `.worktrees/NF-4` (`claude/NF-4`) | Claude | the detection skill: bees avoid fermented nectar, and honey makers take the oldest first | Claude | in progress | none | `plans/now/nectar-fermentation.md` NF-4 -- the detection skill: bees avoid fermented nectar, and honey makers take the oldest first |
