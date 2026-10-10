@@ -1,7 +1,7 @@
 # Diagnostic readiness -- make the colony state behind a player decision explicit
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: CD-3 -- waiting and travel diagnostic boundary, in the Codex backlog behind GD-2a | Dependency: extends `plans/reference/colony-diagnostics.md`; BB-2 released `scripts/bee.gd` 10 Oct 2026, and CD-3 shares `scripts/year_winter.gd` with GD-2a (Codex lane), so it runs after it; no player-facing copy or balance change | Verified: 2026-10-10
+Status: active | Owner: Dave / Codex | Next: CD-3 -- waiting and travel diagnostic boundary, in the Codex backlog; GD-2a released `scripts/year_winter.gd` 10 Oct 2026, and PP-1 (Claude lane) now holds `scripts/bee.gd` | Dependency: extends `plans/reference/colony-diagnostics.md`; CD-3 is admitted once no Claude-lane slice holds `scripts/bee.gd`; no player-facing copy or balance change | Verified: 2026-10-10
 
 ## Objective
 

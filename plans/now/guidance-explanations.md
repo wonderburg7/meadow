@@ -1,7 +1,7 @@
 # Guidance explanations -- turn colony facts into a causal player answer
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: GD-2a -- the guidance policy, the first two explanations and the Why list, in the Codex lane (Dave accepted GD-1, 10 Oct 2026) | Dependency: CD-2 provides the missing-workforce and blocked-work facts; GD-2b waits for the save files to be free of Claude-lane slices | Verified: 2026-10-10
+Status: active | Owner: Dave / Codex | Next: GD-2b -- the shown ledger and Why history saved with the run, gated (GD-2a landed 10 Oct 2026; hands-on check C-122) | Dependency: CD-2 provides the missing-workforce and blocked-work facts; GD-2b waits for the save files to be free of Claude-lane slices, and PP-1 (Claude lane) holds them now | Verified: 2026-10-10
 
 ## Objective
 
@@ -126,4 +126,4 @@ loses history (row 2, row 3). A save without them loads an empty ledger.
 
 ## Not in the queue, and why
 
-- **GD-2b** waits for GD-2a, and for the save files to be free of Claude-lane slices (BB-2 released them 10 Oct 2026; PP-1, PP-4 and PP-5 hold them later).
+- **GD-2b** waits for the save files to be free of Claude-lane slices: PP-1 (Claude lane, queued fifth) holds them now, and PP-4 and PP-5 hold them later. GD-2a landed 10 Oct 2026.
