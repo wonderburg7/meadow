@@ -62,14 +62,14 @@ T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
 and each adds a test module. They depend on
 nothing else. T2-4a follows T2-2 (`actions.gd`, `challenge_stages.gd`).
 T2-4b landed 9 Oct 2026, so it no longer shares files with NF-3
-(`plans/now/nectar-fermentation.md`) or Bee Bread's BB-1
+(`plans/archive/nectar-fermentation_2026-10-10.md`) or Bee Bread's BB-1
 (`plans/now/bee-bread.md`).
 T2-7 prices the gates T2-1 to T2-3 built. T2-6 shares `skills.gd` with
 T2-7 and NF-4 and `bee_foraging.gd`, `game_config.gd` and
 `settings_catalogue.gd` with BB-2, so it runs after them in the Claude lane.
 Pollinator Points (`plans/now/pollination.md` PP-1) needs T2-6: foraging
 tier 3 opens only when Associative learning is owned. T2-8 multiplies COL-6's one-step winter (landed 7 Oct 2026).
-NF-4 (`plans/now/nectar-fermentation.md`) adds a Colony tier-2 node and
+NF-4 (`plans/archive/nectar-fermentation_2026-10-10.md`) adds a Colony tier-2 node and
 shares `skills.gd`; it lands before T2-7, which prices it. T2-7 runs after
 BB-2 (`plans/now/bee-bread.md`) so its sweep includes the 15-day
 unfed-worker rule; BB-4 then moves stage thresholds only, never prices.

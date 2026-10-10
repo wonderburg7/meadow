@@ -1,7 +1,7 @@
 # Save integrity -- what a load must bring back, and a write that cannot half-finish
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: complete | Owner: Dave / Claude Code | Next: nothing further -- SI-1 to SI-3 landed | Dependency: none (shares `scripts/save_game.gd` and `scripts/saving.gd` with NF-2 in `plans/now/nectar-fermentation.md`, so never in the other lane at the same time) | Verified: 2026-10-09
+Status: complete | Owner: Dave / Claude Code | Next: nothing further -- SI-1 to SI-3 landed | Dependency: none (shares `scripts/save_game.gd` and `scripts/saving.gd` with NF-2 in `plans/archive/nectar-fermentation_2026-10-10.md`, so never in the other lane at the same time) | Verified: 2026-10-09
 
 ## Objective
 

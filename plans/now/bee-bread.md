@@ -29,7 +29,7 @@ Verified 7 Oct 2026 against master; BB-1 (9 Oct 2026) has since built Bee Bread 
   Every worker lives `bee_lifespan_days` (25) at full speed and capacity.
   (BB-2, 10 Oct 2026, has since made nurses feed ripe Bee Bread in place of
   pollen and fixed each new worker's outcome at emergence.)
-- Nectar fermentation (`plans/now/nectar-fermentation.md`) is a different
+- Nectar fermentation (`plans/archive/nectar-fermentation_2026-10-10.md`) is a different
   mechanism -- raw nectar spoiling with age -- and shares only files.
 
 ## Open slices
@@ -42,9 +42,9 @@ Verified 7 Oct 2026 against master; BB-1 (9 Oct 2026) has since built Bee Bread 
 releasing `skill_tree_panel.gd`). BB-4 follows BB-2, whose rule it balances around, and T2-7
 (`plans/now/tier-two.md`), whose tier-two prices the Challenges are played at. Every slice
 changes balance, so each is simulated first with PE-2's arc
-(`tools/pacing_gates.py`). Cross-plan: `plans/now/nectar-fermentation.md`
+(`tools/pacing_gates.py`). Cross-plan: `plans/archive/nectar-fermentation_2026-10-10.md`
 NF-2 and `plans/now/tier-two.md` T2-3, which had to land first, have, and
-NF-5 (`plans/now/nectar-fermentation.md`), which shared `hud.gd`, landed
+NF-5 (`plans/archive/nectar-fermentation_2026-10-10.md`), which shared `hud.gd`, landed
 9 Oct 2026, and so did SP-3 (`plans/now/sprites.md`), which shared
 `hive_cell.gd` and `bee.gd`. BB-2 released
 `bee_nursery.gd` and `bee_survival.gd` to NF-4, `bee.gd` to CD-3
