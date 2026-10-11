@@ -7,7 +7,7 @@ extends GamePanel
 ##
 ## The list is built when the window opens and after a save or delete.
 ## Nothing polls the filesystem: save_slots.gd answers from its index file.
-## Created by hud.gd; opened only from the settings window's "Saves…"
+## Created by main.gd (RR-2, before the menu returns early); opened only from the settings window's "Saves…"
 ## (debug_panel.gd::_on_load_pressed), in a run or on the main menu (SA-1).
 
 const UI = preload("res://scripts/ui.gd")
@@ -79,7 +79,52 @@ func _ready() -> void:
 	column.add_child(list_box)
 
 	Session.run_reset.connect(_on_run_reset)
-	connect_left_window_reflow()
+	get_viewport().size_changed.connect(_apply_left_window_rect)
+	connect_hud_reflow()
+
+## main.gd builds this window before the hud exists (RR-2), so the hud
+## signals are joined here when it is there and by hud.gd::_ready otherwise.
+func connect_hud_reflow() -> void:
+	if main.hud == null or main.hud.bottom_row_changed.is_connected(_on_bottom_row_changed):
+		return
+	main.hud.bottom_row_changed.connect(_on_bottom_row_changed)
+	main.hud.corner_height_changed.connect(_on_bottom_row_changed)
+
+## With no hud (the menu at boot) there is no corner readout or bottom row
+## to avoid, so the window takes the full height below the top margin.
+func _apply_left_window_rect() -> void:
+	if main.hud != null:
+		super._apply_left_window_rect()
+		return
+	var rect := UiLayout.left_window_rect(
+		get_viewport().get_visible_rect().size, panel.custom_minimum_size.x, 0.0, 0.0
+	)
+	panel.offset_top = rect.position.y
+	UiPanelLayout.apply(panel, scroll_container, rect)
+
+## A warning through the hud, or the log when there is no hud yet (RR-2).
+func _warn(text: String) -> void:
+	if main.hud == null:
+		push_warning(text)
+		return
+	main.hud.show_warning(text)
+
+## The hud's confirmation dialog. With no hud (the menu at boot) the window
+## asks through a plain ConfirmationDialog of its own, so Delete still works (RR-2).
+func _confirm(title: String, text: String, ok_text: String, cancel_text: String, action: Callable, offer_stop_warning: bool = true) -> void:
+	if main.hud != null:
+		main.hud.confirm_discard(title, text, ok_text, cancel_text, action, offer_stop_warning)
+		return
+	var dialog := ConfirmationDialog.new()
+	dialog.title = title
+	dialog.dialog_text = text
+	dialog.ok_button_text = ok_text
+	dialog.cancel_button_text = cancel_text
+	dialog.confirmed.connect(action)
+	dialog.canceled.connect(dialog.queue_free)
+	dialog.confirmed.connect(dialog.queue_free)
+	add_child(dialog)
+	dialog.popup_centered()
 
 ## Over the main menu the window takes the settings window's own
 ## over-the-menu layer (debug_panel.gd::_apply_layer_for_context), since the
@@ -128,7 +173,7 @@ func _on_name_confirmed() -> void:
 		if entry["slug"] == slug and int(entry.get("saved_at", 0)) > 0:
 			taken = true
 	if taken and Session.warn_on_discard:
-		main.hud.confirm_discard(
+		_confirm(
 			"Replace the saved run",
 			"There is already a saved run called \"%s\". Saving under that name replaces it." % run_name,
 			"Replace it", "Keep the old one", func(): _save(run_name))
@@ -136,6 +181,9 @@ func _on_name_confirmed() -> void:
 	_save(run_name)
 
 func _save(run_name: String) -> void:
+	if main.saving == null:
+		push_warning("There is no run to save")
+		return
 	main.saving.save_run(run_name)
 	_run_named = true
 	_rebuild()
@@ -196,7 +244,7 @@ func _rebuild() -> void:
 ## decide the hive's shape, so the world is rebuilt with them first.
 func _load(path: String, display_name: String) -> void:
 	if not reload_from(get_tree(), path, display_name):
-		main.hud.show_warning("That save could not be read — check the log for why.")
+		_warn("That save could not be read — check the log for why.")
 
 ## The reload itself, static so the game-over screen's "Load the latest
 ## checkpoint" runs the very same path. False if the file could not be read.
@@ -220,7 +268,7 @@ static func reload_from(tree: SceneTree, path: String, display_name: String) -> 
 ## Always asks, whatever warn_on_discard says (SA-1): a deleted run cannot
 ## be recovered, so the confirmation offers no "stop warning me".
 func _on_delete_pressed(slug: String, display_name: String) -> void:
-	main.hud.confirm_discard(
+	_confirm(
 		"Delete this run",
 		"Delete \"%s\" and its checkpoints? This cannot be undone." % display_name,
 		"Delete it", "Keep it", func(): _delete(slug), false)

@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-1 -- the queen can build a cell in every run | Dependency: none outside this plan; RR-1 to RR-4 run in order (shared `hud.gd` and `main.gd`) | Verified: 2026-10-11
+Status: active | Owner: Dave / Claude Code | Next: RR-3 -- a new run from the menu gets its own default name | Dependency: none outside this plan; RR-1 to RR-4 run in order (shared `hud.gd` and `main.gd`) | Verified: 2026-10-11
 
 ## Objective
 
@@ -39,7 +39,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-1 | The queen can build a cell in every Challenge, Scenario and Colony Run | `scripts/challenge_runner.gd`, `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `test_scenarios/rr1_queen_builds_test.json`, `tests/test_rr1_queen_builds.py` | yes | medium |
-| RR-2 | "Saves..." works on the main menu at boot | `scripts/main.gd`, `scripts/hud.gd`, `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `tests/rr2_boot_saves_test.gd`, `tests/test_rr2_boot_saves.py` | after RR-1 (shared `hud.gd`) | medium |
 | RR-3 | A new run from the menu gets its own default name | `scripts/save_slots.gd`, `scripts/main.gd`, `tests/test_rr3_fresh_run_name.py` | after RR-2 (shared `main.gd`) | medium |
 | RR-4 | The window cannot be made smaller than 800x600 | `scripts/ui_layout.gd`, `scripts/main.gd`, `tests/test_rr4_min_window.py` | after RR-3 (shared `main.gd`) | low |
 | RR-5 | Hexagon names re-fit when the typeface changes | `scripts/main_menu.gd`, `tests/rr5_hex_refit_test.gd`, `tests/test_rr5_hex_refit.py` | yes (no shared file) | low |
@@ -108,47 +107,7 @@ runs it the way `tests/test_col6_winter_skip.py` runs its scenario.
 - Next after: RR-2 -- "Saves..." works on the main menu at boot
 ```
 
-## RR-2 -- "Saves..." works on the main menu at boot
-
-<!-- LAYER: immediate-task -->
-
-**True now.** See "Current state". `hud.gd` builds the Saves window
-(`saves_panel = SavesPanel.new()`, added to `main`), so it does not exist
-until a run is built. `saves_panel.gd` calls `main.hud.confirm_discard`,
-`main.hud.show_warning` and `main.saving.save_run`; the last two are also
-missing at boot. `main.gd` already builds `debug_panel` before the
-early return for the same reason (UI-M).
-
-**True afterwards.**
-
-- `main.gd::_ready` builds the Saves window before the `menu_pending`
-  return, beside `debug_panel`, and `hud.gd` uses that instance instead of
-  making its own.
-- At boot the window lists saves and loads one; its Save row stays hidden
-  on the menu (it already is: "Hidden on the main menu"). Any `main.hud`
-  call it makes with no `hud` falls back to `push_warning` with the same
-  text.
-- `_on_load_pressed` opens it on the main menu whether or not a run is
-  built behind the menu; no null access.
-
-**Must not change.** Loading by scene reload (`Session.load_pending`), a
-Challenge in progress loading its latest named slot, and the Saves
-window's behaviour in a run.
-
-**Test.** `tests/rr2_boot_saves_test.gd`, booting as
-`tests/col7_gyne_window_test.gd::_boot` does but with
-`menu_pending = true`, calls `debug_panel._on_load_pressed()` and asserts
-the Saves window is open, with no script error in the output.
-`tests/test_rr2_boot_saves.py` runs it.
-
-```queue
-**[Claude] RR-2 -- "Saves..." works on the main menu at boot**
-- Plan: `plans/now/run-repairs.md` -- "RR-2 -- \"Saves...\" works on the main menu at boot"
-- Files: `scripts/main.gd`, `scripts/hud.gd`, `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `tests/rr2_boot_saves_test.gd`, `tests/test_rr2_boot_saves.py`
-- Check: `python -m unittest tests.test_rr2_boot_saves` passes (on a fresh boot the menu's Saves... opens the Saves window with no script error); `tools/verify.ps1` is green
-- Proof: `absent: scripts/main.gd :: SavesPanel`
-- Next after: RR-3 -- A new run from the menu gets its own default name
-```
+RR-2 shipped 2026-10-11; its specification is `plans/archive/RR-2_2026-10-11.md`.
 
 ## RR-3 -- a new run from the menu gets its own default name
 

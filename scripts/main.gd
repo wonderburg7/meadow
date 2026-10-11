@@ -61,6 +61,7 @@ const Obstacle = preload("res://scripts/obstacle.gd")
 const RockBlock = preload("res://scripts/rock_block.gd")
 const Hud = preload("res://scripts/hud.gd")
 const DebugPanel = preload("res://scripts/debug_panel.gd")
+const SavesPanel = preload("res://scripts/saves_panel.gd")
 const SettingsCatalogue = preload("res://scripts/settings_catalogue.gd")
 const MainMenu = preload("res://scripts/main_menu.gd")
 const GameOver = preload("res://scripts/game_over.gd")
@@ -129,6 +130,9 @@ var fog_of_war: Node
 var stage_gate: Node
 var challenge_runner: Node
 var debug_panel: Node
+## The Saves window (RR-2): built beside debug_panel so the menu's Saves...
+## works on a fresh boot, before any run (or hud) exists.
+var saves_panel: CanvasLayer
 
 # --- world and meadow constants -----------------------------------
 const HIVE_WORLD_OFFSET := Vector2(20000, 0)
@@ -424,6 +428,12 @@ func _ready() -> void:
 	# _ready(), so building it this early is safe.
 	debug_panel = DebugPanel.new()
 	add_child(debug_panel)
+
+	# RR-2: the Saves window is opened from the settings window, which the
+	# menu reaches too, so it is built before the early return. It copes
+	# with there being no hud or saving node yet (saves_panel.gd).
+	saves_panel = SavesPanel.new()
+	add_child(saves_panel)
 
 	if Session.menu_pending:
 		menu.open()

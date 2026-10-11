@@ -811,11 +811,16 @@ func _on_load_pressed() -> void:
 	var menus := get_tree().get_nodes_in_group("main_menu")
 	var menu_visible: bool = not menus.is_empty() and menus[0].visible
 	if not worlds.is_empty() and (menu_visible or not (Session.starting_level in [1, 2])):
-		var saves_panel = worlds[0].hud.saves_panel
+		# RR-2: main.gd builds the window before the menu returns early, so
+		# it exists at boot even though the hud and year_winter do not.
+		var saves_panel = worlds[0].saves_panel
 		if saves_panel != null:
 			panel.visible = false
 			if not saves_panel.is_open():
-				worlds[0].year_winter._toggle_panel(saves_panel)
+				if worlds[0].year_winter != null:
+					worlds[0].year_winter._toggle_panel(saves_panel)
+				else:
+					saves_panel.open()
 			return
 	var slot := SaveSlots.latest_named()
 	var path := SaveSlots.slot_path(slot["slug"]) if not slot.is_empty() else ""
