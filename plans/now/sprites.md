@@ -79,8 +79,8 @@ Verified 9 Oct 2026 against master and the main checkout:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-4 | nectar and pollen fill levels drawn from the sprites | `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, the sprite table and catalogue, tests no -- landed 11 Oct 2026 | medium |
-| SP-5 | the skep in the meadow, and the rival hive as a recoloured skep | `scripts/hive.gd`, `scripts/rival_hive.gd`, the sprite table and catalogue, tests yes -- SP-4 landed 11 Oct 2026 | medium |
+| SP-4 | nectar and pollen fill levels drawn from the sprites | `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, the sprite table and catalogue, tests | no -- landed 11 Oct 2026 | medium |
+| SP-5 | the skep in the meadow, and the rival hive as a recoloured skep | `scripts/hive.gd`, `scripts/rival_hive.gd`, the sprite table and catalogue, tests | yes -- SP-4 landed 11 Oct 2026 | medium |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for Dave's repacked sheet | high (per-bee hot path) |
 
 Dependencies: SP-2 -> SP-4 -> SP-5 -> SP-6 (SP-1 and SP-3 landed 9 Oct 2026).
