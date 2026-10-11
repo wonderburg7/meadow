@@ -608,6 +608,26 @@ static func adaptive_constancy_on() -> bool:
 static func tarsal_markers_on() -> bool:
 	return GameConfig.tarsal_markers_on or (Session.progression != null and Session.progression.is_behaviour_enabled("tarsal_markers_on"))
 
+static func handling_experience_on() -> bool:
+	return GameConfig.handling_experience_on or (Session.progression != null and Session.progression.is_behaviour_enabled("handling_experience_on"))
+
+## T2-6: count one finished visit to `species` and fade the bee's experience
+## with every other species, so a full edge is gone after
+## handling_experience_forget_visits visits elsewhere. Entries that reach
+## zero are erased, which keeps the dictionary to the species she works.
+static func record_species_visit(bee: Node2D, species: String) -> void:
+	bee.species_experience[species] = float(bee.species_experience.get(species, 0.0)) + 1.0
+	var fade: float = GameConfig.handling_experience_visits_to_floor / maxf(GameConfig.handling_experience_forget_visits, 1.0)
+	for other in bee.species_experience.keys():
+		if other == species:
+			continue
+		var left: float = float(bee.species_experience[other]) - fade
+		if left <= 0.0001:
+			bee.species_experience.erase(other)
+		else:
+			bee.species_experience[other] = left
+
+
 static func orientation_flight_on() -> bool:
 	return GameConfig.orientation_flight_on or (Session.progression != null and Session.progression.is_behaviour_enabled("orientation_flight_on"))
 
@@ -706,7 +726,7 @@ static func start_collecting(bee: Node2D) -> void:
 	# Slice 7's handling experience, further scaled by how practised this
 	# particular bee is with this particular species.
 	var experience_scale := 1.0
-	if GameConfig.handling_experience_on:
+	if handling_experience_on():
 		experience_scale = _handling_experience_scale(bee, bee.current_flower.species_name)
 	bee.timer = bee.flower_handling_time * bee.current_flower.handling_time_scale * experience_scale
 	bee.state = State.COLLECTING
@@ -719,7 +739,7 @@ static func start_collecting(bee: Node2D) -> void:
 ## approach handling_experience_visits_to_floor rather than a hard
 ## cutoff, so the first few visits matter more than the tenth.
 static func _handling_experience_scale(bee: Node2D, species: String) -> float:
-	var visits: float = float(bee.species_experience.get(species, 0))
+	var visits: float = float(bee.species_experience.get(species, 0.0))
 	var t: float = clampf(visits / GameConfig.handling_experience_visits_to_floor, 0.0, 1.0)
 	return lerpf(1.0, GameConfig.handling_experience_floor, t)
 
@@ -791,15 +811,15 @@ static func finish_collecting(bee: Node2D) -> void:
 		if is_instance_valid(bee.world) and bee.world.challenge_runner != null and bee.world.challenge_runner.active and bee == bee.world.queen:
 			bee.world.challenge_runner._c1_queen_collections += 1
 		var species: String = bee.current_flower.species_name
-		var prior_experience := int(bee.species_experience.get(species, 0))
+		var prior_experience := int(bee.species_experience.get(species, 0.0))
 		if handling_seconds >= 0.0:
 			DiagnosticLog.record_handling_visit(species, prior_experience, handling_seconds)
 		# Slice 7: a completed handling bout is what "experience"/
 		# "confidence" mean here -- she got far enough into working this
 		# flower to be timed out or run it dry, as opposed to reject_flower
 		# below, which is a species she looked at and turned down.
-		if GameConfig.handling_experience_on:
-			bee.species_experience[species] = int(bee.species_experience.get(species, 0)) + 1
+		if handling_experience_on():
+			record_species_visit(bee, species)
 		if adaptive_constancy_on():
 			bee.species_confidence[species] = minf(1.0, float(bee.species_confidence.get(species, 0.0)) + GameConfig.adaptive_constancy_gain)
 		# stay away until it's had time to fully recharge

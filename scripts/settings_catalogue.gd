@@ -1347,6 +1347,9 @@ const TUNABLES := [
 		"key": "handling_experience_visits_to_floor", "persist": "run",
 	},
 	{
+		"key": "handling_experience_forget_visits", "persist": "run",
+	},
+	{
 		"key": "hive_entrance_width", "persist": "run",
 	},
 	{
