@@ -953,6 +953,15 @@ func _config_snapshot() -> Dictionary:
 
 
 # --- the snapshot -------------------------------------------------
+## T2-7: whether the colony could pay for the cheapest first tier-2 path now,
+## for analyze_session.py's first_tier2_day. Once per snapshot, never per frame.
+func _first_tier2_affordable(hive: Object) -> bool:
+	if Session.progression == null:
+		return false
+	var stores := {"honey": hive.total_honey(), "nectar": hive.total("nectar"), "pollen": hive.total("pollen")}
+	return Session.progression.first_tier2_path_covered(stores)
+
+
 func _snapshot(world: Node2D) -> Dictionary:
 	var bees: Array = world.get_tree().get_nodes_in_group("bees")
 
@@ -1057,6 +1066,7 @@ func _snapshot(world: Node2D) -> Dictionary:
 			"food_stores": hive.total_honey(),
 			"stored_nectar": hive.total("nectar"),
 			"stored_pollen": hive.total("pollen"),
+			"first_tier2_affordable": _first_tier2_affordable(hive),
 		},
 		"cells": {
 			"total": hive.cells.size(),

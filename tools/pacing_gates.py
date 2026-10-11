@@ -54,6 +54,9 @@ GATES = (
     Gate("gyne/victory", "victory_day", 90, "alpha_route", ("first_gyne_day", "victory_day")),
 )
 
+# T2-7: the first tier-2 purchase is a diagnostic beside the five gates, not a sixth.
+TIER2_TARGET_DAY = 5
+
 DIAGNOSTIC_METRICS = ("first_worker_day", "food_secure_day", "winter_entered_day", "winter_survived_day")
 
 
@@ -153,6 +156,29 @@ def render_seed_rows(rows: list[dict[str, Any]], winter_entered_day: float,
     return "\n".join(lines)
 
 
+def tier2_row(analyses: list[dict[str, Any]]) -> dict[str, Any]:
+    """The first tier-2 purchase day against day 5, using the same band as the gates."""
+    values = [analysis.get("milestone_times", {}).get("first_tier2_day") for analysis in analyses]
+    complete = bool(values) and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in values)
+    median_day = statistics.median(values) if complete else None
+    inside = in_band(median_day, float(TIER2_TARGET_DAY))
+    return {
+        "milestone": "first tier-2",
+        "median_day": median_day,
+        "target_day": float(TIER2_TARGET_DAY),
+        "inside_band": inside,
+        "status": "in band" if inside else "out of band" if complete else "unavailable",
+        "days": values,
+    }
+
+
+def render_tier2_row(row: dict[str, Any]) -> str:
+    median = "missing" if row["median_day"] is None else "%.2f" % row["median_day"]
+    days = ", ".join("missing" if d is None else "%.2f" % d for d in row["days"])
+    return "Diagnostic (not a gate): %-12s  %10s  %10.2f  %-11s  per seed: %s" % (
+        row["milestone"], median, row["target_day"], row["status"], days)
+
+
 def render_table(rows: list[dict[str, Any]], day_length_seconds: float, repeat: int) -> str:
     """Render the compact, human-readable pacing report."""
     lines = [
@@ -248,6 +274,7 @@ def main() -> int:
     print(render_table(rows, day_length_seconds, args.repeat))
     winter_entered_day, winter_ended_day = winter_schedule(analyses)
     print(render_seed_rows(seed_rows(analyses), winter_entered_day, winter_ended_day))
+    print(render_tier2_row(tier2_row(analyses)))
     return 0
 
 

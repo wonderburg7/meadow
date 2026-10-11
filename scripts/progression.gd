@@ -347,11 +347,58 @@ func cost_for(skill_id: String) -> Dictionary:
 
 
 func can_afford(skill_id: String, stores: Dictionary) -> bool:
-	var cost: Dictionary = cost_for(skill_id)
+	return _covers(cost_for(skill_id), stores)
+
+
+## The one price rule: every resource in `cost` is held in full.
+func _covers(cost: Dictionary, stores: Dictionary) -> bool:
 	for resource in cost:
 		if float(stores.get(resource, 0)) < float(cost[resource]):
 			return false
 	return true
+
+
+## T2-7: the stores cover the cheapest first tier-2 path -- Honey worker (the
+## spine), plus one tier-1 and one tier-2 node of one branch, with their
+## `all_of` prerequisites, summed per resource and checked by _covers(). Only
+## nodes the tree offers (not cut) count. Read once per diagnostic snapshot.
+func first_tier2_path_covered(stores: Dictionary) -> bool:
+	for sector in Skills.sector_keys():
+		for first in Skills.for_sector_tier(sector, 1):
+			for second in Skills.for_sector_tier(sector, 2):
+				if Skills.is_cut(first.id) or Skills.is_cut(second.id):
+					continue
+				var path := {Skills.HONEY_WORKER: true}
+				_add_with_prerequisites(first.id, path)
+				_add_with_prerequisites(second.id, path)
+				if _path_offered(path) and _covers(_path_cost(path), stores):
+					return true
+	return false
+
+
+func _add_with_prerequisites(skill_id: String, path: Dictionary) -> void:
+	if path.has(skill_id) and skill_id != Skills.HONEY_WORKER:
+		return
+	path[skill_id] = true
+	for required in Skills.entry(skill_id).get("all_of", []):
+		if not path.has(required):
+			_add_with_prerequisites(required, path)
+
+
+func _path_offered(path: Dictionary) -> bool:
+	for skill_id in path:
+		if Skills.is_cut(skill_id) or not Skills.has(skill_id):
+			return false
+	return true
+
+
+func _path_cost(path: Dictionary) -> Dictionary:
+	var total := {}
+	for skill_id in path:
+		var cost: Dictionary = cost_for(skill_id)
+		for resource in cost:
+			total[resource] = float(total.get(resource, 0)) + float(cost[resource])
+	return total
 
 # --- effective values -----------------------------------------------
 ## Section 9.1's resolution order, restricted to what this step can

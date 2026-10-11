@@ -20,7 +20,7 @@ SNAPSHOT_FIELDS = frozenset({
     "resources.stored_pollen", "environment.winter_here", "environment.flowers_by_species",
     "environment.flowers_in_season", "environment.flowers_out_of_season",
     "role_outcomes.cells_completed_total", "performance.fps", "performance.top_sections_ms",
-    "colony.milestone_days",
+    "colony.milestone_days", "resources.first_tier2_affordable",
 })
 SUMMARY_FIELDS = frozenset({
     "outcome", "total_deaths", "deaths_by_cause", "deaths_by_role", "queen_alive",

@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] T2-7 -- Tier-2 costs tuned so the first purchase lands around day 5**
-   - Plan: `plans/now/tier-two.md` -- "T2-7 -- Tier-2 costs tuned so the first purchase lands around day 5"
-   - Files: `scripts/skills.gd`, `scripts/progression.gd`, `scripts/diagnostic_log.gd`, `tools/analyze_session.py`, `tools/pacing_gates.py`, `plans/design/progression.md`, `tests/test_t2_7_tier_two_prices.py`
-   - Check: `python -m unittest tests.test_t2_7_tier_two_prices` passes (a snapshot whose stores cover the cheapest first-tier-2 path sets `first_tier2_day`, one that falls short by one unit of any resource does not, and pacing_gates prints the row against day 5 without changing the five gate rows); `python tools/pacing_gates.py` shows the median `first_tier2_day` in band, recorded before and after in the plan; `tools/verify.ps1` is green
-   - Proof: `absent: tools/analyze_session.py :: first_tier2_day`
-   - Next after: T2-6 -- Associative learning
-
-2. **[Claude] T2-6 -- Associative learning**
+1. **[Claude] T2-6 -- Associative learning**
    - Plan: `plans/now/tier-two.md` -- "T2-6 -- Associative learning"
    - Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd`
    - Check: `python -m unittest tests.test_t2_6_associative_learning` passes (with the toggle off, a bee's handling time and experience stay unchanged until Associative learning is bought; once owned, ten visits to one species bring its handling to 0.75 of a first-timer's, and fifteen visits to another species then erase that experience; experience survives save and restore); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/bee_foraging.gd :: static func handling_experience_on`
    - Next after: PP-1 -- bees earn Pollinator Points and Contribution
 
-3. **[Claude] BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers**
+2. **[Claude] BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers**
    - Plan: `plans/now/bee-bread.md` -- "BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers"
    - Files: `scripts/challenge_stages.gd`, `docs/challenge-stages.md`, `scripts/scenario_actions.gd`, `test_scenarios/bb4_challenge1_route.json`, `test_scenarios/bb4_challenge2_route.json`, `tests/test_bb4_challenge_pacing.py`
    - Check: `python -m unittest tests.test_bb4_challenge_pacing` passes (each route, run once on its pinned seed, reaches its Challenge's completion under BB-2's rule with no stage jumped after its start, and the test reads the thresholds from `scripts/challenge_stages.gd` rather than restating them); the three-seed reach days under the rule and with both pollen-raised factors at 1.0, and `python tools/pacing_gates.py`'s five rows, are recorded in the plan; `python tools/stage_reference.py --check` is clean; `.\tools\verify.ps1` is green
    - Proof: `present: scripts/challenge_stages.gd :: the rescue threshold -- first guesses`
    - Next after: none -- Bee Bread is complete
 
-4. **[Claude] PP-1 -- bees earn Pollinator Points and Contribution**
+3. **[Claude] PP-1 -- bees earn Pollinator Points and Contribution**
    - Plan: `plans/now/pollination.md` -- "PP-1 -- bees earn Pollinator Points and Contribution"
    - Files: `scripts/pollination.gd`, `scripts/main.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/debug_panel.gd`, `tests/test_pp1_pollination_ledger.py`, `test_scenarios/pp1_pollination_ledger.json`
    - Check: `python -m unittest tests.test_pp1_pollination_ledger` passes (two same-species flowers in one trip earn one point only once Pollinator points is owned and not again from that flower until it has refilled; a trip's first flower earns nothing; arriving from another species counts one incompatible delivery; Contribution rises whether or not the skill is owned; the counters and flower counts survive save and restore); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/flower.gd :: compatible_visits`
    - Next after: PP-2 -- points are spendable and shown, with a +1 at the flower
 
-5. **[Claude] SP-4 -- nectar and pollen fill levels drawn from the sprites**
+4. **[Claude] SP-4 -- nectar and pollen fill levels drawn from the sprites**
    - Plan: `plans/now/sprites.md` -- "SP-4 -- nectar and pollen fill levels drawn from the sprites"
    - Files: `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, `assets/sprites/SPRITES.md`, `scripts/sprite_catalogue.gd`, `tests/test_sp4_fill_sprites.py`
    - Check: `python -m unittest tests.test_sp4_fill_sprites` passes and `python tools/sprites.py --check` is clean; `tools/verify.ps1` is green
    - Proof: `present: scripts/hive_cell.gd :: const NECTAR_COLOR :=`
    - Next after: SP-5 -- the skep in the meadow, and the rival hive as a recoloured skep
+
+5. **[Claude] RR-2 -- "Saves..." works on the main menu at boot**
+   - Plan: `plans/now/run-repairs.md` -- "RR-2 -- \"Saves...\" works on the main menu at boot"
+   - Files: `scripts/main.gd`, `scripts/hud.gd`, `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `tests/rr2_boot_saves_test.gd`, `tests/test_rr2_boot_saves.py`
+   - Check: `python -m unittest tests.test_rr2_boot_saves` passes (on a fresh boot the menu's Saves... opens the Saves window with no script error); `tools/verify.ps1` is green
+   - Proof: `absent: scripts/main.gd :: SavesPanel`
+   - Next after: RR-3 -- A new run from the menu gets its own default name
 
 ### Codex lane
 
