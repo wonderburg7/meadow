@@ -53,6 +53,7 @@ const LOCAL_WHEN_KEYS := [
 	"food_stores_at_least", "challenge_stage_id", "queen_inside_hive", "queen_load_empty",
 	"queen_watch_hits_at_most", "in_hive_view", "camera_following_queen",
 	"challenge_overflow_discards", "cell_empty", "selected_mine_queue_at_least",
+	"challenge_goal_met",
 ]
 
 # --- run_pending --------------------------------------------------
@@ -271,6 +272,8 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_restore_slot(main, action)
 		"buy_skill":
 			_do_buy_skill(main, action)
+		"grant_skill":
+			_do_grant_skill(action)
 		var other:
 			_log(other, str(action), "rejected", "unknown 'do' value")
 
@@ -293,6 +296,16 @@ static func _when_met(main: Node2D, when: Dictionary) -> bool:
 		return false
 	if when.has("challenge_stage_id"):
 		if main.challenge_runner.current_stage_id() != str(when["challenge_stage_id"]):
+			return false
+	if when.has("challenge_goal_met"):
+		# BB-4: the running stage's own goal condition, as the runner's poll reads
+		# it. A Challenge's last goal opens the completion screen on its next
+		# 4 Hz poll, which pauses the run, and a paused run never reaches
+		# run_pending again; an action gated on this key resolves in the frames
+		# before that, so a route can end on its final goal.
+		var runner: Node = main.challenge_runner
+		var goal_met: bool = runner.active and runner._goal_met(str(runner._stages()[runner._stage_index].get("goal", "")))
+		if goal_met != bool(when["challenge_goal_met"]):
 			return false
 	if when.has("queen_inside_hive"):
 		if not is_instance_valid(main.queen) or main.queen._is_inside_hive() != bool(when["queen_inside_hive"]):
@@ -676,6 +689,10 @@ static func _do_hatch_role(main: Node2D, action: Dictionary) -> void:
 	var focus: String = action.get("focus", "")
 	var automine: bool = action.get("automine", false)
 	main.orders_zones._on_cell_hatch_role_requested(cell, role_id, focus, automine)
+	# BB-4: {"locked": true} is the cell popup's "Keep for every bee" box, through
+	# the function its signal reaches; false clears it, absent leaves it alone.
+	if action.has("locked"):
+		main.orders_zones._on_cell_hatch_lock_requested(cell, bool(action["locked"]))
 	if action.has("expect_refused"):
 		var refused: bool = cell.hatch_role != role_id
 		if refused != bool(action["expect_refused"]):
@@ -1102,6 +1119,23 @@ static func _do_buy_skill(main: Node2D, action: Dictionary) -> void:
 	else:
 		var reason: String = Session.progression.purchase_blocker(skill_id, main.hud.skill_tree_panel._stores()) if Session.progression != null else "no progression"
 		_log("buy_skill", str(action), "rejected", reason)
+
+## BB-4: {"do": "grant_skill", "skill": id} -- the run owns the skill without
+## buying it (progression.gd::grant_temporary). A stand-in for T2-9, which is
+## not on master yet: until it lands, Challenge 2's Comb worker (Colony tier
+## two) cannot be bought at 2.7 because Cell capacity, the sector's only tier
+## one skill, is not offered at that stage. Remove the grant from the BB-4
+## Challenge 2 route when T2-9 has merged.
+static func _do_grant_skill(action: Dictionary) -> void:
+	var skill_id := str(action.get("skill", ""))
+	if Session.progression == null:
+		_log("grant_skill", str(action), "rejected", "no progression")
+		return
+	Session.progression.grant_temporary(skill_id)
+	if not Session.progression.is_owned(skill_id):
+		_log("grant_skill", str(action), "rejected", "unknown skill")
+		return
+	_log("grant_skill", str(action), "accepted", "")
 
 ## SV-1: {"do": "restore_slot", "name": "Run name"} -- replays that run's
 ## named save over the live world in place, the way tutorial_checkpoint.gd

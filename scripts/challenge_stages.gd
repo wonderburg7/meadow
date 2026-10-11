@@ -331,6 +331,12 @@ const STAGES_1 := [
 ## workforce through 2.1-2.4 and earns it back easily once 10 nectar
 ## Foragers exist). Like Challenge 1's own constants, easy to retune once
 ## this is actually played.
+##
+## BB-4 (11 Oct 2026) played both Challenges through with 15-day unfed workers
+## (tests/test_bb4_challenge_pacing.py). Every stage, 2.1 to the full colony
+## goal at 2.9, was reached on three seeds under BB-2's rule, in about the
+## days the colony from before BB-2 took, so no stage was unreachable and no
+## threshold moved. The reach days are in plans/now/bee-bread.md.
 const C2_INTERIM_NECTAR := 175.0        # 2.4: doc range 150-200
 const C2_INTERIM_POLLEN := 90.0         # 2.4: doc range 75-100
 const C2_COMPLETE_NECTAR := 300.0

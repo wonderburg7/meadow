@@ -1,7 +1,7 @@
 # Bee Bread -- fermented larval food, the tier-3 currency, and what it makes of a worker
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers, specified below and leading the Claude lane (T2-6 landed 11 Oct 2026; T2-7 landed the same day without moving tier-2 prices; their sweep, T2-7b, waits for AR-4) | Dependency: none -- COL-4, NF-2, T2-2, T2-3, BB-1, BB-2 and BB-3 have landed | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: None -- plan complete (BB-4 landed 11 Oct 2026; the follow-up that remains is Dave's save decision on making BB-2's five tunables run settings, listed under BB-4's Out of scope and the BB-4 outline) | Dependency: none -- COL-4, NF-2, T2-2, T2-3, BB-1, BB-2, BB-3 and BB-4 have landed | Verified: 2026-10-11
 
 ## Objective
 
@@ -119,6 +119,72 @@ gates.
 reclassification with its own save `FORMAT_VERSION` bump. That is a save
 decision for Dave, open as of 10 Oct 2026, not part of a pacing slice.
 Stage prompts and the Challenge UI are untouched.
+
+**Result (11 Oct 2026).** No stage was unreachable, so no threshold,
+goal text or `docs/challenge-stages.md` line moved; the "first guesses"
+comment in `scripts/challenge_stages.gd` now says so.
+
+- *How it was played.* `test_scenarios/bb4_challenge1_route.json` starts
+  Challenge 1 at 1.16 (its one `advance_challenge_stage`, because the
+  Challenge's setup builds the world for the stage) and plays on by hand:
+  the queen forages pollen to 90, lays, the first worker hatches, is
+  selected and sent out. `test_scenarios/bb4_challenge2_route.json` starts
+  at 2.1 and jumps nothing: it designates the starting cells, raises
+  foragers, buys Nurses, keeps cells locked to a role, builds with Comb
+  workers and digs with miners. Each run stamps the game time of every stage
+  with an `assert` on the stage id; the last goal is stamped by the new
+  `challenge_goal_met` key, because a Challenge's last goal opens the
+  completion screen, which pauses the run and with it the scenario driver
+  (a run that waits for the completion hangs until its timeout).
+- *Stand-in.* The Comb worker and Miner are Colony tier two, and Cell
+  capacity, the sector's only tier one skill, is not offered during the
+  Challenge, so `buy_skill` is refused at 2.7 and 2.8. The route uses the new
+  `grant_skill` action (`progression.gd::grant_temporary`) for those two
+  skills; remove both grants when T2-9 has landed and the stages offer the
+  prerequisite. Nurses is bought for real at 2.5.
+- *Reach days* (game days after the route's start, 200 s each; the control is
+  the same route with `pollen_raised_lifespan_factor` and
+  `pollen_raised_stat_factor` set to 1.0 by `set_config`, the colony from
+  before BB-2). A stage is unreachable when its rule day exceeds twice the
+  control's; none comes near.
+
+| Stage | Rule: seed 5601 / 5602 / 5603 | Control (factors 1.0): seed 5601 / 5602 / 5603 |
+| --- | --- | --- |
+| 1.16 | 0.0 / 0.0 / 0.0 | 0.0 / 0.0 / 0.0 |
+| 1.17 | 0.5 / 0.3 / 0.2 | 0.5 / 0.3 / 0.2 |
+| 1.18 | 1.1 / 0.9 / 0.9 | 1.1 / 0.9 / 0.9 |
+| 1.19 | 1.1 / 0.9 / 0.9 | 1.1 / 0.9 / 0.9 |
+| 1.20 | 3.2 / 3.0 / 3.0 | 3.2 / 3.0 / 3.0 |
+| last goal met | 3.2 / 3.0 / 3.0 | 3.2 / 3.0 / 3.0 |
+
+| Stage | Rule: seed 7001 / 7002 / 7003 | Control (factors 1.0): seed 7001 / 7002 / 7003 |
+| --- | --- | --- |
+| 2.1 | 0.0 / 0.0 / 0.0 | 0.0 / 0.0 / 0.0 |
+| 2.2 | 1.2 / 1.2 / 1.4 | 1.2 / 1.2 / 1.4 |
+| 2.3 | 1.2 / 1.2 / 1.4 | 1.2 / 1.2 / 1.4 |
+| 2.4 | 1.3 / 1.3 / 1.4 | 1.3 / 1.3 / 1.5 |
+| 2.5 | 3.2 / 4.2 / 4.1 | 3.4 / 3.9 / 4.7 |
+| 2.6 | 3.6 / 4.6 / 4.2 | 3.6 / 3.9 / 5.2 |
+| 2.7 | 3.8 / 5.0 / 4.4 | 3.8 / 4.2 / 5.6 |
+| 2.8 | 5.0 / 6.0 / 5.6 | 5.0 / 5.3 / 6.6 |
+| 2.9 | 5.7 / 6.8 / 6.3 | 5.7 / 6.6 / 7.4 |
+| last goal met | 7.2 / 8.7 / 8.0 | 7.5 / 9.0 / 9.2 |
+
+- *Why Challenge 1 does not move.* It needs one worker, so the rule's 15
+  days is not reached: rule and control match to a tenth of a day. Challenge
+  2 needs about twenty workers over about seven days; the earliest are raised
+  on pollen alone and live 15 days, so none has died before 2.9 clears, and
+  the pollen it takes to raise them (60 per egg) is what paces it, in both.
+- *Colony Run (`python tools/pacing_gates.py`, 3 seeds, run once).* first
+  worker: median day 16.87 against target 1.50, out of band (measured fact);
+  first automation: missing, target 3.00, unavailable; crisis response:
+  missing, target 6.00, unavailable (hands-on question); winter survival:
+  missing, target 41.00, unavailable; gyne/victory: missing, target 27.00,
+  unavailable. Per seed the first worker came on day 16.87, 22.32 and 16.87,
+  and the colony lived on two seeds (5 and 6 bees) and died on one. BB-4
+  changes nothing the Colony Run reads, so the out-of-band first worker is
+  not tuned here; it goes to Dave with its options in the hand-off (T2-7's
+  or PP-6's prices, BB-2's factors).
 
 ```queue
 **[Claude] BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers**

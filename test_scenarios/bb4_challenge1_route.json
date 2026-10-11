@@ -1,0 +1,19 @@
+{
+  "challenge": 1,
+  "random_seed": 5601,
+  "snapshot_seconds": 10,
+  "actions": [
+    {"do": "advance_challenge_stage", "stage_id": "1.16"},
+    {"do": "assert", "when": {"challenge_stage_id": "1.16"}, "condition": {"challenge_stage_id": "1.16"}},
+    {"do": "assert", "when": {"challenge_stage_id": "1.17"}, "condition": {"challenge_stage_id": "1.17"}},
+    {"do": "assert", "when": {"challenge_stage_id": "1.18"}, "condition": {"challenge_stage_id": "1.18"}},
+    {"do": "assert", "when": {"challenge_stage_id": "1.19"}, "condition": {"challenge_stage_id": "1.19"}},
+    {"do": "assert", "when": {"challenge_stage_id": "1.20"}, "condition": {"challenge_stage_id": "1.20"}},
+    {"do": "assert", "when": {"challenge_stage_id": "1.20", "challenge_goal_met": true}, "condition": {"challenge_goal_met": true}},
+    {"do": "assign_role", "when": {"challenge_stage_id": "1.16"}, "target": {"queen": true}, "role": "forager_pollen"},
+    {"do": "assign_role", "when": {"challenge_stage_id": "1.16", "hive_total": {"resource": "pollen", "at_least": 90}}, "target": {"queen": true}, "role": "laying"},
+    {"do": "select_bees", "when": {"challenge_stage_id": "1.18"}, "target": {"current_role": "forager", "count": 1}},
+    {"do": "assign_role", "when": {"challenge_stage_id": "1.19"}, "target": {"current_role": "forager", "count": 1}, "role": "forager_nectar"}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 14}
+}
