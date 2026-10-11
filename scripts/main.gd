@@ -1137,6 +1137,7 @@ func _on_restart_after_loss() -> void:
 	get_tree().reload_current_scene()
 
 func _on_level_chosen(level: int) -> void:
+	Session.run_name = SaveSlots.fresh_run_name("My colony")
 	Session.starting_level = level
 	Session.menu_pending = false
 	Session.reset_run_state()
@@ -1153,6 +1154,7 @@ func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dicti
 	SettingsCatalogue.reset_config_keys(ScenarioPresets.keys_to_reset(preset_key, custom_overrides))
 	ScenarioPresets.apply(preset_key, custom_overrides)
 	PlayerProfile.mark_scenario_played(level, preset_key)
+	Session.run_name = SaveSlots.fresh_run_name("My colony")
 	Session.starting_level = level
 	Session.menu_pending = false
 	Session.reset_run_state()
