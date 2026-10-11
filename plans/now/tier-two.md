@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-7 -- tier-2 costs tuned so the first purchase lands around day 5, leading the Claude lane since SP-2 landed (Dave, 10 Oct 2026; BB-2 and NF-4 landed 10 Oct 2026); then T2-6 -- Associative learning, specified below with Dave's 10 Oct 2026 decisions and queued in the Claude lane behind T2-7 | Dependency: COL-4, COL-6, T2-4a and T2-4b landed; T2-7's predecessors BB-2 and NF-4 landed 10 Oct 2026; T2-6 follows T2-7 (shared `skills.gd`) | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: T2-7 -- tier-2 costs tuned so the first purchase lands around day 5, leading the Claude lane since SP-2 landed (Dave, 10 Oct 2026; BB-2 and NF-4 landed 10 Oct 2026); then T2-9 -- a skill not available in this run never blocks the tier above it (C-113, Dave 11 Oct 2026) and T2-6 -- Associative learning, specified below with Dave's 10 Oct 2026 decisions and queued in the Claude lane behind T2-7 | Dependency: COL-4, COL-6, T2-4a and T2-4b landed; T2-7's predecessors BB-2 and NF-4 landed 10 Oct 2026; T2-6 follows T2-7 (shared `skills.gd`) | Verified: 2026-10-11
 
 ## Objective
 
@@ -56,6 +56,7 @@ Verified 7 Oct 2026 against master:
 | --- | --- | --- | --- | --- |
 | T2-6 | Associative learning: the existing handling experience, gated by the skill, with a fade | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd` | yes -- queued in the Claude lane behind T2-7 | medium |
 | T2-7 | Tier-2 costs tuned so the first purchase lands around day 5 | `scripts/skills.gd`, `scripts/progression.gd`, `scripts/diagnostic_log.gd`, `tools/analyze_session.py`, `tools/pacing_gates.py`, `plans/design/progression.md`, its test | yes -- leads the Claude lane (SP-2, BB-2 and NF-4 landed 10 Oct 2026) | medium |
+| T2-9 | A skill not available in this run never blocks the tier above it (C-113) | `scripts/progression.gd`, `plans/design/progression.md`, `test_scenarios/t2_9_c2_comb_worker_test.json`, `tests/test_t2_9_unavailable_tier.py` | after T2-7 (shared `scripts/progression.gd`, `plans/design/progression.md`) | medium |
 
 **Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
 T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
@@ -216,8 +217,67 @@ buy skills (AR-4, `plans/now/alpha-route-evidence.md`, which shares
 - Next after: T2-6 -- Associative learning
 ```
 
+## T2-9 -- A skill not available in this run never blocks the tier above it
+
+<!-- LAYER: immediate-task -->
+
+**Decision (Dave, 11 Oct 2026, from failed check C-113).** Branch-tier
+progress counts only the lower-tier skills this run offers. A skill that is
+cut, banned, not yet unlocked by the stage, or missing its feature no longer
+keeps the tier above it shut. This makes `plans/design/progression.md`
+section 9's rule ("a Challenge's grants/bans/delays cannot make branch
+advancement impossible") hold.
+
+**True now.** `progression.gd::branch_tier_open` returns false unless every
+skill in the branch's tier below is owned. In Challenge 2 at 2.7 and 2.8,
+Cell capacity (Colony's only tier-1 skill) is not in the stage's
+`unlocked_keys`, so `is_permitted` refuses it and it cannot be bought. Comb
+worker and Miner, Colony tier 2 and free at those stages, read "blocked:
+needs a skill from the tier before it" (C-113, confirmed by an opus re-run
+on 11 Oct 2026).
+
+**True afterwards.**
+
+- `progression.gd` has `_offered_in_run(skill_id) -> bool`, returning
+  `is_permitted(skill_id) and feature_valid(skill_id)`.
+  `branch_tier_open` skips a lower-tier sibling for which it is false. A
+  tier whose siblings are all skipped counts as satisfied.
+- `plans/design/progression.md` section 4.3's first rule reads "every skill
+  in that branch's tier N that this run offers", with the decision's date.
+- `purchase_blocker`'s order and every other gate are unchanged.
+
+**Runtime.** Same call sites and count as now (`purchase_blocker`, on a
+panel refresh or a purchase query). It adds two dictionary lookups per
+sibling and nothing per frame.
+
+**Must not change.** Skill prices (T2-7's); the rule when every lower-tier
+skill is offered; mastered skills counting as owned; Challenge 2's stage
+data.
+
+**Escalate** if a test shows a Colony Run or Scenario tier opening earlier
+than before because a stage-delayed skill now counts as not offered: that
+would be a gameplay change beyond the Challenge case Dave decided.
+
+**Test.** `test_scenarios/t2_9_c2_comb_worker_test.json` (`"challenge": 2`,
+as `test_scenarios/bs9_c2_queen_nurses_test.json` starts): advance to 2.5
+and `buy_skill` `skill.brood.nurses`, advance to 2.7, `buy_skill`
+`skill.colony.comb_worker`, assert `skill_owned` true; advance to 2.8,
+`buy_skill` `skill.colony.miner`, assert `skill_owned` true.
+`tests/test_t2_9_unavailable_tier.py` runs it and also checks, from source,
+that `branch_tier_open` calls `_offered_in_run`.
+
+```queue
+**[Claude] T2-9 -- A skill not available in this run never blocks the tier above it**
+- Plan: `plans/now/tier-two.md` -- "T2-9 -- A skill not available in this run never blocks the tier above it"
+- Files: `scripts/progression.gd`, `plans/design/progression.md`, `test_scenarios/t2_9_c2_comb_worker_test.json`, `tests/test_t2_9_unavailable_tier.py`
+- Check: `python -m unittest tests.test_t2_9_unavailable_tier` passes (Challenge 2 buys Comb worker at 2.7 and Miner at 2.8 while Cell capacity stays unavailable); `tools/verify.ps1` is green
+- Proof: `absent: scripts/progression.gd :: _offered_in_run`
+- Next after: T2-6 -- Associative learning
+```
+
 ## Not in the queue, and why
 
 - **T2-6** is admissible and waits only for room in the Claude lane, behind T2-7.
+- **T2-9** is admissible and waits only for room in the Claude lane, behind T2-7 (shared `scripts/progression.gd`).
 
 T2-8b shipped 2026-10-09; its specification is `plans/archive/T2-8b_2026-10-09.md`.
