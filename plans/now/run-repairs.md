@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-4 -- the window cannot be made smaller than 800x600 | Dependency: none outside this plan; RR-1 to RR-4 run in order (shared `hud.gd` and `main.gd`) | Verified: 2026-10-11
+Status: active | Owner: Dave / Claude Code | Next: RR-4 -- the window cannot be made smaller than 800x600 | Dependency: none outside this plan; RR-1 to RR-4 run in order (shared `hud.gd` and `main.gd`) | Verified: 2026-10-12
 
 ## Objective
 
@@ -39,7 +39,7 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-1 | The queen can build a cell in every Challenge, Scenario and Colony Run | `scripts/challenge_runner.gd`, `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `test_scenarios/rr1_queen_builds_test.json`, `tests/test_rr1_queen_builds.py` | yes | medium |
-| RR-4 | The window cannot be made smaller than 800x600 | `scripts/ui_layout.gd`, `scripts/main.gd`, `tests/test_rr4_min_window.py` | after RR-3 (shared `main.gd`) | low |
+| RR-4 | The window cannot be made smaller than 800x600 | `scripts/ui_layout.gd`, `scripts/main.gd`, `tests/test_rr4_min_window.py` | yes -- Claude lane (RR-3 landed 12 Oct 2026) | low |
 | RR-5 | Hexagon names re-fit when the typeface changes | `scripts/main_menu.gd`, `tests/rr5_hex_refit_test.gd`, `tests/test_rr5_hex_refit.py` | yes (no shared file) | low |
 
 Each slice reads its own section only. Do not change skill prices, the
@@ -170,4 +170,4 @@ runs it. This is the instrument for this failure: it fails on today's code.
 
 ## Not in the queue, and why
 
-- **RR-1** waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`; RR-3 to RR-5 are in the Claude lane (RR-2 landed 11 Oct 2026).
+- **RR-1** waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`; RR-4 and RR-5 are in the Claude lane (RR-2 landed 11 Oct 2026, RR-3 landed 12 Oct 2026).
