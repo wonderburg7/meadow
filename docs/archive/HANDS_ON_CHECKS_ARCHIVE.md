@@ -148,6 +148,87 @@ Owner: `plans/archive/brood-spine_2026-10-05.md`
 
 Confirmed 11 Oct 2026: run by opus: C-104 at scale 2 Open Sans in a paused Scenario run PAUSED is the last line and covers nothing, the long problem line wraps and the Colony window moves down with it, and a click just past its end selects the bee there; C-106 a paused click on a bee under the Bees readout text selects it, and a problem-strip line selects its bee; C-119 fermented nectar shows olive (#8CAD63), stays olive while topped up, and stands apart from fresh nectar, pollen and empty comb; C-112 (overturning a sonnet fail) a Run availability edit marks the row (edited), applies on the cog's Restart Run, and Reset to the game's data clears it for the next restart
 
+### C-100 -- Escape closes the skill tree on a real keyboard
+
+What this checks: run the game in its own window, not in the Godot
+editor's Game tab. In Git Bash, run `cd /c/Users/dl13860/Documents/Meadow/meadow`
+then `"/c/Program Files/Godot/Godot.exe" --path .`. From the main menu
+start "Scenario 2 A working colony" and set the speed to 2. Press the
+Skills button to open the skill tree. With the tree open, press Space and
+Tab on the physical keyboard, then press Escape.
+
+PASS: Space and Tab do nothing behind the tree, and Escape closes it and the speed shows 2 again, just as the × button does.
+
+If it fails, HO-1 (`plans/archive/hands-on-findings_2026-10-05.md`) reopens with a real
+fault to chase in `scripts/skill_tree_panel.gd::_input`. When you report a
+failure, say whether Ctrl+1 reached the game ("Group 1 cleared.") while
+the tree was still open: if it did, the handler is not running at all for
+real key presses.
+
+Runner: dave -- needs physical Space, Tab and Escape presses; a synthetic key is no evidence
+
+Owner: `plans/archive/hands-on-findings_2026-10-05.md`
+
+Confirmed 11 Oct 2026: run by Dave (11 Oct 2026): C-100 pass, C-101 pass (sonnet had covered scale 2 in Munro and Silkscreen and the wheel zoom; Dave covered the rest), C-120 pass, C-121 pass
+
+### C-101 -- Every skill name reads whole in its hex, and the wheel zooms out to the whole tree
+
+What this checks: Start a run, click the Skills button (top right) and read every skill name inside its hexagon at the opening zoom. Do it at text scale 1 and 2 (Settings) in both Silkscreen and Atkinson Hyperlegible, then scroll the wheel down with the window maximised and again at the default window size.
+
+PASS: Every skill name shows every letter (a long word may shrink or break with a hyphen), and the wheel zooms out until the whole tree, including REST and AUTO RECR, is on screen at once.
+
+If it fails, HO-2 reopens: the name layout in `scripts/skill_tree_panel.gd::SkillGrid._fit_name`, or the zoom limit in `_min_zoom`.
+
+Runner: sonnet -- clipped-letter reading across fonts and scales, plus wheel zoom
+
+Owner: `plans/archive/hands-on-findings_2026-10-05.md`
+
+Confirmed 11 Oct 2026: run by Dave (11 Oct 2026): C-100 pass, C-101 pass (sonnet had covered scale 2 in Munro and Silkscreen and the wheel zoom; Dave covered the rest), C-120 pass, C-121 pass
+
+### C-120 -- Zoom the comb from minimum to maximum and check the cell pixels stay sharp
+
+What this checks: start a run and open the hive view, then zoom the comb from the minimum zoom to the maximum with the mouse wheel, watching the empty cells.
+
+PASS: cell pixels stay square and sharp at every zoom, nothing shimmers while zooming, and no seams open between cells.
+
+If it fails, SP-1's shader or the cell sprite scale needs another pass (`assets/shaders/pixel_sharp.gdshader`, `EMPTY_SPRITE_SCALE_NUDGE` in `scripts/hive_cell.gd`).
+
+Runner: dave -- shimmer and seams while zooming are motion, invisible in stills
+
+Owner: `plans/now/sprites.md`
+
+Confirmed 11 Oct 2026: run by Dave (11 Oct 2026): C-100 pass, C-101 pass (sonnet had covered scale 2 in Munro and Silkscreen and the wheel zoom; Dave covered the rest), C-120 pass, C-121 pass
+
+### C-121 -- Comb holding every content side by side, also in colour-blind mode
+
+What this checks: In a running game, build up a comb so that empty, nectar, fermented nectar, pollen, wet and ripe honey, brood, royal-jelly, gyne brood and corpse cells all show side by side (a scenario or a few minutes of play), then open Settings and turn colour-blind mode on and off. Look at the cells with the eye, not the tags.
+
+PASS: Every kind of cell content is told apart at a glance (nectar lime, pollen orange, honey a darker amber), with and without colour-blind mode.
+
+If it fails, the offending colour is retuned in scripts/hive_cell.gd and tests/test_sp3_content_colours.py is rerun.
+
+Runner: dave -- 'told apart at a glance' is a perceptual colour judgement
+
+Owner: `plans/now/sprites.md`
+
+Confirmed 11 Oct 2026: run by Dave (11 Oct 2026): C-100 pass, C-101 pass (sonnet had covered scale 2 in Munro and Silkscreen and the wheel zoom; Dave covered the rest), C-120 pass, C-121 pass
+
+### C-94 -- Challenge 2 shows 2.2, then 2.3, then 2.4 on screen when one hatch meets all three
+
+What this checks: start Challenge 2 from the main menu, then use cog -> World & start -> the Challenge stage ▶ arrow to reach 2.2 (raise a pollen Forager). Click a cell with a developing larva, set its Raises choice to a pollen Forager, and let it hatch (speed 4 or 8 is fine). This is the 2 Oct run where 2.2, 2.3 and 2.4 all cleared in one go and 2.5 came up next.
+
+PASS: after the hatch, the goal shelf shows 2.3 (designate a cell) with Dr Gallerin's line for about five game seconds, then 2.4 (build a reserve of ~175 nectar and ~90 pollen) for at least as long, before 2.5 appears.
+
+The hold itself is proved headlessly (tests/test_challenge2_checks.py, HO-16); this check asks only whether each stage stays up long enough to read.
+
+If it fails, the minimum stage dwell in `scripts/challenge_runner.gd::_process` is not holding the stage (HO-7), or `MIN_STAGE_DWELL` in `scripts/challenge_stages.gd` is too short to read; retune that constant, or reopen HO-7 in `plans/archive/hands-on-third-pass_2026-10-03.md`.
+
+Runner: dave -- how long a stage stays up needs a stopwatch eye; screenshots lag 1-2 s, so an opus reading of ~2 s was not evidence (11 Oct 2026)
+
+Owner: `plans/archive/hands-on-third-pass_2026-10-03.md`
+
+Confirmed 11 Oct 2026: retired, not passed (Dave, 11 Oct 2026): Dave was unsure by eye and screenshots cannot time it; the 5 game-second hold is proved headlessly by HO-16 (tests/test_challenge2_checks.py), and readability of 5 s is left to Dave raising it in play
+
 ## 3 Oct 2026 -- Dave's hands-on pass
 
 ### C-79 -- Skills fills the screen and pauses the game

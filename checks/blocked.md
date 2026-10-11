@@ -170,3 +170,17 @@ Runner: sonnet -- plays to the winter countdown, reads a figure, buys a skill, r
 Owner: `plans/now/tier-two.md`
 
 Blocked by: RR-1 (`plans/now/run-repairs.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
+
+### C-84 -- Challenge 2's last stage shows what is still short
+
+What this checks: play Challenge 2 through to 2.9, which asks for 300 nectar, 150 pollen, 10 nectar Foragers, 4 pollen Foragers, 2 nurses, 2 Comb workers and 2 miners all at once (`docs/challenge-stages.md`). Play it out without the stage arrows.
+
+PASS: throughout 2.9 you can tell from the screen which of the seven targets are still short, and you finish it without guessing.
+
+If it fails, 2.9 needs a progress readout or a Dr Gallerin line (its `prompts` list in `scripts/challenge_stages.gd` is empty, the only stage with none), and it goes to Dave as a Challenge 2 goal-presentation slice. Found by `docs/product-review-2026-09-30.md`.
+
+Runner: dave -- a long unassisted Challenge 2 playthrough judged on whether the goals felt readable
+
+Owner: `plans/archive/hands-on-findings_2026-10-05.md`
+
+Blocked by: RR-1 (`plans/now/run-repairs.md`) and T2-9 (`plans/now/tier-two.md`) -- Challenge 2 has no way to make new cells: the queen's Build cell is Challenge 1 only and Comb worker is blocked at 2.7 (Dave, 11 Oct 2026).
