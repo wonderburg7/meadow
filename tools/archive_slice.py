@@ -45,7 +45,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_docs import current_plans, plan_is_terminal, queue_item_chunks  # noqa: E402
 from heading import headings, section  # noqa: E402
 
-PLAN_LINE = re.compile(r"- Plan: `([^`]+)` -- \"([^\"]+)\"")
+# The heading may hold escaped quotes (`-- "RR-2 -- \"Saves...\" works"`);
+# resolve_item unescapes them (RR-2, 11 Oct 2026).
+PLAN_LINE = re.compile(r"- Plan: `([^`]+)` -- \"((?:[^\"\\]|\\.)+)\"")
 
 
 def _git(root: Path, *args: str) -> subprocess.CompletedProcess:
@@ -75,7 +77,7 @@ def resolve_item(text: str, slice_id: str) -> tuple[str, str] | None:
         plan = PLAN_LINE.search(chunk)
         if not plan:
             return None
-        return plan.group(1), plan.group(2)
+        return plan.group(1), re.sub(r"\\(.)", r"\1", plan.group(2))
     return None
 
 
