@@ -634,9 +634,9 @@ var predator_flower_cooldowns: Dictionary = {}
 
 ## PP-1 (plans/now/pollination.md): the flower this bee last finished on
 ## this foraging trip, which pollination.gd::record_visit compares the next
-## one against. Cleared when she enters the hive (main.gd's
-## move_bee_into_hive) -- she grooms her pollen off -- and never saved, so
-## a load starts a fresh trip.
+## one against. Cleared when she enters the hive (_on_tree_entered) --
+## she grooms her pollen off -- and never saved, so a load starts a fresh
+## trip.
 var trip_last_flower: Node2D = null
 
 ## Crab spiders (see CRAB_SPIDER_PLAN.md section 4) -- set at the moment
@@ -726,6 +726,7 @@ var dance_ring: Polygon2D
 # --- _ready and construction --------------------------------------
 func _ready() -> void:
 	add_to_group("bees")
+	tree_entered.connect(_on_tree_entered)
 	# Newly built cells and freshly-mined floor tiles get added to
 	# hive_root's child list after bees that already exist, which made
 	# them draw on top -- Godot draws same-z siblings in child order, and
@@ -2943,6 +2944,15 @@ func _terrain_speed_factor() -> float:
 
 func _is_inside_hive() -> bool:
 	return world != null and get_parent() == world.hive_root
+
+## PP-1: every way into the hive reparents the bee under hive_root
+## (world_building.gd::move_bee_into_hive, including a Challenge stage's
+## direct call), and a reparent re-enters the tree, so entering is caught
+## here rather than at each caller. tree_entered, not _notification, so
+## nothing runs per frame.
+func _on_tree_entered() -> void:
+	if is_instance_valid(world) and world.pollination != null and _is_inside_hive():
+		world.pollination.groom(self)
 
 # --- getting round things in the meadow ---------------------------
 ## Obstacle avoidance and steering moved to bee_movement.gd -- see

@@ -18,7 +18,7 @@ extends RefCounted
 ## incompatible_visits); bees own only their trip's last flower
 ## (bee.gd::trip_last_flower), which only this file sets.
 ## bee_foraging.gd::finish_collecting calls record_visit once per finished
-## visit, and main.gd::move_bee_into_hive calls groom -- never per frame.
+## visit, and bee.gd calls groom as she enters the hive -- never per frame.
 ##
 ## main.gd creates it, as it does colony_milestones.gd; save_game.gd writes
 ## save_data() under "pollination" and saving.gd::_restore hands it back, so
@@ -48,9 +48,13 @@ static func pollinator_points_on() -> bool:
 ## the flower with the trip's last one, then makes this flower the last one.
 ## A trip's first flower, or the same flower twice running, delivers nothing.
 func record_visit(bee: Node2D, flower: Node2D, resource_type: String) -> void:
-	var previous: Node2D = bee.trip_last_flower
+	# Checked untyped first: the last flower may have died of age since,
+	# and a freed instance cannot be assigned to a typed variable. A dead
+	# flower's pollen is no previous flower at all.
+	var last = bee.trip_last_flower
+	var previous: Node2D = last if is_instance_valid(last) else null
 	bee.trip_last_flower = flower
-	if previous == null or not is_instance_valid(previous) or previous == flower:
+	if previous == null or previous == flower:
 		_log_visit(bee, flower, previous, "first", false)
 		return
 	if previous.species_name != flower.species_name:
@@ -68,10 +72,13 @@ func record_visit(bee: Node2D, flower: Node2D, resource_type: String) -> void:
 		points_earned.emit(flower)
 
 ## A bee entering the hive grooms her pollen off, so her next trip's first
-## flower delivers nothing. main.gd::move_bee_into_hive calls this for
-## every bee it brings in.
+## flower delivers nothing. bee.gd calls this whenever the bee is parented
+## under the hive root, which every way into the hive does
+## (world_building.gd::move_bee_into_hive reparents her).
 func groom(bee: Node2D) -> void:
-	if bee.trip_last_flower == null:
+	# Untyped, for the same reason as record_visit: it may have died.
+	var last = bee.trip_last_flower
+	if last == null:
 		return
 	bee.trip_last_flower = null
 	if main != null and main.scenario_active:

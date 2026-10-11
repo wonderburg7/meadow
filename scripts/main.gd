@@ -680,10 +680,6 @@ func entrance_wait_point(side: int) -> Vector2:
 	return world_building.entrance_wait_point(side)
 
 func move_bee_into_hive(bee: Node2D) -> void:
-	# PP-1: she grooms her pollen off at the hive, so her next trip's first
-	# flower pollinates nothing.
-	if pollination != null:
-		pollination.groom(bee)
 	world_building.move_bee_into_hive(bee)
 
 func move_bee_out_of_hive(bee: Node2D) -> void:

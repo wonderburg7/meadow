@@ -106,6 +106,12 @@ class PollinationRunTest(unittest.TestCase):
         if session_file is None:
             raise AssertionError("scenario run produced no session log")
         entries = load_entries(session_file)
+        # The engine's own log sits beside the session log. A freed flower
+        # assigned to a typed variable shows up only here, as a SCRIPT ERROR,
+        # and the visit it broke is silently missing from the session log.
+        godot_log = session_file.parent / "godot.log"
+        log_text = godot_log.read_text(encoding="utf-8", errors="replace") if godot_log.exists() else ""
+        cls.script_errors = [line for line in log_text.splitlines() if "SCRIPT ERROR" in line]
         actions = [e for e in entries if e.get("type") == "action"]
         cls.rejected = [e for e in actions if e.get("result") == "rejected"]
         scratch = scenario_saves_dir(session_file)
@@ -140,6 +146,9 @@ class PollinationRunTest(unittest.TestCase):
                 visit["t"] = float(e["game_time"])
                 phase.append(visit)
                 ledger = {"points": visit["points"], "contribution": visit["contribution"]}
+
+    def test_run_raises_no_script_error(self):
+        self.assertEqual(self.script_errors, [], self.script_errors[:5])
 
     def test_run_resolves_every_action(self):
         self.assertEqual(self.rejected, [], self.rejected)
