@@ -400,7 +400,7 @@ const TUNABLES := [
 		"persist": "player",
 		"key": "use_cell_sprites", "label": "Cell art", "toggle": true,
 		"category": "Appearance",
-		"tip": "Show the wax-cell resprite on empty comb cells instead of the original flat colour fill. Off reverts to the flat fill. Applies within about a second, as cells redraw themselves.",
+		"tip": "Show the wax-cell resprite on empty comb cells, and the nectar and pollen fill levels on filled ones, instead of the original flat colour fill. Off reverts to the flat fill. Applies within about a second, as cells redraw themselves.",
 	},
 	{
 		"persist": "player",
