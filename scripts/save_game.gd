@@ -127,6 +127,9 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 		"fog": world.fog_of_war.explored_list(),
 		"skills": _skills_data(),
 		"colony_milestones": world.colony_milestones.save_data(),
+		# PP-1: Pollinator Points and Contribution. Additive: an older save
+		# has none and restores both at zero (pollination.gd::restore).
+		"pollination": world.pollination.save_data(),
 		# BS-14: the grants and bans this run's availability sheet was built
 		# from, so a load does not re-read today's developer edits.
 		"skill_policy": {
@@ -364,6 +367,11 @@ static func _flowers_data(world) -> Array:
 			"nectar": f.nectar_amount,
 			"pollen": f.pollen_amount,
 			"age": f.age_seconds,
+			# PP-1, additive: an older save loads both counts at zero and
+			# the pollination window open.
+			"compatible": f.compatible_visits,
+			"incompatible": f.incompatible_visits,
+			"award_ready_at": f.award_ready_at,
 		})
 	return out
 

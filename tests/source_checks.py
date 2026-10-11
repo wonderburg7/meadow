@@ -2708,8 +2708,11 @@ TRANSCRIBED_EFFECTS = {
     "skill.ecology.rain_recall": ("enable_behaviour", "rain_recall_on"),
     # NF-4: fermentation sense is an owned-skill behaviour (hive.gd).
     "skill.colony.fermentation_sense": ("enable_behaviour", "fermentation_sense_on"),
+    # PP-1: Pollinator points is an owned-skill behaviour (pollination.gd).
+    "skill.foraging.pollinator_points": ("enable_behaviour", "pollinator_points_on"),
 }
-SKILL_ONLY_BEHAVIOURS = {"weather_sensing_on", "rain_recall_on", "fermentation_sense_on"}
+SKILL_ONLY_BEHAVIOURS = {"weather_sensing_on", "rain_recall_on", "fermentation_sense_on",
+                         "pollinator_points_on"}
 
 
 def check_progression_transcribed_effects(problems):
