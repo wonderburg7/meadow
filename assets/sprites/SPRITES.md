@@ -33,7 +33,7 @@ Columns:
 | Family | File | Shows | View | Layout | Frames | Levels | Anchor | Variants |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | wax_cell_nectar | comb/wax_cell_nectar.aseprite | nectar cell: empty cup, then seven fill levels | hive | layers | 8 | 10/25/40/55/70/85/100 | 16,22 | - |
-| wax_cell_pollen | comb/wax_cell_pollen.aseprite | pollen cell: empty cup, then four fill levels | hive | layers | 5 | 30/60/90/100 | 16,22 | - |
+| wax_cell_pollen | comb/wax_cell_pollen.aseprite | pollen cell: empty cup, then five fill levels | hive | layers | 6 | 20/40/60/80/100 | 16,22 | - |
 | hive_skep | meadow/hive_skep.png | the straw skep, your hive in the meadow | meadow | single | 1 | - | - | - |
 | grass_base | meadow/grass_base.png | the repeating meadow grass tile | meadow | tile | 1 | - | - | - |
 | bee_forager_meadow | bees/bee_forager_meadow.aseprite | meadow forager, 8 directions x 4 wing frames (waits for the repacked sheet, SP-6) | meadow | unexported | 32 | - | - | - |

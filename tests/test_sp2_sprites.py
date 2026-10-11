@@ -180,7 +180,7 @@ class RepoTests(unittest.TestCase):
     def test_the_cell_sheets_hold_the_plan_levels(self):
         cat = (ROOT / "scripts" / "sprite_catalogue.gd").read_text(encoding="utf-8")
         self.assertIn("const WAX_CELL_NECTAR_LEVELS: Array[int] = [10, 25, 40, 55, 70, 85, 100]", cat)
-        self.assertIn("const WAX_CELL_POLLEN_LEVELS: Array[int] = [30, 60, 90, 100]", cat)
+        self.assertIn("const WAX_CELL_POLLEN_LEVELS: Array[int] = [20, 40, 60, 80, 100]", cat)
         self.assertIn("const WAX_CELL_NECTAR_HFRAMES := 8", cat)
 
     def test_the_empty_cup_is_the_retired_pngs_pixels(self):

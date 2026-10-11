@@ -51,7 +51,7 @@ Verified 9 Oct 2026 against master and the main checkout:
 - Both cell files are 32x32. Layer 0 matches `wax.cell.empty.png` pixel
   for pixel, and each further layer is one fill level. The nectar file has
   7 levels (upper bounds 10/25/40/55/70/85/100 %), filled flat lime
-  (187,248,36). The pollen file has 4 (30/60/90/100 %), in five oranges
+  (187,248,36). The pollen file has 5 (20/40/60/80/100 %, redrawn 11 Oct), in oranges
   around (255,123,0). Neither has part-transparent pixels.
 - The forager sheet is 52x100 with 8 rows x 4 wing frames. Each bee is
   9-12 px and drawn in 4 colours. It is **not on a regular grid**: rows

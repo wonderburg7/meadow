@@ -16,17 +16,17 @@ const WAX_CELL_NECTAR_ANCHOR := Vector2(16.0, 22.0)
 const WAX_CELL_NECTAR_VIEW := "hive"
 const WAX_CELL_NECTAR_LEVELS: Array[int] = [10, 25, 40, 55, 70, 85, 100]
 
-# wax_cell_pollen: pollen cell: empty cup, then four fill levels
+# wax_cell_pollen: pollen cell: empty cup, then five fill levels
 const WAX_CELL_POLLEN_SHEET := preload("res://assets/sprites/comb/wax_cell_pollen_sheet.png")
 const WAX_CELL_POLLEN_FRAME_SIZE := Vector2i(32, 32)
 const WAX_CELL_POLLEN_CELL_GUTTER := 1
 const WAX_CELL_POLLEN_CELL_SIZE := Vector2i(34, 34)
-const WAX_CELL_POLLEN_HFRAMES := 5
+const WAX_CELL_POLLEN_HFRAMES := 6
 const WAX_CELL_POLLEN_VFRAMES := 1
-const WAX_CELL_POLLEN_FRAMES: Array[String] = ["empty", "1", "2", "3", "4"]
+const WAX_CELL_POLLEN_FRAMES: Array[String] = ["empty", "1", "2", "3", "4", "5"]
 const WAX_CELL_POLLEN_ANCHOR := Vector2(16.0, 22.0)
 const WAX_CELL_POLLEN_VIEW := "hive"
-const WAX_CELL_POLLEN_LEVELS: Array[int] = [30, 60, 90, 100]
+const WAX_CELL_POLLEN_LEVELS: Array[int] = [20, 40, 60, 80, 100]
 
 # hive_skep: the straw skep, your hive in the meadow
 const HIVE_SKEP_SHEET := preload("res://assets/sprites/meadow/hive_skep_sheet.png")
