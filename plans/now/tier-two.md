@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-7 -- tier-2 costs tuned so the first purchase lands around day 5, leading the Claude lane since SP-2 landed (Dave, 10 Oct 2026; BB-2 and NF-4 landed 10 Oct 2026); then T2-9 -- a skill not available in this run never blocks the tier above it (C-113, Dave 11 Oct 2026) and T2-6 -- Associative learning, specified below with Dave's 10 Oct 2026 decisions and queued in the Claude lane behind T2-7 | Dependency: COL-4, COL-6, T2-4a and T2-4b landed; T2-7's predecessors BB-2 and NF-4 landed 10 Oct 2026; T2-6 follows T2-7 (shared `skills.gd`) | Verified: 2026-10-11
+Status: active | Owner: Dave / Claude Code | Next: T2-9 -- a skill not available in this run never blocks the tier above it (C-113, Dave 11 Oct 2026) and T2-6 -- Associative learning, specified below with Dave's 10 Oct 2026 decisions and queued in the Claude lane (T2-7 landed 11 Oct 2026 as the rule, snapshot field and pacing row; its price sweep waits for AR-4) | Dependency: COL-4, COL-6, T2-4a and T2-4b landed; T2-7's predecessors BB-2 and NF-4 landed 10 Oct 2026; T2-6 follows T2-7 (shared `skills.gd`) | Verified: 2026-10-11
 
 ## Objective
 
@@ -200,6 +200,17 @@ is the one affordability rule. Snapshots already log `food_stores`,
   each seed's day, are recorded in this section and replace the "guesses"
   sentence in `plans/design/progression.md` step 8.
 
+**Landed scope (Dave, 11 Oct 2026).** The price sweep and the "median in
+band" check are deferred until AR-4 (the arc buying a Honey worker). Baseline,
+3 seeds (20260923-25), no price change: `first_tier2_day` missing in every
+seed, because the arc makes no honey (`food_stores` is 0 for all 30 days) and
+every tier-2 recipe costs 20-30 honey; first worker 16.87 days. Nectar peaks
+600-800 and pollen 200-450. T2-7 lands the path rule
+(`Progression.first_tier2_path_covered`), the `resources.first_tier2_affordable`
+snapshot field (also added to the headless probe whitelist, profile validator
+and the alpha arc scenario), `first_tier2_day` and its pacing row; tier-2
+`cost` amounts are unchanged and still guesses.
+
 **Must not change.** Tier-1, tier-3 and tier-4 prices; the five gates'
 rows and verdicts; any stage threshold; the branch-tier rule.
 
@@ -211,8 +222,8 @@ buy skills (AR-4, `plans/now/alpha-route-evidence.md`, which shares
 ```queue
 **[Claude] T2-7 -- Tier-2 costs tuned so the first purchase lands around day 5**
 - Plan: `plans/now/tier-two.md` -- "T2-7 -- Tier-2 costs tuned so the first purchase lands around day 5"
-- Files: `scripts/skills.gd`, `scripts/progression.gd`, `scripts/diagnostic_log.gd`, `tools/analyze_session.py`, `tools/pacing_gates.py`, `plans/design/progression.md`, `tests/test_t2_7_tier_two_prices.py`
-- Check: `python -m unittest tests.test_t2_7_tier_two_prices` passes (a snapshot whose stores cover the cheapest first-tier-2 path sets `first_tier2_day`, one that falls short by one unit of any resource does not, and pacing_gates prints the row against day 5 without changing the five gate rows); `python tools/pacing_gates.py` shows the median `first_tier2_day` in band, recorded before and after in the plan; `tools/verify.ps1` is green
+- Files: `scripts/skills.gd`, `scripts/progression.gd`, `scripts/diagnostic_log.gd`, `scripts/headless/diagnostic_probes.gd`, `tools/headless/profiles.py`, `test_scenarios/alpha_arc_test.json`, `tools/analyze_session.py`, `tools/pacing_gates.py`, `plans/design/progression.md`, `tests/test_t2_7_tier_two_prices.py`
+- Check: `python -m unittest tests.test_t2_7_tier_two_prices` passes (a snapshot whose stores cover the cheapest first-tier-2 path sets `first_tier2_day`, one that falls short by one unit of any resource does not, and pacing_gates prints the row against day 5 without changing the five gate rows); `python tools/pacing_gates.py` prints the `first_tier2_day` row against day 5 (reads "unavailable" until AR-4; baseline recorded in the plan); `tools/verify.ps1` is green
 - Proof: `absent: tools/analyze_session.py :: first_tier2_day`
 - Next after: T2-6 -- Associative learning
 ```
