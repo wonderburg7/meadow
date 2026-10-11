@@ -36,7 +36,7 @@ where `bee.gd::_idle_dispatch` / `_try_role_work` already search for work,
 then let diagnostics read that result. A bee state alone can mistake an idle
 bee with available work for a bee waiting on work. Do not repeat a mutable
 work search in diagnostics or add a per-bee scan outside the existing refresh.
-BB-2 (`plans/now/bee-bread.md`) released `scripts/bee.gd` on 10 Oct 2026.
+BB-2 (`plans/archive/bee-bread_2026-10-11.md`) released `scripts/bee.gd` on 10 Oct 2026.
 Rechecked then, the file list stands; `scripts/year_winter.gd` is shared
 with GD-2a (`plans/now/guidance-explanations.md`), queued in the Codex lane,
 so CD-3 runs after it.

@@ -63,7 +63,7 @@ and each adds a test module. They depend on
 nothing else. T2-4a follows T2-2 (`actions.gd`, `challenge_stages.gd`).
 T2-4b landed 9 Oct 2026, so it no longer shares files with NF-3
 (`plans/archive/nectar-fermentation_2026-10-10.md`) or Bee Bread's BB-1
-(`plans/now/bee-bread.md`).
+(`plans/archive/bee-bread_2026-10-11.md`).
 T2-7 (landed 11 Oct 2026) measures the gates T2-1 to T2-3 built; T2-7b prices them. T2-6 shared `skills.gd` with
 T2-7, so it ran after it in the Claude lane (NF-4 and BB-2, which shared
 `skills.gd`, `bee_foraging.gd`, `game_config.gd` and `settings_catalogue.gd`, landed 10 Oct 2026).
@@ -71,7 +71,7 @@ Pollinator Points (`plans/now/pollination.md` PP-1) needs T2-6: foraging
 tier 3 opens only when Associative learning is owned. T2-8 multiplies COL-6's one-step winter (landed 7 Oct 2026).
 NF-4 (`plans/archive/nectar-fermentation_2026-10-10.md`) added a Colony tier-2 node in
 `skills.gd` and landed 10 Oct 2026, before T2-7b, which prices it. T2-7b runs after
-BB-2 (`plans/now/bee-bread.md`), so its sweep includes the 15-day
+BB-2 (`plans/archive/bee-bread_2026-10-11.md`), so its sweep includes the 15-day
 unfed-worker rule; BB-4 moves stage thresholds only, never prices.
 T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`): the alpha arc
 makes no honey, so the sweep's median cannot land in band before AR-4's arc

@@ -180,7 +180,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | SPR-2 -- the windowed render baseline at 500 and 1,000 bees | `plans/archive/render-scale_2026-10-07.md` |
 | SI-1 to SI-3 -- save integrity: run state a load misses, exact Challenge rollback, all-or-nothing writes | `plans/archive/save-integrity_2026-10-09.md` |
 | T2-1 to T2-8 -- progression step 8: tier-2 skills gated and built, bodies, rain in the Colony Run, Shiver Cluster | `plans/now/tier-two.md` |
-| BB-1 to BB-4 -- Bee Bread: Fermenters, larval feeding, the tier-3 currency, re-pacing | `plans/now/bee-bread.md` |
+| BB-1 to BB-4 -- Bee Bread: Fermenters, larval feeding, the tier-3 currency, re-pacing | `plans/archive/bee-bread_2026-10-11.md` |
 | GD-2a, GD-2b -- Dr Gallerin's first explanations and the persistent Why list, then saving them | `plans/now/guidance-explanations.md` |
 | PP-1 to PP-6 -- pollination: Pollinator Points, the gyne and jelly gates, seed set, Priority cells, the route's pricing | `plans/now/pollination.md` |
 | Progression/skills design | `plans/design/progression.md` |

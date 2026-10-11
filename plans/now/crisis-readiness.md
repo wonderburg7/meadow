@@ -31,7 +31,7 @@ pre-rain response on the fallback path, actual rain, forage and store effects,
 plus save/restore across the trigger; a displayed warning alone is not proof.
 File a hands-on check for whether a player can diagnose and answer the event.
 
-BB-2 (`plans/now/bee-bread.md`) released `scripts/save_game.gd`,
+BB-2 (`plans/archive/bee-bread_2026-10-11.md`) released `scripts/save_game.gd`,
 `scripts/saving.gd` and `scripts/hud.gd` on 10 Oct 2026 (NF-3, BB-1 and
 NF-5 landed 9 Oct 2026; NF-5 released `scripts/main.gd` and
 `scripts/scenario_actions.gd`). The one file still held is

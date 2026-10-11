@@ -1,7 +1,7 @@
 # Meadow — Skill Tree, Colony Adaptations and Progression Plan
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only after progression is selected -->
-Status: active -- Phase A finished with step 4, landed 7 Sep 2026 | Owner: Dave / Claude Code | Next: Phase B step 8 is sliced in `plans/now/tier-two.md` (T2-1 to T2-8, Shiver Cluster as T2-8), from the plan-ahead decisions of 6-7 Oct 2026 in step 8 and section 5.6; Phase C step 12 (Bee bread) is sliced in `plans/now/bee-bread.md`; step 7 (`plans/archive/brood-spine_2026-10-05.md`) is built | Dependency: none blocking -- the skill-gating question is settled in section 11, step 6 (Dave, 17 Sep 2026). Two skill definitions still open (section 5.9) | Verified: 2026-10-07
+Status: active -- Phase A finished with step 4, landed 7 Sep 2026 | Owner: Dave / Claude Code | Next: Phase B step 8 is sliced in `plans/now/tier-two.md` (T2-1 to T2-8, Shiver Cluster as T2-8), from the plan-ahead decisions of 6-7 Oct 2026 in step 8 and section 5.6; Phase C step 12 (Bee bread) is sliced in `plans/archive/bee-bread_2026-10-11.md`; step 7 (`plans/archive/brood-spine_2026-10-05.md`) is built | Dependency: none blocking -- the skill-gating question is settled in section 11, step 6 (Dave, 17 Sep 2026). Two skill definitions still open (section 5.9) | Verified: 2026-10-07
 
 Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Rewritten 1 Sep 2026 against Dave's revised skill catalogue — six sectors, four resource-gated tiers, a hexagonal wedge grid and a HUD Skills button. It supersedes the 26 Aug catalogue outright: the sectors, tier meaning, costs and node list below are the design, and the earlier ones are not.
 
