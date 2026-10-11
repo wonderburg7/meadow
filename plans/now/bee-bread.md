@@ -1,7 +1,7 @@
 # Bee Bread -- fermented larval food, the tier-3 currency, and what it makes of a worker
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers, specified below and leading the Claude lane (T2-6 landed 11 Oct 2026; T2-7 landed the same day without moving tier-2 prices; their sweep, T2-7b, waits for AR-4) | Dependency: none -- COL-4, NF-2, T2-2, T2-3, BB-1, BB-2 and BB-3 have landed | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: None -- plan complete (BB-4 landed 11 Oct 2026; the follow-up that remains is Dave's save decision on making BB-2's five tunables run settings, listed under BB-4's Out of scope and the BB-4 outline) | Dependency: none -- COL-4, NF-2, T2-2, T2-3, BB-1, BB-2, BB-3 and BB-4 have landed | Verified: 2026-10-11
 
 ## Objective
 
@@ -36,7 +36,6 @@ Verified 7 Oct 2026 against master; BB-1 (9 Oct 2026) has since built Bee Bread 
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BB-4 | Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers | `scripts/challenge_stages.gd`, `docs/challenge-stages.md`, `scripts/scenario_actions.gd`, `test_scenarios/bb4_challenge1_route.json`, `test_scenarios/bb4_challenge2_route.json`, tests | yes -- leads the Claude lane (T2-6 and T2-7 landed 11 Oct 2026) | medium |
 
 **Dependencies.** BB-1, BB-2 and BB-3 have landed (BB-3 on 10 Oct 2026,
 releasing `skill_tree_panel.gd`). BB-4 follows BB-2, whose rule it balances around, and T2-7
@@ -65,69 +64,7 @@ BB-2 shipped 2026-10-10; its specification is `plans/archive/BB-2_2026-10-10.md`
 
 BB-3 shipped 2026-10-10; its specification is `plans/archive/BB-3_2026-10-10.md`.
 
-## BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers
-
-<!-- LAYER: immediate-task -->
-
-**True now** (verified 10 Oct 2026 against master). A worker raised on
-pollen alone lives `pollen_raised_lifespan_factor` (0.6: 15 of 25 days) at
-`pollen_raised_stat_factor` (0.95) of speed and load
-(`bee.gd::outcome_lifespan_days`); founders keep 25 days. Bee Bread needs
-`skill.brood.bee_bread`, so every worker the Challenges raise is pollen-only.
-Challenge 2's interim, completion, stability, failure and rescue thresholds
-are the `C2_*` constants in `scripts/challenge_stages.gd`, whose comment
-calls them "first guesses" made before BB-2; Challenge 1's are the `C1_*`
-constants beside them. No fixture plays either Challenge through: the
-Challenge fixtures jump stages with `advance_challenge_stage`, so nothing yet
-says whether a stage is still reachable with 15-day workers. The Colony
-Run's arc is `tools/pacing_gates.py` (PE-2), which T2-7 runs under BB-2's
-rule when it prices tier two.
-
-**True afterwards.**
-
-- Two routes play the Challenges as a player would, with no
-  `advance_challenge_stage` after their start: Challenge 1 from its first
-  egg (1.16, where the queen lays the colony's first egg) to completion, and
-  Challenge 2 from 2.1 (the nectar stores fall, then recover) to 2.9 (the
-  full colony goal), hatching roles, buying Nurses, designating cells and
-  mining with the actions `scripts/scenario_actions.gd` already has (it gains
-  one only if a stage needs an action it lacks). Each route runs on three
-  seeds under BB-2's rule, and as a control with both pollen-raised factors
-  set to 1.0 by `set_config`, which is the colony from before BB-2. Each
-  stage's reach day, for both, is recorded in this section.
-- A stage is unreachable when the route under the rule has not reached it
-  by twice the day the control did. Only such a stage's threshold moves, by
-  the least that lets the route reach it on all three seeds; its goal text,
-  `docs/challenge-stages.md` (`python tools/stage_reference.py`) and the
-  "first guesses" comment then cite this evidence. If no stage is
-  unreachable, no threshold moves and the comment says so.
-- The Colony Run: `python tools/pacing_gates.py` is run once and its five
-  rows recorded here. BB-4 changes nothing the Colony Run reads, so a gate
-  out of band goes to Dave with its options (T2-7's or PP-6's prices, BB-2's
-  factors) rather than being tuned here.
-- Runtime: no repeating work is added; the slice adds fixtures, a test and
-  constants.
-
-**Must not change.** Any skill price (T2-7 and PP-6 own them; Dave, 10 Oct
-2026); BB-2's five tunables and product-scope section 9's decisions behind
-them; a threshold whose stage the route still reaches; the Colony Run's
-gates.
-
-**Out of scope.** Making BB-2's five tunables run settings. They are
-`persist: "none"`; changing that adds them to `tests/source_checks.py`'s
-`ORIGINAL_SAVED_SETTINGS`, which that file allows only as a deliberate
-reclassification with its own save `FORMAT_VERSION` bump. That is a save
-decision for Dave, open as of 10 Oct 2026, not part of a pacing slice.
-Stage prompts and the Challenge UI are untouched.
-
-```queue
-**[Claude] BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers**
-- Plan: `plans/now/bee-bread.md` -- "BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers"
-- Files: `scripts/challenge_stages.gd`, `docs/challenge-stages.md`, `scripts/scenario_actions.gd`, `test_scenarios/bb4_challenge1_route.json`, `test_scenarios/bb4_challenge2_route.json`, `tests/test_bb4_challenge_pacing.py`
-- Check: `python -m unittest tests.test_bb4_challenge_pacing` passes (each route, run once on its pinned seed, reaches its Challenge's completion under BB-2's rule with no stage jumped after its start, and the test reads the thresholds from `scripts/challenge_stages.gd` rather than restating them); the three-seed reach days under the rule and with both pollen-raised factors at 1.0, and `python tools/pacing_gates.py`'s five rows, are recorded in the plan; `python tools/stage_reference.py --check` is clean; `.\tools\verify.ps1` is green
-- Proof: `present: scripts/challenge_stages.gd :: the rescue threshold -- first guesses`
-- Next after: none -- Bee Bread is complete
-```
+BB-4 shipped 2026-10-11; its specification is `plans/archive/BB-4_2026-10-11.md`.
 
 ## Outline
 
