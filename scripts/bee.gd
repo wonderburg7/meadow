@@ -632,6 +632,13 @@ var flower_cooldowns: Dictionary = {}
 ## longer or try a different species, not walk back into the same spider.
 var predator_flower_cooldowns: Dictionary = {}
 
+## PP-1 (plans/now/pollination.md): the flower this bee last finished on
+## this foraging trip, which pollination.gd::record_visit compares the next
+## one against. Cleared when she enters the hive (main.gd's
+## move_bee_into_hive) -- she grooms her pollen off -- and never saved, so
+## a load starts a fresh trip.
+var trip_last_flower: Node2D = null
+
 ## Crab spiders (see CRAB_SPIDER_PLAN.md section 4) -- set at the moment
 ## this bee escapes an ambush. Not a permanent mark: recruitment
 ## suppression (Bundle 3) compares her *current* forage_start_point/

@@ -55,6 +55,10 @@ var developer_row: VBoxContainer
 ## HO-3: the Triggers group, built only while Developer mode is on.
 var triggers_box: VBoxContainer
 var run_availability_panel: PanelContainer
+## PP-1: the pollination ledger's two counters, a Developer mode row. Null
+## with Developer mode off. Contribution is shown nowhere else.
+var pollination_label: Label
+var _pollination_key: String = ""
 ## Kept so _apply_panel_width() can resize it alongside the panel on
 ## get_viewport().size_changed, the same pattern gallerin_panel.gd uses.
 var panel_scroll: ScrollContainer
@@ -431,6 +435,25 @@ func _make_challenge_stage_navigation() -> Control:
 
 func _process(_delta: float) -> void:
 	_refresh_challenge_stage_navigation()
+	_refresh_pollination_readout()
+
+## PP-1: rewrites the row only when a counter has changed, and only while
+## the window is open with Developer mode on.
+func _refresh_pollination_readout() -> void:
+	if pollination_label == null or panel == null or not panel.visible:
+		return
+	var worlds := get_tree().get_nodes_in_group("world")
+	if worlds.is_empty() or worlds[0].pollination == null:
+		return
+	var ledger = worlds[0].pollination
+	var key := "%d|%d" % [ledger.points, ledger.contribution]
+	if key == _pollination_key:
+		return
+	_pollination_key = key
+	pollination_label.text = _pollination_text(ledger.points, ledger.contribution)
+
+func _pollination_text(points: int, contribution: int) -> String:
+	return "Pollinator points: %d   Contribution: %d" % [points, contribution]
 
 func _refresh_challenge_stage_navigation() -> void:
 	if challenge_stage_row == null:
@@ -624,6 +647,16 @@ func _refresh_developer_row() -> void:
 		_add_action_row(developer_row, button, "Developer mode: an editable table of this run's skills, the roles they unlock and the features they need -- which the run starts owning, leaves to the skill tree or does not offer, and why. Click a skill's source to change what the next run of this level starts with (this machine only).")
 	elif run_availability_panel != null:
 		run_availability_panel.hide()
+	pollination_label = null
+	_pollination_key = ""
+	if Session.developer_mode:
+		pollination_label = Label.new()
+		pollination_label.theme_type_variation = "Small"
+		pollination_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		pollination_label.text = _pollination_text(0, 0)
+		var row := UI.with_info(pollination_label, "Developer mode: the colony's spendable Pollinator Points, earned once the Pollinator points skill is owned, and its Pollination Contribution, which counts every compatible pollen delivery whether or not the skill is owned and is never spent.")
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		developer_row.add_child(row)
 
 ## Null unless Developer mode is on; tests/source_checks.py fails this if
 ## the guard goes.

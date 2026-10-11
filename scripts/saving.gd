@@ -86,6 +86,9 @@ func _restore(data: Dictionary) -> void:
 		main.rival.restore(data["rival"])
 	var new_bees := _restore_bees(data.get("bees", []))
 	main.fog_of_war.restore(data.get("fog", []))
+	# PP-1: here rather than in main.gd, so an in-place checkpoint restore
+	# puts the ledger back as exactly as a load does.
+	main.pollination.restore(data.get("pollination"))
 	main.SaveGame.restore_skills(data, Session.progression)
 	# BS-3 (Dave, 30 Sep 2026): a save holds only the skills it recorded, and
 	# one written before BS-1 has none of the run's seeded-role skills. What a
@@ -290,6 +293,10 @@ func _restore_flowers(flowers: Array) -> Array:
 		flower.nectar_amount = float(entry.get("nectar", 0.0))
 		flower.pollen_amount = float(entry.get("pollen", 0.0))
 		flower.age_seconds = float(entry.get("age", 0.0))
+		# PP-1, additive: a save from before them loads zero.
+		flower.compatible_visits = maxi(0, int(entry.get("compatible", 0)))
+		flower.incompatible_visits = maxi(0, int(entry.get("incompatible", 0)))
+		flower.award_ready_at = float(entry.get("award_ready_at", 0.0))
 		created.append(flower)
 	return created
 

@@ -824,6 +824,10 @@ static func finish_collecting(bee: Node2D) -> void:
 			bee.species_confidence[species] = minf(1.0, float(bee.species_confidence.get(species, 0.0)) + GameConfig.adaptive_constancy_gain)
 		# stay away until it's had time to fully recharge
 		bee.flower_cooldowns[bee.current_flower] = Session.sim_time + bee.current_flower.seconds_until_full(bee.resource_type)
+		# PP-1: pollen carried from the trip's last flower, once per finished
+		# visit. pollination.gd counts it and pays any point.
+		if is_instance_valid(bee.world) and bee.world.pollination != null:
+			bee.world.pollination.record_visit(bee, bee.current_flower, bee.resource_type)
 		bee.current_flower.release(bee)
 	bee.current_flower = null
 	# Both arms are the bee's own decision, so a player-driven queen stops at

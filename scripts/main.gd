@@ -108,6 +108,7 @@ const OrdersZones = preload("res://scripts/orders_zones.gd")
 const ForagingStats = preload("res://scripts/foraging_stats.gd")
 const YearWinter = preload("res://scripts/year_winter.gd")
 const ColonyMilestones = preload("res://scripts/colony_milestones.gd")
+const Pollination = preload("res://scripts/pollination.gd")
 const CameraView = preload("res://scripts/camera_view.gd")
 const FogOfWar = preload("res://scripts/fog_of_war.gd")
 const StageGate = preload("res://scripts/stage_gate.gd")
@@ -121,6 +122,8 @@ var foraging_stats: Node
 var year_winter: Node
 ## CR-2: the Colony Run's milestone evaluator. Idle in any other run.
 var colony_milestones: ColonyMilestones
+## PP-1: the Pollinator Points and Pollination Contribution ledger.
+var pollination: Pollination
 var camera_view: Node
 var fog_of_war: Node
 var stage_gate: Node
@@ -447,6 +450,8 @@ func _ready() -> void:
 	add_child(year_winter)
 	colony_milestones = ColonyMilestones.new()
 	colony_milestones.main = self
+	pollination = Pollination.new()
+	pollination.main = self
 	camera_view = CameraView.new()
 	camera_view.main = self
 	add_child(camera_view)
@@ -675,6 +680,10 @@ func entrance_wait_point(side: int) -> Vector2:
 	return world_building.entrance_wait_point(side)
 
 func move_bee_into_hive(bee: Node2D) -> void:
+	# PP-1: she grooms her pollen off at the hive, so her next trip's first
+	# flower pollinates nothing.
+	if pollination != null:
+		pollination.groom(bee)
 	world_building.move_bee_into_hive(bee)
 
 func move_bee_out_of_hive(bee: Node2D) -> void:

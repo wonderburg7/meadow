@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-1 -- bees earn Pollinator Points, leading the Claude lane (T2-6 landed 11 Oct 2026; BB-4 the same day); PP-3 -- Gyne rearing and Royal jelly become real gates, in the Codex lane | Dependency: none left for PP-1 -- T2-6 (`plans/now/tier-two.md`), which opens foraging tier 3, landed 11 Oct 2026, and BB-2 and NF-4, which shared its files, landed 10 Oct 2026; AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: PP-2 -- points are spendable and shown, with a +1 at the flower, next in the Claude lane (PP-1 landed 11 Oct 2026: `scripts/pollination.gd` is the ledger); PP-3 -- Gyne rearing and Royal jelly become real gates, in the Codex lane | Dependency: none left for PP-2 or PP-4 -- PP-1's ledger landed 11 Oct 2026; AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-11
 
 ## Objective
 
@@ -35,6 +35,13 @@ Verified 10 Oct 2026 against master:
   type.
 - `colony_milestones.gd` is a main-owned, saved, colony-level ledger
   (genetic points) -- the precedent for the Pollinator Points ledger.
+- PP-1 (11 Oct 2026): `pollination.gd` holds `points` and `contribution`;
+  flowers save `compatible_visits`, `incompatible_visits` and
+  `award_ready_at`. Found while testing it: a flower's `lifespan_seconds`
+  is not saved, so a load or checkpoint restore re-rolls it and a flower
+  now older than its new lifespan dies at once (123 of 545 in
+  `pp1_pollination_ledger.json`'s restore). PP-4, which replants on death,
+  should save the lifespan or expect those deaths.
 
 ## Open slices
 

@@ -233,8 +233,10 @@ const SKILLS := [
 		"sector": "foraging", "tier": 3, "axial": Vector2i(6, 1),
 		"max_rank": 1, "cost": {BEE_BREAD: 14, HONEY: 40, NECTAR: 150},
 		"requires_previous_tier": true, "all_of": [], "any_of": [],
-		"feature": "", "introduced_by": "", "effects": [], "icon": "",
-		"status": "new", "baseline": false, "open": false,
+		# PP-1: owning it switches points on (pollination.gd); Contribution
+		# and the flowers' pollen counts run whether or not it is owned.
+		"feature": "", "introduced_by": "", "effects": [{"type": "enable_behaviour", "key": "pollinator_points_on"}], "icon": "",
+		"status": "existing", "baseline": false, "open": false,
 	},
 	{
 		# A pure speed-up with no downside would dominate: needs its own
