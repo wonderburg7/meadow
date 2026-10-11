@@ -41,6 +41,24 @@ const EMPTY_COLOR := Color(0.85, 0.78, 0.55)
 const EMPTY_TEXTURE := SpriteCatalogue.WAX_CELL_NECTAR_SHEET
 const EMPTY_FRAME_SIZE := SpriteCatalogue.WAX_CELL_NECTAR_FRAME_SIZE
 
+## SP-7. Every cell sheet `_show_fill_art` can show, as [texture, hframes,
+## level bounds]. All share the cup's 32x32 frame and anchor, so swapping
+## one for another moves nothing.
+const CELL_ART := {
+	"nectar": [SpriteCatalogue.WAX_CELL_NECTAR_SHEET, SpriteCatalogue.WAX_CELL_NECTAR_HFRAMES, SpriteCatalogue.WAX_CELL_NECTAR_LEVELS],
+	"fermented": [SpriteCatalogue.WAX_CELL_NECTAR_FERMENTED_SHEET, SpriteCatalogue.WAX_CELL_NECTAR_FERMENTED_HFRAMES, SpriteCatalogue.WAX_CELL_NECTAR_FERMENTED_LEVELS],
+	"pollen": [SpriteCatalogue.WAX_CELL_POLLEN_SHEET, SpriteCatalogue.WAX_CELL_POLLEN_HFRAMES, SpriteCatalogue.WAX_CELL_POLLEN_LEVELS],
+	"honey": [SpriteCatalogue.WAX_CELL_HONEY_SHEET, SpriteCatalogue.WAX_CELL_HONEY_HFRAMES, SpriteCatalogue.WAX_CELL_HONEY_LEVELS],
+	"jelly": [SpriteCatalogue.WAX_CELL_ROYAL_JELLY_SHEET, SpriteCatalogue.WAX_CELL_ROYAL_JELLY_HFRAMES, SpriteCatalogue.WAX_CELL_ROYAL_JELLY_LEVELS],
+	"bee_bread": [SpriteCatalogue.WAX_CELL_BEE_BREAD_SHEET, SpriteCatalogue.WAX_CELL_BEE_BREAD_HFRAMES, SpriteCatalogue.WAX_CELL_BEE_BREAD_LEVELS],
+	"bee_bread_ripe": [SpriteCatalogue.WAX_CELL_BEE_BREAD_RIPE_SHEET, SpriteCatalogue.WAX_CELL_BEE_BREAD_RIPE_HFRAMES, SpriteCatalogue.WAX_CELL_BEE_BREAD_RIPE_LEVELS],
+	"larva": [SpriteCatalogue.WAX_CELL_LARVA_SHEET, SpriteCatalogue.WAX_CELL_LARVA_HFRAMES, SpriteCatalogue.WAX_CELL_LARVA_LEVELS],
+}
+
+## SP-7. A starving larva's art reddens towards this as it runs out of
+## time, as the flat brood colour does without sprites.
+const STARVING_ART_TINT := Color(1.0, 0.45, 0.4)
+
 ## SP-4. Which sheet and frame a nectar or pollen cell shows at `fraction`
 ## full, from the catalogue's level bounds (percent, rising): the first level
 ## whose bound is at least the fill, frame 0 (the empty cup) at nothing.
@@ -304,9 +322,13 @@ var zone_glow_tag: String = ""
 var _rings_follow_cup: bool = false
 ## A small seal drawn over a closed cell.
 var closed_mark: Line2D
-## The empty-cell resprite (see `EMPTY_TEXTURE`), shown only while the
-## cell holds nothing and `Session.use_cell_sprites` is on.
+## The cell art (see `EMPTY_TEXTURE` and `CELL_ART`): the cup, with
+## whatever the cell holds drawn in it, while `Session.use_cell_sprites`
+## is on.
 var empty_sprite: Sprite2D
+## SP-7. The wax cap drawn over `empty_sprite`: going on stage by stage
+## while bee bread ripens, whole over a cell the player has closed.
+var cap_sprite: Sprite2D
 
 # --- slots --------------------------------------------------------
 
@@ -371,6 +393,17 @@ func _ready() -> void:
 	)
 	empty_sprite.visible = false
 	add_child(empty_sprite)
+
+	# SP-7. The cap sheet shares the cup's frame and anchor, so it takes
+	# the cup's scale and offset and lands exactly over it.
+	cap_sprite = Sprite2D.new()
+	cap_sprite.texture = SpriteCatalogue.WAX_CELL_SEALED_SHEET
+	cap_sprite.hframes = SpriteCatalogue.WAX_CELL_SEALED_HFRAMES
+	cap_sprite.vframes = SpriteCatalogue.WAX_CELL_SEALED_VFRAMES
+	PixelSprite.apply(cap_sprite, empty_scale * EMPTY_SPRITE_SCALE_NUDGE)
+	cap_sprite.offset = empty_sprite.offset
+	cap_sprite.visible = false
+	add_child(cap_sprite)
 
 	# The body is drawn washed out and this sits on top at full strength,
 	# scaled to the contents -- so a cell with 20 nectar in it reads as
@@ -1206,6 +1239,7 @@ func _refresh() -> void:
 		outline.visible = true
 		color = Color(SITE_COLOR.r, SITE_COLOR.g, SITE_COLOR.b, lerp(0.25, 0.75, f))
 		empty_sprite.visible = false
+		cap_sprite.visible = false
 		designation_ring.visible = false
 		fill_shape.visible = false
 		closed_mark.visible = false
@@ -1230,13 +1264,17 @@ func _refresh() -> void:
 
 	empty_sprite.visible = false
 	var art_sheet: String = ""
-	var art_frame: int = 0
+	# -1: the frame for how full the cell is, from the sheet's own levels
+	# once the match below has picked the sheet.
+	var art_frame: int = -1
+	# SP-7. 0 for no cap, otherwise the cap stage, 1 to the sheet's last.
+	var cap_stage: int = 0
+	var art_tint: Color = Color.WHITE
 	match content_type:
 		"nectar":
 			color = NECTAR_COLOR
 			info_label.text = "N%d" % int(round(amount))
 			art_sheet = "nectar"
-			art_frame = fill_frame(SpriteCatalogue.WAX_CELL_NECTAR_LEVELS, fill_fraction())
 			if is_fermented():
 				color = FERMENTED_NECTAR_COLOR
 				art_sheet = "fermented"
@@ -1245,14 +1283,23 @@ func _refresh() -> void:
 		"pollen":
 			color = POLLEN_COLOR
 			art_sheet = "pollen"
-			art_frame = fill_frame(SpriteCatalogue.WAX_CELL_POLLEN_LEVELS, fill_fraction())
 			info_label.text = "P%d" % int(round(amount))
 		"jelly":
 			color = JELLY_COLOR
+			art_sheet = "jelly"
 			info_label.text = "RJ%d" % int(round(amount))
 		"bee_bread":
 			# Filling, sealed and ripe each have a colour and a label of their
-			# own, so a glance tells the three apart.
+			# own, so a glance tells the three apart. The art does the same:
+			# unfermented bee bread while it fills, a cap going on stage by
+			# stage as it ripens under the seal, fully capped once ripe, and
+			# the fermented art showing once the bees open it to eat.
+			art_sheet = "bee_bread"
+			if is_ripe_bee_bread():
+				art_sheet = "bee_bread_ripe"
+			if is_bee_bread_sealed() and amount >= capacity - 0.001:
+				var stages: int = SpriteCatalogue.WAX_CELL_SEALED_HFRAMES
+				cap_stage = clampi(int(ceil(bee_bread_ripen_fraction() * stages)), 1, stages)
 			if is_ripe_bee_bread():
 				color = BEE_BREAD_RIPE_COLOR
 				info_label.text = "BB%d ripe" % int(round(amount))
@@ -1264,6 +1311,7 @@ func _refresh() -> void:
 				info_label.text = "bb%d" % int(round(amount))
 		"honey":
 			color = HONEY_WET_COLOR.lerp(HONEY_COLOR, ripen_fraction())
+			art_sheet = "honey"
 			if is_ripe_honey():
 				info_label.text = "H%d" % int(round(amount))
 			else:
@@ -1271,11 +1319,16 @@ func _refresh() -> void:
 		"brood":
 			color = GYNE_BROOD_COLOR if brood_is_gyne else BROOD_COLOR
 			info_label.text = "%s %d%%" % [brood_kind_label(), int(development_percent())]
+			# Nine growth stages, each an equal share of the development
+			# time; a fresh egg already shows the first.
+			art_sheet = "larva"
+			art_frame = maxi(1, fill_frame(SpriteCatalogue.WAX_CELL_LARVA_LEVELS, fill_fraction()))
 			if brood_fed_seconds <= 0.0:
 				# a starving larva reddens as it runs out of time, so a
 				# neglected nursery is obvious without opening any panels
 				var urgency: float = 1.0 - (seconds_until_death() / max(0.001, GameConfig.larva_death_seconds))
 				color = BROOD_COLOR.lerp(Color(0.85, 0.25, 0.2), urgency)
+				art_tint = Color.WHITE.lerp(STARVING_ART_TINT, urgency)
 				info_label.text += " (%ds)" % int(seconds_until_death())
 		"corpse":
 			color = CORPSE_COLOR
@@ -1295,6 +1348,12 @@ func _refresh() -> void:
 				info_label.text = _priority_mark()
 			else:
 				info_label.text = ""
+
+	if art_sheet != "" and art_frame < 0:
+		art_frame = fill_frame(CELL_ART[art_sheet][2], fill_fraction())
+	# A cell the player has closed wears the whole cap, whatever is in it.
+	if is_closed:
+		cap_stage = SpriteCatalogue.WAX_CELL_SEALED_HFRAMES
 
 	# The designation ring is colour-only: a cell reserved for pollen and
 	# one reserved for honey are the same shape, same size, same
@@ -1320,6 +1379,7 @@ func _refresh() -> void:
 		color = over[0]
 		fill_shape.visible = false
 		empty_sprite.visible = false
+		cap_sprite.visible = false
 		outline.visible = true
 		outline.default_color = Color(0.12, 0.12, 0.14, 0.8)
 		info_label.text = str(over[1])
@@ -1333,31 +1393,35 @@ func _refresh() -> void:
 		color = Color(color.r, color.g, color.b, 0.0)
 	else:
 		_apply_fill_shading()
-	closed_mark.visible = is_closed or fill_then_close
+	empty_sprite.modulate = art_tint
+	_show_cap(cap_stage if empty_sprite.visible else 0)
+	# The cap says "closed" by itself; the bar stays for the flat look and
+	# for a cell still filling towards its close.
+	closed_mark.visible = (is_closed or fill_then_close) and not cap_sprite.visible
 	closed_mark.default_color = (
 		Color(0.1, 0.1, 0.12, 0.9) if is_closed else Color(0.95, 0.95, 0.4, 0.85)
 	)
 
-## SP-4. Points `empty_sprite` at a nectar, fermented-nectar or pollen frame
-## and shows it. All three sheets share one frame size and anchor, so only
-## the texture and its column count change, and only when the frame does.
+## SP-4, SP-7. Points `empty_sprite` at one frame of a `CELL_ART` sheet and
+## shows it. Every sheet shares one frame size and anchor, so only the
+## texture and its column count change, and only when the frame does.
 func _show_fill_art(sheet: String, frame: int) -> void:
 	empty_sprite.visible = true
 	var key := "%s:%d" % [sheet, frame]
 	if key == _art_key:
 		return
 	_art_key = key
-	match sheet:
-		"pollen":
-			empty_sprite.texture = SpriteCatalogue.WAX_CELL_POLLEN_SHEET
-			empty_sprite.hframes = SpriteCatalogue.WAX_CELL_POLLEN_HFRAMES
-		"fermented":
-			empty_sprite.texture = SpriteCatalogue.WAX_CELL_NECTAR_FERMENTED_SHEET
-			empty_sprite.hframes = SpriteCatalogue.WAX_CELL_NECTAR_HFRAMES
-		_:
-			empty_sprite.texture = SpriteCatalogue.WAX_CELL_NECTAR_SHEET
-			empty_sprite.hframes = SpriteCatalogue.WAX_CELL_NECTAR_HFRAMES
+	var art: Array = CELL_ART[sheet]
+	empty_sprite.texture = art[0]
+	empty_sprite.hframes = art[1]
 	empty_sprite.frame = frame
+
+## SP-7. Shows cap stage `stage` (1 to the sheet's last) over the cell art,
+## or hides the cap at 0.
+func _show_cap(stage: int) -> void:
+	cap_sprite.visible = stage > 0
+	if stage > 0 and cap_sprite.frame != stage - 1:
+		cap_sprite.frame = stage - 1
 
 ## A one-character tag for what the cell is reserved for, shown when
 ## colour-blind labels are on. "·" for an unreserved cell would be noise,

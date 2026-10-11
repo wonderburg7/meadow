@@ -70,10 +70,18 @@ class Image:
             self.pixels[d:d + src.width * 4] = src.pixels[s:s + src.width * 4]
 
     def overlay(self, src: "Image") -> None:
-        """Hard-pixel composite: an opaque src pixel replaces, others skip."""
+        """Draw src over this image: an opaque pixel replaces, a translucent
+        one (Dave's honey, the thin middle of a wax cap) blends over."""
         for i in range(0, len(src.pixels), 4):
-            if src.pixels[i + 3]:
+            sa = src.pixels[i + 3]
+            if sa == 255:
                 self.pixels[i:i + 4] = src.pixels[i:i + 4]
+            elif sa:
+                da = self.pixels[i + 3] * (255 - sa) / 255
+                out_a = sa + da
+                for c in range(3):
+                    self.pixels[i + c] = round((src.pixels[i + c] * sa + self.pixels[i + c] * da) / out_a)
+                self.pixels[i + 3] = round(out_a)
 
     def crop(self, x: int, y: int, w: int, h: int) -> "Image":
         out = Image.blank(w, h)
@@ -84,9 +92,6 @@ class Image:
 
     def copy(self) -> "Image":
         return Image(self.width, self.height, bytearray(self.pixels))
-
-    def part_transparent(self) -> int:
-        return sum(1 for i in range(3, len(self.pixels), 4) if self.pixels[i] not in (0, 255))
 
     def is_empty(self) -> bool:
         return not any(self.pixels[i] for i in range(3, len(self.pixels), 4))
@@ -241,7 +246,15 @@ def read_aseprite(data: bytes) -> tuple[int, int, list[AseLayer]]:
                     raise ValueError(f"layer {layers[index].name!r} has a short pixel stream")
             cel = Image(w, h, bytearray(payload[:w * h * 4]))
             if x < 0 or y < 0 or x + w > width or y + h > height:
-                raise ValueError(f"layer {layers[index].name!r} has art outside the {width}x{height} canvas")
+                # Editors leave a cel's box hanging off the canvas after a
+                # move; only drawn pixels out there are an error.
+                for cy in range(h):
+                    for cx in range(w):
+                        if cel.pixels[(cy * w + cx) * 4 + 3] and not (0 <= x + cx < width and 0 <= y + cy < height):
+                            raise ValueError(f"layer {layers[index].name!r} has art outside the {width}x{height} canvas")
+                left, top = max(0, -x), max(0, -y)
+                cel = cel.crop(left, top, min(w, width - x) - left, min(h, height - y) - top)
+                x, y = x + left, y + top
             full = Image.blank(width, height)
             full.blit(cel, x, y)
             layers[index].image = full
@@ -395,9 +408,22 @@ def build_family(row: Row, source: Path, sheet_name: str) -> Built | None:
             hframes = len(frames)
             if len(set(names)) != len(names):
                 raise SpriteError(f"{fam}: two layers share the state name {names}")
+        elif layout == "frames":
+            # Every layer is a whole frame on its own, with no base under
+            # it: the wax caps drawn over another cell, or the stages of a
+            # soil block crumbling away.
+            frames = [l.image.copy() for l in usable]
+            names = [_state_name(l.name) for l in usable]
+            hframes = len(frames)
+            if len(set(names)) != len(names):
+                raise SpriteError(f"{fam}: two layers share the state name {names}")
         elif layout == "single":
-            frames, names = [usable[0].image.copy()], ["frame"]
-            for l in usable[1:]:
+            # What the editor shows: hidden layers are offcuts and spares.
+            shown = [l for l in usable if l.visible]
+            if not shown:
+                raise SpriteError(f"{fam}: a single sprite needs at least one visible layer")
+            frames, names = [shown[0].image.copy()], ["frame"]
+            for l in shown[1:]:
                 frames[0].overlay(l.image)
         elif layout == "grid":
             sheet_layers = [l for l in usable if l.name == "sheet"]
@@ -423,9 +449,6 @@ def build_family(row: Row, source: Path, sheet_name: str) -> Built | None:
     if len(frames) != row.frames:
         raise SpriteError(f"{fam}: the file gives {len(frames)} frames but the table says {row.frames}")
     for name, f in zip(names, frames):
-        n = f.part_transparent()
-        if n:
-            raise SpriteError(f"{fam}: frame {name!r} has {n} part-transparent pixels (hard pixels only)")
         if layout == "grid" and not f.is_empty() and not f.border_clear():
             raise SpriteError(f"{fam}: frame {name!r} has art on the edge of its grid cell (leave 1 px clear)")
     if layout == "layers":

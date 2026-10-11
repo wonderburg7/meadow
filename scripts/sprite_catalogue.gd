@@ -6,7 +6,6 @@ extends RefCounted
 
 # wax_cell_nectar: nectar cell: empty cup, then seven fill levels
 const WAX_CELL_NECTAR_SHEET := preload("res://assets/sprites/comb/wax_cell_nectar_sheet.png")
-const WAX_CELL_NECTAR_FERMENTED_SHEET := preload("res://assets/sprites/comb/wax_cell_nectar_fermented_sheet.png")
 const WAX_CELL_NECTAR_FRAME_SIZE := Vector2i(32, 32)
 const WAX_CELL_NECTAR_CELL_GUTTER := 1
 const WAX_CELL_NECTAR_CELL_SIZE := Vector2i(34, 34)
@@ -15,7 +14,19 @@ const WAX_CELL_NECTAR_VFRAMES := 1
 const WAX_CELL_NECTAR_FRAMES: Array[String] = ["empty", "1", "2", "3", "4", "5", "6", "7"]
 const WAX_CELL_NECTAR_ANCHOR := Vector2(16.0, 22.0)
 const WAX_CELL_NECTAR_VIEW := "hive"
-const WAX_CELL_NECTAR_LEVELS: Array[int] = [10, 25, 40, 55, 70, 85, 100]
+const WAX_CELL_NECTAR_LEVELS: Array[int] = [17, 33, 50, 67, 83, 99, 100]
+
+# wax_cell_nectar_fermented: fermented nectar: empty cup, then seven fill levels
+const WAX_CELL_NECTAR_FERMENTED_SHEET := preload("res://assets/sprites/comb/wax_cell_nectar_fermented_sheet.png")
+const WAX_CELL_NECTAR_FERMENTED_FRAME_SIZE := Vector2i(32, 32)
+const WAX_CELL_NECTAR_FERMENTED_CELL_GUTTER := 1
+const WAX_CELL_NECTAR_FERMENTED_CELL_SIZE := Vector2i(34, 34)
+const WAX_CELL_NECTAR_FERMENTED_HFRAMES := 8
+const WAX_CELL_NECTAR_FERMENTED_VFRAMES := 1
+const WAX_CELL_NECTAR_FERMENTED_FRAMES: Array[String] = ["empty", "1", "2", "3", "4", "5", "6", "7"]
+const WAX_CELL_NECTAR_FERMENTED_ANCHOR := Vector2(16.0, 22.0)
+const WAX_CELL_NECTAR_FERMENTED_VIEW := "hive"
+const WAX_CELL_NECTAR_FERMENTED_LEVELS: Array[int] = [17, 33, 50, 67, 83, 99, 100]
 
 # wax_cell_pollen: pollen cell: empty cup, then five fill levels
 const WAX_CELL_POLLEN_SHEET := preload("res://assets/sprites/comb/wax_cell_pollen_sheet.png")
@@ -27,7 +38,78 @@ const WAX_CELL_POLLEN_VFRAMES := 1
 const WAX_CELL_POLLEN_FRAMES: Array[String] = ["empty", "1", "2", "3", "4", "5"]
 const WAX_CELL_POLLEN_ANCHOR := Vector2(16.0, 22.0)
 const WAX_CELL_POLLEN_VIEW := "hive"
-const WAX_CELL_POLLEN_LEVELS: Array[int] = [20, 40, 60, 80, 100]
+const WAX_CELL_POLLEN_LEVELS: Array[int] = [25, 50, 75, 99, 100]
+
+# wax_cell_honey: honey cell: empty cup, then seven fill levels
+const WAX_CELL_HONEY_SHEET := preload("res://assets/sprites/comb/wax_cell_honey_sheet.png")
+const WAX_CELL_HONEY_FRAME_SIZE := Vector2i(32, 32)
+const WAX_CELL_HONEY_CELL_GUTTER := 1
+const WAX_CELL_HONEY_CELL_SIZE := Vector2i(34, 34)
+const WAX_CELL_HONEY_HFRAMES := 8
+const WAX_CELL_HONEY_VFRAMES := 1
+const WAX_CELL_HONEY_FRAMES: Array[String] = ["Layer", "1", "2", "3", "4", "5", "6", "7"]
+const WAX_CELL_HONEY_ANCHOR := Vector2(16.0, 22.0)
+const WAX_CELL_HONEY_VIEW := "hive"
+const WAX_CELL_HONEY_LEVELS: Array[int] = [17, 33, 50, 67, 83, 99, 100]
+
+# wax_cell_royal_jelly: royal jelly cell: empty cup, then six fill levels
+const WAX_CELL_ROYAL_JELLY_SHEET := preload("res://assets/sprites/comb/wax_cell_royal_jelly_sheet.png")
+const WAX_CELL_ROYAL_JELLY_FRAME_SIZE := Vector2i(32, 32)
+const WAX_CELL_ROYAL_JELLY_CELL_GUTTER := 1
+const WAX_CELL_ROYAL_JELLY_CELL_SIZE := Vector2i(34, 34)
+const WAX_CELL_ROYAL_JELLY_HFRAMES := 7
+const WAX_CELL_ROYAL_JELLY_VFRAMES := 1
+const WAX_CELL_ROYAL_JELLY_FRAMES: Array[String] = ["empty", "1", "2", "3", "4", "5", "6"]
+const WAX_CELL_ROYAL_JELLY_ANCHOR := Vector2(16.0, 22.0)
+const WAX_CELL_ROYAL_JELLY_VIEW := "hive"
+const WAX_CELL_ROYAL_JELLY_LEVELS: Array[int] = [20, 40, 60, 80, 99, 100]
+
+# wax_cell_bee_bread: unfermented bee bread, filling and ripening: empty cup, then five fill levels
+const WAX_CELL_BEE_BREAD_SHEET := preload("res://assets/sprites/comb/wax_cell_bee_bread_sheet.png")
+const WAX_CELL_BEE_BREAD_FRAME_SIZE := Vector2i(32, 32)
+const WAX_CELL_BEE_BREAD_CELL_GUTTER := 1
+const WAX_CELL_BEE_BREAD_CELL_SIZE := Vector2i(34, 34)
+const WAX_CELL_BEE_BREAD_HFRAMES := 6
+const WAX_CELL_BEE_BREAD_VFRAMES := 1
+const WAX_CELL_BEE_BREAD_FRAMES: Array[String] = ["empty", "1", "2", "3", "4", "5"]
+const WAX_CELL_BEE_BREAD_ANCHOR := Vector2(16.0, 22.0)
+const WAX_CELL_BEE_BREAD_VIEW := "hive"
+const WAX_CELL_BEE_BREAD_LEVELS: Array[int] = [25, 50, 75, 99, 100]
+
+# wax_cell_bee_bread_ripe: ripe (fermented) bee bread: empty cup, then five fill levels
+const WAX_CELL_BEE_BREAD_RIPE_SHEET := preload("res://assets/sprites/comb/wax_cell_bee_bread_ripe_sheet.png")
+const WAX_CELL_BEE_BREAD_RIPE_FRAME_SIZE := Vector2i(32, 32)
+const WAX_CELL_BEE_BREAD_RIPE_CELL_GUTTER := 1
+const WAX_CELL_BEE_BREAD_RIPE_CELL_SIZE := Vector2i(34, 34)
+const WAX_CELL_BEE_BREAD_RIPE_HFRAMES := 6
+const WAX_CELL_BEE_BREAD_RIPE_VFRAMES := 1
+const WAX_CELL_BEE_BREAD_RIPE_FRAMES: Array[String] = ["empty", "1", "2", "3", "4", "5"]
+const WAX_CELL_BEE_BREAD_RIPE_ANCHOR := Vector2(16.0, 22.0)
+const WAX_CELL_BEE_BREAD_RIPE_VIEW := "hive"
+const WAX_CELL_BEE_BREAD_RIPE_LEVELS: Array[int] = [25, 50, 75, 99, 100]
+
+# wax_cell_larva: brood: empty cup, then nine growth stages, the last until the bee emerges
+const WAX_CELL_LARVA_SHEET := preload("res://assets/sprites/comb/wax_cell_larva_sheet.png")
+const WAX_CELL_LARVA_FRAME_SIZE := Vector2i(32, 32)
+const WAX_CELL_LARVA_CELL_GUTTER := 1
+const WAX_CELL_LARVA_CELL_SIZE := Vector2i(34, 34)
+const WAX_CELL_LARVA_HFRAMES := 10
+const WAX_CELL_LARVA_VFRAMES := 1
+const WAX_CELL_LARVA_FRAMES: Array[String] = ["empty", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+const WAX_CELL_LARVA_ANCHOR := Vector2(16.0, 22.0)
+const WAX_CELL_LARVA_VIEW := "hive"
+const WAX_CELL_LARVA_LEVELS: Array[int] = [11, 22, 33, 44, 56, 67, 78, 89, 100]
+
+# wax_cell_sealed: the wax cap going on, eight stages drawn over a full cell
+const WAX_CELL_SEALED_SHEET := preload("res://assets/sprites/comb/wax_cell_sealed_sheet.png")
+const WAX_CELL_SEALED_FRAME_SIZE := Vector2i(32, 32)
+const WAX_CELL_SEALED_CELL_GUTTER := 1
+const WAX_CELL_SEALED_CELL_SIZE := Vector2i(34, 34)
+const WAX_CELL_SEALED_HFRAMES := 8
+const WAX_CELL_SEALED_VFRAMES := 1
+const WAX_CELL_SEALED_FRAMES: Array[String] = ["1", "2", "3", "4", "5", "6", "7", "8"]
+const WAX_CELL_SEALED_ANCHOR := Vector2(16.0, 22.0)
+const WAX_CELL_SEALED_VIEW := "hive"
 
 # hive_skep: the straw skep, your hive in the meadow
 const HIVE_SKEP_SHEET := preload("res://assets/sprites/meadow/hive_skep_sheet.png")
@@ -50,3 +132,47 @@ const GRASS_BASE_VFRAMES := 1
 const GRASS_BASE_FRAMES: Array[String] = ["frame"]
 const GRASS_BASE_ANCHOR := Vector2(16.0, 16.0)
 const GRASS_BASE_VIEW := "meadow"
+
+# grass_block: full-height block with the grass top: the floor's top layer
+const GRASS_BLOCK_SHEET := preload("res://assets/sprites/meadow/grass_block_sheet.png")
+const GRASS_BLOCK_FRAME_SIZE := Vector2i(32, 32)
+const GRASS_BLOCK_CELL_GUTTER := 1
+const GRASS_BLOCK_CELL_SIZE := Vector2i(34, 34)
+const GRASS_BLOCK_HFRAMES := 1
+const GRASS_BLOCK_VFRAMES := 1
+const GRASS_BLOCK_FRAMES: Array[String] = ["frame"]
+const GRASS_BLOCK_ANCHOR := Vector2(16.0, 9.0)
+const GRASS_BLOCK_VIEW := "meadow"
+
+# grass_block_half: half-height block with the grass top
+const GRASS_BLOCK_HALF_SHEET := preload("res://assets/sprites/meadow/grass_block_half_sheet.png")
+const GRASS_BLOCK_HALF_FRAME_SIZE := Vector2i(32, 32)
+const GRASS_BLOCK_HALF_CELL_GUTTER := 1
+const GRASS_BLOCK_HALF_CELL_SIZE := Vector2i(34, 34)
+const GRASS_BLOCK_HALF_HFRAMES := 1
+const GRASS_BLOCK_HALF_VFRAMES := 1
+const GRASS_BLOCK_HALF_FRAMES: Array[String] = ["frame"]
+const GRASS_BLOCK_HALF_ANCHOR := Vector2(16.0, 16.0)
+const GRASS_BLOCK_HALF_VIEW := "meadow"
+
+# soil_block: full-height soil block under the top layer, breaking down: frames 1, 2, 4, 5 (5 whole)
+const SOIL_BLOCK_SHEET := preload("res://assets/sprites/meadow/soil_block_sheet.png")
+const SOIL_BLOCK_FRAME_SIZE := Vector2i(32, 32)
+const SOIL_BLOCK_CELL_GUTTER := 1
+const SOIL_BLOCK_CELL_SIZE := Vector2i(34, 34)
+const SOIL_BLOCK_HFRAMES := 4
+const SOIL_BLOCK_VFRAMES := 1
+const SOIL_BLOCK_FRAMES: Array[String] = ["1", "2", "4", "5"]
+const SOIL_BLOCK_ANCHOR := Vector2(16.0, 9.0)
+const SOIL_BLOCK_VIEW := "meadow"
+
+# soil_block_half: half-height soil block under the top layer
+const SOIL_BLOCK_HALF_SHEET := preload("res://assets/sprites/meadow/soil_block_half_sheet.png")
+const SOIL_BLOCK_HALF_FRAME_SIZE := Vector2i(32, 32)
+const SOIL_BLOCK_HALF_CELL_GUTTER := 1
+const SOIL_BLOCK_HALF_CELL_SIZE := Vector2i(34, 34)
+const SOIL_BLOCK_HALF_HFRAMES := 1
+const SOIL_BLOCK_HALF_VFRAMES := 1
+const SOIL_BLOCK_HALF_FRAMES: Array[String] = ["frame"]
+const SOIL_BLOCK_HALF_ANCHOR := Vector2(16.0, 16.0)
+const SOIL_BLOCK_HALF_VIEW := "meadow"

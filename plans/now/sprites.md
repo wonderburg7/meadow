@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-5 -- the skep in the meadow, specified below and queued (SP-1 to SP-4 landed); SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: SP-5 -- the skep in the meadow, specified below and queued (SP-1 to SP-4 and SP-7 landed); SP-6 waits for Dave's repacked forager sheet; SP-8, the block terrain, needs Dave's answers below before it can be cut | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-10
 
 ## Objective
 
@@ -81,6 +81,7 @@ Verified 9 Oct 2026 against master and the main checkout:
 | --- | --- | --- | --- | --- |
 | SP-5 | the skep in the meadow, and the rival hive as a recoloured skep | `scripts/hive.gd`, `scripts/rival_hive.gd`, the sprite table and catalogue, tests | yes -- Claude lane (SP-4 landed 11 Oct 2026) | medium |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for Dave's repacked sheet | high (per-bee hot path) |
+| SP-8 | the meadow floor built from stacked grass and soil blocks | the meadow ground drawing, tests | no -- the open questions in its section first | high (meadow-wide drawing, flower placement) |
 
 Dependencies: SP-2 -> SP-4 -> SP-5 -> SP-6 (SP-1 and SP-3 landed 9 Oct 2026).
 
@@ -89,6 +90,10 @@ SP-1 shipped 2026-10-09; its specification is `plans/archive/SP-1_2026-10-09.md`
 SP-2 shipped 2026-10-10; its specification is `plans/archive/SP-2_2026-10-10.md`.
 
 SP-4 shipped 2026-10-11; its specification is `plans/archive/SP-4_2026-10-11.md`.
+
+SP-7 (the whole comb drawn from Dave's cell art: honey, jelly, larva, both
+bee breads, fermented nectar and the wax caps) shipped 2026-10-12 as ad-hoc
+work on Dave's request; its record is `plans/archive/SP-7_2026-10-12.md`.
 
 ## SP-5 -- the skep in the meadow, and the rival hive
 
@@ -109,6 +114,33 @@ SP-4 shipped 2026-10-11; its specification is `plans/archive/SP-4_2026-10-11.md`
 - Proof: `present: scripts/hive.gd :: extends Polygon2D`
 - Next after: SP-6 -- meadow foragers drawn from the sheet: eight directions, flapping wings
 ```
+
+## SP-8 -- the meadow floor from stacked blocks (not yet cut)
+
+Dave drew full and half-height grass blocks and soil blocks (10-11 Oct
+2026), exported as `grass_block`, `grass_block_half`, `soil_block` (four
+crumbling stages: 5 whole, 4, 2, 1) and `soil_block_half`. His rules
+(12 Oct 2026):
+
+- Grass blocks are not animated. The top layer is a grass block whose top
+  face is the floor, at height 0 (or a block's height above or below it);
+  flowers grow on it.
+- Blocks stack, full or half height. Only the top layer has the grass top;
+  the layers under it are soil blocks or half soil blocks.
+- A soil block breaks down from stage 5 to nothing, and the bare soil of
+  the block under it shows through.
+- Geometry: each block's anchor is the middle of its top face. A full
+  block's side is 14 art px and a half block's 7, so each block in a stack
+  draws that much higher than the one below.
+
+Open questions for Dave before this is cut:
+
+1. What digs or breaks a soil block (bees, the player, an event), and does
+   it change the simulation or only the look?
+2. Is height part of the simulation (flight, flower reach, water) or
+   drawing only?
+3. Does the existing flat `grass_base` tile go once the blocks cover the
+   meadow?
 
 ## SP-6 -- meadow foragers drawn from the sheet
 

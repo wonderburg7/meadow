@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PP-3` (`codex/PP-3`) | Codex | Gyne rearing gates gyne cells and Royal jelly gates jelly | Codex | in progress | none | `plans/now/pollination.md` PP-3 -- Gyne rearing gates gyne cells and Royal jelly gates jelly |
 | `.worktrees/RR-3` (`claude/RR-3`) | Claude | A new run from the menu gets its own default name | Claude | in progress | none | `plans/now/run-repairs.md` RR-3 -- a new run from the menu gets its own default name |
-| `.claude/worktrees/sprite-layer-config-271fee` (`claude/sprite-layer-config-271fee`) | Claude | Dave's new comb and block art: table rows, exporter layouts, and the comb drawn from it (ad-hoc, Dave 12 Oct 2026) | Claude | in progress | none | `plans/now/sprites.md` SP-7 -- the whole comb drawn from Dave's cell art |

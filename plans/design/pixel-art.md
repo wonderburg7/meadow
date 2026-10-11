@@ -1,7 +1,7 @@
 # Pixel art -- scale, sizes and conventions for every sprite
 
 <!-- CONTEXT: plan | LAYER: design -->
-Status: agreed art direction, built by `plans/now/sprites.md` | Owner: Dave | Next: Dave draws against the size tables below; SP-2 builds the exporter that enforces the conventions | Dependency: none | Verified: 2026-10-09
+Status: agreed art direction, built by `plans/now/sprites.md` | Owner: Dave | Next: Dave draws against the size tables below; the SP-2 exporter enforces the conventions | Dependency: none | Verified: 2026-10-12
 
 What any new sprite must match so the game keeps one pixel style. Dave
 reads the size tables when drawing in Resprite. A session reads the
@@ -90,11 +90,17 @@ than 15 px covers its neighbour more than today's circle does.
 - **Layer sprites** (cells): the bottom layer is the base, drawn under
   every other layer. Each other layer is one state, named
   `<family>.<state>`. Layer visibility does not matter.
+- **Frame-per-layer sprites** (overlays and stages: the wax caps, a soil
+  block crumbling): each layer is a whole frame with no base under it.
+- **Single sprites** made of layers flatten the visible layers; hidden ones
+  are left out.
 - **Grid sprites** (directions, animation): one layer named `sheet`, with
   frames on a fixed grid (16x16 or 24x24). Every frame is centred on the
   same body point and has at least 1 px of empty space around the art.
 - Layers whose names start with `_` are guides and are ignored.
-- Hard pixels only: no part-transparent pixels, no anti-aliasing.
+- No anti-aliasing. Translucency is allowed where it is the material
+  (honey, the thin middle of a wax cap going on); the exporter blends it
+  over the base (Dave's art, 12 Oct 2026).
 - Each family gets one row in the sprite table (assets/sprites/SPRITES.md,
   created by SP-2). The row gives: file, what it shows, view, layout
   (layers, or grid + row order by direction name), level bounds, anchor
@@ -105,9 +111,10 @@ than 15 px covers its neighbour more than today's circle does.
 ## Art still to draw (Dave)
 
 - In-hive bees: worker 16x16, drone/gyne/queen 24x24.
-- Cup layers: honey (wet to ripe), brood stages, royal jelly, corpse and
-  bee bread.
-- Soil, bedrock, floor and tunnel tiles on the 32x32 cup template.
+- Cup layers: corpse. (Honey, brood, royal jelly, both bee breads and the
+  wax caps were drawn on 10 Oct 2026.)
+- Bedrock, floor and tunnel tiles on the 32x32 cup template. (Soil and
+  grass blocks, full and half height, were drawn on 10-11 Oct 2026.)
 - A flower per species (20x20).
 - Trees (32/40/48).
 - Crab spider (8x8).

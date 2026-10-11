@@ -35,18 +35,20 @@ class FillSprites(unittest.TestCase):
         nectar = levels("WAX_CELL_NECTAR")
         self.assertEqual(fill_frame(nectar, 0.0), 0)
         self.assertEqual(fill_frame(nectar, 0.01), 1)
-        self.assertEqual(fill_frame(nectar, 0.10), 1)
-        self.assertEqual(fill_frame(nectar, 0.11), 2)
+        self.assertEqual(fill_frame(nectar, 0.17), 1)
+        self.assertEqual(fill_frame(nectar, 0.18), 2)
+        self.assertEqual(fill_frame(nectar, 0.99), len(nectar) - 1)
         self.assertEqual(fill_frame(nectar, 1.0), len(nectar))
         pollen = levels("WAX_CELL_POLLEN")
-        self.assertEqual(fill_frame(pollen, 0.5), 3)
+        self.assertEqual(fill_frame(pollen, 0.5), 2)
+        self.assertEqual(fill_frame(pollen, 0.51), 3)
         self.assertEqual(fill_frame(pollen, 1.0), 5)
 
     def test_gdscript_matches_the_rule(self):
         self.assertIn("percent <= float(levels[i])", CELL)
         self.assertIn("if fraction <= 0.0:\r\n\t\treturn 0" if "\r\n" in CELL else "if fraction <= 0.0:\n\t\treturn 0", CELL)
 
-    def test_fermented_variant_and_no_flat_body(self):
+    def test_fermented_art_and_no_flat_body(self):
         self.assertIn("WAX_CELL_NECTAR_FERMENTED_SHEET", CAT)
         self.assertIn('art_sheet = "fermented"', CELL)
         self.assertTrue((ROOT / "assets/sprites/comb/wax_cell_nectar_fermented_sheet.png").exists())
@@ -57,7 +59,7 @@ class FillSprites(unittest.TestCase):
         self.assertRegex(CELL, r"if key == _art_key:\s+return")
 
     def test_tip_names_filled_cells(self):
-        self.assertIn("nectar and pollen fill levels", SETTINGS)
+        self.assertIn("how full each store is", SETTINGS)
 
 
 if __name__ == "__main__":

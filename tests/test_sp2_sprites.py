@@ -121,11 +121,13 @@ class ExporterTests(RepoFixture):
         self.assertEqual(self.run_tool(), 1)
         self.assertTrue(any("not use" in line for line in self.out), self.out)
 
-    def test_part_transparent_pixels_fail(self):
+    def test_part_transparent_pixels_blend_over_the_base(self):
+        # SP-7: Dave's honey and wax caps are translucent on purpose.
         self.write_cell(solid(2, 2, (255, 0, 0, 128)))
         self.write_table(self.ROW)
-        self.assertEqual(self.run_tool(), 1)
-        self.assertTrue(any("part-transparent" in line for line in self.out), self.out)
+        self.assertEqual(self.run_tool(), 0, self.out)
+        sheet = sprites.decode_png((self.sprites / "comb" / "thing_sheet.png").read_bytes())
+        self.assertEqual(sheet.get(6 + 2, 2), bytes((128, 0, 127, 255)))
 
     def test_frame_count_must_match_the_table(self):
         self.write_cell()
@@ -179,8 +181,8 @@ class RepoTests(unittest.TestCase):
 
     def test_the_cell_sheets_hold_the_plan_levels(self):
         cat = (ROOT / "scripts" / "sprite_catalogue.gd").read_text(encoding="utf-8")
-        self.assertIn("const WAX_CELL_NECTAR_LEVELS: Array[int] = [10, 25, 40, 55, 70, 85, 100]", cat)
-        self.assertIn("const WAX_CELL_POLLEN_LEVELS: Array[int] = [20, 40, 60, 80, 100]", cat)
+        self.assertIn("const WAX_CELL_NECTAR_LEVELS: Array[int] = [17, 33, 50, 67, 83, 99, 100]", cat)
+        self.assertIn("const WAX_CELL_POLLEN_LEVELS: Array[int] = [25, 50, 75, 99, 100]", cat)
         self.assertIn("const WAX_CELL_NECTAR_HFRAMES := 8", cat)
 
     def test_the_empty_cup_is_the_retired_pngs_pixels(self):
