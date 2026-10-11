@@ -1,7 +1,7 @@
 # Guidance explanations -- turn colony facts into a causal player answer
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: GD-2b -- the shown ledger and Why history saved with the run, gated (GD-2a landed 10 Oct 2026; hands-on check C-122) | Dependency: CD-2 provides the missing-workforce and blocked-work facts; GD-2b waits for the save files to be free of Claude-lane slices, and PP-1 (Claude lane) holds them now | Verified: 2026-10-10
+Status: active | Owner: Dave / Codex | Next: GD-2b -- the shown ledger and Why history saved with the run, in the Codex backlog (GD-2a landed 10 Oct 2026; hands-on check C-122) | Dependency: CD-2 provides the missing-workforce and blocked-work facts; GD-2b needs the save files free of Claude-lane slices, which they are since PP-1 landed 11 Oct 2026; PP-4 (Claude backlog) holds them next | Verified: 2026-10-11
 
 ## Objective
 
@@ -52,14 +52,14 @@ save boundary stand as written above. With them:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| GD-2b | the shown ledger and Why history saved with the run | `scripts/guidance_policy.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | no -- after GD-2a, and while no Claude-lane slice holds the save files | medium |
+| GD-2b | the shown ledger and Why history saved with the run | `scripts/guidance_policy.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- Codex backlog, while no Claude-lane slice holds the save files (PP-1 released them 11 Oct 2026) | medium |
 
 GD-1 shipped 2026-10-09; its specification is `plans/archive/GD-1_2026-10-09.md`.
 
 **Dependencies.** GD-2a shares no file with the Claude lane. GD-2b needs
-`save_game.gd` and `saving.gd`, which BB-2 released on 10 Oct 2026 and PP-1,
+`save_game.gd` and `saving.gd`, which PP-1 released on 11 Oct 2026 and
 PP-4 and PP-5 (`plans/now/pollination.md`) will hold later; it is admissible only in a
-gap between them, or moves to the Claude lane if none opens.
+gap between them (one is open now), or moves to the Claude lane if none opens.
 
 **Reads.** A slice reads its own section and the decision record above;
 `plans/reference/colony-diagnostics.md` for the facts' meaning.
@@ -74,7 +74,7 @@ GD-2a shipped 2026-10-10; its specification is `plans/archive/GD-2a_2026-10-10.m
 with the run and restored, so a reload neither replays an introduction nor
 loses history (row 2, row 3). A save without them loads an empty ledger.
 
-```queue-gated
+```queue
 **[Codex] GD-2b -- the shown ledger and Why history saved with the run**
 - Plan: `plans/now/guidance-explanations.md` -- "GD-2b -- the shown ledger and Why history saved with the run"
 - Files: `scripts/guidance_policy.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_gd2b_guidance_saved.py`
@@ -85,4 +85,4 @@ loses history (row 2, row 3). A save without them loads an empty ledger.
 
 ## Not in the queue, and why
 
-- **GD-2b** waits for the save files to be free of Claude-lane slices: PP-1 (leading the Claude lane) holds them now, and PP-4 and PP-5 hold them later. GD-2a landed 10 Oct 2026.
+- None: GD-2b's gate cleared when PP-1 released the save files (11 Oct 2026).
