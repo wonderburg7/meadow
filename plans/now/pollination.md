@@ -47,7 +47,6 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-1 | bees earn Pollinator Points and Contribution; flowers count compatible and incompatible pollen | `scripts/pollination.gd`, `scripts/main.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/debug_panel.gd`, tests | yes -- leads the Claude lane (T2-6 and BB-4 landed 11 Oct 2026) | high |
 | PP-2 | points are spendable and shown, with a +1 at the flower | `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, tests | no -- after PP-1 | medium |
 | PP-3 | Gyne rearing gates gyne cells and Royal jelly gates jelly | `scripts/roles.gd`, `scripts/actions.gd`, `scripts/orders_zones.gd`, `scripts/run_availability.gd`, tests | yes -- Codex lane | medium |
 | PP-4 | seed set: pollinated flowers replant nearby and the meadow remembers through winter | `scripts/flower.gd`, `scripts/world_building.gd`, `scripts/flower_species.gd`, `scripts/pollination.gd`, `scripts/levels.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | no -- after PP-1 | high |
@@ -70,49 +69,7 @@ decisions (`python tools/heading.py plans/design/product-scope.md "10.
 Pollination and ecology"`), and `.claude/rules/performance.md` for PP-1,
 PP-2 and PP-4, which touch a per-visit path.
 
-## PP-1 -- bees earn Pollinator Points and Contribution
-
-<!-- LAYER: immediate-task -->
-
-**Owner of the ledger.** A new `scripts/pollination.gd`, created and saved
-by `main.gd` exactly as `colony_milestones.gd` is: spendable `points`,
-never-spent `contribution`, and the `points_earned` signal PP-2's "+1"
-listens to. It is the only writer of both counters. Flowers own their own
-pollen counts; bees own only their trip's last flower.
-
-**Change.**
-
-1. `bee.gd`: `trip_last_flower`, cleared whenever the bee enters the hive
-   (she grooms her pollen off) and not saved -- a load starts a fresh trip.
-2. `bee_foraging.gd::finish_collecting`: if `trip_last_flower` is another
-   flower of the same species, this flower takes one compatible delivery
-   (`flower.compatible_visits`) and `contribution` rises by one; if it is a
-   flower of another species, this flower takes one incompatible delivery.
-   A compatible delivery earns one point only while the colony owns
-   Pollinator points and only when `Session.sim_time` has reached the
-   flower's `award_ready_at`, which is then set to the flower's refill time
-   (`seconds_until_full` for the resource taken, as `flower_cooldowns`
-   uses). Then `trip_last_flower` becomes this flower. Once per finished
-   visit; nothing per frame.
-3. `skills.gd`: Pollinator points gains an `enable_behaviour` effect
-   (`pollinator_points_on`) read through a `pollination.gd` helper in the
-   `tarsal_markers_on()` pattern, and its status becomes `existing`.
-4. `flower.gd`: `compatible_visits`, `incompatible_visits`,
-   `award_ready_at`, saved with the flower; a save without them loads zero.
-5. `debug_panel.gd`: points and contribution in the developer readout.
-
-**Must not change.** Foraging choice, handling and yields; any run's
-behaviour while Pollinator points is unowned except the two flower counts
-and Contribution.
-
-```queue
-**[Claude] PP-1 -- bees earn Pollinator Points and Contribution**
-- Plan: `plans/now/pollination.md` -- "PP-1 -- bees earn Pollinator Points and Contribution"
-- Files: `scripts/pollination.gd`, `scripts/main.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/debug_panel.gd`, `tests/test_pp1_pollination_ledger.py`, `test_scenarios/pp1_pollination_ledger.json`
-- Check: `python -m unittest tests.test_pp1_pollination_ledger` passes (two same-species flowers in one trip earn one point only once Pollinator points is owned and not again from that flower until it has refilled; a trip's first flower earns nothing; arriving from another species counts one incompatible delivery; Contribution rises whether or not the skill is owned; the counters and flower counts survive save and restore); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/flower.gd :: compatible_visits`
-- Next after: PP-2 -- points are spendable and shown, with a +1 at the flower
-```
+PP-1 shipped 2026-10-11; its specification is `plans/archive/PP-1_2026-10-11.md`.
 
 ## PP-2 -- points are spendable and shown, with a +1 at the flower
 
