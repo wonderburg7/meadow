@@ -413,29 +413,29 @@ The headless verbs, `when` clauses and layout assertions.
 1648 static func _log(do: String, target_desc: String, result: String, reason: String) -> void
 ```
 
-## settings_catalogue.gd (1,575 lines)
+## settings_catalogue.gd (1,578 lines)
 
 Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
 
 ```
 22   # --- preloads and collection order --------------------------------
 48   # --- the tunables table -------------------------------------------
-1450 # --- settings owned by Session ------------------------------------
-1464 # --- reading and writing a setting --------------------------------
-1465 static func setting_get(key: String)
-1468 static func setting_set(key: String, value) -> void
-1475 # --- resetting ----------------------------------------------------
-1492 static func reset_config_to_defaults() -> void
-1504 static func reset_config_keys(keys: Array) -> void
-1510 # --- applying a setting with its cascades -------------------------
-1519 static func apply_setting(key: String, value) -> void
-1530 # --- the cascade helpers ------------------------------------------
-1535 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1553 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1567 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+1453 # --- settings owned by Session ------------------------------------
+1467 # --- reading and writing a setting --------------------------------
+1468 static func setting_get(key: String)
+1471 static func setting_set(key: String, value) -> void
+1478 # --- resetting ----------------------------------------------------
+1495 static func reset_config_to_defaults() -> void
+1507 static func reset_config_keys(keys: Array) -> void
+1513 # --- applying a setting with its cascades -------------------------
+1522 static func apply_setting(key: String, value) -> void
+1533 # --- the cascade helpers ------------------------------------------
+1538 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1556 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1570 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
-## bee_foraging.gd (1,497 lines)
+## bee_foraging.gd (1,517 lines)
 
 The forager's search, scouting, recruitment and species-preference
 behaviour.
@@ -481,44 +481,46 @@ behaviour.
 599  # --- skill-or-setting behaviour switches ---------------------------
 604  static func adaptive_constancy_on() -> bool
 608  static func tarsal_markers_on() -> bool
-611  static func orientation_flight_on() -> bool
-615  # --- accepting or rejecting a flower ------------------------------
-616  static func worth_feeding(bee: Node2D, f: Node2D) -> bool
-629  static func reject_flower(bee: Node2D) -> void
-647  # --- collecting ---------------------------------------------------
-648  static func start_collecting(bee: Node2D) -> void
-721  static func _handling_experience_scale(bee: Node2D, species: String) -> float
-730  static func collect(bee: Node2D, delta: float) -> void
-779  static func finish_collecting(bee: Node2D) -> void
-818  # --- entering the hive and depositing -----------------------------
-822  static func enter_hive(bee: Node2D) -> void
-849  static func approach_cell(bee: Node2D, cell: Node2D, delta: float) -> int
-864  static func release_cell_slot(bee: Node2D) -> void
-871  static func go_to_deposit_cell(bee: Node2D, delta: float) -> void
-961  static func finish_depositing(bee: Node2D) -> void
-1001 static func _after_delivery_state(bee: Node2D) -> int
-1012 static func _resume_own_job_if_indoors(bee: Node2D) -> bool
-1020 # --- scoring a trip -----------------------------------------------
-1025 static func _score_trip(bee: Node2D) -> void
-1103 # --- leaving the hive ---------------------------------------------
-1104 static func go_to_exit(bee: Node2D, delta: float) -> void
-1148 static func _entrance_wait_spot(bee: Node2D, side: int) -> Vector2
-1160 static func _leave_hive_and_resume(bee: Node2D) -> void
-1187 static func _send_to_scout_point(bee: Node2D) -> void
-1198 # --- scouting -----------------------------------------------------
-1204 static func start_scouting(bee: Node2D) -> void
-1222 # --- waiting at the entrance --------------------------------------
-1227 static func wait_at_entrance(bee: Node2D, delta: float) -> void
-1331 # --- the recruitment dance ----------------------------------------
-1339 static func _update_dance_eligibility(bee: Node2D) -> void
-1362 static func leave_recruitment(bee: Node2D) -> void
-1384 static func check_dance_proximity(bee: Node2D, _delta: float) -> void
-1409 static func _start_dance(mentor: Node2D, seeker: Node2D) -> void
-1429 static func dance(bee: Node2D, delta: float) -> void
-1441 static func _end_dance(bee: Node2D) -> void
-1463 static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void
-1490 # --- remote deposit -----------------------------------------------
-1492 static func deposit_everything_remotely(bee: Node2D) -> void
+611  static func handling_experience_on() -> bool
+618  static func record_species_visit(bee: Node2D, species: String) -> void
+631  static func orientation_flight_on() -> bool
+635  # --- accepting or rejecting a flower ------------------------------
+636  static func worth_feeding(bee: Node2D, f: Node2D) -> bool
+649  static func reject_flower(bee: Node2D) -> void
+667  # --- collecting ---------------------------------------------------
+668  static func start_collecting(bee: Node2D) -> void
+741  static func _handling_experience_scale(bee: Node2D, species: String) -> float
+750  static func collect(bee: Node2D, delta: float) -> void
+799  static func finish_collecting(bee: Node2D) -> void
+838  # --- entering the hive and depositing -----------------------------
+842  static func enter_hive(bee: Node2D) -> void
+869  static func approach_cell(bee: Node2D, cell: Node2D, delta: float) -> int
+884  static func release_cell_slot(bee: Node2D) -> void
+891  static func go_to_deposit_cell(bee: Node2D, delta: float) -> void
+981  static func finish_depositing(bee: Node2D) -> void
+1021 static func _after_delivery_state(bee: Node2D) -> int
+1032 static func _resume_own_job_if_indoors(bee: Node2D) -> bool
+1040 # --- scoring a trip -----------------------------------------------
+1045 static func _score_trip(bee: Node2D) -> void
+1123 # --- leaving the hive ---------------------------------------------
+1124 static func go_to_exit(bee: Node2D, delta: float) -> void
+1168 static func _entrance_wait_spot(bee: Node2D, side: int) -> Vector2
+1180 static func _leave_hive_and_resume(bee: Node2D) -> void
+1207 static func _send_to_scout_point(bee: Node2D) -> void
+1218 # --- scouting -----------------------------------------------------
+1224 static func start_scouting(bee: Node2D) -> void
+1242 # --- waiting at the entrance --------------------------------------
+1247 static func wait_at_entrance(bee: Node2D, delta: float) -> void
+1351 # --- the recruitment dance ----------------------------------------
+1359 static func _update_dance_eligibility(bee: Node2D) -> void
+1382 static func leave_recruitment(bee: Node2D) -> void
+1404 static func check_dance_proximity(bee: Node2D, _delta: float) -> void
+1429 static func _start_dance(mentor: Node2D, seeker: Node2D) -> void
+1449 static func dance(bee: Node2D, delta: float) -> void
+1461 static func _end_dance(bee: Node2D) -> void
+1483 static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void
+1510 # --- remote deposit -----------------------------------------------
+1512 static func deposit_everything_remotely(bee: Node2D) -> void
 ```
 
 ## hive_cell.gd (1,364 lines)
@@ -1005,35 +1007,35 @@ restart.
 1143 func _restart() -> void
 ```
 
-## game_config.gd (987 lines)
+## game_config.gd (991 lines)
 
 The balance fields.
 
 ```
 8    # --- world ---
 30   # --- flowers (per-species values are in flower.gd; these scale them) ---
-412  # --- foraging ---
-421  # --- hive ---
-448  # --- the nursery zone ---
-509  # --- eating ---
-517  # --- flight ---
-548  # --- gynes ---
-563  # --- royal jelly ---
-573  # --- bee bread (BB-1) ---
-587  # --- bee bread nursing and a worker's outcome (BB-2) ---
-606  # --- weather ---
-624  # --- warnings ---
-633  # --- honey ---
-677  # --- comb building ---
-697  # --- hive geometry ---
-726  # --- bee life ---
-731  # --- bee individuality ---
-810  # --- the rival colony ---
-859  # --- seasons ---
-891  # --- disease ---
-930  # --- gynes leaving ---
-942  # --- nuptial flights ---
-950  # --- winter ---
+416  # --- foraging ---
+425  # --- hive ---
+452  # --- the nursery zone ---
+513  # --- eating ---
+521  # --- flight ---
+552  # --- gynes ---
+567  # --- royal jelly ---
+577  # --- bee bread (BB-1) ---
+591  # --- bee bread nursing and a worker's outcome (BB-2) ---
+610  # --- weather ---
+628  # --- warnings ---
+637  # --- honey ---
+681  # --- comb building ---
+701  # --- hive geometry ---
+730  # --- bee life ---
+735  # --- bee individuality ---
+814  # --- the rival colony ---
+863  # --- seasons ---
+895  # --- disease ---
+934  # --- gynes leaving ---
+946  # --- nuptial flights ---
+954  # --- winter ---
 ```
 
 ## main_menu.gd (728 lines)
