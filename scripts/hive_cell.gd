@@ -41,6 +41,19 @@ const EMPTY_COLOR := Color(0.85, 0.78, 0.55)
 const EMPTY_TEXTURE := SpriteCatalogue.WAX_CELL_NECTAR_SHEET
 const EMPTY_FRAME_SIZE := SpriteCatalogue.WAX_CELL_NECTAR_FRAME_SIZE
 
+## SP-4. Which sheet and frame a nectar or pollen cell shows at `fraction`
+## full, from the catalogue's level bounds (percent, rising): the first level
+## whose bound is at least the fill, frame 0 (the empty cup) at nothing.
+## Returns the frame index, or -1 for a fill with no art.
+static func fill_frame(levels: Array, fraction: float) -> int:
+	if fraction <= 0.0:
+		return 0
+	var percent: float = fraction * 100.0
+	for i in levels.size():
+		if percent <= float(levels[i]) + 0.0001:
+			return i + 1
+	return levels.size()
+
 ## Where the actual hex "floor" -- the silhouette that has to land on the
 ## grid's own hex, three-sided front wall included -- is centred within
 ## the 32x32 frame: the table's anchor row (y 22, the middle of the 16-tall
@@ -259,6 +272,9 @@ var cell_size: float = 17.0
 ## Cached when the empty-cell sprite is built so its raised cup outline uses
 ## the same screen-space scale as the sprite itself.
 var empty_scale: float = 1.0
+## SP-4. "<sheet>:<frame>" of what `empty_sprite` last showed, so `_refresh`
+## touches the texture only when the art actually changes.
+var _art_key: String = ""
 ## Cached from `Session.use_sprite_hex_grid` in `_ready` -- read once, not
 ## live, since the hive's whole grid is laid out on Restart Run (see the
 ## note on that Session field).
@@ -1213,16 +1229,23 @@ func _refresh() -> void:
 		)
 
 	empty_sprite.visible = false
+	var art_sheet: String = ""
+	var art_frame: int = 0
 	match content_type:
 		"nectar":
 			color = NECTAR_COLOR
 			info_label.text = "N%d" % int(round(amount))
+			art_sheet = "nectar"
+			art_frame = fill_frame(SpriteCatalogue.WAX_CELL_NECTAR_LEVELS, fill_fraction())
 			if is_fermented():
 				color = FERMENTED_NECTAR_COLOR
+				art_sheet = "fermented"
 				if Session.colour_blind_mode:
 					info_label.text = "sour " + info_label.text
 		"pollen":
 			color = POLLEN_COLOR
+			art_sheet = "pollen"
+			art_frame = fill_frame(SpriteCatalogue.WAX_CELL_POLLEN_LEVELS, fill_fraction())
 			info_label.text = "P%d" % int(round(amount))
 		"jelly":
 			color = JELLY_COLOR
@@ -1262,7 +1285,8 @@ func _refresh() -> void:
 			# setting's on; either way EMPTY_COLOR stays set underneath so
 			# switching it off mid-run needs nothing else touched.
 			color = EMPTY_COLOR
-			empty_sprite.visible = Session.use_cell_sprites
+			if Session.use_cell_sprites:
+				_show_fill_art("nectar", 0)
 			# an empty cell reserved for something still says so, otherwise
 			# you can't tell a reserved cell from an unused one
 			if keep_empty:
@@ -1295,17 +1319,45 @@ func _refresh() -> void:
 	if not over.is_empty():
 		color = over[0]
 		fill_shape.visible = false
+		empty_sprite.visible = false
 		outline.visible = true
 		outline.default_color = Color(0.12, 0.12, 0.14, 0.8)
 		info_label.text = str(over[1])
 		closed_mark.visible = is_closed or fill_then_close
 		return
 
-	_apply_fill_shading()
+	if art_sheet != "" and Session.use_cell_sprites:
+		_show_fill_art(art_sheet, art_frame)
+		fill_shape.visible = false
+		# The sprite is the whole cell: no flat body behind it.
+		color = Color(color.r, color.g, color.b, 0.0)
+	else:
+		_apply_fill_shading()
 	closed_mark.visible = is_closed or fill_then_close
 	closed_mark.default_color = (
 		Color(0.1, 0.1, 0.12, 0.9) if is_closed else Color(0.95, 0.95, 0.4, 0.85)
 	)
+
+## SP-4. Points `empty_sprite` at a nectar, fermented-nectar or pollen frame
+## and shows it. All three sheets share one frame size and anchor, so only
+## the texture and its column count change, and only when the frame does.
+func _show_fill_art(sheet: String, frame: int) -> void:
+	empty_sprite.visible = true
+	var key := "%s:%d" % [sheet, frame]
+	if key == _art_key:
+		return
+	_art_key = key
+	match sheet:
+		"pollen":
+			empty_sprite.texture = SpriteCatalogue.WAX_CELL_POLLEN_SHEET
+			empty_sprite.hframes = SpriteCatalogue.WAX_CELL_POLLEN_HFRAMES
+		"fermented":
+			empty_sprite.texture = SpriteCatalogue.WAX_CELL_NECTAR_FERMENTED_SHEET
+			empty_sprite.hframes = SpriteCatalogue.WAX_CELL_NECTAR_HFRAMES
+		_:
+			empty_sprite.texture = SpriteCatalogue.WAX_CELL_NECTAR_SHEET
+			empty_sprite.hframes = SpriteCatalogue.WAX_CELL_NECTAR_HFRAMES
+	empty_sprite.frame = frame
 
 ## A one-character tag for what the cell is reserved for, shown when
 ## colour-blind labels are on. "·" for an unreserved cell would be noise,

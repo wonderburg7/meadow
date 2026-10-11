@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-4 -- nectar and pollen fill levels, specified below and queued third in the Claude lane (SP-1, SP-2 and SP-3 landed); SP-5 is specified here and gets its block when SP-4 lands; SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: SP-5 -- the skep in the meadow, specified below and queued (SP-1 to SP-4 landed); SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-10
 
 ## Objective
 
@@ -71,13 +71,15 @@ Verified 9 Oct 2026 against master and the main checkout:
 - Measured OKLab distance between the new pollen orange and today's
   `HONEY_COLOR` is 0.08, which reads as the same colour. Nectar lime to
   `FERMENTED_NECTAR_COLOR` is 0.28, which reads as distinct.
+- SP-4 found the nectar cell art's liquid is dark green (72, 121, 8), not the
+  lime of the flat fill, so the `fermented` variant recolours that green to
+  `FERMENTED_NECTAR_COLOR`.
 
 ## Open slices
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-4 | nectar and pollen fill levels drawn from the sprites | `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, the sprite table and catalogue, tests | yes -- SP-2 landed 10 Oct 2026; queued third in the Claude lane | medium |
-| SP-5 | the skep in the meadow, and the rival hive as a recoloured skep | `scripts/hive.gd`, `scripts/rival_hive.gd`, the sprite table and catalogue, tests | after SP-4 (SP-2 landed 10 Oct 2026) | medium |
+| SP-5 | the skep in the meadow, and the rival hive as a recoloured skep | `scripts/hive.gd`, `scripts/rival_hive.gd`, the sprite table and catalogue, tests | yes -- SP-4 landed 11 Oct 2026 | medium |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for Dave's repacked sheet | high (per-bee hot path) |
 
 Dependencies: SP-2 -> SP-4 -> SP-5 -> SP-6 (SP-1 and SP-3 landed 9 Oct 2026).
@@ -86,33 +88,7 @@ SP-1 shipped 2026-10-09; its specification is `plans/archive/SP-1_2026-10-09.md`
 
 SP-2 shipped 2026-10-10; its specification is `plans/archive/SP-2_2026-10-10.md`.
 
-## SP-4 -- nectar and pollen fill levels drawn from the sprites
-
-**True now.** A filled cell hides the cup and draws a flat hex plus
-`fill_shape`, a hex scaled by sqrt(fraction).
-
-**True afterwards.**
-
-- With `use_cell_sprites` on, a nectar or pollen cell shows the
-  catalogue frame for its level: the first level whose upper bound is at
-  least amount / capacity, or the empty frame at 0.
-- Fermented nectar shows a `fermented` recolour variant (lime ->
-  `FERMENTED_NECTAR_COLOR`), which needs no new art.
-- Flat body and `fill_shape` are hidden, and the rings follow the cup.
-- Contents with no art keep today's flat look.
-- The bounds are presentation, not balance, so they live in the sprite
-  table, not `GameConfig`.
-- The setting's tip text names filled cells too.
-- Runtime: the frame is set in `_refresh`, and only when it changes.
-
-```queue
-**[Claude] SP-4 -- nectar and pollen fill levels drawn from the sprites**
-- Plan: `plans/now/sprites.md` -- "SP-4 -- nectar and pollen fill levels drawn from the sprites"
-- Files: `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, `assets/sprites/SPRITES.md`, `scripts/sprite_catalogue.gd`, `tests/test_sp4_fill_sprites.py`
-- Check: `python -m unittest tests.test_sp4_fill_sprites` passes and `python tools/sprites.py --check` is clean; `tools/verify.ps1` is green
-- Proof: `present: scripts/hive_cell.gd :: const NECTAR_COLOR :=`
-- Next after: SP-5 -- the skep in the meadow, and the rival hive as a recoloured skep
-```
+SP-4 shipped 2026-10-11; its specification is `plans/archive/SP-4_2026-10-11.md`.
 
 ## SP-5 -- the skep in the meadow, and the rival hive
 
@@ -124,6 +100,15 @@ SP-2 shipped 2026-10-10; its specification is `plans/archive/SP-2_2026-10-10.md`
 - `rival_hive.gd` does the same with a darker recolour variant.
 - Hands-on: the skep sits where the square was, and foragers arrive at its
   entrance.
+
+```queue
+**[Claude] SP-5 -- the skep in the meadow, and the rival hive as a recoloured skep**
+- Plan: `plans/now/sprites.md` -- "SP-5 -- the skep in the meadow, and the rival hive"
+- Files: `scripts/hive.gd`, `scripts/rival_hive.gd`, `assets/sprites/SPRITES.md`, `scripts/sprite_catalogue.gd`, `tests/test_sp5_skep.py`
+- Check: `python -m unittest tests.test_sp5_skep` passes and `python tools/sprites.py --check` is clean; `tools/verify.ps1` is green
+- Proof: `present: scripts/hive.gd :: extends Polygon2D`
+- Next after: SP-6 -- meadow foragers drawn from the sheet: eight directions, flapping wings
+```
 
 ## SP-6 -- meadow foragers drawn from the sheet
 

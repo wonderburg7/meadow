@@ -1,6 +1,6 @@
 # Sprite table
 
-Status: current | Owner: Dave / Claude Code | Next: SP-4 reads the cell sheets for fill levels | Dependency: tools/sprites.py | Verified: 2026-10-10
+Status: current | Owner: Dave / Claude Code | Next: SP-5 adds the skep to the meadow | Dependency: tools/sprites.py | Verified: 2026-10-10
 
 One row per sprite family. `python tools/sprites.py` reads this table and the
 art beside it, writes a `<name>_sheet.png` next to each source (with a 1-px
@@ -32,7 +32,7 @@ Columns:
 
 | Family | File | Shows | View | Layout | Frames | Levels | Anchor | Variants |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| wax_cell_nectar | comb/wax_cell_nectar.aseprite | nectar cell: empty cup, then seven fill levels | hive | layers | 8 | 10/25/40/55/70/85/100 | 16,22 | - |
+| wax_cell_nectar | comb/wax_cell_nectar.aseprite | nectar cell: empty cup, then seven fill levels | hive | layers | 8 | 10/25/40/55/70/85/100 | 16,22 | fermented: 487908>8CAD63 |
 | wax_cell_pollen | comb/wax_cell_pollen.aseprite | pollen cell: empty cup, then five fill levels | hive | layers | 6 | 20/40/60/80/100 | 16,22 | - |
 | hive_skep | meadow/hive_skep.png | the straw skep, your hive in the meadow | meadow | single | 1 | - | - | - |
 | grass_base | meadow/grass_base.png | the repeating meadow grass tile | meadow | tile | 1 | - | - | - |

@@ -6,6 +6,7 @@ extends RefCounted
 
 # wax_cell_nectar: nectar cell: empty cup, then seven fill levels
 const WAX_CELL_NECTAR_SHEET := preload("res://assets/sprites/comb/wax_cell_nectar_sheet.png")
+const WAX_CELL_NECTAR_FERMENTED_SHEET := preload("res://assets/sprites/comb/wax_cell_nectar_fermented_sheet.png")
 const WAX_CELL_NECTAR_FRAME_SIZE := Vector2i(32, 32)
 const WAX_CELL_NECTAR_CELL_GUTTER := 1
 const WAX_CELL_NECTAR_CELL_SIZE := Vector2i(34, 34)
