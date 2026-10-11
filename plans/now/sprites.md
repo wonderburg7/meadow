@@ -79,7 +79,6 @@ Verified 9 Oct 2026 against master and the main checkout:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-4 | nectar and pollen fill levels drawn from the sprites | `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, the sprite table and catalogue, tests | no -- landed 11 Oct 2026 | medium |
 | SP-5 | the skep in the meadow, and the rival hive as a recoloured skep | `scripts/hive.gd`, `scripts/rival_hive.gd`, the sprite table and catalogue, tests | yes -- SP-4 landed 11 Oct 2026 | medium |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for Dave's repacked sheet | high (per-bee hot path) |
 
@@ -89,33 +88,7 @@ SP-1 shipped 2026-10-09; its specification is `plans/archive/SP-1_2026-10-09.md`
 
 SP-2 shipped 2026-10-10; its specification is `plans/archive/SP-2_2026-10-10.md`.
 
-## SP-4 -- nectar and pollen fill levels drawn from the sprites
-
-**True now.** A filled cell hides the cup and draws a flat hex plus
-`fill_shape`, a hex scaled by sqrt(fraction).
-
-**True afterwards.**
-
-- With `use_cell_sprites` on, a nectar or pollen cell shows the
-  catalogue frame for its level: the first level whose upper bound is at
-  least amount / capacity, or the empty frame at 0.
-- Fermented nectar shows a `fermented` recolour variant (lime ->
-  `FERMENTED_NECTAR_COLOR`), which needs no new art.
-- Flat body and `fill_shape` are hidden, and the rings follow the cup.
-- Contents with no art keep today's flat look.
-- The bounds are presentation, not balance, so they live in the sprite
-  table, not `GameConfig`.
-- The setting's tip text names filled cells too.
-- Runtime: the frame is set in `_refresh`, and only when it changes.
-
-```queue
-**[Claude] SP-4 -- nectar and pollen fill levels drawn from the sprites**
-- Plan: `plans/now/sprites.md` -- "SP-4 -- nectar and pollen fill levels drawn from the sprites"
-- Files: `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, `assets/sprites/SPRITES.md`, `scripts/sprite_catalogue.gd`, `tests/test_sp4_fill_sprites.py`
-- Check: `python -m unittest tests.test_sp4_fill_sprites` passes and `python tools/sprites.py --check` is clean; `tools/verify.ps1` is green
-- Proof: `present: scripts/hive_cell.gd :: const NECTAR_COLOR :=`
-- Next after: SP-5 -- the skep in the meadow, and the rival hive as a recoloured skep
-```
+SP-4 shipped 2026-10-11; its specification is `plans/archive/SP-4_2026-10-11.md`.
 
 ## SP-5 -- the skep in the meadow, and the rival hive
 
