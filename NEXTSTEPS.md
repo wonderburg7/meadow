@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] SP-4 -- nectar and pollen fill levels drawn from the sprites**
-   - Plan: `plans/now/sprites.md` -- "SP-4 -- nectar and pollen fill levels drawn from the sprites"
-   - Files: `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, `assets/sprites/SPRITES.md`, `scripts/sprite_catalogue.gd`, `tests/test_sp4_fill_sprites.py`
-   - Check: `python -m unittest tests.test_sp4_fill_sprites` passes and `python tools/sprites.py --check` is clean; `tools/verify.ps1` is green
-   - Proof: `present: scripts/hive_cell.gd :: const NECTAR_COLOR :=`
-   - Next after: SP-5 -- the skep in the meadow, and the rival hive as a recoloured skep
-
-2. **[Claude] RR-2 -- "Saves..." works on the main menu at boot**
+1. **[Claude] RR-2 -- "Saves..." works on the main menu at boot**
    - Plan: `plans/now/run-repairs.md` -- "RR-2 -- \"Saves...\" works on the main menu at boot"
    - Files: `scripts/main.gd`, `scripts/hud.gd`, `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `tests/rr2_boot_saves_test.gd`, `tests/test_rr2_boot_saves.py`
    - Check: `python -m unittest tests.test_rr2_boot_saves` passes (on a fresh boot the menu's Saves... opens the Saves window with no script error); `tools/verify.ps1` is green
    - Proof: `absent: scripts/main.gd :: SavesPanel`
    - Next after: RR-3 -- A new run from the menu gets its own default name
 
-3. **[Claude] RR-3 -- A new run from the menu gets its own default name**
+2. **[Claude] RR-3 -- A new run from the menu gets its own default name**
    - Plan: `plans/now/run-repairs.md` -- "RR-3 -- a new run from the menu gets its own default name"
    - Files: `scripts/save_slots.gd`, `scripts/main.gd`, `tests/test_rr3_fresh_run_name.py`
    - Check: `python -m unittest tests.test_rr3_fresh_run_name` passes (the three naming cases above); `tools/verify.ps1` is green
    - Proof: `absent: scripts/save_slots.gd :: func fresh_run_name`
    - Next after: RR-4 -- The window cannot be made smaller than 800x600
 
-4. **[Claude] RR-4 -- The window cannot be made smaller than 800x600**
+3. **[Claude] RR-4 -- The window cannot be made smaller than 800x600**
    - Plan: `plans/now/run-repairs.md` -- "RR-4 -- the window cannot be made smaller than 800x600"
    - Files: `scripts/ui_layout.gd`, `scripts/main.gd`, `tests/test_rr4_min_window.py`
    - Check: `python -m unittest tests.test_rr4_min_window` passes; `tools/verify.ps1` is green
    - Proof: `absent: scripts/ui_layout.gd :: MIN_SUPPORTED_HEIGHT`
    - Next after: RR-5 -- Hexagon names re-fit when the typeface changes
 
-5. **[Claude] RR-5 -- Hexagon names re-fit when the typeface changes**
+4. **[Claude] RR-5 -- Hexagon names re-fit when the typeface changes**
    - Plan: `plans/now/run-repairs.md` -- "RR-5 -- hexagon names re-fit when the typeface changes"
    - Files: `scripts/main_menu.gd`, `tests/rr5_hex_refit_test.gd`, `tests/test_rr5_hex_refit.py`
    - Check: `python -m unittest tests.test_rr5_hex_refit` passes (switching Munro to OpenDyslexic at scale 2 refits every hexagon name); `tools/verify.ps1` is green
    - Proof: `present: scripts/main_menu.gd :: font.get_rid().get_id()`
    - Next after: none -- plan complete
+
+5. **[Claude] SP-5 -- the skep in the meadow, and the rival hive as a recoloured skep**
+   - Plan: `plans/now/sprites.md` -- "SP-5 -- the skep in the meadow, and the rival hive"
+   - Files: `scripts/hive.gd`, `scripts/rival_hive.gd`, `assets/sprites/SPRITES.md`, `scripts/sprite_catalogue.gd`, `tests/test_sp5_skep.py`
+   - Check: `python -m unittest tests.test_sp5_skep` passes and `python tools/sprites.py --check` is clean; `tools/verify.ps1` is green
+   - Proof: `present: scripts/hive.gd :: extends Polygon2D`
+   - Next after: SP-6 -- meadow foragers drawn from the sheet: eight directions, flapping wings
 
 ### Codex lane
 
