@@ -4,6 +4,7 @@
   "weather": false, "disease": false, "rival_hive": false, "winter": false,
   "random_seed": 6101,
   "snapshot_seconds": 30,
+  "pollination_log": true,
   "actions": [
     {"do": "set_cell_contents", "cell": {"built_index": 0}, "resource": "honey", "amount": 200},
     {"do": "set_cell_contents", "cell": {"built_index": 1}, "resource": "honey", "amount": 200},

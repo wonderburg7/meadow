@@ -288,6 +288,10 @@ var current_speed: float = 1.0
 ## scenario_stop_max_days stays -1 (never triggers) unless the scenario
 ## file's "stop.max_days" says otherwise.
 var scenario_active: bool = false
+## PP-1: a scenario file's "pollination_log": true asks pollination.gd for
+## one session-log line per flower visit and hive entry. Off unless asked,
+## so every other scenario's action log is unchanged.
+var scenario_pollination_log: bool = false
 var scenario_stop_max_days: int = -1
 ## A "stop.when" dict (CHATGPT_INSIGHTS_PLAN.md's A5) -- the same
 ## day_at_least/food_stores_at_least/population_at_least/
@@ -1232,6 +1236,9 @@ func _apply_scenario_boot_arg() -> void:
 	# ordinary hourly cadence. See DiagnosticLog.snapshot_interval_override.
 	var scenario_snapshot_seconds: float = float(level.get("snapshot_seconds", -1.0))
 	level.erase("snapshot_seconds")
+	# PP-1, dev-only like snapshot_seconds: see scenario_pollination_log.
+	scenario_pollination_log = bool(level.get("pollination_log", false))
+	level.erase("pollination_log")
 	# Dev-only, same reasoning as time_scale/snapshot_seconds above. An
 	# explicit field instead of always reusing DEFAULT_RANDOM_SEED (the one
 	# every manual-play boot also gets) lets a headless comparison declare

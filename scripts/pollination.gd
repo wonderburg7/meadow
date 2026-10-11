@@ -81,8 +81,11 @@ func groom(bee: Node2D) -> void:
 	if last == null:
 		return
 	bee.trip_last_flower = null
-	if main != null and main.scenario_active:
+	if _logging():
 		DiagnosticLog.log_action("pollination_groomed", "bee %d" % int(bee.bee_id), "recorded", "")
+
+func _logging() -> bool:
+	return main != null and main.scenario_active and main.scenario_pollination_log
 
 func save_data() -> Dictionary:
 	return {POINTS: points, CONTRIBUTION: contribution}
@@ -97,12 +100,13 @@ func restore(data) -> void:
 	points = maxi(0, int(data.get(POINTS, 0)))
 	contribution = maxi(0, int(data.get(CONTRIBUTION, 0)))
 
-## Headless scenario runs only: one session-log line per finished visit, so
-## tests/test_pp1_pollination_ledger.py can watch each delivery and award
-## happen rather than infer them from the totals. Ordinary play writes
-## nothing here.
+## Only in a headless scenario that sets "pollination_log": true
+## (main.gd's scenario_pollination_log): one session-log line per finished
+## visit, so tests/test_pp1_pollination_ledger.py can watch each delivery
+## and award happen rather than infer them from the totals. Ordinary play,
+## and every other scenario, writes nothing here.
 func _log_visit(bee: Node2D, flower: Node2D, previous: Node2D, kind: String, awarded: bool) -> void:
-	if main == null or not main.scenario_active:
+	if not _logging():
 		return
 	# Only a delivery has a flower it came from; "first" may hold a freed one.
 	var delivered := kind != "first"

@@ -619,7 +619,7 @@ One cell: contents, brood, honey ripening, how it draws.
 1361 func development_percent() -> float
 ```
 
-## main.gd (1,348 lines)
+## main.gd (1,355 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
@@ -629,44 +629,44 @@ Per-frame entry point, everything not yet split out of main.
 97   # --- delegate systems ---------------------------------------------
 133  # --- world and meadow constants -----------------------------------
 194  # --- state --------------------------------------------------------
-351  # --- _ready and construction --------------------------------------
-361  static func run_definition(level_id: int, developer_edits_allowed: bool, overrides_path: String = DeveloperOverrides.PATH) -> Dictionary
-380  func _ready() -> void
-666  # --- public surface other scripts call directly -------------------
-673  func is_on_screen(node: Node2D) -> bool
-676  func hive_entrance_inside() -> Vector2
-679  func entrance_wait_point(side: int) -> Vector2
-682  func move_bee_into_hive(bee: Node2D) -> void
-685  func move_bee_out_of_hive(bee: Node2D) -> void
-688  func mark_death(bee: Node2D) -> void
-696  func _on_bee_died(bee: Node2D) -> void
-700  func finish_mining(block: Node2D) -> void
-703  func save_run() -> void
-706  func begin_winter_countdown() -> void
-709  # --- per-frame ----------------------------------------------------
-719  func _process(delta: float) -> void
-806  # --- the frame rate readout ----------------------------------------
-825  func _sample_fps() -> void
-848  func _reseed_meadow(delta: float) -> void
-868  func _hatch_ready_brood() -> void
-904  func _sample_day_stores() -> void
-921  func _advance_weather(delta: float) -> void
-951  func _apply_rain_overlay() -> void
-978  func _check_for_loss() -> void
-1006 func _promote_gyne_to_queen() -> bool
-1027 func _check_colony_energy(delta: float) -> void
-1058 func invalidate_population() -> void
-1069 func _role_counts(bees = null) -> Dictionary
-1086 func _update_population_readout(bees = null) -> void
-1100 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-1106 func _prune_selection() -> void
-1119 func _on_restart_after_loss() -> void
-1125 func _on_level_chosen(level: int) -> void
-1138 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-1156 func _apply_scenario_boot_arg() -> void
-1281 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
-1321 func _is_whole_number(value: Variant) -> bool
-1335 func _end_scenario_run(outcome: String) -> void
+355  # --- _ready and construction --------------------------------------
+365  static func run_definition(level_id: int, developer_edits_allowed: bool, overrides_path: String = DeveloperOverrides.PATH) -> Dictionary
+384  func _ready() -> void
+670  # --- public surface other scripts call directly -------------------
+677  func is_on_screen(node: Node2D) -> bool
+680  func hive_entrance_inside() -> Vector2
+683  func entrance_wait_point(side: int) -> Vector2
+686  func move_bee_into_hive(bee: Node2D) -> void
+689  func move_bee_out_of_hive(bee: Node2D) -> void
+692  func mark_death(bee: Node2D) -> void
+700  func _on_bee_died(bee: Node2D) -> void
+704  func finish_mining(block: Node2D) -> void
+707  func save_run() -> void
+710  func begin_winter_countdown() -> void
+713  # --- per-frame ----------------------------------------------------
+723  func _process(delta: float) -> void
+810  # --- the frame rate readout ----------------------------------------
+829  func _sample_fps() -> void
+852  func _reseed_meadow(delta: float) -> void
+872  func _hatch_ready_brood() -> void
+908  func _sample_day_stores() -> void
+925  func _advance_weather(delta: float) -> void
+955  func _apply_rain_overlay() -> void
+982  func _check_for_loss() -> void
+1010 func _promote_gyne_to_queen() -> bool
+1031 func _check_colony_energy(delta: float) -> void
+1062 func invalidate_population() -> void
+1073 func _role_counts(bees = null) -> Dictionary
+1090 func _update_population_readout(bees = null) -> void
+1104 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+1110 func _prune_selection() -> void
+1123 func _on_restart_after_loss() -> void
+1129 func _on_level_chosen(level: int) -> void
+1142 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+1160 func _apply_scenario_boot_arg() -> void
+1288 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
+1328 func _is_whole_number(value: Variant) -> bool
+1342 func _end_scenario_run(outcome: String) -> void
 ```
 
 ## diagnostic_log.gd (1,260 lines)

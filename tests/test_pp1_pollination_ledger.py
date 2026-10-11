@@ -6,8 +6,9 @@ is granted it and forages on. It saves before the grant ("unowned") and 300
 seconds after it ("owned"), forages another minute, restores "owned" in
 place and saves again at once ("restored"), then forages a last minute.
 
-pollination.gd writes one session-log line per finished flower visit in a
-scenario run ("pollination_visit": first, compatible or incompatible), with
+The fixture sets "pollination_log": true, so pollination.gd writes one
+session-log line per finished flower visit ("pollination_visit": first,
+compatible or incompatible), with
 the bee, the flower and the flower it came from, the flower's counts and
 award_ready_at after the visit, and the ledger's points and contribution.
 From those lines and the three saves:
