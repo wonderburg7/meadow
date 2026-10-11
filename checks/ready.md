@@ -20,4 +20,5 @@ unblocker.
 - [C-122 -- Dr Gallerin explains a missing nurse and a missing comb worker, and Why keeps both](ready/C-122.md)
 - [C-123 -- A Colony Run queen builds her own first cell](ready/C-123.md)
 - [C-124 -- A new Colony Run never offers an earlier run's checkpoint](ready/C-124.md)
+- [C-125 -- Filled comb cells show the nectar and pollen fill-level art](ready/C-125.md)
 - [C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface](ready/C-99.md)
