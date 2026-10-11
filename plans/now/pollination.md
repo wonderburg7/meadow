@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-1 -- bees earn Pollinator Points, queued fifth in the Claude lane behind T2-6 and BB-4; PP-3 -- Gyne rearing and Royal jelly become real gates, in the Codex lane | Dependency: T2-6 (`plans/now/tier-two.md`), because foraging tier 3 opens only when Associative learning is owned; PP-1 follows T2-6 in the Claude lane (shared files; BB-2 and NF-4 landed 10 Oct 2026); AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: PP-1 -- bees earn Pollinator Points, queued second in the Claude lane behind BB-4 (T2-6 landed 11 Oct 2026); PP-3 -- Gyne rearing and Royal jelly become real gates, in the Codex lane | Dependency: none left for PP-1 -- T2-6 (`plans/now/tier-two.md`), which opens foraging tier 3, landed 11 Oct 2026, and BB-2 and NF-4, which shared its files, landed 10 Oct 2026; AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-10
 
 ## Objective
 
@@ -40,7 +40,7 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-1 | bees earn Pollinator Points and Contribution; flowers count compatible and incompatible pollen | `scripts/pollination.gd`, `scripts/main.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/debug_panel.gd`, tests | yes -- queued in the Claude lane behind T2-6 and BB-4 | high |
+| PP-1 | bees earn Pollinator Points and Contribution; flowers count compatible and incompatible pollen | `scripts/pollination.gd`, `scripts/main.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/debug_panel.gd`, tests | yes -- queued second in the Claude lane, behind BB-4 (T2-6 landed 11 Oct 2026) | high |
 | PP-2 | points are spendable and shown, with a +1 at the flower | `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, tests | no -- after PP-1 | medium |
 | PP-3 | Gyne rearing gates gyne cells and Royal jelly gates jelly | `scripts/roles.gd`, `scripts/actions.gd`, `scripts/orders_zones.gd`, `scripts/run_availability.gd`, tests | yes -- Codex lane | medium |
 | PP-4 | seed set: pollinated flowers replant nearby and the meadow remembers through winter | `scripts/flower.gd`, `scripts/world_building.gd`, `scripts/flower_species.gd`, `scripts/pollination.gd`, `scripts/levels.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | no -- after PP-1 | high |
@@ -49,8 +49,8 @@ Verified 10 Oct 2026 against master:
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
 once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
-`skills.gd` and the save files with T2-6, so it runs after
-it in the Claude lane (BB-2 and NF-4, which shared them too, landed 10 Oct 2026). PP-2 and PP-4 build on PP-1's ledger; PP-2's
+`skills.gd` and the save files with T2-6, so it ran after
+it in the Claude lane (T2-6 landed 11 Oct 2026; BB-2 and NF-4, which shared them too, landed 10 Oct 2026). PP-2 and PP-4 build on PP-1's ledger; PP-2's
 `skill_tree_panel.gd` is free since BB-3 landed (10 Oct 2026). PP-3 shares no file with the Claude
 lane and runs in the Codex lane now. PP-5 shares `orders_zones.gd` with PP-3
 and `bee_nursery.gd` with BB-2 and NF-4, both landed 10 Oct 2026. PP-6 balances everything above; T2-7

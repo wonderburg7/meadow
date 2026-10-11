@@ -155,7 +155,7 @@ that `branch_tier_open` calls `_offered_in_run`.
 - Files: `scripts/progression.gd`, `plans/design/progression.md`, `test_scenarios/t2_9_c2_comb_worker_test.json`, `tests/test_t2_9_unavailable_tier.py`
 - Check: `python -m unittest tests.test_t2_9_unavailable_tier` passes (Challenge 2 buys Comb worker at 2.7 and Miner at 2.8 while Cell capacity stays unavailable); `tools/verify.ps1` is green
 - Proof: `absent: scripts/progression.gd :: _offered_in_run`
-- Next after: T2-6 -- Associative learning
+- Next after: none -- T2-6 landed 11 Oct 2026, and T2-7b waits for AR-4
 ```
 
 ## Not in the queue, and why

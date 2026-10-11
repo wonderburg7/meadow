@@ -85,4 +85,4 @@ loses history (row 2, row 3). A save without them loads an empty ledger.
 
 ## Not in the queue, and why
 
-- **GD-2b** waits for the save files to be free of Claude-lane slices: PP-1 (Claude lane, queued fifth) holds them now, and PP-4 and PP-5 hold them later. GD-2a landed 10 Oct 2026.
+- **GD-2b** waits for the save files to be free of Claude-lane slices: PP-1 (Claude lane, queued second) holds them now, and PP-4 and PP-5 hold them later. GD-2a landed 10 Oct 2026.
