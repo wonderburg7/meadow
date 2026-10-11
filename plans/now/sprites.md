@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-5 -- the skep in the meadow, specified below and queued (SP-1 to SP-4 and SP-7 landed); SP-6 waits for Dave's repacked forager sheet; SP-8, the block terrain, needs Dave's answers below before it can be cut | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: SP-5 -- the skep in the meadow, specified below and queued (SP-1 to SP-4 and SP-7 landed); SP-6 waits for Dave's repacked forager sheet; SP-9, hive soil drawn from the art, is specified below; SP-8, the block terrain, is decided and waits to be cut into slices | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-12
 
 ## Objective
 
@@ -81,7 +81,8 @@ Verified 9 Oct 2026 against master and the main checkout:
 | --- | --- | --- | --- | --- |
 | SP-5 | the skep in the meadow, and the rival hive as a recoloured skep | `scripts/hive.gd`, `scripts/rival_hive.gd`, the sprite table and catalogue, tests | yes -- Claude lane (SP-4 landed 11 Oct 2026) | medium |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for Dave's repacked sheet | high (per-bee hot path) |
-| SP-8 | the meadow floor built from stacked grass and soil blocks | the meadow ground drawing, tests | no -- the open questions in its section first | high (meadow-wide drawing, flower placement) |
+| SP-8 | the meadow floor built from stacked grass and soil blocks, with height in the simulation | to be cut: height map, save, flight, flowers, scouting | no -- needs cutting into slices first | high (save format, balance, multi-slice) |
+| SP-9 | hive soil blocks drawn from the art, crumbling as they are mined | `scripts/soil_block.gd`, tests | yes -- Claude lane | medium |
 
 Dependencies: SP-2 -> SP-4 -> SP-5 -> SP-6 (SP-1 and SP-3 landed 9 Oct 2026).
 
@@ -119,28 +120,61 @@ work on Dave's request; its record is `plans/archive/SP-7_2026-10-12.md`.
 
 Dave drew full and half-height grass blocks and soil blocks (10-11 Oct
 2026), exported as `grass_block`, `grass_block_half`, `soil_block` (four
-crumbling stages: 5 whole, 4, 2, 1) and `soil_block_half`. His rules
-(12 Oct 2026):
+crumbling stages: 5 whole, 4, 2, 1) and `soil_block_half`.
 
-- Grass blocks are not animated. The top layer is a grass block whose top
-  face is the floor, at height 0 (or a block's height above or below it);
-  flowers grow on it.
-- Blocks stack, full or half height. Only the top layer has the grass top;
-  the layers under it are soil blocks or half soil blocks.
-- A soil block breaks down from stage 5 to nothing, and the bare soil of
-  the block under it shows through.
-- Geometry: each block's anchor is the middle of its top face. A full
-  block's side is 14 art px and a half block's 7, so each block in a stack
-  draws that much higher than the one below.
+Decisions (Dave, 12 Oct 2026):
 
-Open questions for Dave before this is cut:
+1. **Look.** Grass blocks are not animated. The top layer is a grass block
+   whose top face is the floor; flowers grow on it. Blocks stack, full or
+   half height; only the top layer has the grass top, and the layers under
+   it are soil or half soil blocks. Each block's anchor is the middle of
+   its top face; a full block's side is 14 art px and a half block's 7, so
+   each block in a stack draws that much higher than the one below.
+2. **Height is simulation, not just drawing.** It changes flight cost
+   (climbing costs a bee more, downhill less), where flowers grow (species
+   favour high or low ground), water and wet ground (low ground collects
+   it, high ground dries) and scouting reach (further from high ground).
+3. **Shape.** Generated per run (gentle seeded hills and hollows), saved
+   with the run.
+4. **Range.** A few steps: about -2 to +3 blocks, in half-block steps.
+5. **The flat `grass_base` tile goes** once blocks cover the meadow.
+6. Meadow blocks are not dug; soil blocks crumble only in the hive (SP-9).
 
-1. What digs or breaks a soil block (bees, the player, an event), and does
-   it change the simulation or only the look?
-2. Is height part of the simulation (flight, flower reach, water) or
-   drawing only?
-3. Does the existing flat `grass_base` tile go once the blocks cover the
-   meadow?
+Before this is cut (multi-slice planning, high): it touches save format
+(the height map), balance (flight cost, which `GameConfig` owns and which
+is simulated first) and flower placement, so it splits into at least a
+height map with its drawing, then each of the four effects as its own
+slice. Water in the meadow does not exist yet; that effect waits for it.
+
+## SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined
+
+Dave, 12 Oct 2026: the soil block's stages are what a hive soil block
+shows as it is mined.
+
+**True afterwards.**
+
+- With Cell art on (`Session.use_cell_sprites`), each hive soil block
+  (`scripts/soil_block.gd`) draws a `soil_block` frame from the catalogue
+  instead of its flat colour: stage 5 (whole) below 25 % mined, then 4, 2
+  and 1 for each further quarter. At 100 % the block is gone and the
+  site or floor already drawn there shows, which is the bare soil under
+  it.
+- The block's footprint lands on its hex like a comb cup: the catalogue
+  anchor is the top face's middle, so the floor point is 14 art px lower
+  (the side height); check it against the cup's 16,22 floor by eye.
+- Cell art off keeps today's flat mass. The mining marker, selection ring
+  and progress label are unchanged. The frame is set only when it changes.
+- Hands-on: zoomed in on the hive wall, the blocks read as Dave's soil and
+  a marked block crumbles through four stages as it is dug.
+
+```queue
+**[Claude] SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined**
+- Plan: `plans/now/sprites.md` -- "SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined"
+- Files: `scripts/soil_block.gd`, `tests/test_sp9_soil_art.py`
+- Check: `python -m unittest tests.test_sp9_soil_art` passes; `tools/verify.ps1` is green
+- Proof: `absent: scripts/soil_block.gd :: SpriteCatalogue`
+- Next after: SP-6 -- meadow foragers drawn from the sheet: eight directions, flapping wings
+```
 
 ## SP-6 -- meadow foragers drawn from the sheet
 
