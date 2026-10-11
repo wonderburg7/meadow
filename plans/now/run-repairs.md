@@ -39,7 +39,7 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-1 | The queen can build a cell in every Challenge, Scenario and Colony Run | `scripts/challenge_runner.gd`, `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `test_scenarios/rr1_queen_builds_test.json`, `tests/test_rr1_queen_builds.py` | yes | medium |
-| RR-3 | A new run from the menu gets its own default name | `scripts/save_slots.gd`, `scripts/main.gd`, `tests/test_rr3_fresh_run_name.py` | after RR-2 (shared `main.gd`) | medium |
+| RR-3 | A new run from the menu gets its own default name | `scripts/save_slots.gd`, `scripts/main.gd`, `tests/test_rr3_fresh_run_name.py` | yes -- Claude lane (RR-2 landed 11 Oct 2026) | medium |
 | RR-4 | The window cannot be made smaller than 800x600 | `scripts/ui_layout.gd`, `scripts/main.gd`, `tests/test_rr4_min_window.py` | after RR-3 (shared `main.gd`) | low |
 | RR-5 | Hexagon names re-fit when the typeface changes | `scripts/main_menu.gd`, `tests/rr5_hex_refit_test.gd`, `tests/test_rr5_hex_refit.py` | yes (no shared file) | low |
 
@@ -206,4 +206,4 @@ runs it. This is the instrument for this failure: it fails on today's code.
 
 ## Not in the queue, and why
 
-- **RR-1 to RR-5** are admissible; `finish`'s top-up queues them in order.
+- **RR-1** waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`; RR-3 to RR-5 are in the Claude lane (RR-2 landed 11 Oct 2026).

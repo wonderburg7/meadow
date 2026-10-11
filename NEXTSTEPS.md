@@ -75,7 +75,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
-- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for CD-3 (Codex backlog, admissible now that no Claude-lane slice holds `scripts/bee.gd`) to release `scripts/colony_diagnostics.gd`; RR-2 to RR-4 (Claude lane) hold `scripts/main.gd` and RR-2 `scripts/hud.gd` meanwhile.
+- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for CD-3 (Codex backlog, admissible now that no Claude-lane slice holds `scripts/bee.gd`) to release `scripts/colony_diagnostics.gd`; RR-3 and RR-4 (Claude lane) hold `scripts/main.gd` and PP-2 `scripts/hud.gd` meanwhile (RR-2 landed 11 Oct 2026).
 - **PP-5** (`plans/now/pollination.md`) -- Priority cells; waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`.
 - **PP-6** (`plans/now/pollination.md`) -- the route's pricing sweep; waits for PP-2 to PP-5 (PP-1 landed 11 Oct 2026), and is specified when they land.
 - **T2-7b** (`plans/now/tier-two.md`) -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4, whose arc buys a Honey worker, and is specified when it lands.

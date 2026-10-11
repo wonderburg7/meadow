@@ -47,7 +47,7 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-2 | points are spendable and shown, with a +1 at the flower | `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, tests | yes -- Claude backlog (PP-1 landed 11 Oct 2026) | medium |
+| PP-2 | points are spendable and shown, with a +1 at the flower | `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, tests | yes -- Claude lane (PP-1 landed 11 Oct 2026) | medium |
 | PP-3 | Gyne rearing gates gyne cells and Royal jelly gates jelly | `scripts/roles.gd`, `scripts/actions.gd`, `scripts/orders_zones.gd`, `scripts/run_availability.gd`, tests | yes -- Codex lane | medium |
 | PP-4 | seed set: pollinated flowers replant nearby and the meadow remembers through winter | `scripts/flower.gd`, `scripts/world_building.gd`, `scripts/flower_species.gd`, `scripts/pollination.gd`, `scripts/levels.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- Claude backlog, after PP-2 (PP-1 landed 11 Oct 2026) | high |
 | PP-5 | Priority cells: marked brood cells are fed first | `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | no -- after PP-3 releases `orders_zones.gd` | high |
