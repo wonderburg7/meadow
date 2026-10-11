@@ -5,7 +5,7 @@ Status: active | Owner: Dave / Claude Code | Next: RR-1 -- the queen can build a
 
 ## Objective
 
-Four faults the 10-11 Oct 2026 check pass confirmed in areas whose plans are
+Five faults the 10-11 Oct 2026 check pass confirmed in areas whose plans are
 archived (Colony Run, saving, scenario reds), so they start here
 (`plans/README.md`, "Plan schema"). Each slice comes from one failed check and
 Dave's decision in that session (11 Oct 2026).
@@ -42,6 +42,7 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | RR-2 | "Saves..." works on the main menu at boot | `scripts/main.gd`, `scripts/hud.gd`, `scripts/saves_panel.gd`, `scripts/debug_panel.gd`, `tests/rr2_boot_saves_test.gd`, `tests/test_rr2_boot_saves.py` | after RR-1 (shared `hud.gd`) | medium |
 | RR-3 | A new run from the menu gets its own default name | `scripts/save_slots.gd`, `scripts/main.gd`, `tests/test_rr3_fresh_run_name.py` | after RR-2 (shared `main.gd`) | medium |
 | RR-4 | The window cannot be made smaller than 800x600 | `scripts/ui_layout.gd`, `scripts/main.gd`, `tests/test_rr4_min_window.py` | after RR-3 (shared `main.gd`) | low |
+| RR-5 | Hexagon names re-fit when the typeface changes | `scripts/main_menu.gd`, `tests/rr5_hex_refit_test.gd`, `tests/test_rr5_hex_refit.py` | yes (no shared file) | low |
 
 Each slice reads its own section only. Do not change skill prices, the
 branch-tier rule (`plans/now/tier-two.md` T2-9 owns that), or the save
@@ -203,9 +204,47 @@ constants and the `min_size` assignment from source.
 - Files: `scripts/ui_layout.gd`, `scripts/main.gd`, `tests/test_rr4_min_window.py`
 - Check: `python -m unittest tests.test_rr4_min_window` passes; `tools/verify.ps1` is green
 - Proof: `absent: scripts/ui_layout.gd :: MIN_SUPPORTED_HEIGHT`
+- Next after: RR-5 -- Hexagon names re-fit when the typeface changes
+```
+
+## RR-5 -- hexagon names re-fit when the typeface changes
+
+<!-- LAYER: immediate-task -->
+
+**True now (C-99, Dave, 11 Oct 2026).** Hexagon names fit at every scale
+when the scale is raised with the typeface already chosen. But raising the
+scale to 2 in Munro and then switching to OpenDyslexic splits words across
+lines. `main_menu.gd::_fit_hex_label` skips the refit when its cache key is
+unchanged. The key starts with `font.get_rid().get_id()`, which is 0 for
+every `FontFile` (a headless probe on 11 Oct 2026 printed 0 for Munro,
+OpenDyslexic, Silkscreen and Atkinson). So a typeface change at the same
+scale keeps the previous face's shrunken size. No other script keys on
+`get_rid().get_id()`.
+
+**True afterwards.** The key uses `font.get_instance_id()`, so any typeface
+change refits. Nothing else changes.
+
+**Runtime.** Unchanged: the fit runs on the label's `draw` and returns early
+on a matching key.
+
+**Test.** `tests/rr5_hex_refit_test.gd` builds the main menu as
+`tests/col7_gyne_window_test.gd::_boot` does, with `menu_pending = true`.
+It sets text scale 2 and Munro, waits two frames, then switches to
+OpenDyslexic through the Typeface setting's own apply path
+(`settings_catalogue.gd`'s `ui_typeface` row) and waits two frames. It
+asserts each hexagon label's font size equals
+`MainMenu.hex_fit_size` for OpenDyslexic. `tests/test_rr5_hex_refit.py`
+runs it. This is the instrument for this failure: it fails on today's code.
+
+```queue
+**[Claude] RR-5 -- Hexagon names re-fit when the typeface changes**
+- Plan: `plans/now/run-repairs.md` -- "RR-5 -- hexagon names re-fit when the typeface changes"
+- Files: `scripts/main_menu.gd`, `tests/rr5_hex_refit_test.gd`, `tests/test_rr5_hex_refit.py`
+- Check: `python -m unittest tests.test_rr5_hex_refit` passes (switching Munro to OpenDyslexic at scale 2 refits every hexagon name); `tools/verify.ps1` is green
+- Proof: `present: scripts/main_menu.gd :: font.get_rid().get_id()`
 - Next after: none -- plan complete
 ```
 
 ## Not in the queue, and why
 
-- **RR-1 to RR-4** are admissible; `finish`'s top-up queues them in order.
+- **RR-1 to RR-5** are admissible; `finish`'s top-up queues them in order.
