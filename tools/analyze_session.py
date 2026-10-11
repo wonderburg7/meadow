@@ -167,6 +167,9 @@ def _milestone_states(snapshot: dict[str, Any], settings: dict[str, Any],
         "winter_entered_day": False,
         "winter_survived_day": False,
         "food_secure_day": False,
+        # T2-7: the snapshot says the stores cover the cheapest first tier-2 path.
+        "first_tier2_day": (has_population and isinstance(resources, dict)
+                            and resources.get("first_tier2_affordable") is True),
     }
     winter_here = environment.get("winter_here") if isinstance(environment, dict) else None
     if winter_here is True:
