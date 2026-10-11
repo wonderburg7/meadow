@@ -79,7 +79,8 @@ One line each: the id, its plan, and the single thing it waits for.
 - **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for CD-3 (Codex backlog; it needs `scripts/bee.gd`, which PP-1 in the Claude lane holds) to release `scripts/colony_diagnostics.gd`, and for PP-1 (Claude lane, fifth) to release `scripts/main.gd` and the save files; `scripts/hud.gd` is free since 10 Oct 2026.
 - **PP-2 and PP-4** (`plans/now/pollination.md`) -- Pollinator Points made spendable, and seed set; wait for PP-1's ledger (`scripts/pollination.gd`).
 - **PP-5** (`plans/now/pollination.md`) -- Priority cells; waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`.
-- **PP-6** (`plans/now/pollination.md`) -- the route's pricing sweep; waits for PP-1 to PP-5 and T2-7, and is specified when they land.
+- **PP-6** (`plans/now/pollination.md`) -- the route's pricing sweep; waits for PP-1 to PP-5, and is specified when they land.
+- **T2-7b** (`plans/now/tier-two.md`) -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4, whose arc buys a Honey worker, and is specified when it lands.
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Dr Gallerin guidance now has its plan, `plans/now/guidance-explanations.md`.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts

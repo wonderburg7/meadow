@@ -45,7 +45,7 @@ Verified 10 Oct 2026 against master:
 | PP-3 | Gyne rearing gates gyne cells and Royal jelly gates jelly | `scripts/roles.gd`, `scripts/actions.gd`, `scripts/orders_zones.gd`, `scripts/run_availability.gd`, tests | yes -- Codex lane | medium |
 | PP-4 | seed set: pollinated flowers replant nearby and the meadow remembers through winter | `scripts/flower.gd`, `scripts/world_building.gd`, `scripts/flower_species.gd`, `scripts/pollination.gd`, `scripts/levels.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | no -- after PP-1 | high |
 | PP-5 | Priority cells: marked brood cells are fed first | `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | no -- after PP-3 releases `orders_zones.gd` | high |
-| PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after PP-1 to PP-5 and T2-7 | medium |
+| PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after PP-1 to PP-5 (T2-7 landed 11 Oct 2026) | medium |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
 once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
@@ -53,9 +53,10 @@ once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
 it in the Claude lane (BB-2 and NF-4, which shared them too, landed 10 Oct 2026). PP-2 and PP-4 build on PP-1's ledger; PP-2's
 `skill_tree_panel.gd` is free since BB-3 landed (10 Oct 2026). PP-3 shares no file with the Claude
 lane and runs in the Codex lane now. PP-5 shares `orders_zones.gd` with PP-3
-and `bee_nursery.gd` with BB-2 and NF-4, both landed 10 Oct 2026. PP-6 balances everything above and
-also follows T2-7 (`plans/now/tier-two.md`), which prices tier 2 on the same
-arc. AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6.
+and `bee_nursery.gd` with BB-2 and NF-4, both landed 10 Oct 2026. PP-6 balances everything above; T2-7
+(`plans/now/tier-two.md`), which it followed, landed 11 Oct 2026 without moving
+prices. AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6, and T2-7b,
+the tier-2 price sweep on the same arc, waits for AR-4.
 
 **Reads.** A slice reads its own section, product-scope §10's 10 Oct 2026
 decisions (`python tools/heading.py plans/design/product-scope.md "10.
@@ -207,7 +208,7 @@ Without the skill nothing changes.
 
 <!-- LAYER: design -->
 
-Specified when PP-1 to PP-5 and T2-7 have landed. Intent (Dave, 10 Oct
+Specified when PP-1 to PP-5 have landed (T2-7 landed 11 Oct 2026). Intent (Dave, 10 Oct
 2026): a reasonably played Colony Run first affords Gyne rearing after the
 first winter. The reference player in `alpha_arc_test.json` buys along the
 route; `pacing_gates.py` reports the day Gyne rearing becomes affordable;
@@ -218,4 +219,4 @@ Its end opens AR-4.
 
 - **PP-2** and **PP-4** wait for PP-1's ledger (`scripts/pollination.gd`).
 - **PP-5** waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`.
-- **PP-6** waits for PP-1 to PP-5 and T2-7, and is specified when they land.
+- **PP-6** waits for PP-1 to PP-5, and is specified when they land.

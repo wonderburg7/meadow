@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-9 -- a skill not available in this run never blocks the tier above it (C-113, Dave 11 Oct 2026) and T2-6 -- Associative learning, specified below with Dave's 10 Oct 2026 decisions and queued in the Claude lane (T2-7 landed 11 Oct 2026 as the rule, snapshot field and pacing row; its price sweep waits for AR-4) | Dependency: COL-4, COL-6, T2-4a and T2-4b landed; T2-7's predecessors BB-2 and NF-4 landed 10 Oct 2026; T2-6 follows T2-7 (shared `skills.gd`) | Verified: 2026-10-11
+Status: active | Owner: Dave / Claude Code | Next: T2-6 -- Associative learning, specified below with Dave's 10 Oct 2026 decisions and leading the Claude lane; T2-9 -- a skill not available in this run never blocks the tier above it (C-113, Dave 11 Oct 2026), waiting for room in the Claude lane; then T2-7b -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker) | Dependency: COL-4, COL-6, T2-4a, T2-4b and T2-7 landed (T2-7 on 11 Oct 2026, as the rule, snapshot field and pacing row); T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`) | Verified: 2026-10-11
 
 ## Objective
 
@@ -54,8 +54,9 @@ Verified 7 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-6 | Associative learning: the existing handling experience, gated by the skill, with a fade | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd` | yes -- queued in the Claude lane behind T2-7 | medium |
-| T2-9 | A skill not available in this run never blocks the tier above it (C-113) | `scripts/progression.gd`, `plans/design/progression.md`, `test_scenarios/t2_9_c2_comb_worker_test.json`, `tests/test_t2_9_unavailable_tier.py` | after T2-7 (shared `scripts/progression.gd`, `plans/design/progression.md`) | medium |
+| T2-6 | Associative learning: the existing handling experience, gated by the skill, with a fade | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd` | yes -- leads the Claude lane (T2-7 landed 11 Oct 2026) | medium |
+| T2-9 | A skill not available in this run never blocks the tier above it (C-113) | `scripts/progression.gd`, `plans/design/progression.md`, `test_scenarios/t2_9_c2_comb_worker_test.json`, `tests/test_t2_9_unavailable_tier.py` | yes -- waits for room in the Claude lane (T2-7, which shared `scripts/progression.gd`, landed 11 Oct 2026) | medium |
+| T2-7b | The tier-2 price sweep T2-7 deferred: tier-2 costs set so the arc's first tier-2 purchase lands around day 5 | `scripts/skills.gd`, `plans/design/progression.md`, tests; specified when AR-4 lands | no -- after AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker | medium |
 
 **Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
 T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
@@ -64,17 +65,19 @@ nothing else. T2-4a follows T2-2 (`actions.gd`, `challenge_stages.gd`).
 T2-4b landed 9 Oct 2026, so it no longer shares files with NF-3
 (`plans/archive/nectar-fermentation_2026-10-10.md`) or Bee Bread's BB-1
 (`plans/now/bee-bread.md`).
-T2-7 prices the gates T2-1 to T2-3 built. T2-6 shares `skills.gd` with
-T2-7, so it runs after it in the Claude lane (NF-4 and BB-2, which shared
+T2-7 (landed 11 Oct 2026) measures the gates T2-1 to T2-3 built; T2-7b prices them. T2-6 shared `skills.gd` with
+T2-7, so it ran after it in the Claude lane (NF-4 and BB-2, which shared
 `skills.gd`, `bee_foraging.gd`, `game_config.gd` and `settings_catalogue.gd`, landed 10 Oct 2026).
 Pollinator Points (`plans/now/pollination.md` PP-1) needs T2-6: foraging
 tier 3 opens only when Associative learning is owned. T2-8 multiplies COL-6's one-step winter (landed 7 Oct 2026).
 NF-4 (`plans/archive/nectar-fermentation_2026-10-10.md`) added a Colony tier-2 node in
-`skills.gd` and landed 10 Oct 2026, before T2-7, which prices it. T2-7 runs after
-BB-2 (`plans/now/bee-bread.md`) so its sweep includes the 15-day
-unfed-worker rule; BB-4 then moves stage thresholds only, never prices.
-T2-7 shares `tools/pacing_gates.py` with gated AR-4
-(`plans/now/alpha-route-evidence.md`). A new test module no longer edits
+`skills.gd` and landed 10 Oct 2026, before T2-7b, which prices it. T2-7b runs after
+BB-2 (`plans/now/bee-bread.md`), so its sweep includes the 15-day
+unfed-worker rule; BB-4 moves stage thresholds only, never prices.
+T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`): the alpha arc
+makes no honey, so the sweep's median cannot land in band before AR-4's arc
+buys a Honey worker (Dave, 11 Oct 2026). Open when T2-7b is specified:
+whether BB-4's Challenge routes are re-checked at the new prices. A new test module no longer edits
 `tools/verify.ps1`, which finds them itself since 7 Oct 2026, so adding a
 test puts no shared file in either lane.
 
@@ -101,7 +104,7 @@ T2-4b shipped 2026-10-09; its specification is `plans/archive/T2-4b_2026-10-09.m
 <!-- LAYER: immediate-task -->
 
 **Level: medium.** Bounded, with an acceptance check; no save migration.
-It runs after T2-7, which sets its price; T2-6 keeps that price.
+T2-6 keeps Associative learning's current price in `skills.gd`; T2-7b's sweep, after AR-4, owns it.
 
 **The behaviour already ships behind a developer toggle.** Slice 7's
 handling experience (`GameConfig.handling_experience_on`, off by default)
@@ -219,7 +222,7 @@ that `branch_tier_open` calls `_offered_in_run`.
 
 ## Not in the queue, and why
 
-- **T2-6** is admissible and waits only for room in the Claude lane, behind T2-7.
-- **T2-9** is admissible and waits only for room in the Claude lane, behind T2-7 (shared `scripts/progression.gd`).
+- **T2-9** is admissible and waits only for room in the Claude lane.
+- **T2-7b** -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker, and is specified when it lands.
 
 T2-8b shipped 2026-10-09; its specification is `plans/archive/T2-8b_2026-10-09.md`.

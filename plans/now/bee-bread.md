@@ -1,7 +1,7 @@
 # Bee Bread -- fermented larval food, the tier-3 currency, and what it makes of a worker
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers, specified below and queued fifth in the Claude lane, after T2-7 sets the tier-2 prices it plays against | Dependency: none -- COL-4, NF-2, T2-2, T2-3, BB-1, BB-2 and BB-3 have landed | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers, specified below and queued second in the Claude lane, behind T2-6 (T2-7 landed 11 Oct 2026 without moving tier-2 prices; their sweep, T2-7b, waits for AR-4) | Dependency: none -- COL-4, NF-2, T2-2, T2-3, BB-1, BB-2 and BB-3 have landed | Verified: 2026-10-10
 
 ## Objective
 
@@ -36,11 +36,12 @@ Verified 7 Oct 2026 against master; BB-1 (9 Oct 2026) has since built Bee Bread 
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| BB-4 | Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers | `scripts/challenge_stages.gd`, `docs/challenge-stages.md`, `scripts/scenario_actions.gd`, `test_scenarios/bb4_challenge1_route.json`, `test_scenarios/bb4_challenge2_route.json`, tests | yes -- queued in the Claude lane behind T2-7 and T2-6 | medium |
+| BB-4 | Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers | `scripts/challenge_stages.gd`, `docs/challenge-stages.md`, `scripts/scenario_actions.gd`, `test_scenarios/bb4_challenge1_route.json`, `test_scenarios/bb4_challenge2_route.json`, tests | yes -- queued second in the Claude lane, behind T2-6 (T2-7 landed 11 Oct 2026) | medium |
 
 **Dependencies.** BB-1, BB-2 and BB-3 have landed (BB-3 on 10 Oct 2026,
 releasing `skill_tree_panel.gd`). BB-4 follows BB-2, whose rule it balances around, and T2-7
-(`plans/now/tier-two.md`), whose tier-two prices the Challenges are played at. Every slice
+(`plans/now/tier-two.md`, landed 11 Oct 2026), which left tier-two prices as they
+were; their sweep, T2-7b, waits for AR-4. Every slice
 changes balance, so each is simulated first with PE-2's arc
 (`tools/pacing_gates.py`). Cross-plan: `plans/archive/nectar-fermentation_2026-10-10.md`
 NF-2 and `plans/now/tier-two.md` T2-3, which had to land first, have, and

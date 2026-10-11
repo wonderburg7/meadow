@@ -53,7 +53,8 @@ AR-3 shipped 2026-10-07; its specification is `plans/archive/AR-3_2026-10-07.md`
 
 AR-4 is gated on Tier 2 automation, Bee Bread and the gyne route; the gyne
 route is `plans/now/pollination.md`, whose last slice, PP-6, opens AR-4. T2-7
-(`plans/now/tier-two.md`, Claude lane) adds a `first_tier2_day` row to
-`tools/pacing_gates.py`; AR-4 keeps that row when it is admitted. It cannot be
+(`plans/now/tier-two.md`, landed 11 Oct 2026) added a `first_tier2_day` row to
+`tools/pacing_gates.py`; AR-4 keeps that row when it is admitted. AR-4's arc
+buying a Honey worker opens T2-7b, the tier-2 price sweep T2-7 deferred. It cannot be
 an honest acceptance scenario while those mechanics are still incomplete; the
 first three slices make that absence visible instead of faking a successful run.
