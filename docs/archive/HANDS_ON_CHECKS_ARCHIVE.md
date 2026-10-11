@@ -6,6 +6,148 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 11 Oct 2026 -- Dave's hands-on pass
+
+### C-102 -- Run availability table: cut skills read not available, features named in words
+
+What this checks: Open the developer panel, then its Run availability table, at starting levels 5 and 6.
+
+PASS: The nine cut skills (guard bee, combat, auto defence, nectar robbing, drones, medicine, adjustment panel, extended backup roles, chemical cascade) read "not available" with a "Cut from this build" reason, and the Feature rows say Predators, Weather and so on, never "feature.predators".
+
+If it fails, BS-11 reopens.
+
+Runner: haiku -- opens one table and reads its rows
+
+Owner: `plans/archive/brood-spine_2026-10-05.md`
+
+Confirmed 11 Oct 2026: run by haiku: at starting levels 5 and 6 the nine cut skills read not available with Cut from this build; Feature rows read in words (Predators, Weather, Fog of war)
+
+### C-105 -- Dr Gallerin's bubble wraps inside itself and the Winter window scrolls inside the screen
+
+What this checks: Start a run, wait for Dr Gallerin's bubble to speak (or click his icon), and open the Winter window from the top bar with a bee selected. Also hover the settings cog at the top right.
+
+PASS: no word in Gallerin's bubble is cut at its right edge, and the Winter window sits above the selected bee's panel and scrolls rather than running off the bottom, and the cog's hover description wraps inside the screen.
+
+If it fails, HO-5 reopens for scripts/gallerin_panel.gd or scripts/winter_panel.gd.
+
+Runner: sonnet -- three wrap and position checks on fixed panels
+
+Owner: `plans/archive/hands-on-findings_2026-10-05.md`
+
+Confirmed 11 Oct 2026: run by sonnet: C-105 Gallerin bubble wraps with no word cut, Winter window above the bee panel scrolls rather than running off-screen, cog tip wraps on screen; C-107 at High contrast and scale 2 the Job, When idle, cog and cell Raises popups use the HUD font and colours and follow a switch to OpenDyslexic; C-60 Honeycomb and Grain texture the Colony window in Dark and Light, High contrast stays plain black; C-81 Change to lists only Forager until Nurses is bought at 2.5, then Forager and Nurse; C-86 the game-over screen at High contrast and scale 2 matches the HUD text size and colours with no overflow
+
+### C-107 -- Role menus use the theme font and text scale
+
+What this checks: Start a run and select the queen. Open Settings and set text scale to 2 and the theme to High contrast. Then open the Job row's "Change to..." list, a Raises menu in the command tray, and the cog beside the selection panel's star.
+
+PASS: each popup uses the theme's font at the scale-2 size in the High contrast colours, changes when you switch typeface or text scale and reopen it, and lists the same roles as before.
+
+If it fails, HO-11 reopens: the popups still need the theme font, size or colours in `scripts/hud.gd` (`_theme_popup_on_open`).
+
+Runner: sonnet -- popup font, size and colours compared across settings
+
+Owner: `plans/archive/hands-on-findings_2026-10-05.md`
+
+Confirmed 11 Oct 2026: run by sonnet: C-105 Gallerin bubble wraps with no word cut, Winter window above the bee panel scrolls rather than running off-screen, cog tip wraps on screen; C-107 at High contrast and scale 2 the Job, When idle, cog and cell Raises popups use the HUD font and colours and follow a switch to OpenDyslexic; C-60 Honeycomb and Grain texture the Colony window in Dark and Light, High contrast stays plain black; C-81 Change to lists only Forager until Nurses is bought at 2.5, then Forager and Nurse; C-86 the game-over screen at High contrast and scale 2 matches the HUD text size and colours with no overflow
+
+### C-60 -- a chosen panel texture appears
+
+What this checks: with the Colony window open, go to cog -> Appearance -> Panel texture and set it to Honeycomb, then Grain, then Flat, in Dark, then Light, then High contrast.
+
+PASS: Honeycomb and Grain each visibly texture the Colony window's background the moment they are chosen in Dark and in Light; in High contrast the background stays plain whichever is chosen (C-71).
+
+If it fails, `scripts/ui_theme.gd::PanelBox` is still not drawing its texture (HF-1 changed it to extend `StyleBox` because Godot never calls a script `_draw` on a `StyleBoxFlat`).
+
+Runner: sonnet -- settings navigation and a visible texture judgement in three themes
+
+Owner: `plans/archive/hud-followups_2026-09-30.md`
+
+Confirmed 11 Oct 2026: run by sonnet: C-105 Gallerin bubble wraps with no word cut, Winter window above the bee panel scrolls rather than running off-screen, cog tip wraps on screen; C-107 at High contrast and scale 2 the Job, When idle, cog and cell Raises popups use the HUD font and colours and follow a switch to OpenDyslexic; C-60 Honeycomb and Grain texture the Colony window in Dark and Light, High contrast stays plain black; C-81 Change to lists only Forager until Nurses is bought at 2.5, then Forager and Nurse; C-86 the game-over screen at High contrast and scale 2 matches the HUD text size and colours with no overflow
+
+### C-81 -- Nurse stays locked until Nurses is bought
+
+What this checks: start Challenge 2 from the main menu and click the queen; open her Job row's "Change to..." menu. Open the cog, tick Developer mode, and under World & start press the Challenge stage ▶ arrow until it reads 2.5 (stop there). Close the cog, open Skills, buy Nurses (free at 2.5), close the tree and open the queen's "Change to..." menu again.
+
+PASS: Nurse is missing from the menu before Nurses is bought and offered straight after.
+
+If it fails, `Availability.role_query` is not what the menu reads (`hud.gd::_role_offered`), or the purchase is not re-applying it (`hud.gd::refresh_role_gating`).
+
+Runner: sonnet -- debug stage arrows, one skill purchase and a menu read twice
+
+Owner: `plans/archive/hands-on-third-pass_2026-10-03.md`
+
+Confirmed 11 Oct 2026: run by sonnet: C-105 Gallerin bubble wraps with no word cut, Winter window above the bee panel scrolls rather than running off-screen, cog tip wraps on screen; C-107 at High contrast and scale 2 the Job, When idle, cog and cell Raises popups use the HUD font and colours and follow a switch to OpenDyslexic; C-60 Honeycomb and Grain texture the Colony window in Dark and Light, High contrast stays plain black; C-81 Change to lists only Forager until Nurses is bought at 2.5, then Forager and Nurse; C-86 the game-over screen at High contrast and scale 2 matches the HUD text size and colours with no overflow
+
+### C-86 -- Game-over screen follows theme and text size
+
+What this checks: start Challenge 2 from the main menu. Open the cog, set Appearance -> Theme to High contrast and Text scale to 2, and tick Developer mode. Under the Triggers heading that appears, press "End the run", then close the settings window if "The queen is dead" is not already showing.
+
+PASS: the game-over text and buttons use the High contrast colours, their text is the same size as the HUD's text, and nothing runs off the window edge.
+
+If it fails, UI-F-1 reopens, and the fix is in `scripts/game_over.gd` (panel width or theme), not in `UiTheme`.
+
+Runner: sonnet -- game-over text compared with the HUD for size, colour and overflow
+
+Owner: `plans/archive/ui-feedback_2026-10-01.md`
+
+Confirmed 11 Oct 2026: run by sonnet: C-105 Gallerin bubble wraps with no word cut, Winter window above the bee panel scrolls rather than running off-screen, cog tip wraps on screen; C-107 at High contrast and scale 2 the Job, When idle, cog and cell Raises popups use the HUD font and colours and follow a switch to OpenDyslexic; C-60 Honeycomb and Grain texture the Colony window in Dark and Light, High contrast stays plain black; C-81 Change to lists only Forager until Nurses is bought at 2.5, then Forager and Nurse; C-86 the game-over screen at High contrast and scale 2 matches the HUD text size and colours with no overflow
+
+### C-104 -- PAUSED, the wrapped problem strip and the Colony window at Text scale 2 in Open Sans
+
+What this checks: In Settings set Text scale to 2 and the typeface to Open Sans, star the problem signals so the strip shows, then pause the game and open the Colony window. Also click the world just to the right of a short problem line.
+
+PASS: PAUSED sits as the last line under the readouts and strip without covering any line, long problem lines wrap inside the window width, the Colony window opens below the corner column and follows it as it grows, and a click to the right of a short line selects the bee or flower there rather than the problem target.
+
+If it fails, reopen SC-4 (`plans/archive/settings-and-corner_2026-10-03.md`): the corner column layout in `scripts/hud.gd` or the left-window reflow in `scripts/game_panel.gd`.
+
+Runner: opus -- four layout conditions plus a click on a bee beside a short problem line
+
+Owner: `plans/archive/settings-and-corner_2026-10-03.md`
+
+Confirmed 11 Oct 2026: run by opus: C-104 at scale 2 Open Sans in a paused Scenario run PAUSED is the last line and covers nothing, the long problem line wraps and the Colony window moves down with it, and a click just past its end selects the bee there; C-106 a paused click on a bee under the Bees readout text selects it, and a problem-strip line selects its bee; C-119 fermented nectar shows olive (#8CAD63), stays olive while topped up, and stands apart from fresh nectar, pollen and empty comb; C-112 (overturning a sonnet fail) a Run availability edit marks the row (edited), applies on the cog's Restart Run, and Reset to the game's data clears it for the next restart
+
+### C-106 -- A bee drawn under the top-left readout text can be clicked and selected
+
+What this checks: Start a run (Scenario 4 works) and wait until a bee drifts behind the stats text in the top-left corner. Click that bee through the text, then click one of the problem-strip lines under the readout.
+
+PASS: the bee under the readout text gets selected, and the problem-strip buttons still take you to what they describe.
+
+If it fails, HO-6 reopens for scripts/hud.gd, to find which corner control still takes the click.
+
+Runner: opus -- clicking a moving bee under the readout text (pause first)
+
+Owner: `plans/archive/hands-on-findings_2026-10-05.md`
+
+Confirmed 11 Oct 2026: run by opus: C-104 at scale 2 Open Sans in a paused Scenario run PAUSED is the last line and covers nothing, the long problem line wraps and the Colony window moves down with it, and a click just past its end selects the bee there; C-106 a paused click on a bee under the Bees readout text selects it, and a problem-strip line selects its bee; C-119 fermented nectar shows olive (#8CAD63), stays olive while topped up, and stands apart from fresh nectar, pollen and empty comb; C-112 (overturning a sonnet fail) a Run availability edit marks the row (edited), applies on the cog's Restart Run, and Reset to the game's data clears it for the next restart
+
+### C-119 -- Fermented nectar shows its own colour in the comb
+
+What this checks: start a new free-play run, open the cog -> Hive -> Honey and set "Nectar ferments h" to 1, then go into the hive view and watch a cell the foragers have put nectar in (pale blue-grey, labelled N) for about ten seconds, with no honey makers assigned.
+
+PASS: the nectar cell turns a murky olive that reads clearly apart from fresh nectar, pollen, honey and empty comb, and stays olive when foragers top it up.
+
+If it fails, `FERMENTED_NECTAR_COLOR` in `scripts/hive_cell.gd` is retuned (NF-2); if it never changes colour, NF-2's `is_fermented` reopens.
+
+Runner: opus -- a colour-distinctness judgement on one cell
+
+Owner: `plans/archive/nectar-fermentation_2026-10-10.md`
+
+Confirmed 11 Oct 2026: run by opus: C-104 at scale 2 Open Sans in a paused Scenario run PAUSED is the last line and covers nothing, the long problem line wraps and the Colony window moves down with it, and a click just past its end selects the bee there; C-106 a paused click on a bee under the Bees readout text selects it, and a problem-strip line selects its bee; C-119 fermented nectar shows olive (#8CAD63), stays olive while topped up, and stands apart from fresh nectar, pollen and empty comb; C-112 (overturning a sonnet fail) a Run availability edit marks the row (edited), applies on the cog's Restart Run, and Reset to the game's data clears it for the next restart
+
+### C-112 -- An edit in the Run availability table changes what the next run starts with, and Reset restores it
+
+What this checks: start any run that is not a Challenge, open the cog's settings window, turn on Interface -> Developer mode, then press "Run availability". Find a skill row whose Source reads "in the tree" and click that Source button once, so it reads "at the start" and the row's name gains "(edited)". Close the table, use Restart Run, and open the skill tree: that skill is already owned. Open "Run availability" again, press "Reset to the game's data", Restart Run once more, and look at the skill tree again.
+
+PASS: after the edit the restarted run owns the skill from its first second, and after Reset the next restarted run leaves it to be bought in the tree again, with no "(edited)" row left in the table.
+
+If it fails, BS-6 reopens: the store in `scripts/developer_overrides.gd`, the row buttons in `scripts/run_availability_panel.gd::_fill`, or the run-start hook in `scripts/main.gd::_ready`.
+
+Runner: sonnet -- a developer-table edit and two restarts
+
+Owner: `plans/archive/brood-spine_2026-10-05.md`
+
+Confirmed 11 Oct 2026: run by opus: C-104 at scale 2 Open Sans in a paused Scenario run PAUSED is the last line and covers nothing, the long problem line wraps and the Colony window moves down with it, and a click just past its end selects the bee there; C-106 a paused click on a bee under the Bees readout text selects it, and a problem-strip line selects its bee; C-119 fermented nectar shows olive (#8CAD63), stays olive while topped up, and stands apart from fresh nectar, pollen and empty comb; C-112 (overturning a sonnet fail) a Run availability edit marks the row (edited), applies on the cog's Restart Run, and Reset to the game's data clears it for the next restart
+
 ## 3 Oct 2026 -- Dave's hands-on pass
 
 ### C-79 -- Skills fills the screen and pauses the game

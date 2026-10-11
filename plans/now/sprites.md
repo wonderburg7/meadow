@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-4 -- nectar and pollen fill levels, specified below with a queue block (SP-1, SP-2 and SP-3 landed); SP-5 is specified here and gets its block when SP-4 lands; SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: SP-4 -- nectar and pollen fill levels, specified below and queued fifth in the Claude lane (SP-1, SP-2 and SP-3 landed); SP-5 is specified here and gets its block when SP-4 lands; SP-6 waits for Dave's repacked forager sheet | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-10
 
 ## Objective
 
@@ -76,8 +76,8 @@ Verified 9 Oct 2026 against master and the main checkout:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-4 | nectar and pollen fill levels drawn from the sprites | `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, the sprite table and catalogue, tests | yes -- SP-2 landed 10 Oct 2026; queued in the Claude lane | medium |
-| SP-5 | the skep in the meadow, and the rival hive as a recoloured skep | `scripts/hive.gd`, `scripts/rival_hive.gd`, the sprite table and catalogue, tests | after SP-2 | medium |
+| SP-4 | nectar and pollen fill levels drawn from the sprites | `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, the sprite table and catalogue, tests | yes -- SP-2 landed 10 Oct 2026; queued fifth in the Claude lane | medium |
+| SP-5 | the skep in the meadow, and the rival hive as a recoloured skep | `scripts/hive.gd`, `scripts/rival_hive.gd`, the sprite table and catalogue, tests | after SP-4 (SP-2 landed 10 Oct 2026) | medium |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for Dave's repacked sheet | high (per-bee hot path) |
 
 Dependencies: SP-2 -> SP-4 -> SP-5 -> SP-6 (SP-1 and SP-3 landed 9 Oct 2026).

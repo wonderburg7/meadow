@@ -51,6 +51,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/flower.gd :: compatible_visits`
    - Next after: PP-2 -- points are spendable and shown, with a +1 at the flower
 
+5. **[Claude] SP-4 -- nectar and pollen fill levels drawn from the sprites**
+   - Plan: `plans/now/sprites.md` -- "SP-4 -- nectar and pollen fill levels drawn from the sprites"
+   - Files: `scripts/hive_cell.gd`, `scripts/settings_catalogue.gd`, `assets/sprites/SPRITES.md`, `scripts/sprite_catalogue.gd`, `tests/test_sp4_fill_sprites.py`
+   - Check: `python -m unittest tests.test_sp4_fill_sprites` passes and `python tools/sprites.py --check` is clean; `tools/verify.ps1` is green
+   - Proof: `present: scripts/hive_cell.gd :: const NECTAR_COLOR :=`
+   - Next after: SP-5 -- the skep in the meadow, and the rival hive as a recoloured skep
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -74,7 +81,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **PP-5** (`plans/now/pollination.md`) -- Priority cells; waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`.
 - **PP-6** (`plans/now/pollination.md`) -- the route's pricing sweep; waits for PP-1 to PP-5 and T2-7, and is specified when they land.
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Dr Gallerin guidance now has its plan, `plans/now/guidance-explanations.md`.
-- **SP-4** (`plans/now/sprites.md`) -- nectar and pollen fill levels drawn from the sprites; waits for SP-2, queued in the Claude lane, and gets its block when it lands (SP-3 landed 9 Oct 2026).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
 
