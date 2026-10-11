@@ -46,5 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.claude/worktrees/run-queue-task-5-a72f8e` (`claude/run-queue-task-5-a72f8e`) | Claude (docs only) | gate lines after PP-1: open PP-2, PP-4 and GD-2b | Claude Code | in progress | none | `NEXTSTEPS.md`, `plans/now/pollination.md`, `plans/now/guidance-explanations.md`, `plans/now/diagnostic-readiness.md` |
 | `.worktrees/PP-3` (`codex/PP-3`) | Codex | Gyne rearing gates gyne cells and Royal jelly gates jelly | Codex | in progress | none | `plans/now/pollination.md` PP-3 -- Gyne rearing gates gyne cells and Royal jelly gates jelly |
