@@ -74,6 +74,7 @@ const RainEffect = preload("res://scripts/rain_effect.gd")
 const RivalHive = preload("res://scripts/rival_hive.gd")
 const SpatialGrid = preload("res://scripts/spatial_grid.gd")
 const Season = preload("res://scripts/season.gd")
+const UiLayout = preload("res://scripts/ui_layout.gd")
 const WinterPanel = preload("res://scripts/winter_panel.gd")
 const GallerinPanel = preload("res://scripts/gallerin_panel.gd")
 const SuccessionPanel = preload("res://scripts/succession_panel.gd")
@@ -390,6 +391,11 @@ func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS   # keep input and camera alive while paused
 	Engine.time_scale = 1.0
 	seed(DEFAULT_RANDOM_SEED)   # fixed layout while tuning -- delete for a random meadow each run
+
+	# RR-4: the window cannot be made smaller than the floor the UI is laid
+	# out for. Set before the menu_pending return below so the pre-run menu
+	# is bounded too.
+	get_tree().root.min_size = Vector2i(int(UiLayout.MIN_SUPPORTED_WIDTH), int(UiLayout.MIN_SUPPORTED_HEIGHT))
 
 	# Every path back to this function -- a fresh boot, Restart Run, the
 	# main menu's level picker, a load, a post-game-over restart -- reloads

@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-4 -- the window cannot be made smaller than 800x600 | Dependency: none outside this plan; RR-1 to RR-4 run in order (shared `hud.gd` and `main.gd`) | Verified: 2026-10-11
+Status: active | Owner: Dave / Claude Code | Next: RR-5 -- hexagon names re-fit when the typeface changes | Dependency: none outside this plan; RR-1 to RR-4 run in order (shared `hud.gd` and `main.gd`) | Verified: 2026-10-11
 
 ## Objective
 
