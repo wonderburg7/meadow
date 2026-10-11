@@ -202,8 +202,8 @@ const SKILLS := [
 		"sector": "foraging", "tier": 2, "axial": Vector2i(5, 0),
 		"max_rank": 1, "cost": {HONEY: 20, NECTAR: 200, POLLEN: 80},
 		"requires_previous_tier": true, "all_of": [], "any_of": [],
-		"feature": "", "introduced_by": "", "effects": [], "icon": "",
-		"status": "new", "baseline": false, "open": false,
+		"feature": "", "introduced_by": "", "effects": [{"type": "enable_behaviour", "key": "handling_experience_on"}], "icon": "",
+		"status": "existing", "baseline": false, "open": false,
 	},
 	{
 		# The old floral_constancy_on, with the difference that a forager

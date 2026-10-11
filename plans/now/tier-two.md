@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-6 -- Associative learning, specified below with Dave's 10 Oct 2026 decisions and leading the Claude lane; T2-9 -- a skill not available in this run never blocks the tier above it (C-113, Dave 11 Oct 2026), waiting for room in the Claude lane; then T2-7b -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker) | Dependency: COL-4, COL-6, T2-4a, T2-4b and T2-7 landed (T2-7 on 11 Oct 2026, as the rule, snapshot field and pacing row); T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`) | Verified: 2026-10-11
+Status: active | Owner: Dave / Claude Code | Next: T2-9 -- a skill not available in this run never blocks the tier above it (C-113, Dave 11 Oct 2026), waiting for room in the Claude lane (T2-6 landed 11 Oct 2026); then T2-7b -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker) | Dependency: COL-4, COL-6, T2-4a, T2-4b, T2-6 and T2-7 landed (T2-7 on 11 Oct 2026, as the rule, snapshot field and pacing row); T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`) | Verified: 2026-10-11
 
 ## Objective
 
@@ -54,7 +54,6 @@ Verified 7 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-6 | Associative learning: the existing handling experience, gated by the skill, with a fade | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd` | yes -- leads the Claude lane (T2-7 landed 11 Oct 2026) | medium |
 | T2-9 | A skill not available in this run never blocks the tier above it (C-113) | `scripts/progression.gd`, `plans/design/progression.md`, `test_scenarios/t2_9_c2_comb_worker_test.json`, `tests/test_t2_9_unavailable_tier.py` | yes -- waits for room in the Claude lane (T2-7, which shared `scripts/progression.gd`, landed 11 Oct 2026) | medium |
 | T2-7b | The tier-2 price sweep T2-7 deferred: tier-2 costs set so the arc's first tier-2 purchase lands around day 5 | `scripts/skills.gd`, `plans/design/progression.md`, tests; specified when AR-4 lands | no -- after AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker | medium |
 
@@ -99,68 +98,7 @@ T2-5 shipped 2026-10-09; its specification is `plans/archive/T2-5_2026-10-09.md`
 
 T2-4b shipped 2026-10-09; its specification is `plans/archive/T2-4b_2026-10-09.md`.
 
-## T2-6 -- Associative learning
-
-<!-- LAYER: immediate-task -->
-
-**Level: medium.** Bounded, with an acceptance check; no save migration.
-T2-6 keeps Associative learning's current price in `skills.gd`; T2-7b's sweep, after AR-4, owns it.
-
-**The behaviour already ships behind a developer toggle.** Slice 7's
-handling experience (`GameConfig.handling_experience_on`, off by default)
-counts each bee's finished visits per species in `bee.species_experience`
-and shortens handling time towards `handling_experience_floor` (0.75, a
-quarter faster) over `handling_experience_visits_to_floor` (10) visits:
-`bee_foraging.gd::_handling_experience_scale`, read in the handling start
-and incremented in `finish_collecting`. `bee.species_experience` is
-already saved and restored (`save_game.gd`, `saving.gd`). That matches the
-7 Oct intent, so this slice gates it and adds the fade, and changes no save
-format.
-
-**Decisions (Dave, 10 Oct 2026, plan-ahead session).**
-
-- **Bees learn only once the colony owns the skill.** Nothing is counted
-  before the purchase; the speed-up builds over the next visits. The
-  developer toggle still forces it on, as Tarsal secretions' does.
-- **Experience fades after about 15 visits elsewhere.** Each finished visit
-  to one species takes `handling_experience_visits_to_floor / 15` visits'
-  worth off the bee's experience with every other species, so full
-  experience is gone after 15 visits to others. A loyal forager keeps her
-  edge; a generalist never fully gets it. One `GameConfig` value,
-  `handling_experience_forget_visits` (15), confirmed by the headless test
-  below rather than a separate sweep.
-
-**Change.**
-
-1. `skills.gd`: Associative learning gains
-   `{"type": "enable_behaviour", "key": "handling_experience_on"}` and its
-   status becomes `existing`, so the tree stops calling it "Not built yet".
-2. `bee_foraging.gd`: a `handling_experience_on()` helper beside
-   `tarsal_markers_on()` (setting OR owned skill); both reads of
-   `GameConfig.handling_experience_on` use it.
-3. `bee_foraging.gd`, where `finish_collecting` counts a visit: experience
-   becomes a float; after adding one to this species, subtract the fade from
-   every other species in the bee's dictionary and erase entries that reach
-   zero, so the dictionary stays bounded. Runtime: once per finished visit,
-   over the handful of species one bee has worked; no per-frame cost.
-4. `game_config.gd` and `settings_catalogue.gd`:
-   `handling_experience_forget_visits` with a `"persist": "run"` row beside
-   `handling_experience_visits_to_floor`.
-
-**Must not change.** Handling time with neither the toggle nor the skill;
-the save format (a pre-T2-6 save's integer counts load as floats); Adaptive
-constancy's separate `species_confidence`.
-
-```queue
-**[Claude] T2-6 -- Associative learning**
-- Plan: `plans/now/tier-two.md` -- "T2-6 -- Associative learning"
-- Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd`
-- Check: `python -m unittest tests.test_t2_6_associative_learning` passes (with the toggle off, a bee's handling time and experience stay unchanged until Associative learning is bought; once owned, ten visits to one species bring its handling to 0.75 of a first-timer's, and fifteen visits to another species then erase that experience; experience survives save and restore); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/bee_foraging.gd :: static func handling_experience_on`
-- Next after: PP-1 -- bees earn Pollinator Points and Contribution
-```
-
-T2-7 shipped 2026-10-11; its specification is `plans/archive/T2-7_2026-10-11.md`.
+T2-6 shipped 2026-10-11; its specification is `plans/archive/T2-6_2026-10-11.md`.
 
 ## T2-9 -- A skill not available in this run never blocks the tier above it
 
