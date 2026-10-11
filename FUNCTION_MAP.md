@@ -622,7 +622,7 @@ One cell: contents, brood, honey ripening, how it draws.
 1477 func development_percent() -> float
 ```
 
-## main.gd (1,365 lines)
+## main.gd (1,367 lines)
 
 Per-frame entry point, everything not yet split out of main.
 
@@ -665,11 +665,11 @@ Per-frame entry point, everything not yet split out of main.
 1120 func _prune_selection() -> void
 1133 func _on_restart_after_loss() -> void
 1139 func _on_level_chosen(level: int) -> void
-1152 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-1170 func _apply_scenario_boot_arg() -> void
-1298 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
-1338 func _is_whole_number(value: Variant) -> bool
-1352 func _end_scenario_run(outcome: String) -> void
+1153 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+1172 func _apply_scenario_boot_arg() -> void
+1300 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
+1340 func _is_whole_number(value: Variant) -> bool
+1354 func _end_scenario_run(outcome: String) -> void
 ```
 
 ## diagnostic_log.gd (1,260 lines)

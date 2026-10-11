@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-3 -- a new run from the menu gets its own default name | Dependency: none outside this plan; RR-1 to RR-4 run in order (shared `hud.gd` and `main.gd`) | Verified: 2026-10-11
+Status: active | Owner: Dave / Claude Code | Next: RR-4 -- the window cannot be made smaller than 800x600 | Dependency: none outside this plan; RR-1 to RR-4 run in order (shared `hud.gd` and `main.gd`) | Verified: 2026-10-11
 
 ## Objective
 
@@ -39,7 +39,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-1 | The queen can build a cell in every Challenge, Scenario and Colony Run | `scripts/challenge_runner.gd`, `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `test_scenarios/rr1_queen_builds_test.json`, `tests/test_rr1_queen_builds.py` | yes | medium |
-| RR-3 | A new run from the menu gets its own default name | `scripts/save_slots.gd`, `scripts/main.gd`, `tests/test_rr3_fresh_run_name.py` | yes -- Claude lane (RR-2 landed 11 Oct 2026) | medium |
 | RR-4 | The window cannot be made smaller than 800x600 | `scripts/ui_layout.gd`, `scripts/main.gd`, `tests/test_rr4_min_window.py` | after RR-3 (shared `main.gd`) | low |
 | RR-5 | Hexagon names re-fit when the typeface changes | `scripts/main_menu.gd`, `tests/rr5_hex_refit_test.gd`, `tests/test_rr5_hex_refit.py` | yes (no shared file) | low |
 
@@ -109,42 +108,7 @@ runs it the way `tests/test_col6_winter_skip.py` runs its scenario.
 
 RR-2 shipped 2026-10-11; its specification is `plans/archive/RR-2_2026-10-11.md`.
 
-## RR-3 -- a new run from the menu gets its own default name
-
-<!-- LAYER: immediate-task -->
-
-**Decision (Dave, 11 Oct 2026).** Each new run gets its own default name
-("My colony", "My colony 2", ...), so slots never mix. Nothing is deleted.
-
-**True now.** See "Current state". Slots are keyed by
-`SaveSlots.slugify(Session.run_name)`; `SaveSlots.list_slots()` lists every
-slot with a named save or checkpoints.
-
-**True afterwards.**
-
-- `save_slots.gd` has `static func fresh_run_name(base: String) -> String`:
-  `base` if no listed slot has its slug, else `"%s %d" % [base, n]` for the
-  lowest `n >= 2` whose slug is free.
-- `main.gd::_on_level_chosen` and `_on_scenario_chosen` set
-  `Session.run_name = SaveSlots.fresh_run_name("My colony")` before the
-  reload. Loading a save, Restart Run and the restart after a loss keep the
-  current name.
-
-**Must not change.** The save and index formats; the name a loaded run
-keeps; Challenges' own checkpoints.
-
-**Test.** `tests/test_rr3_fresh_run_name.py`: on `SaveSlots.use_scratch_root()`,
-no slots gives "My colony"; a recorded "My colony" gives "My colony 2"; a
-recorded "My colony" and "My colony 2" gives "My colony 3".
-
-```queue
-**[Claude] RR-3 -- A new run from the menu gets its own default name**
-- Plan: `plans/now/run-repairs.md` -- "RR-3 -- a new run from the menu gets its own default name"
-- Files: `scripts/save_slots.gd`, `scripts/main.gd`, `tests/test_rr3_fresh_run_name.py`
-- Check: `python -m unittest tests.test_rr3_fresh_run_name` passes (the three naming cases above); `tools/verify.ps1` is green
-- Proof: `absent: scripts/save_slots.gd :: func fresh_run_name`
-- Next after: RR-4 -- The window cannot be made smaller than 800x600
-```
+RR-3 shipped 2026-10-12; its specification is `plans/archive/RR-3_2026-10-12.md`.
 
 ## RR-4 -- the window cannot be made smaller than 800x600
 
