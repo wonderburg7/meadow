@@ -109,13 +109,22 @@ func _warn(text: String) -> void:
 		return
 	main.hud.show_warning(text)
 
-## The hud's confirmation dialog; with no hud the question cannot be asked,
-## so the log says what was refused and nothing happens (RR-2).
+## The hud's confirmation dialog. With no hud (the menu at boot) the window
+## asks through a plain ConfirmationDialog of its own, so Delete still works (RR-2).
 func _confirm(title: String, text: String, ok_text: String, cancel_text: String, action: Callable, offer_stop_warning: bool = true) -> void:
-	if main.hud == null:
-		push_warning(text)
+	if main.hud != null:
+		main.hud.confirm_discard(title, text, ok_text, cancel_text, action, offer_stop_warning)
 		return
-	main.hud.confirm_discard(title, text, ok_text, cancel_text, action, offer_stop_warning)
+	var dialog := ConfirmationDialog.new()
+	dialog.title = title
+	dialog.dialog_text = text
+	dialog.ok_button_text = ok_text
+	dialog.cancel_button_text = cancel_text
+	dialog.confirmed.connect(action)
+	dialog.canceled.connect(dialog.queue_free)
+	dialog.confirmed.connect(dialog.queue_free)
+	add_child(dialog)
+	dialog.popup_centered()
 
 ## Over the main menu the window takes the settings window's own
 ## over-the-menu layer (debug_panel.gd::_apply_layer_for_context), since the

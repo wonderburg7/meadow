@@ -54,6 +54,18 @@ func _check_saves() -> void:
 			"the Save row should stay hidden on the menu")
 		# Closing and reopening must also work, and a load of an unreadable
 		# file must warn rather than touch the missing hud.
+		# Delete must still ask, through the panel's own dialog, with no hud.
+		var deleted := [false]
+		_main.saves_panel._confirm("Delete this run", "Delete it?", "Delete it", "Keep it",
+			func(): deleted[0] = true, false)
+		var dialog: ConfirmationDialog = null
+		for child in _main.saves_panel.get_children():
+			if child is ConfirmationDialog:
+				dialog = child
+		_check(dialog != null and dialog.visible, "Delete showed no confirmation dialog at boot")
+		if dialog != null:
+			dialog.confirmed.emit()
+		_check(deleted[0], "confirming Delete at boot did not run the action")
 		_main.saves_panel.close()
 		_main.saves_panel._load("res://tests/no_such_save.json", "none")
 	if _failures.is_empty():
