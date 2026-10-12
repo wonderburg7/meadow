@@ -10,11 +10,22 @@ const Roles = preload("res://scripts/roles.gd")
 static func compute(main: Node2D, bees: Array, counts: Dictionary) -> Dictionary:
 	var starving = 0
 	var hungry = 0
+	var waiting_for_work = 0
+	var travelling_for_work = 0
+	var no_available_work = 0
 	for b in bees:
 		if b.energy < GameConfig.energy_capacity * 0.15:
 			starving += 1
 		elif b.energy < GameConfig.energy_capacity * GameConfig.low_energy_warning_level:
 			hungry += 1
+		# Bee records the result at its real dispatch search. Re-running that
+		# mutable search here could disagree with the work it has just claimed.
+		if b.is_waiting_for_work():
+			waiting_for_work += 1
+		if b.is_travelling_for_work():
+			travelling_for_work += 1
+		if b.has_no_available_work():
+			no_available_work += 1
 	var foragers: int = int(counts.get(Roles.count_key(Roles.FORAGER, "nectar"), 0)) + int(counts.get(Roles.count_key(Roles.FORAGER, "pollen"), 0))
 	var nurses: int = int(counts.get(Roles.count_key(Roles.NURSE), 0))
 	var comb_workers: int = int(counts.get(Roles.count_key(Roles.COMB_WORKER), 0))
@@ -47,6 +58,9 @@ static func compute(main: Node2D, bees: Array, counts: Dictionary) -> Dictionary
 		"bees_count": bees.size(),
 		"starving": starving,
 		"hungry": hungry,
+		"waiting_for_work": waiting_for_work,
+		"travelling_for_work": travelling_for_work,
+		"no_available_work": no_available_work,
 		"foragers": foragers,
 		"nurses": nurses,
 		"comb_workers": comb_workers,

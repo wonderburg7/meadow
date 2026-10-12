@@ -33,6 +33,15 @@ class Colony:
 class Bee:
 	extends RefCounted
 	var energy: float = 100.0
+	var waiting: bool = false
+	var travelling: bool = false
+	var no_work: bool = false
+	func is_waiting_for_work() -> bool:
+		return waiting
+	func is_travelling_for_work() -> bool:
+		return travelling
+	func has_no_available_work() -> bool:
+		return no_work
 
 func _process(_delta: float) -> bool:
 	var diagnostics: GDScript = load("res://scripts/colony_diagnostics.gd")
@@ -42,6 +51,9 @@ func _process(_delta: float) -> bool:
 		{"name": "staffed", "brood": 2, "corpses": 1, "nurses": 1, "comb": 1},
 		{"name": "blocked", "brood": 2, "corpses": 2, "nurses": 0, "comb": 0},
 		{"name": "partly_staffed", "brood": 2, "corpses": 2, "nurses": 1, "comb": 0},
+		{"name": "waiting_with_work", "brood": 0, "corpses": 0, "nurses": 0, "comb": 0, "waiting": true},
+		{"name": "no_work", "brood": 0, "corpses": 0, "nurses": 0, "comb": 0, "waiting": true, "no_work": true},
+		{"name": "travelling", "brood": 0, "corpses": 0, "nurses": 0, "comb": 0, "travelling": true},
 	]
 	for item in cases:
 		var colony := Colony.new()
@@ -56,7 +68,11 @@ func _process(_delta: float) -> bool:
 			roles.count_key(roles.NURSE): item.nurses,
 			roles.count_key(roles.COMB_WORKER): item.comb,
 		}
-		var facts: Dictionary = diagnostics.compute(colony, [Bee.new()], counts)
+		var bee := Bee.new()
+		bee.waiting = item.get("waiting", false)
+		bee.travelling = item.get("travelling", false)
+		bee.no_work = item.get("no_work", false)
+		var facts: Dictionary = diagnostics.compute(colony, [bee], counts)
 		print("DIAGNOSTIC " + JSON.stringify({"name": item.name, "facts": facts}))
 		colony.free()
 	return true
@@ -91,7 +107,7 @@ class ColonyDiagnosticsTest(unittest.TestCase):
             for line in output.splitlines() if line.startswith("DIAGNOSTIC ")
             for row in [json.loads(line.removeprefix("DIAGNOSTIC "))]
         }
-        self.assertEqual(set(facts), {"empty", "staffed", "blocked", "partly_staffed"})
+        self.assertEqual(set(facts), {"empty", "staffed", "blocked", "partly_staffed", "waiting_with_work", "no_work", "travelling"})
         expected = {
             "empty": (0, 0, 0, 0, 0),
             "staffed": (0, 0, 0, 1, 0),
@@ -105,12 +121,26 @@ class ColonyDiagnosticsTest(unittest.TestCase):
                 self.assertEqual(tuple(facts[name][key] for key in keys), values)
                 self.assertTrue(all(facts[name][key] >= 0 for key in keys))
 
+        self.assertEqual(
+            tuple(facts["waiting_with_work"][key] for key in ("waiting_for_work", "travelling_for_work", "no_available_work")),
+            (1, 0, 0),
+        )
+        self.assertEqual(
+            tuple(facts["no_work"][key] for key in ("waiting_for_work", "travelling_for_work", "no_available_work")),
+            (1, 0, 1),
+        )
+        self.assertEqual(
+            tuple(facts["travelling"][key] for key in ("waiting_for_work", "travelling_for_work", "no_available_work")),
+            (0, 1, 0),
+        )
+
     def test_one_hz_snapshot_passes_named_facts(self):
         source = (ROOT / "scripts" / "year_winter.gd").read_text(encoding="utf-8")
         refresh = source.split("func _refresh_signals(", 1)[1].split("func _refresh_panels(", 1)[0]
         self.assertIn("ColonyDiagnostics.compute(main, bees, counts)", refresh)
         for key in ("blocked_cells", "blocked_work", "missing_nurse_workforce",
-                    "missing_comb_workforce", "missing_required_workforce"):
+                    "missing_comb_workforce", "missing_required_workforce", "waiting_for_work",
+                    "travelling_for_work", "no_available_work"):
             self.assertIn('"%s": facts.%s' % (key, key), refresh)
 
 
