@@ -1045,7 +1045,7 @@ The balance fields.
 954  # --- winter ---
 ```
 
-## main_menu.gd (728 lines)
+## main_menu.gd (730 lines)
 
 The main menu overlay: the honeycomb of stage hexes, their name fitting,
 and the menu buttons.
@@ -1065,27 +1065,27 @@ and the menu buttons.
 402  static func hex_fit_size(font: Font, text: String, avail: Vector2, base: int, line_spacing: int) -> int
 411  static func hex_text_fits(font: Font, text: String, avail: Vector2, size: int, line_spacing: int) -> bool
 421  func _fit_hex_label(label: Label) -> void
-437  func _make_hex_tile(stage: Dictionary) -> Control
-530  func _apply_hex_colors(level: int, state: String) -> void
-541  func _refresh_hex_state(level: int) -> void
-544  func _refresh_ticks() -> void
-551  func _stage_for_level(level: int) -> Dictionary
-557  # --- selection and the detail pane ---------------------------------------
-559  func _select_stage(stage: Dictionary) -> void
-569  func _rebuild_detail_pane(stage: Dictionary) -> void
-601  func _make_note_label(text: String) -> Label
-612  func _make_preset_row(stage: Dictionary) -> Control
-629  func _make_preset_description() -> Control
-639  func _make_custom_controls() -> Control
-647  func _make_custom_row(field: Dictionary) -> Control
-691  # --- choosing --------------------------------------------------------
-693  func _choose(stage: Dictionary) -> void
-700  # --- small shared helpers ---------------------------------------------
-705  func _uses_presets(stage: Dictionary) -> bool
-708  func _style_button(button: Button, selected: bool = false) -> void
-715  func _is_challenge_complete(level: int) -> bool
-718  func _is_scenario_played(level: int) -> bool
-725  func _is_completed(stage: Dictionary) -> bool
+439  func _make_hex_tile(stage: Dictionary) -> Control
+532  func _apply_hex_colors(level: int, state: String) -> void
+543  func _refresh_hex_state(level: int) -> void
+546  func _refresh_ticks() -> void
+553  func _stage_for_level(level: int) -> Dictionary
+559  # --- selection and the detail pane ---------------------------------------
+561  func _select_stage(stage: Dictionary) -> void
+571  func _rebuild_detail_pane(stage: Dictionary) -> void
+603  func _make_note_label(text: String) -> Label
+614  func _make_preset_row(stage: Dictionary) -> Control
+631  func _make_preset_description() -> Control
+641  func _make_custom_controls() -> Control
+649  func _make_custom_row(field: Dictionary) -> Control
+693  # --- choosing --------------------------------------------------------
+695  func _choose(stage: Dictionary) -> void
+702  # --- small shared helpers ---------------------------------------------
+707  func _uses_presets(stage: Dictionary) -> bool
+710  func _style_button(button: Button, selected: bool = false) -> void
+717  func _is_challenge_complete(level: int) -> bool
+720  func _is_scenario_played(level: int) -> bool
+727  func _is_completed(stage: Dictionary) -> bool
 ```
 
 ## input_selection.gd (712 lines)
