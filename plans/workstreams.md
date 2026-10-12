@@ -46,3 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/PP-2` (`claude/PP-2`) | Claude | points are spendable and shown, with a +1 at the flower | Claude | in progress | none | `plans/now/pollination.md` PP-2 -- points are spendable and shown, with a +1 at the flower |
