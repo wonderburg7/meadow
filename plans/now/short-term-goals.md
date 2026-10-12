@@ -34,12 +34,37 @@ Verified 13 Oct 2026 against master `06bd26c`:
    player can dismiss one; a new one is offered the next day. Selection and
    progress reuse `colony_diagnostics.gd` and `conditions.gd`, evaluated on
    the same hooks as milestones, never per frame.
-2. **Finishing one gives a small resource reward.** No failure penalty
-   (§7).
+2. **Finishing one gives a small reward in the goal's own resource**
+   (a pollen goal pays pollen), worth about a quarter of a day of the
+   colony's income of it, so it stays small for five bees or five hundred.
+   No failure penalty (§7). "Income" here is gross production over the last
+   day, not net: the pollen goal is offered when net income is at or below
+   zero, where a net figure would pay nothing. The amount is fixed when the
+   goal is offered and shown on it. A headless sweep confirms the quarter-day
+   intent and sets any floor in `GameConfig`.
 3. **Shown in the Colony Run and in Scenarios**, under the milestone shelf,
    so long-term, milestone, short-term and urgent read top to bottom.
    Challenges keep their own stage goals. Offered, dismissed and completed
    goals are saved with the run; a save without them starts with none.
+
+4. **The starting catalogue: six goals.** Each is offered only while its
+   trigger holds.
+
+   | Goal | Offered when | Done when | Pays |
+   | --- | --- | --- | --- |
+   | Build a pollen surplus | pollen net income at or below zero | pollen net income positive for a whole day | pollen |
+   | Clear blocked work | blocked cells or blocked work above zero | none blocked | honey |
+   | Make room | few free cells | that many cells built | nectar |
+   | Feed every larva | hungry brood above zero | no hungry brood for a whole day | pollen |
+   | Put waiting bees to work | many bees waiting for work | few waiting | nectar |
+   | Lay in honey for winter | winter coming and not winter-ready | winter-ready | honey |
+
+   The "few" and "many" thresholds are balance values in `GameConfig`, set by
+   the same sweep.
+5. **Pacing is measured with goals on.** The scripted reference player
+   earns whatever goals it happens to finish, as a real player would, and
+   the 5/10/20/60/90-minute gates are judged with the rewards in
+   (`plans/now/alpha-route-evidence.md`).
 
 ## Open questions
 
