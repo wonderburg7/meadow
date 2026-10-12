@@ -1,7 +1,7 @@
 # Coordinator context -- keep the /run-queue session small
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude | Next: CX-1 -- session_cost.py reports what each /run-queue coordinator spends, and where | Dependency: none; CX-2 follows CX-1, whose report is CX-2's before-and-after measure | Verified: 2026-10-08
+Status: complete | Owner: Dave / Claude | Next: None -- plan complete (CX-1 and CX-2 shipped 8 Oct 2026) | Dependency: none | Verified: 2026-10-12
 
 ## Objective
 
