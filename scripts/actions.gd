@@ -52,12 +52,12 @@ const ACTIONS := [
 	{
 		"id": "nurse_store_jelly", "label": "Store royal jelly", "roles": [Roles.NURSE],
 		"band": 1, "modes": ["jelly", "both"], "find": "jelly_storage_cell",
-		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
+		"feature": "", "skill": "skill.brood.royal_jelly", "gate_key": "", "config_flag": "", "season": "",
 	},
 	{
 		"id": "nurse_make_jelly", "label": "Make royal jelly", "roles": [Roles.NURSE],
 		"band": 2, "modes": ["jelly", "both"], "find": "can_make_jelly",
-		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
+		"feature": "", "skill": "skill.brood.royal_jelly", "gate_key": "", "config_flag": "", "season": "",
 	},
 
 	# Maintenance outranks stocking and building. A Stocking comb worker clears
