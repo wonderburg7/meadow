@@ -48,7 +48,7 @@ class GyneGateTest(unittest.TestCase):
         self.assertIn('"key": "jelly", "skill": "%s"' % ROYAL_JELLY, roles)
         orders = (ROOT / "scripts" / "orders_zones.gd").read_text(encoding="utf-8")
         guard = orders.split("func _on_cell_gyne_requested", 1)[1].split("func _on_cell_keep_empty_requested", 1)[0]
-        self.assertIn("not Session.progression.is_owned(Skills.GYNE_REARING)", guard)
+        self.assertIn('not Session.progression.is_owned("%s")' % GYNE_REARING, guard)
         self.assertIn("_warn_gyne_rearing_required()", guard)
 
     def test_colony_buys_both_skills_and_a_scenario_starts_with_them(self):
