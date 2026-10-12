@@ -37,14 +37,24 @@ Verified 12 Oct 2026 against master `06bd26c`:
    as Standard.
 2. **Disease still shortens lives on Easy.** A disease-shortened life still
    ends as old age, which Easy allows. Easy blocks every other cause.
-3. **A health stat is added** rather than modelling Easy injury through
-   energy alone. A worker at one health or without energy crawls home at
-   25% speed, rests, and leaves only once it clears minimum health and
-   energy thresholds (product-scope §11).
-4. **Brood is protected on Easy too.** Larvae cannot starve on Easy, as
-   well as workers and the queen.
-5. **Standard is today's game, unchanged.** Every Standard outcome a
-   headless scenario records today must still hold.
+3. **Every bee has health, on every difficulty.** Two things lower it: a
+   crab-spider ambush, and running out of energy (health then drains over
+   time rather than the bee dying at once). Resting in the hive restores it.
+   At zero health a bee dies on Standard; on Easy health stops at one. A
+   worker at one health or without energy crawls home at 25% speed, rests,
+   and leaves only once it clears minimum health and energy thresholds
+   (product-scope §11). Health is saved per bee; a save without it loads
+   every bee at full health.
+4. **Brood is protected on Easy.** An unfed larva stops developing and
+   waits; it resumes when fed. Neglect costs time, not lives. On Standard
+   larvae starve as today.
+5. **Standard changes in one way only: exhaustion.** A bee out of energy
+   loses health over time instead of dying on the spot, so it may reach
+   food first. Every other Standard outcome a headless scenario records
+   today must still hold.
+6. **Scenario presets:** Relaxed is Easy's rules plus Relaxed's numbers;
+   Standard and Demanding use Standard's rules; Custom gains an "Easy rules"
+   checkbox. No new preset name.
 
 ## Open questions
 
