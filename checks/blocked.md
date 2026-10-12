@@ -56,7 +56,7 @@ Runner: opus -- the player must time collection and the first worker by hand (Da
 
 Owner: `plans/archive/colony-run_2026-10-08.md`
 
-Blocked by: RR-1 (`plans/now/run-repairs.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
+Blocked by: RR-1 (`plans/archive/run-repairs_2026-10-12.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
 
 ### C-110 -- Colony Run victory screen
 
@@ -71,7 +71,7 @@ Runner: opus -- a long play through the first winter, then save and load
 
 Owner: `plans/archive/colony-run_2026-10-08.md`
 
-Blocked by: RR-1 (`plans/now/run-repairs.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
+Blocked by: RR-1 (`plans/archive/run-repairs_2026-10-12.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
 
 ### C-111 -- A lost Colony Run offers its latest checkpoint
 
@@ -85,7 +85,7 @@ Runner: sonnet -- a checkpoint, a debug kill and two game-over screens
 
 Owner: `plans/archive/colony-run_2026-10-08.md`
 
-Blocked by: RR-1 (`plans/now/run-repairs.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
+Blocked by: RR-1 (`plans/archive/run-repairs_2026-10-12.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
 
 ### C-114 -- An unmated queen's nuptial flights: the succession window's button and the Mating row switch
 
@@ -99,7 +99,7 @@ Runner: opus -- sets up a gyne succession and watches her flights over several d
 
 Owner: `plans/archive/colony-run_2026-10-08.md`
 
-Blocked by: RR-1 (`plans/now/run-repairs.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
+Blocked by: RR-1 (`plans/archive/run-repairs_2026-10-12.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
 
 ### C-115 -- Sending a gyne in mid summer wins; in early spring she is lost
 
@@ -125,7 +125,7 @@ Runner: opus -- raises gynes through winter and times two sends by the season
 
 Owner: `plans/archive/colony-run_2026-10-08.md`
 
-Blocked by: RR-1 (`plans/now/run-repairs.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
+Blocked by: RR-1 (`plans/archive/run-repairs_2026-10-12.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
 
 ### C-116 -- Meadow dies back over winter and regrows
 
@@ -139,7 +139,7 @@ Runner: sonnet -- plays to spring and looks at the flowers over a few days
 
 Owner: `plans/archive/colony-run_2026-10-08.md`
 
-Blocked by: RR-1 (`plans/now/run-repairs.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
+Blocked by: RR-1 (`plans/archive/run-repairs_2026-10-12.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
 
 ### C-117 -- Rain skills in the Colony Run
 
@@ -155,7 +155,7 @@ Runner: dave -- whether foragers avoid approaching rain is movement over time, n
 
 Owner: `plans/now/tier-two.md`
 
-Blocked by: RR-1 (`plans/now/run-repairs.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
+Blocked by: RR-1 (`plans/archive/run-repairs_2026-10-12.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
 
 ### C-118 -- Shiver Cluster in a Colony Run: the Winter note and doubled figure, gone once the node is bought
 
@@ -169,7 +169,7 @@ Runner: sonnet -- plays to the winter countdown, reads a figure, buys a skill, r
 
 Owner: `plans/now/tier-two.md`
 
-Blocked by: RR-1 (`plans/now/run-repairs.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
+Blocked by: RR-1 (`plans/archive/run-repairs_2026-10-12.md`) -- a lone Colony Run queen cannot build her first cell, so no Colony Run grows past the founding (10-11 Oct 2026 pass).
 
 ### C-84 -- Challenge 2's last stage shows what is still short
 
@@ -183,4 +183,4 @@ Runner: dave -- a long unassisted Challenge 2 playthrough judged on whether the 
 
 Owner: `plans/archive/hands-on-findings_2026-10-05.md`
 
-Blocked by: RR-1 (`plans/now/run-repairs.md`) and T2-9 (`plans/now/tier-two.md`) -- Challenge 2 has no way to make new cells: the queen's Build cell is Challenge 1 only and Comb worker is blocked at 2.7 (Dave, 11 Oct 2026).
+Blocked by: RR-1 (`plans/archive/run-repairs_2026-10-12.md`) and T2-9 (`plans/now/tier-two.md`) -- Challenge 2 has no way to make new cells: the queen's Build cell is Challenge 1 only and Comb worker is blocked at 2.7 (Dave, 11 Oct 2026).
