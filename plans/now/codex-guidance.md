@@ -1,7 +1,7 @@
 # Codex guidance -- keep Codex-only instructions executable
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: L-25 -- verify and prefinish refuse to check a different checkout (found closing CD-3, 12 Oct 2026; L-20 shipped 7 Oct 2026) | Dependency: none | Verified: 2026-10-12
+Status: complete | Owner: Dave / Codex | Next: None — plan complete (L-25 closed 13 Oct 2026; L-20 shipped 7 Oct 2026) | Dependency: none | Verified: 2026-10-13
 
 ## Objective
 
