@@ -42,12 +42,12 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] CD-3 -- waiting and travel get a deterministic diagnostic boundary**
-   - Plan: `plans/now/diagnostic-readiness.md` -- "CD-3 -- waiting and travel get a deterministic diagnostic boundary"
-   - Files: `scripts/bee.gd`, `scripts/colony_diagnostics.gd`, `scripts/year_winter.gd`, `tests/test_colony_diagnostics.py`
-   - Check: `python -m unittest tests.test_colony_diagnostics` passes with waiting, travelling and no-work fixtures; `tools/verify.ps1` is green
-   - Proof: `present: scripts/year_winter.gd :: func _refresh_signals`
-   - Next after: none -- diagnostic readiness is complete
+1. **[Codex] L-25 -- verify and prefinish refuse to check a different checkout**
+   - Plan: `plans/now/codex-guidance.md` -- "L-25 -- verify and prefinish refuse to check a different checkout"
+   - Files: `tools/verify.ps1`, `tools/prefinish.py`, `tests/test_wrong_checkout_guard.py`
+   - Check: `python -m unittest tests.test_wrong_checkout_guard` passes, showing both scripts refuse when run from another worktree and run normally from their own; `tools/verify.ps1` is green
+   - Proof: `absent: tools/prefinish.py :: different checkout`
+   - Next after: none -- Codex guidance is complete
 
 ## Not in the queue, and why
 
