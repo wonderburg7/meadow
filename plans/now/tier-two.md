@@ -54,7 +54,6 @@ Verified 7 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-9 | A skill not available in this run never blocks the tier above it (C-113) | `scripts/progression.gd`, `plans/design/progression.md`, `test_scenarios/t2_9_c2_comb_worker_test.json`, `tests/test_t2_9_unavailable_tier.py` | yes -- queued in the Claude lane (T2-7, which shared `scripts/progression.gd`, landed 11 Oct 2026) | medium |
 | T2-7b | The tier-2 price sweep T2-7 deferred: tier-2 costs set so the arc's first tier-2 purchase lands around day 5 | `scripts/skills.gd`, `plans/design/progression.md`, tests; specified when AR-4 lands | no -- after AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker | medium |
 
 **Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
@@ -100,63 +99,7 @@ T2-4b shipped 2026-10-09; its specification is `plans/archive/T2-4b_2026-10-09.m
 
 T2-6 shipped 2026-10-11; its specification is `plans/archive/T2-6_2026-10-11.md`.
 
-## T2-9 -- A skill not available in this run never blocks the tier above it
-
-<!-- LAYER: immediate-task -->
-
-**Decision (Dave, 11 Oct 2026, from failed check C-113).** Branch-tier
-progress counts only the lower-tier skills this run offers. A skill that is
-cut, banned, not yet unlocked by the stage, or missing its feature no longer
-keeps the tier above it shut. This makes `plans/design/progression.md`
-section 9's rule ("a Challenge's grants/bans/delays cannot make branch
-advancement impossible") hold.
-
-**True now.** `progression.gd::branch_tier_open` returns false unless every
-skill in the branch's tier below is owned. In Challenge 2 at 2.7 and 2.8,
-Cell capacity (Colony's only tier-1 skill) is not in the stage's
-`unlocked_keys`, so `is_permitted` refuses it and it cannot be bought. Comb
-worker and Miner, Colony tier 2 and free at those stages, read "blocked:
-needs a skill from the tier before it" (C-113, confirmed by an opus re-run
-on 11 Oct 2026).
-
-**True afterwards.**
-
-- `progression.gd` has `_offered_in_run(skill_id) -> bool`, returning
-  `is_permitted(skill_id) and feature_valid(skill_id)`.
-  `branch_tier_open` skips a lower-tier sibling for which it is false. A
-  tier whose siblings are all skipped counts as satisfied.
-- `plans/design/progression.md` section 4.3's first rule reads "every skill
-  in that branch's tier N that this run offers", with the decision's date.
-- `purchase_blocker`'s order and every other gate are unchanged.
-
-**Runtime.** Same call sites and count as now (`purchase_blocker`, on a
-panel refresh or a purchase query). It adds two dictionary lookups per
-sibling and nothing per frame.
-
-**Must not change.** Skill prices (T2-7's); the rule when every lower-tier
-skill is offered; mastered skills counting as owned; Challenge 2's stage
-data.
-
-**Escalate** if a test shows a Colony Run or Scenario tier opening earlier
-than before because a stage-delayed skill now counts as not offered: that
-would be a gameplay change beyond the Challenge case Dave decided.
-
-**Test.** `test_scenarios/t2_9_c2_comb_worker_test.json` (`"challenge": 2`,
-as `test_scenarios/bs9_c2_queen_nurses_test.json` starts): advance to 2.5
-and `buy_skill` `skill.brood.nurses`, advance to 2.7, `buy_skill`
-`skill.colony.comb_worker`, assert `skill_owned` true; advance to 2.8,
-`buy_skill` `skill.colony.miner`, assert `skill_owned` true.
-`tests/test_t2_9_unavailable_tier.py` runs it and also checks, from source,
-that `branch_tier_open` calls `_offered_in_run`.
-
-```queue
-**[Claude] T2-9 -- A skill not available in this run never blocks the tier above it**
-- Plan: `plans/now/tier-two.md` -- "T2-9 -- A skill not available in this run never blocks the tier above it"
-- Files: `scripts/progression.gd`, `plans/design/progression.md`, `test_scenarios/t2_9_c2_comb_worker_test.json`, `tests/test_t2_9_unavailable_tier.py`
-- Check: `python -m unittest tests.test_t2_9_unavailable_tier` passes (Challenge 2 buys Comb worker at 2.7 and Miner at 2.8 while Cell capacity stays unavailable); `tools/verify.ps1` is green
-- Proof: `absent: scripts/progression.gd :: _offered_in_run`
-- Next after: T2-7b -- the deferred tier-2 price sweep; waits for AR-4 and is specified when it lands
-```
+T2-9 shipped 2026-10-12; its specification is `plans/archive/T2-9_2026-10-12.md`.
 
 ## Not in the queue, and why
 
