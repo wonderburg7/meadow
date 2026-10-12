@@ -39,7 +39,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-1 | The queen can build a cell in every Challenge, Scenario and Colony Run | `scripts/challenge_runner.gd`, `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `test_scenarios/rr1_queen_builds_test.json`, `tests/test_rr1_queen_builds.py` | yes | medium |
-| RR-4 | The window cannot be made smaller than 800x600 | `scripts/ui_layout.gd`, `scripts/main.gd`, `tests/test_rr4_min_window.py` | after RR-3 (shared `main.gd`) | low |
 | RR-5 | Hexagon names re-fit when the typeface changes | `scripts/main_menu.gd`, `tests/rr5_hex_refit_test.gd`, `tests/test_rr5_hex_refit.py` | yes (no shared file) | low |
 
 Each slice reads its own section only. Do not change skill prices, the
@@ -110,25 +109,7 @@ RR-2 shipped 2026-10-11; its specification is `plans/archive/RR-2_2026-10-11.md`
 
 RR-3 shipped 2026-10-12; its specification is `plans/archive/RR-3_2026-10-12.md`.
 
-## RR-4 -- the window cannot be made smaller than 800x600
-
-<!-- LAYER: immediate-task -->
-
-**Decision (Dave, 11 Oct 2026).** Enforce an 800x600 minimum window.
-
-**True afterwards.** `ui_layout.gd` adds `MIN_SUPPORTED_HEIGHT := 600.0`
-beside `MIN_SUPPORTED_WIDTH`. `main.gd::_ready`, before the `menu_pending`
-return, sets `get_window().min_size` to those two values. A test reads both
-constants and the `min_size` assignment from source.
-
-```queue
-**[Claude] RR-4 -- The window cannot be made smaller than 800x600**
-- Plan: `plans/now/run-repairs.md` -- "RR-4 -- the window cannot be made smaller than 800x600"
-- Files: `scripts/ui_layout.gd`, `scripts/main.gd`, `tests/test_rr4_min_window.py`
-- Check: `python -m unittest tests.test_rr4_min_window` passes; `tools/verify.ps1` is green
-- Proof: `absent: scripts/ui_layout.gd :: MIN_SUPPORTED_HEIGHT`
-- Next after: RR-5 -- Hexagon names re-fit when the typeface changes
-```
+RR-4 shipped 2026-10-12; its specification is `plans/archive/RR-4_2026-10-12.md`.
 
 ## RR-5 -- hexagon names re-fit when the typeface changes
 
