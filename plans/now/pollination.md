@@ -49,7 +49,6 @@ Verified 10 Oct 2026 against master:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | PP-2 | points are spendable and shown, with a +1 at the flower | `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, tests | yes -- Claude lane (PP-1 landed 11 Oct 2026) | medium |
-| PP-3 | Gyne rearing gates gyne cells and Royal jelly gates jelly | `scripts/roles.gd`, `scripts/actions.gd`, `scripts/orders_zones.gd`, `scripts/run_availability.gd`, tests | landed 12 Oct 2026 | medium |
 | PP-4 | seed set: pollinated flowers replant nearby and the meadow remembers through winter | `scripts/flower.gd`, `scripts/world_building.gd`, `scripts/flower_species.gd`, `scripts/pollination.gd`, `scripts/levels.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- Claude backlog, after PP-2 (PP-1 landed 11 Oct 2026) | high |
 | PP-5 | Priority cells: marked brood cells are fed first | `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | no -- after PP-3 releases `orders_zones.gd` | high |
 | PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after PP-2 to PP-5 (PP-1 and T2-7 landed 11 Oct 2026) | medium |
@@ -94,34 +93,7 @@ windowed baseline before and after, and record both here.
 - Next after: PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter
 ```
 
-## PP-3 -- Gyne rearing gates gyne cells and Royal jelly gates jelly
-
-<!-- LAYER: immediate-task -->
-
-**Change.**
-
-1. `orders_zones.gd::_on_cell_gyne_requested`: marking a cell for a gyne
-   is refused unless Gyne rearing is owned, with a one-line message in the
-   pattern of `_warn_bee_bread_stays`; unmarking is always allowed.
-2. `roles.gd`: the Nurse's "Making jelly" mode names
-   `skill.brood.royal_jelly` (the T2-2 mode-skill pattern, which the HUD
-   already greys); `actions.gd`: `nurse_make_jelly` and `nurse_store_jelly`
-   name it too, so "Anything" nurses cannot make jelly without it.
-3. `run_availability.gd`: a run whose level row is not `"run_type":
-   "colony"` owns Gyne rearing and Royal jelly from the start, exactly as
-   it owns Shiver Cluster.
-
-**Must not change.** Gyne raising in every Challenge and Scenario; a save
-whose cells are already marked keeps them (marking is refused, not undone).
-
-```queue
-**[Codex] PP-3 -- Gyne rearing gates gyne cells and Royal jelly gates jelly**
-- Plan: `plans/now/pollination.md` -- "PP-3 -- Gyne rearing gates gyne cells and Royal jelly gates jelly"
-- Files: `scripts/roles.gd`, `scripts/actions.gd`, `scripts/orders_zones.gd`, `scripts/run_availability.gd`, `tests/test_pp3_gyne_gate.py`, `test_scenarios/pp3_gyne_gate.json`
-- Check: `python -m unittest tests.test_pp3_gyne_gate` passes (in a Colony Run a gyne-cell request is refused until Gyne rearing is owned and accepted after; nurses make no jelly until Royal jelly is owned; a Scenario run owns both from the start and raises a gyne as today); `tools/verify.ps1` is green
-- Proof: `absent: scripts/roles.gd :: skill.brood.royal_jelly`
-- Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
-```
+PP-3 shipped 2026-10-12; its specification is `plans/archive/PP-3_2026-10-12.md`.
 
 ## PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter
 
