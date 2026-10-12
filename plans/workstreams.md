@@ -46,4 +46,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.claude/worktrees/claude-lane-refill-4547dd` (`claude/claude-lane-refill-4547dd`) | Claude (docs only) | goal-presentation plan and Claude-lane refill (docs only) | Claude Code | in progress | none | `plans/now/goal-presentation.md` (new) |
