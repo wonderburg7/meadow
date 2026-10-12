@@ -79,7 +79,6 @@ Verified 9 Oct 2026 against master and the main checkout:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-5 | the skep in the meadow, and the rival hive as a recoloured skep | `scripts/hive.gd`, `scripts/rival_hive.gd`, the sprite table and catalogue, tests | yes -- Claude lane (SP-4 landed 11 Oct 2026) | medium |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for Dave's repacked sheet | high (per-bee hot path) |
 | SP-8 | the meadow floor built from stacked grass and soil blocks, with height in the simulation | to be cut: height map, save, flight, flowers, scouting | no -- needs cutting into slices first | high (save format, balance, multi-slice) |
 | SP-9 | hive soil blocks drawn from the art, crumbling as they are mined | `scripts/soil_block.gd`, tests | yes -- Claude lane | medium |
@@ -96,25 +95,7 @@ SP-7 (the whole comb drawn from Dave's cell art: honey, jelly, larva, both
 bee breads, fermented nectar and the wax caps) shipped 2026-10-12 as ad-hoc
 work on Dave's request; its record is `plans/archive/SP-7_2026-10-12.md`.
 
-## SP-5 -- the skep in the meadow, and the rival hive
-
-**True afterwards.**
-
-- `hive.gd` gets a sprite child drawn at the meadow scale, with its
-  footprint centred on the hive. The 60x60 square stays as the hit shape,
-  drawn transparent.
-- `rival_hive.gd` does the same with a darker recolour variant.
-- Hands-on: the skep sits where the square was, and foragers arrive at its
-  entrance.
-
-```queue
-**[Claude] SP-5 -- the skep in the meadow, and the rival hive as a recoloured skep**
-- Plan: `plans/now/sprites.md` -- "SP-5 -- the skep in the meadow, and the rival hive"
-- Files: `scripts/hive.gd`, `scripts/rival_hive.gd`, `assets/sprites/SPRITES.md`, `scripts/sprite_catalogue.gd`, `tests/test_sp5_skep.py`
-- Check: `python -m unittest tests.test_sp5_skep` passes and `python tools/sprites.py --check` is clean; `tools/verify.ps1` is green
-- Proof: `present: scripts/hive.gd :: extends Polygon2D`
-- Next after: SP-6 -- meadow foragers drawn from the sheet: eight directions, flapping wings
-```
+SP-5 shipped 2026-10-12; its specification is `plans/archive/SP-5_2026-10-12.md`.
 
 ## SP-8 -- the meadow floor from stacked blocks (not yet cut)
 
