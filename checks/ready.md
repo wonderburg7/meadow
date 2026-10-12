@@ -25,4 +25,5 @@ unblocker.
 - [C-127 -- The comb draws honey, jelly, brood, bee bread and wax caps from Dave's art](ready/C-127.md)
 - [C-128 -- The skep sits where the hive square was, and the rival hive is a darker skep](ready/C-128.md)
 - [C-129 -- A +1 rises over a flower that earns a Pollinator Point, and the stores line counts points](ready/C-129.md)
+- [C-130 -- Hive soil blocks show Dave's art and crumble as they are dug](ready/C-130.md)
 - [C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface](ready/C-99.md)
