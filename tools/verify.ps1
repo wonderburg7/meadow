@@ -273,6 +273,7 @@ function Invoke-PythonStage {
         [string]$ScriptPath,
         [string[]]$ScriptArgs = @(),
         [string]$FailureNote,
+        [hashtable]$ExitNotes = @{},
         [switch]$RegenerateNote
     )
 
@@ -291,6 +292,10 @@ function Invoke-PythonStage {
     }
 
     $stageTimer.Stop()
+    # An exit code can name a different cause than the stage's usual one.
+    if ($ExitNotes.ContainsKey([int]$exit)) {
+        $FailureNote = $ExitNotes[[int]$exit]
+    }
     Write-StageResult -Name $Name -Ok ($exit -eq 0) -Output $captured -FailureNote $FailureNote -Ms ([int]$stageTimer.ElapsedMilliseconds)
     if ($RegenerateNote -and $exit -eq 0) {
         # Never silent: say what the generator did, whether or not -Quiet hid it.
@@ -336,7 +341,9 @@ if ($runBranchScope -and -not $Docs) {
     # undeclared `Skills`, main.gd failed to compile, and every test that
     # boots Godot ran to its timeout -- 98 minutes before the parse error
     # surfaced. Now it fails in seconds with the stage named.
-    Invoke-PythonStage -Name "godot boot" -ScriptPath (Join-Path $repoRoot "tools/godot_compile_check.py") -FailureNote "the project does not boot"
+    # Exit 3 is the import cache, not the code (tools/godot_cache.py): the
+    # stage says so, so nobody edits code to satisfy it.
+    Invoke-PythonStage -Name "godot boot" -ScriptPath (Join-Path $repoRoot "tools/godot_compile_check.py") -FailureNote "the project does not boot" -ExitNotes @{ 3 = "the Godot import cache, not a code fault -- run the Fix command printed below" }
     if ($lastStageExit -ne 0) {
         exit $lastStageExit
     }
