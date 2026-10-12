@@ -424,7 +424,9 @@ func _fit_hex_label(label: Label) -> void:
 	# own size is this function's override once it has run.
 	var base := int(round(UiTheme.TYPE_SIZES["Tiny"] * Session.text_scale))
 	var avail := label.size - label.get_theme_stylebox("normal").get_minimum_size()
-	var key := "%d|%d|%s" % [font.get_rid().get_id(), base, str(avail)]
+	# The font's instance id, not its RID: every FontFile reports RID 0, so a
+	# typeface change at the same scale would keep the previous face's fit.
+	var key := "%d|%d|%s" % [font.get_instance_id(), base, str(avail)]
 	if label.get_meta("hex_fit_key", "") == key:
 		return
 	label.set_meta("hex_fit_key", key)
