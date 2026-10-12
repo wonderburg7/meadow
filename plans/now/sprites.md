@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-9, hive soil drawn from the art, is queued (SP-1 to SP-5 and SP-7 landed; the skep is in the meadow); SP-6 waits for Dave's repacked forager sheet; SP-8a, the meadow floor drawn in blocks with everything on it lifted, is specified below and gated on CD-3 (Codex lane) releasing `scripts/bee.gd` (PP-4 landed 12 Oct 2026); height's effects (rest of SP-8) are cut after it | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: nothing queued but SP-8a (SP-1 to SP-5, SP-7 and SP-9 landed; the skep is in the meadow and hive soil is drawn from the art); SP-6 waits for Dave's repacked forager sheet; SP-8a, the meadow floor drawn in blocks with everything on it lifted, is specified below and gated on CD-3 (Codex lane) releasing `scripts/bee.gd` (PP-4 landed 12 Oct 2026); height's effects (rest of SP-8) are cut after it | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-12
 
 ## Objective
 
