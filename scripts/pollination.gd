@@ -34,17 +34,22 @@ extends RefCounted
 ##
 ## - counts it in `seed_counts` under its species, the meadow's memory of
 ##   which species the colony pollinated this year, and
-## - queues a seed where it stood (`pending_seeds`), which
-##   world_building.gd::_seed_flower plants as the next replacement, of the
-##   same species, close by. A flower that did not set seed queues nothing,
-##   so its gap is filled by today's seasonal draw, the background floor.
+## - queues the gap it leaves (`gaps`, oldest first): a seed of its species
+##   where it stood if it set seed, an empty gap if not.
+##
+## world_building.gd::_seed_flower fills the oldest gap first. A seed of a
+## species in flower now comes up close by; an empty gap, or a seed whose
+## species is out of season, takes today's seasonal draw, the background
+## floor. Queuing both kinds keeps the order the flowers died in, so seeds
+## waiting never crowd the seasonal draw out.
 ##
 ## After winter, while COL-8's regrowth is under way (Flower.regrowth_factor
 ## below 1), the seasonal draw is weighted by the counts the year gathered
-## (regrowth_counts, read through flower_species.gd::species_weights). On
-## the first draw after a winter the counts move to `spring_counts` and
-## `seed_counts` starts again from zero, so each winter remembers one year.
-## save_game.gd writes them, with the seeds waiting, under "seed_bank"
+## (regrowth_counts, read through flower_species.gd::species_weights). The
+## first death or replacement after a winter moves the counts to
+## `spring_counts` and starts `seed_counts` again from zero (_roll_spring),
+## so each winter remembers one year.
+## save_game.gd writes them, with the gaps, under "seed_bank"
 ## (seed_save_data), beside the "pollination" record rather than in it, and
 ## saving.gd::_restore hands them back through restore_seed.
 
@@ -59,9 +64,10 @@ const CONTRIBUTION := "contribution"
 const SEED_COUNTS := "seed_counts"
 const SPRING_COUNTS := "spring_counts"
 const SPRING_OF := "spring_of"
-const PENDING_SEEDS := "pending_seeds"
+const GAPS := "gaps"
 
 const Levels = preload("res://scripts/levels.gd")
+const FlowerSpecies = preload("res://scripts/flower_species.gd")
 
 var main: Node2D
 var points: int = 0
@@ -69,12 +75,13 @@ var contribution: int = 0
 ## PP-4: seed-setting deaths this year, species name -> count.
 var seed_counts: Dictionary = {}
 ## PP-4: the counts this spring's regrowth reads, moved out of seed_counts
-## on the first draw after the winter that ended on day `spring_of`.
+## by _roll_spring after the winter that ended on day `spring_of`.
 var spring_counts: Dictionary = {}
 var spring_of: float = 0.0
-## PP-4: seeds waiting to be planted, oldest first, each
-## [species_index, x, y] of the flower that set it.
-var pending_seeds: Array = []
+## PP-4: gaps waiting to be filled, oldest first, each [species_index, x, y]
+## of the flower that left it; species_index is EMPTY_GAP when it set no seed.
+var gaps: Array = []
+const EMPTY_GAP := -1
 
 ## Whether the colony owns Pollinator points, in bee_foraging.gd's
 ## tarsal_markers_on() pattern. There is no GameConfig toggle behind it: the
@@ -142,17 +149,19 @@ static func seed_set_on() -> bool:
 	return Levels.seed_set_enabled(Session.starting_level)
 
 ## flower.gd calls this once as a flower dies of age, before it frees
-## itself. Counts and queues a seed only when the run has seed set and the
-## flower set seed; logs every death in a "pollination_log" scenario.
+## itself. With seed set on, counts the flower if it set seed and queues its
+## gap; logs every death in a "pollination_log" scenario.
 func flower_withered(flower: Node2D) -> void:
 	var on := seed_set_on()
 	var sets: bool = flower.sets_seed()
-	if on and sets:
-		seed_counts[flower.species_name] = int(seed_counts.get(flower.species_name, 0)) + 1
-		pending_seeds.append([flower.species_index, flower.position.x, flower.position.y])
-		# Never more waiting than the meadow holds: each seed fills one gap.
-		while pending_seeds.size() > maxi(1, int(GameConfig.flower_count)):
-			pending_seeds.pop_front()
+	if on:
+		_roll_spring()
+		if sets:
+			seed_counts[flower.species_name] = int(seed_counts.get(flower.species_name, 0)) + 1
+		gaps.append([flower.species_index if sets else EMPTY_GAP, flower.position.x, flower.position.y])
+		# Never more waiting than the meadow holds.
+		while gaps.size() > maxi(1, int(GameConfig.flower_count)):
+			gaps.pop_front()
 	if _logging():
 		DiagnosticLog.log_action("pollination_withered", flower.species_name, "recorded", JSON.stringify({
 			"flower": [flower.position.x, flower.position.y],
@@ -162,48 +171,75 @@ func flower_withered(flower: Node2D) -> void:
 			"seed_set_on": on,
 			"sets_seed": sets,
 			"seed_counts": seed_counts,
-			"pending": pending_seeds.size(),
+			"gaps": gaps.size(),
 		}))
 
-## The oldest seed waiting to be planted, removed from the queue, or an
-## empty array when none is. Only world_building.gd::_seed_flower takes them.
-func take_pending_seed() -> Array:
-	if pending_seeds.is_empty():
+## The oldest gap waiting, removed from the queue, or an empty array when
+## none is. Only world_building.gd::_seed_flower takes them.
+func take_gap() -> Array:
+	if gaps.is_empty():
 		return []
-	return pending_seeds.pop_front()
+	return gaps.pop_front()
+
+## Whether `gap` holds a seed that can come up now: one was set, and its
+## species is in flower today. Out of season, the gap takes the seasonal draw.
+static func seed_in_season(gap: Array) -> bool:
+	return not gap.is_empty() and int(gap[0]) >= 0 \
+		and FlowerSpecies.in_season(FlowerSpecies.SPECIES[int(gap[0]) % FlowerSpecies.SPECIES.size()])
+
+## A bushy seasonal draw fills more than its one gap: it also takes up to
+## `count` empty gaps waiting at the front, so the queue keeps pace with the
+## room in the meadow. Never skips past a seed. Returns how many it took.
+func drop_empty_gaps(count: int) -> int:
+	var dropped := 0
+	while dropped < count and not gaps.is_empty() and int(gaps[0][0]) == EMPTY_GAP:
+		gaps.pop_front()
+		dropped += 1
+	return dropped
 
 ## The seed counts the seasonal draw is weighted by now, or an empty
 ## dictionary for an ordinary draw. `regrowing` is whether COL-8's spring
 ## regrowth is still under way (world_building.gd reads
-## Flower.regrowth_factor). The first call after a winter moves the year's
-## counts into spring_counts and starts seed_counts again, whether or not
-## the regrowth is still running.
+## Flower.regrowth_factor).
 func regrowth_counts(regrowing: bool) -> Dictionary:
-	if not seed_set_on() or Session.winter_ends_day <= 0.0 or Session.winter_here:
+	if not seed_set_on():
 		return {}
-	if spring_of != Session.winter_ends_day:
-		spring_counts = seed_counts
-		seed_counts = {}
-		spring_of = Session.winter_ends_day
-		if _logging():
-			DiagnosticLog.log_action("pollination_spring", str(spring_of), "recorded",
-				JSON.stringify({"spring_counts": spring_counts}))
+	_roll_spring()
+	if Session.winter_ends_day <= 0.0 or Session.winter_here:
+		return {}
 	return spring_counts if regrowing else {}
 
-## One line per replacement in a "pollination_log" scenario: `kind` is
-## "seed" (planted from a pending seed at `parent`) or "seasonal" (today's
-## draw, with the weights it was drawn from and the counts that weighted it).
-func log_replant(kind: String, flower: Node2D, parent: Array, weights: Array, counts: Dictionary) -> void:
+## Once per winter, on the first death or replacement after it: the year's
+## counts become spring's, and the new year's start from zero.
+func _roll_spring() -> void:
+	if Session.winter_ends_day <= 0.0 or Session.winter_here or spring_of == Session.winter_ends_day:
+		return
+	spring_counts = seed_counts
+	seed_counts = {}
+	spring_of = Session.winter_ends_day
+	if _logging():
+		DiagnosticLog.log_action("pollination_spring", str(spring_of), "recorded",
+			JSON.stringify({"spring_counts": spring_counts}))
+
+## One line per flower planted as a replacement in a "pollination_log"
+## scenario: `kind` is "seed" (from the seed in `gap`) or "seasonal" (today's
+## draw, with the weights it was drawn from and the counts that weighted
+## them). A replacement's first flower also carries the gap it filled (empty
+## when none was waiting) and how many empty gaps a bush took with it.
+func log_replant(kind: String, flower: Node2D, weights: Array, counts: Dictionary, first: bool, gap: Array, dropped: int) -> void:
 	if not _logging():
 		return
-	DiagnosticLog.log_action("pollination_replant", kind, "recorded", JSON.stringify({
+	var detail := {
 		"flower": [flower.position.x, flower.position.y],
 		"species": flower.species_name,
 		"species_index": flower.species_index,
-		"parent": parent,
 		"weights": weights,
 		"counts": counts,
-	}))
+	}
+	if first:
+		detail["gap"] = gap
+		detail["dropped"] = dropped
+	DiagnosticLog.log_action("pollination_replant", kind, "recorded", JSON.stringify(detail))
 
 func _logging() -> bool:
 	return main != null and main.scenario_active and main.scenario_pollination_log
@@ -221,32 +257,32 @@ func restore(data) -> void:
 	points = maxi(0, int(data.get(POINTS, 0)))
 	contribution = maxi(0, int(data.get(CONTRIBUTION, 0)))
 
-## PP-4: the seed counts and the seeds waiting, save_game.gd's "seed_bank".
+## PP-4: the seed counts and the gaps waiting, save_game.gd's "seed_bank".
 func seed_save_data() -> Dictionary:
 	return {
 		SEED_COUNTS: seed_counts.duplicate(),
 		SPRING_COUNTS: spring_counts.duplicate(),
 		SPRING_OF: spring_of,
-		PENDING_SEEDS: pending_seeds.duplicate(true),
+		GAPS: gaps.duplicate(true),
 	}
 
 ## A record that is missing, or not a dictionary -- every save from before
-## PP-4 -- restores no seed counts and no seeds waiting.
+## PP-4 -- restores no seed counts and no gaps waiting.
 func restore_seed(data) -> void:
 	seed_counts = {}
 	spring_counts = {}
 	spring_of = 0.0
-	pending_seeds = []
+	gaps = []
 	if typeof(data) != TYPE_DICTIONARY:
 		return
 	seed_counts = _restore_counts(data.get(SEED_COUNTS))
 	spring_counts = _restore_counts(data.get(SPRING_COUNTS))
 	spring_of = maxf(0.0, float(data.get(SPRING_OF, 0.0)))
-	var seeds = data.get(PENDING_SEEDS)
-	if typeof(seeds) == TYPE_ARRAY:
-		for entry in seeds:
+	var saved = data.get(GAPS)
+	if typeof(saved) == TYPE_ARRAY:
+		for entry in saved:
 			if typeof(entry) == TYPE_ARRAY and entry.size() == 3:
-				pending_seeds.append([int(entry[0]), float(entry[1]), float(entry[2])])
+				gaps.append([maxi(EMPTY_GAP, int(entry[0])), float(entry[1]), float(entry[2])])
 
 ## JSON reads every number back as a float; the counts are whole.
 static func _restore_counts(data) -> Dictionary:

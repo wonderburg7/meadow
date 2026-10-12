@@ -192,13 +192,7 @@ static func season_weight(species: Dictionary, year_fraction: float = -1.0) -> f
 	# This duplicates Flower.season_fraction() rather than preloading
 	# flower.gd, which already preloads this registry. Winter holds the
 	# flower curve at autumn until the following playable season begins.
-	var fraction := year_fraction
-	if fraction < 0.0:
-		var day: float = 1.0 + Session.sim_time / max(1.0, GameConfig.seconds_per_day)
-		var season_days: float = max(1.0, GameConfig.season_length_days)
-		var year_days: float = Session.year_days()
-		var day_in_year: float = fposmod(day - 1.0, year_days) + 1.0
-		fraction = clampf((day_in_year - 1.0) / season_days, 0.0, 1.0)
+	var fraction := year_fraction if year_fraction >= 0.0 else year_fraction_now()
 	var strength: float = GameConfig.out_of_season_seed_weight
 	if fraction >= season_start and fraction <= season_end:
 		var span: float = maxf(0.001, season_end - season_start)
@@ -206,13 +200,31 @@ static func season_weight(species: Dictionary, year_fraction: float = -1.0) -> f
 		strength = maxf(GameConfig.out_of_season_seed_weight, sin(through * PI))
 	return weight * strength
 
+## Where today falls in the playable season, 0 to 1 (Flower.season_fraction's
+## sum, which season_weight and in_season share).
+static func year_fraction_now() -> float:
+	var day: float = 1.0 + Session.sim_time / max(1.0, GameConfig.seconds_per_day)
+	var season_days: float = max(1.0, GameConfig.season_length_days)
+	var year_days: float = Session.year_days()
+	var day_in_year: float = fposmod(day - 1.0, year_days) + 1.0
+	return clampf((day_in_year - 1.0) / season_days, 0.0, 1.0)
+
+## PP-4: whether `species` is in flower today (always, with seasons off).
+## A seed of a species out of season does not come up; its gap takes the
+## seasonal draw instead (pollination.gd::seed_in_season).
+static func in_season(species: Dictionary) -> bool:
+	if not GameConfig.seasons_on:
+		return true
+	var fraction := year_fraction_now()
+	return fraction >= float(species.get("season_start", 0.0)) and fraction <= float(species.get("season_end", 1.0))
+
 ## Picks a species by rarity weight, scaled by its current flowering season.
 ## Clover is common, foxglove scarce.
 ## `exclude` is used by Challenge 1, whose meadow deliberately has no Poppies.
 ## `seed_counts` (PP-4) weights the draw by the seed the meadow set last
 ## year; see species_weights.
 static func pick_species_index(exclude: Array = [], year_fraction: float = -1.0, seed_counts: Dictionary = {}) -> int:
-	return pick_from_weights(species_weights(exclude, year_fraction, seed_counts))
+	return pick_from_weights(species_weights(exclude, year_fraction, seed_counts), exclude)
 
 ## One weight per SPECIES entry, zero for an excluded species. With no
 ## `seed_counts` (species name -> seed-setting deaths) each is its
@@ -244,7 +256,8 @@ static func species_weights(exclude: Array = [], year_fraction: float = -1.0, se
 	return weights
 
 ## A species index drawn in proportion to `weights` (one per SPECIES entry).
-static func pick_from_weights(weights: Array) -> int:
+## With nothing to draw from, the first species not in `exclude`.
+static func pick_from_weights(weights: Array, exclude: Array = []) -> int:
 	var total := 0.0
 	for weight in weights:
 		total += float(weight)
@@ -255,8 +268,8 @@ static func pick_from_weights(weights: Array) -> int:
 		roll -= float(weights[i])
 		if roll <= 0.0:
 			return i
-	for i in range(weights.size()):
-		if float(weights[i]) > 0.0:
+	for i in range(SPECIES.size()):
+		if not SPECIES[i].name in exclude:
 			return i
 	return 0
 

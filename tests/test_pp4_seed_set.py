@@ -12,20 +12,26 @@ saves once the regrowth is over ("spring").
 The fixture sets "pollination_log": true, so pollination.gd writes one
 session-log line per flower that dies of age ("pollination_withered", with
 its pollen counts and whether it set seed), one per replacement
-("pollination_replant": "seed", with the flower it came from, or
-"seasonal", with the weights it was drawn from and the counts that weighted
-them), and one when the year's counts move to spring
+("pollination_replant": "seed" or "seasonal", with the weights a seasonal
+draw used, the counts that weighted them, and on a replacement's first
+flower the gap it filled and the empty gaps a bush took with it), and one
+when the year's counts move to spring
 ("pollination_spring"). From those lines and the saves:
 
 - a flower sets seed exactly when it had a compatible delivery and more
   compatible than incompatible ones;
 - every flower that set seed is replaced by its own species close to where
-  it stood, and no flower that did not set seed is;
-- the seasonal draw is weighted only during the spring regrowth, by exactly
-  the seed the year set; the weighting favours the seeded species, keeps
+  it stood, inside the field and clear of the hive, and no flower that did
+  not set seed is;
+- the gaps are filled in the order the flowers died: a seed of a species in
+  flower comes up, an empty gap or an out-of-season seed takes the seasonal
+  draw, and the gaps a save holds are exactly the ones still waiting;
+- the year's counts move to spring at the first death or replacement after
+  winter, and the seasonal draw is weighted only during the spring regrowth,
+  by exactly the seed the year set; the weighting favours the seeded species, keeps
   every species at or above its seasonal weight, and the meadow comes back
   with more of the species the colony pollinated;
-- the seed counts, the seeds waiting and each flower's lifespan survive save
+- the seed counts, the gaps waiting and each flower's lifespan survive save
   and restore.
 
 A second, shorter run of the same fixture without "seed_set" stands for a
@@ -58,6 +64,21 @@ SPECIES = ["Clover", "Borage", "Foxglove", "Poppy", "Bramble", "Dandelion"]
 # parent, unless an obstacle pushed it clear.
 SEED_NEAR = 60.0
 SEED_FAR = 150.0
+MAIN = (SCRIPTS / "main.gd").read_text(encoding="utf-8")
+
+
+def _vector(name: str) -> tuple:
+    match = re.search(r"const %s := Vector2\(([-\d.]+), ([-\d.]+)\)" % name, MAIN)
+    return float(match.group(1)), float(match.group(2))
+
+
+HIVE = _vector("HIVE_MARKER_POSITION")
+FIELD_HALF = _vector("FLOWER_FIELD_HALF_SIZE")
+MIN_DISTANCE = float(re.search(r"const FLOWER_MIN_DISTANCE := ([\d.]+)", MAIN).group(1))
+# Each species' flowering window, in SPECIES order (flower_species.gd).
+WINDOWS = [(float(a), float(b)) for a, b in re.findall(
+    r'"season_start": ([\d.]+), "season_end": ([\d.]+)',
+    (SCRIPTS / "flower_species.gd").read_text(encoding="utf-8"))]
 
 
 def _close(a, b, tolerance: float = 0.01) -> bool:
@@ -117,7 +138,7 @@ class SeedSetSourceTest(unittest.TestCase):
                 continue
             text = path.read_text(encoding="utf-8")
             self.assertIsNone(
-                re.search(r"pollination\.(seed_counts|spring_counts|spring_of|pending_seeds)\s*[+\-]?=", text),
+                re.search(r"pollination\.(seed_counts|spring_counts|spring_of|gaps)\s*[+\-]?=", text),
                 "%s writes the seed ledger" % path.name)
 
 
@@ -151,6 +172,9 @@ class SeedSetRunTest(unittest.TestCase):
             else:
                 continue
             cls.events[-1]["t"] = float(e["game_time"])
+        for e in cls.events:
+            if e["kind"] == "replant" and e["target"] == "seed":
+                e["parent"] = e["gap"][1:]
         cls.deaths = [e for e in cls.events if e["kind"] == "withered"]
         cls.replants = [e for e in cls.events if e["kind"] == "replant"]
         # COL-8's regrowth: winter ends on day season + 1 + winter, and the
@@ -159,6 +183,18 @@ class SeedSetRunTest(unittest.TestCase):
         winter_ends_day = float(cls.config["season_length_days"]) + 1.0 + float(cls.config["winter_length_days"])
         cls.regrowth_from = (winter_ends_day - 1.0) * day
         cls.regrowth_to = cls.regrowth_from + float(cls.config["spring_regrowth_days"]) * day
+
+    def _in_season(self, species_index: int, t: float):
+        """Whether the species flowers at game time `t` (flower_species.gd's
+        in_season), or None within a hair of its window's edge."""
+        day = 1.0 + t / float(self.config["seconds_per_day"])
+        season = float(self.config["season_length_days"])
+        year = season + float(self.config["winter_length_days"])
+        fraction = min(1.0, max(0.0, (((day - 1.0) % year) + 1.0 - 1.0) / season))
+        start, end = WINDOWS[species_index]
+        if min(abs(fraction - start), abs(fraction - end)) < 0.02:
+            return None
+        return start <= fraction <= end
 
     def _index(self, kind: str, **match) -> int:
         for i, e in enumerate(self.events):
@@ -196,13 +232,20 @@ class SeedSetRunTest(unittest.TestCase):
                 self.assertEqual(e["species_index"], parents[-1]["species_index"], e)
                 distance = _distance(e["flower"], e["parent"])
                 self.assertLessEqual(distance, SEED_FAR, e)
+                # Inside the field and off the hive, so a lineage cannot drift.
+                x, y = e["flower"]
+                self.assertLessEqual(abs(x - HIVE[0]), FIELD_HALF[0] + 1.0, e)
+                self.assertLessEqual(abs(y - HIVE[1]), FIELD_HALF[1] + 1.0, e)
+                self.assertGreaterEqual(_distance(e["flower"], HIVE), MIN_DISTANCE - 1.0, e)
                 near += distance <= SEED_NEAR + 0.01
         self.assertGreaterEqual(near, 0.95 * len(seeds))
-        # Up to the mid save, every flower that set seed has been replanted
+        # Up to the mid save, every flower that set seed has had its gap
+        # filled (by its seed, or by the seasonal draw when out of season)
         # or is a seed still waiting in that save.
         mid = self._index("save", name="mid")
-        waiting = [tuple(p[1:]) for p in self.saves["mid"]["seed_bank"]["pending_seeds"]]
-        planted = [r["parent"] for r in self.events[:mid] if r["kind"] == "replant" and r["target"] == "seed"]
+        waiting = [tuple(p[1:]) for p in self.saves["mid"]["seed_bank"]["gaps"] if p[0] >= 0]
+        planted = [r["gap"][1:] for r in self.events[:mid]
+                   if r["kind"] == "replant" and r.get("gap") and r["gap"][0] >= 0]
         for d in self.events[:mid]:
             if d["kind"] == "withered" and d["sets_seed"]:
                 self.assertTrue(any(_close(d["flower"], p) for p in planted)
@@ -225,8 +268,57 @@ class SeedSetRunTest(unittest.TestCase):
             if r["t"] < self.regrowth_from - 1.0 or r["t"] > self.regrowth_to + 1.0:
                 self.assertEqual(r["counts"], {}, r)
 
+    def test_gaps_fill_in_the_order_the_flowers_died(self):
+        mid_gaps = self.saves["mid"]["seed_bank"]["gaps"]
+        queue = []
+        filled = {"seed": 0, "empty": 0, "out_of_season": 0, "none_waiting": 0}
+        checked_save = False
+        for e in self.events:
+            if e["kind"] == "save" and e["name"] == "mid":
+                # The save holds exactly the gaps still waiting.
+                self.assertEqual(len(mid_gaps), len(queue))
+                for saved, waiting in zip(mid_gaps, queue):
+                    self.assertEqual(int(saved[0]), waiting[0])
+                    self.assertTrue(_close(saved[1:], waiting[1:]), (saved, waiting))
+                checked_save = True
+            elif e["kind"] == "restore":
+                queue = [[int(g[0]), float(g[1]), float(g[2])] for g in mid_gaps]
+            elif e["kind"] == "withered":
+                queue.append([e["species_index"] if e["sets_seed"] else -1] + list(e["flower"]))
+            elif e["kind"] == "replant" and "gap" in e:
+                expected = queue.pop(0) if queue else []
+                gap = e["gap"]
+                self.assertEqual(len(gap), len(expected), e)
+                if expected:
+                    self.assertEqual(int(gap[0]), expected[0], e)
+                    self.assertTrue(_close(gap[1:], expected[1:]), e)
+                if e["target"] == "seed":
+                    self.assertGreaterEqual(expected[0], 0, e)
+                    self.assertEqual(e["species_index"], expected[0], e)
+                    self.assertNotEqual(self._in_season(expected[0], e["t"]), False, e)
+                    filled["seed"] += 1
+                elif not expected:
+                    filled["none_waiting"] += 1
+                elif expected[0] < 0:
+                    filled["empty"] += 1
+                else:
+                    # A seed out of season falls back to the seasonal draw.
+                    self.assertNotEqual(self._in_season(expected[0], e["t"]), True, e)
+                    filled["out_of_season"] += 1
+                for _ in range(int(e["dropped"])):
+                    self.assertTrue(queue and queue[0][0] == -1, "a bush took a gap that held a seed: %s" % e)
+                    queue.pop(0)
+        self.assertTrue(checked_save)
+        self.assertGreater(filled["seed"], 20, filled)
+        self.assertGreater(filled["empty"], 100, filled)
+        self.assertGreater(filled["out_of_season"], 0, filled)
+
     def test_spring_regrowth_favours_the_species_that_set_seed_without_losing_any(self):
         spring = self._index("spring")
+        # The swap happens at the first death or replacement after winter,
+        # whatever is waiting, so no event after the winter precedes it.
+        self.assertLessEqual(self.events[spring]["t"], self.regrowth_from + 2.0)
+        self.assertTrue(all(e["t"] <= self.regrowth_from + 2.0 for e in self.events[:spring]))
         counted = {}
         for d in self.events[:spring]:
             if d["kind"] == "withered" and d["sets_seed"]:
@@ -327,7 +419,7 @@ class ChallengeReplantsAsTodayTest(unittest.TestCase):
         self.assertGreater(len(self.deaths), 200)
         self.assertTrue(all(not d["seed_set_on"] for d in self.deaths))
         self.assertTrue(any(d["sets_seed"] for d in self.deaths), "no flower was pollinated enough to matter")
-        self.assertTrue(all(d["seed_counts"] == {} and d["pending"] == 0 for d in self.deaths))
+        self.assertTrue(all(d["seed_counts"] == {} and d["gaps"] == 0 for d in self.deaths))
         self.assertGreater(len(self.replants), 200)
         self.assertTrue(all(kind == "seasonal" and r["counts"] == {} for kind, r in self.replants))
 

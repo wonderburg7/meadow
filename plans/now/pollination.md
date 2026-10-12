@@ -103,11 +103,27 @@ with and without a colony working one species.
   `"seed_set": true`; Challenges 1 and 2 do not, and
   `Levels.seed_set_enabled` reads it. A headless scenario file asks for it
   with its own `"seed_set": true`.
-- A flower dying of age calls `pollination.gd::flower_withered`. One that
-  set seed is counted under its species and queues a seed where it stood;
-  `world_building.gd::_seed_flower` plants the oldest waiting seed first,
-  one unit of that species 20 to 60 px away (`SEED_DISTANCE`, a placement
-  distance), before any seasonal draw.
+- A flower dying of age calls `pollination.gd::flower_withered`, which
+  queues the gap it leaves (`gaps`, oldest first): a seed of its species
+  where it stood if it set seed (and counts it), an empty gap if not.
+  `world_building.gd::_seed_flower` fills the oldest gap first. A seed comes
+  up as one unit of its species 20 to 60 px away (`SEED_DISTANCE`, a
+  placement distance), clamped into the flower field and at least
+  `FLOWER_MIN_DISTANCE` from the hive (`_in_field`, `_random_field_point`'s
+  rules), so a lineage cannot drift out over the years. An empty gap takes
+  the seasonal draw. So does a seed whose species is out of season when its
+  gap comes up (`flower_species.gd::in_season`), so a Foxglove past its
+  window does not hold a slot an in-season species would get. Queuing the
+  empty gaps too keeps the order the flowers died in, so waiting seeds
+  never crowd the seasonal draw out. A bushy seasonal draw also takes the
+  empty gaps at the front for its extra units, never a seed.
+  At the game's own pace the queue sits at the meadow's unfilled room
+  (about 550 gaps), so a gap is filled several minutes after its flower
+  dies. That is the existing replant rate, not a new delay.
+- Founders and seasonal draws keep their old placement (cluster anchors may
+  still spill up to `GRASS_MARGIN` past the field), so a seeded run's
+  founding meadow is unchanged. Every flower now goes in through one
+  `_add_flower` (obstacle clearance, setup, crab spider), seed or not.
 - The spring weighting, read from the Change paragraph: during COL-8's
   regrowth (`Flower.regrowth_factor` below 1) each species' draw weight is
   its seasonal weight plus its share of last year's seed times the seasonal
@@ -115,9 +131,14 @@ with and without a colony working one species.
   draw follows the season and half the seed; no species falls below its
   seasonal weight. No new balance value: if the half-and-half split proves
   too strong or weak, PP-6 or a later sweep gives it a `GameConfig` weight.
-  The first draw after a winter moves the counts to `spring_counts` and
-  restarts `seed_counts`.
-- Saves: the counts, `spring_counts` and the waiting seeds go under a
+  The first death or replacement after a winter, whichever comes first,
+  moves the counts to `spring_counts` and restarts `seed_counts`
+  (`pollination.gd::_roll_spring`). Waiting seeds can neither delay that
+  swap nor stop the weighting, and a seed set in early spring counts
+  toward next year.
+- `flower_species.gd::pick_from_weights` falls back to the first species
+  not excluded, as `pick_species_index` always did.
+- Saves: the counts, `spring_counts` and the waiting gaps go under a
   top-level `"seed_bank"` record, beside `"pollination"` rather than in it,
   so PP-1's record keeps its shape; each flower saves its `"lifespan"`.
   Both additive.
@@ -133,13 +154,19 @@ behaved before PP-4. Fast runs are `pp4_seed_set.json` (20-second days,
 10-day seasons, summer read on day 10, spring on day 25); real runs keep the
 game's own 200-second days and 30-day seasons (summer on day 30, spring on
 day 45). The real free run's colony starved before day 30 and is left out.
+The fast rows were measured again after the review fixes (gap queue,
+in-season fallback, field clamp). The real rows are from the first build:
+re-running them, the fixture's brood-less colony starved before day 30
+(with or without longer bee lifespans), so they could not be repeated. The
+fast rows moved by at most a few points, the free-colony spring excepted
+(below).
 
 | Run | When | Flowers | Clover | Borage | Foxglove | Poppy | Bramble | Dandelion | Seed counted |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| fast, pinned | end of summer | 605 | 28% | 34% | 2% | 1% | 32% | 3% | Clover 48 |
-| fast, pinned | second spring | 514 | 63% | 6% | 0% | 12% | 4% | 14% | |
-| fast, free | end of summer | 550 | 22% | 36% | 1% | 2% | 33% | 7% | Dandelion 56, Bramble 11 |
-| fast, free | second spring | 498 | 31% | 6% | 0% | 15% | 15% | 33% | |
+| fast, pinned | end of summer | 604 | 26% | 33% | 2% | 1% | 36% | 2% | Clover 48 |
+| fast, pinned | second spring | 526 | 63% | 6% | 1% | 12% | 4% | 14% | |
+| fast, free | end of summer | 566 | 19% | 35% | 1% | 2% | 40% | 2% | Dandelion 39, Bramble 16, Clover 1 |
+| fast, free | second spring | 475 | 31% | 8% | 0% | 13% | 25% | 22% | |
 | fast, off | end of summer | 575 | 22% | 36% | 1% | 3% | 34% | 4% | none |
 | fast, off | second spring | 509 | 42% | 9% | 1% | 21% | 5% | 21% | |
 | real, pinned | end of summer | 252 | 6% | 58% | 3% | 8% | 10% | 14% | Clover 225 |
@@ -149,7 +176,10 @@ day 45). The real free run's colony starved before day 30 and is left out.
 
 Read: the species the colony worked comes back about one and a half times
 as strong in spring (Clover 42% against 25% at real pace, 63% against 42%
-fast; Dandelion 33% against 21% for the free colony), every species is
+fast; the free colony, which set mostly Dandelion and Bramble seed, brings
+back Bramble at 25% against 5% but Dandelion only at 22% against 21% -- "off"
+is the baseline for any colony, since without seed set foragers do not shape
+the meadow), every species is
 still present, and summer's shares barely move, because seed replants are a
 small part of a summer's deaths. Found while simulating, not PP-4's to fix:
 at the game's own pace the meadow holds about 250 flowers, not
