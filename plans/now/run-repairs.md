@@ -39,7 +39,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-1 | The queen can build a cell in every Challenge, Scenario and Colony Run | `scripts/challenge_runner.gd`, `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `test_scenarios/rr1_queen_builds_test.json`, `tests/test_rr1_queen_builds.py` | yes | medium |
-| RR-5 | Hexagon names re-fit when the typeface changes | `scripts/main_menu.gd`, `tests/rr5_hex_refit_test.gd`, `tests/test_rr5_hex_refit.py` | yes (no shared file) | low |
 
 Each slice reads its own section only. Do not change skill prices, the
 branch-tier rule (`plans/now/tier-two.md` T2-9 owns that), or the save
@@ -111,43 +110,7 @@ RR-3 shipped 2026-10-12; its specification is `plans/archive/RR-3_2026-10-12.md`
 
 RR-4 shipped 2026-10-12; its specification is `plans/archive/RR-4_2026-10-12.md`.
 
-## RR-5 -- hexagon names re-fit when the typeface changes
-
-<!-- LAYER: immediate-task -->
-
-**True now (C-99, Dave, 11 Oct 2026).** Hexagon names fit at every scale
-when the scale is raised with the typeface already chosen. But raising the
-scale to 2 in Munro and then switching to OpenDyslexic splits words across
-lines. `main_menu.gd::_fit_hex_label` skips the refit when its cache key is
-unchanged. The key starts with `font.get_rid().get_id()`, which is 0 for
-every `FontFile` (a headless probe on 11 Oct 2026 printed 0 for Munro,
-OpenDyslexic, Silkscreen and Atkinson). So a typeface change at the same
-scale keeps the previous face's shrunken size. No other script keys on
-`get_rid().get_id()`.
-
-**True afterwards.** The key uses `font.get_instance_id()`, so any typeface
-change refits. Nothing else changes.
-
-**Runtime.** Unchanged: the fit runs on the label's `draw` and returns early
-on a matching key.
-
-**Test.** `tests/rr5_hex_refit_test.gd` builds the main menu as
-`tests/col7_gyne_window_test.gd::_boot` does, with `menu_pending = true`.
-It sets text scale 2 and Munro, waits two frames, then switches to
-OpenDyslexic through the Typeface setting's own apply path
-(`settings_catalogue.gd`'s `ui_typeface` row) and waits two frames. It
-asserts each hexagon label's font size equals
-`MainMenu.hex_fit_size` for OpenDyslexic. `tests/test_rr5_hex_refit.py`
-runs it. This is the instrument for this failure: it fails on today's code.
-
-```queue
-**[Claude] RR-5 -- Hexagon names re-fit when the typeface changes**
-- Plan: `plans/now/run-repairs.md` -- "RR-5 -- hexagon names re-fit when the typeface changes"
-- Files: `scripts/main_menu.gd`, `tests/rr5_hex_refit_test.gd`, `tests/test_rr5_hex_refit.py`
-- Check: `python -m unittest tests.test_rr5_hex_refit` passes (switching Munro to OpenDyslexic at scale 2 refits every hexagon name); `tools/verify.ps1` is green
-- Proof: `present: scripts/main_menu.gd :: font.get_rid().get_id()`
-- Next after: none -- plan complete
-```
+RR-5 shipped 2026-10-12; its specification is `plans/archive/RR-5_2026-10-12.md`.
 
 ## Not in the queue, and why
 
