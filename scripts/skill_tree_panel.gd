@@ -28,8 +28,9 @@ const Resources = preload("res://scripts/resources.gd")
 const Availability = preload("res://scripts/availability.gd")
 
 ## skills.gd prices in these keys; the comb holds them under these content
-## types. Pollinator points are not held anywhere yet, so a skill costing
-## them cannot be afforded. Bee bread (BB-3) is held by sealed, ripe cells.
+## types. Bee bread (BB-3) is held by sealed, ripe cells. Pollinator points
+## (PP-2) are not in the comb: pollination.gd's ledger holds them, so they
+## are added to the snapshot and spent separately.
 const STORE_CONTENT := {
 	Skills.NECTAR: Resources.NECTAR,
 	Skills.POLLEN: Resources.POLLEN,
@@ -263,6 +264,9 @@ func _stores() -> Dictionary:
 			if key == Skills.BEE_BREAD and not cell.is_ripe_bee_bread():
 				continue
 			stores[key] = float(stores.get(key, 0.0)) + cell.amount
+	# PP-2: the ledger, read like a cell; absent at zero, like any store.
+	if main.pollination != null and main.pollination.points > 0:
+		stores[Skills.POLLINATOR_POINTS] = float(main.pollination.points)
 	return stores
 
 ## AP-4: buys one skill. Who owns the stores (the plan's escalation): the
@@ -285,6 +289,12 @@ func buy_skill(skill_id: String) -> bool:
 	for key in before:
 		var spent: float = float(before[key]) - float(stores.get(key, 0.0))
 		if spent <= 0.0:
+			continue
+		# PP-2: points come out of the ledger, which is their only owner.
+		if key == Skills.POLLINATOR_POINTS:
+			var points_taken: int = main.pollination.spend(int(round(spent)))
+			if points_taken < int(round(spent)):
+				push_warning("Skill %s: took %d of %d pollinator points." % [skill_id, points_taken, int(round(spent))])
 			continue
 		var taken: float = main.hive.take(STORE_CONTENT[key], spent)
 		if taken + 0.001 < spent:

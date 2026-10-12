@@ -84,6 +84,21 @@ points once the skill is owned. A new presentation-only
 simulation state. Measure frame time at 500 and 1,000 bees with the SPR-2
 windowed baseline before and after, and record both here.
 
+**Frame time (12 Oct 2026).** `python tools/run_scenario.py
+test_scenarios/spr2_render_<n>.json --windowed --report full`, before on
+the base commit and after on the branch, interleaved, mean / p95 ms:
+
+| Bees | Before | After |
+| --- | --- | --- |
+| 500 | 16.6 / 18.2, 19.8 / 21.9, 26.1 / 42.0, 18.8 / 19.8 | 18.2 / 19.5, 23.5 / 27.5, 19.1 / 20.0, 19.7 / 21.9 |
+| 1,000 | 29.0 / 32.0, 33.7 / 38.0 | 34.8 / 43.1, 31.8 / 36.0 |
+
+No difference outside the run-to-run spread (500-bee medians 19.3 and
+19.4; other sessions were loading the machine). Draw calls and node counts
+are unchanged bar the one pop node. Both fixtures are nurses only, so no
+point is earned and the pop stays idle: what they measure is that the idle
+cost is nil. A "+1" processes only while one shows, from an eight-slot pool.
+
 ```queue
 **[Claude] PP-2 -- points are spendable and shown, with a +1 at the flower**
 - Plan: `plans/now/pollination.md` -- "PP-2 -- points are spendable and shown, with a +1 at the flower"
