@@ -21,6 +21,11 @@ extends Node2D
 ## opaque.
 
 const Shapes = preload("res://scripts/shapes.gd")
+const SpriteCatalogue = preload("res://scripts/sprite_catalogue.gd")
+const PixelSprite = preload("res://scripts/pixel_sprite.gd")
+
+## The ruin's tint: the darker skep goes grey when the colony dies out.
+const RUIN_TINT := Color(0.55, 0.55, 0.55)
 
 ## Visible foragers. Enough to read as a colony at a glance without
 ## costing anything that matters.
@@ -54,6 +59,7 @@ var tick_timer: float = randf()
 ## direction of travel. No state machine, no energy, no pathfinding.
 var foragers: Array = []
 var body: Polygon2D
+var skep: Sprite2D
 var label: Label
 
 func _ready() -> void:
@@ -62,8 +68,16 @@ func _ready() -> void:
 
 	body = Polygon2D.new()
 	body.polygon = Shapes.square_points(Vector2(52, 52))
-	body.color = Color(0.42, 0.24, 0.30)   # muted red-brown, clearly not the player's
+	body.color = Color(0.42, 0.24, 0.30, 0.0)   # hit shape only; the skep below is drawn
 	add_child(body)
+
+	# The darker recolour of the player's skep (SP-5), footprint centred.
+	skep = Sprite2D.new()
+	skep.texture = SpriteCatalogue.HIVE_SKEP_RIVAL_SHEET
+	skep.centered = false
+	PixelSprite.apply(skep, PixelSprite.MEADOW_SCALE)
+	skep.position = -(SpriteCatalogue.HIVE_SKEP_ANCHOR + Vector2(SpriteCatalogue.HIVE_SKEP_CELL_GUTTER, SpriteCatalogue.HIVE_SKEP_CELL_GUTTER)) * PixelSprite.MEADOW_SCALE
+	add_child(skep)
 
 	label = Label.new()
 	label.position = Vector2(-34, -46)
@@ -99,7 +113,7 @@ func restore(data: Dictionary) -> void:
 			_collapse()
 	elif not alive:
 		alive = true
-		body.color = Color(0.42, 0.24, 0.30)
+		skep.modulate = Color.WHITE
 		for i in range(SHOWN_FORAGERS):
 			foragers.append(_make_forager())
 		_update_label()
@@ -224,7 +238,7 @@ func _local_forage_richness() -> float:
 func _collapse() -> void:
 	alive = false
 	population = 0.0
-	body.color = Color(0.3, 0.28, 0.28)
+	skep.modulate = RUIN_TINT
 	label.text = "Rival hive — collapsed"
 	for forager in foragers:
 		if is_instance_valid(forager.node):

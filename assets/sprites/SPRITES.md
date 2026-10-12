@@ -1,6 +1,6 @@
 # Sprite table
 
-Status: current | Owner: Dave / Claude Code | Next: SP-5 adds the skep to the meadow; SP-8 builds the block terrain | Dependency: tools/sprites.py | Verified: 2026-10-12
+Status: current | Owner: Dave / Claude Code | Next: SP-8 builds the block terrain | Dependency: tools/sprites.py | Verified: 2026-10-12
 
 One row per sprite family. `python tools/sprites.py` reads this table and the
 art beside it, writes a `<name>_sheet.png` next to each source (with a 1-px
@@ -56,7 +56,7 @@ higher. How the terrain stacks them is `plans/now/sprites.md`, SP-8.
 | wax_cell_bee_bread_ripe | comb/wax_cell_bee_bread_ripe.aseprite | ripe (fermented) bee bread: empty cup, then five fill levels | hive | layers | 6 | 25/50/75/99/100 | 16,22 | - |
 | wax_cell_larva | comb/wax_cell_larva.aseprite | brood: empty cup, then nine growth stages, the last until the bee emerges | hive | layers | 10 | 11/22/33/44/56/67/78/89/100 | 16,22 | - |
 | wax_cell_sealed | comb/wax_cell_sealed.aseprite | the wax cap going on, eight stages drawn over a full cell | hive | frames | 8 | - | 16,22 | - |
-| hive_skep | meadow/hive_skep.png | the straw skep, your hive in the meadow | meadow | single | 1 | - | - | - |
+| hive_skep | meadow/hive_skep.png | the straw skep, your hive in the meadow | meadow | single | 1 | - | - | rival: EBAB3F>8A4A52,563604>2A1216,DDA037>7C424A,B58027>62343B,D39732>723C45,EFBD68>9C5A62,915E0A>4A2A2E,714804>3A1D22 |
 | grass_base | meadow/grass_base.png | the repeating meadow grass tile | meadow | tile | 1 | - | - | - |
 | grass_block | meadow/grass_block.aseprite | full-height block with the grass top: the floor's top layer | meadow | single | 1 | - | 16,9 | - |
 | grass_block_half | meadow/grass_block_half.aseprite | half-height block with the grass top | meadow | single | 1 | - | 16,16 | - |

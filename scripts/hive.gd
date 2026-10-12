@@ -14,6 +14,8 @@ const HiveCell = preload("res://scripts/hive_cell.gd")
 const Resources = preload("res://scripts/resources.gd")
 const Roles = preload("res://scripts/roles.gd")
 const HiveBody = preload("res://scripts/hive_body.gd")
+const SpriteCatalogue = preload("res://scripts/sprite_catalogue.gd")
+const PixelSprite = preload("res://scripts/pixel_sprite.gd")
 
 var cells: Array = []            # populated by main.gd once the comb is built
 var comb_parent: Node2D = null   # the hive-view root new cells get added to
@@ -231,8 +233,17 @@ func cell_at_tile(hex: Vector2i) -> Node2D:
 	return null
 
 func _ready() -> void:
+	# The 60x60 square stays as the hit shape, drawn transparent; the skep
+	# sprite sits over it, its footprint centred on the hive (SP-5).
 	polygon = Shapes.square_points(Vector2(60, 60))
-	color = Color(0.55, 0.35, 0.15)  # placeholder art: brown square
+	color = Color(0.55, 0.35, 0.15, 0.0)
+	var skep := Sprite2D.new()
+	skep.name = "SkepSprite"
+	skep.texture = SpriteCatalogue.HIVE_SKEP_SHEET
+	skep.centered = false
+	PixelSprite.apply(skep, PixelSprite.MEADOW_SCALE)
+	skep.position = -SpriteCatalogue.HIVE_SKEP_ANCHOR * PixelSprite.MEADOW_SCALE - Vector2(SpriteCatalogue.HIVE_SKEP_CELL_GUTTER, SpriteCatalogue.HIVE_SKEP_CELL_GUTTER) * PixelSprite.MEADOW_SCALE
+	add_child(skep)
 
 ## Spreads `amount` across any cells that will take it. Returns how
 ## much actually fitted -- anything left over is lost, which is the
