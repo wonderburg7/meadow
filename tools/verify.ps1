@@ -15,6 +15,30 @@ $ErrorActionPreference = "Stop"
 # impression. Write-Diagnostic never fails its caller -- see tools/diagnostics.ps1.
 . (Join-Path $PSScriptRoot "diagnostics.ps1")
 
+# A checkout's verify.ps1 tests that checkout ($PSScriptRoot\..), not the one
+# you stand in. On 12 Oct 2026 Codex, in .worktrees/CD-3, ran
+# ../../tools/verify.ps1: it tested the primary checkout, failed on Dave's
+# uncommitted sprite work and tested nothing of the branch. So a run from
+# inside a different checkout stops and names the right command. slice.ps1
+# calls a checkout's copy by full path from wherever it stands, so its calls
+# pass: -ResolvePythonOnly tests nothing, -Scope primary is the primary's
+# ledger check from anywhere, and finish's branch verify sets
+# MEADOW_FINISH_VERIFY.
+if (-not $ResolvePythonOnly -and $Scope -ne "primary" -and -not $env:MEADOW_FINISH_VERIFY) {
+    $scriptCheckout = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..")).TrimEnd('\', '/')
+    $cwdCheckout = ""
+    try { $cwdCheckout = (& git -C (Get-Location).ProviderPath rev-parse --show-toplevel 2>$null | Out-String).Trim() } catch { }
+    if ($cwdCheckout) {
+        $cwdCheckout = [System.IO.Path]::GetFullPath($cwdCheckout).TrimEnd('\', '/')
+        if ($cwdCheckout -ne $scriptCheckout) {
+            Write-Output "verify: stopped -- this is the verify.ps1 of $scriptCheckout, but you are inside $cwdCheckout."
+            Write-Output "It would test $scriptCheckout, not your checkout. Run your checkout's own copy:"
+            Write-Output "    cd $cwdCheckout; .\tools\verify.ps1"
+            exit 2
+        }
+    }
+}
+
 # A failed stage only names itself when a switch was passed; the plain
 # no-switch run prints exactly what it always has.
 $labelFailures = $Quiet.IsPresent -or $Docs.IsPresent
