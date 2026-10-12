@@ -49,4 +49,4 @@ file list when it lands; FC-2 stays gated until then.
 
 ## Not in the queue, and why
 
-- **FC-2** waits for CD-3 to release diagnostics (BB-2 released the save and HUD files 10 Oct 2026; T2-4b, NF-3, BB-1 and NF-5 landed 9 Oct 2026), then its `Files:` line must be rechecked before admitting it.
+- **FC-2** waits for PP-5 and RR-1 (Claude lane) to release `scripts/main.gd`, `scripts/hud.gd`, `scripts/save_game.gd`, `scripts/saving.gd` and `scripts/scenario_actions.gd`; `scripts/colony_diagnostics.gd` was released 12 Oct 2026. Recheck its `Files:` line before admitting it.
