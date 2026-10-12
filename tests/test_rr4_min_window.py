@@ -32,16 +32,16 @@ class RR4MinWindowTest(unittest.TestCase):
     def test_main_assigns_min_size_from_both_constants(self):
         source = _read(MAIN)
         assignment = re.search(
-            r"(?m)^\s*get_tree\(\)\.root\.min_size\s*=\s*Vector2i\(\s*"
+            r'(?m)^\s*get_tree\(\)\.root\.set_deferred\(\s*"min_size",\s*Vector2i\(\s*'
             r"int\(UiLayout\.MIN_SUPPORTED_WIDTH\)\s*,\s*"
-            r"int\(UiLayout\.MIN_SUPPORTED_HEIGHT\)\s*\)\s*$",
+            r"int\(UiLayout\.MIN_SUPPORTED_HEIGHT\)\s*\)\s*\)\s*$",
             source,
         )
-        self.assertIsNotNone(assignment, "main.gd does not set get_window().min_size from the floor constants")
+        self.assertIsNotNone(assignment, "main.gd does not set the window's min_size from the floor constants")
 
     def test_min_size_is_set_before_the_menu_pending_return(self):
         source = _read(MAIN)
-        assignment = source.find("get_tree().root.min_size")
+        assignment = source.find("get_tree().root.set_deferred(")
         self.assertNotEqual(assignment, -1)
         ready_start = source.index("func _ready() -> void:")
         early_return = source.index("if Session.menu_pending:", ready_start)

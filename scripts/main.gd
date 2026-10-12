@@ -394,8 +394,8 @@ func _ready() -> void:
 
 	# RR-4: the window cannot be made smaller than the floor the UI is laid
 	# out for. Set before the menu_pending return below so the pre-run menu
-	# is bounded too.
-	get_tree().root.min_size = Vector2i(int(UiLayout.MIN_SUPPORTED_WIDTH), int(UiLayout.MIN_SUPPORTED_HEIGHT))
+	# is bounded too. Deferred: an immediate set changed the boot-time viewport the settings panel is sized from, failing test_layout_regression.
+	get_tree().root.set_deferred("min_size", Vector2i(int(UiLayout.MIN_SUPPORTED_WIDTH), int(UiLayout.MIN_SUPPORTED_HEIGHT)))
 
 	# Every path back to this function -- a fresh boot, Restart Run, the
 	# main menu's level picker, a load, a post-game-over restart -- reloads
