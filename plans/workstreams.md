@@ -46,3 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/L-25` (`codex/L-25`) | Codex | verify and prefinish refuse to check a different checkout | Codex | in progress | none | `plans/now/codex-guidance.md` L-25 -- verify and prefinish refuse to check a different checkout |
