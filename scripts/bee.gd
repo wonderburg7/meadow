@@ -87,6 +87,10 @@ var click_radius: float = 14.0
 var role: int = Role.FORAGER
 var state: int = State.SEEK_FLOWER
 var timer: float = 0.0
+## The outcome of this bee's most recent real role-work search. This starts
+## optimistic so a newly assigned worker is not reported as lacking work
+## until _idle_dispatch has actually searched its role catalogue.
+var work_search_found: bool = true
 var is_queen: bool = false
 
 ## A gyne: a future queen, raised on royal jelly and several times more
@@ -1803,8 +1807,10 @@ func _is_busy() -> bool:
 
 func _idle_dispatch() -> void:
 	if _apply_pending_role():
+		work_search_found = true
 		return
 	if _deliver_held_load():
+		work_search_found = true
 		return
 
 	# The queen is the exception to "own role first". A hungry larva stops
@@ -1813,14 +1819,47 @@ func _idle_dispatch() -> void:
 	# more. Any other bee, and a queen whose backup the player has
 	# changed, still works its own role first.
 	if is_queen and role == Role.EGG_LAYER and secondary_role != -1 and (role_restricted_to.is_empty() or secondary_role in role_restricted_to):
-		if _try_role_work(secondary_role):
+		if _record_work_search(_try_role_work(secondary_role)):
 			return
 
 	working_secondary = false
-	if _try_role_work(role):
+	if _record_work_search(_try_role_work(role)):
 		return
 	if secondary_role != -1 and secondary_role != role and (role_restricted_to.is_empty() or secondary_role in role_restricted_to):
-		working_secondary = _try_role_work(secondary_role)
+		working_secondary = _record_work_search(_try_role_work(secondary_role))
+	else:
+		work_search_found = false
+
+## Records a work search at the point it really happened. Diagnostics reads
+## this result rather than running the mutable catalogue search a second time.
+func _record_work_search(found: bool) -> bool:
+	work_search_found = found
+	return found
+
+## A working-role bee is waiting to dispatch. This says nothing about whether
+## work exists: use has_no_available_work for that narrower observation.
+func is_waiting_for_work() -> bool:
+	return state in [State.NURSE_IDLE, State.BUILD_IDLE, State.MINE_IDLE, State.HONEY_IDLE]
+
+## The no-work observation is valid only for a bee still waiting at its role's
+## dispatch point; a task that has already started may have made the result
+## stale, but it is no longer waiting for work in any case.
+func has_no_available_work() -> bool:
+	return is_waiting_for_work() and not work_search_found
+
+## Autonomous movement whose destination is a colony task. Player-directed
+## movement and a bee's own feeding trip are deliberately excluded: neither
+## explains delayed colony work.
+func is_travelling_for_work() -> bool:
+	return state in [
+		State.TO_FLOWER, State.TO_HIVE, State.TO_JELLY_CELL,
+		State.IN_HIVE_TO_CELL, State.IN_HIVE_TO_EXIT, State.TO_BROOD,
+		State.TO_FOOD_CELL, State.TO_BUILD_SITE, State.TO_HAUL_SOURCE,
+		State.TO_HAUL_TARGET, State.TO_RESTOCK_SOURCE, State.TO_RESTOCK_TARGET,
+		State.TO_WASTE_EXIT, State.TO_CLEAN_CELL, State.TO_MINE_SITE,
+		State.TO_MINE_EXIT, State.TO_POLLEN_CELL, State.TO_CELL_TO_LAY,
+		State.TO_NECTAR_CELL, State.TO_HONEY_CELL, State.TO_BEE_BREAD_CELL,
+	]
 
 ## Called on a think tick while working_secondary and "Finish the job
 ## first" is off. Only building and mining are long enough to need this --
@@ -2340,6 +2379,8 @@ func set_role(new_role: int) -> void:
 func _apply_role(new_role: int) -> void:
 	_release_everything()
 	working_secondary = false
+	# The last search was for the old role; the new one has not searched yet.
+	work_search_found = true
 
 	role = new_role
 	# The one place `role` actually changes, so it's the one place to tell
