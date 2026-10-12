@@ -5,8 +5,6 @@ extends Node
 ## state beyond `_designation_undo`, which nothing outside this file
 ## touches; reads and writes main's fields through the `main` reference.
 
-const Skills = preload("res://scripts/skills.gd")
-
 var main: Node2D
 
 ## One step of undo for cell designation. Records what each cell was
@@ -298,7 +296,7 @@ func _empty_one(cell: Node2D, method: String, keep_empty: bool) -> void:
 	cell.bump_display_epoch()
 
 func _on_cell_gyne_requested(anchor: Node2D, as_gyne: bool) -> void:
-	if as_gyne and Session.progression != null and not Session.progression.is_owned(Skills.GYNE_REARING):
+	if as_gyne and Session.progression != null and not Session.progression.is_owned("skill.brood.gyne_rearing"):
 		_warn_gyne_rearing_required()
 		return
 	for cell in _cells_to_act_on(anchor):
