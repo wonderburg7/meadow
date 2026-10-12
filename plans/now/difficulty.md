@@ -43,7 +43,11 @@ Verified 12 Oct 2026 against master `06bd26c`:
    At zero health a bee dies on Standard; on Easy health stops at one. A
    worker at one health or without energy crawls home at 25% speed, rests,
    and leaves only once it clears minimum health and energy thresholds
-   (product-scope §11). Health is saved per bee; a save without it loads
+   (product-scope §11). Intent for the drain: on Standard a bee out of
+   energy lasts about half a game-day -- long enough to crawl home from
+   mid-meadow and eat, short enough that a colony with empty stores still
+   loses bees within a day. A headless sweep sets the `GameConfig` rate to
+   that intent; it is not guessed. Health is saved per bee; a save without it loads
    every bee at full health.
 4. **Brood is protected on Easy.** An unfed larva stops developing and
    waits; it resumes when fed. Neglect costs time, not lives. On Standard
@@ -52,7 +56,12 @@ Verified 12 Oct 2026 against master `06bd26c`:
    loses health over time instead of dying on the spot, so it may reach
    food first. Every other Standard outcome a headless scenario records
    today must still hold.
-6. **Scenario presets:** Relaxed is Easy's rules plus Relaxed's numbers;
+6. **Easy winter:** the one-step winter bill (`season.gd`) empties the
+   stores as today, but the bees it cannot feed come through to spring at
+   one health and no energy instead of dying, and crawl to food. A short
+   winter costs a slow, weak spring, not a dead colony. No new balance
+   value.
+7. **Scenario presets:** Relaxed is Easy's rules plus Relaxed's numbers;
    Standard and Demanding use Standard's rules; Custom gains an "Easy rules"
    checkbox. No new preset name.
 
