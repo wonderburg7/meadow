@@ -1,7 +1,7 @@
 # Diagnostic readiness -- make the colony state behind a player decision explicit
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: awaiting Claude review | Owner: Dave / Codex | Next: CD-3 -- waiting and travel diagnostic boundary is implemented on `codex/CD-3`; it needs high-risk review and merge before diagnostic readiness is complete | Dependency: extends `plans/reference/colony-diagnostics.md`; no player-facing copy or balance change | Verified: 2026-10-12
+Status: complete | Owner: Dave / Codex | Next: None — plan complete; CD-3 reviewed and merged 12 Oct 2026, no follow-ups filed | Dependency: extends `plans/reference/colony-diagnostics.md`; no player-facing copy or balance change | Verified: 2026-10-12
 
 ## Objective
 

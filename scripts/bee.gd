@@ -2379,6 +2379,8 @@ func set_role(new_role: int) -> void:
 func _apply_role(new_role: int) -> void:
 	_release_everything()
 	working_secondary = false
+	# The last search was for the old role; the new one has not searched yet.
+	work_search_found = true
 
 	role = new_role
 	# The one place `role` actually changes, so it's the one place to tell
