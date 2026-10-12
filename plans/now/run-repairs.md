@@ -114,4 +114,4 @@ RR-5 shipped 2026-10-12; its specification is `plans/archive/RR-5_2026-10-12.md`
 
 ## Not in the queue, and why
 
-- **RR-1** waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd` (RR-2 landed 11 Oct 2026; RR-3, RR-4 and RR-5 landed 12 Oct 2026).
+- **RR-1** waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd` (RR-2 landed 11 Oct 2026; RR-3, RR-4 and RR-5 landed 12 Oct 2026). It shares `scripts/input_selection.gd` with SP-8a (`plans/now/sprites.md`, gated), so whichever is queued second waits.
