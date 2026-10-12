@@ -23,4 +23,5 @@ unblocker.
 - [C-125 -- Filled comb cells show the nectar and pollen fill-level art](ready/C-125.md)
 - [C-126 -- Saves... opens from the main menu on a fresh launch](ready/C-126.md)
 - [C-127 -- The comb draws honey, jelly, brood, bee bread and wax caps from Dave's art](ready/C-127.md)
+- [C-128 -- The skep sits where the hive square was, and the rival hive is a darker skep](ready/C-128.md)
 - [C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface](ready/C-99.md)
