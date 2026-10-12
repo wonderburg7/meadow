@@ -1,0 +1,53 @@
+# Difficulty -- Easy rules, a Standard baseline, and the choice at run start
+
+<!-- CONTEXT: plan | LAYER: active -->
+Status: active | Owner: Dave / Claude Code | Next: decisions being recorded in the 12 Oct 2026 plan-ahead session; slices follow | Dependency: none to design; the save and menu slices wait for the Claude lane to release `scripts/save_game.gd`, `scripts/saving.gd` and `scripts/main.gd` | Verified: 2026-10-12
+
+## Objective
+
+`plans/design/product-scope.md` §6.1 lists "Easy difficulty rules, a
+standard difficulty baseline" as essential for the closed alpha, and §11
+writes Easy's rules. Nothing builds them. This plan makes Easy a real,
+visible preset rule set, chosen at the start of a Colony Run or Scenario and
+fixed for the run, and keeps Standard as today's game.
+
+## Current state
+
+Verified 12 Oct 2026 against master `06bd26c`:
+
+- A bee dies in three ways: energy reaching zero (`bee_survival.gd::age_and_burn`
+  and winter's `season.gd`, cause "starvation"), age past
+  `lifespan_seconds` (which disease shortens), and a crab-spider ambush
+  (`crab_spider.gd`, cause "crab spider ambush"). All go through
+  `bee_survival.gd::die`. The queen never dies of old age; she can starve.
+- There is no health stat.
+- `scripts/scenario_presets.gd` gives the main menu's Scenario group
+  Relaxed/Standard/Demanding/Custom presets: four `GameConfig` multipliers
+  each, applied through `levels.gd::apply_config_overrides`. The Colony Run
+  tile has no preset (`"presets": false`).
+- Nothing records a run's difficulty in `Session` or the save.
+
+## Decisions (Dave, 12 Oct 2026, plan-ahead session)
+
+1. **Offered in the Colony Run and in Scenarios; chosen at run start; fixed
+   for the run.** The Colony Run tile gains an Easy/Standard choice.
+   Scenario's presets gain Easy's survival rules: Relaxed is Easy's rules
+   plus Relaxed's numbers. Challenges are always Standard: they teach fixed
+   lessons. The run's difficulty is saved with it; a save without one loads
+   as Standard.
+2. **Disease still shortens lives on Easy.** A disease-shortened life still
+   ends as old age, which Easy allows. Easy blocks every other cause.
+3. **A health stat is added** rather than modelling Easy injury through
+   energy alone. A worker at one health or without energy crawls home at
+   25% speed, rests, and leaves only once it clears minimum health and
+   energy thresholds (product-scope §11).
+4. **Brood is protected on Easy too.** Larvae cannot starve on Easy, as
+   well as workers and the queen.
+5. **Standard is today's game, unchanged.** Every Standard outcome a
+   headless scenario records today must still hold.
+
+## Open questions
+
+- Easy's "event timing follows player readiness more strongly than calendar
+  day" needs the event director (`NEXTSTEPS.md`, "Not in the queue"), which
+  has no design yet. It is out of this plan until that pass exists.
