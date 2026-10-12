@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-2 -- points are spendable and shown, with a +1 at the flower, next in the Claude lane (PP-1 landed 11 Oct 2026: `scripts/pollination.gd` is the ledger); PP-3 landed 12 Oct 2026, releasing `orders_zones.gd` for PP-5 | Dependency: none left for PP-2 or PP-4 -- PP-1's ledger landed 11 Oct 2026; AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-11
+Status: active | Owner: Dave / Claude Code | Next: PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter, next in the Claude lane (PP-2 landed 12 Oct 2026: points are spent through `pollination.gd::spend`; its hands-on check is C-129); PP-3 landed 12 Oct 2026, releasing `orders_zones.gd` for PP-5 | Dependency: none left for PP-4 -- PP-1's ledger landed 11 Oct 2026; AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-12
 
 ## Objective
 

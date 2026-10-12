@@ -675,3 +675,20 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- the verified record stores and compares
   `HEAD` (or the tree hash), so any new commit forces a fresh branch verify.
 - Disposition: untriaged
+
+### 2026-10-12 — a merged sprite leaves the primary's import cache unbootable
+
+- Source: PP-2 (Claude)
+- Area: tooling / `tools/godot_cache.py`
+- Signal: the first headless run stopped with "the primary checkout does not
+  boot (Could not preload resource file hive_skep_rival_sheet.png)". SP-5
+  merged the sprite to master, but nothing reimported the primary's `.godot/`,
+  and `godot_cache.py --force` on the primary only reports "present". A hand
+  `godot --headless --import --path <primary>` fixed it in seconds.
+- Evidence: the reimport log named only that one file.
+- Consequence: every worktree's headless test and verify boot is blocked
+  until someone reimports the primary by hand.
+- Candidate direction: Hypothesis -- when the primary fails on an
+  unresolved resource, `ensure_cache` runs `--import` on the primary once
+  before refusing.
+- Disposition: untriaged
