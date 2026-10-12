@@ -1,0 +1,20 @@
+{
+  "challenge": 2,
+  "random_seed": 4242,
+  "actions": [
+    {"do": "advance_challenge_stage", "stage_id": "2.5"},
+    {"do": "settle", "ticks": 2},
+    {"do": "buy_skill", "skill": "skill.brood.nurses"},
+    {"do": "assert", "condition": {"skill_owned": "skill.colony.cell_capacity", "owned": false}},
+    {"do": "advance_challenge_stage", "stage_id": "2.7"},
+    {"do": "settle", "ticks": 2},
+    {"do": "buy_skill", "skill": "skill.colony.comb_worker"},
+    {"do": "assert", "condition": {"skill_owned": "skill.colony.comb_worker", "owned": true}},
+    {"do": "advance_challenge_stage", "stage_id": "2.8"},
+    {"do": "settle", "ticks": 2},
+    {"do": "buy_skill", "skill": "skill.colony.miner"},
+    {"do": "assert", "condition": {"skill_owned": "skill.colony.miner", "owned": true}},
+    {"do": "assert", "condition": {"skill_owned": "skill.colony.cell_capacity", "owned": false}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 5}
+}
