@@ -43,6 +43,13 @@ Verified 13 Oct 2026 against master `06bd26c`:
    because there is always something to forage, so a bee that falls through
    to it never reaches anything below. Jobs the run has not unlocked or
    bought are left out until they are.
+4. **Many bees: edit a selection, plus a colony default.** The selection
+   panel's Backup row becomes an ordered list (up/down buttons,
+   keyboard-reachable) that applies to every selected bee at once, as role
+   changes already do. The Colony window holds a colony default list, which
+   starts in decision 3's order and which every new bee takes. On purchase,
+   each bee's current backup goes first, then the default order. The default
+   list is saved with the run; a save without one uses decision 3's order.
 
 ## Open questions
 
