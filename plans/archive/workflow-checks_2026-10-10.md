@@ -51,7 +51,7 @@ Verified 9 Oct 2026 against master `4ca584c`:
 
 **Dependencies.** WC-1, WC-2 and WC-4 edit `tools/check_docs.py` and run in
 that order; WC-3 and WC-5 depend on nothing. None edits `tools/slice.ps1`,
-so each can be built and tested in any session. WC-5 shares `tools/session_cost.py` with CX-1 (`plans/now/coordinator-context.md`, Claude lane); `refill_lane.py` refuses to queue both at once. `tools/check_docs.py` and
+so each can be built and tested in any session. WC-5 shares `tools/session_cost.py` with CX-1 (`plans/archive/coordinator-context_2026-10-12.md`, Claude lane); `refill_lane.py` refuses to queue both at once. `tools/check_docs.py` and
 `tools/refill_lane.py` are lifecycle tooling owned by
 `plans/now/agent-lifecycle.md`, which has no open slice; it points here.
 
