@@ -48,7 +48,6 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-2 | points are spendable and shown, with a +1 at the flower | `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, tests | yes -- Claude lane (PP-1 landed 11 Oct 2026) | medium |
 | PP-4 | seed set: pollinated flowers replant nearby and the meadow remembers through winter | `scripts/flower.gd`, `scripts/world_building.gd`, `scripts/flower_species.gd`, `scripts/pollination.gd`, `scripts/levels.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- Claude backlog, after PP-2 (PP-1 landed 11 Oct 2026) | high |
 | PP-5 | Priority cells: marked brood cells are fed first | `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | no -- after PP-3 releases `orders_zones.gd` | high |
 | PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after PP-2 to PP-5 (PP-1 and T2-7 landed 11 Oct 2026) | medium |
@@ -71,44 +70,7 @@ PP-2 and PP-4, which touch a per-visit path.
 
 PP-1 shipped 2026-10-11; its specification is `plans/archive/PP-1_2026-10-11.md`.
 
-## PP-2 -- points are spendable and shown, with a +1 at the flower
-
-<!-- LAYER: immediate-task -->
-
-**Change.** `skill_tree_panel.gd::_stores` adds `Skills.POLLINATOR_POINTS`
-from the ledger, and a purchase takes what it deducted from the ledger
-(the comb stays owner of everything else). The HUD's stores readout shows
-points once the skill is owned. A new presentation-only
-`pollination_pop.gd` draws a small rising "+1" over the flower on
-`points_earned`, from a small fixed pool; it never reads or writes
-simulation state. Measure frame time at 500 and 1,000 bees with the SPR-2
-windowed baseline before and after, and record both here.
-
-**Frame time (12 Oct 2026).** `python tools/run_scenario.py
-test_scenarios/spr2_render_<n>.json --windowed --report full`, before on
-the base commit and after on the branch, interleaved, mean / p95 ms:
-
-| Bees | Before | After |
-| --- | --- | --- |
-| 500 | 16.6 / 18.2, 19.8 / 21.9, 26.1 / 42.0, 18.8 / 19.8 | 18.2 / 19.5, 23.5 / 27.5, 19.1 / 20.0, 19.7 / 21.9 |
-| 1,000 | 29.0 / 32.0, 33.7 / 38.0 | 34.8 / 43.1, 31.8 / 36.0 |
-
-No difference outside the run-to-run spread (500-bee medians 19.3 and
-19.4; other sessions were loading the machine). Draw calls and node counts
-are unchanged bar the one pop node. Both fixtures are nurses only, so no
-point is earned and the pop stays idle: what they measure is that the idle
-cost is nil. A "+1" processes only while one shows, from an eight-slot pool.
-
-```queue
-**[Claude] PP-2 -- points are spendable and shown, with a +1 at the flower**
-- Plan: `plans/now/pollination.md` -- "PP-2 -- points are spendable and shown, with a +1 at the flower"
-- Files: `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, `tests/test_pp2_points_spendable.py`, `test_scenarios/pp2_points_spendable.json`
-- Check: `python -m unittest tests.test_pp2_points_spendable` passes (a tier-4 skill is refused with too few points, bought once enough are earned, and the ledger loses exactly the recipe's points); the frame-time comparison is recorded in this section; `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/skill_tree_panel.gd :: Skills.POLLINATOR_POINTS`
-- Next after: PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter
-```
-
-PP-3 shipped 2026-10-12; its specification is `plans/archive/PP-3_2026-10-12.md`.
+PP-2 shipped 2026-10-12; its specification is `plans/archive/PP-2_2026-10-12.md`.
 
 ## PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter
 
