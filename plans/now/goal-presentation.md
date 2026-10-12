@@ -51,7 +51,7 @@ Verified 12 Oct 2026 against master `291e5a3`:
 | --- | --- | --- | --- | --- |
 | GP-1 | Goals drop-down on the right: long-term phase line, milestone, collapse remembered | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/session.gd`, `scripts/player_profile.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/test_gp1_goals_dropdown.py` | yes -- behind PP-5 and RR-1 in the same lane | medium |
 | GP-2 | Favourite goals stay on screen when the drop-down is collapsed; saved | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/test_gp2_goal_favourites.py` | after GP-1 | medium |
-| GP-3 | One short-term goal at a time, dismissable until it clears; saved | `scripts/short_term_goals.gd`, `scripts/colony_milestones.gd`, `scripts/year_winter.gd`, `scripts/hud.gd`, `tests/gp3_short_term_goals_test.gd`, `tests/test_gp3_short_term_goals.py` | after GP-2 and CD-3 | medium |
+| GP-3 | One short-term goal at a time, dismissable until it clears; saved | `scripts/short_term_goals.gd`, `scripts/colony_milestones.gd`, `scripts/year_winter.gd`, `scripts/hud.gd`, `tests/gp3_short_term_goals_test.gd`, `tests/test_gp3_short_term_goals.py` | after GP-2 (CD-3 landed 12 Oct 2026) | medium |
 | GP-4 | Problem strip: clicks only on text, 4-line cap, red shown when unstarred, × until it clears | `scripts/hud.gd`, `scripts/problem_messages.gd`, `tests/gp4_problem_strip_test.gd`, `tests/test_gp4_problem_strip.py` | after GP-3 | medium |
 
 Each slice reads this plan's "Decisions" and its own section only. Do not
