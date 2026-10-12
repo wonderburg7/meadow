@@ -32,6 +32,8 @@ here. A rule both agents need lives here, nowhere else.
    in the worktree (boot check, source checks, the unit tests naming the
    files you changed). A line or stop cause saying "not a code fault" is
    the Godot import cache: change no code, run the Fix command it names.
+   Run it and `tools/verify.ps1` as `tools/...` from inside the worktree,
+   never `../../tools/...`: each tests the checkout it lives in.
 
 ## Working style
 

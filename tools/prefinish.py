@@ -22,13 +22,15 @@ that list as one command, stopping at the first failure:
 It is a subset of `finish`'s verify, never a replacement: no balance tests,
 no lifecycle suite, no generated-file stages. Typically under a minute.
 
-Run it from the worktree (Windows PowerShell or Git Bash):
+Run it from the worktree (Windows PowerShell or Git Bash), as its own copy --
+never ../../tools/prefinish.py, which checks another checkout and now stops:
     python tools/prefinish.py [--base master]
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -47,6 +49,28 @@ UNSEARCHED = {"__init__.py"}
 # Godot-booting tests import godot_compile_check for find_godot alone): only
 # its own test_<name> modules run here, and `finish` runs the rest.
 BROAD = 8
+
+
+def wrong_checkout(cwd: Path) -> str | None:
+    """Why this copy must not run from `cwd`, or None when it may.
+
+    This copy checks ROOT, not the checkout you stand in. On 12 Oct 2026
+    Codex, in .worktrees/CD-3, ran `python ../../tools/prefinish.py`: it
+    checked the primary checkout and passed a branch it never looked at.
+    Outside any git checkout there is nothing to confuse, so it may run."""
+    try:
+        out = subprocess.run(["git", "-C", str(cwd), "rev-parse", "--show-toplevel"],
+                             capture_output=True, text=True)
+    except OSError:
+        return None
+    top = out.stdout.strip()
+    if out.returncode != 0 or not top:
+        return None
+    if os.path.normcase(str(Path(top).resolve())) == os.path.normcase(str(ROOT)):
+        return None
+    return ("prefinish: stopped -- this is the prefinish.py of %s, but you are inside %s.\n"
+            "It would check %s, not your checkout. Run your checkout's own copy:\n"
+            "    cd %s; python tools/prefinish.py" % (ROOT, top, ROOT, top))
 
 
 def git_lines(*args: str) -> list[str]:
@@ -146,6 +170,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--base", default="master", help="branch to diff against (default master)")
     args = parser.parse_args(argv)
     python = sys.executable
+
+    refusal = wrong_checkout(Path.cwd())
+    if refusal:
+        print(refusal)
+        return 2
 
     code = run_step("godot boot", [python, "tools/godot_compile_check.py"])
     if code != 0:
