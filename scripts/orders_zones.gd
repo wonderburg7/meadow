@@ -5,6 +5,8 @@ extends Node
 ## state beyond `_designation_undo`, which nothing outside this file
 ## touches; reads and writes main's fields through the `main` reference.
 
+const Skills = preload("res://scripts/skills.gd")
+
 var main: Node2D
 
 ## One step of undo for cell designation. Records what each cell was
