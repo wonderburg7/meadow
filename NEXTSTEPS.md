@@ -23,28 +23,21 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined**
-   - Plan: `plans/now/sprites.md` -- "SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined"
-   - Files: `scripts/soil_block.gd`, `tests/test_sp9_soil_art.py`
-   - Check: `python -m unittest tests.test_sp9_soil_art` passes; `tools/verify.ps1` is green
-   - Proof: `absent: scripts/soil_block.gd :: SpriteCatalogue`
-   - Next after: SP-6 -- meadow foragers drawn from the sheet: eight directions, flapping wings
-
-2. **[Claude] T2-9 -- A skill not available in this run never blocks the tier above it**
+1. **[Claude] T2-9 -- A skill not available in this run never blocks the tier above it**
    - Plan: `plans/now/tier-two.md` -- "T2-9 -- A skill not available in this run never blocks the tier above it"
    - Files: `scripts/progression.gd`, `plans/design/progression.md`, `test_scenarios/t2_9_c2_comb_worker_test.json`, `tests/test_t2_9_unavailable_tier.py`
    - Check: `python -m unittest tests.test_t2_9_unavailable_tier` passes (Challenge 2 buys Comb worker at 2.7 and Miner at 2.8 while Cell capacity stays unavailable); `tools/verify.ps1` is green
    - Proof: `absent: scripts/progression.gd :: _offered_in_run`
    - Next after: T2-7b -- the deferred tier-2 price sweep; waits for AR-4 and is specified when it lands
 
-3. **[Claude] PP-5 -- Priority cells: marked brood cells are fed first**
+2. **[Claude] PP-5 -- Priority cells: marked brood cells are fed first**
    - Plan: `plans/now/pollination.md` -- "PP-5 -- Priority cells: marked brood cells are fed first"
    - Files: `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_pp5_priority_cells.py`, `test_scenarios/pp5_priority_cells.json`
    - Check: `python -m unittest tests.test_pp5_priority_cells` passes (with food for one larva, a nurse feeds the marked larva first for each food type; unowned, the mark cannot be set and feeding order is today's; the mark survives save and restore); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/hive_cell.gd :: priority_cell`
    - Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
 
-4. **[Claude] RR-1 -- The queen can build a cell in every run**
+3. **[Claude] RR-1 -- The queen can build a cell in every run**
    - Plan: `plans/now/run-repairs.md` -- "RR-1 -- the queen can build a cell in every run"
    - Files: `scripts/challenge_runner.gd`, `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `test_scenarios/rr1_queen_builds_test.json`, `tests/test_rr1_queen_builds.py`
    - Check: `python -m unittest tests.test_rr1_queen_builds` passes (a lone queen outside any Challenge is offered Build cell and builds one cell within two days); `tools/verify.ps1` is green

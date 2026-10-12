@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-9, hive soil drawn from the art, is queued (SP-1 to SP-5 and SP-7 landed; the skep is in the meadow); SP-6 waits for Dave's repacked forager sheet; SP-8a, the meadow floor drawn in blocks with everything on it lifted, is specified below and gated on CD-3 (Codex lane) releasing `scripts/bee.gd` (PP-4 landed 12 Oct 2026); height's effects (rest of SP-8) are cut after it | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: nothing queued but SP-8a (SP-1 to SP-5, SP-7 and SP-9 landed; the skep is in the meadow and hive soil is drawn from the art); SP-6 waits for Dave's repacked forager sheet; SP-8a, the meadow floor drawn in blocks with everything on it lifted, is specified below and gated on CD-3 (Codex lane) releasing `scripts/bee.gd` (PP-4 landed 12 Oct 2026); height's effects (rest of SP-8) are cut after it | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-12
 
 ## Objective
 
@@ -82,7 +82,6 @@ Verified 9 Oct 2026 against master and the main checkout:
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for Dave's repacked sheet | high (per-bee hot path) |
 | SP-8a | the meadow floor drawn in blocks, with everything on it lifted | see its `Files:` line below | no -- waits for CD-3 (Codex lane) to release `bee.gd` (PP-4 landed 12 Oct 2026) | high |
 | SP-8 (rest) | height's effects: flight cost, where flowers grow, scouting reach | to be cut after SP-8a | no -- after SP-8a | high (balance) |
-| SP-9 | hive soil blocks drawn from the art, crumbling as they are mined | `scripts/soil_block.gd`, tests | yes -- Claude lane | medium |
 
 Dependencies: SP-2 -> SP-4 -> SP-5 -> SP-6 (SP-1 and SP-3 landed 9 Oct 2026).
 
@@ -233,35 +232,7 @@ interior, and the RAISED obstacles' blocking.
 - Next after: SP-6 -- meadow foragers drawn from the sheet: eight directions, flapping wings
 ```
 
-## SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined
-
-Dave, 12 Oct 2026: the soil block's stages are what a hive soil block
-shows as it is mined.
-
-**True afterwards.**
-
-- With Cell art on (`Session.use_cell_sprites`), each hive soil block
-  (`scripts/soil_block.gd`) draws a `soil_block` frame from the catalogue
-  instead of its flat colour: stage 5 (whole) below 25 % mined, then 4, 2
-  and 1 for each further quarter. At 100 % the block is gone and the
-  site or floor already drawn there shows, which is the bare soil under
-  it.
-- The block's footprint lands on its hex like a comb cup: the catalogue
-  anchor is the top face's middle, so the floor point is 14 art px lower
-  (the side height); check it against the cup's 16,22 floor by eye.
-- Cell art off keeps today's flat mass. The mining marker, selection ring
-  and progress label are unchanged. The frame is set only when it changes.
-- Hands-on: zoomed in on the hive wall, the blocks read as Dave's soil and
-  a marked block crumbles through four stages as it is dug.
-
-```queue
-**[Claude] SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined**
-- Plan: `plans/now/sprites.md` -- "SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined"
-- Files: `scripts/soil_block.gd`, `tests/test_sp9_soil_art.py`
-- Check: `python -m unittest tests.test_sp9_soil_art` passes; `tools/verify.ps1` is green
-- Proof: `absent: scripts/soil_block.gd :: SpriteCatalogue`
-- Next after: SP-6 -- meadow foragers drawn from the sheet: eight directions, flapping wings
-```
+SP-9 shipped 2026-10-12; its specification is `plans/archive/SP-9_2026-10-12.md`.
 
 ## SP-6 -- meadow foragers drawn from the sheet
 
