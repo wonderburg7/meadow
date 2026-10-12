@@ -28,6 +28,11 @@ here. A rule both agents need lives here, nowhere else.
    change an architecture/ownership boundary, save compatibility, a gameplay
    outcome or more than one later slice. Give the options and their costs.
 
+6. **Before `tools/slice.ps1 finish`, run `python tools/prefinish.py`**
+   in the worktree (boot check, source checks, the unit tests naming the
+   files you changed). A line or stop cause saying "not a code fault" is
+   the Godot import cache: change no code, run the Fix command it names.
+
 ## Working style
 
 - British English; readable, direct code and comments. Keep slices small and

@@ -38,7 +38,7 @@ lane. Queue rules: `.claude/rules/documentation.md`.
 Run `.\tools\verify.ps1` before committing ad-hoc work (`-PythonPath` if
 Python is not on PATH). On a claimed slice, don't: `finish` runs it on the
 branch as its first step and stops cleanly if it fails; mid-slice, run only
-the one test you need. It does not replace a Godot boot when parser/type feedback matters, or
+the one test you need, and `python tools/prefinish.py` before `finish`. It does not replace a Godot boot when parser/type feedback matters, or
 Dave's hands-on check for click-driven, visual or feel-sensitive work. Run
 `tools/check_docs.py` after documentation work. The second time a check fails
 for the same reason, build the instrument that would catch it without a human

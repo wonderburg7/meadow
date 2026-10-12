@@ -577,7 +577,7 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
         with _suppress_windows_crash_dialogs():
             process_outcome = run_headless_process(cmd, timeout, env=env)
             # A worktree cache left stale by a merge cannot resolve a new
-            # script: refresh it from the primary and run once more.
+            # file: rebuild it from this worktree's sources and run once more.
             if process_outcome.kind not in ("timed_out", "environment_failure"):
                 first_output = process_outcome.stdout + "\n" + process_outcome.stderr
                 if failing_lines(first_output):
