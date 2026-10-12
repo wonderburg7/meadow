@@ -47,4 +47,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PP-3` (`codex/PP-3`) | Codex | Gyne rearing gates gyne cells and Royal jelly gates jelly | Codex | in progress | none | `plans/now/pollination.md` PP-3 -- Gyne rearing gates gyne cells and Royal jelly gates jelly |
-| `.worktrees/RR-5` (`claude/RR-5`) | Claude | Hexagon names re-fit when the typeface changes | Claude | in progress | none | `plans/now/run-repairs.md` RR-5 -- hexagon names re-fit when the typeface changes |
