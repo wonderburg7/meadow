@@ -151,6 +151,25 @@ function Test-LifecycleTouched {
     return $false
 }
 
+# A job's output as text. Codex's Windows sandbox can deny PowerShell the
+# job's host process: Receive-Job then threw "Access is denied"
+# (Win32Exception), which aborted verify with no stage named and left the
+# closeout's stop cause as a bare FullyQualifiedErrorId (PP-3, 12 Oct 2026).
+# The failure is returned as the job's output instead, with the remedy.
+function Receive-JobText {
+    param($Job)
+    try {
+        return @(Receive-Job -Job $Job -ErrorAction Continue 2>&1 | ForEach-Object { $_.ToString() })
+    }
+    catch {
+        $script:jobReadDenied = $true
+        return @(
+            "$($Job.Name): PowerShell could not read this background job ($($_.Exception.Message))."
+            "verify.ps1 runs its stages as PowerShell background jobs, which a sandbox can deny. In Codex, rerun the same command outside the sandbox (sandbox_permissions: require_escalated); nothing was changed."
+        )
+    }
+}
+
 function Start-LifecycleJob {
     param($Interpreter, $Root, $Module)
     Start-Job -Name "lifecycle tests ($($Module -replace '^tests\.test_', ''))" -ArgumentList $Interpreter, $Root, @($Module) -ScriptBlock {
@@ -365,8 +384,9 @@ if ($runBranchScope -and -not $Docs) {
             $jobMs = [int](($job.PSEndTime - $job.PSBeginTime).TotalMilliseconds)
         }
         if ($Quiet) {
-            $captured = @(Receive-Job -Job $job -ErrorAction Continue 2>&1 | ForEach-Object { $_.ToString() })
-            $ok = ($job.State -eq "Completed")
+            $script:jobReadDenied = $false
+            $captured = Receive-JobText -Job $job
+            $ok = ($job.State -eq "Completed" -and -not $script:jobReadDenied)
             Write-StageResult -Name $job.Name -Ok $ok -Output $captured -Ms $jobMs
             if (-not $ok) {
                 $failed = $true
@@ -382,9 +402,10 @@ if ($runBranchScope -and -not $Docs) {
             # before 2>&1 could keep it -- unittest's whole failure report --
             # so five failed closeouts (25-27 Sep 2026) printed only
             # "lifecycle tests: FAILED" and logged no failure line.
-            $plainOutput = @(Receive-Job -Job $job -ErrorAction Continue 2>&1 | ForEach-Object { $_.ToString() })
+            $script:jobReadDenied = $false
+            $plainOutput = Receive-JobText -Job $job
             $plainOutput | ForEach-Object { Write-Output $_ }
-            $ok = ($job.State -eq "Completed")
+            $ok = ($job.State -eq "Completed" -and -not $script:jobReadDenied)
             # The -Quiet branch above records its stages through
             # Write-StageResult; this branch prints directly, so it records
             # its own or the plain run would be missing from the log.

@@ -111,15 +111,23 @@ work by default.
 **`finish` takes about a minute, or 4-10 minutes when the branch touches
 workflow tooling** (its branch verify then runs the lifecycle suite, one
 worktree at a time; `finish` is the verify, so do not run `verify.ps1`
-first). Give the shell call a timeout of at least 20 minutes
-(`timeout_ms: 1200000` where the shell tool takes one), and keep polling the
+first). **Run it outside the sandbox from the first call**
+(`sandbox_permissions: "require_escalated"`): its verify runs as PowerShell
+background jobs, which the sandbox can deny (`Receive-Job : Access is
+denied`; PP-3, 12 Oct 2026). Give the shell call a timeout of at least 20
+minutes (`timeout_ms: 1200000`, or `yield_time_ms: 1200000` on
+`exec_command`; a 30 s yield lost PP-3's output), and keep polling the
 same process until it prints one of its two closing blocks: `Slice landed:`
 or `slice finish stopped`. A call that returns with neither has **not**
 stopped -- `finish` is still running. Do not rerun it, and do not report it
 as stopped without a diagnosis. Instead run
 `tools/slice.ps1 status -Lane Codex`: `running` names the lifecycle command
 in progress and its PID (wait for it with `Wait-Process -Id <pid>`), and
-`last_run` says how the last one ended (`outcome`, `step`, `cause`). A failed
+`last_run` says how the last one ended (`outcome`, `step`, `cause`). While
+finish verifies the branch, `state` says so and `verifying` gives its PID:
+wait for that one. **Never stop a Godot or Python process** -- headless Godot
+runs are a live verify's unit tests, and stopping one fails that run
+(PP-3's escalated finish, 12 Oct 2026). A failed
 verify's full output is saved to `.git/meadow-slice-verify.log` in the
 primary checkout, and the stop block names that path. A
 `slice lifecycle is busy` message that names a `finish` run from your own
