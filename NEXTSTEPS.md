@@ -37,6 +37,20 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/orders_zones.gd :: func queen_build_at`
    - Next after: none -- plan complete (RR-2 to RR-5 landed)
 
+3. **[Claude] GP-1 -- The goals drop-down and the long-term line**
+   - Plan: `plans/now/goal-presentation.md` -- "GP-1 -- the goals drop-down and the long-term line"
+   - Files: `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/session.gd`, `scripts/player_profile.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/test_gp1_goals_dropdown.py`
+   - Check: `python -m unittest tests.test_gp1_goals_dropdown` passes (in a Colony Run the shelf shows a Goals header, the long-term line for each phase and the next milestone; collapsed it shows the header alone and stays inside the viewport at the minimum width; the collapsed state survives a profile reload; a Challenge's shelf is unchanged); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/session.gd :: goals_collapsed`
+   - Next after: GP-2 -- favourite goals stay on screen when the drop-down is collapsed
+
+4. **[Claude] GP-2 -- Favourite goals stay on screen when the drop-down is collapsed**
+   - Plan: `plans/now/goal-presentation.md` -- "GP-2 -- favourite goals"
+   - Files: `scripts/hud.gd`, `scripts/colony_milestones.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/test_gp2_goal_favourites.py`
+   - Check: `python -m unittest tests.test_gp2_goal_favourites` passes (a starred line shows when collapsed; a met favourite shows struck through until the next day change, then drops and unstars; stars survive save and load; a save without them loads with none); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/colony_milestones.gd :: FAVOURITES`
+   - Next after: GP-3 -- one short-term goal at a time, dismissable until it clears
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
