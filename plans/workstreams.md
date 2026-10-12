@@ -47,4 +47,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PP-3` (`codex/PP-3`) | Codex | Gyne rearing gates gyne cells and Royal jelly gates jelly | Codex | in progress | none | `plans/now/pollination.md` PP-3 -- Gyne rearing gates gyne cells and Royal jelly gates jelly |
-| `.worktrees/RR-4` (`claude/RR-4`) | Claude | The window cannot be made smaller than 800x600 | Claude | in progress | none | `plans/now/run-repairs.md` RR-4 -- the window cannot be made smaller than 800x600 |
