@@ -41,7 +41,7 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | RR-1 | The queen can build a cell in every Challenge, Scenario and Colony Run | `scripts/challenge_runner.gd`, `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `test_scenarios/rr1_queen_builds_test.json`, `tests/test_rr1_queen_builds.py` | yes -- PP-3 released `scripts/orders_zones.gd` (12 Oct 2026) | medium |
 
 Each slice reads its own section only. Do not change skill prices, the
-branch-tier rule (`plans/now/tier-two.md` T2-9 owns that), or the save
+branch-tier rule (settled by `plans/now/tier-two.md` T2-9, landed 12 Oct 2026), or the save
 format.
 
 ## RR-1 -- the queen can build a cell in every run
