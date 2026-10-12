@@ -46,4 +46,5 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.claude/worktrees/run-queue-3-c52e06` (`claude/run-queue-3-c52e06`) | Claude (docs only) | gates after PP-4 and Claude lane top-up | Claude Code | in progress | none | `NEXTSTEPS.md` Claude lane refill |
 | `.worktrees/CD-3` (`codex/CD-3`) | Codex | waiting and travel get a deterministic diagnostic boundary | Codex | in progress | none | `plans/now/diagnostic-readiness.md` CD-3 -- waiting and travel get a deterministic diagnostic boundary |
