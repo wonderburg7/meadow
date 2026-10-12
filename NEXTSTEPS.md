@@ -59,6 +59,8 @@ One line each: the id, its plan, and the single thing it waits for.
 - **SP-8a** (`plans/now/sprites.md`) -- the meadow floor drawn in blocks, with everything on it lifted (Dave, 12 Oct 2026); waits for CD-3 (Codex lane) to release `scripts/bee.gd` (PP-4 landed 12 Oct 2026, releasing `scripts/world_building.gd`, `scripts/flower.gd` and the save files).
 - **SP-6** (`plans/now/sprites.md`) -- meadow foragers drawn from the sheet (eight directions, flapping wings); waits for Dave's repack of the forager sheet onto a 16x16 `sheet` grid, which the exporter needs, and is queued once it is committed (SP-5 landed 12 Oct 2026).
 - **T2-7b** (`plans/now/tier-two.md`) -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4, whose arc buys a Honey worker, and is specified when it lands.
+- **GP-3** (`plans/now/goal-presentation.md`) -- one short-term goal at a time; waits for GP-2 and for CD-3 (Codex lane) to release `scripts/year_winter.gd`; its gated block is written.
+- **GP-4** (`plans/now/goal-presentation.md`) -- the problem strip stops blocking play; waits for GP-3 (Dave's order, 12 Oct 2026); its gated block is written.
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Dr Gallerin guidance now has its plan, `plans/now/guidance-explanations.md`.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
