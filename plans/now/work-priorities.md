@@ -30,14 +30,19 @@ Verified 13 Oct 2026 against master `06bd26c`:
    supersedes (product-scope §8); Extended backup roles is retired from the
    catalogue. The tier-0 baseline that orders cells, zones and orders is
    renamed "Cell priority", so the two never share a name.
-2. **Owning it gives one colony-wide, player-ordered list of jobs**
-   (Forage, Nurse, Comb work, Mine, Honey and the rest the run has). A bee
-   works its own role first; when that has nothing, it takes the highest job
-   on the list that has work, instead of a single backup. The per-bee role
-   and backup stay as the individual override. Dispatch happens only when a
-   bee goes idle, as today, never per frame. Bees leaving a role that still
-   has work because another need is urgent (§8's full version) is out of
-   the alpha.
+2. **Work Priorities turns each bee's single backup into an ordered list
+   of backups** (Dave: "work priorities are per bee backups, they can just
+   be ordered. so these replace the backup"). Once owned, an idle bee tries
+   its own role, then each job on its own list in order, taking the first
+   that has work. The list replaces the one `secondary_role`; it is not a
+   colony-wide list. Dispatch happens only when a bee goes idle, as today,
+   never per frame. The queen keeps today's rule (she nurses before laying).
+   Bees leaving a role that still has work because another need is urgent
+   (§8's full version) is out of the alpha.
+3. **Default order: Comb work, Nurse, Mine, Honey, Forage.** Forage is last
+   because there is always something to forage, so a bee that falls through
+   to it never reaches anything below. Jobs the run has not unlocked or
+   bought are left out until they are.
 
 ## Open questions
 
