@@ -327,6 +327,20 @@ $runBranchScope = $Scope -in @("branch", "all")
 $runPrimaryScope = $Scope -in @("primary", "all")
 
 if ($runBranchScope -and -not $Docs) {
+    # The Python suites cannot see a GDScript parse error. One headless boot
+    # can: on 12 Sep 2026 a call to a Rect2 method that does not exist in
+    # Godot 4 failed hud.gd's compile, took main.gd down with it and shipped
+    # a game with no HUD at all. Skips itself, passing, where no Godot
+    # binary is installed.
+    # It runs first, before the parallel jobs: PP-3 (12 Oct 2026) shipped an
+    # undeclared `Skills`, main.gd failed to compile, and every test that
+    # boots Godot ran to its timeout -- 98 minutes before the parse error
+    # surfaced. Now it fails in seconds with the stage named.
+    Invoke-PythonStage -Name "godot boot" -ScriptPath (Join-Path $repoRoot "tools/godot_compile_check.py") -FailureNote "the project does not boot"
+    if ($lastStageExit -ne 0) {
+        exit $lastStageExit
+    }
+
     $jobs = @(
         (Start-Job -Name "source checks" -ArgumentList $python, $repoRoot -ScriptBlock {
             param($interpreter, $root)
@@ -430,15 +444,6 @@ if ($runBranchScope -and -not $Docs) {
         exit $lastStageExit
     }
 
-    # The Python suites cannot see a GDScript parse error. One headless boot
-    # can: on 12 Sep 2026 a call to a Rect2 method that does not exist in
-    # Godot 4 failed hud.gd's compile, took main.gd down with it and shipped
-    # a game with no HUD at all. Skips itself, passing, where no Godot
-    # binary is installed.
-    Invoke-PythonStage -Name "godot boot" -ScriptPath (Join-Path $repoRoot "tools/godot_compile_check.py") -FailureNote "the project does not boot"
-    if ($lastStageExit -ne 0) {
-        exit $lastStageExit
-    }
 }
 
 if ($runBranchScope) {

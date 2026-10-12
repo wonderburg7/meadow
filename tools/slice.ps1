@@ -2112,7 +2112,12 @@ function Test-BranchVerified {
     $recordPath = Get-BranchVerifyFilePath -WorktreeRoot $Target.WorktreeRoot -Name "meadow-slice-verified.json"
     if (-not (Test-Path -LiteralPath $recordPath)) { return $false }
     try { $record = Get-Content -Raw -LiteralPath $recordPath | ConvertFrom-Json } catch { return $false }
-    return ([string]$record.branch -eq $Target.Branch)
+    if ([string]$record.branch -ne $Target.Branch) { return $false }
+    # Nothing removes the record before the worktree goes, so a commit made
+    # after a pass (a fix, a merge of master) must not inherit it: a pass
+    # vouches for the commit it ran on, not for the branch name (12 Oct 2026).
+    $head = (Invoke-GitText -C $Target.WorktreeRoot rev-parse HEAD).Text.Trim()
+    return ([string]$record.head -eq $head)
 }
 
 function Invoke-SliceBranchVerify {

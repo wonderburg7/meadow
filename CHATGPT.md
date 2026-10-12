@@ -111,7 +111,14 @@ work by default.
 **`finish` takes about a minute, or 4-10 minutes when the branch touches
 workflow tooling** (its branch verify then runs the lifecycle suite, one
 worktree at a time; `finish` is the verify, so do not run `verify.ps1`
-first). **Run it outside the sandbox from the first call**
+first). **`finish` is the last, expensive step, not the first test.** Before
+it, in the slice's worktree and stopping at the first failure: (1)
+`python tools/godot_compile_check.py` (if it reports "Could not preload
+resource", run `python tools/godot_cache.py --force` first); (2) the slice's
+own test, `python -m unittest tests.<module>`; (3) the tests that drive the
+files you changed (`git grep -l <changed function or constant> -- tests/`).
+A parse error cost PP-3 a 98-minute `finish` on 12 Oct 2026; step 1 finds it
+in seconds. **Run it outside the sandbox from the first call**
 (`sandbox_permissions: "require_escalated"`): its verify runs as PowerShell
 background jobs, which the sandbox can deny (`Receive-Job : Access is
 denied`; PP-3, 12 Oct 2026). Give the shell call a timeout of at least 20
