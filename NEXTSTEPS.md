@@ -51,6 +51,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/soil_block.gd :: SpriteCatalogue`
    - Next after: SP-6 -- meadow foragers drawn from the sheet: eight directions, flapping wings
 
+5. **[Claude] T2-9 -- A skill not available in this run never blocks the tier above it**
+   - Plan: `plans/now/tier-two.md` -- "T2-9 -- A skill not available in this run never blocks the tier above it"
+   - Files: `scripts/progression.gd`, `plans/design/progression.md`, `test_scenarios/t2_9_c2_comb_worker_test.json`, `tests/test_t2_9_unavailable_tier.py`
+   - Check: `python -m unittest tests.test_t2_9_unavailable_tier` passes (Challenge 2 buys Comb worker at 2.7 and Miner at 2.8 while Cell capacity stays unavailable); `tools/verify.ps1` is green
+   - Proof: `absent: scripts/progression.gd :: _offered_in_run`
+   - Next after: T2-7b -- the deferred tier-2 price sweep; waits for AR-4 and is specified when it lands
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -69,6 +76,7 @@ One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
 - **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for CD-3 (Codex backlog, admissible now that no Claude-lane slice holds `scripts/bee.gd`) to release `scripts/colony_diagnostics.gd`; PP-2 (Claude lane) holds `scripts/hud.gd` meanwhile (RR-2 landed 11 Oct 2026, RR-3 and RR-4 landed 12 Oct 2026).
+- **RR-1** (`plans/now/run-repairs.md`) -- the queen can build a cell in every run; waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`.
 - **PP-5** (`plans/now/pollination.md`) -- Priority cells; waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`.
 - **PP-6** (`plans/now/pollination.md`) -- the route's pricing sweep; waits for PP-2 to PP-5 (PP-1 landed 11 Oct 2026), and is specified when they land.
 - **T2-7b** (`plans/now/tier-two.md`) -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4, whose arc buys a Honey worker, and is specified when it lands.

@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: complete | Owner: Dave / Claude Code | Next: None — plan complete | Dependency: none outside this plan; RR-1 to RR-4 run in order (shared `hud.gd` and `main.gd`) | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: RR-1 -- the queen can build a cell in every run, specified below; it waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd` (RR-2 to RR-5 landed; restored from the archive 12 Oct 2026, where RR-5's closeout had sent it with RR-1 unshipped) | Dependency: PP-3 (`plans/now/pollination.md`) releases `scripts/orders_zones.gd` | Verified: 2026-10-12
 
 ## Objective
 
@@ -38,7 +38,7 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| RR-1 | The queen can build a cell in every Challenge, Scenario and Colony Run | `scripts/challenge_runner.gd`, `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `test_scenarios/rr1_queen_builds_test.json`, `tests/test_rr1_queen_builds.py` | yes | medium |
+| RR-1 | The queen can build a cell in every Challenge, Scenario and Colony Run | `scripts/challenge_runner.gd`, `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `test_scenarios/rr1_queen_builds_test.json`, `tests/test_rr1_queen_builds.py` | after PP-3 (Codex lane) releases `scripts/orders_zones.gd` | medium |
 
 Each slice reads its own section only. Do not change skill prices, the
 branch-tier rule (`plans/now/tier-two.md` T2-9 owns that), or the save
@@ -101,7 +101,7 @@ runs it the way `tests/test_col6_winter_skip.py` runs its scenario.
 - Files: `scripts/challenge_runner.gd`, `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `test_scenarios/rr1_queen_builds_test.json`, `tests/test_rr1_queen_builds.py`
 - Check: `python -m unittest tests.test_rr1_queen_builds` passes (a lone queen outside any Challenge is offered Build cell and builds one cell within two days); `tools/verify.ps1` is green
 - Proof: `absent: scripts/orders_zones.gd :: func queen_build_at`
-- Next after: RR-2 -- "Saves..." works on the main menu at boot
+- Next after: none -- plan complete (RR-2 to RR-5 landed)
 ```
 
 RR-2 shipped 2026-10-11; its specification is `plans/archive/RR-2_2026-10-11.md`.
@@ -114,4 +114,4 @@ RR-5 shipped 2026-10-12; its specification is `plans/archive/RR-5_2026-10-12.md`
 
 ## Not in the queue, and why
 
-- **RR-1** waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`; RR-5 is in the Claude lane (RR-2 landed 11 Oct 2026, RR-3 and RR-4 landed 12 Oct 2026).
+- **RR-1** waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd` (RR-2 landed 11 Oct 2026; RR-3, RR-4 and RR-5 landed 12 Oct 2026).

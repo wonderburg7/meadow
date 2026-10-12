@@ -46,4 +46,5 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.claude/worktrees/run-queue-3-dfeb4f` (`claude/run-queue-3-dfeb4f`) | Claude (docs only) | Restore run-repairs.md for RR-1; T2-9 successor; Claude-lane top-up | Claude | in progress | none | `plans/now/run-repairs.md` RR-1, `plans/now/tier-two.md` T2-9 |
 | `.worktrees/PP-3` (`codex/PP-3`) | Codex | Gyne rearing gates gyne cells and Royal jelly gates jelly | Codex | in progress | none | `plans/now/pollination.md` PP-3 -- Gyne rearing gates gyne cells and Royal jelly gates jelly |
