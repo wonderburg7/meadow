@@ -23,35 +23,28 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] SP-5 -- the skep in the meadow, and the rival hive as a recoloured skep**
-   - Plan: `plans/now/sprites.md` -- "SP-5 -- the skep in the meadow, and the rival hive"
-   - Files: `scripts/hive.gd`, `scripts/rival_hive.gd`, `assets/sprites/SPRITES.md`, `scripts/sprite_catalogue.gd`, `tests/test_sp5_skep.py`
-   - Check: `python -m unittest tests.test_sp5_skep` passes and `python tools/sprites.py --check` is clean; `tools/verify.ps1` is green
-   - Proof: `present: scripts/hive.gd :: extends Polygon2D`
-   - Next after: SP-6 -- meadow foragers drawn from the sheet: eight directions, flapping wings
-
-2. **[Claude] PP-2 -- points are spendable and shown, with a +1 at the flower**
+1. **[Claude] PP-2 -- points are spendable and shown, with a +1 at the flower**
    - Plan: `plans/now/pollination.md` -- "PP-2 -- points are spendable and shown, with a +1 at the flower"
    - Files: `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, `tests/test_pp2_points_spendable.py`, `test_scenarios/pp2_points_spendable.json`
    - Check: `python -m unittest tests.test_pp2_points_spendable` passes (a tier-4 skill is refused with too few points, bought once enough are earned, and the ledger loses exactly the recipe's points); the frame-time comparison is recorded in this section; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/skill_tree_panel.gd :: Skills.POLLINATOR_POINTS`
    - Next after: PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter
 
-3. **[Claude] PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter**
+2. **[Claude] PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter**
    - Plan: `plans/now/pollination.md` -- "PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter"
    - Files: `scripts/flower.gd`, `scripts/world_building.gd`, `scripts/flower_species.gd`, `scripts/pollination.gd`, `scripts/levels.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_pp4_seed_set.py`, `test_scenarios/pp4_seed_set.json`
    - Check: `python -m unittest tests.test_pp4_seed_set` passes (a flower that set seed is replaced by its species nearby; one that did not is replaced by the seasonal draw; spring regrowth favours the species that set seed without losing any species; a Challenge replants as today; seed counts survive save and restore); the species-share table is recorded in this section; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/levels.gd :: seed_set`
    - Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
 
-4. **[Claude] SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined**
+3. **[Claude] SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined**
    - Plan: `plans/now/sprites.md` -- "SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined"
    - Files: `scripts/soil_block.gd`, `tests/test_sp9_soil_art.py`
    - Check: `python -m unittest tests.test_sp9_soil_art` passes; `tools/verify.ps1` is green
    - Proof: `absent: scripts/soil_block.gd :: SpriteCatalogue`
    - Next after: SP-6 -- meadow foragers drawn from the sheet: eight directions, flapping wings
 
-5. **[Claude] T2-9 -- A skill not available in this run never blocks the tier above it**
+4. **[Claude] T2-9 -- A skill not available in this run never blocks the tier above it**
    - Plan: `plans/now/tier-two.md` -- "T2-9 -- A skill not available in this run never blocks the tier above it"
    - Files: `scripts/progression.gd`, `plans/design/progression.md`, `test_scenarios/t2_9_c2_comb_worker_test.json`, `tests/test_t2_9_unavailable_tier.py`
    - Check: `python -m unittest tests.test_t2_9_unavailable_tier` passes (Challenge 2 buys Comb worker at 2.7 and Miner at 2.8 while Cell capacity stays unavailable); `tools/verify.ps1` is green
