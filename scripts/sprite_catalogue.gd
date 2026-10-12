@@ -113,6 +113,7 @@ const WAX_CELL_SEALED_VIEW := "hive"
 
 # hive_skep: the straw skep, your hive in the meadow
 const HIVE_SKEP_SHEET := preload("res://assets/sprites/meadow/hive_skep_sheet.png")
+const HIVE_SKEP_RIVAL_SHEET := preload("res://assets/sprites/meadow/hive_skep_rival_sheet.png")
 const HIVE_SKEP_FRAME_SIZE := Vector2i(54, 41)
 const HIVE_SKEP_CELL_GUTTER := 1
 const HIVE_SKEP_CELL_SIZE := Vector2i(56, 43)
