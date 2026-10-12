@@ -304,7 +304,7 @@ func prerequisites_met(skill_id: String) -> bool:
 
 
 ## Section 4.3: a branch's tier N+1 opens only when *every* skill in that
-## branch's tier N is owned -- not any one of them, and per branch. Tier
+## branch's tier N that this run offers is owned -- not any one of them, and per branch. Tier
 ## 1 has no tier below it, and a run definition waiving
 ## `requires_previous_tier` is the only thing that skips the rule.
 func branch_tier_open(skill_id: String) -> bool:
@@ -317,9 +317,18 @@ func branch_tier_open(skill_id: String) -> bool:
 	if tier <= 1:
 		return true
 	for sibling in Skills.for_sector_tier(entry.get("sector", ""), tier - 1):
+		if not _offered_in_run(sibling.id):
+			continue
 		if not is_owned(sibling.id):
 			return false
 	return true
+
+
+## T2-9: this run offers the skill -- permitted and its feature holds. A
+## skill the run cuts, bans, has not yet unlocked or lacks the feature for
+## cannot be bought, so it must not keep the tier above it shut.
+func _offered_in_run(skill_id: String) -> bool:
+	return is_permitted(skill_id) and feature_valid(skill_id)
 
 
 ## Section 4.2: the recipe is spent from the colony's stores, so it has

@@ -322,6 +322,12 @@ function Get-VerifyFailureSummary {
     if ($lines -match 'PowerShell could not read this background job') {
         return "PowerShell background jobs were denied, as Codex's sandbox does; nothing ran -- rerun finish outside the sandbox (sandbox_permissions: require_escalated)"
     }
+    # tools/godot_cache.py's CACHE_FAULT: the import cache failed, not the
+    # code, and the line carries its own fix command.
+    $cacheFault = @($lines | Where-Object { $_.Trim().StartsWith("godot cache: FAILED (not a code fault)") } | Select-Object -First 1)
+    if ($cacheFault.Count -gt 0) {
+        return "godot boot: the Godot import cache, NOT a code fault -- change no code" + $cacheFault[0].Trim().Substring("godot cache: FAILED (not a code fault)".Length)
+    }
     $stages = @()
     foreach ($line in $lines) {
         if ($line -match '^(.+): FAILED$') { $stages += $Matches[1] }
@@ -2184,7 +2190,7 @@ function Invoke-SliceBranchVerify {
         $verifyOutput | ForEach-Object { Write-Output $_ }
         if ($verifyExit -ne 0) {
             $verifyLog = Save-VerifyLog -Root $worktreeRoot -Output $verifyOutput
-            Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched ($(Get-VerifyFailureSummary -Output @($verifyOutput | ForEach-Object { "$_" })))" -Fix "the failing check is printed above this block and saved to $verifyLog. Fix it on the branch, commit, and retry. If the only failure is the Godot compile check with 'Could not preload resource', the worktree's .godot import cache is stale and the automatic refresh could not fix it -- run python tools/godot_cache.py --force in the worktree; it is not a code fault"
+            Stop-Slice -Cause "$id -- tools/verify.ps1 (-Scope branch) failed; branch left untouched ($(Get-VerifyFailureSummary -Output @($verifyOutput | ForEach-Object { "$_" })))" -Fix "the failing check is printed above this block and saved to $verifyLog. Fix it on the branch, commit, and retry. If the cause says NOT a code fault, change no code: run the Fix command it names, then retry"
         }
         Invoke-InjectedLifecycleFailure -Phase "verified"
         $head = (Invoke-GitText -C $worktreeRoot rev-parse HEAD).Text.Trim()

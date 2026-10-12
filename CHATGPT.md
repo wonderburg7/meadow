@@ -112,13 +112,12 @@ work by default.
 workflow tooling** (its branch verify then runs the lifecycle suite, one
 worktree at a time; `finish` is the verify, so do not run `verify.ps1`
 first). **`finish` is the last, expensive step, not the first test.** Before
-it, in the slice's worktree and stopping at the first failure: (1)
-`python tools/godot_compile_check.py` (if it reports "Could not preload
-resource", run `python tools/godot_cache.py --force` first); (2) the slice's
-own test, `python -m unittest tests.<module>`; (3) the tests that drive the
-files you changed (`git grep -l <changed function or constant> -- tests/`).
-A parse error cost PP-3 a 98-minute `finish` on 12 Oct 2026; step 1 finds it
-in seconds. **Run it outside the sandbox from the first call**
+it, run `python tools/prefinish.py` in the slice's worktree: the boot check,
+`tests/source_checks.py`, then the unit tests that name a file the branch
+changed, stopping at the first failure, in about a minute. On 12 Oct 2026
+PP-3 lost a 98-minute `finish` to a parse error and another to a
+source-check rule; this finds both in seconds. Exit 3 ("not a code fault")
+is the Godot import cache: change no code, run the Fix command it prints. **Run it outside the sandbox from the first call**
 (`sandbox_permissions: "require_escalated"`): its verify runs as PowerShell
 background jobs, which the sandbox can deny (`Receive-Job : Access is
 denied`; PP-3, 12 Oct 2026). Give the shell call a timeout of at least 20

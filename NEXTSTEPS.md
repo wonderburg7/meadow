@@ -23,33 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] PP-2 -- points are spendable and shown, with a +1 at the flower**
-   - Plan: `plans/now/pollination.md` -- "PP-2 -- points are spendable and shown, with a +1 at the flower"
-   - Files: `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, `tests/test_pp2_points_spendable.py`, `test_scenarios/pp2_points_spendable.json`
-   - Check: `python -m unittest tests.test_pp2_points_spendable` passes (a tier-4 skill is refused with too few points, bought once enough are earned, and the ledger loses exactly the recipe's points); the frame-time comparison is recorded in this section; `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/skill_tree_panel.gd :: Skills.POLLINATOR_POINTS`
-   - Next after: PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter
-
-2. **[Claude] PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter**
-   - Plan: `plans/now/pollination.md` -- "PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter"
-   - Files: `scripts/flower.gd`, `scripts/world_building.gd`, `scripts/flower_species.gd`, `scripts/pollination.gd`, `scripts/levels.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_pp4_seed_set.py`, `test_scenarios/pp4_seed_set.json`
-   - Check: `python -m unittest tests.test_pp4_seed_set` passes (a flower that set seed is replaced by its species nearby; one that did not is replaced by the seasonal draw; spring regrowth favours the species that set seed without losing any species; a Challenge replants as today; seed counts survive save and restore); the species-share table is recorded in this section; `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/levels.gd :: seed_set`
+1. **[Claude] PP-5 -- Priority cells: marked brood cells are fed first**
+   - Plan: `plans/now/pollination.md` -- "PP-5 -- Priority cells: marked brood cells are fed first"
+   - Files: `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_pp5_priority_cells.py`, `test_scenarios/pp5_priority_cells.json`
+   - Check: `python -m unittest tests.test_pp5_priority_cells` passes (with food for one larva, a nurse feeds the marked larva first for each food type; unowned, the mark cannot be set and feeding order is today's; the mark survives save and restore); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/hive_cell.gd :: priority_cell`
    - Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
 
-3. **[Claude] SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined**
-   - Plan: `plans/now/sprites.md` -- "SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined"
-   - Files: `scripts/soil_block.gd`, `tests/test_sp9_soil_art.py`
-   - Check: `python -m unittest tests.test_sp9_soil_art` passes; `tools/verify.ps1` is green
-   - Proof: `absent: scripts/soil_block.gd :: SpriteCatalogue`
-   - Next after: SP-6 -- meadow foragers drawn from the sheet: eight directions, flapping wings
-
-4. **[Claude] T2-9 -- A skill not available in this run never blocks the tier above it**
-   - Plan: `plans/now/tier-two.md` -- "T2-9 -- A skill not available in this run never blocks the tier above it"
-   - Files: `scripts/progression.gd`, `plans/design/progression.md`, `test_scenarios/t2_9_c2_comb_worker_test.json`, `tests/test_t2_9_unavailable_tier.py`
-   - Check: `python -m unittest tests.test_t2_9_unavailable_tier` passes (Challenge 2 buys Comb worker at 2.7 and Miner at 2.8 while Cell capacity stays unavailable); `tools/verify.ps1` is green
-   - Proof: `absent: scripts/progression.gd :: _offered_in_run`
-   - Next after: T2-7b -- the deferred tier-2 price sweep; waits for AR-4 and is specified when it lands
+2. **[Claude] RR-1 -- The queen can build a cell in every run**
+   - Plan: `plans/now/run-repairs.md` -- "RR-1 -- the queen can build a cell in every run"
+   - Files: `scripts/challenge_runner.gd`, `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `test_scenarios/rr1_queen_builds_test.json`, `tests/test_rr1_queen_builds.py`
+   - Check: `python -m unittest tests.test_rr1_queen_builds` passes (a lone queen outside any Challenge is offered Build cell and builds one cell within two days); `tools/verify.ps1` is green
+   - Proof: `absent: scripts/orders_zones.gd :: func queen_build_at`
+   - Next after: none -- plan complete (RR-2 to RR-5 landed)
 
 ### Codex lane
 
@@ -68,11 +54,9 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
-- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for CD-3 (Codex backlog, admissible now that no Claude-lane slice holds `scripts/bee.gd`) to release `scripts/colony_diagnostics.gd`; PP-2 (Claude lane) holds `scripts/hud.gd` meanwhile (RR-2 landed 11 Oct 2026, RR-3 and RR-4 landed 12 Oct 2026).
-- **RR-1** (`plans/now/run-repairs.md`) -- the queen can build a cell in every run; waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`.
-- **PP-5** (`plans/now/pollination.md`) -- Priority cells; waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`.
-- **PP-6** (`plans/now/pollination.md`) -- the route's pricing sweep; waits for PP-2 to PP-5 (PP-1 landed 11 Oct 2026), and is specified when they land.
-- **SP-8a** (`plans/now/sprites.md`) -- the meadow floor drawn in blocks, with everything on it lifted (Dave, 12 Oct 2026); waits for PP-4 (Claude lane) to release `scripts/world_building.gd`, `scripts/flower.gd`, `scripts/save_game.gd` and `scripts/saving.gd`. It shares `scripts/input_selection.gd` with RR-1, so whichever is queued second waits, and once queued it holds `scripts/bee.gd`, which CD-3 (Codex) needs free.
+- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for CD-3 (Codex backlog, admissible now that no Claude-lane slice holds `scripts/bee.gd`) to release `scripts/colony_diagnostics.gd`; PP-5 and RR-1 (Claude lane, queued 12 Oct 2026) hold `scripts/hud.gd` next (PP-2 landed 12 Oct 2026, RR-2 landed 11 Oct 2026, RR-3 and RR-4 landed 12 Oct 2026).
+- **PP-6** (`plans/now/pollination.md`) -- the route's pricing sweep; waits for PP-5 (PP-1 to PP-4 landed 11-12 Oct 2026); its gated block is written.
+- **SP-8a** (`plans/now/sprites.md`) -- the meadow floor drawn in blocks, with everything on it lifted (Dave, 12 Oct 2026); waits for CD-3 (Codex lane) to release `scripts/bee.gd` (PP-4 landed 12 Oct 2026, releasing `scripts/world_building.gd`, `scripts/flower.gd` and the save files).
 - **SP-6** (`plans/now/sprites.md`) -- meadow foragers drawn from the sheet (eight directions, flapping wings); waits for Dave's repack of the forager sheet onto a 16x16 `sheet` grid, which the exporter needs, and is queued once it is committed (SP-5 landed 12 Oct 2026).
 - **T2-7b** (`plans/now/tier-two.md`) -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4, whose arc buys a Honey worker, and is specified when it lands.
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Dr Gallerin guidance now has its plan, `plans/now/guidance-explanations.md`.

@@ -98,7 +98,7 @@ This is deliberate and is the strongest structural claim in the design. Section 
 
 ### 4.3 Branch-tier progress
 
-**A branch's tier N+1 opens only when every skill in that branch's tier N is owned.** Not "any one of them" and not a per-branch count. Mastered skills count as owned (section 4.1).
+**A branch's tier N+1 opens only when every skill in that branch's tier N that this run offers is owned** (Dave, 11 Oct 2026, T2-9: a skill the run cuts, bans, has not yet unlocked or lacks the feature for does not keep the tier above it shut). Not "any one of them" and not a per-branch count. Mastered skills count as owned (section 4.1).
 
 - An empty tier is vacuously satisfied — but there is nothing to buy there, so an empty tier N with a populated tier N+1 must not exist. Enforced by validation (section 9).
 - Branch-tier progress is per branch. Owning all of Foraging T1 opens Foraging T2 only.

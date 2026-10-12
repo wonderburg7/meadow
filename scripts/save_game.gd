@@ -130,6 +130,10 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 		# PP-1: Pollinator Points and Contribution. Additive: an older save
 		# has none and restores both at zero (pollination.gd::restore).
 		"pollination": world.pollination.save_data(),
+		# PP-4: the year's seed counts, the counts this spring reads and the
+		# seeds waiting to be planted. Additive: an older save has none and
+		# restores none (pollination.gd::restore_seed).
+		"seed_bank": world.pollination.seed_save_data(),
 		# BS-14: the grants and bans this run's availability sheet was built
 		# from, so a load does not re-read today's developer edits.
 		"skill_policy": {
@@ -367,6 +371,10 @@ static func _flowers_data(world) -> Array:
 			"nectar": f.nectar_amount,
 			"pollen": f.pollen_amount,
 			"age": f.age_seconds,
+			# PP-4, additive: without it a load re-rolls the lifespan, and a
+			# flower already older than its new one dies (and replants) at
+			# once. An older save keeps that re-roll.
+			"lifespan": f.lifespan_seconds,
 			# PP-1, additive: an older save loads both counts at zero and
 			# the pollination window open.
 			"compatible": f.compatible_visits,

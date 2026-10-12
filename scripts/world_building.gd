@@ -145,9 +145,9 @@ func _spawn_starting_foragers() -> void:
 	var level: Dictionary = main.Levels.get_level(Session.starting_level)
 	if not level.is_empty():
 		for i in range(int(level.nectar_foragers)):
-			_spawn_bee("nectar")
+			_spawn_bee("nectar", str(level.get("forager_species", "")))
 		for i in range(int(level.pollen_foragers)):
-			_spawn_bee("pollen")
+			_spawn_bee("pollen", str(level.get("forager_species", "")))
 		return
 
 	var total_bees: int = maxi(2, int(GameConfig.starting_bees))
@@ -201,10 +201,17 @@ func _random_point_in_zone(habitat: String) -> Vector2:
 	var dist := sqrt(randf()) * radius
 	return centre + Vector2(cos(angle), sin(angle)) * dist
 
+const SEED_DISTANCE := Vector2(20.0, 60.0)  # PP-4: a seed from its parent, in px
+
 ## Founders are sampled as though they were born earlier in this same year,
 ## rather than all being born in today's season. Replacements retain the
-## current-season selection used before SF-1.
+## current-season selection used before SF-1. PP-4: oldest gap first (pollination.gd).
 func _seed_flower(founding: bool = false, max_units: int = 4) -> int:
+	var ledger = main.pollination if not founding else null
+	var counts: Dictionary = ledger.regrowth_counts(main.Flower.regrowth_factor < 1.0) if ledger != null else {}
+	var gap: Array = ledger.take_gap() if ledger != null else []
+	if ledger != null and ledger.seed_in_season(gap):
+		return _plant_seed(ledger, gap)
 	var excluded_species: Array = ["Poppy"] if Session.starting_level == 1 else []
 	var starting_age := -1.0
 	var birth_fraction := -1.0
@@ -219,7 +226,8 @@ func _seed_flower(founding: bool = false, max_units: int = 4) -> int:
 		var birth_day: float = 1.0 + (Session.sim_time - starting_age) / maxf(1.0, GameConfig.seconds_per_day)
 		var day_in_year: float = fposmod(birth_day - 1.0, year_days) + 1.0
 		birth_fraction = clampf((day_in_year - 1.0) / season_days, 0.0, 1.0)
-	var species_index = main.FlowerSpecies.pick_species_index(excluded_species, birth_fraction)
+	var weights: Array = main.FlowerSpecies.species_weights(excluded_species, birth_fraction, counts)
+	var species_index: int = main.FlowerSpecies.pick_from_weights(weights, excluded_species)
 	var species: Dictionary = main.FlowerSpecies.SPECIES[species_index]
 	var species_name: String = species.name
 	var cluster_radius: float = species.get("cluster_radius", 70.0)
@@ -257,6 +265,7 @@ func _seed_flower(founding: bool = false, max_units: int = 4) -> int:
 		unit_count = randi_range(
 			species.get("bush_min_units", 2), species.get("bush_max_units", 4))
 	unit_count = mini(unit_count, max_units)
+	var dropped: int = ledger.drop_empty_gaps(unit_count - 1) if ledger != null else 0
 
 	for unit in range(unit_count):
 		var pos: Vector2 = anchor
@@ -273,14 +282,38 @@ func _seed_flower(founding: bool = false, max_units: int = 4) -> int:
 				var a2 := randf() * TAU
 				var d2 := randf_range(BUSH_UNIT_SPREAD.x, BUSH_UNIT_SPREAD.y)
 				pos = anchor + Vector2(cos(a2), sin(a2)) * d2
-		pos = _clear_of_obstacles(pos)
-
-		var flower = main.Flower.new()
-		flower.position = pos
-		main.meadow_root.add_child(flower)
-		flower.setup(species_index, starting_age)
-		main.CrabSpider.maybe_spawn(flower)
+		var flower: Node2D = _add_flower(pos, species_index, starting_age)
+		if ledger != null:
+			ledger.log_replant("seasonal", flower, weights, counts, unit == 0, gap, dropped)
 	return unit_count
+
+## Every replacement and founder goes in here: clear of obstacles, then set up.
+func _add_flower(pos: Vector2, species_index: int, starting_age: float = -1.0) -> Node2D:
+	var flower = main.Flower.new()
+	flower.position = _clear_of_obstacles(pos)
+	main.meadow_root.add_child(flower)
+	flower.setup(species_index, starting_age)
+	main.CrabSpider.maybe_spawn(flower)
+	return flower
+
+## PP-4: one unit (bushy too) of `entry`'s species near where it stood.
+func _plant_seed(ledger, entry: Array) -> int:
+	var parent := Vector2(float(entry[1]), float(entry[2]))
+	var pos := parent
+	for attempt in range(9):
+		var angle := randf() * TAU
+		pos = _in_field(parent + Vector2(cos(angle), sin(angle)) * randf_range(SEED_DISTANCE.x, SEED_DISTANCE.y))
+		if _is_clear_ground(pos):
+			break
+	ledger.log_replant("seed", _add_flower(pos, int(entry[0])), [], {}, true, entry, 0)
+	return 1
+
+## `point` kept in the field and FLOWER_MIN_DISTANCE off the hive (_random_field_point's rules).
+func _in_field(point: Vector2) -> Vector2:
+	var centre: Vector2 = main.hive.position
+	var off: Vector2 = point.clamp(centre - main.FLOWER_FIELD_HALF_SIZE, centre + main.FLOWER_FIELD_HALF_SIZE) - centre
+	var reach: float = maxf(off.length(), main.FLOWER_MIN_DISTANCE)
+	return centre + (off.normalized() if off.length() > 0.01 else Vector2.RIGHT) * reach
 
 func _is_clear_ground(point: Vector2) -> bool:
 	for obstacle in main.obstacles:
@@ -510,11 +543,13 @@ func _build_cameras() -> void:
 	main.hive_camera.position = main.HIVE_INTERIOR_CENTRE
 	main.add_child(main.hive_camera)
 
-func _spawn_bee(focus: String) -> void:
+func _spawn_bee(focus: String, preferred_species: String = "") -> void:
 	var bee = main.Bee.new()
 	bee.position = main.hive.position
 	main.meadow_root.add_child(bee)
 	bee.setup(main.hive, focus, main.next_bee_id, main.Bee.Role.FORAGER, main)
+	if preferred_species != "":
+		bee.set_preferred_species(preferred_species)
 	_stagger_starter_age(bee)
 	main.next_bee_id += 1
 
