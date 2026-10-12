@@ -164,7 +164,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | GC-1, GC-2, GC-3 -- an Idle bee stays put, a job change delivers the load, honey conserves energy | `plans/archive/gameplay-consistency_2026-10-06.md` |
 | PE-1 -- the headless pacing gates timed to the hour | `plans/archive/pacing-evidence_2026-10-01.md` |
 | AR-1 to AR-4 -- alpha-route evidence: recorded gates, their diagnostic boundary, then an end-to-end scripted route | `plans/now/alpha-route-evidence.md` |
-| CX-1, CX-2 -- coordinator context: a per-run cost report, then a queue-steward subagent for the /run-queue housekeeping | `plans/now/coordinator-context.md` |
+| CX-1, CX-2 -- coordinator context: a per-run cost report, then a queue-steward subagent for the /run-queue housekeeping | `plans/archive/coordinator-context_2026-10-12.md` |
 | WC-1 to WC-5 -- workflow checks: stale deferrals, the dry-lane report, Codex's hooks, spaced ids, level-to-model parity | `plans/archive/workflow-checks_2026-10-10.md` |
 | WO-1 -- winter's countdown opens by itself on a set day | `plans/archive/winter-onset_2026-10-01.md` |
 | UI-F-1, UI-F-2, UI-F-3 -- the game-over screen's theme, warning severity, comb label scale | `plans/archive/ui-feedback_2026-10-01.md` |
@@ -180,7 +180,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | SPR-2 -- the windowed render baseline at 500 and 1,000 bees | `plans/archive/render-scale_2026-10-07.md` |
 | SI-1 to SI-3 -- save integrity: run state a load misses, exact Challenge rollback, all-or-nothing writes | `plans/archive/save-integrity_2026-10-09.md` |
 | T2-1 to T2-8 -- progression step 8: tier-2 skills gated and built, bodies, rain in the Colony Run, Shiver Cluster | `plans/now/tier-two.md` |
-| BB-1 to BB-4 -- Bee Bread: Fermenters, larval feeding, the tier-3 currency, re-pacing | `plans/now/bee-bread.md` |
+| BB-1 to BB-4 -- Bee Bread: Fermenters, larval feeding, the tier-3 currency, re-pacing | `plans/archive/bee-bread_2026-10-11.md` |
 | GD-2a, GD-2b -- Dr Gallerin's first explanations and the persistent Why list, then saving them | `plans/now/guidance-explanations.md` |
 | PP-1 to PP-6 -- pollination: Pollinator Points, the gyne and jelly gates, seed set, Priority cells, the route's pricing | `plans/now/pollination.md` |
 | Progression/skills design | `plans/design/progression.md` |

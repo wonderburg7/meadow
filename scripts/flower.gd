@@ -63,6 +63,17 @@ var occupied_by: Node2D = null   # the bee currently visiting this flower, if an
 var marked_at: float = -999.0    # sim-time of the last tarsal scent mark
 var marked_by: Node2D = null     # which bee left it
 
+## PP-1 (plans/now/pollination.md): pollen this flower has received from
+## bees arriving straight from another flower on the same trip -- of its
+## own species (compatible) or another (incompatible). PP-4's seed set reads
+## them. Saved with the flower; a save without them loads zero.
+var compatible_visits: int = 0
+var incompatible_visits: int = 0
+## Sim-time from which a compatible delivery may earn a Pollinator Point
+## again: the flower's own refill after its last award (product-scope §10,
+## "the pollination window is the flower's own refill"). Saved with it.
+var award_ready_at: float = 0.0
+
 var age_seconds: float = 0.0
 var lifespan_seconds: float = 1800.0
 
@@ -377,6 +388,24 @@ func release(bee: Node2D) -> void:
 func set_selected(value: bool) -> void:
 	if selection_ring != null:
 		selection_ring.visible = value
+
+# --- pollination (PP-1) -------------------------------------------
+## One delivery of pollen from the visiting bee's previous flower.
+## pollination.gd decides which kind it is; the flower only keeps count.
+func receive_pollen(compatible: bool) -> void:
+	if compatible:
+		compatible_visits += 1
+	else:
+		incompatible_visits += 1
+
+## Whether this flower's pollination window is open for a point now. If it
+## is, it closes until the flower is full again for the resource just taken
+## -- the same refill time a bee's flower_cooldowns entry waits out.
+func take_award(resource_type: String) -> bool:
+	if Session.sim_time < award_ready_at:
+		return false
+	award_ready_at = Session.sim_time + seconds_until_full(resource_type)
+	return true
 
 # --- tarsal secretion markers -------------------------------------
 ## Real bees leave a scent from their feet on flowers they land on, and

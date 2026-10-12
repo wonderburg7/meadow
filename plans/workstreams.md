@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PP-3` (`codex/PP-3`) | Codex | Gyne rearing gates gyne cells and Royal jelly gates jelly | Codex | in progress | none | `plans/now/pollination.md` PP-3 -- Gyne rearing gates gyne cells and Royal jelly gates jelly |
+| `.worktrees/PP-2` (`claude/PP-2`) | Claude | points are spendable and shown, with a +1 at the flower | Claude | in progress | none | `plans/now/pollination.md` PP-2 -- points are spendable and shown, with a +1 at the flower |

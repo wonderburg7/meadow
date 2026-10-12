@@ -61,6 +61,7 @@ const Obstacle = preload("res://scripts/obstacle.gd")
 const RockBlock = preload("res://scripts/rock_block.gd")
 const Hud = preload("res://scripts/hud.gd")
 const DebugPanel = preload("res://scripts/debug_panel.gd")
+const SavesPanel = preload("res://scripts/saves_panel.gd")
 const SettingsCatalogue = preload("res://scripts/settings_catalogue.gd")
 const MainMenu = preload("res://scripts/main_menu.gd")
 const GameOver = preload("res://scripts/game_over.gd")
@@ -73,6 +74,7 @@ const RainEffect = preload("res://scripts/rain_effect.gd")
 const RivalHive = preload("res://scripts/rival_hive.gd")
 const SpatialGrid = preload("res://scripts/spatial_grid.gd")
 const Season = preload("res://scripts/season.gd")
+const UiLayout = preload("res://scripts/ui_layout.gd")
 const WinterPanel = preload("res://scripts/winter_panel.gd")
 const GallerinPanel = preload("res://scripts/gallerin_panel.gd")
 const SuccessionPanel = preload("res://scripts/succession_panel.gd")
@@ -108,6 +110,7 @@ const OrdersZones = preload("res://scripts/orders_zones.gd")
 const ForagingStats = preload("res://scripts/foraging_stats.gd")
 const YearWinter = preload("res://scripts/year_winter.gd")
 const ColonyMilestones = preload("res://scripts/colony_milestones.gd")
+const Pollination = preload("res://scripts/pollination.gd")
 const CameraView = preload("res://scripts/camera_view.gd")
 const FogOfWar = preload("res://scripts/fog_of_war.gd")
 const StageGate = preload("res://scripts/stage_gate.gd")
@@ -121,11 +124,16 @@ var foraging_stats: Node
 var year_winter: Node
 ## CR-2: the Colony Run's milestone evaluator. Idle in any other run.
 var colony_milestones: ColonyMilestones
+## PP-1: the Pollinator Points and Pollination Contribution ledger.
+var pollination: Pollination
 var camera_view: Node
 var fog_of_war: Node
 var stage_gate: Node
 var challenge_runner: Node
 var debug_panel: Node
+## The Saves window (RR-2): built beside debug_panel so the menu's Saves...
+## works on a fresh boot, before any run (or hud) exists.
+var saves_panel: CanvasLayer
 
 # --- world and meadow constants -----------------------------------
 const HIVE_WORLD_OFFSET := Vector2(20000, 0)
@@ -285,6 +293,10 @@ var current_speed: float = 1.0
 ## scenario_stop_max_days stays -1 (never triggers) unless the scenario
 ## file's "stop.max_days" says otherwise.
 var scenario_active: bool = false
+## PP-1: a scenario file's "pollination_log": true asks pollination.gd for
+## one session-log line per flower visit and hive entry. Off unless asked,
+## so every other scenario's action log is unchanged.
+var scenario_pollination_log: bool = false
 var scenario_stop_max_days: int = -1
 ## A "stop.when" dict (CHATGPT_INSIGHTS_PLAN.md's A5) -- the same
 ## day_at_least/food_stores_at_least/population_at_least/
@@ -380,6 +392,11 @@ func _ready() -> void:
 	Engine.time_scale = 1.0
 	seed(DEFAULT_RANDOM_SEED)   # fixed layout while tuning -- delete for a random meadow each run
 
+	# RR-4: the window cannot be made smaller than the floor the UI is laid
+	# out for. Set before the menu_pending return below so the pre-run menu
+	# is bounded too. Deferred: an immediate set changed the boot-time viewport the settings panel is sized from, failing test_layout_regression.
+	get_tree().root.set_deferred("min_size", Vector2i(int(UiLayout.MIN_SUPPORTED_WIDTH), int(UiLayout.MIN_SUPPORTED_HEIGHT)))
+
 	# Every path back to this function -- a fresh boot, Restart Run, the
 	# main menu's level picker, a load, a post-game-over restart -- reloads
 	# the whole scene, and tutorial_checkpoint.gd's rolling snapshot is only
@@ -418,6 +435,12 @@ func _ready() -> void:
 	debug_panel = DebugPanel.new()
 	add_child(debug_panel)
 
+	# RR-2: the Saves window is opened from the settings window, which the
+	# menu reaches too, so it is built before the early return. It copes
+	# with there being no hud or saving node yet (saves_panel.gd).
+	saves_panel = SavesPanel.new()
+	add_child(saves_panel)
+
 	if Session.menu_pending:
 		menu.open()
 		return
@@ -447,6 +470,8 @@ func _ready() -> void:
 	add_child(year_winter)
 	colony_milestones = ColonyMilestones.new()
 	colony_milestones.main = self
+	pollination = Pollination.new()
+	pollination.main = self
 	camera_view = CameraView.new()
 	camera_view.main = self
 	add_child(camera_view)
@@ -1118,6 +1143,7 @@ func _on_restart_after_loss() -> void:
 	get_tree().reload_current_scene()
 
 func _on_level_chosen(level: int) -> void:
+	Session.run_name = SaveSlots.fresh_run_name("My colony")
 	Session.starting_level = level
 	Session.menu_pending = false
 	Session.reset_run_state()
@@ -1134,6 +1160,7 @@ func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dicti
 	SettingsCatalogue.reset_config_keys(ScenarioPresets.keys_to_reset(preset_key, custom_overrides))
 	ScenarioPresets.apply(preset_key, custom_overrides)
 	PlayerProfile.mark_scenario_played(level, preset_key)
+	Session.run_name = SaveSlots.fresh_run_name("My colony")
 	Session.starting_level = level
 	Session.menu_pending = false
 	Session.reset_run_state()
@@ -1227,6 +1254,9 @@ func _apply_scenario_boot_arg() -> void:
 	# ordinary hourly cadence. See DiagnosticLog.snapshot_interval_override.
 	var scenario_snapshot_seconds: float = float(level.get("snapshot_seconds", -1.0))
 	level.erase("snapshot_seconds")
+	# PP-1, dev-only like snapshot_seconds: see scenario_pollination_log.
+	scenario_pollination_log = bool(level.get("pollination_log", false))
+	level.erase("pollination_log")
 	# Dev-only, same reasoning as time_scale/snapshot_seconds above. An
 	# explicit field instead of always reusing DEFAULT_RANDOM_SEED (the one
 	# every manual-play boot also gets) lets a headless comparison declare

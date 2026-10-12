@@ -16,7 +16,6 @@ const Availability = preload("res://scripts/availability.gd")
 const PerfPlot = preload("res://scripts/perf_plot.gd")
 const PerfBreakdown = preload("res://scripts/perf_breakdown.gd")
 const UiIcon = preload("res://scripts/ui_icon.gd")
-const SavesPanel = preload("res://scripts/saves_panel.gd")
 const SkillTreePanel = preload("res://scripts/skill_tree_panel.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
 const UiPanelLayout = preload("res://scripts/ui_panel_layout.gd")
@@ -548,8 +547,8 @@ var pending_cell: Node2D = null
 ## What confirm_discard runs if the player agrees; empty while the dialog
 ## is asking about a cell.
 var _pending_discard_action: Callable = Callable()
-## The Saves window (SV-2), created here and parented to main like every
-## other GamePanel. Only the settings window's "Saves…" opens it (SA-1).
+## The Saves window (SV-2), created by main.gd (RR-2) and parented to it like
+## every other GamePanel. Only the settings window's "Saves…" opens it (SA-1).
 var saves_panel: CanvasLayer
 ## The read-only skill tree (AP-3), created and opened from here the same way.
 var skill_tree_panel: CanvasLayer
@@ -560,8 +559,10 @@ func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 	layer = 9
 	# Deferred: main is still adding its own children while this runs.
-	saves_panel = SavesPanel.new()
-	main.add_child.call_deferred(saves_panel)
+	# Built by main.gd before the menu's early return (RR-2); this only
+	# lets it follow the corner and bottom row now that they exist.
+	saves_panel = main.saves_panel
+	saves_panel.connect_hud_reflow()
 	skill_tree_panel = SkillTreePanel.new()
 	main.add_child.call_deferred(skill_tree_panel)
 	# So the settings window can find the corner readout to refresh it when

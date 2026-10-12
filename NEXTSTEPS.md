@@ -23,33 +23,33 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] T2-7 -- Tier-2 costs tuned so the first purchase lands around day 5**
-   - Plan: `plans/now/tier-two.md` -- "T2-7 -- Tier-2 costs tuned so the first purchase lands around day 5"
-   - Files: `scripts/skills.gd`, `scripts/progression.gd`, `scripts/diagnostic_log.gd`, `tools/analyze_session.py`, `tools/pacing_gates.py`, `plans/design/progression.md`, `tests/test_t2_7_tier_two_prices.py`
-   - Check: `python -m unittest tests.test_t2_7_tier_two_prices` passes (a snapshot whose stores cover the cheapest first-tier-2 path sets `first_tier2_day`, one that falls short by one unit of any resource does not, and pacing_gates prints the row against day 5 without changing the five gate rows); `python tools/pacing_gates.py` shows the median `first_tier2_day` in band, recorded before and after in the plan; `tools/verify.ps1` is green
-   - Proof: `absent: tools/analyze_session.py :: first_tier2_day`
-   - Next after: T2-6 -- Associative learning
+1. **[Claude] PP-2 -- points are spendable and shown, with a +1 at the flower**
+   - Plan: `plans/now/pollination.md` -- "PP-2 -- points are spendable and shown, with a +1 at the flower"
+   - Files: `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, `tests/test_pp2_points_spendable.py`, `test_scenarios/pp2_points_spendable.json`
+   - Check: `python -m unittest tests.test_pp2_points_spendable` passes (a tier-4 skill is refused with too few points, bought once enough are earned, and the ledger loses exactly the recipe's points); the frame-time comparison is recorded in this section; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/skill_tree_panel.gd :: Skills.POLLINATOR_POINTS`
+   - Next after: PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter
 
-2. **[Claude] T2-6 -- Associative learning**
-   - Plan: `plans/now/tier-two.md` -- "T2-6 -- Associative learning"
-   - Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_t2_6_associative_learning.py`, `tests/t2_6_associative_learning_test.gd`
-   - Check: `python -m unittest tests.test_t2_6_associative_learning` passes (with the toggle off, a bee's handling time and experience stay unchanged until Associative learning is bought; once owned, ten visits to one species bring its handling to 0.75 of a first-timer's, and fifteen visits to another species then erase that experience; experience survives save and restore); `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/bee_foraging.gd :: static func handling_experience_on`
-   - Next after: PP-1 -- bees earn Pollinator Points and Contribution
+2. **[Claude] PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter**
+   - Plan: `plans/now/pollination.md` -- "PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter"
+   - Files: `scripts/flower.gd`, `scripts/world_building.gd`, `scripts/flower_species.gd`, `scripts/pollination.gd`, `scripts/levels.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_pp4_seed_set.py`, `test_scenarios/pp4_seed_set.json`
+   - Check: `python -m unittest tests.test_pp4_seed_set` passes (a flower that set seed is replaced by its species nearby; one that did not is replaced by the seasonal draw; spring regrowth favours the species that set seed without losing any species; a Challenge replants as today; seed counts survive save and restore); the species-share table is recorded in this section; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/levels.gd :: seed_set`
+   - Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
 
-3. **[Claude] BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers**
-   - Plan: `plans/now/bee-bread.md` -- "BB-4 -- Challenges 1 and 2 and the Colony Run re-paced for 15-day unfed workers"
-   - Files: `scripts/challenge_stages.gd`, `docs/challenge-stages.md`, `scripts/scenario_actions.gd`, `test_scenarios/bb4_challenge1_route.json`, `test_scenarios/bb4_challenge2_route.json`, `tests/test_bb4_challenge_pacing.py`
-   - Check: `python -m unittest tests.test_bb4_challenge_pacing` passes (each route, run once on its pinned seed, reaches its Challenge's completion under BB-2's rule with no stage jumped after its start, and the test reads the thresholds from `scripts/challenge_stages.gd` rather than restating them); the three-seed reach days under the rule and with both pollen-raised factors at 1.0, and `python tools/pacing_gates.py`'s five rows, are recorded in the plan; `python tools/stage_reference.py --check` is clean; `.\tools\verify.ps1` is green
-   - Proof: `present: scripts/challenge_stages.gd :: the rescue threshold -- first guesses`
-   - Next after: none -- Bee Bread is complete
+3. **[Claude] SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined**
+   - Plan: `plans/now/sprites.md` -- "SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined"
+   - Files: `scripts/soil_block.gd`, `tests/test_sp9_soil_art.py`
+   - Check: `python -m unittest tests.test_sp9_soil_art` passes; `tools/verify.ps1` is green
+   - Proof: `absent: scripts/soil_block.gd :: SpriteCatalogue`
+   - Next after: SP-6 -- meadow foragers drawn from the sheet: eight directions, flapping wings
 
-4. **[Claude] PP-1 -- bees earn Pollinator Points and Contribution**
-   - Plan: `plans/now/pollination.md` -- "PP-1 -- bees earn Pollinator Points and Contribution"
-   - Files: `scripts/pollination.gd`, `scripts/main.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/debug_panel.gd`, `tests/test_pp1_pollination_ledger.py`, `test_scenarios/pp1_pollination_ledger.json`
-   - Check: `python -m unittest tests.test_pp1_pollination_ledger` passes (two same-species flowers in one trip earn one point only once Pollinator points is owned and not again from that flower until it has refilled; a trip's first flower earns nothing; arriving from another species counts one incompatible delivery; Contribution rises whether or not the skill is owned; the counters and flower counts survive save and restore); `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/flower.gd :: compatible_visits`
-   - Next after: PP-2 -- points are spendable and shown, with a +1 at the flower
+4. **[Claude] T2-9 -- A skill not available in this run never blocks the tier above it**
+   - Plan: `plans/now/tier-two.md` -- "T2-9 -- A skill not available in this run never blocks the tier above it"
+   - Files: `scripts/progression.gd`, `plans/design/progression.md`, `test_scenarios/t2_9_c2_comb_worker_test.json`, `tests/test_t2_9_unavailable_tier.py`
+   - Check: `python -m unittest tests.test_t2_9_unavailable_tier` passes (Challenge 2 buys Comb worker at 2.7 and Miner at 2.8 while Cell capacity stays unavailable); `tools/verify.ps1` is green
+   - Proof: `absent: scripts/progression.gd :: _offered_in_run`
+   - Next after: T2-7b -- the deferred tier-2 price sweep; waits for AR-4 and is specified when it lands
 
 ### Codex lane
 
@@ -67,14 +67,15 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation, Bee Bread and the gyne route.
-- **GD-2b** (`plans/now/guidance-explanations.md`) -- the shown ledger and Why history saved with the run; GD-2a landed 10 Oct 2026, so it waits only for the save files to be free of Claude-lane slices: PP-1 (Claude lane, fifth) holds them now, and PP-4 and PP-5 hold them later.
-- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for CD-3 (Codex backlog; it needs `scripts/bee.gd`, which PP-1 in the Claude lane holds) to release `scripts/colony_diagnostics.gd`, and for PP-1 (Claude lane, fifth) to release `scripts/main.gd` and the save files; `scripts/hud.gd` is free since 10 Oct 2026.
-- **PP-2 and PP-4** (`plans/now/pollination.md`) -- Pollinator Points made spendable, and seed set; wait for PP-1's ledger (`scripts/pollination.gd`).
+- **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
+- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for CD-3 (Codex backlog, admissible now that no Claude-lane slice holds `scripts/bee.gd`) to release `scripts/colony_diagnostics.gd`; PP-2 (Claude lane) holds `scripts/hud.gd` meanwhile (RR-2 landed 11 Oct 2026, RR-3 and RR-4 landed 12 Oct 2026).
+- **RR-1** (`plans/now/run-repairs.md`) -- the queen can build a cell in every run; waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`.
 - **PP-5** (`plans/now/pollination.md`) -- Priority cells; waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`.
-- **PP-6** (`plans/now/pollination.md`) -- the route's pricing sweep; waits for PP-1 to PP-5 and T2-7, and is specified when they land.
+- **PP-6** (`plans/now/pollination.md`) -- the route's pricing sweep; waits for PP-2 to PP-5 (PP-1 landed 11 Oct 2026), and is specified when they land.
+- **SP-8a** (`plans/now/sprites.md`) -- the meadow floor drawn in blocks, with everything on it lifted (Dave, 12 Oct 2026); waits for PP-4 (Claude lane) to release `scripts/world_building.gd`, `scripts/flower.gd`, `scripts/save_game.gd` and `scripts/saving.gd`. It shares `scripts/input_selection.gd` with RR-1, so whichever is queued second waits, and once queued it holds `scripts/bee.gd`, which CD-3 (Codex) needs free.
+- **SP-6** (`plans/now/sprites.md`) -- meadow foragers drawn from the sheet (eight directions, flapping wings); waits for Dave's repack of the forager sheet onto a 16x16 `sheet` grid, which the exporter needs, and is queued once it is committed (SP-5 landed 12 Oct 2026).
+- **T2-7b** (`plans/now/tier-two.md`) -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4, whose arc buys a Honey worker, and is specified when it lands.
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Dr Gallerin guidance now has its plan, `plans/now/guidance-explanations.md`.
-- **SP-4** (`plans/now/sprites.md`) -- nectar and pollen fill levels drawn from the sprites; waits for SP-2, queued in the Claude lane, and gets its block when it lands (SP-3 landed 9 Oct 2026).
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
 

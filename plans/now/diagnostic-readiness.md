@@ -1,7 +1,7 @@
 # Diagnostic readiness -- make the colony state behind a player decision explicit
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: CD-3 -- waiting and travel diagnostic boundary, in the Codex backlog; GD-2a released `scripts/year_winter.gd` 10 Oct 2026, and PP-1 (Claude lane) now holds `scripts/bee.gd` | Dependency: extends `plans/reference/colony-diagnostics.md`; CD-3 is admitted once no Claude-lane slice holds `scripts/bee.gd`; no player-facing copy or balance change | Verified: 2026-10-10
+Status: active | Owner: Dave / Codex | Next: CD-3 -- waiting and travel diagnostic boundary, in the Codex backlog; GD-2a released `scripts/year_winter.gd` 10 Oct 2026 and PP-1 released `scripts/bee.gd` 11 Oct 2026, so it is admissible now | Dependency: extends `plans/reference/colony-diagnostics.md`; CD-3 is admitted while no Claude-lane slice holds `scripts/bee.gd`; no player-facing copy or balance change | Verified: 2026-10-11
 
 ## Objective
 
@@ -36,7 +36,7 @@ where `bee.gd::_idle_dispatch` / `_try_role_work` already search for work,
 then let diagnostics read that result. A bee state alone can mistake an idle
 bee with available work for a bee waiting on work. Do not repeat a mutable
 work search in diagnostics or add a per-bee scan outside the existing refresh.
-BB-2 (`plans/now/bee-bread.md`) released `scripts/bee.gd` on 10 Oct 2026.
+BB-2 (`plans/archive/bee-bread_2026-10-11.md`) released `scripts/bee.gd` on 10 Oct 2026.
 Rechecked then, the file list stands; `scripts/year_winter.gd` is shared
 with GD-2a (`plans/now/guidance-explanations.md`), queued in the Codex lane,
 so CD-3 runs after it.

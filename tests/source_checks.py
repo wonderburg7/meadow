@@ -1326,6 +1326,8 @@ ORIGINAL_SAVED_SETTINGS = frozenset({
     "known_patches_max", "known_patch_min_spacing",
     "handling_experience_on", "handling_experience_floor",
     "handling_experience_visits_to_floor",
+    # T2-6: how fast associative learning fades; a run-tunable catalogue value.
+    "handling_experience_forget_visits",
     "adaptive_constancy_on", "adaptive_constancy_gain",
     "adaptive_constancy_decay", "adaptive_constancy_weight",
     # D1 second half (12 Sep 2026): reclassified from persist:"none" to
@@ -2699,13 +2701,18 @@ TRANSCRIBED_EFFECTS = {
     "skill.foraging.orientation_flight": ("enable_behaviour", "orientation_flight_on"),
     # T2-3: adaptive constancy is a bought behaviour, its own content step.
     "skill.foraging.adaptive_constancy": ("enable_behaviour", "adaptive_constancy_on"),
+    # T2-6: associative learning is a bought behaviour, its own content step.
+    "skill.foraging.associative_learning": ("enable_behaviour", "handling_experience_on"),
     # T2-5: weather sensing and rain recall use live rain values, not toggles.
     "skill.ecology.weather_sensing": ("enable_behaviour", "weather_sensing_on"),
     "skill.ecology.rain_recall": ("enable_behaviour", "rain_recall_on"),
     # NF-4: fermentation sense is an owned-skill behaviour (hive.gd).
     "skill.colony.fermentation_sense": ("enable_behaviour", "fermentation_sense_on"),
+    # PP-1: Pollinator points is an owned-skill behaviour (pollination.gd).
+    "skill.foraging.pollinator_points": ("enable_behaviour", "pollinator_points_on"),
 }
-SKILL_ONLY_BEHAVIOURS = {"weather_sensing_on", "rain_recall_on", "fermentation_sense_on"}
+SKILL_ONLY_BEHAVIOURS = {"weather_sensing_on", "rain_recall_on", "fermentation_sense_on",
+                         "pollinator_points_on"}
 
 
 def check_progression_transcribed_effects(problems):

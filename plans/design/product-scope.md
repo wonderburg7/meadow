@@ -346,7 +346,7 @@ The exact pollen/honey recipe, cell capacity, larval ration and UI forecast are
 balance decisions requiring the scenario harness; they are not guessed here.
 
 **Decisions (Dave, 6-7 Oct 2026, plan-ahead session).** Sliced in
-`plans/now/bee-bread.md`.
+`plans/archive/bee-bread_2026-10-11.md`.
 
 - **The adult outcomes above stand as written, in every run**, Challenges
   included: a worker raised without Bee Bread lives 15 days at 95% speed and

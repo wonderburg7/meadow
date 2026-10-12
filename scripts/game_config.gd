@@ -220,6 +220,10 @@ var handling_experience_floor: float = 0.75
 ## the floor by visits/this, capped at 1.0) rather than a hard cutoff.
 ## Provisional, pending Slice 7's simulation sweep.
 var handling_experience_visits_to_floor: float = 10.0
+## T2-6: how many finished visits to other species erase a bee's full
+## experience with one species. Each visit elsewhere takes
+## visits_to_floor / this many visits' worth off.
+var handling_experience_forget_visits: float = 15.0
 
 ## Slice 7 (adaptive constancy): a continuous per-bee-species confidence
 ## score that grows with a completed handling bout and decays on

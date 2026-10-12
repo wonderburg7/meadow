@@ -1,0 +1,24 @@
+{
+  "cells": 12, "nectar_foragers": 8, "pollen_foragers": 4,
+  "nurses": 0, "builders": 0, "miners": 0,
+  "weather": false, "disease": false, "rival_hive": false, "winter": false,
+  "random_seed": 6101,
+  "snapshot_seconds": 30,
+  "pollination_log": true,
+  "actions": [
+    {"do": "set_cell_contents", "cell": {"built_index": 0}, "resource": "honey", "amount": 200},
+    {"do": "set_cell_contents", "cell": {"built_index": 1}, "resource": "honey", "amount": 200},
+    {"do": "set_cell_contents", "cell": {"built_index": 2}, "resource": "honey", "amount": 200},
+    {"do": "wait", "seconds": 150},
+    {"do": "save_run", "name": "PP1 unowned"},
+    {"do": "grant_skill", "skill": "skill.foraging.pollinator_points"},
+    {"do": "wait", "seconds": 300},
+    {"do": "save_run", "name": "PP1 owned"},
+    {"do": "wait", "seconds": 60},
+    {"do": "restore_slot", "name": "PP1 owned"},
+    {"do": "settle", "ticks": 2},
+    {"do": "save_run", "name": "PP1 restored"},
+    {"do": "wait", "seconds": 60}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 6}
+}

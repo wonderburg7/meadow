@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-1 -- bees earn Pollinator Points, queued fifth in the Claude lane behind T2-6 and BB-4; PP-3 landed 10 Oct 2026, releasing `orders_zones.gd` for PP-5 | Dependency: T2-6 (`plans/now/tier-two.md`), because foraging tier 3 opens only when Associative learning is owned; PP-1 follows T2-6 in the Claude lane (shared files; BB-2 and NF-4 landed 10 Oct 2026); AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: PP-2 -- points are spendable and shown, with a +1 at the flower, next in the Claude lane (PP-1 landed 11 Oct 2026: `scripts/pollination.gd` is the ledger); PP-3 landed 12 Oct 2026, releasing `orders_zones.gd` for PP-5 | Dependency: none left for PP-2 or PP-4 -- PP-1's ledger landed 11 Oct 2026; AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-11
 
 ## Objective
 
@@ -36,76 +36,41 @@ Verified 10 Oct 2026 against master:
   type.
 - `colony_milestones.gd` is a main-owned, saved, colony-level ledger
   (genetic points) -- the precedent for the Pollinator Points ledger.
+- PP-1 (11 Oct 2026): `pollination.gd` holds `points` and `contribution`;
+  flowers save `compatible_visits`, `incompatible_visits` and
+  `award_ready_at`. Found while testing it: a flower's `lifespan_seconds`
+  is not saved, so a load or checkpoint restore re-rolls it and a flower
+  now older than its new lifespan dies at once (123 of 545 in
+  `pp1_pollination_ledger.json`'s restore). PP-4, which replants on death,
+  should save the lifespan or expect those deaths.
 
 ## Open slices
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-1 | bees earn Pollinator Points and Contribution; flowers count compatible and incompatible pollen | `scripts/pollination.gd`, `scripts/main.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/debug_panel.gd`, tests | yes -- queued in the Claude lane behind T2-6 and BB-4 | high |
-| PP-2 | points are spendable and shown, with a +1 at the flower | `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, tests | no -- after PP-1 | medium |
-| PP-3 | Gyne rearing gates gyne cells and Royal jelly gates jelly | `scripts/roles.gd`, `scripts/actions.gd`, `scripts/orders_zones.gd`, `scripts/run_availability.gd`, tests | landed 10 Oct 2026 | medium |
-| PP-4 | seed set: pollinated flowers replant nearby and the meadow remembers through winter | `scripts/flower.gd`, `scripts/world_building.gd`, `scripts/flower_species.gd`, `scripts/pollination.gd`, `scripts/levels.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | no -- after PP-1 | high |
+| PP-2 | points are spendable and shown, with a +1 at the flower | `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, tests | yes -- Claude lane (PP-1 landed 11 Oct 2026) | medium |
+| PP-3 | Gyne rearing gates gyne cells and Royal jelly gates jelly | `scripts/roles.gd`, `scripts/actions.gd`, `scripts/orders_zones.gd`, `scripts/run_availability.gd`, tests | landed 12 Oct 2026 | medium |
+| PP-4 | seed set: pollinated flowers replant nearby and the meadow remembers through winter | `scripts/flower.gd`, `scripts/world_building.gd`, `scripts/flower_species.gd`, `scripts/pollination.gd`, `scripts/levels.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- Claude backlog, after PP-2 (PP-1 landed 11 Oct 2026) | high |
 | PP-5 | Priority cells: marked brood cells are fed first | `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | no -- after PP-3 releases `orders_zones.gd` | high |
-| PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after PP-1 to PP-5 and T2-7 | medium |
+| PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after PP-2 to PP-5 (PP-1 and T2-7 landed 11 Oct 2026) | medium |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
 once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
-`skills.gd` and the save files with T2-6, so it runs after
-it in the Claude lane (BB-2 and NF-4, which shared them too, landed 10 Oct 2026). PP-2 and PP-4 build on PP-1's ledger; PP-2's
+`skills.gd` and the save files with T2-6, so it ran after
+it in the Claude lane (T2-6 landed 11 Oct 2026; BB-2 and NF-4, which shared them too, landed 10 Oct 2026). PP-2 and PP-4 build on PP-1's ledger; PP-2's
 `skill_tree_panel.gd` is free since BB-3 landed (10 Oct 2026). PP-3 shares no file with the Claude
 lane and ran in the Codex lane. PP-5 shares `orders_zones.gd` with PP-3
-and `bee_nursery.gd` with BB-2 and NF-4, both landed 10 Oct 2026. PP-6 balances everything above and
-also follows T2-7 (`plans/now/tier-two.md`), which prices tier 2 on the same
-arc. AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6.
+and `bee_nursery.gd` with BB-2 and NF-4, both landed 10 Oct 2026. PP-6 balances everything above; T2-7
+(`plans/now/tier-two.md`), which it followed, landed 11 Oct 2026 without moving
+prices. AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6, and T2-7b,
+the tier-2 price sweep on the same arc, waits for AR-4.
 
 **Reads.** A slice reads its own section, product-scope §10's 10 Oct 2026
 decisions (`python tools/heading.py plans/design/product-scope.md "10.
 Pollination and ecology"`), and `.claude/rules/performance.md` for PP-1,
 PP-2 and PP-4, which touch a per-visit path.
 
-## PP-1 -- bees earn Pollinator Points and Contribution
-
-<!-- LAYER: immediate-task -->
-
-**Owner of the ledger.** A new `scripts/pollination.gd`, created and saved
-by `main.gd` exactly as `colony_milestones.gd` is: spendable `points`,
-never-spent `contribution`, and the `points_earned` signal PP-2's "+1"
-listens to. It is the only writer of both counters. Flowers own their own
-pollen counts; bees own only their trip's last flower.
-
-**Change.**
-
-1. `bee.gd`: `trip_last_flower`, cleared whenever the bee enters the hive
-   (she grooms her pollen off) and not saved -- a load starts a fresh trip.
-2. `bee_foraging.gd::finish_collecting`: if `trip_last_flower` is another
-   flower of the same species, this flower takes one compatible delivery
-   (`flower.compatible_visits`) and `contribution` rises by one; if it is a
-   flower of another species, this flower takes one incompatible delivery.
-   A compatible delivery earns one point only while the colony owns
-   Pollinator points and only when `Session.sim_time` has reached the
-   flower's `award_ready_at`, which is then set to the flower's refill time
-   (`seconds_until_full` for the resource taken, as `flower_cooldowns`
-   uses). Then `trip_last_flower` becomes this flower. Once per finished
-   visit; nothing per frame.
-3. `skills.gd`: Pollinator points gains an `enable_behaviour` effect
-   (`pollinator_points_on`) read through a `pollination.gd` helper in the
-   `tarsal_markers_on()` pattern, and its status becomes `existing`.
-4. `flower.gd`: `compatible_visits`, `incompatible_visits`,
-   `award_ready_at`, saved with the flower; a save without them loads zero.
-5. `debug_panel.gd`: points and contribution in the developer readout.
-
-**Must not change.** Foraging choice, handling and yields; any run's
-behaviour while Pollinator points is unowned except the two flower counts
-and Contribution.
-
-```queue
-**[Claude] PP-1 -- bees earn Pollinator Points and Contribution**
-- Plan: `plans/now/pollination.md` -- "PP-1 -- bees earn Pollinator Points and Contribution"
-- Files: `scripts/pollination.gd`, `scripts/main.gd`, `scripts/bee.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/debug_panel.gd`, `tests/test_pp1_pollination_ledger.py`, `test_scenarios/pp1_pollination_ledger.json`
-- Check: `python -m unittest tests.test_pp1_pollination_ledger` passes (two same-species flowers in one trip earn one point only once Pollinator points is owned and not again from that flower until it has refilled; a trip's first flower earns nothing; arriving from another species counts one incompatible delivery; Contribution rises whether or not the skill is owned; the counters and flower counts survive save and restore); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/flower.gd :: compatible_visits`
-- Next after: PP-2 -- points are spendable and shown, with a +1 at the flower
-```
+PP-1 shipped 2026-10-11; its specification is `plans/archive/PP-1_2026-10-11.md`.
 
 ## PP-2 -- points are spendable and shown, with a +1 at the flower
 
@@ -120,7 +85,7 @@ points once the skill is owned. A new presentation-only
 simulation state. Measure frame time at 500 and 1,000 bees with the SPR-2
 windowed baseline before and after, and record both here.
 
-```queue-gated
+```queue
 **[Claude] PP-2 -- points are spendable and shown, with a +1 at the flower**
 - Plan: `plans/now/pollination.md` -- "PP-2 -- points are spendable and shown, with a +1 at the flower"
 - Files: `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, `tests/test_pp2_points_spendable.py`, `test_scenarios/pp2_points_spendable.json`
@@ -174,7 +139,7 @@ disappears, and the counts then reset. Simulated first: record the meadow's
 species shares at the end of the first summer and in the second spring,
 with and without a colony working one species.
 
-```queue-gated
+```queue
 **[Claude] PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter**
 - Plan: `plans/now/pollination.md` -- "PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter"
 - Files: `scripts/flower.gd`, `scripts/world_building.gd`, `scripts/flower_species.gd`, `scripts/pollination.gd`, `scripts/levels.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_pp4_seed_set.py`, `test_scenarios/pp4_seed_set.json`
@@ -208,7 +173,7 @@ Without the skill nothing changes.
 
 <!-- LAYER: design -->
 
-Specified when PP-1 to PP-5 and T2-7 have landed. Intent (Dave, 10 Oct
+Specified when PP-2 to PP-5 have landed (PP-1 and T2-7 landed 11 Oct 2026). Intent (Dave, 10 Oct
 2026): a reasonably played Colony Run first affords Gyne rearing after the
 first winter. The reference player in `alpha_arc_test.json` buys along the
 route; `pacing_gates.py` reports the day Gyne rearing becomes affordable;
@@ -217,6 +182,5 @@ Its end opens AR-4.
 
 ## Not in the queue, and why
 
-- **PP-2** and **PP-4** wait for PP-1's ledger (`scripts/pollination.gd`).
 - **PP-5** waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd`.
-- **PP-6** waits for PP-1 to PP-5 and T2-7, and is specified when they land.
+- **PP-6** waits for PP-2 to PP-5 (PP-1 landed 11 Oct 2026), and is specified when they land.

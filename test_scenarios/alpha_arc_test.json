@@ -16,6 +16,7 @@
         "resources.food_stores",
         "resources.stored_nectar",
         "resources.stored_pollen",
+        "resources.first_tier2_affordable",
         "role_outcomes.cells_completed_total",
         "environment.winter_here",
         "colony.milestone_days"

@@ -400,7 +400,7 @@ const TUNABLES := [
 		"persist": "player",
 		"key": "use_cell_sprites", "label": "Cell art", "toggle": true,
 		"category": "Appearance",
-		"tip": "Show the wax-cell resprite on empty comb cells instead of the original flat colour fill. Off reverts to the flat fill. Applies within about a second, as cells redraw themselves.",
+		"tip": "Draw the comb as wax-cell art -- how full each store is, the brood growing and the wax caps going on -- instead of the original flat colour fill. Off reverts to the flat fill. Applies within about a second, as cells redraw themselves.",
 	},
 	{
 		"persist": "player",
@@ -1345,6 +1345,9 @@ const TUNABLES := [
 	},
 	{
 		"key": "handling_experience_visits_to_floor", "persist": "run",
+	},
+	{
+		"key": "handling_experience_forget_visits", "persist": "run",
 	},
 	{
 		"key": "hive_entrance_width", "persist": "run",

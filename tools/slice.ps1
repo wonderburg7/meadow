@@ -317,6 +317,11 @@ function Get-VerifyFailureSummary {
     # L-22: the stage a failed verify named, for the stop ledger's cause.
     param([string[]]$Output)
     $lines = @($Output | ForEach-Object { "$_" -split "\r?\n" } | ForEach-Object { $_.TrimEnd() })
+    # verify.ps1's Receive-JobText: the stages never ran, so naming them
+    # would send the caller to fix code that is not at fault.
+    if ($lines -match 'PowerShell could not read this background job') {
+        return "PowerShell background jobs were denied, as Codex's sandbox does; nothing ran -- rerun finish outside the sandbox (sandbox_permissions: require_escalated)"
+    }
     $stages = @()
     foreach ($line in $lines) {
         if ($line -match '^(.+): FAILED$') { $stages += $Matches[1] }
@@ -1759,9 +1764,15 @@ function Invoke-SliceStatus {
         git -C $root show-ref --verify --quiet "refs/heads/$branch"
         $branchExists = $LASTEXITCODE -eq 0
         $phase = if ($branchExists -and (Test-SliceBranchMerged -Root $root -Branch $branch)) { "merged; cleanup pending" } elseif ($worktreeExists) { "working" } elseif ($branchExists) { "worktree missing; resumable" } else { "ledger-only; repair required" }
-        # A finish verifying outside the lifecycle lock shows here, not as `running`.
-        if ($phase -eq "working" -and (Get-LifecycleHolder -LockPath (Get-BranchVerifyFilePath -WorktreeRoot (Join-Path $root $worktreeRelative) -Name "meadow-slice-verify.lock"))) { $phase = "finish verifying the branch (outside the lifecycle lock)" }
-        [PSCustomObject]@{ id=$id; lane=$row.Lane; branch=$branch; worktree=$worktreeRelative; state=$phase }
+        # A finish verifying outside the lifecycle lock shows here, not as
+        # `running`, with its PID in `verifying`. On 12 Oct 2026 a Codex
+        # session saw only this state, went looking for the run, and stopped
+        # its headless Godot children as "orphans" -- they were the live
+        # verify's unit tests.
+        $verifier = $null
+        if ($phase -eq "working") { $verifier = Get-LifecycleHolder -LockPath (Get-BranchVerifyFilePath -WorktreeRoot (Join-Path $root $worktreeRelative) -Name "meadow-slice-verify.lock") }
+        if ($verifier) { $phase = "finish verifying the branch (outside the lifecycle lock): wait for PID $($verifier.pid) (PowerShell: Wait-Process -Id $($verifier.pid)); its Godot and Python children are that run's tests, not orphans" }
+        [PSCustomObject]@{ id=$id; lane=$row.Lane; branch=$branch; worktree=$worktreeRelative; state=$phase; verifying=$verifier }
     }
     if (-not $states) { $states = @([PSCustomObject]@{ state="idle" }) }
     # `running` is the lifecycle command holding the lock now; `last_run` is
@@ -2101,7 +2112,12 @@ function Test-BranchVerified {
     $recordPath = Get-BranchVerifyFilePath -WorktreeRoot $Target.WorktreeRoot -Name "meadow-slice-verified.json"
     if (-not (Test-Path -LiteralPath $recordPath)) { return $false }
     try { $record = Get-Content -Raw -LiteralPath $recordPath | ConvertFrom-Json } catch { return $false }
-    return ([string]$record.branch -eq $Target.Branch)
+    if ([string]$record.branch -ne $Target.Branch) { return $false }
+    # Nothing removes the record before the worktree goes, so a commit made
+    # after a pass (a fix, a merge of master) must not inherit it: a pass
+    # vouches for the commit it ran on, not for the branch name (12 Oct 2026).
+    $head = (Invoke-GitText -C $Target.WorktreeRoot rev-parse HEAD).Text.Trim()
+    return ([string]$record.head -eq $head)
 }
 
 function Invoke-SliceBranchVerify {

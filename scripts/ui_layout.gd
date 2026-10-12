@@ -11,6 +11,8 @@ const UiTheme = preload("res://scripts/ui_theme.gd")
 ## Floor width this project's UI is expected to still render at, per
 ## UI_PLAN.md section 14's acceptance criteria.
 const MIN_SUPPORTED_WIDTH := 800.0
+## Floor height, the same basis as the width above (RR-4).
+const MIN_SUPPORTED_HEIGHT := 600.0
 
 ## One clearance value separates any two of the hierarchy's persistent
 ## panels -- command tray, bottom-row side bands, left-side windows -- and

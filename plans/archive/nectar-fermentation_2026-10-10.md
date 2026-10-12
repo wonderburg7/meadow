@@ -96,7 +96,7 @@ Verified 6 Oct 2026 against master:
 | --- | --- | --- | --- | --- |
 
 **Dependencies.** NF-1, then NF-2, both landed. NF-3 and NF-5 each follow
-NF-2, and NF-4 follows NF-3. Bee Bread's BB-1 (`plans/now/bee-bread.md`)
+NF-2, and NF-4 follows NF-3. Bee Bread's BB-1 (`plans/archive/bee-bread_2026-10-11.md`)
 shared `hive.gd`, `game_config.gd`, `settings_catalogue.gd` and the save
 files with NF-3 and `orders_zones.gd` and `hud.gd` with NF-5 (both
 landed 9 Oct 2026), and shares `hive.gd` and `bee_honey.gd` with NF-4.

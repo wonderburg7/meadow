@@ -2,7 +2,7 @@
 class_name HeadlessDiagnosticProbes
 extends RefCounted
 
-const SNAPSHOT_FIELDS := ["population.total", "resources.food_stores", "resources.stored_nectar", "resources.stored_pollen", "environment.winter_here", "environment.flowers_by_species", "environment.flowers_in_season", "environment.flowers_out_of_season", "role_outcomes.cells_completed_total", "performance.fps", "performance.top_sections_ms", "colony.milestone_days"]
+const SNAPSHOT_FIELDS := ["population.total", "resources.food_stores", "resources.stored_nectar", "resources.stored_pollen", "environment.winter_here", "environment.flowers_by_species", "environment.flowers_in_season", "environment.flowers_out_of_season", "role_outcomes.cells_completed_total", "performance.fps", "performance.top_sections_ms", "colony.milestone_days", "resources.first_tier2_affordable"]
 
 static func selected_snapshot(world: Node2D, fields: Array, counters: Dictionary) -> Dictionary:
 	var snapshot := {"type": "snapshot", "game_time": Session.sim_time, "day": world.day}
@@ -13,6 +13,10 @@ static func selected_snapshot(world: Node2D, fields: Array, counters: Dictionary
 			"resources.food_stores": _merge_field(snapshot, "resources", "food_stores", world.hive.total_honey())
 			"resources.stored_nectar": _merge_field(snapshot, "resources", "stored_nectar", world.hive.total("nectar"))
 			"resources.stored_pollen": _merge_field(snapshot, "resources", "stored_pollen", world.hive.total("pollen"))
+			"resources.first_tier2_affordable":
+				var tier2_stores := {"honey": world.hive.total_honey(), "nectar": world.hive.total("nectar"), "pollen": world.hive.total("pollen")}
+				_merge_field(snapshot, "resources", "first_tier2_affordable",
+					Session.progression != null and Session.progression.first_tier2_path_covered(tier2_stores))
 			"environment.winter_here": _merge_field(snapshot, "environment", "winter_here", Session.winter_here)
 			"environment.flowers_by_species": _merge_field(snapshot, "environment", "flowers_by_species", _flowers_by_species(world))
 			"environment.flowers_in_season": _merge_field(snapshot, "environment", "flowers_in_season", _flower_season_counts(world).in_season)
