@@ -25,6 +25,19 @@ extends RefCounted
 ## the same way an early attempt at cell_build_time did (see
 ## challenge_runner.gd's FAST_BUILD_TIME comment).
 ##
+## `seed_set` (PP-4, plans/now/pollination.md) turns on seed set: a flower
+## pollinated enough replants its own species nearby, and the year's seed
+## counts weight spring's regrowth (pollination.gd). True on every Scenario
+## row and the Colony Run; absent on Challenges 1 and 2, which keep their
+## random replanting so their authored balance stands. A headless scenario
+## file asks for it with its own "seed_set": true. Read through
+## seed_set_enabled().
+##
+## `forager_species` is dev-only, for a headless scenario file: every
+## starting forager prefers that flower species
+## (world_building.gd::_spawn_starting_foragers), so a run can show a colony
+## working one species. No row here sets it.
+##
 ## `skill_grants`/`skill_bans`/`skill_delays` (progression.md section 11,
 ## Phase A step 3) are this run's explicit skill-policy overrides:
 ## `skill_grants` and `skill_bans` are arrays of skill IDs, `skill_delays`
@@ -80,12 +93,14 @@ const LEVELS := {
 		"cells": 3, "nectar_foragers": 1, "pollen_foragers": 1,
 		"nurses": 0, "builders": 0, "miners": 0,
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
+		"seed_set": true,
 		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
 	4: {
 		"cells": 15, "nectar_foragers": 8, "pollen_foragers": 3,
 		"nurses": 2, "builders": 2, "miners": 2,
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
+		"seed_set": true,
 		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
 	# An established colony: enough bees and stores that the interesting
@@ -98,6 +113,7 @@ const LEVELS := {
 		"nurses": 2, "builders": 3, "miners": 3, "automine": true,
 		"stock": {"nectar": 4, "pollen": 2},
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
+		"seed_set": true,
 		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
 	# 30-bee colony, three ring-layers of comb (18 cells) with half of them
@@ -110,6 +126,7 @@ const LEVELS := {
 		"nurses": 3, "builders": 3, "miners": 2, "honey_makers": 2,
 		"stock": {"nectar": 6, "pollen": 2, "honey": 1},
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
+		"seed_set": true,
 		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
 	# Free-form extreme start: deliberately distinct from Challenge 1 even
@@ -120,6 +137,7 @@ const LEVELS := {
 		"cells": 0, "nectar_foragers": 0, "pollen_foragers": 0,
 		"nurses": 0, "builders": 0, "miners": 0, "honey_makers": 0,
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
+		"seed_set": true,
 		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
 	# The Colony Run (plans/now/colony-run.md decisions 1-2), the flagship
@@ -136,6 +154,7 @@ const LEVELS := {
 		"winter": true,
 		"weather": true,
 		"skill_grants": [], "skill_bans": [], "skill_delays": {},
+		"seed_set": true,
 		"queen_laying_backup": ORDINARY_QUEEN_BACKUP,
 	},
 }
@@ -157,6 +176,11 @@ static func get_level(id: int) -> Dictionary:
 
 static func weather_enabled(id: int) -> bool:
 	return get_level(id).get("weather", GameConfig.weather_on)
+
+## PP-4: whether level `id` has seed set. Off unless the row says so, so a
+## Challenge, and any scenario file that does not ask, replants as before.
+static func seed_set_enabled(id: int) -> bool:
+	return bool(get_level(id).get("seed_set", false))
 
 ## Dev-only headless playtest path (AI_PLAYTEST_PLAN.md slice 2). Applies a
 ## scenario file's "config_overrides" block to GameConfig, one field at a

@@ -209,21 +209,54 @@ static func season_weight(species: Dictionary, year_fraction: float = -1.0) -> f
 ## Picks a species by rarity weight, scaled by its current flowering season.
 ## Clover is common, foxglove scarce.
 ## `exclude` is used by Challenge 1, whose meadow deliberately has no Poppies.
-static func pick_species_index(exclude: Array = [], year_fraction: float = -1.0) -> int:
-	var total := 0.0
+## `seed_counts` (PP-4) weights the draw by the seed the meadow set last
+## year; see species_weights.
+static func pick_species_index(exclude: Array = [], year_fraction: float = -1.0, seed_counts: Dictionary = {}) -> int:
+	return pick_from_weights(species_weights(exclude, year_fraction, seed_counts))
+
+## One weight per SPECIES entry, zero for an excluded species. With no
+## `seed_counts` (species name -> seed-setting deaths) each is its
+## season_weight, today's seasonal draw. PP-4's spring regrowth adds to each
+## species its share of the counted seed, times the seasonal weights' total,
+## so half of a weighted draw follows today's season and half follows the
+## seed the colony helped set. Today's weight is the floor: no species,
+## seeded or not, is drawn less often than its seasonal weight allows, so
+## none disappears.
+static func species_weights(exclude: Array = [], year_fraction: float = -1.0, seed_counts: Dictionary = {}) -> Array:
+	var weights: Array = []
+	var seasonal_total := 0.0
+	var seed_total := 0
 	for s in SPECIES:
 		if s.name in exclude:
+			weights.append(0.0)
 			continue
-		total += season_weight(s, year_fraction)
-	var roll := randf() * total
+		var weight: float = season_weight(s, year_fraction)
+		weights.append(weight)
+		seasonal_total += weight
+		seed_total += maxi(0, int(seed_counts.get(s.name, 0)))
+	if seed_total <= 0:
+		return weights
 	for i in range(SPECIES.size()):
 		if SPECIES[i].name in exclude:
 			continue
-		roll -= season_weight(SPECIES[i], year_fraction)
+		var seeds: int = maxi(0, int(seed_counts.get(SPECIES[i].name, 0)))
+		weights[i] += seasonal_total * float(seeds) / float(seed_total)
+	return weights
+
+## A species index drawn in proportion to `weights` (one per SPECIES entry).
+static func pick_from_weights(weights: Array) -> int:
+	var total := 0.0
+	for weight in weights:
+		total += float(weight)
+	var roll := randf() * total
+	for i in range(weights.size()):
+		if float(weights[i]) <= 0.0:
+			continue
+		roll -= float(weights[i])
 		if roll <= 0.0:
 			return i
-	for i in range(SPECIES.size()):
-		if not SPECIES[i].name in exclude:
+	for i in range(weights.size()):
+		if float(weights[i]) > 0.0:
 			return i
 	return 0
 

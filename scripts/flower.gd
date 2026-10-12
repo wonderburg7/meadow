@@ -66,7 +66,7 @@ var marked_by: Node2D = null     # which bee left it
 ## PP-1 (plans/now/pollination.md): pollen this flower has received from
 ## bees arriving straight from another flower on the same trip -- of its
 ## own species (compatible) or another (incompatible). PP-4's seed set reads
-## them. Saved with the flower; a save without them loads zero.
+## them (sets_seed). Saved with the flower; a save without them loads zero.
 var compatible_visits: int = 0
 var incompatible_visits: int = 0
 ## Sim-time from which a compatible delivery may earn a Pollinator Point
@@ -256,7 +256,8 @@ func _process(delta: float) -> void:
 		CrabSpider.update(self, delta)
 
 	# Flowers don't last forever. main.gd seeds a replacement elsewhere,
-	# so the meadow drifts around while staying about as full.
+	# so the meadow drifts around while staying about as full -- or, with
+	# PP-4's seed set, nearby and of this species if this one set seed.
 	var seasonal_strength: float = season_strength()
 	var ageing_factor: float = 1.0 if seasonal_strength > GameConfig.out_of_season_strength else GameConfig.out_of_season_ageing_factor
 	age_seconds += delta * ageing_factor
@@ -266,6 +267,7 @@ func _process(delta: float) -> void:
 			occupied_by.release_flower_reference(self)
 		if has_crab_spider:
 			CrabSpider.relocate(self, false)
+		_report_withered()
 		queue_free()
 		Perf.end("flowers")
 		return
@@ -397,6 +399,21 @@ func receive_pollen(compatible: bool) -> void:
 		compatible_visits += 1
 	else:
 		incompatible_visits += 1
+
+## PP-4: whether this flower set seed -- at least one compatible delivery
+## and more compatible than incompatible ones (product-scope §10). Read as
+## it dies; pollination.gd decides whether the run has seed set at all.
+func sets_seed() -> bool:
+	return compatible_visits >= 1 and compatible_visits > incompatible_visits
+
+## PP-4: hands this flower to the pollination ledger as it dies of age. The
+## ledger is found through main.gd's "world" group once per death, which is
+## rare beside the per-frame path, rather than through a reference every
+## flower would have to carry.
+func _report_withered() -> void:
+	var world = get_tree().get_first_node_in_group("world")
+	if world != null and world.pollination != null:
+		world.pollination.flower_withered(self)
 
 ## Whether this flower's pollination window is open for a point now. If it
 ## is, it closes until the flower is full again for the resource just taken
