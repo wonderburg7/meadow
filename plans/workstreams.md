@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/CD-3` (`codex/CD-3`) | Codex | waiting and travel get a deterministic diagnostic boundary | Codex | in progress | none | `plans/now/diagnostic-readiness.md` CD-3 -- waiting and travel get a deterministic diagnostic boundary |
+| `.worktrees/SP-9` (`claude/SP-9`) | Claude | hive soil blocks drawn from Dave's art, crumbling as they are mined | Claude | in progress | none | `plans/now/sprites.md` SP-9 -- hive soil blocks drawn from Dave's art, crumbling as they are mined |
