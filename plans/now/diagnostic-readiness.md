@@ -1,7 +1,7 @@
 # Diagnostic readiness -- make the colony state behind a player decision explicit
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: CD-3 -- waiting and travel diagnostic boundary, in the Codex backlog; GD-2a released `scripts/year_winter.gd` 10 Oct 2026 and PP-1 released `scripts/bee.gd` 11 Oct 2026, so it is admissible now | Dependency: extends `plans/reference/colony-diagnostics.md`; CD-3 is admitted while no Claude-lane slice holds `scripts/bee.gd`; no player-facing copy or balance change | Verified: 2026-10-11
+Status: awaiting Claude review | Owner: Dave / Codex | Next: CD-3 -- waiting and travel diagnostic boundary is implemented on `codex/CD-3`; it needs high-risk review and merge before diagnostic readiness is complete | Dependency: extends `plans/reference/colony-diagnostics.md`; no player-facing copy or balance change | Verified: 2026-10-12
 
 ## Objective
 
@@ -19,7 +19,7 @@ diagnostics, but none has a named data contract.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CD-3 | waiting and travel get a deterministic diagnostic boundary | diagnostics, existing bee work dispatch and focused tests | yes -- BB-2 released `scripts/bee.gd` 10 Oct 2026; after GD-2a (Codex lane), which shares `scripts/year_winter.gd` | high |
+| CD-3 | waiting and travel get a deterministic diagnostic boundary | diagnostics, existing bee work dispatch and focused tests | implemented on `codex/CD-3`; awaiting high-risk review and merge | high |
 
 **Must not change.** The one-Hz cadence, existing warning text and severity,
 or any simulation, role-assignment or balance rule.
