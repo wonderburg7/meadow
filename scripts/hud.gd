@@ -17,6 +17,7 @@ const PerfPlot = preload("res://scripts/perf_plot.gd")
 const PerfBreakdown = preload("res://scripts/perf_breakdown.gd")
 const UiIcon = preload("res://scripts/ui_icon.gd")
 const SkillTreePanel = preload("res://scripts/skill_tree_panel.gd")
+const PollinationPop = preload("res://scripts/pollination_pop.gd")
 const UiLayout = preload("res://scripts/ui_layout.gd")
 const UiPanelLayout = preload("res://scripts/ui_panel_layout.gd")
 const Shapes = preload("res://scripts/shapes.gd")
@@ -552,6 +553,8 @@ var _pending_discard_action: Callable = Callable()
 var saves_panel: CanvasLayer
 ## The read-only skill tree (AP-3), created and opened from here the same way.
 var skill_tree_panel: CanvasLayer
+## PP-2: the rising "+1" over a flower that earned a Pollinator Point.
+var pollination_pop: Node2D
 var skills_button: Button
 var pending_type: String = ""
 
@@ -565,6 +568,12 @@ func _ready() -> void:
 	saves_panel.connect_hud_reflow()
 	skill_tree_panel = SkillTreePanel.new()
 	main.add_child.call_deferred(skill_tree_panel)
+	# PP-2: drawn in the meadow, so it lives under main rather than this layer.
+	pollination_pop = PollinationPop.new()
+	main.add_child.call_deferred(pollination_pop)
+	if main.pollination != null:
+		main.pollination.points_earned.connect(pollination_pop.show_at)
+		main.pollination.points_earned.connect(func(_flower): _refresh_stores_text())
 	# So the settings window can find the corner readout to refresh it when
 	# a star is toggled, without either script holding a reference to the
 	# other.
@@ -2476,12 +2485,28 @@ func update_day(day: int, note: String = "") -> void:
 ## drying in a cell isn't a store the colony can use yet. Anything sealed
 ## into closed cells is called out separately: it's still the colony's,
 ## but nothing can eat it until the cells are opened again.
+## PP-2: Pollinator Points join the line once the colony owns the skill that
+## earns them; before that there are none to show.
 func update_storage(nectar: float, pollen: float, honey: float, jelly: float, sealed: float = 0.0) -> void:
 	var text := "Nectar: %d   Pollen: %d   Honey: %d   Jelly: %d" % [
 		int(round(nectar)), int(round(pollen)), int(round(honey)), int(round(jelly)),
 	]
 	if sealed > 0.5:
 		text += "\n(%d sealed away in closed cells)" % int(round(sealed))
+	_comb_stores_text = text
+	_refresh_stores_text()
+
+## The comb's figures from update_storage, kept so a point earned between
+## two storage changes can redraw the readout on its own.
+var _comb_stores_text: String = ""
+
+func _refresh_stores_text() -> void:
+	var text := _comb_stores_text
+	if main.pollination != null and Session.progression != null \
+			and Session.progression.is_behaviour_enabled(main.pollination.BEHAVIOUR):
+		var line_end := text.find("\n")
+		var points := "   Points: %d" % main.pollination.points
+		text = text + points if line_end < 0 else text.insert(line_end, points)
 	corner_texts["stores"] = text
 	_refresh_corner()
 

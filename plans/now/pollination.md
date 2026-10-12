@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-2 -- points are spendable and shown, with a +1 at the flower, next in the Claude lane (PP-1 landed 11 Oct 2026: `scripts/pollination.gd` is the ledger); PP-3 landed 12 Oct 2026, releasing `orders_zones.gd` for PP-5 | Dependency: none left for PP-2 or PP-4 -- PP-1's ledger landed 11 Oct 2026; AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-11
+Status: active | Owner: Dave / Claude Code | Next: PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter, next in the Claude lane (PP-2 landed 12 Oct 2026: points are spent through `pollination.gd::spend`; its hands-on check is C-129); PP-3 landed 12 Oct 2026, releasing `orders_zones.gd` for PP-5 | Dependency: none left for PP-4 -- PP-1's ledger landed 11 Oct 2026; AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-12
 
 ## Objective
 
@@ -48,7 +48,6 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-2 | points are spendable and shown, with a +1 at the flower | `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, tests | yes -- Claude lane (PP-1 landed 11 Oct 2026) | medium |
 | PP-4 | seed set: pollinated flowers replant nearby and the meadow remembers through winter | `scripts/flower.gd`, `scripts/world_building.gd`, `scripts/flower_species.gd`, `scripts/pollination.gd`, `scripts/levels.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- Claude backlog, after PP-2 (PP-1 landed 11 Oct 2026) | high |
 | PP-5 | Priority cells: marked brood cells are fed first | `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | no -- after PP-3 releases `orders_zones.gd` | high |
 | PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after PP-2 to PP-5 (PP-1 and T2-7 landed 11 Oct 2026) | medium |
@@ -71,29 +70,7 @@ PP-2 and PP-4, which touch a per-visit path.
 
 PP-1 shipped 2026-10-11; its specification is `plans/archive/PP-1_2026-10-11.md`.
 
-## PP-2 -- points are spendable and shown, with a +1 at the flower
-
-<!-- LAYER: immediate-task -->
-
-**Change.** `skill_tree_panel.gd::_stores` adds `Skills.POLLINATOR_POINTS`
-from the ledger, and a purchase takes what it deducted from the ledger
-(the comb stays owner of everything else). The HUD's stores readout shows
-points once the skill is owned. A new presentation-only
-`pollination_pop.gd` draws a small rising "+1" over the flower on
-`points_earned`, from a small fixed pool; it never reads or writes
-simulation state. Measure frame time at 500 and 1,000 bees with the SPR-2
-windowed baseline before and after, and record both here.
-
-```queue
-**[Claude] PP-2 -- points are spendable and shown, with a +1 at the flower**
-- Plan: `plans/now/pollination.md` -- "PP-2 -- points are spendable and shown, with a +1 at the flower"
-- Files: `scripts/skill_tree_panel.gd`, `scripts/hud.gd`, `scripts/pollination.gd`, `scripts/pollination_pop.gd`, `tests/test_pp2_points_spendable.py`, `test_scenarios/pp2_points_spendable.json`
-- Check: `python -m unittest tests.test_pp2_points_spendable` passes (a tier-4 skill is refused with too few points, bought once enough are earned, and the ledger loses exactly the recipe's points); the frame-time comparison is recorded in this section; `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/skill_tree_panel.gd :: Skills.POLLINATOR_POINTS`
-- Next after: PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter
-```
-
-PP-3 shipped 2026-10-12; its specification is `plans/archive/PP-3_2026-10-12.md`.
+PP-2 shipped 2026-10-12; its specification is `plans/archive/PP-2_2026-10-12.md`.
 
 ## PP-4 -- seed set: pollinated flowers replant nearby and the meadow remembers through winter
 

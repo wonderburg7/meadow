@@ -8,7 +8,8 @@ extends RefCounted
 ##   a flower straight after a *different* flower of the same species on the
 ##   same foraging trip, but only while the colony owns the Pollinator points
 ##   skill, and only once per flower until that flower has refilled (its
-##   `award_ready_at`). PP-2 spends them and shows the "+1".
+##   `award_ready_at`). PP-2: skill_tree_panel.gd spends them through
+##   spend(), and pollination_pop.gd shows the "+1".
 ## - `contribution`: Pollination Contribution, never spent. It rises on every
 ##   compatible delivery whether or not the skill is owned, because
 ##   pollination itself happens either way. Nothing reads it yet beyond the
@@ -83,6 +84,19 @@ func groom(bee: Node2D) -> void:
 	bee.trip_last_flower = null
 	if _logging():
 		DiagnosticLog.log_action("pollination_groomed", "bee %d" % int(bee.bee_id), "recorded", "")
+
+## PP-2: a skill purchase spends points. skill_tree_panel.gd::buy_skill calls
+## it with exactly what Progression.purchase deducted from its snapshot, so
+## the ledger loses the recipe's points and nothing else. Returns what was
+## taken; asking for more than is held takes what there is.
+func spend(amount: int) -> int:
+	var before := points
+	var taken := clampi(amount, 0, points)
+	points -= taken
+	if _logging():
+		DiagnosticLog.log_action("pollination_spent", str(amount), "recorded",
+			JSON.stringify({"before": before, "spent": taken, "after": points}))
+	return taken
 
 func _logging() -> bool:
 	return main != null and main.scenario_active and main.scenario_pollination_log
