@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-9, hive soil drawn from the art, is queued (SP-1 to SP-5 and SP-7 landed; the skep is in the meadow); SP-6 waits for Dave's repacked forager sheet; SP-8a, the meadow floor drawn in blocks with everything on it lifted, is specified below and gated on PP-4; height's effects (rest of SP-8) are cut after it | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: SP-9, hive soil drawn from the art, is queued (SP-1 to SP-5 and SP-7 landed; the skep is in the meadow); SP-6 waits for Dave's repacked forager sheet; SP-8a, the meadow floor drawn in blocks with everything on it lifted, is specified below and gated on CD-3 (Codex lane) releasing `scripts/bee.gd` (PP-4 landed 12 Oct 2026); height's effects (rest of SP-8) are cut after it | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-12
 
 ## Objective
 
@@ -80,7 +80,7 @@ Verified 9 Oct 2026 against master and the main checkout:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for Dave's repacked sheet | high (per-bee hot path) |
-| SP-8a | the meadow floor drawn in blocks, with everything on it lifted | see its `Files:` line below | no -- waits for PP-4 to release `world_building.gd`, `flower.gd` and the save files | high |
+| SP-8a | the meadow floor drawn in blocks, with everything on it lifted | see its `Files:` line below | no -- waits for CD-3 (Codex lane) to release `bee.gd` (PP-4 landed 12 Oct 2026) | high |
 | SP-8 (rest) | height's effects: flight cost, where flowers grow, scouting reach | to be cut after SP-8a | no -- after SP-8a | high (balance) |
 | SP-9 | hive soil blocks drawn from the art, crumbling as they are mined | `scripts/soil_block.gd`, tests | yes -- Claude lane | medium |
 

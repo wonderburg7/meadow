@@ -49,7 +49,7 @@ Verified 10 Oct 2026 against master:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | PP-5 | Priority cells: marked brood cells are fed first | `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- PP-3 released `orders_zones.gd` (12 Oct 2026) | high |
-| PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after PP-2 to PP-5 (PP-1 and T2-7 landed 11 Oct 2026) | medium |
+| PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after PP-5 (PP-1 to PP-4 and T2-7 landed 11-12 Oct 2026) | medium |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
 once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
@@ -98,7 +98,7 @@ Without the skill nothing changes.
 
 <!-- LAYER: design -->
 
-Specified when PP-2 to PP-5 have landed (PP-1 and T2-7 landed 11 Oct 2026). Intent (Dave, 10 Oct
+Its gated block is below; it opens when PP-5 has landed (PP-1 to PP-4 and T2-7 landed 11-12 Oct 2026). Intent (Dave, 10 Oct
 2026): a reasonably played Colony Run first affords Gyne rearing after the
 first winter. The reference player in `alpha_arc_test.json` buys along the
 route; `pacing_gates.py` reports the day Gyne rearing becomes affordable;

@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-1 -- the queen can build a cell in every run, specified below; it waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd` (RR-2 to RR-5 landed; restored from the archive 12 Oct 2026, where RR-5's closeout had sent it with RR-1 unshipped) | Dependency: PP-3 (`plans/now/pollination.md`) releases `scripts/orders_zones.gd` | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: RR-1 -- the queen can build a cell in every run, specified below and admissible now that PP-3 has landed (12 Oct 2026), releasing `scripts/orders_zones.gd` (RR-2 to RR-5 landed; restored from the archive 12 Oct 2026, where RR-5's closeout had sent it with RR-1 unshipped) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-12
 
 ## Objective
 
@@ -38,7 +38,7 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| RR-1 | The queen can build a cell in every Challenge, Scenario and Colony Run | `scripts/challenge_runner.gd`, `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `test_scenarios/rr1_queen_builds_test.json`, `tests/test_rr1_queen_builds.py` | after PP-3 (Codex lane) releases `scripts/orders_zones.gd` | medium |
+| RR-1 | The queen can build a cell in every Challenge, Scenario and Colony Run | `scripts/challenge_runner.gd`, `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `test_scenarios/rr1_queen_builds_test.json`, `tests/test_rr1_queen_builds.py` | yes -- PP-3 released `scripts/orders_zones.gd` (12 Oct 2026) | medium |
 
 Each slice reads its own section only. Do not change skill prices, the
 branch-tier rule (`plans/now/tier-two.md` T2-9 owns that), or the save
@@ -114,4 +114,4 @@ RR-5 shipped 2026-10-12; its specification is `plans/archive/RR-5_2026-10-12.md`
 
 ## Not in the queue, and why
 
-- **RR-1** waits for PP-3 (Codex lane) to release `scripts/orders_zones.gd` (RR-2 landed 11 Oct 2026; RR-3, RR-4 and RR-5 landed 12 Oct 2026). It shares `scripts/input_selection.gd` with SP-8a (`plans/now/sprites.md`, gated), so whichever is queued second waits.
+Nothing: RR-1's gate cleared when PP-3 landed (12 Oct 2026). It shares `scripts/input_selection.gd` with SP-8a (`plans/now/sprites.md`, gated) and `scripts/hud.gd` and `scripts/orders_zones.gd` with PP-5, which run one after the other in the Claude lane.
