@@ -76,6 +76,8 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if _font == null:
 		return
+	# Slots hold meadow (global) positions; this node draws in its own space.
+	var to_here := global_transform.affine_inverse()
 	for i in POOL:
 		var age: float = _ages[i]
 		if age >= LIFETIME:
@@ -83,5 +85,5 @@ func _draw() -> void:
 		var t := age / LIFETIME
 		var colour := _colour
 		colour.a = 1.0 - t * t
-		draw_string(_font, to_local(_positions[i]) + Vector2(0.0, -RISE * t), "+1",
+		draw_string(_font, to_here * _positions[i] + Vector2(0.0, -RISE * t), "+1",
 			HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, colour)
