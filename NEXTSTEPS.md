@@ -56,19 +56,19 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] CD-3 -- waiting and travel get a deterministic diagnostic boundary**
-   - Plan: `plans/now/diagnostic-readiness.md` -- "CD-3 -- waiting and travel get a deterministic diagnostic boundary"
-   - Files: `scripts/bee.gd`, `scripts/colony_diagnostics.gd`, `scripts/year_winter.gd`, `tests/test_colony_diagnostics.py`
-   - Check: `python -m unittest tests.test_colony_diagnostics` passes with waiting, travelling and no-work fixtures; `tools/verify.ps1` is green
-   - Proof: `present: scripts/year_winter.gd :: func _refresh_signals`
-   - Next after: none -- diagnostic readiness is complete
+1. **[Codex] L-25 -- verify and prefinish refuse to check a different checkout**
+   - Plan: `plans/now/codex-guidance.md` -- "L-25 -- verify and prefinish refuse to check a different checkout"
+   - Files: `tools/verify.ps1`, `tools/prefinish.py`, `tests/test_wrong_checkout_guard.py`
+   - Check: `python -m unittest tests.test_wrong_checkout_guard` passes, showing both scripts refuse when run from another worktree and run normally from their own; `tools/verify.ps1` is green
+   - Proof: `absent: tools/prefinish.py :: different checkout`
+   - Next after: none -- Codex guidance is complete
 
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
-- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed, so it waits for CD-3 (Codex backlog, admissible now that no Claude-lane slice holds `scripts/bee.gd`) to release `scripts/colony_diagnostics.gd`; PP-5 and RR-1 (Claude lane, queued 12 Oct 2026) hold `scripts/hud.gd` next (PP-2 landed 12 Oct 2026, RR-2 landed 11 Oct 2026, RR-3 and RR-4 landed 12 Oct 2026).
+- **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed; `scripts/colony_diagnostics.gd` was released 12 Oct 2026, so it waits for PP-5 (`scripts/main.gd`, `scripts/hud.gd`, `scripts/save_game.gd`, `scripts/saving.gd`) and RR-1 (`scripts/hud.gd`, `scripts/scenario_actions.gd`), both Claude lane, queued 12 Oct 2026.
 - **PP-6** (`plans/now/pollination.md`) -- the route's pricing sweep; waits for PP-5 (PP-1 to PP-4 landed 11-12 Oct 2026); its gated block is written.
 - **SP-8a** (`plans/now/sprites.md`) -- the meadow floor drawn in blocks, with everything on it lifted (Dave, 12 Oct 2026); waits for CD-3 (Codex lane) to release `scripts/bee.gd` (PP-4 landed 12 Oct 2026, releasing `scripts/world_building.gd`, `scripts/flower.gd` and the save files).
 - **SP-6** (`plans/now/sprites.md`) -- meadow foragers drawn from the sheet (eight directions, flapping wings); waits for Dave's repack of the forager sheet onto a 16x16 `sheet` grid, which the exporter needs, and is queued once it is committed (SP-5 landed 12 Oct 2026).

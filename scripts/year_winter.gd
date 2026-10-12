@@ -221,6 +221,9 @@ func _refresh_signals(delta: float) -> void:
 	var lines := ProblemMessages.signal_lines({
 		"bees": bees, "queen": main.queen, "day": main.day,
 		"starving": facts.starving, "hungry": facts.hungry,
+		"waiting_for_work": facts.waiting_for_work,
+		"travelling_for_work": facts.travelling_for_work,
+		"no_available_work": facts.no_available_work,
 		"foragers": facts.foragers, "nurses": facts.nurses,
 		"comb_workers": facts.comb_workers, "hungry_brood": facts.hungry_brood,
 		"free_cells": facts.free_cells, "dead_cells": facts.blocked_cells,

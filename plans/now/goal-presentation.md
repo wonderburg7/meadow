@@ -1,7 +1,7 @@
 # Goal presentation -- the four goal layers on screen in a Colony Run
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: GP-1 -- the goals drop-down and the long-term line, in the Claude backlog behind PP-5 and RR-1, which hold `scripts/hud.gd` first | Dependency: GP-1 → GP-2 → GP-3 → GP-4 (Dave's order, 12 Oct 2026); GP-3 also waits for CD-3 (`plans/now/diagnostic-readiness.md`, Codex lane) to release `scripts/year_winter.gd` | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: GP-1 -- the goals drop-down and the long-term line, in the Claude backlog behind PP-5 and RR-1, which hold `scripts/hud.gd` first | Dependency: GP-1 → GP-2 → GP-3 → GP-4 (Dave's order, 12 Oct 2026); GP-3's other wait, on CD-3 (Codex lane) holding `scripts/year_winter.gd`, cleared when CD-3 landed on 12 Oct 2026 (`plans/archive/diagnostic-readiness_2026-10-12.md`) | Verified: 2026-10-12
 
 ## Objective
 
