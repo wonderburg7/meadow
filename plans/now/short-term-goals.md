@@ -88,8 +88,8 @@ SG-1, then SG-2, then SG-3. SG-1 touches no file either lane holds, so it
 runs in the Codex lane now. SG-2 and SG-3 are Claude lane, after Work
 Priorities (Dave's order, 13 Oct 2026: tier 3, then short-term goals, then
 Easy); they should land back to back, since SG-2 alone pays rewards the
-player cannot yet see. SG-3 also waits for GP-1 and GP-2, which build the
-drop-down and its stars. Do not change milestones, urgent problems or the
+player cannot yet see. SG-3 also waits for GP-2, which adds stars to the
+drop-down GP-1 built (13 Oct 2026). Do not change milestones, urgent problems or the
 Challenge goal shelf's behaviour.
 
 **Reads.** A slice reads its own section only; SG-2 also reads
