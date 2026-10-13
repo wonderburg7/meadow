@@ -1,6 +1,6 @@
 # Sprite table
 
-Status: current | Owner: Dave / Claude Code | Next: SP-8 builds the block terrain | Dependency: tools/sprites.py | Verified: 2026-10-12
+Status: current | Owner: Dave / Claude Code | Next: SP-8a builds the block terrain; HM-1 and HM-2 (`plans/now/hive-and-menu-art.md`) export the hive and menu rows | Dependency: tools/sprites.py | Verified: 2026-10-13
 
 One row per sprite family. `python tools/sprites.py` reads this table and the
 art beside it, writes a `<name>_sheet.png` next to each source (with a 1-px
@@ -9,15 +9,15 @@ gutter around every frame) and regenerates `scripts/sprite_catalogue.gd`.
 runs it. Scale, sizes and the file conventions are in
 `plans/design/pixel-art.md`; this file does not repeat them.
 
-To add a sprite: save the file under `assets/sprites/comb/`, `meadow/` or
-`bees/`, add one row below (the file name without its extension is the
+To add a sprite: save the file under `assets/sprites/comb/`, `meadow/`,
+`bees/` or `menu/`, add one row below (the file name without its extension is the
 family), run `python tools/sprites.py`, and commit the results. The exporter
 refuses an art file with no row.
 
 Columns:
 
 - **File**: path under `assets/sprites/`.
-- **View**: `hive` or `meadow`.
+- **View**: `hive`, `meadow` or `menu` (the top bar's buttons).
 - **Layout**: `layers` (bottom layer is the base, each other layer one state;
   frame 0 is the base alone, frame N the base plus layer N), `frames` (every
   layer is a whole frame on its own, with no base: overlays such as the wax
@@ -62,4 +62,11 @@ higher. How the terrain stacks them is `plans/now/sprites.md`, SP-8.
 | grass_block_half | meadow/grass_block_half.aseprite | half-height block with the grass top | meadow | single | 1 | - | 16,16 | - |
 | soil_block | meadow/soil_block.aseprite | full-height soil block under the top layer, breaking down: frames 1, 2, 4, 5 (5 whole) | meadow | frames | 4 | - | 16,9 | - |
 | soil_block_half | meadow/soil_block_half.aseprite | half-height soil block under the top layer | meadow | single | 1 | - | 16,16 | - |
-| bee_forager_meadow | bees/bee_forager_meadow.aseprite | meadow forager, 8 directions x 4 wing frames (waits for the repacked sheet, SP-6) | meadow | unexported | 32 | - | - | - |
+| foragers_meadow_view | bees/foragers_meadow_view.png | meadow forager, 8 directions x 4 wing frames; columns on a 12-px pitch, rows not yet on a grid (SP-6 waits for it on a 16x16 `sheet` layer) | meadow | unexported | 32 | - | - | - |
+| hive_meadow_view_large | meadow/hive_meadow_view_large.aseprite | your hive in the meadow, to replace hive_skep (HM-1; layer 0 has art outside the 54x41 canvas) | meadow | unexported | 1 | - | - | - |
+| hive_meadow_view_small | meadow/hive_meadow_view_small.aseprite | a rival colony's hive in the meadow, to replace the rival skep (HM-1) | meadow | unexported | 1 | - | - | - |
+| menu_icon_forager_window | menu/menu_icon_forager_window.aseprite | top-bar icon: the Foraging window (HM-2) | menu | unexported | 1 | - | - | - |
+| menu_icon_hive | menu/menu_icon_hive.aseprite | top-bar icon: switch to the Hive view (HM-2) | menu | unexported | 1 | - | - | - |
+| menu_icon_meadow | menu/menu_icon_meadow.aseprite | top-bar icon: switch to the Meadow view (HM-2) | menu | unexported | 1 | - | - | - |
+| menu_icon_nursery | menu/menu_icon_nursery.aseprite | top-bar icon: the Nursery window (HM-2) | menu | unexported | 1 | - | - | - |
+| menu_icon_skill | menu/menu_icon_skill.aseprite | top-bar icon: the skill tree (HM-2) | menu | unexported | 1 | - | - | - |

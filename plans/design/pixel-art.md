@@ -84,7 +84,8 @@ than 15 px covers its neighbour more than today's circle does.
 ## Conventions every sprite file follows
 
 - One `.aseprite` per sprite family, saved from Resprite or Aseprite, in
-  assets/sprites/comb/, assets/sprites/meadow/ or assets/sprites/bees/,
+  assets/sprites/comb/, assets/sprites/meadow/, assets/sprites/bees/ or
+  assets/sprites/menu/ (top-bar icons, 32x32),
   named in lowercase with underscores (`wax_cell_nectar.aseprite`). A
   single-image sprite with no layers may be a plain `.png`.
 - **Layer sprites** (cells): the bottom layer is the base, drawn under
@@ -118,5 +119,5 @@ than 15 px covers its neighbour more than today's circle does.
 - A flower per species (20x20).
 - Trees (32/40/48).
 - Crab spider (8x8).
-- The repacked forager sheet.
+- The forager sheet on a 16x16 `sheet` grid (SP-6's gate).
 - Meadow drones and queens for mating flights.
