@@ -51,7 +51,7 @@ Verified 12 Oct 2026 against master `291e5a3`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| GP-4 | Problem strip: clicks only on text, 4-line cap, red shown when unstarred, × until it clears | `scripts/hud.gd`, `scripts/problem_messages.gd`, `tests/gp4_problem_strip_test.gd`, `tests/test_gp4_problem_strip.py` | after GP-2 | medium |
+| GP-4 | Problem strip: clicks only on text, 4-line cap, red shown when unstarred, × until it clears | `scripts/hud.gd`, `scripts/problem_messages.gd`, `tests/gp4_problem_strip_test.gd`, `tests/test_gp4_problem_strip.py` | yes (GP-2 landed 13 Oct 2026) | medium |
 
 Each slice reads this plan's "Decisions" and its own section only. Do not
 change `GameConfig`, a milestone's condition, the victory rule or the
@@ -133,7 +133,7 @@ line and see the bee selected. Unstar the strip in a Colony Run and see red
 warnings stay. Remove one with × and see it stay away until the problem
 clears.
 
-```queue-gated
+```queue
 **[Claude] GP-4 -- The problem strip stops blocking play, keeps red visible and lets the player remove a warning**
 - Plan: `plans/now/goal-presentation.md` -- "GP-4 -- the problem strip stops blocking play"
 - Files: `scripts/hud.gd`, `scripts/problem_messages.gd`, `tests/gp4_problem_strip_test.gd`, `tests/test_gp4_problem_strip.py`

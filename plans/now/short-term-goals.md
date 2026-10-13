@@ -1,7 +1,7 @@
 # Short-term goals -- optional outcomes the colony's state suggests
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: SG-1 -- the goal catalogue and its rules, as a standalone module (Codex lane, queued 13 Oct 2026), then SG-2 and SG-3 (Claude lane) | Dependency: SG-2 waits for SG-1, for WP-3 (`plans/now/work-priorities.md`) in Dave's order, and for FC-2 (`plans/now/crisis-readiness.md`, Codex lane) to release the save files; SG-3 waits for SG-2 and for GP-2 (`plans/now/goal-presentation.md`) | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude Code | Next: SG-1 -- the goal catalogue and its rules, as a standalone module (Codex lane, queued 13 Oct 2026), then SG-2 and SG-3 (Claude lane) | Dependency: SG-2 waits for SG-1, for WP-3 (`plans/now/work-priorities.md`) in Dave's order, and for FC-2 (`plans/now/crisis-readiness.md`, Codex lane) to release the save files; SG-3 waits for SG-2 (GP-2 landed 13 Oct 2026) | Verified: 2026-10-13
 
 ## Objective
 
@@ -82,14 +82,14 @@ Verified 13 Oct 2026 against master `06bd26c`:
 | --- | --- | --- | --- | --- |
 | SG-1 | The six-goal catalogue and its offer, progress and reward rules, as a standalone module | `scripts/short_term_goals.gd`, `tests/sg1_short_term_goals_test.gd`, `tests/test_sg1_short_term_goals.py` | yes (Codex lane) | medium |
 | SG-2 | Goals offered, completed and paid in Colony Runs and Scenarios, and saved | `scripts/short_term_goals.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/sg2_short_term_goals.json`, `tests/test_sg2_short_term_goals.py` | no -- after SG-1 and WP-3, and once the Codex lane's FC-2 releases the save files | high |
-| SG-3 | The goals in the Goals drop-down, with progress, reward, star and Dismiss | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/guidance_catalogue.gd`, `test_scenarios/sg3_goal_shelf.json`, `tests/test_sg3_goal_shelf.py` | no -- after SG-2, and GP-2 (`plans/now/goal-presentation.md`) | medium |
+| SG-3 | The goals in the Goals drop-down, with progress, reward, star and Dismiss | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/guidance_catalogue.gd`, `test_scenarios/sg3_goal_shelf.json`, `tests/test_sg3_goal_shelf.py` | no -- after SG-2 | medium |
 
 SG-1, then SG-2, then SG-3. SG-1 touches no file either lane holds, so it
 runs in the Codex lane now. SG-2 and SG-3 are Claude lane, after Work
 Priorities (Dave's order, 13 Oct 2026: tier 3, then short-term goals, then
 Easy); they should land back to back, since SG-2 alone pays rewards the
-player cannot yet see. SG-3 also waits for GP-2, which adds stars to the
-drop-down GP-1 built (13 Oct 2026). Do not change milestones, urgent problems or the
+player cannot yet see. GP-2 added stars to the drop-down GP-1 built
+(both landed 13 Oct 2026). Do not change milestones, urgent problems or the
 Challenge goal shelf's behaviour.
 
 **Reads.** A slice reads its own section only; SG-2 also reads
