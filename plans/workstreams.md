@@ -46,4 +46,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/T3-1` (`claude/T3-1`) | Claude | Weighted flower choice becomes a purchase | Claude | in progress | none | `plans/now/tier-three.md` T3-1 -- Weighted flower choice becomes a purchase |
