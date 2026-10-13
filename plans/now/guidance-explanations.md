@@ -1,7 +1,7 @@
 # Guidance explanations -- turn colony facts into a causal player answer
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: GD-2b -- the shown ledger and Why history saved with the run, in the Codex backlog (GD-2a landed 10 Oct 2026; hands-on check C-122) | Dependency: CD-2 provides the missing-workforce and blocked-work facts; GD-2b needs the save files free of Claude-lane slices, which they are since PP-1 landed 11 Oct 2026; PP-4 (Claude backlog) holds them next | Verified: 2026-10-11
+Status: active | Owner: Dave / Codex | Next: GD-2b -- the shown ledger and Why history saved with the run, in the Codex backlog (GD-2a landed 10 Oct 2026; hands-on check C-122) | Dependency: CD-2 provides the missing-workforce and blocked-work facts; GD-2b needs the save files free of Claude-lane slices, which they are since PP-5 landed 13 Oct 2026 | Verified: 2026-10-11
 
 ## Objective
 
@@ -58,8 +58,8 @@ GD-1 shipped 2026-10-09; its specification is `plans/archive/GD-1_2026-10-09.md`
 
 **Dependencies.** GD-2a shares no file with the Claude lane. GD-2b needs
 `save_game.gd` and `saving.gd`, which PP-1 released on 11 Oct 2026 and
-PP-4 and PP-5 (`plans/now/pollination.md`) will hold later; it is admissible only in a
-gap between them (one is open now), or moves to the Claude lane if none opens.
+PP-4 and PP-5 (`plans/now/pollination.md`) then held until PP-5 landed on
+13 Oct 2026; no Claude-lane slice holds them now, so it is admissible.
 
 **Reads.** A slice reads its own section and the decision record above;
 `plans/reference/colony-diagnostics.md` for the facts' meaning.
@@ -85,7 +85,6 @@ loses history (row 2, row 3). A save without them loads an empty ledger.
 
 ## Not in the queue, and why
 
-- GD-2b waits for the Claude lane to release `scripts/save_game.gd` and
-  `scripts/saving.gd` after PP-5. The 13 Oct 2026 refill refused GD-2b
-  because both files are in that lane. Once released, rerun the Codex lane
-  refill through L-25's `finish`.
+- Nothing: GD-2b's gate cleared when PP-5 landed (13 Oct 2026) and released
+  `scripts/save_game.gd` and `scripts/saving.gd`; the next Codex lane
+  refill admits it.

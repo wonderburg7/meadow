@@ -114,4 +114,4 @@ RR-5 shipped 2026-10-12; its specification is `plans/archive/RR-5_2026-10-12.md`
 
 ## Not in the queue, and why
 
-Nothing: RR-1's gate cleared when PP-3 landed (12 Oct 2026). It shares `scripts/input_selection.gd` with SP-8a (`plans/now/sprites.md`, gated) and `scripts/hud.gd` and `scripts/orders_zones.gd` with PP-5, which run one after the other in the Claude lane.
+Nothing: RR-1's gate cleared when PP-3 landed (12 Oct 2026). It shares `scripts/input_selection.gd` with SP-8a (`plans/now/sprites.md`, gated) and `scripts/hud.gd` and `scripts/orders_zones.gd` with PP-5, which landed 13 Oct 2026.
