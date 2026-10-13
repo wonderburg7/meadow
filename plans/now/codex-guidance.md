@@ -31,8 +31,8 @@ L-20 shipped 2026-10-07; its specification is `plans/archive/L-20_2026-10-07.md`
 
 <!-- LAYER: immediate-task -->
 
-Found closing CD-3 on 12 Oct 2026. Codex ran `../../tools/verify.ps1` and
-`python ../../tools/prefinish.py` from `.worktrees/CD-3`. Both resolve their
+Found closing CD-3 on 12 Oct 2026. Codex ran the primary checkout's `tools/verify.ps1` and
+`tools/prefinish.py`, by relative path, from `.worktrees/CD-3`. Both resolve their
 repository root from their own location, so they checked the primary
 checkout, not the branch: verify failed on Dave's uncommitted sprite files
 (`tests.test_sp2_sprites`), and prefinish passed without seeing CD-3 at all.

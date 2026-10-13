@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import contextlib
-import importlib.util
 import io
 import json
 from pathlib import Path
@@ -23,19 +22,11 @@ from headless.contracts import (  # noqa: E402
     SUCCESS_STDOUT_BUDGET_BYTES,
     fits_stdout_budget,
 )
-
-
-def _load_module(name: str, path: Path):
-    spec = importlib.util.spec_from_file_location(name, path)
-    assert spec and spec.loader
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-analyze_session = _load_module("analyze_session", TOOLS / "analyze_session.py")
-run_scenario = _load_module("run_scenario", TOOLS / "run_scenario.py")
+# Plain imports, never a fresh exec into sys.modules: replacing the module
+# would strand names other test modules already imported from it, so their
+# mock.patch("run_scenario.<name>") would patch a copy their code never reads.
+import analyze_session  # noqa: E402
+import run_scenario  # noqa: E402
 
 
 class HeadlessEfficiencyBaselineTest(unittest.TestCase):

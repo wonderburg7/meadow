@@ -37,6 +37,20 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/orders_zones.gd :: func queen_build_at`
    - Next after: none -- plan complete (RR-2 to RR-5 landed)
 
+3. **[Claude] GP-1 -- The goals drop-down and the long-term line**
+   - Plan: `plans/now/goal-presentation.md` -- "GP-1 -- the goals drop-down and the long-term line"
+   - Files: `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/session.gd`, `scripts/player_profile.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/test_gp1_goals_dropdown.py`
+   - Check: `python -m unittest tests.test_gp1_goals_dropdown` passes (in a Colony Run the shelf shows a Goals header, the long-term line for each phase and the next milestone; collapsed it shows the header alone and stays inside the viewport at the minimum width; the collapsed state survives a profile reload; a Challenge's shelf is unchanged); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/session.gd :: goals_collapsed`
+   - Next after: GP-2 -- favourite goals stay on screen when the drop-down is collapsed
+
+4. **[Claude] GP-2 -- Favourite goals stay on screen when the drop-down is collapsed**
+   - Plan: `plans/now/goal-presentation.md` -- "GP-2 -- favourite goals"
+   - Files: `scripts/hud.gd`, `scripts/colony_milestones.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/test_gp2_goal_favourites.py`
+   - Check: `python -m unittest tests.test_gp2_goal_favourites` passes (a starred line shows when collapsed; a met favourite shows struck through until the next day change, then drops and unstars; stars survive save and load; a save without them loads with none); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/colony_milestones.gd :: FAVOURITES`
+   - Next after: GP-4 -- the problem strip stops blocking play, keeps red visible and lets the player remove a warning
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -62,10 +76,11 @@ One line each: the id, its plan, and the single thing it waits for.
 - **WP-2** (`plans/now/work-priorities.md`) -- each bee's backup an ordered list; waits for WP-1 and T3-2 (Dave's order, 13 Oct 2026: tier 3, then short-term goals, then Easy) and for FC-2 (Codex lane) to release the save files.
 - **WP-3** (`plans/now/work-priorities.md`) -- the ordered list in the selection panel and the colony default; waits for WP-2.
 - **SG-2** (`plans/now/short-term-goals.md`) -- goals offered, paid and saved in runs; waits for SG-1 (Codex lane), WP-3 (Dave's order) and FC-2 releasing the save files.
-- **SG-3** (`plans/now/short-term-goals.md`) -- the goals shown under the milestone shelf; waits for SG-2.
+- **SG-3** (`plans/now/short-term-goals.md`) -- the goals shown in the Goals drop-down; waits for SG-2 and GP-2.
 - **ED-1** (`plans/now/difficulty.md`) -- every bee has health; waits for SG-3 (Dave's order) and FC-2 releasing the save files.
 - **ED-2** (`plans/now/difficulty.md`) -- a run's difficulty and Easy's rules; waits for ED-1.
 - **ED-3** (`plans/now/difficulty.md`) -- choosing Easy at run start; waits for ED-2.
+- **GP-4** (`plans/now/goal-presentation.md`) -- the problem strip stops blocking play; waits for GP-2 (Dave's order, 12 Oct 2026; GP-3 left the plan 13 Oct 2026); its gated block is written.
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Dr Gallerin guidance now has its plan, `plans/now/guidance-explanations.md`.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts

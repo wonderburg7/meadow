@@ -584,3 +584,13 @@ The list is not secrecy. A review or planning session that is asked to read
 one of them reads it with `git show HEAD:<path>` (allow-listed) and says so
 in its report; a `.json` file cannot carry this note, which is why it lives
 here. Do not widen the deny list, and do not add a `Read` allow for them.
+
+## Agent cost: verify run through a `../../` path tests the wrong checkout
+
+`tools/verify.ps1` and `tools/prefinish.py` test the checkout they live in,
+not the one you stand in. On 12 Oct 2026 Codex, in `.worktrees/CD-3`, ran
+`python ../../tools/prefinish.py` and the same relative verify.ps1: both tested
+the primary checkout, so Dave's uncommitted sprite work failed
+`test_the_repo_sprites_are_current` and prefinish passed a branch it never
+looked at. Both now stop when run from inside a different checkout and name
+the right command; run them as `tools/...` from inside the worktree.
