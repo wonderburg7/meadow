@@ -46,3 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.claude/worktrees/run-queue-investigation-37c458` (`claude/run-queue-investigation-37c458`) | Claude (docs only) | Gates after GP-1 and a Claude-lane top-up (PP-6) | Claude Code | active | none | queue steward |
