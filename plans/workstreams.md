@@ -46,4 +46,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/GP-2` (`claude/GP-2`) | Claude | Favourite goals stay on screen when the drop-down is collapsed | Claude | in progress | none | `plans/now/goal-presentation.md` GP-2 -- favourite goals |
