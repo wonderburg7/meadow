@@ -113,7 +113,16 @@ func _restock_comb_workers() -> Array:
 		return is_instance_valid(b) and b.role == main.Bee.Role.BUILDER
 	)
 
+## T3-2. Stocking orders are refused until Restocking is bought.
+func _restocking_refused() -> bool:
+	if main.Bee.BeeBuilding.restocking_owned():
+		return false
+	main.hud.show_warning("Stocking needs the Restocking skill.", "restocking_unowned", 2.0)
+	return true
+
 func _on_restock_targets_requested(resource: String) -> void:
+	if _restocking_refused():
+		return
 	var cells: Array = main.selected_cells.filter(func(c): return is_instance_valid(c))
 	if cells.is_empty():
 		main.hud.show_warning("Select the comb you want kept full first, then press the resource.")
@@ -127,6 +136,8 @@ func _on_restock_targets_requested(resource: String) -> void:
 	main.hud.update_selection(main.selected_bees)
 
 func _on_restock_sources_requested(allowed: bool) -> void:
+	if _restocking_refused():
+		return
 	var cells: Array = main.selected_cells.filter(func(c): return is_instance_valid(c))
 	if cells.is_empty():
 		main.hud.show_warning("Select the comb you mean first, then press the button.")
@@ -169,6 +180,8 @@ func _assign_role(role_id: int) -> void:
 	main.hud.update_selection(main.selected_bees)
 
 func _apply_mode(role_id: int, mode_key: String) -> void:
+	if role_id == main.Roles.COMB_WORKER and mode_key == "restock" and _restocking_refused():
+		return
 	# BB-1: Fermenting is a toggle, but every selected bee takes the one state
 	# the HUD lit from the first, so a mixed selection never stays mixed.
 	var ferment_on := true

@@ -90,7 +90,7 @@ const ROLES := [
 		"modes": [
 			{"key": "build", "label": "Building", "tip": "Draw new comb. Pick the tiles yourself with \"Build here\", or leave it to work outward on its own."},
 			{"key": "maintain", "label": "Clearing", "tip": "Clear dead larvae out of blocked cells and shift stores out of any cell you have re-designated or asked to be emptied. A body blocks a cell completely, so this is urgent work."},
-			{"key": "restock", "label": "Stocking", "tip": "Keep chosen cells full of one resource, fetching it from elsewhere in the comb. This is how you get a resource to sit somewhere in particular -- honey beside the brood before winter -- rather than wherever the foragers happened to drop it."},
+			{"key": "restock", "skill": "skill.colony.restocking", "label": "Stocking", "tip": "Keep chosen cells full of one resource, fetching it from elsewhere in the comb. This is how you get a resource to sit somewhere in particular -- honey beside the brood before winter -- rather than wherever the foragers happened to drop it."},
 			{"key": "both", "label": "Anything", "tip": "Take whichever job comes up, clearing first, then stocking, then building."},
 		],
 	},
