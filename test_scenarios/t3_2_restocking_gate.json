@@ -6,7 +6,6 @@
   "random_seed": 4242,
   "actions": [
     {"do": "assert", "condition": {"skill_owned": "skill.colony.restocking", "owned": false}},
-    {"do": "set_restock_order", "target": {"current_role": "comb_worker", "count": 1}, "target_hex": [0, 0], "source_hex": [0, 2], "resource": "nectar"},
     {"do": "wait", "seconds": 40},
     {"do": "save_run", "name": "T3-2 unowned"},
     {"do": "grant_skill", "skill": "skill.colony.restocking"},

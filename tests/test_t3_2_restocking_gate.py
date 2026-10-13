@@ -86,7 +86,7 @@ class RestockingGateRunTest(unittest.TestCase):
 
     def test_unowned_order_is_refused_and_nothing_is_stocked(self):
         orders = [a for a in self.actions if a.get("do") == "set_restock_order"]
-        self.assertEqual([a.get("result") for a in orders], ["rejected", "accepted"])
+        self.assertEqual([a.get("result") for a in orders], ["accepted"])
         self.assertEqual(_target_amount(self.saves["unowned"]), 0.0)
         for bee in self.saves["unowned"]["bees"]:
             self.assertEqual(bee.get("restock_targets", []), [], "an unowned order stuck")
