@@ -47,4 +47,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/SG-1` (`codex/SG-1`) | Codex | the goal catalogue and its rules, as a standalone module | Codex | in progress | none | `plans/now/short-term-goals.md` SG-1 -- the goal catalogue and its rules, as a standalone module |
-| `.claude/worktrees/run-queue-8-30915a` (`claude/run-queue-8-30915a`) | Claude (docs only) | Gates after T3-2: FC-2 and WP-2 no longer wait for T3-2 | Claude Code | active | none | queue steward |
