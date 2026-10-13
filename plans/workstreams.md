@@ -46,5 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/L-26` (`codex/L-26`) | Codex | queue readiness warnings use the refill admission test | Codex | in progress | none | `plans/now/agent-lifecycle.md` L-26 -- queue readiness warnings use the refill admission test |
 | `.worktrees/GP-1` (`claude/GP-1`) | Claude | The goals drop-down and the long-term line | Claude | in progress | none | `plans/now/goal-presentation.md` GP-1 -- the goals drop-down and the long-term line |
