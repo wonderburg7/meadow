@@ -10,6 +10,8 @@ const Role = BeeEnums.Role
 const State = BeeEnums.State
 const BeeForaging = preload("res://scripts/bee_foraging.gd")
 const Resources = preload("res://scripts/resources.gd")
+## PP-5. skills.gd::PRIORITY_CELLS; progression.gd answers whether it is owned.
+const PRIORITY_CELLS_SKILL := "skill.brood.priority_cells"
 
 ## BB-2. A nurse that cannot get at the ripe bee bread -- every wall of the
 ## cell taken, or the walk there not done in BEE_BREAD_ERRAND_SECONDS --
@@ -69,11 +71,43 @@ static func nurse_tend(bee: Node2D, _delta: float) -> void:
 		bee.state = State.NURSE_IDLE
 		return
 
-	var other = bee.hive.find_brood_cell()
+	var other = choose_brood_cell(bee.hive)
 	if other != null and other != bee.target_cell and other.needs_feeding():
 		BeeForaging.release_cell_slot(bee)
 		bee.target_cell = other
 		bee.state = State.TO_BROOD
+
+
+## PP-5. Is Priority cells owned this run? Without it no cell can be marked
+## (orders_zones.gd::_on_cell_feed_first_requested) and no mark is honoured.
+static func priority_cells_owned() -> bool:
+	return Session.progression != null and Session.progression.is_owned(PRIORITY_CELLS_SKILL)
+
+
+## The larva a nurse goes to: the hungriest one that needs feeding, else any
+## brood at all (hive.gd::find_brood_cell's rule). PP-5: with Priority cells
+## owned, a hungry larva in a cell marked "Feed first" comes before every
+## unmarked one, whatever food it takes; inside each group the order is the
+## same as without the skill. One pass over the brood, the ownership looked
+## up once, because a tending nurse asks every frame.
+static func choose_brood_cell(hive: Node2D) -> Node2D:
+	var honour_marks: bool = priority_cells_owned()
+	var hungriest: Node2D = null
+	var hungriest_marked: Node2D = null
+	var any_brood: Node2D = null
+	for cell in hive.cells_holding("brood"):
+		if any_brood == null:
+			any_brood = cell
+		if not cell.needs_feeding():
+			continue
+		if honour_marks and cell.priority_cell:
+			if hungriest_marked == null or cell.brood_fed_seconds < hungriest_marked.brood_fed_seconds:
+				hungriest_marked = cell
+		elif hungriest == null or cell.brood_fed_seconds < hungriest.brood_fed_seconds:
+			hungriest = cell
+	if hungriest_marked != null:
+		return hungriest_marked
+	return hungriest if hungriest != null else any_brood
 
 
 ## Drops a meal into the cell. Larvae don't develop at all on their own
@@ -245,7 +279,7 @@ static func _can_make_jelly(bee: Node2D) -> bool:
 
 ## Catalogue finders all take one bee and return whether they started work.
 static func find_brood_cell(bee: Node2D) -> bool:
-	var brood = bee.hive.find_brood_cell()
+	var brood = choose_brood_cell(bee.hive)
 	if brood == null or (bee.role != Role.NURSERY and not brood.needs_feeding()):
 		return false
 	if brood.needs_feeding():

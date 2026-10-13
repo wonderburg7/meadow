@@ -7,6 +7,8 @@ extends Node
 
 var main: Node2D
 
+const BeeNursery = preload("res://scripts/bee_nursery.gd")
+
 ## One step of undo for cell designation. Records what each cell was
 ## before the change.
 var _designation_undo: Array = []
@@ -308,6 +310,19 @@ func _on_cell_gyne_requested(anchor: Node2D, as_gyne: bool) -> void:
 
 func _warn_gyne_rearing_required() -> void:
 	main.hud.show_warning("Buy Gyne rearing before marking a cell to raise a gyne.", "gyne_rearing_required", 2.0)
+
+## PP-5. The cell popup's "Feed first" box. Only Priority cells sets the
+## mark; clearing it is always allowed. Like the gyne mark, a cell marked
+## that is not yet a nursery cell is reserved for brood.
+func _on_cell_feed_first_requested(anchor: Node2D, feed_first: bool) -> void:
+	if feed_first and not BeeNursery.priority_cells_owned():
+		main.hud.show_warning("Buy Priority cells before marking a cell to be fed first.", "priority_cells_required", 2.0)
+		return
+	for cell in _cells_to_act_on(anchor):
+		cell.priority_cell = feed_first
+		cell.bump_display_epoch()
+		if feed_first and cell.designated_type != "brood":
+			_designate_one(cell, "brood")
 
 func _on_cell_keep_empty_requested(anchor: Node2D, keep_empty: bool) -> void:
 	for cell in _cells_to_act_on(anchor):

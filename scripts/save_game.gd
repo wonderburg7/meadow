@@ -205,6 +205,8 @@ static func _cells_data(world) -> Array:
 			"hatch_automine": cell.hatch_automine,
 			"hatch_locked": cell.hatch_role_locked,
 			"hatch_gyne": cell.hatch_gyne,
+			# PP-5, additive: the "Feed first" mark.
+			"priority_cell": cell.priority_cell,
 			"priority": cell.nursery_priority,
 			"closed": cell.is_closed,
 			"fill_close": cell.fill_then_close,
