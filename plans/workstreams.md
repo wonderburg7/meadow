@@ -46,5 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.claude/worktrees/plan-ahead-665107` (`claude/plan-ahead-665107`) | Claude | plan-ahead session: Easy difficulty, Work Priorities, tier-3 gating, short-term goals -- plans and queue blocks only, no game code | Claude Code | in progress | none | plan-ahead, 12 Oct 2026 |
 | `.worktrees/L-25` (`codex/L-25`) | Codex | verify and prefinish refuse to check a different checkout | Codex | in progress | none | `plans/now/codex-guidance.md` L-25 -- verify and prefinish refuse to check a different checkout |

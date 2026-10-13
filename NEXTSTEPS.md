@@ -51,6 +51,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/colony_milestones.gd :: FAVOURITES`
    - Next after: GP-4 -- the problem strip stops blocking play, keeps red visible and lets the player remove a warning
 
+5. **[Claude] T3-1 -- Weighted flower choice becomes a purchase**
+   - Plan: `plans/now/tier-three.md` -- "T3-1 -- Weighted flower choice becomes a purchase"
+   - Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/settings_catalogue.gd`, `tests/t3_1_weighted_choice_test.gd`, `tests/test_t3_1_weighted_choice.py`
+   - Check: `python -m unittest tests.test_t3_1_weighted_choice` passes (unowned with the setting off, a forager picks nearest-first; owned, it scores flowers as the setting does today; the setting appears only in Developer mode); `.\tools\verify.ps1` is green
+   - Proof: `present: scripts/bee_foraging.gd :: if GameConfig.probabilistic_choice_on:`
+   - Next after: T3-2 -- Restocking becomes a purchase
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -62,6 +69,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Check: `python -m unittest tests.test_wrong_checkout_guard` passes, showing both scripts refuse when run from another worktree and run normally from their own; `tools/verify.ps1` is green
    - Proof: `absent: tools/prefinish.py :: different checkout`
    - Next after: none -- Codex guidance is complete
+
+2. **[Codex] SG-1 -- the goal catalogue and its rules, as a standalone module**
+   - Plan: `plans/now/short-term-goals.md` -- "SG-1 -- the goal catalogue and its rules, as a standalone module"
+   - Files: `scripts/short_term_goals.gd`, `tests/sg1_short_term_goals_test.gd`, `tests/test_sg1_short_term_goals.py`
+   - Check: `python -m unittest tests.test_sg1_short_term_goals` passes (for fixture facts, each of the six goals is offered only while its trigger holds and never more than two at once; a dismissed goal is not offered again the same day; a whole-day goal is done only after a full day of its condition; the reward is the fraction times that resource's gross daily income, fixed at offer); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/main.gd :: ShortTermGoals`
+   - Next after: SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved
 
 ## Not in the queue, and why
 
