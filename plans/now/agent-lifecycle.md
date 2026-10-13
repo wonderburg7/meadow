@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: the completion-gate measurement only (L-24 shipped 6 Oct 2026 -- check_queue_lookahead warns before a lane runs dry; L-18 shipped 5 Oct; L-21, L-22 and L-23 shipped, so `session_cost.py --days` now reads every worktree's transcripts; L-16 and L-17 shipped; the canaries still to be seen are one slice per lane closed out while origin is ahead, and one whose queue title carries an em dash closed out from a `chcp 1252` console with `git log -1 --format=%s master` showing the dash intact); the completion gate in "Objective" (zero `lifecycle_failure` outcomes over seven days, a canary slice named per lane, the implementing share above 40%) is measured on Dave's machine with `python tools/session_cost.py --stops`, `--phases` and `--events` from 6 Oct 2026 (not met on 5 Oct 2026: the seven-day window opens 6 Oct, so the earliest reading is 13 Oct 2026) and pasted into the next agent-workflow review, which cannot read those files from a cloud session (`docs/agent-workflow-review-2026-09-30.md`, Dave's actions) | Dependency: none | Verified: 2026-10-06
+Status: active | Owner: Dave / Claude | Next: L-26 -- queue readiness warnings use the refill admission test; then measure the completion gate described in Objective | Dependency: none | Verified: 2026-10-13
 
 ## Objective
 
@@ -50,6 +50,7 @@ slice until the next measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
+| L-26 | Warn only for queue blocks the refill can actually admit | `tools/check_docs.py`, `tests/test_queue_lookahead.py` | medium |
 
 WC-1 to WC-5 (`plans/archive/workflow-checks_2026-10-10.md`, Codex lane, 7 Oct 2026) extend
 this plan's `tools/check_docs.py` and `tools/refill_lane.py` without changing
@@ -82,6 +83,32 @@ L-22 shipped 2026-10-06; its specification is `plans/archive/L-22_2026-10-06.md`
 L-23 shipped 2026-10-06; its specification is `plans/archive/L-23_2026-10-06.md`.
 
 L-24 shipped 2026-10-06; its specification is `plans/archive/L-24_2026-10-06.md`.
+
+## L-26 -- queue readiness warnings use the refill admission test
+
+<!-- LAYER: immediate-task -->
+
+Level: medium. On 13 Oct 2026, `python tools/check_docs.py` warned that the
+Codex backlog offered GD-2b while `python tools/refill_lane.py --top-up
+--lane Codex --dry-run --root .` refused it: the Claude lane owns
+`scripts/save_game.gd` and `scripts/saving.gd` for PP-5. The warning counts
+open `queue` blocks without applying the refill admission test.
+
+Make the short-lane warning name only blocks that a refill would actually
+admit at that moment, reusing `refill_lane.py`'s admission path rather than
+adding a second set of rules. Keep it a warning. A blocked block still
+appears in the refill's dry-lane report with its reason. Test both the
+file-overlap case and a genuinely admissible block. Do not change queue
+format, lane ownership or the minimum queue size.
+
+```queue
+**[Codex] L-26 -- queue readiness warnings use the refill admission test**
+- Plan: `plans/now/agent-lifecycle.md` -- "L-26 -- queue readiness warnings use the refill admission test"
+- Files: `tools/check_docs.py`, `tests/test_queue_lookahead.py`
+- Check: `python -m unittest tests.test_queue_lookahead` passes, proving the warning omits an overlapping block and names an admissible block; `python tools/check_docs.py` no longer claims GD-2b is offered while PP-5 owns its save files; `tools/verify.ps1` is green
+- Proof: `absent: tools/check_docs.py :: def refill_ready_ids`
+- Next after: GD-2b -- the shown ledger and Why history saved with the run, after PP-5 releases its save files
+```
 
 ## Standing rules
 

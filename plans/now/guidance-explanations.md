@@ -85,4 +85,7 @@ loses history (row 2, row 3). A save without them loads an empty ledger.
 
 ## Not in the queue, and why
 
-- None: GD-2b's gate cleared when PP-1 released the save files (11 Oct 2026).
+- GD-2b waits for the Claude lane to release `scripts/save_game.gd` and
+  `scripts/saving.gd` after PP-5. The 13 Oct 2026 refill refused GD-2b
+  because both files are in that lane. Once released, rerun the Codex lane
+  refill through L-25's `finish`.
