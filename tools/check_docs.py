@@ -739,7 +739,12 @@ def _block_shape(body: str) -> str:
 def refill_ready_ids(text: str, root: Path, entries: list[backlog.Entry],
                      lane: str) -> list[str]:
     """Blocks a real refill would add to this lane now."""
-    import refill_lane  # imported here: refill_lane imports this module
+    try:
+        import refill_lane  # imported here: refill_lane imports this module
+    except ModuleNotFoundError as exc:
+        if exc.name != "refill_lane":
+            raise
+        return []  # a partial tools/ copy cannot run the refill admission test
 
     queued = {slice_id for _, slice_id in refill_lane.queued_ids(text)}
     refilled = refill_lane.top_up(text, lane, root, [], entries, [])
