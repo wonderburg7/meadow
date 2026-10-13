@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: nothing queued but SP-8a (SP-1 to SP-5, SP-7 and SP-9 landed; the skep is in the meadow and hive soil is drawn from the art); SP-6 waits for Dave's repacked forager sheet; SP-8a, the meadow floor drawn in blocks with everything on it lifted, is specified below and gated on FC-2 (Codex lane) releasing `scripts/main.gd` and the save files -- CD-3 released `scripts/bee.gd` on 12 Oct 2026, and Dave put FC-2 first on 13 Oct 2026; height's effects (rest of SP-8) are cut after it | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: nothing queued but SP-8a (SP-1 to SP-5, SP-7 and SP-9 landed; the skep is in the meadow and hive soil is drawn from the art); SP-6 waits for Dave's forager sheet on a 16x16 `sheet` grid (his 11 Oct repack, `bees/foragers_meadow_view.png`, is committed unexported and is not on that grid yet); the hive and menu art is planned in `plans/now/hive-and-menu-art.md`; SP-8a, the meadow floor drawn in blocks with everything on it lifted, is specified below and gated on FC-2 (Codex lane) releasing `scripts/main.gd` and the save files -- CD-3 released `scripts/bee.gd` on 12 Oct 2026, and Dave put FC-2 first on 13 Oct 2026; height's effects (rest of SP-8) are cut after it | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-12
 
 ## Objective
 
@@ -53,11 +53,12 @@ Verified 9 Oct 2026 against master and the main checkout:
   7 levels (upper bounds 10/25/40/55/70/85/100 %), filled flat lime
   (187,248,36). The pollen file has 5 (20/40/60/80/100 %, redrawn 11 Oct), in oranges
   around (255,123,0). Neither has part-transparent pixels.
-- The forager sheet is 52x100 with 8 rows x 4 wing frames. Each bee is
-  9-12 px and drawn in 4 colours. It is **not on a regular grid**: rows
-  start at y 1/12/23/35/46/59/73/86, and column spacing is 11-13 px and
-  differs from row to row. The `.aseprite` has a hidden guide layer and an
-  empty tilemap layer.
+- The forager sheet (13 Oct 2026) is `bees/foragers_meadow_view.png`,
+  48x104, 8 rows x 4 wing frames, row order as in Decisions item 4's
+  notes. Its columns sit on a 12-px pitch; its rows do not (they start at
+  y 1/14/28/41/52/65/78/91). It replaced the irregular 52x100
+  `bee_forager_meadow.aseprite`. The exporter takes a grid only from an
+  `.aseprite` layer named `sheet`, so it stays `unexported`.
 - The skep is 54x41 with 42x35 of drawing and 8 colours.
 - `hive_cell.gd` shows `empty_sprite` (`EMPTY_TEXTURE`, scale 38/32) only
   for an empty cell while `Session.use_cell_sprites` is on. Filled cells
@@ -79,11 +80,13 @@ Verified 9 Oct 2026 against master and the main checkout:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for Dave's repacked sheet | high (per-bee hot path) |
+| SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for the sheet on a 16x16 `sheet` grid | high (per-bee hot path) |
 | SP-8a | the meadow floor drawn in blocks, with everything on it lifted | see its `Files:` line below | no -- waits for FC-2 (Codex lane) to release `main.gd` and the save files (Dave put FC-2 first, 13 Oct 2026; CD-3 released `bee.gd` 12 Oct 2026) | high |
 | SP-8 (rest) | height's effects: flight cost, where flowers grow, scouting reach | to be cut after SP-8a | no -- after SP-8a | high (balance) |
 
 Dependencies: SP-2 -> SP-4 -> SP-5 -> SP-6 (SP-1 and SP-3 landed 9 Oct 2026).
+SP-8a and HM-1 (`plans/now/hive-and-menu-art.md`) both edit `scripts/hive.gd`
+and `scripts/rival_hive.gd`; both are Claude lane, so whichever lands second merges master first.
 
 SP-1 shipped 2026-10-09; its specification is `plans/archive/SP-1_2026-10-09.md`.
 
@@ -236,8 +239,11 @@ SP-9 shipped 2026-10-12; its specification is `plans/archive/SP-9_2026-10-12.md`
 
 ## SP-6 -- meadow foragers drawn from the sheet
 
-**Gate:** Dave's repack onto a 16x16 `sheet` grid. The exporter rejects
-the current sheet.
+**Gate:** Dave's sheet on a 16x16 grid, in an `.aseprite` with one layer
+named `sheet`. `bees/foragers_meadow_view.png` (13 Oct 2026) has the
+frames on a 12-px column pitch with irregular rows, as a plain `.png`,
+which the exporter can only take as `single`. The slice renames its
+sprite-table row's file to the `.aseprite` and sets `grid 16x16 rows=...`.
 
 **True afterwards.**
 

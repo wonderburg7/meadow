@@ -38,7 +38,7 @@ TABLE_NAME = "SPRITES.md"
 CATALOGUE_PATH = Path("scripts") / "sprite_catalogue.gd"
 SHEET_SUFFIX = "_sheet.png"
 GUTTER = 1
-VIEWS = ("hive", "meadow")
+VIEWS = ("hive", "meadow", "menu")
 TABLE_COLUMNS = ("family", "file", "shows", "view", "layout", "frames", "levels", "anchor", "variants")
 
 
