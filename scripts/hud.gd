@@ -59,7 +59,7 @@ signal cell_feed_first_requested(cell: Node2D, feed_first: bool)
 ## relevant view instead of treating it as a normal select/drag. "Work from
 ## here" for comb workers (`home_cell`) applies to one bee only, even if several
 ## are selected; `home_cell_all` is the colony-wide version. `queen_build_cell`
-## is Challenge 1's direct button in the queen's panel (see
+## is the direct button in the queen's panel (see
 ## set_queen_build_button_visible).
 signal placement_tool_requested(tool_id: String)
 ## Restocking. The currently selected comb becomes the cells this
@@ -333,8 +333,8 @@ var _stage_gate = null
 ## keys ("nectar", "pollen", "honey", "jelly", "brood", "any" for
 ## Unreserve). Empty means no restriction. See set_allowed_designation_keys.
 var allowed_designation_keys: Array = []
-## Challenge 1 only -- see set_queen_build_button_visible.
-var show_queen_build_button: bool = false
+## Every run -- see set_queen_build_button_visible.
+var show_queen_build_button: bool = true
 ## Stage-gated controls (F2s). `_gate_controls` maps an
 ## Availability.UI_GATES control name to a Callable returning that control
 ## -- a Callable, not the node, because some controls are rebuilt -- and
@@ -2859,7 +2859,7 @@ func _rebuild_role_controls(bees: Array) -> void:
 	more_panel.visible = more_button.button_pressed
 	_update_command_tray_width()
 
-## Challenge 1 only -- see set_queen_build_button_visible. It is a primary
+## Every run -- see set_queen_build_button_visible. It is a primary
 ## Job-column action so the manual placement lesson never hides behind More….
 func _build_queen_build_row(column: VBoxContainer) -> void:
 	var button := Button.new()
@@ -3678,10 +3678,10 @@ func set_allowed_designation_keys(keys: Array) -> void:
 	if active_cell != null and is_instance_valid(active_cell) and cell_group != null and cell_group.visible:
 		_apply_cell_popup_gating()
 
-## Challenge 1's 1.3 replaces the usual "assign Comb worker, then click a
+## Every run offers the queen a direct build button; Challenge 1's 1.3 replaces the usual "assign Comb worker, then click a
 ## spot" flow with one direct button in the queen's own panel -- see
 ## TUTORIAL_PLAN.md. Only ever shown for the queen, one bee selected.
-## Not a stage gate: it follows the Challenge 1 run and the selection, not
+## Not a stage gate: it follows the selection, not
 ## a stage_gate key, so it stays outside Availability.UI_GATES.
 func set_queen_build_button_visible(value: bool) -> void:
 	show_queen_build_button = value
