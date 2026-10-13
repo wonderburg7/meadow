@@ -23,35 +23,28 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] GP-2 -- Favourite goals stay on screen when the drop-down is collapsed**
-   - Plan: `plans/now/goal-presentation.md` -- "GP-2 -- favourite goals"
-   - Files: `scripts/hud.gd`, `scripts/colony_milestones.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/test_gp2_goal_favourites.py`
-   - Check: `python -m unittest tests.test_gp2_goal_favourites` passes (a starred line shows when collapsed; a met favourite shows struck through until the next day change, then drops and unstars; stars survive save and load; a save without them loads with none); `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/colony_milestones.gd :: FAVOURITES`
-   - Next after: GP-4 -- the problem strip stops blocking play, keeps red visible and lets the player remove a warning
-
-2. **[Claude] T3-1 -- Weighted flower choice becomes a purchase**
+1. **[Claude] T3-1 -- Weighted flower choice becomes a purchase**
    - Plan: `plans/now/tier-three.md` -- "T3-1 -- Weighted flower choice becomes a purchase"
    - Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/settings_catalogue.gd`, `tests/t3_1_weighted_choice_test.gd`, `tests/test_t3_1_weighted_choice.py`
    - Check: `python -m unittest tests.test_t3_1_weighted_choice` passes (unowned with the setting off, a forager picks nearest-first; owned, it scores flowers as the setting does today; the setting appears only in Developer mode); `.\tools\verify.ps1` is green
    - Proof: `present: scripts/bee_foraging.gd :: if GameConfig.probabilistic_choice_on:`
    - Next after: T3-2 -- Restocking becomes a purchase
 
-3. **[Claude] T3-2 -- Restocking becomes a purchase**
+2. **[Claude] T3-2 -- Restocking becomes a purchase**
    - Plan: `plans/now/tier-three.md` -- "T3-2 -- Restocking becomes a purchase"
    - Files: `scripts/roles.gd`, `scripts/bee_building.gd`, `scripts/orders_zones.gd`, `scripts/hud.gd`, `test_scenarios/bb3_bee_bread_currency.json`, `test_scenarios/c4_stocking_hatch_test.json`, `test_scenarios/h3_restock_delivery_test.json`, `test_scenarios/nf4_fermentation_sense.json`, `test_scenarios/t3_2_restocking_gate.json`, `tests/test_t3_2_restocking_gate.py`
    - Check: `python -m unittest tests.test_t3_2_restocking_gate` passes (unowned, no Stocking mode or keep-full control is offered and an Anything-mode Comb worker never stocks; owned, stocking works as today; keep-empty works either way); the four stocking scenarios still pass; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/roles.gd :: skill.colony.restocking`
    - Next after: none -- the tier-three plan is complete; Work Priorities (`plans/now/work-priorities.md`) follows in Dave's order
 
-4. **[Claude] WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3**
+3. **[Claude] WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3**
    - Plan: `plans/now/work-priorities.md` -- "WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3"
    - Files: `scripts/skills.gd`, `tests/test_wp1_work_priorities_node.py`
    - Check: `python -m unittest tests.test_wp1_work_priorities_node` passes (Work priorities is a Hive Mind tier-3 node at Extended backup roles' old slot, needs Backup roles, and reads as not yet built; no Extended backup roles entry remains; the tier-0 baseline is Cell priority); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/skills.gd :: skill.hive_mind.work_priorities`
    - Next after: WP-2 -- owned, each bee follows an ordered backup list
 
-5. **[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
+4. **[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
    - Plan: `plans/now/pollination.md` -- "PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter"
    - Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
    - Check: `python -m unittest tests.test_pacing_gates` passes; `pacing_gates.py` reports the day Gyne rearing first becomes affordable in the reference Colony Run, and that day falls after the first winter; the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
