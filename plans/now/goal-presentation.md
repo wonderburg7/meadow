@@ -51,7 +51,6 @@ Verified 12 Oct 2026 against master `291e5a3`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| GP-2 | Favourite goals stay on screen when the drop-down is collapsed; saved | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/test_gp2_goal_favourites.py` | yes -- leads the Claude lane (GP-1 landed 13 Oct 2026) | medium |
 | GP-4 | Problem strip: clicks only on text, 4-line cap, red shown when unstarred, × until it clears | `scripts/hud.gd`, `scripts/problem_messages.gd`, `tests/gp4_problem_strip_test.gd`, `tests/test_gp4_problem_strip.py` | after GP-2 | medium |
 
 Each slice reads this plan's "Decisions" and its own section only. Do not
@@ -111,33 +110,7 @@ Dave, 12 Oct 2026, in the session that wrote this plan:
 
 GP-1 shipped 2026-10-13; its specification is `plans/archive/GP-1_2026-10-13.md`.
 
-## GP-2 -- favourite goals
-
-<!-- LAYER: immediate-task -->
-
-**When done.** Decision 4. Each line in the expanded drop-down carries a
-star toggle. Starred ids live in `colony_milestones.gd` and are saved under a
-`FAVOURITES` key in its `save_data` record. `restore` keeps only ids it knows
-(`"long_term"`, milestone ids, and from SG-3 the short-term ids), and a record
-without the key restores none. No `save_game.gd` change is needed
-(`SaveGame.milestone_days` returns the record whole). A met favourite stays,
-struck through, until the next `day_changed`, then is removed and unstarred.
-
-**Hands-on (Dave).** Star the long-term line and the milestone, collapse the
-drop-down and see both stay. Save, load, and see them still starred.
-
-```queue
-**[Claude] GP-2 -- Favourite goals stay on screen when the drop-down is collapsed**
-- Plan: `plans/now/goal-presentation.md` -- "GP-2 -- favourite goals"
-- Files: `scripts/hud.gd`, `scripts/colony_milestones.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/test_gp2_goal_favourites.py`
-- Check: `python -m unittest tests.test_gp2_goal_favourites` passes (a starred line shows when collapsed; a met favourite shows struck through until the next day change, then drops and unstars; stars survive save and load; a save without them loads with none); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/colony_milestones.gd :: FAVOURITES`
-- Next after: GP-4 -- the problem strip stops blocking play, keeps red visible and lets the player remove a warning
-```
-
-GP-3 left this plan on 13 Oct 2026 (Dave): `plans/now/short-term-goals.md`
-builds short-term goals as SG-1 to SG-3, keeping GP-3's runtime and
-ownership advice.
+GP-2 shipped 2026-10-13; its specification is `plans/archive/GP-2_2026-10-13.md`.
 
 ## GP-4 -- the problem strip stops blocking play
 
