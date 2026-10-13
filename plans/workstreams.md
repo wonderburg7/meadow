@@ -46,3 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/T3-2` (`claude/T3-2`) | Claude | Restocking becomes a purchase | Claude | in progress | none | `plans/now/tier-three.md` T3-2 -- Restocking becomes a purchase |
