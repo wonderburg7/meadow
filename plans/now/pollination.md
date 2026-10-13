@@ -49,7 +49,6 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-5 | Priority cells: marked brood cells are fed first | `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- PP-3 released `orders_zones.gd` (12 Oct 2026) | high |
 | PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | yes -- PP-5 landed 13 Oct 2026 (PP-1 to PP-4 and T2-7 landed 11-12 Oct 2026) | medium |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
@@ -74,26 +73,7 @@ PP-2 shipped 2026-10-12; its specification is `plans/archive/PP-2_2026-10-12.md`
 
 PP-4 shipped 2026-10-12; its specification is `plans/archive/PP-4_2026-10-12.md`.
 
-## PP-5 -- Priority cells: marked brood cells are fed first
-
-<!-- LAYER: immediate-task -->
-
-**Change.** Once Priority cells is owned, the HUD cell menu offers "Feed
-first" on a brood cell (beside the gyne toggle); `hive_cell.gd` keeps
-`priority_cell`, saved, defaulting to false. Nurses choosing a hungry larva
-take a marked one before any unmarked one, for every food a larva takes
-(pollen, nectar or honey, Bee Bread, jelly); ties inside each group keep
-today's order. `skills.gd`: Priority cells' status becomes `existing`.
-Without the skill nothing changes.
-
-```queue
-**[Claude] PP-5 -- Priority cells: marked brood cells are fed first**
-- Plan: `plans/now/pollination.md` -- "PP-5 -- Priority cells: marked brood cells are fed first"
-- Files: `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_pp5_priority_cells.py`, `test_scenarios/pp5_priority_cells.json`
-- Check: `python -m unittest tests.test_pp5_priority_cells` passes (with food for one larva, a nurse feeds the marked larva first for each food type; unowned, the mark cannot be set and feeding order is today's; the mark survives save and restore); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/hive_cell.gd :: priority_cell`
-- Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
-```
+PP-5 shipped 2026-10-13; its specification is `plans/archive/PP-5_2026-10-13.md`.
 
 ## PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
 
