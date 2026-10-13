@@ -26,6 +26,8 @@ const BeeNursery = preload("res://scripts/bee_nursery.gd")
 
 # --- signals ------------------------------------------------------
 signal role_requested(role_name: String)
+## GP-2: a star on a Goals line was pressed; colony_milestones.gd listens.
+signal goal_star_toggled(id: String)
 signal view_toggle_requested()
 signal colony_panel_requested()
 signal foraging_panel_requested()
@@ -319,6 +321,12 @@ var goal_progress_label: Label
 var goals_header: Button
 var long_term_goal_label: Label
 var colony_goal_entries: Array = []
+## GP-2: a star on each line (child of the label) and the box that holds the
+## starred lines while the drop-down is collapsed. `goal_star_ids` maps a
+## label's star to the goal id its line currently shows.
+var goal_stars: Array = []
+var goal_star_ids: Dictionary = {}
+var favourites_box: VBoxContainer
 ## Restricts the Job row's "Change to..." dropdown / the Doing row's
 ## sub-modes to just these keys. Empty means no restriction -- only a
 ## Challenge (see challenge_runner.gd) ever sets these to something
@@ -927,6 +935,13 @@ func _build_goal_shelf() -> void:
 	goals_header.pressed.connect(_on_goals_header_pressed)
 	goal_shelf.add_child(goals_header)
 
+	# GP-2: starred lines, shown while the drop-down is collapsed.
+	favourites_box = VBoxContainer.new()
+	favourites_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	favourites_box.add_theme_constant_override("separation", 1)
+	favourites_box.visible = false
+	goal_shelf.add_child(favourites_box)
+
 	# GP-1: the long-term line, above the milestone.
 	long_term_goal_label = Label.new()
 	long_term_goal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -937,6 +952,7 @@ func _build_goal_shelf() -> void:
 	long_term_goal_label.visible = false
 	UiTheme.bind_color(long_term_goal_label, "font_color", "text_primary")
 	goal_shelf.add_child(long_term_goal_label)
+	_add_goal_star(long_term_goal_label)
 
 	# Secondary: the goal just completed, struck through and faded, per
 	# section 5. A RichTextLabel rather than a Label since Label has no
@@ -954,6 +970,7 @@ func _build_goal_shelf() -> void:
 	completed_goal_label.add_theme_color_override("default_color", Color(UiTheme.color("warning"), 0.55))
 	completed_goal_label.visible = false
 	goal_shelf.add_child(completed_goal_label)
+	_add_goal_star(completed_goal_label)
 
 	# Primary: the current goal.
 	current_goal_label = Label.new()
@@ -964,6 +981,7 @@ func _build_goal_shelf() -> void:
 	current_goal_label.theme_type_variation = "Body"
 	UiTheme.bind_color(current_goal_label, "font_color", "warning")
 	goal_shelf.add_child(current_goal_label)
+	_add_goal_star(current_goal_label)
 
 	# Tertiary: numeric progress, only for a goal with a countable target.
 	goal_progress_row = HBoxContainer.new()
@@ -1008,6 +1026,9 @@ func set_challenge_goal(text: String, completed_text: String = "", progress_curr
 	colony_goal_entries = []
 	goals_header.visible = false
 	long_term_goal_label.visible = false
+	favourites_box.visible = false
+	for star in goal_stars:
+		star.visible = false
 	current_goal_label.visible = true
 	goal_shelf.visible = not text.is_empty()
 	current_goal_label.text = text
@@ -1033,13 +1054,25 @@ func set_colony_goals(entries: Array) -> void:
 	var long_text := ""
 	var next_text := ""
 	var done_text := ""
+	var long_id := ""
+	var next_id := ""
+	var done_id := ""
 	for entry in entries:
+		if bool(entry.get("extra", false)):
+			continue
 		if str(entry.id) == "long_term":
 			long_text = str(entry.text)
+			long_id = "long_term"
 		elif bool(entry.get("done", false)):
 			done_text = str(entry.text)
+			done_id = str(entry.id)
 		else:
 			next_text = str(entry.text)
+			next_id = str(entry.id)
+	_set_goal_star(long_term_goal_label, long_id, entries)
+	_set_goal_star(current_goal_label, next_id, entries)
+	_set_goal_star(completed_goal_label, done_id, entries)
+	_rebuild_favourites(entries)
 	long_term_goal_label.text = long_text
 	current_goal_label.text = next_text
 	completed_goal_label.text = "[s]%s[/s]" % done_text if not done_text.is_empty() else ""
@@ -1056,6 +1089,66 @@ func _apply_goals_collapsed() -> void:
 	long_term_goal_label.visible = open and not long_term_goal_label.text.is_empty()
 	current_goal_label.visible = open and not current_goal_label.text.is_empty()
 	completed_goal_label.visible = open and not completed_goal_label.text.is_empty()
+	favourites_box.visible = not open and favourites_box.get_child_count() > 0
+
+## GP-2: a small star as a child of a goal line. Its look and its goal id are
+## set by set_colony_goals; pressing it only reports the id.
+func _add_goal_star(label: Control) -> void:
+	var star := Button.new()
+	star.flat = true
+	star.text = "☆"
+	star.visible = false
+	star.focus_mode = Control.FOCUS_NONE
+	star.theme_type_variation = "Small"
+	star.custom_minimum_size = Vector2(26, 20)
+	star.tooltip_text = "Keep this goal on screen when the Goals list is collapsed."
+	star.mouse_filter = Control.MOUSE_FILTER_STOP
+	star.pressed.connect(func(): _on_goal_star_pressed(star))
+	label.add_child(star)
+	goal_stars.append(star)
+	goal_star_ids[star] = ""
+
+func _set_goal_star(label: Control, id: String, entries: Array) -> void:
+	var star: Button = null
+	for candidate in goal_stars:
+		if candidate.get_parent() == label:
+			star = candidate
+	if star == null:
+		return
+	goal_star_ids[star] = id
+	var starred := false
+	for entry in entries:
+		if str(entry.id) == id and bool(entry.get("starred", false)):
+			starred = true
+	star.text = "★" if starred else "☆"
+	star.visible = not id.is_empty() and id != "all_met"
+
+func _on_goal_star_pressed(star: Button) -> void:
+	var id: String = str(goal_star_ids.get(star, ""))
+	if not id.is_empty():
+		goal_star_toggled.emit(id)
+
+## GP-2: the collapsed view -- one line for each starred goal, a met one
+## struck through. Rebuilt whenever the entries are, never per frame.
+func _rebuild_favourites(entries: Array) -> void:
+	for child in favourites_box.get_children():
+		favourites_box.remove_child(child)
+		child.queue_free()
+	for entry in entries:
+		if not bool(entry.get("starred", false)):
+			continue
+		var line := RichTextLabel.new()
+		line.bbcode_enabled = true
+		line.fit_content = true
+		line.scroll_active = false
+		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		line.custom_minimum_size = Vector2(320, 0)
+		line.add_theme_font_size_override("normal_font_size", int(round(14 * Session.text_scale)))
+		var done: bool = bool(entry.get("done", false))
+		line.add_theme_color_override("default_color", Color(UiTheme.color("warning"), 0.55 if done else 1.0))
+		var text: String = str(entry.text).replace("[", "[lb]")
+		line.text = "[right]%s[/right]" % ("[s]%s[/s]" % text if done else text)
+		favourites_box.add_child(line)
 
 func _on_goals_header_pressed() -> void:
 	Session.goals_collapsed = not Session.goals_collapsed

@@ -85,6 +85,10 @@ const MILESTONES := [
 const VICTORY := "victory"
 ## COL-7: the key the genetic points are saved under, beside the days.
 const GENETIC_POINTS := "genetic_points"
+## GP-2: the key the starred goal ids are saved under, in the same record.
+const FAVOURITES := "favourites"
+## The long-term line's id in a favourites list and in the HUD's entries.
+const LONG_TERM := "long_term"
 
 var main: Node2D
 ## Milestone id -> the day it was first met. A milestone absent here is not
@@ -93,6 +97,9 @@ var met_days: Dictionary = {}
 ## COL-7: the genetic points this run has earned from gynes sent inside the
 ## mating window. Colony Run only.
 var genetic_points: int = 0
+## GP-2: the goal ids the player has starred (LONG_TERM or a milestone id).
+## A starred line stays on screen while the Goals drop-down is collapsed.
+var favourites: Array = []
 
 
 ## True in a Colony Run only. Read from the level row each time, so a load
@@ -136,6 +143,7 @@ func add_genetic_points(points: int) -> void:
 func save_data() -> Dictionary:
 	var data: Dictionary = met_days.duplicate()
 	data[GENETIC_POINTS] = genetic_points
+	data[FAVOURITES] = favourites.duplicate()
 	return data
 
 
@@ -157,6 +165,52 @@ func restore(data: Dictionary) -> void:
 	var points = data.get(GENETIC_POINTS)
 	if typeof(points) == TYPE_INT or typeof(points) == TYPE_FLOAT:
 		genetic_points = maxi(0, int(points))
+	# GP-2: keep only ids this file knows; a record without the key has none.
+	favourites.clear()
+	var starred = data.get(FAVOURITES)
+	if typeof(starred) == TYPE_ARRAY:
+		for id in starred:
+			if _is_goal_id(str(id)) and not favourites.has(str(id)):
+				favourites.append(str(id))
+
+
+## GP-2: true for an id a favourite may carry. SG-3 adds the short-term ids.
+func _is_goal_id(id: String) -> bool:
+	if id == LONG_TERM:
+		return true
+	for milestone in MILESTONES:
+		if milestone.id == id:
+			return true
+	return false
+
+
+## GP-2: the star on a Goals line. Unknown ids are ignored.
+func toggle_favourite(id: String) -> void:
+	if not _is_goal_id(id):
+		return
+	if favourites.has(id):
+		favourites.erase(id)
+	else:
+		favourites.append(id)
+	show_next()
+
+
+## GP-2: the day a favourite was met, or -1. The long-term goal is met by the
+## win; a milestone by its recorded day.
+func _favourite_met_day(id: String) -> int:
+	if id == LONG_TERM:
+		return day_met(VICTORY)
+	return day_met(id)
+
+
+## GP-2: a met favourite stays, struck through, for the rest of the day it was
+## met; once the day has changed it is removed and unstarred. Derived from the
+## saved days, so a load mid-day keeps it and a load after it drops it.
+func _drop_stale_favourites() -> void:
+	for id in favourites.duplicate():
+		var met: int = _favourite_met_day(str(id))
+		if met >= 0 and main.day > met:
+			favourites.erase(id)
 
 
 ## COL-2 (decision 3): the Colony Run is won the first time a gyne leaves
@@ -205,10 +259,22 @@ func show_next() -> void:
 	if next_goal.is_empty():
 		next_goal = "Every milestone met -- your colony has made it"
 		next_id = "all_met"
-	var entries: Array = [{"id": "long_term", "text": long_term_line(), "done": false}]
-	entries.append({"id": next_id, "text": next_goal, "done": false})
+	_drop_stale_favourites()
+	var entries: Array = [{
+		"id": LONG_TERM, "text": long_term_line(), "done": met_days.has(VICTORY),
+		"starred": favourites.has(LONG_TERM),
+	}]
+	entries.append({"id": next_id, "text": next_goal, "done": false, "starred": favourites.has(next_id)})
 	if not done_goal.is_empty():
-		entries.append({"id": done_id, "text": done_goal, "done": true})
+		entries.append({"id": done_id, "text": done_goal, "done": true, "starred": favourites.has(done_id)})
+	# A starred milestone that is met but no longer the newest met one has no
+	# line of its own in the drop-down; it still shows while collapsed.
+	for milestone in MILESTONES:
+		var id: String = milestone.id
+		if favourites.has(id) and met_days.has(id) and id != done_id:
+			entries.append({"id": id, "text": milestone.goal, "done": true, "starred": true, "extra": true})
+	if not main.hud.goal_star_toggled.is_connected(toggle_favourite):
+		main.hud.goal_star_toggled.connect(toggle_favourite)
 	main.hud.set_colony_goals(entries)
 
 
