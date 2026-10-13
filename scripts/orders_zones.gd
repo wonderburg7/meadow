@@ -13,6 +13,19 @@ const BeeNursery = preload("res://scripts/bee_nursery.gd")
 ## before the change.
 var _designation_undo: Array = []
 
+## RR-1: the queen's own build, the same in every run. Checks the hex, makes the
+## cell site, and sends her to it. Returns the site, or null when she cannot.
+## A Challenge adds its overrides afterwards (challenge_runner.gd).
+func queen_build_at(hex: Vector2i) -> Node2D:
+	if not is_instance_valid(main.queen) or not main.hive.can_build_on(hex):
+		return null
+	var site: Node2D = main.hive.create_cell_site_at(hex)
+	if site == null:
+		return null
+	main.queen.target_cell = site
+	main.queen.state = main.Bee.State.TO_BUILD_SITE
+	return site
+
 func _apply_zone_glow() -> void:
 	var showing: bool = main.nursery_panel.is_open() and main.in_hive_view
 	if not showing:
