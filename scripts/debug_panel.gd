@@ -76,6 +76,8 @@ var sections: Dictionary = {}
 ## open/close logic.
 var section_headers: Dictionary = {}
 var collection_bodies: Dictionary = {}
+## T3-1: rows whose catalogue entry says "dev_only"; shown only with Developer mode on.
+var dev_only_rows: Array = []
 var collection_headers: Dictionary = {}
 ## This row exists only inside the World & start section and is hidden outside
 ## an active Challenge. Its values remain runner-owned.
@@ -346,14 +348,19 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 		if entry.get("star", false):
 			ordered_entries.append(entry)
 	for entry in ordered_entries:
+		var made: Control
 		if entry.get("star", false):
-			body.add_child(_make_star_row(entry))
+			made = _make_star_row(entry)
 		elif entry.get("toggle", false):
-			body.add_child(_make_toggle_row(entry))
+			made = _make_toggle_row(entry)
 		elif entry.has("options"):
-			body.add_child(_make_options_row(entry))
+			made = _make_options_row(entry)
 		else:
-			body.add_child(_make_row(entry))
+			made = _make_row(entry)
+		if entry.get("dev_only", false):
+			made.visible = Session.developer_mode
+			dev_only_rows.append(made)
+		body.add_child(made)
 	if category == "World & start":
 		body.add_child(_make_challenge_stage_navigation())
 
@@ -637,6 +644,9 @@ func _on_end_run_pressed() -> void:
 ## BS-5: the Developer mode rows. With it off the row is empty -- the
 ## button is absent, not disabled -- and an open table closes.
 func _refresh_developer_row() -> void:
+	for dev_row in dev_only_rows:
+		if is_instance_valid(dev_row):
+			dev_row.visible = Session.developer_mode
 	if triggers_box != null:
 		_rebuild_triggers()
 	for child in developer_row.get_children():

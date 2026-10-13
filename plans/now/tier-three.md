@@ -1,7 +1,7 @@
 # Tier three -- skills over behaviour that already ships
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: T3-1 -- Weighted flower choice becomes a purchase, then T3-2 (both queued 13 Oct 2026) | Dependency: none (GP-1 and GP-2 landed 13 Oct 2026) | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude Code | Next: T3-2 -- Restocking becomes a purchase (T3-1 landed 13 Oct 2026) | Dependency: none (GP-1 and GP-2 landed 13 Oct 2026) | Verified: 2026-10-13
 
 ## Objective
 
@@ -42,7 +42,6 @@ Verified 13 Oct 2026 against master `06bd26c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T3-1 | Weighted flower choice becomes a purchase | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/settings_catalogue.gd`, `tests/t3_1_weighted_choice_test.gd`, `tests/test_t3_1_weighted_choice.py` | yes | medium |
 | T3-2 | Restocking becomes a purchase | `scripts/roles.gd`, `scripts/bee_building.gd`, `scripts/orders_zones.gd`, `scripts/hud.gd`, `test_scenarios/bb3_bee_bread_currency.json`, `test_scenarios/c4_stocking_hatch_test.json`, `test_scenarios/h3_restock_delivery_test.json`, `test_scenarios/nf4_fermentation_sense.json`, `test_scenarios/t3_2_restocking_gate.json`, `tests/test_t3_2_restocking_gate.py` | yes | medium |
 
 T3-1 and T3-2 share no file and may land in either order; Dave's order
@@ -53,26 +52,7 @@ these first lets its sweep price them. Neither changes a skill's price.
 **Reads.** A slice reads its own section only; T3-1 also reads
 `.claude/rules/performance.md`, since flower choice is a per-trip path.
 
-## T3-1 -- Weighted flower choice becomes a purchase
-
-<!-- LAYER: immediate-task -->
-
-**Change.** Follow T2-6's pattern (`bee_foraging.gd`'s
-`handling_experience_on or progression.is_behaviour_enabled(...)`): the
-skill's `effects` enable the `probabilistic_choice_on` behaviour, and both
-places `bee_foraging.gd` reads `GameConfig.probabilistic_choice_on` read
-that combination instead. `skills.gd`: the node's status becomes `existing`.
-`settings_catalogue.gd`: the "Weighted flower choice" row moves behind
-Developer mode, as a force-on for testing. The scoring itself is unchanged.
-
-```queue
-**[Claude] T3-1 -- Weighted flower choice becomes a purchase**
-- Plan: `plans/now/tier-three.md` -- "T3-1 -- Weighted flower choice becomes a purchase"
-- Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/settings_catalogue.gd`, `tests/t3_1_weighted_choice_test.gd`, `tests/test_t3_1_weighted_choice.py`
-- Check: `python -m unittest tests.test_t3_1_weighted_choice` passes (unowned with the setting off, a forager picks nearest-first; owned, it scores flowers as the setting does today; the setting appears only in Developer mode); `.\tools\verify.ps1` is green
-- Proof: `present: scripts/bee_foraging.gd :: if GameConfig.probabilistic_choice_on:`
-- Next after: T3-2 -- Restocking becomes a purchase
-```
+T3-1 shipped 2026-10-13; its specification is `plans/archive/T3-1_2026-10-13.md`.
 
 ## T3-2 -- Restocking becomes a purchase
 

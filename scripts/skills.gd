@@ -222,8 +222,8 @@ const SKILLS := [
 		"sector": "foraging", "tier": 3, "axial": Vector2i(7, 0),
 		"max_rank": 1, "cost": {BEE_BREAD: 12, HONEY: 40, POLLEN: 120},
 		"requires_previous_tier": true, "all_of": [ASSOCIATIVE_LEARNING], "any_of": [],
-		"feature": "", "introduced_by": "", "effects": [], "icon": "",
-		"status": "new", "baseline": false, "open": false,
+		"feature": "", "introduced_by": "", "effects": [{"type": "enable_behaviour", "key": "probabilistic_choice_on"}], "icon": "",
+		"status": "existing", "baseline": false, "open": false,
 	},
 	{
 		# Two ledgers, not one: spendable Points gate every tier-4
