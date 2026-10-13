@@ -70,6 +70,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `absent: scripts/main.gd :: ShortTermGoals`
    - Next after: SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved
 
+2. **[Codex] GD-2b -- the shown ledger and Why history saved with the run**
+   - Plan: `plans/now/guidance-explanations.md` -- "GD-2b -- the shown ledger and Why history saved with the run"
+   - Files: `scripts/guidance_policy.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_gd2b_guidance_saved.py`
+   - Check: `python -m unittest tests.test_gd2b_guidance_saved` passes (an explanation shown before a save is not shown again after loading it, and the Why history survives; an older save loads with an empty ledger); `tools/verify.ps1` is green
+   - Proof: `absent: scripts/save_game.gd :: guidance`
+   - Next after: none -- guidance explanations are complete
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
