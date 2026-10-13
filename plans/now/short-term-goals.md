@@ -1,7 +1,7 @@
 # Short-term goals -- optional outcomes the colony's state suggests
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: SG-1 -- the goal catalogue and its rules, as a standalone module (Codex lane, queued 13 Oct 2026), then SG-2 and SG-3 (Claude lane) | Dependency: SG-2 waits for SG-1, for WP-3 (`plans/now/work-priorities.md`) in Dave's order, and for FC-2 (`plans/now/crisis-readiness.md`, Codex lane) to release the save files; SG-3 waits for SG-2 (GP-2 landed 13 Oct 2026) | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude Code | Next: SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved (Claude lane, gated), then SG-3 | Dependency: SG-2 waits for WP-3 (`plans/now/work-priorities.md`) in Dave's order and for FC-2 (`plans/now/crisis-readiness.md`, Codex lane) to release the save files; SG-3 waits for SG-2 (GP-2 landed 13 Oct 2026) | Verified: 2026-10-13
 
 ## Objective
 
@@ -84,8 +84,7 @@ Verified 13 Oct 2026 against master `06bd26c`:
 | SG-2 | Goals offered, completed and paid in Colony Runs and Scenarios, and saved | `scripts/short_term_goals.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/sg2_short_term_goals.json`, `tests/test_sg2_short_term_goals.py` | no -- after SG-1 and WP-3, and once the Codex lane's FC-2 releases the save files | high |
 | SG-3 | The goals in the Goals drop-down, with progress, reward, star and Dismiss | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/guidance_catalogue.gd`, `test_scenarios/sg3_goal_shelf.json`, `tests/test_sg3_goal_shelf.py` | no -- after SG-2 | medium |
 
-SG-1, then SG-2, then SG-3. SG-1 touches no file either lane holds, so it
-runs in the Codex lane now. SG-2 and SG-3 are Claude lane, after Work
+SG-1 supplies the standalone catalogue and rules. SG-2 and SG-3 are Claude lane, after Work
 Priorities (Dave's order, 13 Oct 2026: tier 3, then short-term goals, then
 Easy); they should land back to back, since SG-2 alone pays rewards the
 player cannot yet see. GP-2 added stars to the drop-down GP-1 built
@@ -94,6 +93,11 @@ Challenge goal shelf's behaviour.
 
 **Reads.** A slice reads its own section only; SG-2 also reads
 `.claude/rules/saving.md`, SG-3 `plans/reference/ui-rules.md`.
+
+## Not in the queue, and why
+
+SG-2 is gated until WP-3 lands in Dave's order and FC-2 releases the save
+files. SG-3 waits for SG-2.
 
 ## SG-1 -- the goal catalogue and its rules, as a standalone module
 
@@ -136,6 +140,15 @@ reference Colony Run records, in this section, how often each goal is
 offered and finished and what it pays, and sets the thresholds to decision
 4's intent. Offered, dismissed and finished goals are saved as an additive
 field; a save without it starts with none.
+
+SG-1's `available(facts, state, day, thresholds, reward_fraction)` returns
+entries for vacant slots. `accept` records one; `dismiss` leaves its slot
+empty until the next day; `progress(entry, facts, state, day, thresholds,
+at_day_change)` records a whole-day condition from a day boundary; `finish`
+removes the entry and returns the reward fixed at offer. Facts add
+`net_daily_income` and `gross_daily_income` resource maps, `built_cells`,
+`winter_coming` and `winter_ready` to the diagnostics snapshot. Thresholds
+are `few_free_cells`, `many_waiting_bees` and `few_waiting_bees`.
 
 ```queue-gated
 **[Claude] SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved**
