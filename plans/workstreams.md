@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/L-26` (`codex/L-26`) | Codex | queue readiness warnings use the refill admission test | Codex | in progress | none | `plans/now/agent-lifecycle.md` L-26 -- queue readiness warnings use the refill admission test |
+| `.worktrees/RR-1` (`claude/RR-1`) | Claude | The queen can build a cell in every run | Claude | in progress | none | `plans/now/run-repairs.md` RR-1 -- the queen can build a cell in every run |
