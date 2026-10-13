@@ -1,0 +1,20 @@
+{
+  "run_type": "colony",
+  "random_seed": 20261013,
+  "cells": 0,
+  "nectar_foragers": 0,
+  "pollen_foragers": 0,
+  "nurses": 0,
+  "builders": 0,
+  "miners": 0,
+  "honey_makers": 0,
+  "winter": true,
+  "actions": [
+    {"do": "assert", "condition": {"queen_build_offered": true}},
+    {"do": "select_bees", "target": {"queen": true}},
+    {"do": "request_placement_tool", "tool": "queen_build_cell"},
+    {"do": "click_world", "comb_hex": [0, 0]},
+    {"do": "assert", "when": {"day_at_least": 2}, "condition": {"built_cells_at_least": 1}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 3}
+}

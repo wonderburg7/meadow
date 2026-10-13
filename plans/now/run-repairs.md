@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-1 -- the queen can build a cell in every run, specified below and admissible now that PP-3 has landed (12 Oct 2026), releasing `scripts/orders_zones.gd` (RR-2 to RR-5 landed; restored from the archive 12 Oct 2026, where RR-5's closeout had sent it with RR-1 unshipped) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: nothing further -- RR-1 to RR-5 have all landed (13 Oct 2026); archive this plan at closeout | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-13
 
 ## Objective
 

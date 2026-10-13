@@ -53,7 +53,7 @@ const LOCAL_WHEN_KEYS := [
 	"food_stores_at_least", "challenge_stage_id", "queen_inside_hive", "queen_load_empty",
 	"queen_watch_hits_at_most", "in_hive_view", "camera_following_queen",
 	"challenge_overflow_discards", "cell_empty", "selected_mine_queue_at_least",
-	"challenge_goal_met",
+	"challenge_goal_met", "queen_build_offered",
 ]
 
 # --- run_pending --------------------------------------------------
@@ -306,6 +306,10 @@ static func _when_met(main: Node2D, when: Dictionary) -> bool:
 		var runner: Node = main.challenge_runner
 		var goal_met: bool = runner.active and runner._goal_met(str(runner._stages()[runner._stage_index].get("goal", "")))
 		if goal_met != bool(when["challenge_goal_met"]):
+			return false
+	if when.has("queen_build_offered"):
+		# RR-1: the Build cell button's flag, as the queen's panel reads it.
+		if main.hud.show_queen_build_button != bool(when["queen_build_offered"]):
 			return false
 	if when.has("queen_inside_hive"):
 		if not is_instance_valid(main.queen) or main.queen._is_inside_hive() != bool(when["queen_inside_hive"]):
@@ -629,13 +633,20 @@ static func _do_request_placement_tool(main: Node2D, action: Dictionary) -> void
 ## Delivers a plain left click at a world point: sets the drag start and end
 ## there and calls input_selection._finish_drag(false), the function a real
 ## mouse release reaches. `x`, `y` are local to the `view` root ("hive" or
-## "meadow"); `soil_hex` [q, r] instead clicks the centre of that soil block.
+## "meadow"); `soil_hex` [q, r] instead clicks the centre of that soil block,
+## and `comb_hex` [q, r] the centre of that comb tile.
 static func _do_click_world(main: Node2D, action: Dictionary) -> void:
 	var point: Vector2
 	if str(action.get("target", "")) == "hive":
 		point = main.hive.global_position
 	elif str(action.get("target", "")) == "hive_exit":
 		point = main.hive_root.to_global(main.hive_entrance_inside())
+	elif action.has("comb_hex"):
+		# RR-1: the centre of a comb tile, [q, r] on the hive's own axial grid.
+		var comb_hex: Array = action["comb_hex"]
+		var comb_local: Vector2 = main.hive.comb_centre + main.Shapes.hex_to_pixel(
+			int(comb_hex[0]), int(comb_hex[1]), GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
+		point = main.hive_root.to_global(comb_local)
 	elif action.has("soil_hex"):
 		var block: Node2D = _resolve_soil_block(main, action["soil_hex"])
 		if block == null:
