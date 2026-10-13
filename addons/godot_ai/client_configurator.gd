@@ -132,6 +132,9 @@ static func prepare_major_upgrade_endpoints(from_version: String, to_version: St
 		return {"ok": false, "error": "EditorSettings is unavailable"}
 	var legacy_http := _read_port_setting(McpSettings.SETTING_HTTP_PORT, DEFAULT_HTTP_PORT)
 	var legacy_ws := _read_port_setting(SETTING_WS_PORT, DEFAULT_WS_PORT)
+	var occupancy := PortResolver.windows_listener_snapshot() if OS.get_name() == "Windows" else {}
+	if OS.get_name() == "Windows" and not occupancy.known:
+		return {"ok": false, "error": "Windows could not query listening ports; retry endpoint selection."}
 	var selected: Array[int] = []
 	var candidate := legacy_http + 1 if legacy_http < MAX_PORT else MIN_PORT
 	candidate = WindowsPortReservation.suggest_non_excluded_port(candidate, MAX_PORT - candidate + 1, MAX_PORT)
@@ -140,17 +143,32 @@ static func prepare_major_upgrade_endpoints(from_version: String, to_version: St
 		candidate = WindowsPortReservation.suggest_non_excluded_port_from_output(reserved_output, candidate, MAX_PORT - candidate + 1, MAX_PORT)
 		if candidate < MIN_PORT or candidate > MAX_PORT:
 			break
-		if candidate not in [legacy_http, legacy_ws] and not selected.has(candidate) and PortResolver.can_bind_local_port(candidate) and not PortResolver.is_port_in_use(candidate):
-			selected.append(candidate)
-			if selected.size() == 2:
-				break
+		if candidate not in [legacy_http, legacy_ws] and not selected.has(candidate) and PortResolver.can_bind_local_port(candidate):
+			var available: bool
+			if OS.get_name() == "Windows":
+				available = PortResolver.windows_port_occupancy(candidate, occupancy) == PortResolver.PortOccupancy.FREE
+			else:
+				available = not PortResolver.is_port_in_use(candidate)
+			if available:
+				selected.append(candidate)
+				if selected.size() == 2:
+					break
 		candidate += 1
 		if candidate > MAX_PORT:
 			candidate = MIN_PORT
 	if selected.size() != 2:
 		return {"ok": false, "error": "No independent HTTP/WebSocket port pair was available for this major upgrade."}
+	if OS.get_name() == "Windows":
+		occupancy = PortResolver.windows_listener_snapshot()
+		if not occupancy.known:
+			return {"ok": false, "error": "Windows could not query listening ports; retry endpoint selection."}
 	for port in selected:
-		if WindowsPortReservation.parse_excluded(reserved_output, port) or not PortResolver.can_bind_local_port(port) or PortResolver.is_port_in_use(port):
+		var available: bool
+		if OS.get_name() == "Windows":
+			available = PortResolver.windows_port_occupancy(port, occupancy) == PortResolver.PortOccupancy.FREE
+		else:
+			available = not PortResolver.is_port_in_use(port)
+		if WindowsPortReservation.parse_excluded(reserved_output, port) or not PortResolver.can_bind_local_port(port) or not available:
 			return {"ok": false, "error": "The selected upgrade port %d became unavailable; retry endpoint selection." % port}
 	var pair := {"http_port": selected[0], "ws_port": selected[1]}
 	es.set_setting(SETTING_V4_ENDPOINT_PORTS, pair)
@@ -535,13 +553,17 @@ static func allow_hosts() -> String:
 ## "free" honest on macOS/Linux, where the reservation table is empty but the
 ## next port up may still be occupied — the same suggestion feeds the dock
 ## crash body, the port-picker spinbox, and the non-recoverable INCOMPATIBLE
-## log line. Falls back to the clamped candidate if nothing in the window
-## clears both checks (caller surfaces it as a best-effort hint; the user can
-## retry or pick another). Best-effort by nature: a TOCTOU window remains
+## log line. Returns zero when discovery fails or no candidate is
+## available. A TOCTOU window remains
 ## between the probe and the caller actually binding the port. The bind probe
 ## is bounded to `SUGGEST_PORT_MAX_PROBES` attempts so this cold path can't
 ## stall on a pathological run of occupied ports.
-static func suggest_free_port(start: int, span: int = 2048) -> int:
+static func suggest_free_port(start: int, span: int = 2048, occupancy: Dictionary = {}) -> int:
+	if OS.get_name() == "Windows":
+		if occupancy.is_empty():
+			occupancy = PortResolver.windows_listener_snapshot()
+		if not occupancy.known:
+			return 0
 	var candidate := clampi(start, MIN_PORT, MAX_PORT - span + 1)
 	var limit := mini(candidate + span - 1, MAX_PORT)
 	var p := candidate
@@ -556,10 +578,11 @@ static func suggest_free_port(start: int, span: int = 2048) -> int:
 			break
 		p = not_reserved
 		probes += 1
-		if PortResolver.can_bind_local_port(p):
+		var occupied := OS.get_name() == "Windows" and PortResolver.windows_port_occupancy(p, occupancy) != PortResolver.PortOccupancy.FREE
+		if not occupied and PortResolver.can_bind_local_port(p):
 			return p
 		p += 1
-	return candidate
+	return 0
 
 
 # --- Client operations (string id) ---------------------------------------
@@ -590,6 +613,12 @@ static func configure(id: String, url: String = "", launch_context: Dictionary =
 	if not client.automatic_config_edits:
 		return _manual_edit_result(client, "configure")
 	var path_error := _config_path_resolution_error(client)
+	if path_error.is_empty():
+		path_error = _config_write_error(client, "configure")
+	if path_error.is_empty():
+		path_error = _config_create_error(client)
+	if path_error.is_empty():
+		path_error = _credentials_error(client)
 	if not path_error.is_empty():
 		return {"status": "error", "message": path_error}
 	## Capture `url` once so a port flip in EditorSettings between write and
@@ -752,6 +781,11 @@ static func warm_env_snapshot(endpoint_policy: Dictionary = {}) -> void:
 		for env_name in [client.get("config_file_env"), client.get("config_home_env")]:
 			if env_name is String and not env_name.is_empty() and not extras.has(env_name):
 				extras.append(env_name)
+		var scope_envs: Variant = client.get("config_scope_envs")
+		if scope_envs is PackedStringArray:
+			for env_name in scope_envs:
+				if not env_name.is_empty() and not extras.has(env_name):
+					extras.append(env_name)
 	McpPathTemplate.warm_env_snapshot(extras)
 	UvResolution.warm_environment()
 	_editor_setting_lookup(MODE_OVERRIDE_SETTING)
@@ -829,6 +863,8 @@ static func remove(id: String, url: String = "", launch_context: Dictionary = {}
 	if not client.automatic_config_edits:
 		return _manual_edit_result(client, "remove")
 	var path_error := _config_path_resolution_error(client)
+	if path_error.is_empty():
+		path_error = _config_write_error(client, "remove")
 	if not path_error.is_empty():
 		return {"status": "error", "message": path_error}
 	if url.is_empty():
@@ -867,6 +903,49 @@ static func _config_path_resolution_error(client: Client) -> String:
 	if client.config_type == "cli":
 		return ""
 	return str(client.resolved_config_path_details().get("error", ""))
+
+
+## Why Configure must not create this client's file although status may still
+## read the path: `create_error` in `McpClient`'s candidate rules. Kept apart
+## from the function above, whose signature `script/local-self-update-smoke`
+## patches by exact match, in release trees as well as this one.
+static func _config_create_error(client: Client) -> String:
+	if client.config_type == "cli":
+		return ""
+	return str(client.resolved_config_path_details().get("create_error", ""))
+
+
+## Why neither Configure nor Remove may touch this client's file: this editor's
+## Flatpak sandbox does not share it with the host (`McpClient.config_write_error`,
+## or the CLI strategy's own rule for a client that writes through its CLI, where
+## Configure and Remove differ). Every strategy refuses on it too; checking here
+## puts the refusal ahead of launcher discovery and the lock.
+static func _config_write_error(client: Client, action: String) -> String:
+	if client.config_type == "cli":
+		if action == "configure":
+			return CliStrategy.configure_write_error(client)
+		return CliStrategy.remove_write_error(client)
+	return client.config_write_error()
+
+
+## Why Configure must not write an attach entry although the client's file is
+## writable: this editor's Flatpak sandbox keeps Godot AI's credentials where
+## the bridge that entry launches does not look. A missing entry is better
+## than one known to be broken. Remove is not held to it.
+static func _credentials_error(client: Client) -> String:
+	if client.command_shape == Client.CommandShape.NONE:
+		return ""
+	if not McpPathTemplate.flatpak_hides_credentials():
+		return ""
+	var app_id := McpPathTemplate.flatpak_app_id()
+	return (
+		"Godot runs in a Flatpak sandbox that keeps Godot AI's credentials to "
+		+ "itself, so the bridge %s starts could not connect and nothing was "
+		+ "changed. Run `flatpak override --user "
+		+ "--filesystem=xdg-config/godot-ai:create %s`, restart Godot, and try "
+		+ "again. docs/steam-capability-directory.md covers the other ways to "
+		+ "share them."
+	) % [client.display_name, app_id if not app_id.is_empty() else "<Godot's Flatpak ID>"]
 
 
 # --- Strategy dispatch + verify (testable seam) --------------------------
@@ -1212,6 +1291,16 @@ static func manual_command(id: String) -> String:
 	)
 	if cmd.is_empty():
 		return cmd
+	## The path above is the one outside Flatpak. When this sandboxed editor
+	## cannot see where a Flatpak build keeps the same file, that may be the
+	## wrong one for this user, and this text is all a refused Configure (or a
+	## manual-only client) leaves them to go on.
+	var hidden_paths: Variant = path_resolution.get("hidden_paths", null)
+	if hidden_paths is PackedStringArray and not hidden_paths.is_empty():
+		cmd += (
+			"\n\nA Flatpak build keeps this file at %s instead. Godot's own Flatpak "
+			+ "sandbox cannot see it, so edit that one if it is the build you use."
+		) % " or ".join(hidden_paths)
 	## #507: when the allow-host opt-in names a non-loopback range, also
 	## surface the LAN URL so the user can copy-paste the right address into
 	## a remote agent. Informational only — configure/remove still WRITE the
@@ -1648,7 +1737,7 @@ static func _is_symlink(path: String) -> bool:
 	return dir.is_link(path)
 
 
-static func get_server_command() -> Array[String]:
+static func get_server_command(trace: Callable = Callable()) -> Array[String]:
 	## `mode_override() == "user"` skips the dev_venv tier even when a nearby
 	## .venv exists — the override then becomes an actual workaround for
 	## the "user venv misidentified as dev checkout" bug, not just a
@@ -1659,7 +1748,7 @@ static func get_server_command() -> Array[String]:
 			print("MCP | using dev venv: %s" % venv_python)
 			return [venv_python, "-m", "godot_ai"]
 
-	var uvx := find_uvx()
+	var uvx := find_uvx(trace)
 	if not uvx.is_empty():
 		var version := get_plugin_version()
 		## PEP 440 local build tags (e.g. 3.0.2+local.1) are not on PyPI.
@@ -1687,7 +1776,7 @@ static func get_server_command() -> Array[String]:
 		cmd.append_array(["--from", "godot-ai==%s" % pypi_version, "godot-ai"])
 		return cmd
 
-	var system_cmd := _find_system_install()
+	var system_cmd := _find_system_install(trace)
 	if not system_cmd.is_empty():
 		print("MCP | using system install: %s" % system_cmd)
 		return [system_cmd]
@@ -1718,8 +1807,8 @@ static func get_server_launch_mode() -> String:
 const PREWARM_TIMEOUT_MS := 180000
 
 
-static func find_uvx() -> String:
-	return CliFinder.find(_uvx_cli_names())
+static func find_uvx(trace: Callable = Callable()) -> String:
+	return CliFinder.find(_uvx_cli_names(), trace)
 
 
 ## Pure argv builder for the pre-warm spawn, split out so tests can pin the
@@ -2057,11 +2146,11 @@ static func find_worktree_src_dir(start_dir: String) -> String:
 ## directly: the finder adds the well-known-install-dirs and login-shell
 ## PATH tiers plus its per-exe cache, and this drops the private
 ## `_pick_best_path` cross-class reach (#711).
-static func _find_system_install() -> String:
+static func _find_system_install(trace: Callable = Callable()) -> String:
 	## Built with append, not a ternary of untyped literals — assigning a
 	## ternary's Array to Array[String] is a runtime error on newer Godot
 	## builds (same idiom as _uvx_cli_names above).
 	var names: Array[String] = ["godot-ai"]
 	if OS.get_name() == "Windows":
 		names.push_front("godot-ai.exe")
-	return CliFinder.find(names)
+	return CliFinder.find(names, trace)
