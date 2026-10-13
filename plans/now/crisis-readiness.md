@@ -49,4 +49,4 @@ file list when it lands; FC-2 stays gated until then.
 
 ## Not in the queue, and why
 
-- **FC-2** waits only for the Claude lane to release `scripts/hud.gd` (T3-2 and GP-4); `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd` and `scripts/scenario_actions.gd` were released 13 Oct 2026, and `scripts/colony_diagnostics.gd` 12 Oct 2026. Recheck its `Files:` line before admitting it.
+- **FC-2** waits only for the Claude lane's GP-4 to release `scripts/hud.gd` (the restocking purchase slice released it 14 Oct 2026); `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd` and `scripts/scenario_actions.gd` were released 13 Oct 2026, and `scripts/colony_diagnostics.gd` 12 Oct 2026. Recheck its `Files:` line before admitting it.

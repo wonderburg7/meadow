@@ -1,7 +1,7 @@
 # Work Priorities -- Hive Mind tier 3: one colony-wide order of fallback jobs
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3 (queued 13 Oct 2026), then WP-2 and WP-3 | Dependency: WP-2 waits for FC-2 (`plans/now/crisis-readiness.md`, Codex lane) to release the save files, and for T3-2 (`plans/archive/tier-three_2026-10-14.md`) in Dave's order | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude Code | Next: WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3 (queued 13 Oct 2026), then WP-2 and WP-3 | Dependency: WP-2 waits for FC-2 (`plans/now/crisis-readiness.md`, Codex lane) to release the save files, and for WP-1 (T3-2 landed 14 Oct 2026) | Verified: 2026-10-13
 
 ## Objective
 
@@ -56,7 +56,7 @@ Verified 13 Oct 2026 against master `06bd26c`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | WP-1 | The catalogue: Work Priorities in Hive Mind tier 3, Cell priority renamed | `scripts/skills.gd`, `tests/test_wp1_work_priorities_node.py` | yes | medium |
-| WP-2 | Owned, each bee follows an ordered backup list; a saved colony default | `scripts/bee.gd`, `scripts/session.gd`, `scripts/skills.gd`, `scripts/orders_zones.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/wp2_backup_order_test.gd`, `tests/test_wp2_backup_order.py` | no -- after WP-1 and T3-2, and once the Codex lane's FC-2 releases the save files | high |
+| WP-2 | Owned, each bee follows an ordered backup list; a saved colony default | `scripts/bee.gd`, `scripts/session.gd`, `scripts/skills.gd`, `scripts/orders_zones.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/wp2_backup_order_test.gd`, `tests/test_wp2_backup_order.py` | no -- after WP-1 (T3-2 landed 14 Oct 2026), and once the Codex lane's FC-2 releases the save files | high |
 | WP-3 | The ordered list in the selection panel and the colony default in the Colony window | `scripts/hud.gd`, `scripts/colony_panel.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `test_scenarios/wp3_backup_order_ui.json`, `tests/test_wp3_backup_order_ui.py` | no -- after WP-2 | medium |
 
 WP-1, then WP-2, then WP-3: each needs the one before. Dave's order (13 Oct
