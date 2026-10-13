@@ -1,7 +1,7 @@
 # Goal presentation -- the four goal layers on screen in a Colony Run
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: GP-1 -- the goals drop-down and the long-term line, queued in the Claude lane behind RR-1, which holds `scripts/hud.gd` first (PP-5 landed 13 Oct 2026) | Dependency: GP-1 → GP-2 → GP-4 (Dave's order, 12 Oct 2026); short-term goals left this plan on 13 Oct 2026 (Dave) for `plans/now/short-term-goals.md` (SG-1 to SG-3), whose SG-3 draws into GP-1's drop-down after GP-2 | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude Code | Next: GP-1 -- the goals drop-down and the long-term line, leading the Claude lane (RR-1 and PP-5 landed 13 Oct 2026) | Dependency: GP-1 → GP-2 → GP-4 (Dave's order, 12 Oct 2026); short-term goals left this plan on 13 Oct 2026 (Dave) for `plans/now/short-term-goals.md` (SG-1 to SG-3), whose SG-3 draws into GP-1's drop-down after GP-2 | Verified: 2026-10-13
 
 ## Objective
 
@@ -51,7 +51,7 @@ Verified 12 Oct 2026 against master `291e5a3`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| GP-1 | Goals drop-down on the right: long-term phase line, milestone, collapse remembered | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/session.gd`, `scripts/player_profile.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/test_gp1_goals_dropdown.py` | yes -- queued behind RR-1 in the same lane (PP-5 landed 13 Oct 2026) | medium |
+| GP-1 | Goals drop-down on the right: long-term phase line, milestone, collapse remembered | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/session.gd`, `scripts/player_profile.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/test_gp1_goals_dropdown.py` | yes -- leads the Claude lane (RR-1 and PP-5 landed 13 Oct 2026) | medium |
 | GP-2 | Favourite goals stay on screen when the drop-down is collapsed; saved | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/test_gp2_goal_favourites.py` | after GP-1 | medium |
 | GP-4 | Problem strip: clicks only on text, 4-line cap, red shown when unstarred, × until it clears | `scripts/hud.gd`, `scripts/problem_messages.gd`, `tests/gp4_problem_strip_test.gd`, `tests/test_gp4_problem_strip.py` | after GP-2 | medium |
 

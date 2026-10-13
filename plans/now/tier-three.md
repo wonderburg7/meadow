@@ -1,7 +1,7 @@
 # Tier three -- skills over behaviour that already ships
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: T3-1 -- Weighted flower choice becomes a purchase, then T3-2 (both queued 13 Oct 2026) | Dependency: none; both run after RR-1, GP-1 and GP-2 in the Claude lane (PP-5 landed 13 Oct 2026) | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude Code | Next: T3-1 -- Weighted flower choice becomes a purchase, then T3-2 (both queued 13 Oct 2026) | Dependency: none; both run after GP-1 and GP-2 in the Claude lane (RR-1 and PP-5 landed 13 Oct 2026) | Verified: 2026-10-13
 
 ## Objective
 
