@@ -1,7 +1,7 @@
 # Work Priorities -- Hive Mind tier 3: one colony-wide order of fallback jobs
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3 (queued 13 Oct 2026), then WP-2 and WP-3 | Dependency: WP-2 waits for FC-2 (`plans/now/crisis-readiness.md`, Codex lane) to release the save files, and for T3-2 (`plans/now/tier-three.md`) in Dave's order | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude Code | Next: WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3 (queued 13 Oct 2026), then WP-2 and WP-3 | Dependency: WP-2 waits for FC-2 (`plans/now/crisis-readiness.md`, Codex lane) to release the save files, and for T3-2 (`plans/archive/tier-three_2026-10-14.md`) in Dave's order | Verified: 2026-10-13
 
 ## Objective
 
@@ -60,7 +60,7 @@ Verified 13 Oct 2026 against master `06bd26c`:
 | WP-3 | The ordered list in the selection panel and the colony default in the Colony window | `scripts/hud.gd`, `scripts/colony_panel.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `test_scenarios/wp3_backup_order_ui.json`, `tests/test_wp3_backup_order_ui.py` | no -- after WP-2 | medium |
 
 WP-1, then WP-2, then WP-3: each needs the one before. Dave's order (13 Oct
-2026) is tier 3 first (`plans/now/tier-three.md` and this plan), then
+2026) is tier 3 first (`plans/archive/tier-three_2026-10-14.md` and this plan), then
 `plans/now/short-term-goals.md`, then `plans/now/difficulty.md`. Do not
 change Backup roles' behaviour for a run that does not own Work Priorities,
 or the queen's nurse-before-laying rule.

@@ -74,7 +74,7 @@ Verified 12 Oct 2026 against master `06bd26c`:
 | ED-3 | Choosing Easy: the Colony Run tile, Relaxed and Custom, and the Saves window | `scripts/main_menu.gd`, `scripts/scenario_presets.gd`, `scripts/main.gd`, `scripts/levels.gd`, `scripts/saves_panel.gd`, `tests/test_ed3_difficulty_choice.py` | no -- after ED-2 | medium |
 
 ED-1, then ED-2, then ED-3: each needs the one before. Dave's order (13 Oct
-2026) puts this plan last: tier 3 (`plans/now/tier-three.md`,
+2026) puts this plan last: tier 3 (`plans/archive/tier-three_2026-10-14.md`,
 `plans/now/work-priorities.md`), then `plans/now/short-term-goals.md`, then
 Easy. ED-1 changes Standard in one way only, exhaustion (decision 5);
 nothing else Standard does may change. Challenges stay Standard.
