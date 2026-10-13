@@ -56,12 +56,12 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] L-25 -- verify and prefinish refuse to check a different checkout**
-   - Plan: `plans/now/codex-guidance.md` -- "L-25 -- verify and prefinish refuse to check a different checkout"
-   - Files: `tools/verify.ps1`, `tools/prefinish.py`, `tests/test_wrong_checkout_guard.py`
-   - Check: `python -m unittest tests.test_wrong_checkout_guard` passes, showing both scripts refuse when run from another worktree and run normally from their own; `tools/verify.ps1` is green
-   - Proof: `absent: tools/prefinish.py :: different checkout`
-   - Next after: none -- Codex guidance is complete
+1. **[Codex] L-26 -- queue readiness warnings use the refill admission test**
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-26 -- queue readiness warnings use the refill admission test"
+   - Files: `tools/check_docs.py`, `tests/test_queue_lookahead.py`
+   - Check: `python -m unittest tests.test_queue_lookahead` passes, proving the warning omits an overlapping block and names an admissible block; `python tools/check_docs.py` no longer claims GD-2b is offered while PP-5 owns its save files; `tools/verify.ps1` is green
+   - Proof: `absent: tools/check_docs.py :: def refill_ready_ids`
+   - Next after: GD-2b -- the shown ledger and Why history saved with the run, after PP-5 releases its save files
 
 ## Not in the queue, and why
 
