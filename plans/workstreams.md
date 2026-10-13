@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/T3-2` (`claude/T3-2`) | Claude | Restocking becomes a purchase | Claude | in progress | none | `plans/now/tier-three.md` T3-2 -- Restocking becomes a purchase |
+| `.worktrees/SG-1` (`codex/SG-1`) | Codex | the goal catalogue and its rules, as a standalone module | Codex | in progress | none | `plans/now/short-term-goals.md` SG-1 -- the goal catalogue and its rules, as a standalone module |
