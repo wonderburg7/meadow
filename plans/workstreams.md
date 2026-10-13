@@ -46,5 +46,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.claude/worktrees/run-queue-8-30915a` (`claude/run-queue-8-30915a`) | Claude (docs only) | short-term-goals Status line no longer trips the terminal-plan check | Claude Code | active | none | queue steward |
 | `.worktrees/WP-1` (`claude/WP-1`) | Claude | the catalogue: Work Priorities in Hive Mind tier 3 | Claude | in progress | none | `plans/now/work-priorities.md` WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3 |
