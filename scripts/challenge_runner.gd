@@ -508,7 +508,7 @@ func _enter_stage() -> void:
 		Availability.invalidate()
 	_apply_stage_gate_to_ui()
 	_show_goal(stage)
-	main.hud.set_queen_build_button_visible(Session.starting_level == 1)
+	main.hud.set_queen_build_button_visible(true)
 	if stage.id == "1.4":
 		_begin_ordered_visit(_hive_inspection_points(), main.hive_root)
 	elif stage.id == "1.7":
@@ -798,7 +798,6 @@ func _complete() -> void:
 	main.stage_gate.stop()
 	_apply_stage_gate_to_ui()
 	main.hud.set_challenge_goal("")
-	main.hud.set_queen_build_button_visible(false)
 	if _marker != null and is_instance_valid(_marker):
 		_set_marker_visible(false)
 	if is_instance_valid(main.queen):
@@ -832,29 +831,25 @@ func _complete() -> void:
 			main.day, bees, main.hive.total("nectar"), main.hive.total("pollen"),
 		)
 
-## Challenge 1 only -- the queen's panel shows a direct "Build cell"
+## Every run -- the queen's panel shows a direct "Build cell"
 ## button during its manual-build stages instead of the usual
 ## assign-role-then-click-a-spot
 ## flow (see hud.gd's set_queen_build_button_visible).
 ##
 ## The button arms the "queen_build_cell" placement tool (see
-## input_selection.gd::PLACEMENT_TOOLS), a Challenge-only player placement
-## mode. The queen keeps her real role: TO_BUILD_SITE and BUILDING work from
+## input_selection.gd::PLACEMENT_TOOLS), a player placement
+## mode (outside a Challenge, orders_zones.gd::queen_build_at). The queen keeps her real role: TO_BUILD_SITE and BUILDING work from
 ## target_cell, while assigning BUILDER would make idle dispatch auto-start
 ## another build after this one.
 
 # --- the queen's build site ---------------------------------------
 func on_queen_build_site_chosen(hex: Vector2i) -> void:
-	if not is_instance_valid(main.queen) or not main.hive.can_build_on(hex):
-		return
-	var site: Node2D = main.hive.create_cell_site_at(hex)
+	var site: Node2D = main.orders_zones.queen_build_at(hex)
 	if site == null:
 		return
 	site.build_time_override = Stages.FAST_BUILD_TIME
 	if Session.starting_level == 1:
 		site.nectar_capacity_override = Stages.C1_NECTAR_CELL_CAPACITY
-	main.queen.target_cell = site
-	main.queen.state = main.Bee.State.TO_BUILD_SITE
 
 # --- gating the UI ------------------------------------------------
 ## Pushes the current stage_gate state into hud.gd, rather than hud.gd

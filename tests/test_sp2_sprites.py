@@ -168,6 +168,14 @@ class ExporterTests(RepoFixture):
         self.assertEqual(self.run_tool(), 0)
         self.assertFalse((self.sprites / "comb" / "thing_sheet.png").exists())
 
+    def test_menu_is_a_view_and_other_names_are_not(self):
+        (self.sprites / "comb" / "thing.aseprite").write_bytes(b"not parsed")
+        self.write_table("| thing | comb/thing.aseprite | x | menu | unexported | 1 | - | - | - |")
+        self.assertEqual(self.run_tool(), 0, self.out)
+        self.write_table("| thing | comb/thing.aseprite | x | toolbar | unexported | 1 | - | - | - |")
+        self.assertEqual(self.run_tool(), 1)
+        self.assertTrue(any("view 'toolbar'" in line for line in self.out), self.out)
+
     def test_png_round_trip(self):
         img = sprites.Image(2, 1, bytearray(RED + CLEAR))
         back = sprites.decode_png(sprites.encode_png(img))

@@ -277,6 +277,11 @@ var hatch_automine: bool = false
 ## than a worker. Costs her far more pollen and takes several times as
 ## long to raise, so it's a deliberate choice per cell.
 var hatch_gyne: bool = false
+## PP-5. Set from the cell popup's "Feed first" box once Priority cells is
+## owned: nurses choosing a hungry larva take one in a marked cell before any
+## other (bee_nursery.gd::choose_brood_cell). A setting of the cell, like
+## hatch_gyne, so it outlasts the larva in it. Saved; false in an older save.
+var priority_cell: bool = false
 ## When false the role applies to the next bee only and then clears, so a
 ## one-off choice doesn't quietly govern the cell forever. The popup's
 ## "Keep for every bee" button pins it.

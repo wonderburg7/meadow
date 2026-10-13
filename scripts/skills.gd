@@ -310,7 +310,7 @@ const SKILLS := [
 		"max_rank": 1, "cost": {BEE_BREAD: 12, HONEY: 40, NECTAR: 120},
 		"requires_previous_tier": true, "all_of": [NURSES], "any_of": [],
 		"feature": "", "introduced_by": "", "effects": [], "icon": "",
-		"status": "new", "baseline": false, "open": false,
+		"status": "existing", "baseline": false, "open": false,
 	},
 	{
 		# The one tier-4 recipe that still names royal jelly directly.

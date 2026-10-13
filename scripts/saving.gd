@@ -214,6 +214,8 @@ func _restore_cells(cells: Array) -> void:
 		cell.hatch_automine = bool(entry.get("hatch_automine", false))
 		cell.hatch_role_locked = bool(entry.get("hatch_locked", false))
 		cell.hatch_gyne = bool(entry.get("hatch_gyne", false))
+		# PP-5, additive: a save from before PP-5 marks no cell.
+		cell.priority_cell = bool(entry.get("priority_cell", false))
 		cell.nursery_priority = int(entry.get("priority", 1))
 		cell.is_closed = bool(entry.get("closed", false))
 		cell.fill_then_close = bool(entry.get("fill_close", false))

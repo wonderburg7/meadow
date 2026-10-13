@@ -416,7 +416,11 @@ func _place_build_cell(global_point: Vector2, keep_adding: bool) -> void:
 			b.set_manual_build_target(hex)
 
 func _place_queen_build_cell(global_point: Vector2, _keep_adding: bool = false) -> void:
-	main.challenge_runner.on_queen_build_site_chosen(_hex_at(global_point))
+	var hex: Vector2i = _hex_at(global_point)
+	if main.challenge_runner.active:
+		main.challenge_runner.on_queen_build_site_chosen(hex)
+	else:
+		main.orders_zones.queen_build_at(hex)
 
 func _place_mine_target(global_point: Vector2, keep_adding: bool) -> void:
 	var block = _soil_at(global_point)

@@ -10,6 +10,10 @@ const Role = BeeEnums.Role
 const State = BeeEnums.State
 const BeeForaging = preload("res://scripts/bee_foraging.gd")
 const Resources = preload("res://scripts/resources.gd")
+## PP-5. skills.gd::PRIORITY_CELLS, spelt out: only the files in
+## source_checks.py's CATALOGUE_READERS may preload skills.gd, and
+## progression.gd answers whether it is owned.
+const PRIORITY_CELLS_SKILL := "skill.brood.priority_cells"
 
 ## BB-2. A nurse that cannot get at the ripe bee bread -- every wall of the
 ## cell taken, or the walk there not done in BEE_BREAD_ERRAND_SECONDS --
@@ -69,11 +73,98 @@ static func nurse_tend(bee: Node2D, _delta: float) -> void:
 		bee.state = State.NURSE_IDLE
 		return
 
-	var other = bee.hive.find_brood_cell()
+	var other = choose_brood_cell(bee)
 	if other != null and other != bee.target_cell and other.needs_feeding():
 		BeeForaging.release_cell_slot(bee)
 		bee.target_cell = other
 		bee.state = State.TO_BROOD
+
+
+## PP-5. Is Priority cells owned this run? Without it no cell can be marked
+## (orders_zones.gd::_on_cell_feed_first_requested) and no mark is honoured.
+## A boot with no progression at all allows it, as the gyne mark does.
+static func priority_cells_owned() -> bool:
+	return Session.progression == null or Session.progression.is_owned(PRIORITY_CELLS_SKILL)
+
+
+## The larva a nurse goes to: the hungriest one that needs feeding, else any
+## brood at all (hive.gd::find_brood_cell's rule; the earlier cell wins a
+## tie). PP-5: with Priority cells owned, a hungry larva in a cell marked
+## "Feed first" comes before every unmarked one, whatever food it takes --
+## so long as this nurse can feed it now or fetch what it needs
+## (_can_serve). A marked larva she can do nothing for, a gyne with no royal
+## jelly anywhere, say, keeps only today's place among the unmarked, so it
+## cannot hold her while larvae she could feed starve. One pass over the
+## brood; the ownership is looked up once and the food only when a marked
+## larva is hungry, because a tending nurse asks every frame.
+static func choose_brood_cell(bee: Node2D) -> Node2D:
+	var honour_marks: bool = priority_cells_owned()
+	var hungriest: Node2D = null
+	var hungriest_at := -1
+	# What a nurse can feed depends only on whether the larva is a gyne, so
+	# the hungriest marked larva of each kind stands for the rest of it.
+	var marked_worker: Node2D = null
+	var marked_worker_at := -1
+	var marked_gyne: Node2D = null
+	var marked_gyne_at := -1
+	var any_brood: Node2D = null
+	var at := -1
+	for cell in bee.hive.cells_holding("brood"):
+		at += 1
+		if any_brood == null:
+			any_brood = cell
+		if not cell.needs_feeding():
+			continue
+		if honour_marks and cell.priority_cell:
+			if cell.brood_is_gyne:
+				if _hungrier(marked_gyne, marked_gyne_at, cell, at):
+					marked_gyne = cell
+					marked_gyne_at = at
+			elif _hungrier(marked_worker, marked_worker_at, cell, at):
+				marked_worker = cell
+				marked_worker_at = at
+		elif _hungrier(hungriest, hungriest_at, cell, at):
+			hungriest = cell
+			hungriest_at = at
+	var first: Node2D = null
+	var first_at := -1
+	if marked_worker != null:
+		if _can_serve(bee, marked_worker):
+			first = marked_worker
+			first_at = marked_worker_at
+		elif _hungrier(hungriest, hungriest_at, marked_worker, marked_worker_at):
+			hungriest = marked_worker
+			hungriest_at = marked_worker_at
+	if marked_gyne != null:
+		if _can_serve(bee, marked_gyne):
+			if _hungrier(first, first_at, marked_gyne, marked_gyne_at):
+				first = marked_gyne
+				first_at = marked_gyne_at
+		elif _hungrier(hungriest, hungriest_at, marked_gyne, marked_gyne_at):
+			hungriest = marked_gyne
+			hungriest_at = marked_gyne_at
+	if first != null:
+		return first
+	return hungriest if hungriest != null else any_brood
+
+
+## PP-5. Does `cell` (at position `cell_at` in the brood list) beat `best`
+## (at `best_at`)? Less food left wins; the earlier cell wins a tie.
+static func _hungrier(best: Node2D, best_at: int, cell: Node2D, cell_at: int) -> bool:
+	if best == null or cell.brood_fed_seconds < best.brood_fed_seconds:
+		return true
+	return cell.brood_fed_seconds == best.brood_fed_seconds and cell_at < best_at
+
+
+## PP-5. Could this nurse feed that larva now, or start an errand that gets
+## her what it needs (nurse_restock_errand: a trip to the stores, or a
+## jelly batch of her own when she is not on feeding only)?
+static func _can_serve(bee: Node2D, cell: Node2D) -> bool:
+	var for_gyne: bool = cell.brood_is_gyne
+	var bread: Node2D = null if for_gyne else bee_bread_source(bee)
+	if can_feed(bee, cell, bread) or restock_possible(bee, for_gyne, bread):
+		return true
+	return for_gyne and bee.nurse_mode != "feed" and _can_make_jelly(bee)
 
 
 ## Drops a meal into the cell. Larvae don't develop at all on their own
@@ -245,7 +336,7 @@ static func _can_make_jelly(bee: Node2D) -> bool:
 
 ## Catalogue finders all take one bee and return whether they started work.
 static func find_brood_cell(bee: Node2D) -> bool:
-	var brood = bee.hive.find_brood_cell()
+	var brood = choose_brood_cell(bee)
 	if brood == null or (bee.role != Role.NURSERY and not brood.needs_feeding()):
 		return false
 	if brood.needs_feeding():

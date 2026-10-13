@@ -22,6 +22,7 @@ const UiLayout = preload("res://scripts/ui_layout.gd")
 const UiPanelLayout = preload("res://scripts/ui_panel_layout.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 const Stages = preload("res://scripts/challenge_stages.gd")
+const BeeNursery = preload("res://scripts/bee_nursery.gd")
 
 # --- signals ------------------------------------------------------
 signal role_requested(role_name: String)
@@ -51,12 +52,14 @@ signal cell_keep_empty_requested(cell: Node2D, keep_empty: bool)
 signal cell_empty_by_bee_requested(cell: Node2D)
 ## Whether the queen lays a gyne into this cell rather than a worker.
 signal cell_gyne_requested(cell: Node2D, as_gyne: bool)
+## PP-5: nurses feed a hungry larva in this cell before any unmarked one.
+signal cell_feed_first_requested(cell: Node2D, feed_first: bool)
 ## "Click a spot" modes -- main.gd arms the named tool from
 ## input_selection.gd::PLACEMENT_TOOLS and consumes the next click in the
 ## relevant view instead of treating it as a normal select/drag. "Work from
 ## here" for comb workers (`home_cell`) applies to one bee only, even if several
 ## are selected; `home_cell_all` is the colony-wide version. `queen_build_cell`
-## is Challenge 1's direct button in the queen's panel (see
+## is the direct button in the queen's panel (see
 ## set_queen_build_button_visible).
 signal placement_tool_requested(tool_id: String)
 ## Restocking. The currently selected comb becomes the cells this
@@ -330,8 +333,8 @@ var _stage_gate = null
 ## keys ("nectar", "pollen", "honey", "jelly", "brood", "any" for
 ## Unreserve). Empty means no restriction. See set_allowed_designation_keys.
 var allowed_designation_keys: Array = []
-## Challenge 1 only -- see set_queen_build_button_visible.
-var show_queen_build_button: bool = false
+## Every run -- see set_queen_build_button_visible.
+var show_queen_build_button: bool = true
 ## Stage-gated controls (F2s). `_gate_controls` maps an
 ## Availability.UI_GATES control name to a Callable returning that control
 ## -- a Callable, not the node, because some controls are rebuilt -- and
@@ -463,6 +466,9 @@ var clear_fermented_btn: Button
 var hatch_lock_box: CheckBox
 var gyne_box: CheckBox
 var gyne_row: HBoxContainer
+## PP-5: the "Feed first" box, shown only once Priority cells is owned.
+var feed_first_box: CheckBox
+var feed_first_row: HBoxContainer
 ## COL-7: a single selected gyne's "Send her to found a colony" button, built
 ## by _build_gyne_send_row and kept current by _refresh_selection_text.
 ## Null whenever no gyne is shown.
@@ -1708,6 +1714,22 @@ func _build_raises_controls(column: VBoxContainer) -> void:
 	gyne_row.add_child(_info("A gyne is a future queen. She costs the queen several times as much pollen to lay, takes four times as long to develop, and can only be fed on royal jelly with pollen and honey -- so you need nurses producing jelly before one will grow at all. She can do any worker job in the meantime, though she is bigger, slower and hungrier than a worker."))
 	lock_row.add_child(_info("On: every bee this cell ever raises comes out in the chosen role, so you can earmark a cell as a builder nursery once and forget about it. Off: the role applies to the next bee only and then clears, so a one-off choice doesn't quietly govern the cell forever."))
 
+	# PP-5: nurses come to the larva here before any unmarked one.
+	feed_first_row = HBoxContainer.new()
+	feed_first_row.name = "feed_first_row"
+	column.add_child(feed_first_row)
+	feed_first_box = CheckBox.new()
+	_style_button(feed_first_box)
+	feed_first_box.text = "Feed first"
+	feed_first_box.theme_type_variation = "Small"
+	feed_first_box.toggled.connect(func(pressed: bool):
+		if active_cell and is_instance_valid(active_cell):
+			cell_feed_first_requested.emit(active_cell, pressed)
+			_refresh_cell_popup()
+	)
+	feed_first_row.add_child(feed_first_box)
+	feed_first_row.add_child(_info("Nurses feed a hungry larva in a marked cell before any unmarked one, whatever food it takes, so scarce food goes where you want it. Marked larvae share it among themselves the way unmarked ones do: the hungriest first."))
+
 ## Sealing a cell. A colony with honey in it drinks the honey; this is
 ## how you set some aside for a hard stretch instead.
 func _build_closing_controls(column: VBoxContainer) -> void:
@@ -2156,6 +2178,8 @@ func _refresh_cell_popup() -> void:
 	state_lines.append("Takes: %s" % reserved)
 	if active_cell.is_nursery_cell():
 		state_lines.append("Nursery — %s priority" % ["low", "medium", "high"][clampi(active_cell.nursery_priority, 0, 2)])
+	if active_cell.priority_cell and BeeNursery.priority_cells_owned():
+		state_lines.append("Fed first — nurses come here before unmarked brood")
 	if active_cell.is_closed:
 		state_lines.append("Sealed — nothing goes in or comes out")
 	elif active_cell.fill_then_close:
@@ -2189,6 +2213,7 @@ func _refresh_cell_popup() -> void:
 	keep_empty_box.set_pressed_no_signal(active_cell.keep_empty)
 	hatch_lock_box.set_pressed_no_signal(active_cell.hatch_role_locked)
 	gyne_box.set_pressed_no_signal(active_cell.hatch_gyne)
+	feed_first_box.set_pressed_no_signal(active_cell.priority_cell)
 	_light_current_options()
 	_apply_cell_popup_gating()
 	# Same ordering as show_object_summary: the cog kind was set before this
@@ -2222,6 +2247,8 @@ func _apply_cell_popup_gating() -> void:
 		hatch_locked_note.visible = not any_raise_option
 	if gyne_row != null:
 		gyne_row.visible = allowed_role_keys.is_empty()
+	if feed_first_row != null:
+		feed_first_row.visible = BeeNursery.priority_cells_owned()
 	if lock_row != null:
 		lock_row.visible = _is_gate_open("lock_row")
 
@@ -2832,7 +2859,7 @@ func _rebuild_role_controls(bees: Array) -> void:
 	more_panel.visible = more_button.button_pressed
 	_update_command_tray_width()
 
-## Challenge 1 only -- see set_queen_build_button_visible. It is a primary
+## Every run -- see set_queen_build_button_visible. It is a primary
 ## Job-column action so the manual placement lesson never hides behind More….
 func _build_queen_build_row(column: VBoxContainer) -> void:
 	var button := Button.new()
@@ -3651,10 +3678,10 @@ func set_allowed_designation_keys(keys: Array) -> void:
 	if active_cell != null and is_instance_valid(active_cell) and cell_group != null and cell_group.visible:
 		_apply_cell_popup_gating()
 
-## Challenge 1's 1.3 replaces the usual "assign Comb worker, then click a
+## Every run offers the queen a direct build button; Challenge 1's 1.3 replaces the usual "assign Comb worker, then click a
 ## spot" flow with one direct button in the queen's own panel -- see
 ## TUTORIAL_PLAN.md. Only ever shown for the queen, one bee selected.
-## Not a stage gate: it follows the Challenge 1 run and the selection, not
+## Not a stage gate: it follows the selection, not
 ## a stage_gate key, so it stays outside Availability.UI_GATES.
 func set_queen_build_button_visible(value: bool) -> void:
 	show_queen_build_button = value
