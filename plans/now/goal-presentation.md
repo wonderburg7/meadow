@@ -1,7 +1,7 @@
 # Goal presentation -- the four goal layers on screen in a Colony Run
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: GP-1 -- the goals drop-down and the long-term line, in the Claude backlog behind PP-5 and RR-1, which hold `scripts/hud.gd` first | Dependency: GP-1 → GP-2 → GP-4 (Dave's order, 12 Oct 2026); short-term goals left this plan on 13 Oct 2026 (Dave) for `plans/now/short-term-goals.md` (SG-1 to SG-3), whose SG-3 draws into GP-1's drop-down after GP-2 | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude Code | Next: GP-2 -- favourite goals stay on screen when the drop-down is collapsed (GP-1 built 13 Oct 2026) | Dependency: GP-1 → GP-2 → GP-4 (Dave's order, 12 Oct 2026); short-term goals left this plan on 13 Oct 2026 (Dave) for `plans/now/short-term-goals.md` (SG-1 to SG-3), whose SG-3 draws into GP-1's drop-down after GP-2 | Verified: 2026-10-13
 
 ## Objective
 
@@ -51,7 +51,6 @@ Verified 12 Oct 2026 against master `291e5a3`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| GP-1 | Goals drop-down on the right: long-term phase line, milestone, collapse remembered | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/session.gd`, `scripts/player_profile.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/test_gp1_goals_dropdown.py` | yes -- behind PP-5 and RR-1 in the same lane | medium |
 | GP-2 | Favourite goals stay on screen when the drop-down is collapsed; saved | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/test_gp2_goal_favourites.py` | after GP-1 | medium |
 | GP-4 | Problem strip: clicks only on text, 4-line cap, red shown when unstarred, × until it clears | `scripts/hud.gd`, `scripts/problem_messages.gd`, `tests/gp4_problem_strip_test.gd`, `tests/test_gp4_problem_strip.py` | after GP-2 | medium |
 
@@ -110,46 +109,7 @@ Dave, 12 Oct 2026, in the session that wrote this plan:
    problem clears, then returns if the problem comes back. This is not
    saved: a load shows the current warnings fresh.
 
-## GP-1 -- the goals drop-down and the long-term line
-
-<!-- LAYER: immediate-task -->
-
-**True now.** See "Current state". The shelf is `hud.gd`'s `goal_shelf`
-(`current_goal_label`, `completed_goal_label`, `goal_progress_row`), fed only
-through `set_challenge_goal`.
-
-**When done.** In a Colony Run the shelf is decision 2's drop-down. A
-"Goals" header button toggles it. Expanded, it shows decision 3's long-term
-line above the next milestone and the last milestone met. Collapsed, it
-shows the header alone. `Session.goals_collapsed` holds the state and
-`player_profile.gd` persists it beside `pinned_stats`. `colony_milestones.gd`
-builds the lines and refreshes them on every `evaluate()` from a day change,
-not only when a milestone is newly met. It hands them to `hud.gd` through a
-Colony-Run setter whose entries carry an `id` (`"long_term"` or the
-milestone id) so GP-2 can star them. Challenges still call
-`set_challenge_goal` and see no header.
-
-**Must not change.** Milestone conditions and recorded days; the victory
-rule; the Challenge shelf.
-
-**Layout.** The shelf is anchored top right. Collapsing or expanding changes
-its rectangle, so the test asserts that it stays inside the viewport at
-`ui_layout.gd`'s `MIN_SUPPORTED_WIDTH`, expanded and collapsed
-(`plans/reference/ui-rules.md`, "A slice that changes a persistent panel's
-rectangle ships the deterministic assertion").
-
-**Hands-on (Dave).** Start a Colony Run from the menu. Collapse and expand
-the Goals drop-down. Pass the winter-countdown day with fast-forward and see
-the long-term line change. Quit and restart, and see the collapsed state kept.
-
-```queue
-**[Claude] GP-1 -- The goals drop-down and the long-term line**
-- Plan: `plans/now/goal-presentation.md` -- "GP-1 -- the goals drop-down and the long-term line"
-- Files: `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/session.gd`, `scripts/player_profile.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/test_gp1_goals_dropdown.py`
-- Check: `python -m unittest tests.test_gp1_goals_dropdown` passes (in a Colony Run the shelf shows a Goals header, the long-term line for each phase and the next milestone; collapsed it shows the header alone and stays inside the viewport at the minimum width; the collapsed state survives a profile reload; a Challenge's shelf is unchanged); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/session.gd :: goals_collapsed`
-- Next after: GP-2 -- favourite goals stay on screen when the drop-down is collapsed
-```
+GP-1 shipped 2026-10-13; its specification is `plans/archive/GP-1_2026-10-13.md`.
 
 ## GP-2 -- favourite goals
 
