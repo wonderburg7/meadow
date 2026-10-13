@@ -116,7 +116,7 @@ const COMB_WORKER := "skill.colony.comb_worker"
 const MINER := "skill.colony.miner"
 const FERMENTATION_SENSE := "skill.colony.fermentation_sense"
 const RESTOCKING := "skill.colony.restocking"
-const WORK_PRIORITIES := "skill.colony.work_priorities"
+const CELL_PRIORITY := "skill.colony.cell_priority"
 
 const THREAT_DETECTION := "skill.defence.threat_detection"
 const ALARM_PHEROMONE := "skill.defence.alarm_pheromone"
@@ -135,7 +135,7 @@ const AUTOMATION := "skill.hive_mind.automation"
 const CLEANING := "skill.hive_mind.cleaning"
 const SHIVER_CLUSTER := "skill.hive_mind.shiver_cluster"
 const ADJUSTMENT_PANEL := "skill.hive_mind.adjustment_panel"
-const EXTENDED_BACKUP_ROLES := "skill.hive_mind.extended_backup_roles"
+const WORK_PRIORITIES := "skill.hive_mind.work_priorities"
 const CHEMICAL_CASCADE := "skill.hive_mind.chemical_cascade"
 const STANDING_INSTRUCTIONS := "skill.hive_mind.standing_instructions"
 
@@ -556,8 +556,8 @@ const SKILLS := [
 		"status": "new", "baseline": false, "open": false,
 	},
 	{
-		"id": EXTENDED_BACKUP_ROLES, "name": "Extended backup roles",
-		"description": "Order a bee's fallback jobs by priority instead of naming a single one.",
+		"id": WORK_PRIORITIES, "name": "Work priorities",
+		"description": "Give a bee an ordered list of jobs to fall back on, not just one",
 		"sector": "hive_mind", "tier": 3, "axial": Vector2i(-6, -1),
 		"max_rank": 1, "cost": {BEE_BREAD: 10, HONEY: 35, NECTAR: 120},
 		"requires_previous_tier": true, "all_of": [BACKUP_ROLES], "any_of": [],
@@ -588,7 +588,7 @@ const SKILLS := [
 		"status": "baseline", "baseline": true, "open": false,
 	},
 	{
-		"id": WORK_PRIORITIES, "name": "Work priorities",
+		"id": CELL_PRIORITY, "name": "Cell priority",
 		"description": "Cells, zones and orders can be given priority over one another.",
 		"sector": "colony", "tier": 0, "axial": Vector2i(0, 0),
 		"max_rank": 1, "cost": {},
@@ -644,7 +644,7 @@ static func is_baseline(skill_id: String) -> bool:
 const CUT_FROM_ALPHA := [
 	"skill.defence.guard_bee", "skill.defence.combat", "skill.defence.auto_defence",
 	"skill.foraging.nectar_robbing", "skill.brood.drones", "skill.defence.medicine",
-	"skill.hive_mind.adjustment_panel", "skill.hive_mind.extended_backup_roles",
+	"skill.hive_mind.adjustment_panel",
 	"skill.hive_mind.chemical_cascade",
 ]
 
