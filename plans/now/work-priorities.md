@@ -55,7 +55,6 @@ Verified 13 Oct 2026 against master `06bd26c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| WP-1 | The catalogue: Work Priorities in Hive Mind tier 3, Cell priority renamed | `scripts/skills.gd`, `tests/test_wp1_work_priorities_node.py` | yes | medium |
 | WP-2 | Owned, each bee follows an ordered backup list; a saved colony default | `scripts/bee.gd`, `scripts/session.gd`, `scripts/skills.gd`, `scripts/orders_zones.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/wp2_backup_order_test.gd`, `tests/test_wp2_backup_order.py` | no -- after WP-1 (T3-2 landed 14 Oct 2026), and once the Codex lane's FC-2 releases the save files | high |
 | WP-3 | The ordered list in the selection panel and the colony default in the Colony window | `scripts/hud.gd`, `scripts/colony_panel.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `test_scenarios/wp3_backup_order_ui.json`, `tests/test_wp3_backup_order_ui.py` | no -- after WP-2 | medium |
 
@@ -73,28 +72,7 @@ then, its sweep prices Work Priorities too.
 `.claude/rules/saving.md` and `.claude/rules/simulation.md`, WP-3
 `plans/reference/ui-rules.md`.
 
-## WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3
-
-<!-- LAYER: immediate-task -->
-
-**Change.** `skills.gd`: a new `WORK_PRIORITIES`
-(`skill.hive_mind.work_priorities`, "Work priorities", description "Give a
-bee an ordered list of jobs to fall back on, not just one") takes Extended
-backup roles' slot -- tier 3, axial `(-6, -1)`, `all_of` Backup roles, its
-recipe -- with status `new`, so the tree shows it as not yet built until
-WP-2. Extended backup roles leaves the catalogue and `CUT_FROM_ALPHA`. The
-tier-0 baseline becomes `CELL_PRIORITY` (`skill.colony.cell_priority`,
-"Cell priority"). The catalogue, grid and reachability source checks pass
-unchanged.
-
-```queue
-**[Claude] WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3**
-- Plan: `plans/now/work-priorities.md` -- "WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3"
-- Files: `scripts/skills.gd`, `tests/test_wp1_work_priorities_node.py`
-- Check: `python -m unittest tests.test_wp1_work_priorities_node` passes (Work priorities is a Hive Mind tier-3 node at Extended backup roles' old slot, needs Backup roles, and reads as not yet built; no Extended backup roles entry remains; the tier-0 baseline is Cell priority); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/skills.gd :: skill.hive_mind.work_priorities`
-- Next after: WP-2 -- owned, each bee follows an ordered backup list
-```
+WP-1 shipped 2026-10-14; its specification is `plans/archive/WP-1_2026-10-14.md`.
 
 ## WP-2 -- owned, each bee follows an ordered backup list
 
