@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-5 -- Priority cells: marked brood cells are fed first, then PP-6 (PP-4 landed 12 Oct 2026: a flower that set seed replants its own species nearby, the year's seed weights spring regrowth, and saves carry a `seed_bank` record and each flower's lifespan; PP-2 landed 12 Oct 2026, its hands-on check is C-129); PP-3 landed 12 Oct 2026, releasing `orders_zones.gd` for PP-5 | Dependency: none left for PP-5 or PP-6 beyond the slices before them; AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter (PP-5 landed 13 Oct 2026: once Priority cells is owned, the cell popup's "Feed first" box marks a brood cell, nurses feed a hungry larva there before any unmarked one, and saves carry each cell's `priority_cell`; PP-4 landed 12 Oct 2026: a flower that set seed replants its own species nearby, the year's seed weights spring regrowth, and saves carry a `seed_bank` record and each flower's lifespan; PP-2 landed 12 Oct 2026, its hands-on check is C-129) | Dependency: none left for PP-6; AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-13
 
 ## Objective
 
@@ -30,7 +30,8 @@ Verified 10 Oct 2026 against master:
   both skills from the start.
 - Brood tier 4 opens only when every Brood tier-3 node is owned
   (`progression.gd::branch_tier_open`): Royal jelly and Priority cells.
-  Priority cells has no behaviour. An unbuilt node can still be bought.
+  Priority cells had no behaviour until PP-5 (13 Oct 2026), which gave it
+  the "Feed first" mark. An unbuilt node can still be bought.
 - Non-Colony runs already own Shiver Cluster from the start
   (`run_availability.gd`); that is the pattern for owning a skill by run
   type.
@@ -48,8 +49,7 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-5 | Priority cells: marked brood cells are fed first | `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- PP-3 released `orders_zones.gd` (12 Oct 2026) | high |
-| PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after PP-5 (PP-1 to PP-4 and T2-7 landed 11-12 Oct 2026) | medium |
+| PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | yes -- PP-5 landed 13 Oct 2026 (PP-1 to PP-4 and T2-7 landed 11-12 Oct 2026) | medium |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
 once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
@@ -73,32 +73,13 @@ PP-2 shipped 2026-10-12; its specification is `plans/archive/PP-2_2026-10-12.md`
 
 PP-4 shipped 2026-10-12; its specification is `plans/archive/PP-4_2026-10-12.md`.
 
-## PP-5 -- Priority cells: marked brood cells are fed first
-
-<!-- LAYER: immediate-task -->
-
-**Change.** Once Priority cells is owned, the HUD cell menu offers "Feed
-first" on a brood cell (beside the gyne toggle); `hive_cell.gd` keeps
-`priority_cell`, saved, defaulting to false. Nurses choosing a hungry larva
-take a marked one before any unmarked one, for every food a larva takes
-(pollen, nectar or honey, Bee Bread, jelly); ties inside each group keep
-today's order. `skills.gd`: Priority cells' status becomes `existing`.
-Without the skill nothing changes.
-
-```queue
-**[Claude] PP-5 -- Priority cells: marked brood cells are fed first**
-- Plan: `plans/now/pollination.md` -- "PP-5 -- Priority cells: marked brood cells are fed first"
-- Files: `scripts/bee_nursery.gd`, `scripts/hive_cell.gd`, `scripts/hud.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `scripts/skills.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_pp5_priority_cells.py`, `test_scenarios/pp5_priority_cells.json`
-- Check: `python -m unittest tests.test_pp5_priority_cells` passes (with food for one larva, a nurse feeds the marked larva first for each food type; unowned, the mark cannot be set and feeding order is today's; the mark survives save and restore); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/hive_cell.gd :: priority_cell`
-- Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
-```
+PP-5 shipped 2026-10-13; its specification is `plans/archive/PP-5_2026-10-13.md`.
 
 ## PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
 
 <!-- LAYER: design -->
 
-Its gated block is below; it opens when PP-5 has landed (PP-1 to PP-4 and T2-7 landed 11-12 Oct 2026). Intent (Dave, 10 Oct
+Its queue block is below; PP-5 landed 13 Oct 2026 (PP-1 to PP-4 and T2-7 landed 11-12 Oct 2026). Intent (Dave, 10 Oct
 2026): a reasonably played Colony Run first affords Gyne rearing after the
 first winter. The reference player in `alpha_arc_test.json` buys along the
 route; `pacing_gates.py` reports the day Gyne rearing becomes affordable;
@@ -107,7 +88,7 @@ Its end opens AR-4. PP-4's simulation found the meadow at about 250 flowers
 at the game's own pace (see PP-4's table): the sweep should see whether
 `flower_regrow_seconds` holds Pollinator Points back.
 
-```queue-gated
+```queue
 **[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
 - Plan: `plans/now/pollination.md` -- "PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter"
 - Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
@@ -118,4 +99,4 @@ at the game's own pace (see PP-4's table): the sweep should see whether
 
 ## Not in the queue, and why
 
-- **PP-6** waits for PP-5 (PP-1 to PP-4 landed 11-12 Oct 2026); its gated block is written, and its sweep settles the final numbers.
+- Nothing: PP-6, the plan's last slice, is startable since PP-5 landed (13 Oct 2026), and its sweep settles the final numbers.
