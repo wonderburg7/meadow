@@ -107,16 +107,15 @@ func applies() -> bool:
 func evaluate() -> void:
 	if main == null or not applies():
 		return
-	var changed := false
 	for milestone in MILESTONES:
 		var id: String = milestone.id
 		if met_days.has(id):
 			continue
 		if Conditions.met(main, milestone.condition):
 			met_days[id] = main.day
-			changed = true
-	if changed:
-		show_next()
+	# GP-1: the Goals drop-down's long-term line follows the day, so it
+	# refreshes on every call (day change, death, gyne), not only a new milestone.
+	show_next()
 
 
 ## The day `id` was first met, or -1 if it hasn't been.
@@ -191,14 +190,41 @@ func show_next() -> void:
 	var next_goal := ""
 	var done_goal := ""
 	var done_day := -1
+	var next_id := ""
+	var done_id := ""
 	for milestone in MILESTONES:
 		var id: String = milestone.id
 		if met_days.has(id):
 			if int(met_days[id]) >= done_day:
 				done_day = int(met_days[id])
 				done_goal = milestone.goal
+				done_id = id
 		elif next_goal.is_empty():
 			next_goal = milestone.goal
+			next_id = id
 	if next_goal.is_empty():
 		next_goal = "Every milestone met -- your colony has made it"
-	main.hud.set_challenge_goal(next_goal, done_goal)
+		next_id = "all_met"
+	var entries: Array = [{"id": "long_term", "text": long_term_line(), "done": false}]
+	entries.append({"id": next_id, "text": next_goal, "done": false})
+	if not done_goal.is_empty():
+		entries.append({"id": done_id, "text": done_goal, "done": true})
+	main.hud.set_colony_goals(entries)
+
+
+## GP-1 (plans/now/goal-presentation.md decision 3): the long-term goal as
+## the run's phase puts it. Read from the winter facts and the mating
+## curve, so it is a line of text and changes no outcome.
+func long_term_line() -> String:
+	if met_days.has(VICTORY):
+		return "Your colony has made it -- keep it thriving"
+	if Session.winter_here:
+		var left: int = maxi(0, int(ceil(Session.winter_ends_day - main.day)))
+		return "Survive winter -- %d day%s left" % [left, "" if left == 1 else "s"]
+	if Session.winter_ends_day > 0.0:
+		if main.season.mating_curve() > 0.0:
+			return "Send out a gyne -- the mating window is open"
+		return "Send out a gyne -- when the mating window opens"
+	if Session.winter_coming:
+		return "Survive winter -- it arrives on day %d" % int(Session.winter_starts_day)
+	return "Survive the first winter, then send out a gyne"

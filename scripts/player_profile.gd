@@ -30,7 +30,7 @@ const FORMAT_VERSION := 1
 ## preference (UI_PLAN.md section 12's "worth a second look" note,
 ## resolved: they stay Session-only).
 const PREFERENCE_KEYS := [
-	"pinned_stats", "perf_enabled", "show_info_badges", "colour_blind_mode",
+	"pinned_stats", "goals_collapsed", "perf_enabled", "show_info_badges", "colour_blind_mode",
 	"warn_on_discard", "gallerin_enabled", "show_flower_amounts",
 	"show_cell_contents_text", "use_cell_sprites", "use_sprite_hex_grid",
 	"use_radial_hex_speed", "show_forager_labels", "show_speed_8x",

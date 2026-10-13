@@ -313,6 +313,12 @@ var current_goal_label: Label
 var goal_progress_row: HBoxContainer
 var goal_progress_bar: ProgressBar
 var goal_progress_label: Label
+## GP-1: the Colony Run's Goals drop-down. The header button folds the
+## shelf; `colony_goal_entries` holds what set_colony_goals was last given
+## (each with an `id`, so GP-2 can star it). Both stay empty in a Challenge.
+var goals_header: Button
+var long_term_goal_label: Label
+var colony_goal_entries: Array = []
 ## Restricts the Job row's "Change to..." dropdown / the Doing row's
 ## sub-modes to just these keys. Empty means no restriction -- only a
 ## Challenge (see challenge_runner.gd) ever sets these to something
@@ -911,6 +917,27 @@ func _build_goal_shelf() -> void:
 	goal_shelf.add_theme_constant_override("separation", 1)
 	add_child(goal_shelf)
 
+	# GP-1: the Goals header, the only part of the shelf that takes clicks.
+	goals_header = Button.new()
+	goals_header.flat = true
+	goals_header.visible = false
+	goals_header.size_flags_horizontal = Control.SIZE_SHRINK_END
+	goals_header.theme_type_variation = "Body"
+	goals_header.mouse_filter = Control.MOUSE_FILTER_STOP
+	goals_header.pressed.connect(_on_goals_header_pressed)
+	goal_shelf.add_child(goals_header)
+
+	# GP-1: the long-term line, above the milestone.
+	long_term_goal_label = Label.new()
+	long_term_goal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	long_term_goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	long_term_goal_label.custom_minimum_size = Vector2(320, 0)
+	long_term_goal_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	long_term_goal_label.theme_type_variation = "Body"
+	long_term_goal_label.visible = false
+	UiTheme.bind_color(long_term_goal_label, "font_color", "text_primary")
+	goal_shelf.add_child(long_term_goal_label)
+
 	# Secondary: the goal just completed, struck through and faded, per
 	# section 5. A RichTextLabel rather than a Label since Label has no
 	# strikethrough of its own -- BBCode's [s] tag is the plain way to get
@@ -977,6 +1004,11 @@ func set_settings_button_width(width: float) -> void:
 ## -1.0 ("no countable target") rather than 0.0, since 0 is itself a
 ## valid amount of progress.
 func set_challenge_goal(text: String, completed_text: String = "", progress_current: float = -1.0, progress_target: float = -1.0) -> void:
+	# A Challenge's shelf has no header and no long-term line (GP-1).
+	colony_goal_entries = []
+	goals_header.visible = false
+	long_term_goal_label.visible = false
+	current_goal_label.visible = true
 	goal_shelf.visible = not text.is_empty()
 	current_goal_label.text = text
 
@@ -990,6 +1022,45 @@ func set_challenge_goal(text: String, completed_text: String = "", progress_curr
 		goal_progress_bar.max_value = progress_target
 		goal_progress_bar.value = clampf(progress_current, 0.0, progress_target)
 		goal_progress_label.text = "%d / %d" % [int(round(progress_current)), int(round(progress_target))]
+
+## GP-1: the Colony Run's Goals drop-down. `entries` are dictionaries of
+## `id` ("long_term" or a milestone id), `text`, and `done` (true for the
+## last goal met, drawn struck through). Called by colony_milestones.gd
+## only; a Challenge keeps set_challenge_goal. Which lines show follows
+## Session.goals_collapsed: collapsed leaves the header alone.
+func set_colony_goals(entries: Array) -> void:
+	colony_goal_entries = entries.duplicate(true)
+	var long_text := ""
+	var next_text := ""
+	var done_text := ""
+	for entry in entries:
+		if str(entry.id) == "long_term":
+			long_text = str(entry.text)
+		elif bool(entry.get("done", false)):
+			done_text = str(entry.text)
+		else:
+			next_text = str(entry.text)
+	long_term_goal_label.text = long_text
+	current_goal_label.text = next_text
+	completed_goal_label.text = "[s]%s[/s]" % done_text if not done_text.is_empty() else ""
+	goal_progress_row.visible = false
+	goals_header.visible = true
+	goal_shelf.visible = true
+	_apply_goals_collapsed()
+
+func _apply_goals_collapsed() -> void:
+	if not goals_header.visible:
+		return
+	goals_header.text = "Goals [+]" if Session.goals_collapsed else "Goals [-]"
+	var open: bool = not Session.goals_collapsed
+	long_term_goal_label.visible = open and not long_term_goal_label.text.is_empty()
+	current_goal_label.visible = open and not current_goal_label.text.is_empty()
+	completed_goal_label.visible = open and not completed_goal_label.text.is_empty()
+
+func _on_goals_header_pressed() -> void:
+	Session.goals_collapsed = not Session.goals_collapsed
+	Session.save_preferences()
+	_apply_goals_collapsed()
 
 func set_speed_display(speed_scale: float) -> void:
 	pause_button.button_pressed = is_equal_approx(speed_scale, 0.0)
