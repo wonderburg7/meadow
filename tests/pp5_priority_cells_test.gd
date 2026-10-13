@@ -17,6 +17,9 @@ extends SceneTree
 ##   the mark is set, and the nurse feeds the marked larva first, on pollen
 ##   and nectar, pollen and honey, bee bread and nectar, and royal jelly with
 ##   pollen and honey for two gyne larvae.
+## - A marked gyne larva she can do nothing for (no royal jelly anywhere, and
+##   she is on feeding only) does not hold her: she feeds the unmarked worker
+##   larva today's order picks.
 ## - The mark survives SaveGame.save, SaveGame.read and saving.gd::_restore,
 ##   and a save entry with no priority_cell key restores unmarked.
 ##
@@ -35,6 +38,7 @@ const CASES := [
 	{"name": "pollen and nectar", "owned": true, "load": "pollen_nectar"},
 	{"name": "pollen and honey", "owned": true, "load": "pollen_honey"},
 	{"name": "bee bread and nectar", "owned": true, "load": "bee_bread_nectar"},
+	{"name": "a marked gyne with no jelly", "owned": true, "load": "pollen_nectar", "unservable_gyne": true},
 	{"name": "royal jelly for gynes", "owned": true, "load": "gyne"},
 ]
 
@@ -155,11 +159,23 @@ func _next_case() -> void:
 		_fail("%s: today's order picked neither test larva" % spec.name)
 		return
 	var marked: Node2D = _cells[1] if today == _cells[0] else _cells[0]
+	if spec.get("unservable_gyne", false):
+		# The cell to mark raises a gyne, and nothing she carries or could
+		# fetch will feed one. Today's order must still pick the worker.
+		marked.start_brood(true)
+		today = _main.hive.find_brood_cell()
+		if today == marked:
+			_fail("%s: today's order picked the gyne larva, so the case shows nothing" % spec.name)
+			return
 	_main.orders_zones._on_cell_feed_first_requested(marked, true)
 	_main.hud._apply_cell_popup_gating()
 	_check(_main.hud.feed_first_row.visible == spec.owned,
 		"%s: the Feed first row is %s" % [spec.name, "shown" if _main.hud.feed_first_row.visible else "hidden"])
-	if spec.owned:
+	if spec.get("unservable_gyne", false):
+		_check(marked.priority_cell, "%s: the handler did not set the mark" % spec.name)
+		_expected = today
+		_other = marked
+	elif spec.owned:
 		_check(marked.priority_cell, "%s: the handler did not set the mark" % spec.name)
 		_expected = marked
 		_other = today

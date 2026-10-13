@@ -10,6 +10,8 @@ the cell popup's "Feed first" box reaches, and lets the nurse work:
   today's order picks, even with a mark forced on the other cell;
 - owned, she feeds the marked larva first on pollen and nectar, pollen and
   honey, bee bread and nectar, and royal jelly (two gyne larvae);
+- a marked gyne larva she can do nothing for (no royal jelly anywhere) does
+  not hold her: she feeds the unmarked worker larva instead;
 - the mark survives save and restore, and a save without it loads unmarked.
 
 It stands in for a headless scenario fixture because no scenario action can
@@ -39,7 +41,8 @@ import godot_compile_check as gcc  # noqa: E402
 
 TEST_SCRIPT = "res://tests/pp5_priority_cells_test.gd"
 TIMEOUT_SECONDS = 300
-CASES = ("unowned", "pollen and nectar", "pollen and honey", "bee bread and nectar", "royal jelly for gynes")
+CASES = ("unowned", "pollen and nectar", "pollen and honey", "bee bread and nectar",
+         "a marked gyne with no jelly", "royal jelly for gynes")
 
 
 class PriorityCellsTest(unittest.TestCase):
