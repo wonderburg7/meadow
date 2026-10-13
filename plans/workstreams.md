@@ -46,4 +46,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/GP-1` (`claude/GP-1`) | Claude | The goals drop-down and the long-term line | Claude | in progress | none | `plans/now/goal-presentation.md` GP-1 -- the goals drop-down and the long-term line |
