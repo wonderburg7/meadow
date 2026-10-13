@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/SG-1` (`codex/SG-1`) | Codex | the goal catalogue and its rules, as a standalone module | Codex | in progress | none | `plans/now/short-term-goals.md` SG-1 -- the goal catalogue and its rules, as a standalone module |
+| `.worktrees/WP-1` (`claude/WP-1`) | Claude | the catalogue: Work Priorities in Hive Mind tier 3 | Claude | in progress | none | `plans/now/work-priorities.md` WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3 |
