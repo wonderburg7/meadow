@@ -23,35 +23,28 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] GP-1 -- The goals drop-down and the long-term line**
-   - Plan: `plans/now/goal-presentation.md` -- "GP-1 -- the goals drop-down and the long-term line"
-   - Files: `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/session.gd`, `scripts/player_profile.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/test_gp1_goals_dropdown.py`
-   - Check: `python -m unittest tests.test_gp1_goals_dropdown` passes (in a Colony Run the shelf shows a Goals header, the long-term line for each phase and the next milestone; collapsed it shows the header alone and stays inside the viewport at the minimum width; the collapsed state survives a profile reload; a Challenge's shelf is unchanged); `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/session.gd :: goals_collapsed`
-   - Next after: GP-2 -- favourite goals stay on screen when the drop-down is collapsed
-
-2. **[Claude] GP-2 -- Favourite goals stay on screen when the drop-down is collapsed**
+1. **[Claude] GP-2 -- Favourite goals stay on screen when the drop-down is collapsed**
    - Plan: `plans/now/goal-presentation.md` -- "GP-2 -- favourite goals"
    - Files: `scripts/hud.gd`, `scripts/colony_milestones.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/test_gp2_goal_favourites.py`
    - Check: `python -m unittest tests.test_gp2_goal_favourites` passes (a starred line shows when collapsed; a met favourite shows struck through until the next day change, then drops and unstars; stars survive save and load; a save without them loads with none); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/colony_milestones.gd :: FAVOURITES`
    - Next after: GP-4 -- the problem strip stops blocking play, keeps red visible and lets the player remove a warning
 
-3. **[Claude] T3-1 -- Weighted flower choice becomes a purchase**
+2. **[Claude] T3-1 -- Weighted flower choice becomes a purchase**
    - Plan: `plans/now/tier-three.md` -- "T3-1 -- Weighted flower choice becomes a purchase"
    - Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/settings_catalogue.gd`, `tests/t3_1_weighted_choice_test.gd`, `tests/test_t3_1_weighted_choice.py`
    - Check: `python -m unittest tests.test_t3_1_weighted_choice` passes (unowned with the setting off, a forager picks nearest-first; owned, it scores flowers as the setting does today; the setting appears only in Developer mode); `.\tools\verify.ps1` is green
    - Proof: `present: scripts/bee_foraging.gd :: if GameConfig.probabilistic_choice_on:`
    - Next after: T3-2 -- Restocking becomes a purchase
 
-4. **[Claude] T3-2 -- Restocking becomes a purchase**
+3. **[Claude] T3-2 -- Restocking becomes a purchase**
    - Plan: `plans/now/tier-three.md` -- "T3-2 -- Restocking becomes a purchase"
    - Files: `scripts/roles.gd`, `scripts/bee_building.gd`, `scripts/orders_zones.gd`, `scripts/hud.gd`, `test_scenarios/bb3_bee_bread_currency.json`, `test_scenarios/c4_stocking_hatch_test.json`, `test_scenarios/h3_restock_delivery_test.json`, `test_scenarios/nf4_fermentation_sense.json`, `test_scenarios/t3_2_restocking_gate.json`, `tests/test_t3_2_restocking_gate.py`
    - Check: `python -m unittest tests.test_t3_2_restocking_gate` passes (unowned, no Stocking mode or keep-full control is offered and an Anything-mode Comb worker never stocks; owned, stocking works as today; keep-empty works either way); the four stocking scenarios still pass; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/roles.gd :: skill.colony.restocking`
    - Next after: none -- the tier-three plan is complete; Work Priorities (`plans/now/work-priorities.md`) follows in Dave's order
 
-5. **[Claude] WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3**
+4. **[Claude] WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3**
    - Plan: `plans/now/work-priorities.md` -- "WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3"
    - Files: `scripts/skills.gd`, `tests/test_wp1_work_priorities_node.py`
    - Check: `python -m unittest tests.test_wp1_work_priorities_node` passes (Work priorities is a Hive Mind tier-3 node at Extended backup roles' old slot, needs Backup roles, and reads as not yet built; no Extended backup roles entry remains; the tier-0 baseline is Cell priority); `.\tools\verify.ps1` is green
@@ -63,19 +56,19 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] L-26 -- queue readiness warnings use the refill admission test**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-26 -- queue readiness warnings use the refill admission test"
-   - Files: `tools/check_docs.py`, `tests/test_queue_lookahead.py`
-   - Check: `python -m unittest tests.test_queue_lookahead` passes, proving the warning omits an overlapping block and names an admissible block; `python tools/check_docs.py` no longer claims GD-2b is offered while PP-5 owns its save files; `tools/verify.ps1` is green
-   - Proof: `absent: tools/check_docs.py :: def refill_ready_ids`
-   - Next after: GD-2b -- the shown ledger and Why history saved with the run, after PP-5 releases its save files
-
-2. **[Codex] SG-1 -- the goal catalogue and its rules, as a standalone module**
+1. **[Codex] SG-1 -- the goal catalogue and its rules, as a standalone module**
    - Plan: `plans/now/short-term-goals.md` -- "SG-1 -- the goal catalogue and its rules, as a standalone module"
    - Files: `scripts/short_term_goals.gd`, `tests/sg1_short_term_goals_test.gd`, `tests/test_sg1_short_term_goals.py`
    - Check: `python -m unittest tests.test_sg1_short_term_goals` passes (for fixture facts, each of the six goals is offered only while its trigger holds and never more than two at once; a dismissed goal is not offered again the same day; a whole-day goal is done only after a full day of its condition; the reward is the fraction times that resource's gross daily income, fixed at offer); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/main.gd :: ShortTermGoals`
    - Next after: SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved
+
+2. **[Codex] GD-2b -- the shown ledger and Why history saved with the run**
+   - Plan: `plans/now/guidance-explanations.md` -- "GD-2b -- the shown ledger and Why history saved with the run"
+   - Files: `scripts/guidance_policy.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_gd2b_guidance_saved.py`
+   - Check: `python -m unittest tests.test_gd2b_guidance_saved` passes (an explanation shown before a save is not shown again after loading it, and the Why history survives; an older save loads with an empty ledger); `tools/verify.ps1` is green
+   - Proof: `absent: scripts/save_game.gd :: guidance`
+   - Next after: none -- guidance explanations are complete
 
 ## Not in the queue, and why
 

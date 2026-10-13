@@ -125,6 +125,11 @@ var crab_spider_preferred_species: String = ""
 ## STAT_ROWS of the colony and nursery windows.
 var pinned_stats: Array = ["day", "stores", "signals"]
 
+## GP-1: whether the Colony Run's Goals drop-down (hud.gd) is folded up to
+## its header. An interface preference, remembered across runs; a new
+## profile starts expanded.
+var goals_collapsed: bool = false
+
 ## Gates perf.gd's instrumentation. Kept in sync with whether "fps" is
 ## starred (see hud.gd's pinned_stats_changed) rather than being its
 ## own setting, so there's exactly one thing to toggle. A plain field

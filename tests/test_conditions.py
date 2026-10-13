@@ -210,7 +210,7 @@ class ColonyMilestonesTest(unittest.TestCase):
         show = self.MILESTONES.split("func show_next()", 1)[1].split("\nfunc ", 1)[0]
         self.assertIn("not applies()", show)
         self.assertIn("elif next_goal.is_empty():", show)
-        self.assertIn("main.hud.set_challenge_goal(next_goal, done_goal)", show)
+        self.assertIn("main.hud.set_colony_goals(entries)", show)
         evaluate = self.MILESTONES.split("func evaluate()", 1)[1].split("\nfunc ", 1)[0]
         self.assertIn("show_next()", evaluate)
         main = (SCRIPTS / "main.gd").read_text(encoding="utf-8")
