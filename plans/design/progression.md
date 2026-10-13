@@ -201,7 +201,7 @@ Colony-level automation and standing policy. New sector.
 | `skill.hive_mind.cleaning` | 2 | Existing foundation | — | Unlocks cleaning of debris and corpses as a directed colony activity. |
 | `skill.hive_mind.shiver_cluster` | 2 | New (not yet in `skills.gd`) | — | Bees surround the queen and shiver to keep her warm through winter. Without it, winter's bill is multiplied. See "Shiver Cluster" below. |
 | `skill.hive_mind.adjustment_panel` | 3 | New | Backup roles | A panel for setting the colony's standing responses — combat behaviour, rain actions, drought actions. Depends on the corresponding behaviours existing: combat (Defence T2), rain recall (Ecology T2), drought (not yet a feature). |
-| `skill.hive_mind.extended_backup_roles` | 3 | New | Backup roles | Order backup-role priorities rather than naming a single fallback. |
+| `skill.hive_mind.work_priorities` | 3 | New | Backup roles | Work Priorities: each bee's single backup becomes an ordered list. Replaces Extended backup roles in this slot (Dave, 13 Oct 2026; rules in `plans/now/work-priorities.md`). |
 | `skill.hive_mind.chemical_cascade` | 4 | **Open** | — | See section 5.9. |
 
 **Shiver Cluster (Dave, 6 Oct 2026, plan-ahead session).** Colony Run decision 9 (`plans/archive/colony-run_2026-10-08.md`) created the skill and left its tree, cost and numbers here. Decided:
@@ -217,7 +217,7 @@ Colony-level automation and standing policy. New sector.
 Per Dave, 1 Sep: these are on from the beginning of a game and are **not** purchasable nodes. That may change later, so **reserve their IDs and leave them in `skills.gd` marked `baseline: true`** rather than deleting them — that way promoting one to a node later is a data change, not a rewrite.
 
 - Auto scouting (`skill.foraging.auto_scouting`) — samples several starting areas, keeps the best.
-- Work priorities (`skill.colony.work_priorities`) — priority tiers for cells, zones and orders.
+- Cell priority (`skill.colony.cell_priority`, renamed from `skill.colony.work_priorities` by WP-1, 13 Oct 2026) — priority tiers for cells, zones and orders.
 - Standing instructions (`skill.hive_mind.standing_instructions`) — persistent instructions such as role retention and work-from-here.
 - Landscape memory (`skill.ecology.landscape_memory`) — explored meadow stays remembered rather than dimming back to uncertain. Feature dependency: fog of war.
 
@@ -505,7 +505,7 @@ Section 9.2's catalogue-integrity group shipped with step 1 (`tests/source_check
 Blocked on new simulation work, in dependency order:
 
 12. **Bee bread** (section 5.9 item 3; recipe/capacity/ration still open, chain shape answered by `product-scope.md` §9). A new resource and production chain. **Nothing at tier 3 can be built or balanced before this lands.**
-13. **Tier 3 content** — Weighted flower choice, Priority cells, Restocking, Auto-defence, Adjustment panel, Extended backup roles, Pollinator Points (`product-scope.md` §10); plus Medicine once defined.
+13. **Tier 3 content** — Weighted flower choice, Priority cells, Restocking, Auto-defence, Adjustment panel, Work Priorities (which replaced Extended backup roles, `plans/now/work-priorities.md`), Pollinator Points (`product-scope.md` §10); plus Medicine once defined.
 14. **Drought** as a weather feature, then Weather sensing's drought half and the Adjustment panel's drought actions.
 15. **Tier 4 content** — Pollinator Points wired to the ladder as the universal gate, then Gyne rearing (also naming royal jelly directly), Drones, Nectar robbing, Auto-recruitment; plus Chemical cascade once defined.
 16. **Colony Adaptations** (section 7). Last, and dependent on nothing above.

@@ -184,6 +184,10 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | GD-2a, GD-2b -- Dr Gallerin's first explanations and the persistent Why list, then saving them | `plans/now/guidance-explanations.md` |
 | GP-1 to GP-4 -- goal presentation: the goals drop-down and long-term line, favourites, short-term goals, the problem strip fix | `plans/now/goal-presentation.md` |
 | PP-1 to PP-6 -- pollination: Pollinator Points, the gyne and jelly gates, seed set, Priority cells, the route's pricing | `plans/now/pollination.md` |
+| T3-1, T3-2 -- tier three over behaviour that already ships: Weighted flower choice and Restocking become purchases | `plans/now/tier-three.md` |
+| WP-1 to WP-3 -- Work Priorities: Hive Mind tier 3, each bee's backup an ordered list, a colony default | `plans/now/work-priorities.md` |
+| SG-1 to SG-3 -- short-term goals: the catalogue, offered and paid in runs, shown under the milestone shelf | `plans/now/short-term-goals.md` |
+| ED-1 to ED-3 -- difficulty: health for every bee, Easy's rules, choosing Easy at run start | `plans/now/difficulty.md` |
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates (the Colony Run definition itself is `plans/archive/colony-run_2026-10-08.md`) | `plans/design/product-scope.md` |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |

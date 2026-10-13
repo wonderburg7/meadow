@@ -320,9 +320,10 @@ responses without declaring one correct colony organisation.
   the grant.
 - **Automation — Hive Mind Tier 2:** automatic building and mining. Cleaning is
   also retained at Tier 2.
-- **Work Priorities — Hive Mind Tier 3:** roles become priority presets which
-  bees may depart from when colony needs demand it. Unlocks colony-wide
-  job/sub-job ordering and individual-bee overrides.
+- **Work Priorities — Hive Mind Tier 3:** each bee's single backup becomes
+  an ordered list of backups. Superseded 13 Oct 2026 (Dave): the earlier
+  "roles become priority presets" and colony-wide ordering are replaced; the
+  rules live in `plans/now/work-priorities.md`.
 - **Extended Backup Roles:** cut from alpha; Work Priorities provides the
   intended scalable control surface.
 
@@ -808,7 +809,8 @@ legal decisions for the release stream, not alpha blockers.
 
 ## 16. Open design questions that do not block this scope
 
-- exact Work Priorities dispatch rules and its scalable many-bee UI;
+- Work Priorities' many-bee UI (its dispatch rule is settled in
+  `plans/now/work-priorities.md`, 13 Oct 2026);
 - Bee Bread recipe quantities, rationing and fermentation feedback;
 - exact skill discovery milestones and costs in the 90-minute route;
 - the seed-set and offspring-quality formulas (the Pollinator Point window
