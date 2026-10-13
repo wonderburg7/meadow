@@ -56,7 +56,7 @@ Godot_console.exe ...` stopped before Godot: `Could not find home directory`.
 | F2 | Closeout contention recurs (51 lifecycle-busy stops); it is not a Codex-only queue defect. | `session_cost.py --stops`; `agent-lifecycle.md` L-19 | high | Queued -- L-19 in `plans/now/agent-lifecycle.md` owns lock ordering and re-apply. |
 | F3 | The sandbox probe cannot reproduce a Godot denial: profile resolution fails before launch. Historical user sessions contain three `4294967295` exits and two tempfile timeouts; no captured `0x58`. | rollout summary; `codex sandbox -P meadow -- ...`; session 78a6f1d2/5770ad43 | medium | Rejected -- changing sandbox/home/profile configuration needs Dave's explicit decision; no safe fix can be inferred. |
 | F4 | PE-1 (medium) and SR-1..3 (low) used high-reasoning sessions; SR-5 (medium) did too. No plan forced a missing design decision. | rollout `turn_context.effort`; archived slice `Level:` lines | medium | Rejected -- `CLAUDE.md` rule 4 and `CHATGPT.md` already make the planned level a cap; caller-selected model effort is outside the slice. |
-| F5 | `CHATGPT.md` says to archive/refill before `finish`, but `closeout.md` says `finish` performs both. | `CHATGPT.md` closeout paragraph; `closeout.md` “Closeout order” | medium | Queued -- L-20 in `plans/now/codex-guidance.md`, low. |
+| F5 | `CHATGPT.md` says to archive/refill before `finish`, but `closeout.md` says `finish` performs both. | `CHATGPT.md` closeout paragraph; `closeout.md` “Closeout order” | medium | Queued -- L-20 in `plans/archive/codex-guidance_2026-10-13.md`, low. |
 
 ## Hand-offs
 

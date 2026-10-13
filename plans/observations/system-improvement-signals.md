@@ -218,12 +218,12 @@ explicit request from Dave.
   review-contract's "Decided" disposition was bypassed.
 - Candidate direction: Hypothesis — the agent workflow review puts the
   sandbox-home options and their costs to Dave in session, and records the
-  answer in `plans/now/codex-guidance.md`.
+  answer in `plans/archive/codex-guidance_2026-10-13.md`.
 - Disposition: decided 7 Oct 2026. The probe now launches (codex-cli
   0.159.2); elevated mode refuses Python under `%LOCALAPPDATA%`, and with
   `-c 'windows.sandbox="unelevated"'` the Godot compile check passes in the
   sandbox. Dave chose to record that recipe rather than change the sandbox
-  setting or move Python (`plans/now/codex-guidance.md`,
+  setting or move Python (`plans/archive/codex-guidance_2026-10-13.md`,
   `docs/known-pitfalls.md`).
 
 ### 2026-10-07 — every test-adding slice owns `tools/verify.ps1`, so the lanes cannot both hold one
