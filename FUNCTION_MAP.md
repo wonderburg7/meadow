@@ -449,7 +449,7 @@ Every setting's key, label, range and tip, plus the read/write and Prerequisites
 1570 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
-## bee_foraging.gd (1,521 lines)
+## bee_foraging.gd (1,526 lines)
 
 The forager's search, scouting, recruitment and species-preference
 behaviour.
@@ -495,46 +495,47 @@ behaviour.
 599  # --- skill-or-setting behaviour switches ---------------------------
 604  static func adaptive_constancy_on() -> bool
 608  static func tarsal_markers_on() -> bool
-611  static func handling_experience_on() -> bool
-618  static func record_species_visit(bee: Node2D, species: String) -> void
-631  static func orientation_flight_on() -> bool
-635  # --- accepting or rejecting a flower ------------------------------
-636  static func worth_feeding(bee: Node2D, f: Node2D) -> bool
-649  static func reject_flower(bee: Node2D) -> void
-667  # --- collecting ---------------------------------------------------
-668  static func start_collecting(bee: Node2D) -> void
-741  static func _handling_experience_scale(bee: Node2D, species: String) -> float
-750  static func collect(bee: Node2D, delta: float) -> void
-799  static func finish_collecting(bee: Node2D) -> void
-842  # --- entering the hive and depositing -----------------------------
-846  static func enter_hive(bee: Node2D) -> void
-873  static func approach_cell(bee: Node2D, cell: Node2D, delta: float) -> int
-888  static func release_cell_slot(bee: Node2D) -> void
-895  static func go_to_deposit_cell(bee: Node2D, delta: float) -> void
-985  static func finish_depositing(bee: Node2D) -> void
-1025 static func _after_delivery_state(bee: Node2D) -> int
-1036 static func _resume_own_job_if_indoors(bee: Node2D) -> bool
-1044 # --- scoring a trip -----------------------------------------------
-1049 static func _score_trip(bee: Node2D) -> void
-1127 # --- leaving the hive ---------------------------------------------
-1128 static func go_to_exit(bee: Node2D, delta: float) -> void
-1172 static func _entrance_wait_spot(bee: Node2D, side: int) -> Vector2
-1184 static func _leave_hive_and_resume(bee: Node2D) -> void
-1211 static func _send_to_scout_point(bee: Node2D) -> void
-1222 # --- scouting -----------------------------------------------------
-1228 static func start_scouting(bee: Node2D) -> void
-1246 # --- waiting at the entrance --------------------------------------
-1251 static func wait_at_entrance(bee: Node2D, delta: float) -> void
-1355 # --- the recruitment dance ----------------------------------------
-1363 static func _update_dance_eligibility(bee: Node2D) -> void
-1386 static func leave_recruitment(bee: Node2D) -> void
-1408 static func check_dance_proximity(bee: Node2D, _delta: float) -> void
-1433 static func _start_dance(mentor: Node2D, seeker: Node2D) -> void
-1453 static func dance(bee: Node2D, delta: float) -> void
-1465 static func _end_dance(bee: Node2D) -> void
-1487 static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void
-1514 # --- remote deposit -----------------------------------------------
-1516 static func deposit_everything_remotely(bee: Node2D) -> void
+613  static func probabilistic_choice_on() -> bool
+616  static func handling_experience_on() -> bool
+623  static func record_species_visit(bee: Node2D, species: String) -> void
+636  static func orientation_flight_on() -> bool
+640  # --- accepting or rejecting a flower ------------------------------
+641  static func worth_feeding(bee: Node2D, f: Node2D) -> bool
+654  static func reject_flower(bee: Node2D) -> void
+672  # --- collecting ---------------------------------------------------
+673  static func start_collecting(bee: Node2D) -> void
+746  static func _handling_experience_scale(bee: Node2D, species: String) -> float
+755  static func collect(bee: Node2D, delta: float) -> void
+804  static func finish_collecting(bee: Node2D) -> void
+847  # --- entering the hive and depositing -----------------------------
+851  static func enter_hive(bee: Node2D) -> void
+878  static func approach_cell(bee: Node2D, cell: Node2D, delta: float) -> int
+893  static func release_cell_slot(bee: Node2D) -> void
+900  static func go_to_deposit_cell(bee: Node2D, delta: float) -> void
+990  static func finish_depositing(bee: Node2D) -> void
+1030 static func _after_delivery_state(bee: Node2D) -> int
+1041 static func _resume_own_job_if_indoors(bee: Node2D) -> bool
+1049 # --- scoring a trip -----------------------------------------------
+1054 static func _score_trip(bee: Node2D) -> void
+1132 # --- leaving the hive ---------------------------------------------
+1133 static func go_to_exit(bee: Node2D, delta: float) -> void
+1177 static func _entrance_wait_spot(bee: Node2D, side: int) -> Vector2
+1189 static func _leave_hive_and_resume(bee: Node2D) -> void
+1216 static func _send_to_scout_point(bee: Node2D) -> void
+1227 # --- scouting -----------------------------------------------------
+1233 static func start_scouting(bee: Node2D) -> void
+1251 # --- waiting at the entrance --------------------------------------
+1256 static func wait_at_entrance(bee: Node2D, delta: float) -> void
+1360 # --- the recruitment dance ----------------------------------------
+1368 static func _update_dance_eligibility(bee: Node2D) -> void
+1391 static func leave_recruitment(bee: Node2D) -> void
+1413 static func check_dance_proximity(bee: Node2D, _delta: float) -> void
+1438 static func _start_dance(mentor: Node2D, seeker: Node2D) -> void
+1458 static func dance(bee: Node2D, delta: float) -> void
+1470 static func _end_dance(bee: Node2D) -> void
+1492 static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void
+1519 # --- remote deposit -----------------------------------------------
+1521 static func deposit_everything_remotely(bee: Node2D) -> void
 ```
 
 ## hive_cell.gd (1,485 lines)
@@ -862,6 +863,78 @@ The stage machine, goal checks and stage effects.
 1234 func _custom_goal_progress(method: String) -> Dictionary
 ```
 
+## debug_panel.gd (1,205 lines)
+
+The settings window (the cog icon): tuner rows, save/load buttons,
+restart.
+
+```
+20   # --- preloads -----------------------------------------------------
+45   # --- fields -------------------------------------------------------
+93   # --- _ready and construction --------------------------------------
+96   func _style_button(button: BaseButton) -> BaseButton
+101  func _ready() -> void
+220  func _apply_panel_width() -> void
+225  func _report_settings_button_width() -> void
+230  # --- collections and sections -------------------------------------
+231  func _rows_in(category: String) -> Array
+253  func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
+284  func _set_open(header: Button, body: Control, label: String, open: bool) -> void
+292  func open_to_categories(categories: Array) -> void
+312  func collapse_all() -> void
+320  func _make_section(category: String, entries: Array, start_open: bool) -> Control
+381  # --- the Challenge stage navigator --------------------------------
+386  func _make_challenge_stage_navigation() -> Control
+443  func _process(_delta: float) -> void
+449  func _refresh_pollination_readout() -> void
+462  func _pollination_text(points: int, contribution: int) -> String
+465  func _refresh_challenge_stage_navigation() -> void
+485  # --- the controls help --------------------------------------------
+491  func _make_controls_help() -> Control
+538  # --- the action buttons -------------------------------------------
+550  func _build_actions(column: VBoxContainer) -> void
+600  func _rebuild_triggers() -> void
+635  func _on_end_run_pressed() -> void
+646  func _refresh_developer_row() -> void
+673  func _make_run_availability_button() -> Button
+682  func _on_run_availability_pressed() -> void
+692  func _add_action_row(parent: Control, button: Button, tip: String) -> void
+698  func _make_winter_action() -> Control
+710  func _on_winter_pressed() -> void
+716  func _on_challenge_advance_pressed() -> void
+723  func _on_challenge_retreat_pressed() -> void
+737  func _on_fire_test_warnings_pressed() -> void
+770  func _on_force_c2_collapse_pressed() -> void
+784  # --- save and load ------------------------------------------------
+790  func set_save_load_enabled(enabled: bool) -> void
+798  func set_toggle(key: String, value: bool) -> void
+803  func _on_save_pressed() -> void
+814  func _on_load_pressed() -> void
+852  # --- showing and hiding the panel ---------------------------------
+853  func _toggle_panel() -> void
+867  func _apply_layer_for_context() -> void
+872  # --- building a settings row --------------------------------------
+873  func _make_row(entry: Dictionary) -> Control
+916  func _make_control_slot() -> HBoxContainer
+925  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
+955  func _make_toggle_row(entry: Dictionary) -> Control
+1028 func _make_options_row(entry: Dictionary) -> Control
+1061 func _option_display(entry: Dictionary, value) -> String
+1065 func _cycle_option(entry: Dictionary, direction: int) -> void
+1076 # --- prerequisite cascades ----------------------------------------
+1080 func _cascade_prerequisites_on(key: String) -> void
+1094 func _cascade_dependents_off(key: String) -> void
+1102 func _cascade_mutual_exclusion(key: String) -> void
+1107 # --- star rows and value editing ----------------------------------
+1112 func _make_star_row(entry: Dictionary) -> Control
+1153 func _adjust(entry: Dictionary, delta: float) -> void
+1170 func _format_value(v) -> String
+1177 # --- restart and main menu ----------------------------------------
+1178 func _on_restart_pressed() -> void
+1183 func _on_main_menu_pressed() -> void
+1191 func _restart() -> void
+```
+
 ## hive.gd (1,201 lines)
 
 The comb as a whole: cells, navigation, finding a cell.
@@ -952,78 +1025,6 @@ The comb as a whole: cells, navigation, finding a cell.
 1167 func mine_stand_point(block: Node2D, from_point: Vector2) -> Vector2
 1189 func remove_block(block: Node2D, floor_maker: Callable) -> void
 1200 func announce() -> void
-```
-
-## debug_panel.gd (1,195 lines)
-
-The settings window (the cog icon): tuner rows, save/load buttons,
-restart.
-
-```
-20   # --- preloads -----------------------------------------------------
-45   # --- fields -------------------------------------------------------
-91   # --- _ready and construction --------------------------------------
-94   func _style_button(button: BaseButton) -> BaseButton
-99   func _ready() -> void
-218  func _apply_panel_width() -> void
-223  func _report_settings_button_width() -> void
-228  # --- collections and sections -------------------------------------
-229  func _rows_in(category: String) -> Array
-251  func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
-282  func _set_open(header: Button, body: Control, label: String, open: bool) -> void
-290  func open_to_categories(categories: Array) -> void
-310  func collapse_all() -> void
-318  func _make_section(category: String, entries: Array, start_open: bool) -> Control
-374  # --- the Challenge stage navigator --------------------------------
-379  func _make_challenge_stage_navigation() -> Control
-436  func _process(_delta: float) -> void
-442  func _refresh_pollination_readout() -> void
-455  func _pollination_text(points: int, contribution: int) -> String
-458  func _refresh_challenge_stage_navigation() -> void
-478  # --- the controls help --------------------------------------------
-484  func _make_controls_help() -> Control
-531  # --- the action buttons -------------------------------------------
-543  func _build_actions(column: VBoxContainer) -> void
-593  func _rebuild_triggers() -> void
-628  func _on_end_run_pressed() -> void
-639  func _refresh_developer_row() -> void
-663  func _make_run_availability_button() -> Button
-672  func _on_run_availability_pressed() -> void
-682  func _add_action_row(parent: Control, button: Button, tip: String) -> void
-688  func _make_winter_action() -> Control
-700  func _on_winter_pressed() -> void
-706  func _on_challenge_advance_pressed() -> void
-713  func _on_challenge_retreat_pressed() -> void
-727  func _on_fire_test_warnings_pressed() -> void
-760  func _on_force_c2_collapse_pressed() -> void
-774  # --- save and load ------------------------------------------------
-780  func set_save_load_enabled(enabled: bool) -> void
-788  func set_toggle(key: String, value: bool) -> void
-793  func _on_save_pressed() -> void
-804  func _on_load_pressed() -> void
-842  # --- showing and hiding the panel ---------------------------------
-843  func _toggle_panel() -> void
-857  func _apply_layer_for_context() -> void
-862  # --- building a settings row --------------------------------------
-863  func _make_row(entry: Dictionary) -> Control
-906  func _make_control_slot() -> HBoxContainer
-915  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
-945  func _make_toggle_row(entry: Dictionary) -> Control
-1018 func _make_options_row(entry: Dictionary) -> Control
-1051 func _option_display(entry: Dictionary, value) -> String
-1055 func _cycle_option(entry: Dictionary, direction: int) -> void
-1066 # --- prerequisite cascades ----------------------------------------
-1070 func _cascade_prerequisites_on(key: String) -> void
-1084 func _cascade_dependents_off(key: String) -> void
-1092 func _cascade_mutual_exclusion(key: String) -> void
-1097 # --- star rows and value editing ----------------------------------
-1102 func _make_star_row(entry: Dictionary) -> Control
-1143 func _adjust(entry: Dictionary, delta: float) -> void
-1160 func _format_value(v) -> String
-1167 # --- restart and main menu ----------------------------------------
-1168 func _on_restart_pressed() -> void
-1173 func _on_main_menu_pressed() -> void
-1181 func _restart() -> void
 ```
 
 ## game_config.gd (991 lines)
