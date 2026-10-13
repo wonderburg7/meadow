@@ -46,4 +46,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.claude/worktrees/run-queue-investigation-37c458` (`claude/run-queue-investigation-37c458`) | Claude (docs only) | Gates after T3-1: note the tier-4 gyne route awaiting its plan-ahead session | Claude Code | active | none | queue steward |
