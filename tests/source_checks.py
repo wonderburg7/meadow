@@ -2703,6 +2703,8 @@ TRANSCRIBED_EFFECTS = {
     "skill.foraging.adaptive_constancy": ("enable_behaviour", "adaptive_constancy_on"),
     # T2-6: associative learning is a bought behaviour, its own content step.
     "skill.foraging.associative_learning": ("enable_behaviour", "handling_experience_on"),
+    # T3-1: weighted flower choice is a bought behaviour, its own content step.
+    "skill.foraging.weighted_flower_choice": ("enable_behaviour", "probabilistic_choice_on"),
     # T2-5: weather sensing and rain recall use live rain values, not toggles.
     "skill.ecology.weather_sensing": ("enable_behaviour", "weather_sensing_on"),
     "skill.ecology.rain_recall": ("enable_behaviour", "rain_recall_on"),

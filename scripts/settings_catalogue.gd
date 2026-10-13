@@ -190,9 +190,9 @@ const TUNABLES := [
 	},
 	{
 		"persist": "run",
-		"key": "probabilistic_choice_on", "label": "Weighted flower choice", "toggle": true,
-		"category": "Flowers",
-		"tip": "A forager choosing between several flowers she can see weighs distance and heading (ahead of her over behind her) instead of always taking the literal nearest one. Off by default; off is the old exact nearest-wins behaviour. Missing from this panel since it was built (Slice 6) -- added now because Adaptive constancy below only has a visible effect when this is also on.",
+		"key": "probabilistic_choice_on", "label": "Weighted flower choice (dev)", "toggle": true,
+		"category": "Flowers", "dev_only": true,
+		"tip": "Developer mode: forces weighted flower choice on for testing. A forager choosing between several flowers she can see weighs distance and heading (ahead of her over behind her) instead of always taking the literal nearest one. In play this comes from owning the Weighted flower choice skill; with neither, foragers take the nearest flower.",
 	},
 	{
 		"persist": "run",

@@ -25,7 +25,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
 1. **[Claude] T3-1 -- Weighted flower choice becomes a purchase**
    - Plan: `plans/now/tier-three.md` -- "T3-1 -- Weighted flower choice becomes a purchase"
-   - Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/settings_catalogue.gd`, `tests/t3_1_weighted_choice_test.gd`, `tests/test_t3_1_weighted_choice.py`
+   - Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/settings_catalogue.gd`, `scripts/debug_panel.gd`, `tests/t3_1_weighted_choice_test.gd`, `tests/test_t3_1_weighted_choice.py`
    - Check: `python -m unittest tests.test_t3_1_weighted_choice` passes (unowned with the setting off, a forager picks nearest-first; owned, it scores flowers as the setting does today; the setting appears only in Developer mode); `.\tools\verify.ps1` is green
    - Proof: `present: scripts/bee_foraging.gd :: if GameConfig.probabilistic_choice_on:`
    - Next after: T3-2 -- Restocking becomes a purchase

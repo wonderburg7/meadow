@@ -406,7 +406,7 @@ static func nearest_flower(bee: Node2D, strict: bool, radius: float, allow_full_
 	var grid = flower_grid(bee)
 	if grid != null:
 		var found: Node2D
-		if GameConfig.probabilistic_choice_on:
+		if probabilistic_choice_on():
 			# grid.near() returns everything in range (plus a few extras
 			# from the touched buckets' corners) rather than stopping at
 			# the first match, so there's a real candidate set to weigh --
@@ -426,7 +426,7 @@ static func nearest_flower(bee: Node2D, strict: bool, radius: float, allow_full_
 		if is_instance_valid(f) and accept.call(f):
 			candidates.append(f)
 
-	if GameConfig.probabilistic_choice_on:
+	if probabilistic_choice_on():
 		return _weighted_flower_choice(bee, candidates, func(_f): return true, INF)
 
 	var best: Node2D = null
@@ -607,6 +607,11 @@ static func adaptive_constancy_on() -> bool:
 
 static func tarsal_markers_on() -> bool:
 	return GameConfig.tarsal_markers_on or (Session.progression != null and Session.progression.is_behaviour_enabled("tarsal_markers_on"))
+
+## T3-1: weighted flower choice is on when the setting (Developer mode
+## force-on) is on OR the Weighted flower choice skill is owned.
+static func probabilistic_choice_on() -> bool:
+	return GameConfig.probabilistic_choice_on or (Session.progression != null and Session.progression.is_behaviour_enabled("probabilistic_choice_on"))
 
 static func handling_experience_on() -> bool:
 	return GameConfig.handling_experience_on or (Session.progression != null and Session.progression.is_behaviour_enabled("handling_experience_on"))
