@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PP-5` (`claude/PP-5`) | Claude | Priority cells: marked brood cells are fed first | Claude | in progress | none | `plans/now/pollination.md` PP-5 -- Priority cells: marked brood cells are fed first |
+| `.worktrees/L-26` (`codex/L-26`) | Codex | queue readiness warnings use the refill admission test | Codex | in progress | none | `plans/now/agent-lifecycle.md` L-26 -- queue readiness warnings use the refill admission test |
