@@ -27,4 +27,5 @@ unblocker.
 - [C-129 -- A +1 rises over a flower that earns a Pollinator Point, and the stores line counts points](ready/C-129.md)
 - [C-130 -- Hive soil blocks show Dave's art and crumble as they are dug](ready/C-130.md)
 - [C-131 -- Goals drop-down in a Colony Run: collapse, long-term line, remembered after restart](ready/C-131.md)
+- [C-132 -- Star goals in the Goals drop-down and collapse it](ready/C-132.md)
 - [C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface](ready/C-99.md)
