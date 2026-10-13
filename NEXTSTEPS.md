@@ -23,28 +23,21 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] T3-2 -- Restocking becomes a purchase**
-   - Plan: `plans/now/tier-three.md` -- "T3-2 -- Restocking becomes a purchase"
-   - Files: `scripts/roles.gd`, `scripts/bee_building.gd`, `scripts/orders_zones.gd`, `scripts/hud.gd`, `test_scenarios/bb3_bee_bread_currency.json`, `test_scenarios/c4_stocking_hatch_test.json`, `test_scenarios/h3_restock_delivery_test.json`, `test_scenarios/nf4_fermentation_sense.json`, `test_scenarios/t3_2_restocking_gate.json`, `tests/test_t3_2_restocking_gate.py`
-   - Check: `python -m unittest tests.test_t3_2_restocking_gate` passes (unowned, no Stocking mode or keep-full control is offered and an Anything-mode Comb worker never stocks; owned, stocking works as today; keep-empty works either way); the four stocking scenarios still pass; `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/roles.gd :: skill.colony.restocking`
-   - Next after: none -- the tier-three plan is complete; Work Priorities (`plans/now/work-priorities.md`) follows in Dave's order
-
-2. **[Claude] WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3**
+1. **[Claude] WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3**
    - Plan: `plans/now/work-priorities.md` -- "WP-1 -- the catalogue: Work Priorities in Hive Mind tier 3"
    - Files: `scripts/skills.gd`, `tests/test_wp1_work_priorities_node.py`
    - Check: `python -m unittest tests.test_wp1_work_priorities_node` passes (Work priorities is a Hive Mind tier-3 node at Extended backup roles' old slot, needs Backup roles, and reads as not yet built; no Extended backup roles entry remains; the tier-0 baseline is Cell priority); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/skills.gd :: skill.hive_mind.work_priorities`
    - Next after: WP-2 -- owned, each bee follows an ordered backup list
 
-3. **[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
+2. **[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
    - Plan: `plans/now/pollination.md` -- "PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter"
    - Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
    - Check: `python -m unittest tests.test_pacing_gates` passes; `pacing_gates.py` reports the day Gyne rearing first becomes affordable in the reference Colony Run, and that day falls after the first winter; the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
    - Proof: `absent: tools/pacing_gates.py :: gyne_rearing_affordable`
    - Next after: none -- the pollination plan is complete; AR-4 in `plans/now/alpha-route-evidence.md` then starts in the Codex lane
 
-4. **[Claude] GP-4 -- The problem strip stops blocking play, keeps red visible and lets the player remove a warning**
+3. **[Claude] GP-4 -- The problem strip stops blocking play, keeps red visible and lets the player remove a warning**
    - Plan: `plans/now/goal-presentation.md` -- "GP-4 -- the problem strip stops blocking play"
    - Files: `scripts/hud.gd`, `scripts/problem_messages.gd`, `tests/gp4_problem_strip_test.gd`, `tests/test_gp4_problem_strip.py`
    - Check: `python -m unittest tests.test_gp4_problem_strip` passes (a strip line's click area is its text's width; at most four lines show, then "+N more"; no severity-0 line shows; in a Colony Run red lines show with the strip unstarred; a removed line stays away until its problem clears, then returns); `.\tools\verify.ps1` is green
