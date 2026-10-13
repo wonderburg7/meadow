@@ -736,11 +736,27 @@ def _block_shape(body: str) -> str:
     return "\n".join(line.rstrip() for line in lines).strip("\n")
 
 
-def check_plan_queue_blocks(errors: list[str], warnings: list[str]) -> None:
+def refill_ready_ids(text: str, root: Path, entries: list[backlog.Entry],
+                     lane: str) -> list[str]:
+    """Blocks a real refill would add to this lane now."""
+    import refill_lane  # imported here: refill_lane imports this module
+
+    queued = {slice_id for _, slice_id in refill_lane.queued_ids(text)}
+    refilled = refill_lane.top_up(text, lane, root, [], entries, [])
+    return [slice_id for item_lane, slice_id in refill_lane.queued_ids(refilled)
+            if item_lane == lane and slice_id not in queued]
+
+
+def check_plan_queue_blocks(errors: list[str], warnings: list[str],
+                            text: str | None = None, root: Path | None = None,
+                            entries: list[backlog.Entry] | None = None) -> None:
     """Plan blocks parse, agree with the live queue, and get used."""
-    text = (ROOT / "NEXTSTEPS.md").read_text(encoding="utf-8")
-    entries, problems = backlog.collect(current_plans(), ROOT)
-    errors.extend(problems)
+    root = root or ROOT
+    if text is None:
+        text = (root / "NEXTSTEPS.md").read_text(encoding="utf-8")
+    if entries is None:
+        entries, problems = backlog.collect(current_plans(), root)
+        errors.extend(problems)
 
     items = queue_item_chunks(text) or []
     queued: dict[str, str] = {}
@@ -774,7 +790,7 @@ def check_plan_queue_blocks(errors: list[str], warnings: list[str]) -> None:
         if not entry.gated or entry.slice_id in queued:
             continue
         proof_errors: list[str] = []
-        validate_queue_proof(entry.body, 0, ROOT, proof_errors)
+        validate_queue_proof(entry.body, 0, root, proof_errors)
         if proof_errors:
             warnings.append(
                 f"{entry.plan}:{entry.line}: {entry.slice_id} is gated, but its Proof: no "
@@ -787,16 +803,14 @@ def check_plan_queue_blocks(errors: list[str], warnings: list[str]) -> None:
         match = re.match(r"\*\*\[(\w+)\]", chunk)
         if match and match.group(1) in lane_sizes:
             lane_sizes[match.group(1)] += 1
-    waiting: dict[str, list[str]] = {lane: [] for lane in LANES}
-    for entry in entries:
-        if entry.gated or entry.slice_id in queued or entry.lane not in lane_sizes:
-            continue
-        waiting[entry.lane].append(entry.slice_id)
     for lane, size in lane_sizes.items():
-        if size < LANE_SIZE_MAX and waiting[lane]:
+        if size >= LANE_SIZE_MAX:
+            continue
+        waiting = refill_ready_ids(text, root, entries, lane)
+        if waiting:
             warnings.append(
                 f"NEXTSTEPS.md: the {lane} lane holds {size} of {LANE_SIZE_MAX} and the "
-                f"backlog offers {', '.join(waiting[lane])} -- run "
+                f"backlog offers {', '.join(waiting)} -- run "
                 f"python tools/refill_lane.py --top-up --lane {lane}"
             )
 

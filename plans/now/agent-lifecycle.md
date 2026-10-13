@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-26 -- queue readiness warnings use the refill admission test; then measure the completion gate described in Objective | Dependency: none | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude | Next: the completion-gate measurement only (L-26 makes short-lane warnings use the refill admission test; the seven-day outcome and cost gate remains) | Dependency: none | Verified: 2026-10-13
 
 ## Objective
 
