@@ -112,6 +112,14 @@ func _run() -> void:
 	_check(ms.favourites == ["long_term"], "favourites after the day change: %s" % [ms.favourites])
 	_check(hud.favourites_box.get_child_count() == 1, "after the day change, %d lines show" % hud.favourites_box.get_child_count())
 
+	# Every milestone met: the 'all met' line is not a goal, so it has no star.
+	for milestone in ms.MILESTONES:
+		ms.met_days[milestone.id] = _main.day
+	ms.show_next()
+	_check(not _star_for(hud.current_goal_label).visible, "the all-met line shows a star")
+	ms.met_days.clear()
+	ms.show_next()
+
 	# Save and load.
 	ms.favourites = ["long_term", "stable_income"]
 	var record: Dictionary = JSON.parse_string(JSON.stringify(ms.save_data()))

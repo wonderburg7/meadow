@@ -1121,7 +1121,7 @@ func _set_goal_star(label: Control, id: String, entries: Array) -> void:
 		if str(entry.id) == id and bool(entry.get("starred", false)):
 			starred = true
 	star.text = "★" if starred else "☆"
-	star.visible = not id.is_empty()
+	star.visible = not id.is_empty() and id != "all_met"
 
 func _on_goal_star_pressed(star: Button) -> void:
 	var id: String = str(goal_star_ids.get(star, ""))
