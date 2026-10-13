@@ -3,6 +3,7 @@
   "nurses": 3, "builders": 2, "miners": 1,
   "random_seed": 4242,
   "actions": [
+    {"do": "grant_skill", "skill": "skill.colony.restocking"},
     {"do": "hatch_role", "hex": [0, 0], "role": "comb_worker", "focus": "restock", "automine": false},
     {
       "when": {"event_count_at_least": {"type": "brood_hatch", "subtype": "BUILDER/restock", "count": 1}},

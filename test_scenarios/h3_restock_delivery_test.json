@@ -4,6 +4,7 @@
   "stock": {"nectar": 2},
   "random_seed": 4242,
   "actions": [
+    {"do": "grant_skill", "skill": "skill.colony.restocking"},
     {
       "do": "set_restock_order",
       "target": {"current_role": "comb_worker", "count": 1},

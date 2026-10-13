@@ -3106,7 +3106,8 @@ func _build_doing_row(common_role: int, first) -> void:
 		# BB-1: Fermenting is offered only once Bee bread is owned. Limited to
 		# the Honey role: the Miner's "Dig on its own" has shown regardless
 		# since T2-2 (its work row is what Automation gates).
-		if common_role == Roles.HONEY and not Availability.mode_query(common_role, key, null, Session.progression).available:
+		# T3-2: Stocking likewise waits for Restocking.
+		if (common_role == Roles.HONEY or common_role == Roles.COMB_WORKER) and not Availability.mode_query(common_role, key, null, Session.progression).available:
 			continue
 		var current: bool = _mode_is_active(common_role, first, key)
 		var command: String = mode_command(common_role, key)
@@ -3236,7 +3237,8 @@ func _build_orders_row(common_role: int, first) -> void:
 
 			# Restocking needs three things chosen, so it gets its own
 			# batch of buttons rather than crowding the general orders.
-			if first != null and first.architect_mode == "restock":
+			# T3-2: the keep-full controls appear only with Restocking.
+			if first != null and first.architect_mode == "restock" and Availability.mode_query(Roles.COMB_WORKER, "restock", null, Session.progression).available:
 				_build_restock_row(first)
 		Bee.Role.MINER:
 			orders_column.add_child(_action_button("Mine",

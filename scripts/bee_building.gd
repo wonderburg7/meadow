@@ -194,6 +194,12 @@ static func clear_restock(bee: Node2D) -> void:
 	bee.restock_resource = ""
 
 
+## T3-2. Has the colony bought Restocking? Stocking orders, the Stocking mode
+## and the restock job are all refused without it. True with no progression,
+## as in a bare test hive (the convention Availability.mode_query keeps).
+static func restocking_owned() -> bool:
+	return Session.progression == null or Session.progression.is_owned("skill.colony.restocking")
+
 static func has_restock_orders(bee: Node2D) -> bool:
 	return not bee.restock_targets.is_empty() and bee.restock_resource != ""
 
@@ -222,6 +228,9 @@ static func find_restock_job(bee: Node2D) -> bool:
 	if bee.current_load > 0.0:
 		return false   # still holding a load (GC-2): never lift over it
 	if not has_restock_orders(bee) or bee.hive == null:
+		return false
+	# T3-2: unowned, no comb worker stocks in any mode, Anything included.
+	if not restocking_owned():
 		return false
 
 	var neediest: Node2D = null

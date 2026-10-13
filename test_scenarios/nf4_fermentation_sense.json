@@ -13,6 +13,7 @@
   },
   "snapshot_seconds": 10,
   "actions": [
+    {"do": "grant_skill", "skill": "skill.colony.restocking"},
     {"do": "designate_cell", "hex": [2, -1], "content": "honey"},
     {"do": "set_cell_contents", "hex": [2, 0], "resource": "nectar", "amount": 100},
     {"do": "wait", "seconds": 10},
