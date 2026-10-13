@@ -56,9 +56,16 @@ One line each: the id, its plan, and the single thing it waits for.
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
 - **FC-2** (`plans/now/crisis-readiness.md`) -- implement the accepted crisis and deterministic scenario; Dave accepted FC-1's option A and T2-4b has landed; `scripts/colony_diagnostics.gd` was released 12 Oct 2026, so it waits for PP-5 (`scripts/main.gd`, `scripts/hud.gd`, `scripts/save_game.gd`, `scripts/saving.gd`) and RR-1 (`scripts/hud.gd`, `scripts/scenario_actions.gd`), both Claude lane, queued 12 Oct 2026.
 - **PP-6** (`plans/now/pollination.md`) -- the route's pricing sweep; waits for PP-5 (PP-1 to PP-4 landed 11-12 Oct 2026); its gated block is written.
-- **SP-8a** (`plans/now/sprites.md`) -- the meadow floor drawn in blocks, with everything on it lifted (Dave, 12 Oct 2026); waits for CD-3 (Codex lane) to release `scripts/bee.gd` (PP-4 landed 12 Oct 2026, releasing `scripts/world_building.gd`, `scripts/flower.gd` and the save files).
+- **SP-8a** (`plans/now/sprites.md`) -- the meadow floor drawn in blocks, with everything on it lifted (Dave, 12 Oct 2026); Dave put FC-2 first (13 Oct 2026), so it waits for FC-2 (Codex lane) to release `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.
 - **SP-6** (`plans/now/sprites.md`) -- meadow foragers drawn from the sheet (eight directions, flapping wings); waits for Dave's repack of the forager sheet onto a 16x16 `sheet` grid, which the exporter needs, and is queued once it is committed (SP-5 landed 12 Oct 2026).
 - **T2-7b** (`plans/now/tier-two.md`) -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4, whose arc buys a Honey worker, and is specified when it lands.
+- **WP-2** (`plans/now/work-priorities.md`) -- each bee's backup an ordered list; waits for WP-1 and T3-2 (Dave's order, 13 Oct 2026: tier 3, then short-term goals, then Easy) and for FC-2 (Codex lane) to release the save files.
+- **WP-3** (`plans/now/work-priorities.md`) -- the ordered list in the selection panel and the colony default; waits for WP-2.
+- **SG-2** (`plans/now/short-term-goals.md`) -- goals offered, paid and saved in runs; waits for SG-1 (Codex lane), WP-3 (Dave's order) and FC-2 releasing the save files.
+- **SG-3** (`plans/now/short-term-goals.md`) -- the goals shown under the milestone shelf; waits for SG-2.
+- **ED-1** (`plans/now/difficulty.md`) -- every bee has health; waits for SG-3 (Dave's order) and FC-2 releasing the save files.
+- **ED-2** (`plans/now/difficulty.md`) -- a run's difficulty and Easy's rules; waits for ED-1.
+- **ED-3** (`plans/now/difficulty.md`) -- choosing Easy at run start; waits for ED-2.
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Dr Gallerin guidance now has its plan, `plans/now/guidance-explanations.md`.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts

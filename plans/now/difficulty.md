@@ -1,7 +1,7 @@
 # Difficulty -- Easy rules, a Standard baseline, and the choice at run start
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: decisions being recorded in the 12 Oct 2026 plan-ahead session; slices follow | Dependency: none to design; the save and menu slices wait for the Claude lane to release `scripts/save_game.gd`, `scripts/saving.gd` and `scripts/main.gd` | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: ED-1 -- every bee has health, then ED-2 and ED-3, all gated (specified 13 Oct 2026) | Dependency: ED-1 waits for SG-3 (`plans/now/short-term-goals.md`) in Dave's order, and for FC-2 (`plans/now/crisis-readiness.md`, Codex lane) to release the save files | Verified: 2026-10-12
 
 ## Objective
 
@@ -64,6 +64,96 @@ Verified 12 Oct 2026 against master `06bd26c`:
 7. **Scenario presets:** Relaxed is Easy's rules plus Relaxed's numbers;
    Standard and Demanding use Standard's rules; Custom gains an "Easy rules"
    checkbox. No new preset name.
+
+## Open slices
+
+| Slice | What it does | Files it owns | Startable | Level |
+| --- | --- | --- | --- | --- |
+| ED-1 | Every bee has health; exhaustion drains it; spiders take it; rest restores it; a spent bee crawls home | `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/crab_spider.gd`, `scripts/game_config.gd`, `scripts/hud.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/ed1_exhaustion.json`, `tests/ed1_health_test.gd`, `tests/test_ed1_health.py` | no -- after SG-3, and once the Codex lane's FC-2 releases the save files | high |
+| ED-2 | A run's difficulty, and Easy's rules: health floors at one, the queen cannot die, brood waits, winter spares | `scripts/session.gd`, `scripts/bee_survival.gd`, `scripts/bee_nursery.gd`, `scripts/season.gd`, `scripts/crab_spider.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed2_easy_rules_test.gd`, `tests/test_ed2_easy_rules.py` | no -- after ED-1 | high |
+| ED-3 | Choosing Easy: the Colony Run tile, Relaxed and Custom, and the Saves window | `scripts/main_menu.gd`, `scripts/scenario_presets.gd`, `scripts/main.gd`, `scripts/levels.gd`, `scripts/saves_panel.gd`, `tests/test_ed3_difficulty_choice.py` | no -- after ED-2 | medium |
+
+ED-1, then ED-2, then ED-3: each needs the one before. Dave's order (13 Oct
+2026) puts this plan last: tier 3 (`plans/now/tier-three.md`,
+`plans/now/work-priorities.md`), then `plans/now/short-term-goals.md`, then
+Easy. ED-1 changes Standard in one way only, exhaustion (decision 5);
+nothing else Standard does may change. Challenges stay Standard.
+
+**Reads.** A slice reads its own section only; ED-1 and ED-2 also read
+`.claude/rules/simulation.md`, `.claude/rules/saving.md` and
+`.claude/rules/performance.md` (health is per bee, per frame), ED-3
+`plans/reference/ui-rules.md`.
+
+## ED-1 -- every bee has health
+
+<!-- LAYER: immediate-task -->
+
+**Change.** `bee.gd` gains `health` (full at birth). `bee_survival.gd`: at
+zero energy a bee no longer dies on the spot; it loses health at a rate set
+so a bee lasts about half a game-day (decision 3), and dies at zero health.
+A bee at zero energy, or at minimum health, moves at 25% speed
+(`bee_movement.gd`) and heads home; inside it eats and rests, regaining
+health, and leaves only once health and energy clear minimum thresholds.
+`crab_spider.gd`: an ambush takes health -- all of it on every difficulty
+for now, so Standard ambushes still kill. Rates and thresholds live in
+`GameConfig`; a headless sweep (`ed1_exhaustion.json`) sets the drain to the
+half-day intent and records its table here. The selection panel shows
+health beside energy. Health is saved per bee; a save without it loads
+every bee at full health. Every existing scenario still passes, or its
+changed expectation is recorded here with the exhaustion reason.
+
+```queue-gated
+**[Claude] ED-1 -- every bee has health**
+- Plan: `plans/now/difficulty.md` -- "ED-1 -- every bee has health"
+- Files: `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/crab_spider.gd`, `scripts/game_config.gd`, `scripts/hud.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/ed1_exhaustion.json`, `tests/ed1_health_test.gd`, `tests/test_ed1_health.py`
+- Check: `python -m unittest tests.test_ed1_health` passes (a bee out of energy crawls at 25% speed, loses health and dies after about half a game-day unless it eats first; resting restores health and it leaves only past the thresholds; an ambush still kills; health survives save and restore and an old save loads at full health); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
+- Proof: `absent: scripts/bee.gd :: var health`
+- Next after: ED-2 -- a run's difficulty, and Easy's rules
+```
+
+## ED-2 -- a run's difficulty, and Easy's rules
+
+<!-- LAYER: immediate-task -->
+
+**Change.** `Session` gains the run's difficulty, `"standard"` or
+`"easy"`, reset with the run and saved; a save without it loads as
+Standard. On Easy: a worker's health stops at one (exhaustion and ambush
+alike); the queen cannot die of anything; an unfed larva stops developing
+and resumes when fed instead of starving (`bee_nursery.gd`); the winter bill
+(`season.gd`) still empties the stores, but the bees it cannot feed reach
+spring at one health and no energy. Old age, disease-shortened or not,
+still kills (decision 2). On Standard nothing differs from ED-1. Until ED-3
+nothing sets Easy except a headless scenario.
+
+```queue-gated
+**[Claude] ED-2 -- a run's difficulty, and Easy's rules**
+- Plan: `plans/now/difficulty.md` -- "ED-2 -- a run's difficulty, and Easy's rules"
+- Files: `scripts/session.gd`, `scripts/bee_survival.gd`, `scripts/bee_nursery.gd`, `scripts/season.gd`, `scripts/crab_spider.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed2_easy_rules_test.gd`, `tests/test_ed2_easy_rules.py`
+- Check: `python -m unittest tests.test_ed2_easy_rules` passes (on Easy an exhausted or ambushed worker stops at one health and crawls home; the queen survives starvation, ambush and winter; an unfed larva waits and then develops; a short winter leaves bees at one health, not dead; a bee past its lifespan still dies; on Standard every one of these behaves as ED-1; the difficulty survives save and restore and an old save is Standard); `.\tools\verify.ps1` is green
+- Proof: `absent: scripts/session.gd :: difficulty`
+- Next after: ED-3 -- choosing Easy: the Colony Run tile, Relaxed and Custom, and the Saves window
+```
+
+## ED-3 -- choosing Easy: the Colony Run tile, Relaxed and Custom, and the Saves window
+
+<!-- LAYER: immediate-task -->
+
+**Change.** The main menu's Colony Run tile offers Easy and Standard
+(Standard selected by default). Scenario's Relaxed preset sets Easy's rules
+as well as its numbers; Standard and Demanding set Standard; Custom gains an
+"Easy rules" checkbox. Challenges always start Standard. The choice reaches
+`Session` at run start (`main.gd`, `levels.gd`) and the Saves window shows
+each run's difficulty. Each choice names Easy's rules in its tooltip, so
+they stay visible preset rules (product-scope §11).
+
+```queue-gated
+**[Claude] ED-3 -- choosing Easy: the Colony Run tile, Relaxed and Custom, and the Saves window**
+- Plan: `plans/now/difficulty.md` -- "ED-3 -- choosing Easy: the Colony Run tile, Relaxed and Custom, and the Saves window"
+- Files: `scripts/main_menu.gd`, `scripts/scenario_presets.gd`, `scripts/main.gd`, `scripts/levels.gd`, `scripts/saves_panel.gd`, `tests/test_ed3_difficulty_choice.py`
+- Check: `python -m unittest tests.test_ed3_difficulty_choice` passes (choosing Easy on the Colony Run tile, or Relaxed or Custom with Easy rules ticked, starts an Easy run; Standard, Demanding and both Challenges start Standard; the Saves window names each run's difficulty); `.\tools\verify.ps1` is green
+- Proof: `absent: scripts/main_menu.gd :: easy_rules`
+- Next after: none -- the difficulty plan is complete
+```
 
 ## Open questions
 
