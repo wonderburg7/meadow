@@ -89,6 +89,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **ED-2** (`plans/now/difficulty.md`) -- a run's difficulty and Easy's rules; waits for ED-1.
 - **ED-3** (`plans/now/difficulty.md`) -- choosing Easy at run start; waits for ED-2.
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Dr Gallerin guidance now has its plan, `plans/now/guidance-explanations.md`.
+- **The tier-4 gyne route** (`plans/design/progression.md` §11 step 15: Pollinator Points as the tier-4 gate, then Gyne rearing) -- has no plan yet, and AR-4 waits for it; waits for Dave's plan-ahead session (his choice, 13 Oct 2026), and the Claude lane stays at four until that plan exists.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
 
