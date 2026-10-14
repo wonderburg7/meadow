@@ -11,9 +11,10 @@ or prescribing a single colony organisation.
 
 ## Current state
 
-The panel can schedule and retain prompts, but its own source says ordinary
-runs feed it no real prompts. Existing warnings know symptoms, not a stable
-causal explanation contract.
+**Status:** complete locally; GD-2b's rendered ledger and bounded Why history
+now save and restore with the run, while an older save begins with neither.
+
+**Next:** none -- Guidance explanations are complete.
 
 ## GD-1 decision record -- accepted
 
@@ -50,21 +51,8 @@ save boundary stand as written above. With them:
 
 ## Open slices
 
-| Slice | What it does | Files it owns | Startable | Level |
-| --- | --- | --- | --- | --- |
-| GD-2b | the shown ledger and Why history saved with the run | `scripts/guidance_policy.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- Codex backlog, while no Claude-lane slice holds the save files (PP-1 released them 11 Oct 2026) | medium |
-
-GD-1 shipped 2026-10-09; its specification is `plans/archive/GD-1_2026-10-09.md`.
-
-**Dependencies.** GD-2a shares no file with the Claude lane. GD-2b needs
-`save_game.gd` and `saving.gd`, which PP-1 released on 11 Oct 2026 and
-PP-4 and PP-5 (`plans/now/pollination.md`) then held until PP-5 landed on
-13 Oct 2026; no Claude-lane slice holds them now, so it is admissible.
-
-**Reads.** A slice reads its own section and the decision record above;
-`plans/reference/colony-diagnostics.md` for the facts' meaning.
-
-GD-2a shipped 2026-10-10; its specification is `plans/archive/GD-2a_2026-10-10.md`.
+None. GD-1 shipped 2026-10-09 and GD-2a shipped 2026-10-10; GD-2b completes
+the plan when this branch lands.
 
 ## GD-2b -- the shown ledger and Why history saved with the run
 
@@ -85,6 +73,4 @@ loses history (row 2, row 3). A save without them loads an empty ledger.
 
 ## Not in the queue, and why
 
-- Nothing: GD-2b's gate cleared when PP-5 landed (13 Oct 2026) and released
-  `scripts/save_game.gd` and `scripts/saving.gd`; the next Codex lane
-  refill admits it.
+- Nothing: Guidance explanations are complete.

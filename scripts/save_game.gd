@@ -125,6 +125,9 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 		"bees": _bees_data(world),
 		"flowers": _flowers_data(world),
 		"fog": world.fog_of_war.explored_list(),
+		# GD-2b: diagnostic facts are recomputed after loading, but rendered
+		# explanations must remain consumed and available through Why.
+		"guidance": world.gallerin_panel.guidance_policy.save_data(),
 		"skills": _skills_data(),
 		"colony_milestones": world.colony_milestones.save_data(),
 		# PP-1: Pollinator Points and Contribution. Additive: an older save

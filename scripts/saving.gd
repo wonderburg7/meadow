@@ -91,6 +91,9 @@ func _restore(data: Dictionary) -> void:
 	# and waiting seeds with it.
 	main.pollination.restore(data.get("pollination"))
 	main.pollination.restore_seed(data.get("seed_bank"))
+	# GD-2b: an older save has no guidance block, which intentionally clears
+	# the ledger instead of treating a previously shown explanation as new.
+	main.gallerin_panel.guidance_policy.restore(data.get("guidance", {}))
 	main.SaveGame.restore_skills(data, Session.progression)
 	# BS-3 (Dave, 30 Sep 2026): a save holds only the skills it recorded, and
 	# one written before BS-1 has none of the run's seeded-role skills. What a
