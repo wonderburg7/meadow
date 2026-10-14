@@ -5,7 +5,9 @@
 Edit this file only from the primary checkout (never from inside a feature
 branch/worktree -- parallel branches editing this file will conflict on
 merge). Add a row when a branch/worktree is created; remove it the moment
-that work is integrated and closed out. `tools/check_docs.py` fails
+that work is integrated and closed out. A docs-only edit merged and pushed
+in the same sitting takes no row (`plans/reference/closeout.md`, "Branches
+follow the lanes"). `tools/check_docs.py` fails
 verification if a row's worktree/branch no longer exists, or if a registered
 `.worktrees/*` worktree has no row here.
 
@@ -47,4 +49,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/GD-2b` (`codex/GD-2b`) | Codex | the shown ledger and Why history saved with the run | Codex | in progress | none | `plans/now/guidance-explanations.md` GD-2b -- the shown ledger and Why history saved with the run |
-| `.claude/worktrees/reduce-closeout-bookkeeping-b516bd` (`claude/reduce-closeout-bookkeeping-b516bd`) | Claude (workflow) | fewer closeout bookkeeping commits: one closeout commit per side, gates batched per run, docs-only steward edits without a ledger pair, a model-mismatch warning at start | Claude Code | active | none | ad hoc (Dave, 14 Oct 2026) |
