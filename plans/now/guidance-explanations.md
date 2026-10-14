@@ -54,22 +54,7 @@ save boundary stand as written above. With them:
 None. GD-1 shipped 2026-10-09 and GD-2a shipped 2026-10-10; GD-2b completes
 the plan when this branch lands.
 
-## GD-2b -- the shown ledger and Why history saved with the run
-
-<!-- LAYER: immediate-task -->
-
-**Change.** The policy's shown ledger and the bounded Why history are saved
-with the run and restored, so a reload neither replays an introduction nor
-loses history (row 2, row 3). A save without them loads an empty ledger.
-
-```queue
-**[Codex] GD-2b -- the shown ledger and Why history saved with the run**
-- Plan: `plans/now/guidance-explanations.md` -- "GD-2b -- the shown ledger and Why history saved with the run"
-- Files: `scripts/guidance_policy.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_gd2b_guidance_saved.py`
-- Check: `python -m unittest tests.test_gd2b_guidance_saved` passes (an explanation shown before a save is not shown again after loading it, and the Why history survives; an older save loads with an empty ledger); `tools/verify.ps1` is green
-- Proof: `absent: scripts/save_game.gd :: guidance`
-- Next after: none -- guidance explanations are complete
-```
+GD-2b shipped 2026-10-14; its specification is `plans/archive/GD-2b_2026-10-14.md`.
 
 ## Not in the queue, and why
 
