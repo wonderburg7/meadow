@@ -23,14 +23,7 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
-   - Plan: `plans/now/pollination.md` -- "PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter"
-   - Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
-   - Check: `python -m unittest tests.test_pacing_gates` passes; `pacing_gates.py` reports the day Gyne rearing first becomes affordable in the reference Colony Run, and that day falls after the first winter; the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
-   - Proof: `absent: tools/pacing_gates.py :: gyne_rearing_affordable`
-   - Next after: none -- the pollination plan is complete; AR-4 in `plans/now/alpha-route-evidence.md` then starts in the Codex lane
-
-2. **[Claude] GP-4 -- The problem strip stops blocking play, keeps red visible and lets the player remove a warning**
+1. **[Claude] GP-4 -- The problem strip stops blocking play, keeps red visible and lets the player remove a warning**
    - Plan: `plans/now/goal-presentation.md` -- "GP-4 -- the problem strip stops blocking play"
    - Files: `scripts/hud.gd`, `scripts/problem_messages.gd`, `tests/gp4_problem_strip_test.gd`, `tests/test_gp4_problem_strip.py`
    - Check: `python -m unittest tests.test_gp4_problem_strip` passes (a strip line's click area is its text's width; at most four lines show, then "+N more"; no severity-0 line shows; in a Colony Run red lines show with the strip unstarred; a removed line stays away until its problem clears, then returns); `.\tools\verify.ps1` is green
@@ -48,6 +41,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Check: `python -m unittest tests.test_gd2b_guidance_saved` passes (an explanation shown before a save is not shown again after loading it, and the Why history survives; an older save loads with an empty ledger); `tools/verify.ps1` is green
    - Proof: `absent: scripts/save_game.gd :: guidance`
    - Next after: none -- guidance explanations are complete
+
+2. **[Codex] FR-1 -- the three foraging stages measured on the same Colony Run seeds**
+   - Plan: `plans/now/forager-recruitment.md` -- "FR-1 -- the three foraging stages measured on the same Colony Run seeds"
+   - Files: `tools/forager_stages.py`, `tests/test_forager_stages.py`, `test_scenarios/fr1_forager_stages_test.json`, `tools/scenario_sweep.py`
+   - Check: `python -m unittest tests.test_forager_stages` passes; `python tools/forager_stages.py` prints food per forager per day for the four stages on five seeds, and the table is recorded in this plan's FR-1 section; `tools/verify.ps1` is green
+   - Proof: `absent: tools/scenario_sweep.py :: ^fr1_`
+   - Next after: FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
 
 ## Not in the queue, and why
 
@@ -68,7 +68,9 @@ One line each: the id, its plan, and the single thing it waits for.
 - **ED-2** (`plans/now/difficulty.md`) -- a run's difficulty and Easy's rules; waits for ED-1.
 - **ED-3** (`plans/now/difficulty.md`) -- choosing Easy at run start; waits for ED-2.
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces. Dr Gallerin guidance now has its plan, `plans/now/guidance-explanations.md`.
-- **The tier-4 gyne route** (`plans/design/progression.md` §11 step 15: Pollinator Points as the tier-4 gate, then Gyne rearing) -- has no plan yet, and AR-4 waits for it; waits for Dave's plan-ahead session (his choice, 13 Oct 2026), and the Claude lane stays at four until that plan exists.
+- **PP-6** (`plans/now/pollination.md`) -- the sweep prices the gyne route so Gyne rearing is first affordable in the 11 days after the first winter; waits for FR-2, which puts Auto scouting on the route (Dave, 14 Oct 2026).
+- **FR-2** (`plans/now/forager-recruitment.md`) -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight; waits for FR-1's measurement to show Auto scouting forages better (Dave, 14 Oct 2026).
+- **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-6, which shares `scripts/skills.gd`.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
 

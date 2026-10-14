@@ -58,3 +58,21 @@ route is `plans/now/pollination.md`, whose last slice, PP-6, opens AR-4. T2-7
 buying a Honey worker opens T2-7b, the tier-2 price sweep T2-7 deferred. It cannot be
 an honest acceptance scenario while those mechanics are still incomplete; the
 first three slices make that absence visible instead of faking a successful run.
+
+## AR-4 -- a scripted Colony Run reaches and records all five gates
+
+<!-- LAYER: design -->
+
+Its gated block is above. Decision (Dave, 14 Oct 2026): **the 90-minute
+gyne/victory gate is judged on the run's calendar, not on minutes.** It
+passes when the run's first counted gyne -- one sent inside the mating
+window, so `first_gyne_day` -- leaves inside the second summer's mating
+window (`season.gd`'s `MATING_WINDOW_START` to `MATING_WINDOW_END` of the
+season after the first winter, about days 47 to 65 on today's calendar).
+`pacing_gates.py` reads that window from the run's logged settings, as
+`winter_schedule` already does for the 60-minute gate; the target worked
+out from minutes and day length is still printed, for information only. Today's
+conversion puts 90 minutes at day 27, before the first winter ends, so the
+gate could never pass. PP-6 (`plans/now/pollination.md`) sets the day Gyne
+rearing becomes affordable to the first 11 days after winter, which leaves
+this window reachable.
