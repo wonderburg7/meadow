@@ -20,6 +20,19 @@ class SlowestFirstTest(unittest.TestCase):
         self.assertEqual(["tests.new", "tests.slow", "tests.fast"], ordered)
 
 
+class SplitGameClassesTest(unittest.TestCase):
+    def test_only_a_game_module_with_several_classes_is_split(self):
+        ids = run_tests.split_game_classes([
+            "tests.test_bb4_challenge_pacing", "tests.test_ho10_queen_starvation_ends_run", "tests.test_run_tests",
+        ])
+        self.assertEqual([
+            "tests.test_bb4_challenge_pacing.ChallengeOneRouteTest",
+            "tests.test_bb4_challenge_pacing.ChallengeTwoRouteTest",
+            "tests.test_ho10_queen_starvation_ends_run",
+            "tests.test_run_tests",
+        ], ids)
+
+
 class GameTestReachTest(unittest.TestCase):
     GAME = ["tests.test_bb1_bee_bread"]
 

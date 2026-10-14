@@ -11,7 +11,8 @@ last recorded time, so the stage takes about as long as its slowest module.
                               [--game-tests-since BASE] <module> [<module> ...]
 
 --cases splits each module into its test cases (the lifecycle suite, whose
-cases each build their own temporary repository). --private-user gives each
+cases each build their own temporary repository); otherwise a game test
+module with several classes is split into them (split_game_classes). --private-user gives each
 worker its own user:// (see private_user_home). --game-tests-since BASE drops
 the modules that boot Godot when nothing changed since BASE can reach them
 (see game_tests_reached). A passing id prints one line; a failing one prints
@@ -221,6 +222,22 @@ def expand_cases(modules: list[str]) -> list[str]:
     return ids
 
 
+def split_game_classes(modules: list[str]) -> list[str]:
+    """Each game test module with more than one class, as its classes. A
+    class's setUpClass makes its own Godot run, and no game module has a
+    module-level fixture, so the classes run apart unchanged; bb4's two
+    route runs were one 360 s module, the longest wait in the unit stage
+    (14 Oct 2026)."""
+    ids: list[str] = []
+    for module in modules:
+        if not is_game_test(module):
+            ids.append(module)
+            continue
+        classes = list(dict.fromkeys(case.rsplit(".", 1)[0] for case in expand_cases([module])))
+        ids.extend(classes if len(classes) > 1 else [module])
+    return ids
+
+
 def private_user_home(worker: int, run: str) -> Path:
     """Each worker's own user://. The modules that launch Godot with
     --script read and write the one user:// every Godot on the machine
@@ -301,7 +318,7 @@ def main(argv: list[str] | None = None) -> int:
         print("%s: none to run" % args.label)
         return 0
 
-    ids = expand_cases(modules) if args.cases else modules
+    ids = expand_cases(modules) if args.cases else split_game_classes(modules)
     path = timings_path()
     ids = slowest_first(ids, load_timings(path))
     workers = min(args.workers or default_workers(), len(ids))
@@ -309,7 +326,7 @@ def main(argv: list[str] | None = None) -> int:
     failed, measured = run_all(ids, workers, args.private_user)
     save_timings(path, measured)
     print("%s: ran %d %s in %.0f s on %d workers; %d failed" % (
-        args.label, len(ids), "cases" if args.cases else "modules", time.time() - start, workers, len(failed)))
+        args.label, len(ids), "cases" if args.cases else "ids", time.time() - start, workers, len(failed)))
     for test_id in failed:
         print("failed: %s -- rerun alone with: python -m unittest %s" % (test_id, test_id))
     return 1 if failed else 0
