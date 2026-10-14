@@ -813,6 +813,10 @@ legal decisions for the release stream, not alpha blockers.
   `plans/now/work-priorities.md`, 13 Oct 2026);
 - Bee Bread recipe quantities, rationing and fermentation feedback;
 - exact skill discovery milestones and costs in the 90-minute route;
+- what genetic points buy -- gynes earn them (COL-7) and the notice names
+  them, but nothing spends them; Dave deferred it (14 Oct 2026). It blocks
+  nothing in the alpha, since victory is the first counted gyne, and it
+  blocks lineage (§6.3);
 - the seed-set and offspring-quality formulas (the Pollinator Point window
   is settled in §10's 10 Oct 2026 decisions);
 - Standard and harder difficulty rules;

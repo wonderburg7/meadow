@@ -131,13 +131,14 @@ Where Dave's brief joined two names with `+` ("Auto-mining + Auto-building"), th
 | `skill.foraging.tarsal_secretions` | 1 | Existing | — | Bees respond to recent scent marks, reducing crowding at recently-visited flowers. Cross-sector prereq for Alarm pheromone. |
 | `skill.foraging.orientation_flight` | 1 | Existing | — | A new forager scouts a working area instead of heading for the nearest flower. |
 | `skill.foraging.associative_learning` | 2 | New | — | Handling time drops with repeated visits to one flower species. Familiarity is per bee **per species**, not per flower, and must be saved. Rates need simulation before build. |
+| `skill.foraging.auto_scouting` | 2 | Existing behaviour, node new | Orientation flight | Replaces Orientation flight: a new forager samples several starting areas and keeps the best. The middle of three stages (Dave, 14 Oct 2026, `plans/now/forager-recruitment.md`). |
 | `skill.foraging.adaptive_constancy` | 2 | Existing foundation | — | The old `floral_constancy`: a forager specialises in one species, but re-evaluates and switches when that species stops paying rather than locking to it permanently. |
 | `skill.foraging.weighted_flower_choice` | 3 | New | Associative learning | Foragers score candidate flowers on expected yield, handling time and distance instead of picking nearest-first. |
 | `skill.foraging.pollinator_points` | 3 | New | — | Two ledgers: **Spendable Pollinator Points**, required by every tier-4 skill purchase in every branch (replacing royal jelly as the universal tier-4 gate), and **Pollination Contribution**, never spent, driving ecological goals and seed outcomes. Full mechanic — award rule, compatible/incompatible visits, offspring quality — in `product-scope.md` §10. Window duration and the seed/quality formula stay open (`product-scope.md` §16). |
 | `skill.foraging.nectar_robbing` | 4 | New | Weighted flower choice | Piercing the flower base to skip handling time, at the cost of no pollination and faster patch depletion. Needs its own balance pass — a pure speed-up with no downside would dominate. |
-| `skill.foraging.auto_recruitment` | 4 | Existing | — | Successful foragers share productive areas at the entrance. When Adaptive constancy is also owned, recruitment can pass species too. |
+| `skill.foraging.auto_recruitment` | 4 | Existing behaviour, not wired to the node | Auto scouting | Successful foragers share productive areas at the entrance. When Adaptive constancy is also owned, recruitment passes species too. The last of three stages; wired by FR-3 (`plans/now/forager-recruitment.md`). |
 
-**Auto scouting is no longer a node** — it is baseline (section 5.7).
+**Auto scouting is a node again** (Dave, 14 Oct 2026): Orientation flight → Auto scouting → Auto-recruitment, each foraging better than the one before. This supersedes the 1 Sep baseline decision in section 5.7; the rules are `plans/now/forager-recruitment.md`'s.
 
 ### 5.2 Brood
 
@@ -216,7 +217,7 @@ Colony-level automation and standing policy. New sector.
 
 Per Dave, 1 Sep: these are on from the beginning of a game and are **not** purchasable nodes. That may change later, so **reserve their IDs and leave them in `skills.gd` marked `baseline: true`** rather than deleting them — that way promoting one to a node later is a data change, not a rewrite.
 
-- Auto scouting (`skill.foraging.auto_scouting`) — samples several starting areas, keeps the best.
+- ~~Auto scouting (`skill.foraging.auto_scouting`)~~ — superseded (Dave, 14 Oct 2026): a Foraging tier-2 node again, section 5.1. FR-2 promotes the reserved entry.
 - Cell priority (`skill.colony.cell_priority`, renamed from `skill.colony.work_priorities` by WP-1, 13 Oct 2026) — priority tiers for cells, zones and orders.
 - Standing instructions (`skill.hive_mind.standing_instructions`) — persistent instructions such as role retention and work-from-here.
 - Landscape memory (`skill.ecology.landscape_memory`) — explored meadow stays remembered rather than dimming back to uncertain. Feature dependency: fog of war.
