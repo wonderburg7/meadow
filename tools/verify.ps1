@@ -210,8 +210,9 @@ function Start-LifecycleJob {
         # marker, so a nested verify never starts the suite a second time --
         # the recursion that once kept an outer closeout from returning.
         $env:MEADOW_LIFECYCLE_SUITE = "1"
-        # Four workers: the unit job runs its own pool alongside.
-        & $interpreter tools/run_tests.py --cases --workers 4 --label "lifecycle tests" @modules
+        # Three workers: the unit job runs its own pool alongside, and at four
+        # each a finish under load ran past a test's 120 s timeout.
+        & $interpreter tools/run_tests.py --cases --workers 3 --label "lifecycle tests" @modules
         if ($LASTEXITCODE -ne 0) {
             throw "workflow unittest modules exited with code $LASTEXITCODE"
         }

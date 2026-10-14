@@ -55,9 +55,10 @@ def default_workers() -> int:
         return int(override)
     # Measured on Dave's i7-1370P laptop (14 Oct 2026): one Godot module
     # alone took 25 s, three at once 49 s each (1.5x the throughput), six at
-    # once 70 s each (2.1x). Four keeps most of the gain without stretching
-    # each run towards its own timeout.
-    return max(2, min(4, (os.cpu_count() or 4) // 4))
+    # once 70 s each (2.1x). Three keeps each run within about twice its time
+    # alone: four, beside the lifecycle pool and another session's runs, took
+    # bb4's Challenge 2 route past its 900 s timeout.
+    return max(2, min(3, (os.cpu_count() or 4) // 4))
 
 
 # Godot processes on the whole machine above which a game test waits to
