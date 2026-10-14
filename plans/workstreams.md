@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/GD-2b` (`codex/GD-2b`) | Codex | the shown ledger and Why history saved with the run | Codex | in progress | none | `plans/now/guidance-explanations.md` GD-2b -- the shown ledger and Why history saved with the run |
+| `.claude/worktrees/reduce-closeout-bookkeeping-b516bd` (`claude/reduce-closeout-bookkeeping-b516bd`) | Claude (workflow) | fewer closeout bookkeeping commits: one closeout commit per side, gates batched per run, docs-only steward edits without a ledger pair, a model-mismatch warning at start | Claude Code | active | none | ad hoc (Dave, 14 Oct 2026) |
