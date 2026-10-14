@@ -6,6 +6,22 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 14 Oct 2026 -- Dave's hands-on pass
+
+### C-125 -- Filled comb cells show the nectar and pollen fill-level art
+
+What this checks: Start a run with Cell art switched on (Settings, Appearance), then watch the comb while bees store nectar and pollen. Filled cells should show the cup art with a liquid or pollen level that rises as the cell fills; nectar left to ferment turns a paler, murkier green.
+
+PASS: Nectar and pollen cells show rising fill-level art, fermented nectar looks different from fresh, and the selection ring still hugs the cup.
+
+If it fails, SP-4 reopens: the level bounds in assets/sprites/SPRITES.md or the frame choice in scripts/hive_cell.gd are changed.
+
+Runner: dave
+
+Owner: `plans/now/sprites.md`
+
+Confirmed 14 Oct 2026: run by Dave: nectar and pollen cells show fill levels that rise (pass); fermented nectar looks paler and murkier than fresh (pass). The selection-ring condition failed (it should trace the cup's flat rim, not the whole shape) and is re-filed as C-134 for SP-11.
+
 ## 11 Oct 2026 -- Dave's hands-on pass
 
 ### C-102 -- Run availability table: cut skills read not available, features named in words

@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: nothing queued but SP-8a (SP-1 to SP-5, SP-7 and SP-9 landed; the skep is in the meadow and hive soil is drawn from the art); SP-6 waits for Dave's forager sheet on a 16x16 `sheet` grid (his 11 Oct repack, `bees/foragers_meadow_view.png`, is committed unexported and is not on that grid yet); the hive and menu art is planned in `plans/now/hive-and-menu-art.md`; SP-8a, the meadow floor drawn in blocks with everything on it lifted, is specified below and gated on FC-2 (Codex lane) releasing `scripts/main.gd` and the save files -- CD-3 released `scripts/bee.gd` on 12 Oct 2026, and Dave put FC-2 first on 13 Oct 2026; height's effects (rest of SP-8) are cut after it | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: SP-10 then SP-11, from Dave's 14 Oct 2026 pass (soil draw order; rings trace the rim), then SP-8a (SP-1 to SP-5, SP-7 and SP-9 landed; the skep is in the meadow and hive soil is drawn from the art); SP-6 waits for Dave's forager sheet on a 16x16 `sheet` grid (his 11 Oct repack, `bees/foragers_meadow_view.png`, is committed unexported and is not on that grid yet); the hive and menu art is planned in `plans/now/hive-and-menu-art.md`; SP-8a, the meadow floor drawn in blocks with everything on it lifted, is specified below and gated on FC-2 (Codex lane) releasing `scripts/main.gd` and the save files -- CD-3 released `scripts/bee.gd` on 12 Oct 2026, and Dave put FC-2 first on 13 Oct 2026; height's effects (rest of SP-8) are cut after it | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-14
 
 ## Objective
 
@@ -80,11 +80,14 @@ Verified 9 Oct 2026 against master and the main checkout:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
+| SP-10 | hive soil blocks draw front over back everywhere (Dave's 14 Oct 2026 pass) | `scripts/shapes.gd`, `scripts/soil_block.gd`, `scripts/rock_block.gd`, `scripts/hive_cell.gd`, tests | yes | low |
+| SP-11 | every ring on a cell traces the cup's rim (C-125, 14 Oct 2026) | `scripts/hive_cell.gd`, tests | yes, after SP-10 (shares `hive_cell.gd`) | medium |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for the sheet on a 16x16 `sheet` grid | high (per-bee hot path) |
 | SP-8a | the meadow floor drawn in blocks, with everything on it lifted | see its `Files:` line below | no -- waits for FC-2 (Codex lane) to release `main.gd` and the save files (Dave put FC-2 first, 13 Oct 2026; CD-3 released `bee.gd` 12 Oct 2026) | high |
 | SP-8 (rest) | height's effects: flight cost, where flowers grow, scouting reach | to be cut after SP-8a | no -- after SP-8a | high (balance) |
 
 Dependencies: SP-2 -> SP-4 -> SP-5 -> SP-6 (SP-1 and SP-3 landed 9 Oct 2026).
+SP-10 -> SP-11 (both edit `scripts/hive_cell.gd`).
 SP-8a and HM-1 (`plans/now/hive-and-menu-art.md`) both edit `scripts/hive.gd`
 and `scripts/rival_hive.gd`; both are Claude lane, so whichever lands second merges master first.
 
@@ -99,6 +102,112 @@ bee breads, fermented nectar and the wax caps) shipped 2026-10-12 as ad-hoc
 work on Dave's request; its record is `plans/archive/SP-7_2026-10-12.md`.
 
 SP-5 shipped 2026-10-12; its specification is `plans/archive/SP-5_2026-10-12.md`.
+
+```queue
+**[Claude] SP-10 -- hive soil blocks draw front over back everywhere**
+- Plan: `plans/now/sprites.md` -- "SP-10 -- hive soil blocks draw front over back everywhere"
+- Files: `scripts/shapes.gd`, `scripts/soil_block.gd`, `scripts/rock_block.gd`, `scripts/hive_cell.gd`, `tests/sp10_soil_depth_test.gd`, `tests/test_sp10_soil_depth.py`
+- Check: `python -m unittest tests.test_sp10_soil_depth` passes: every soil and rock block in a fresh hive has `z_index == Shapes.hex_draw_depth(axial)`, a block one row lower on screen has a higher `z_index` than the block above it, and a comb cell and a soil block on neighbouring hexes order the same way.
+- Proof: `absent: scripts/soil_block.gd :: z_index`
+- Next after: SP-11 -- every ring on a cell traces the cup's rim
+```
+## SP-10 -- hive soil blocks draw front over back everywhere
+
+Level: low. Dave's 14 Oct 2026 pass: with Cell art on, only the soil
+blocks in the bottom right of the hive look as intended.
+
+**True now** (verified 14 Oct 2026 against master `3e37ea6`).
+
+- `soil_block.gd` draws Dave's block art (SP-9) with a 14 art px side
+  wall below its top face, so each block must paint over the block
+  behind it. It never sets `z_index`; nor does `rock_block.gd`.
+- `world_building.gd::_dig_out_chamber` adds blocks ring by ring, walking
+  each ring round, so same-z blocks draw in that order: outer rings over
+  inner, and round each ring by the walk. Only where the walk happens to
+  run screen-top to screen-bottom (the bottom right) does it look right.
+- `hive_cell.gd::_ready` already solves this for comb: `z_index = 2 *
+  axial.y + axial.x`, which rises down the screen whatever the build
+  order. Blocks sit at 0 beside cells at -40..40, so a cell and a block
+  next to each other also overlap the wrong way round.
+
+**True afterwards.**
+
+- `shapes.gd` has `static func hex_draw_depth(hex: Vector2i) -> int`
+  returning `2 * hex.y + hex.x`, with the comment moved from
+  `hive_cell.gd::_ready` (why that formula rises down the screen).
+- `hive_cell.gd::_ready` sets `z_index = Shapes.hex_draw_depth(axial)`;
+  `soil_block.gd::setup` and `rock_block.gd::setup` set the same from
+  their `hex` (in `setup`, not `_ready`: `world_building.gd` adds the
+  block before it calls `setup`, so `axial` is still zero in `_ready`).
+- The test pair follows `tests/t2_4b_bodies_test.gd` and
+  `tests/test_t2_4b_bodies.py`.
+
+**Invariants.** Bees keep `z_index = 5` and floor tiles
+`HIVE_FLOOR_Z_INDEX`; the marker, ring and label stay children of the
+block. Flat soil (Cell art off) looks the same as before, since every
+block is one colour. No per-frame work: the depth is set once.
+
+**Escalate** if a block or cell anywhere else in `scripts/` sets its own
+`z_index` from its hex: the shared helper must be the only formula.
+
+**Hands-on check on landing** (move from `checks/blocked.md` to ready):
+C-133.
+
+```queue
+**[Claude] SP-11 -- every ring on a cell traces the cup's rim**
+- Plan: `plans/now/sprites.md` -- "SP-11 -- every ring on a cell traces the cup's rim"
+- Files: `scripts/hive_cell.gd`, `tests/sp11_cell_rim_test.gd`, `tests/test_sp11_cell_rim.py`
+- Check: `python -m unittest tests.test_sp11_cell_rim` passes: with Cell art on, the selection ring's points are `EMPTY_RIM` taken through `_silhouette_point_to_local` and scaled about the rim's centre; the designation, zone and base rings use the same six points at their own sizes; with Cell art off every ring is still the hexagon.
+- Proof: `absent: scripts/hive_cell.gd :: EMPTY_RIM`
+- Next after: SP-8a -- the meadow floor drawn in blocks, with everything on it lifted
+```
+## SP-11 -- every ring on a cell traces the cup's rim
+
+Level: medium. Dave, 14 Oct 2026 (C-125): with the new cell art the
+selection ring "should now highlight the flat top of each of the cells
+(the rim), rather than the whole shape", and every ring on a cell does
+the same (his answer in the pass session), so they cannot disagree.
+
+**True now** (verified 14 Oct 2026 against master `3e37ea6`).
+
+- Every ring on a cell (`outline`, `designation_ring`, `selection_ring`,
+  `zone_halo`, `zone_glow`) goes through `_apply_outline_points`; with
+  Cell art on, `_set_outline_points_cup` walks the eight-point
+  `EMPTY_SILHOUETTE` (the whole cup: rim, walls and base) and scales it
+  by `size / cell_size` about the cell origin.
+- The cup's rim is the bright outline (255,208,0 and 255,234,0) round
+  the top face of frame 0 of `assets/sprites/comb/wax_cell_nectar_sheet.png`.
+  Measured on 14 Oct 2026 by printing that frame's pixels as a grid
+  (Python, PIL): a flat-topped hexagon with outer pixel edges top y 5
+  (x 9..26), bottom y 21 (x 8..26), left x 1 and right x 32 at y 13.
+
+**True afterwards.**
+
+- `EMPTY_RIM` (const, six `Vector2`, in the frame's pixel space) holds
+  the rim's outer edge: `(9,5), (26,5), (32,13), (26,21), (8,21),
+  (1,13)`. Its comment states how it was measured, as `EMPTY_SILHOUETTE`'s
+  does. Re-measure it the same way first; if any vertex is off by more
+  than one pixel from the values above, use the new measurement and say
+  so in the commit.
+- `_set_outline_points_cup` walks `EMPTY_RIM`. Each point goes through
+  `_silhouette_point_to_local` and is then scaled by `size / cell_size`
+  about the rim's own centre (the mean of the six local points), not
+  about the cell origin, so the larger zone rings stay centred on the rim.
+- `_silhouette_point_to_local` no longer adds `RING_Y_NUDGE` (it
+  corrected `EMPTY_SILHOUETTE`'s two-pixel-high measurement, and the rim
+  is measured fresh). Delete `RING_Y_NUDGE` and `EMPTY_SILHOUETTE` if
+  nothing else reads them (`git grep` first).
+- Cell art off: unchanged, every ring is the hexagon.
+
+**Invariants.** One rim definition for every ring; the sprite's own
+placement (`EMPTY_SPRITE_Y_NUDGE`, `empty_scale`) is untouched; the ring
+rebuild still happens only when `Session.use_cell_sprites` changes.
+
+**Escalate** if the measured rim is not a six-sided figure: that means
+the art changed, and Dave chooses the shape.
+
+**Hands-on check on landing** (move from `checks/blocked.md` to ready):
+C-134.
 
 ## SP-8 -- the meadow floor from stacked blocks (not yet cut)
 
