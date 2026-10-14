@@ -47,3 +47,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/GD-2b` (`codex/GD-2b`) | Codex | the shown ledger and Why history saved with the run | Codex | in progress | none | `plans/now/guidance-explanations.md` GD-2b -- the shown ledger and Why history saved with the run |
+| `.claude/worktrees/plan-ahead-tier-4-gyne-cfe426` (`claude/plan-ahead-tier-4-gyne-cfe426`) | Claude | plan-ahead: the tier-4 gyne route's open decisions (docs only) | Claude | in progress | none | `plans/now/pollination.md` PP-6; `plans/now/alpha-route-evidence.md` AR-4 |
