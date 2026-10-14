@@ -987,7 +987,8 @@ class SliceDoctorTest(unittest.TestCase):
 
         phases = (
             "started", "verified", "branch-committed", "actions-committed", "archived", "refilled",
-            "merged", "pushed", "worktree-removed", "branch-deleted", "ledger-deleted",
+            "merged", "pushed", "worktree-removed", "branch-deleted", "ledger-edited",
+            "closeout-committed",
         )
         for phase in phases:
             with self.subTest(phase=phase):
@@ -1035,6 +1036,19 @@ class SliceDoctorTest(unittest.TestCase):
                     capture_output=True, text=True, check=True,
                 ).stdout)
                 self.assertNotIn(".worktrees/T-1", (self.root / "plans" / "workstreams.md").read_text(encoding="utf-8"))
+                # The row's removal is committed and pushed, even when the
+                # failure came after it was edited but before the closeout
+                # commit: resume finds the slice from the journal then.
+                self.assertEqual("", subprocess.run(
+                    ["git", "status", "--porcelain", "--", "plans/workstreams.md", "checks/ready.md"],
+                    cwd=self.root, capture_output=True, text=True, check=True,
+                ).stdout)
+                self.assertEqual(
+                    subprocess.run(["git", "rev-parse", "master"], cwd=self.root,
+                                   capture_output=True, text=True, check=True).stdout.strip(),
+                    subprocess.run(["git", "rev-parse", "master"], cwd=self.remote,
+                                   capture_output=True, text=True, check=True).stdout.strip(),
+                )
 
                 # The refill just consumed T-1 from NEXTSTEPS.md, and every
                 # phase (including "started", whose worktree still went
@@ -1253,6 +1267,12 @@ class SliceDoctorTest(unittest.TestCase):
             )
         )
         self.assertNotIn("sample.md", (self.root / "plans" / "workstreams.md").read_text(encoding="utf-8"))
+        # The row's removal and the plan's move share one closeout commit.
+        subject = subprocess.run(["git", "log", "-1", "--format=%s", "master"], cwd=self.root,
+                                 capture_output=True, text=True, check=True).stdout.strip()
+        self.assertTrue(subject.startswith(
+            "T-1 -- closeout on master: drop its ledger row; archive the finished plan plans/now/sample.md"
+        ), subject)
         self.assertEqual(
             "",
             subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"],

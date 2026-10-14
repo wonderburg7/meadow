@@ -68,6 +68,31 @@ class SessionCostScopeTest(unittest.TestCase):
         self.assertEqual(dict(models), {"claude-sonnet-5": 1})
         self.assertIn("level drift                  none", out.getvalue())
 
+    def test_model_check_warns_a_session_opened_on_the_wrong_model(self):
+        """COL-8 (high) was claimed in a Sonnet session and PP-2 (medium) in
+        an Opus one (14 Oct 2026); `start` now says so at the claim."""
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp)
+            _write(home / (SLUG + "--claude-worktrees-x") / "S2.jsonl",
+                   [_user("implement the next slice"), _assistant("claude-sonnet-5-5")])
+            high = session_cost.model_check("S2", "high", home)
+            medium = session_cost.model_check("S2", "medium", home)
+            missing = session_cost.model_check("S3", "high", home)
+            unstated = session_cost.model_check("S2", "unstated", home)
+        self.assertIn("runs claude-sonnet-5-5, but the plan level is high", high)
+        self.assertEqual("", medium)
+        self.assertEqual("", missing)
+        self.assertEqual("", unstated)
+
+    def test_coordinator_claims_skip_the_model_check(self):
+        """The /run-queue coordinator's own model is not the worker's, so its
+        `start` passes -Dispatched and slice.ps1 skips the check for it."""
+        root = Path(__file__).resolve().parents[1]
+        skill = (root / ".claude" / "skills" / "run-queue" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("start -Lane Claude -Dispatched", skill)
+        source = (root / "tools" / "slice.ps1").read_text(encoding="utf-8")
+        self.assertIn('-not $Dispatched -and $env:CLAUDE_CODE_SESSION_ID', source)
+
     def test_skipped_stage_is_a_skip_not_a_failure(self):
         events = [
             {"kind": "verify_stage", "stage": "lifecycle tests", "skipped": True, "ts": "2999-01-01T00:00:00Z"},

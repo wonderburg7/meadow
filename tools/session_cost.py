@@ -655,6 +655,45 @@ def _print_bash_calls(events):
 PROJECT_SLUG = "C--Users-dl13860-Documents-Meadow-meadow"
 
 
+def session_model(session, home=None):
+    """The model of `session`'s latest assistant row, or "" when its
+    transcript is not found. Reads only that session's own transcript."""
+    home = Path(home) if home else Path.home() / ".claude" / "projects"
+    model = ""
+    for f in home.glob(PROJECT_SLUG + "*/" + session + ".jsonl"):
+        try:
+            with f.open("r", encoding="utf-8") as fh:
+                for line in fh:
+                    if '"assistant"' not in line:
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except Exception:
+                        continue
+                    if row.get("type") == "assistant":
+                        model = row.get("message", {}).get("model") or model
+        except OSError:
+            continue
+    return model
+
+
+def model_check(session, level, home=None):
+    """One warning line when the session claiming a slice runs a model its
+    plan level does not allow, else "". COL-8 (high) ran on Sonnet and PP-2
+    (medium) on Opus, each a direct "implement the next slice" session opened
+    on the wrong model (14 Oct 2026); `start` prints this so the session can
+    stop before the work, not after."""
+    if level not in LEVEL_MODELS or not session:
+        return ""
+    model = session_model(session, home)
+    if not model or model.startswith("<") or _level_allows(level, model):
+        return ""
+    wanted = " or ".join(LEVEL_MODELS[level])
+    return (f"warning: this session runs {model}, but the plan level is {level} ({wanted}*); "
+            "unless a worker subagent will implement it, stop and ask Dave to switch the "
+            "session's model before starting the work")
+
+
 def _level_allows(level: str, model: str) -> bool:
     return any(model.startswith(prefix) for prefix in LEVEL_MODELS[level])
 
@@ -905,7 +944,19 @@ def main():
         action="store_true",
         help="summarise the diagnostic event log: verify stages, sessions, cost by branch",
     )
+    parser.add_argument(
+        "--model-check",
+        nargs=2,
+        metavar=("SESSION", "LEVEL"),
+        help="print a warning when SESSION's model does not suit plan LEVEL (slice.ps1 start)",
+    )
     args = parser.parse_args()
+
+    if args.model_check:
+        line = model_check(*args.model_check)
+        if line:
+            print(line)
+        return 0
 
     # The stop ledger is repository state, not session transcripts, so it is
     # readable even when no session directory exists.
