@@ -1,7 +1,7 @@
 # Closing a slice — branches, merges, checks and the queue
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: at closeout only -->
-Status: reference | Owner: Dave / Claude Code | Next: nothing further -- durable rules moved out of CLAUDE.md so they load only at closeout | Dependency: none | Verified: 2026-09-25
+Status: reference | Owner: Dave / Claude Code | Next: nothing further -- durable rules moved out of CLAUDE.md so they load only at closeout | Dependency: none | Verified: 2026-10-14
 
 Read this when a slice's code is done, or when integrating a Codex branch.
 `tools/slice.ps1 finish` enforces the phases below; this file says why.
@@ -19,6 +19,15 @@ never edited from inside a feature branch. Deliberate overlap (comparing two
 approaches) is the one exception: mark both rows `competing` with the
 comparison criterion, and delete the loser's branch/worktree the moment the
 decision is made.
+
+A docs-only edit to `NEXTSTEPS.md` or `plans/` that is merged and pushed in
+the same sitting needs no row: the queue steward's `gates` and `refill`
+jobs, and similar coordinator bookkeeping (Dave, 14 Oct 2026). The
+register/remove pair was two of every three commits such an edit made.
+`tools/slice.ps1 owner` still reports the work through its unmerged branch.
+Only the row a Codex session or Dave would read is lost, which is why the
+edit must not outlive the sitting. Code, and any docs work held open, still
+register.
 
 ## When to merge
 
@@ -39,9 +48,13 @@ then (L-13) does the two mechanical edits itself and commits each:
 specification into plans/archive/(id)_(date).md, leaves a one-line pointer
 and drops its row from the plan's open-slices table; `python
 tools/refill_lane.py --delete <id>` removes the item from its lane and
-renumbers it, refusing a queue that would fail `tools/check_docs.py`. The
-`archived` and `refilled` gates then prove both happened. **Before running
-it, on the branch:**
+renumbers it, refusing a queue that would fail `tools/check_docs.py`. Both
+go in one `<id> -- closeout: ...` commit on the branch. The
+`archived` and `refilled` gates then prove both happened. After the merge,
+the ledger row's removal, any finished plan's archive and the regenerated
+ready-check index share one `<id> -- closeout on master: ...` commit, and
+one push carries it with the merge (14 Oct 2026: a commit each had made
+bookkeeping half of master's history). **Before running it, on the branch:**
 
 1. Update the owning plan's Status line and `Next:` field. After a plan's
    last slice, set `Next: None — plan complete` and list every follow-up with
@@ -49,7 +62,7 @@ it, on the branch:**
    queue item and ledger row are gone, `finish` runs `python
    tools/archive_slice.py --complete-plans`, which moves every plan
    check_docs calls terminal to plans/archive/(name)_(date).md and repoints
-   each reference to it, in the same push. A finding from the plan's own checks becomes its next
+   each reference to it, in the same closeout commit. A finding from the plan's own checks becomes its next
    slice while the plan is open; one that surfaces after it is archived
    starts a new plan.
 2. Make sure the item's `Next after:` successor has a fenced `queue` block in

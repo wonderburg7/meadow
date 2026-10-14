@@ -1,7 +1,7 @@
 # Queue steward -- post-finish housekeeping and refills, done by a subagent
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: by a queue-steward subagent only -->
-Status: reference | Owner: Dave / Claude Code | Next: nothing further -- tune from the first /run-queue trial note after CX-2 | Dependency: none | Verified: 2026-10-08
+Status: reference | Owner: Dave / Claude Code | Next: nothing further -- tune from the first /run-queue trial note after CX-2 | Dependency: none | Verified: 2026-10-14
 
 You are a `queue-steward` subagent. The `/run-queue` coordinator dispatches
 you in a fresh context so that it never reads plans itself. You edit plan
@@ -15,12 +15,14 @@ this run, the stop block and slice worktree, or the coordinator's worktree).
 
 ## JOB: gates
 
-Given the ids landed in this run: update every line under
+Given the ids landed in this run (the coordinator batches them: usually
+every slice of the run at once, at its end): update every line under
 `## Not in the queue, and why` and every plan slice-table row that names one
 of them, to say what it now waits for. Open any `queue-gated` fence whose
-gate has cleared (its gate line under that heading goes too). Do this even
-after the last slice of a run: `finish` never rewrites those lines.
-Docs-only, on the coordinator's worktree branch.
+gate has cleared (its gate line under that heading goes too). `finish`
+never rewrites those lines. Docs-only, on the coordinator's worktree
+branch: commit all of it as one "Gates after <ids>" commit, merge it to
+master and push. Register no ledger row for it (see "Docs-only edits" below).
 
 ## JOB: refill
 
@@ -42,11 +44,10 @@ specifying the slice needs. Don't read plan history or `plans/archive/`.
    that holds on master today. Fence a slice that can't start yet as
    `queue-gated`, with its one line under `## Not in the queue, and why`.
 3. **Queue it.** A docs-only refill goes on the coordinator session's own
-   worktree branch, not a second lane branch: add its row to
-   `plans/workstreams.md` (lane "Claude (docs only)") before editing, and
-   remove the row once the merge is pushed. Run
+   worktree branch, not a second lane branch. Run
    `python tools/refill_lane.py --top-up --lane Claude`, then
-   `python tools/check_docs.py`. Commit, merge to master and push.
+   `python tools/check_docs.py`. Commit, merge to master and push. When
+   `gates` ran in the same dispatch, one commit carries both.
 
 Return `blocked` (never guess) if either is true:
 - No live plan in `plans/now/` has work left to specify. Propose which
@@ -57,6 +58,17 @@ Return `blocked` (never guess) if either is true:
 - Specifying the slice would change an ownership boundary, save
   compatibility, a gameplay outcome, or more than one later slice, and the
   plan leaves that open (`docs/agent-rules.md` rule 5).
+
+## Docs-only edits
+
+A `gates` or `refill` edit on the coordinator's worktree branch registers no
+row in `plans/workstreams.md` (Dave, 14 Oct 2026). The register/remove pair
+cost two master commits for an edit that is merged within minutes.
+`tools/slice.ps1 owner` still sees the work through the unmerged branch.
+What is lost is the row a Codex session or Dave would read. So before
+editing, run `tools/slice.ps1 owner <path>` for each plan file you will
+touch, and merge and push in the same dispatch, never later. A `finish-stop`
+edit is on the slice's own branch and needs no row either.
 
 ## JOB: finish-stop
 
