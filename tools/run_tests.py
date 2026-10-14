@@ -53,9 +53,59 @@ def default_workers() -> int:
     override = os.environ.get("MEADOW_TEST_WORKERS", "").strip()
     if override.isdigit() and int(override) > 0:
         return int(override)
-    # A Godot module keeps about one core busy; leave room for the other
-    # verify jobs and other sessions on the same machine.
-    return max(2, min(6, (os.cpu_count() or 4) // 3))
+    # Measured on Dave's i7-1370P laptop (14 Oct 2026): one Godot module
+    # alone took 25 s, three at once 49 s each (1.5x the throughput), six at
+    # once 70 s each (2.1x). Four keeps most of the gain without stretching
+    # each run towards its own timeout.
+    return max(2, min(4, (os.cpu_count() or 4) // 4))
+
+
+# Godot processes on the whole machine above which a game test waits to
+# start. Other sessions' headless runs share the same cores: on 14 Oct 2026
+# a check pass started eight at once mid-verify and two game tests ran past
+# their 120 s and 180 s timeouts.
+MACHINE_GODOT_CAP = 6
+GODOT_WAIT_LIMIT_SECONDS = 600
+
+
+def machine_godot_count() -> int:
+    """Godot processes running on this machine, or 0 if it cannot say.
+    A Toolhelp snapshot on Windows: tasklist took 3 s a call."""
+    if os.name != "nt":
+        try:
+            out = subprocess.run(["pgrep", "-c", "-i", "godot"], capture_output=True, text=True, timeout=10).stdout
+        except (OSError, subprocess.SubprocessError):
+            return 0
+        return int(out.strip()) if out.strip().isdigit() else 0
+    import ctypes
+    from ctypes import wintypes
+
+    class ProcessEntry(ctypes.Structure):
+        _fields_ = [
+            ("dwSize", wintypes.DWORD), ("cntUsage", wintypes.DWORD),
+            ("th32ProcessID", wintypes.DWORD), ("th32DefaultHeapID", ctypes.c_size_t),
+            ("th32ModuleID", wintypes.DWORD), ("cntThreads", wintypes.DWORD),
+            ("th32ParentProcessID", wintypes.DWORD), ("pcPriClassBase", ctypes.c_long),
+            ("dwFlags", wintypes.DWORD), ("szExeFile", ctypes.c_wchar * 260),
+        ]
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
+    snapshot = kernel32.CreateToolhelp32Snapshot(0x2, 0)  # TH32CS_SNAPPROCESS
+    if not snapshot or snapshot == wintypes.HANDLE(-1).value:
+        return 0
+    try:
+        entry = ProcessEntry()
+        entry.dwSize = ctypes.sizeof(ProcessEntry)
+        count = 0
+        more = kernel32.Process32FirstW(snapshot, ctypes.byref(entry))
+        while more:
+            if entry.szExeFile.lower().startswith("godot"):
+                count += 1
+            more = kernel32.Process32NextW(snapshot, ctypes.byref(entry))
+        return count
+    finally:
+        kernel32.CloseHandle(snapshot)
 
 
 # --- timings ---
@@ -273,7 +323,27 @@ def run_all(ids: list[str], workers: int, private_user: bool) -> tuple[list[str]
             local.env = env
         return local.env
 
+    godot_lock = threading.Lock()
+
+    def wait_for_godot_room(test_id: str) -> None:
+        """Hold a game test until the machine has room, for at most
+        GODOT_WAIT_LIMIT_SECONDS: waiting must never fail verify. This
+        runner's own workers stay under the cap; it is other sessions' runs
+        that fill it. The lock keeps the waiting workers to one message."""
+        if not is_game_test(".".join(test_id.split(".")[:2])):
+            return
+        with godot_lock:
+            deadline = time.time() + GODOT_WAIT_LIMIT_SECONDS
+            announced = False
+            while machine_godot_count() >= MACHINE_GODOT_CAP and time.time() < deadline:
+                if not announced:
+                    with print_lock:
+                        print("waiting: %d or more Godot processes are running on this machine" % MACHINE_GODOT_CAP, flush=True)
+                    announced = True
+                time.sleep(3)
+
     def run_one(test_id: str) -> None:
+        wait_for_godot_room(test_id)
         start = time.time()
         result = subprocess.run(
             [sys.executable, "-m", "unittest", test_id], cwd=ROOT, env=worker_env(),
