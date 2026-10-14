@@ -5,7 +5,9 @@ param(
     [switch]$Docs,
     [switch]$ResolvePythonOnly,
     [ValidateSet("branch", "primary", "all")]
-    [string]$Scope = "all"
+    [string]$Scope = "all",
+    # Run the lifecycle suite and the game tests whatever the branch changed.
+    [switch]$Full
 )
 
 $ErrorActionPreference = "Stop"
@@ -127,9 +129,10 @@ function Get-FailureLine {
 }
 
 # The workflow ("lifecycle") suite: the two modules that drive slice.ps1 and
-# verify.ps1 through whole closeouts in temporary repositories. Each runs as
-# its own job, side by side: 530 s one after the other, 297 s in parallel
-# (7 Oct 2026). Everything else under tests/ takes seconds.
+# verify.ps1 through whole closeouts in temporary repositories. Every case
+# builds its own repository, so tools/run_tests.py runs the 70-odd cases side
+# by side: 530 s one after the other, 297 s as one job per module (7 Oct
+# 2026), each case on its own since 14 Oct 2026.
 $lifecycleModules = @("tests.test_slice_lifecycle", "tests.test_two_lane_closeout")
 
 # Modules no verify stage runs, each with its reason, as
@@ -159,10 +162,13 @@ $unitModules = @(Get-ChildItem -Path (Join-Path $PSScriptRoot "..\tests") -Filte
 # name); every test builds its queue and ledger there, so NEXTSTEPS.md is not
 # on it. Until 7 Oct 2026 it was all of tools/, so a change to a headless or
 # balance tool ran the suite for nothing.
+$verifyBase = if ($env:MEADOW_VERIFY_BASE) { $env:MEADOW_VERIFY_BASE } else { "master" }
+
 function Test-LifecycleTouched {
+    if ($Full) { return $true }
     $paths = @("tools/slice.ps1", "tools/verify.ps1", "tools/diagnostics.ps1", "tools/check_docs.py", "tools/backlog.py", "tools/archive_slice.py", "tools/refill_lane.py", "tools/heading.py", "tests/workflow_test_support.py") + @($lifecycleModules | ForEach-Object { ($_ -replace "\.", "/") + ".py" })
     try {
-        $changed = @(& git -C $PSScriptRoot diff --name-only "$(if ($env:MEADOW_VERIFY_BASE) { $env:MEADOW_VERIFY_BASE } else { "master" })...HEAD" 2>$null)
+        $changed = @(& git -C $PSScriptRoot diff --name-only "$verifyBase...HEAD" 2>$null)
         $changed += @(& git -C $PSScriptRoot diff --name-only HEAD 2>$null)
         if ($LASTEXITCODE -ne 0) { return $true }
     }
@@ -195,8 +201,8 @@ function Receive-JobText {
 }
 
 function Start-LifecycleJob {
-    param($Interpreter, $Root, $Module)
-    Start-Job -Name "lifecycle tests ($($Module -replace '^tests\.test_', ''))" -ArgumentList $Interpreter, $Root, @($Module) -ScriptBlock {
+    param($Interpreter, $Root, $Modules)
+    Start-Job -Name "lifecycle tests" -ArgumentList $Interpreter, $Root, $Modules -ScriptBlock {
         param($interpreter, $root, $modules)
         Set-Location $root
         # The suite drives finish in temporary repositories, and that finish
@@ -204,7 +210,8 @@ function Start-LifecycleJob {
         # marker, so a nested verify never starts the suite a second time --
         # the recursion that once kept an outer closeout from returning.
         $env:MEADOW_LIFECYCLE_SUITE = "1"
-        & $interpreter -m unittest @modules
+        # Four workers: the unit job runs its own pool alongside.
+        & $interpreter tools/run_tests.py --cases --workers 4 --label "lifecycle tests" @modules
         if ($LASTEXITCODE -ne 0) {
             throw "workflow unittest modules exited with code $LASTEXITCODE"
         }
@@ -244,6 +251,17 @@ function Enter-LifecycleSuiteLock {
     catch {
         return $null
     }
+}
+
+# The unit job leaves out the modules that boot Godot when the branch reaches
+# no game file. Like the lifecycle skip, that is said and logged, even under
+# -Quiet, so a green verify never hides what it did not run.
+function Write-GameTestSkip {
+    param([object[]]$Output, [switch]$Printed)
+    $line = @($Output | Where-Object { "$_" -like "game tests: skipped*" } | Select-Object -First 1)
+    if (-not $line) { return }
+    if (-not $Printed) { Write-Output "$($line[0])" }
+    Write-Diagnostic -Kind "verify_stage" -Fields @{ stage = "game tests"; skipped = $true; scope = $Scope; branch = $stageBranch }
 }
 
 # One line per stage under -Quiet; a stage that fails replays everything it
@@ -389,13 +407,18 @@ if ($runBranchScope -and -not $Docs) {
                 throw "balance_tests.py exited with code $LASTEXITCODE"
             }
         })
-        (Start-Job -Name "unit tests" -ArgumentList $python, $repoRoot, $unitModules -ScriptBlock {
-            param($interpreter, $root, $modules)
+        (Start-Job -Name "unit tests" -ArgumentList $python, $repoRoot, $unitModules, $(if ($Full) { "" } else { $verifyBase }) -ScriptBlock {
+            param($interpreter, $root, $modules, $gameBase)
             Set-Location $root
-            # A checkout with no tests/ (a lifecycle fixture) finds none, and a
-            # bare `-m unittest` would discover from the root instead.
+            # A checkout with no tests/ (a lifecycle fixture) finds none, and
+            # has no tools/run_tests.py either.
             if (-not $modules) { Write-Output "unit tests: none found"; return }
-            & $interpreter -m unittest @modules
+            # Modules run side by side, each worker with its own user://;
+            # the modules that boot Godot are left out when nothing the branch
+            # changed can reach them (run_tests.py, game_tests_reached).
+            $gameArgs = @()
+            if ($gameBase) { $gameArgs = @("--game-tests-since", $gameBase) }
+            & $interpreter tools/run_tests.py --private-user --label "unit tests" @gameArgs @modules
             if ($LASTEXITCODE -ne 0) {
                 throw "unit test modules exited with code $LASTEXITCODE"
             }
@@ -409,9 +432,7 @@ if ($runBranchScope -and -not $Docs) {
     if ($env:MEADOW_LIFECYCLE_SUITE -ne "1") {
         if (Test-LifecycleTouched) {
             $suiteLock = Enter-LifecycleSuiteLock
-            foreach ($module in $lifecycleModules) {
-                $jobs += (Start-LifecycleJob -Interpreter $python -Root $repoRoot -Module $module)
-            }
+            $jobs += (Start-LifecycleJob -Interpreter $python -Root $repoRoot -Modules $lifecycleModules)
         }
         else {
             Write-Output "lifecycle tests: skipped -- branch touches no lifecycle tooling"
@@ -433,6 +454,7 @@ if ($runBranchScope -and -not $Docs) {
             $captured = Receive-JobText -Job $job
             $ok = ($job.State -eq "Completed" -and -not $script:jobReadDenied)
             Write-StageResult -Name $job.Name -Ok $ok -Output $captured -Ms $jobMs
+            Write-GameTestSkip -Output $captured
             if (-not $ok) {
                 $failed = $true
             }
@@ -457,6 +479,7 @@ if ($runBranchScope -and -not $Docs) {
             $plainFields = @{ stage = $job.Name; ok = $ok; ms = $jobMs; scope = $Scope; branch = $stageBranch }
             if (-not $ok) { $plainFields.failure = Get-FailureLine -Output $plainOutput }
             Write-Diagnostic -Kind "verify_stage" -Fields $plainFields
+            Write-GameTestSkip -Output $plainOutput -Printed
             if (-not $ok) {
                 Write-Output "$($job.Name): FAILED"
                 $failed = $true
