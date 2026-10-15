@@ -692,3 +692,14 @@ explicit request from Dave.
   unresolved resource, `ensure_cache` runs `--import` on the primary once
   before refusing.
 - Disposition: untriaged
+
+### 2026-10-15 — `plans/now/sprites.md` is over its soft limit (from the verification review)
+
+- Signal: `tools/check_docs.py` warns "plans/now/sprites.md: 326 lines (soft
+  limit 260) -- check it is not holding delivered slices", and "plans/reference/check-loop.md:
+  verification date is 36 days old". Both warnings print on every verify run.
+- Evidence: `python tools/check_docs.py | grep WARNING`, 15 Oct 2026.
+- Consequence: warnings every agent reads on every verify and learns to ignore.
+- Candidate direction: Hypothesis -- plan review archives delivered sprite
+  slices and re-verifies check-loop.md.
+- Disposition: untriaged

@@ -3290,6 +3290,36 @@ def check_scenario_condition_keys(problems):
                                 % (os.path.basename(path), kind, key))
 
 
+# Fixtures that assert something, are not `*_test.json` (so the sweep skips
+# them) and are named by no test. Each is listed with the reason it runs nowhere.
+SCENARIOS_RUN_BY_NOTHING = {
+    "hive_comb_spiral_repro": "repro of a fixed bug; it ends on max_days today, so it is evidence, not a check",
+}
+
+
+def check_asserting_scenarios_are_run(problems):
+    """A fixture with an `assert` action must run somewhere.
+
+    `tools/scenario_sweep.py` runs only `test_scenarios/*_test.json`; a
+    unit test may run any other name. gd2a_guidance.json asserted the Why
+    button's layout from 10 Oct 2026 and ran nowhere because its name lacked
+    `_test` (verification review, 15 Oct 2026).
+    """
+    tests_dir = os.path.join(ROOT, "..", "tests")
+    test_text = "".join(open(p, encoding="utf-8").read() for p in glob.glob(os.path.join(tests_dir, "test_*.py")))
+    for path in sorted(glob.glob(os.path.join(ROOT, "..", "test_scenarios", "*.json"))):
+        stem = os.path.basename(path)[:-5]
+        if stem.endswith("_test") or stem in SCENARIOS_RUN_BY_NOTHING or stem in test_text:
+            continue
+        try:
+            scenario = json.load(open(path, encoding="utf-8"))
+        except ValueError:
+            continue
+        if any(a.get("do") == "assert" for a in scenario.get("actions", []) if isinstance(a, dict)):
+            problems.append("%s asserts but nothing runs it: rename it *_test.json, name it in a test, "
+                            "or list it in SCENARIOS_RUN_BY_NOTHING" % stem)
+
+
 def main():
     files = sorted(glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True))
     if not files:
@@ -3351,6 +3381,7 @@ def main():
     check_progression_grid(problems)
     check_test_modules_are_run(problems)
     check_scenario_condition_keys(problems)
+    check_asserting_scenarios_are_run(problems)
 
     if problems:
         print("FAILED -- %d problem(s):\n" % len(problems))
