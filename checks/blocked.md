@@ -185,20 +185,6 @@ Owner: `plans/archive/hands-on-findings_2026-10-05.md`
 
 Blocked by: RR-1 (`plans/now/run-repairs.md`) and T2-9 (`plans/now/tier-two.md`) -- Challenge 2 has no way to make new cells: the queen's Build cell is Challenge 1 only and Comb worker is blocked at 2.7 (Dave, 11 Oct 2026).
 
-### C-133 -- Hive soil blocks overlap front over back across the whole hive
-
-What this checks: start a game with Settings > Appearance > Cell art on, open the hive view and zoom in on the soil wall, then look round every side of the hive: top, bottom, left and right.
-
-PASS: everywhere round the hive, each soil block's front wall covers the block behind it, as the bottom-right blocks already do (Dave, 14 Oct 2026).
-
-If it fails, SP-10 reopens: the depth formula `Shapes.hex_draw_depth` or where `soil_block.gd::setup` applies it.
-
-Runner: opus -- a fine visual judgement of overlapping art across the whole wall
-
-Owner: `plans/now/sprites.md`
-
-Blocked by: SP-10 (`plans/now/sprites.md`).
-
 ### C-134 -- Every ring on a comb cell traces the cup's rim
 
 What this checks: start a run with Settings > Appearance > Cell art on, open the hive view and zoom in on the comb. Click a filled cell to select it, then mark a cell for a role so its marked-cell ring shows.

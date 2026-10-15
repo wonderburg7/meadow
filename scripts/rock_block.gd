@@ -24,3 +24,4 @@ func _ready() -> void:
 
 func setup(hex: Vector2i) -> void:
 	axial = hex
+	z_index = Shapes.hex_draw_depth(hex)
