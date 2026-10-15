@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (C-99 failed, 15 Oct 2026, investigation) ( RR-1 to RR-5 landed 13 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-15
+Status: active | Owner: Dave / Claude Code | Next: RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (C-99 failed, 15 Oct 2026, investigation) (RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-15
 
 ## Objective
 
@@ -53,6 +53,7 @@ format.
 - Next after: RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation)
 ```
 RR-6 shipped 2026-10-15; its specification is `plans/archive/RR-6_2026-10-15.md`.
+
 ## RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word
 
 Level: high (ambiguous bug). C-99 failed on 15 Oct 2026 (Sonnet; an Opus
@@ -72,12 +73,23 @@ title: does `hex_fit_size` return a size at which `hex_text_fits` is true
 but the rendered Label still breaks the word (a measurement mismatch, e.g.
 the Label's own spacing or oversampling), or does no size from `base` down
 to 6 fit, so the floor is returned (the floor)? Answer with the printed
-figures, as a line starting `RR-7 answer:` here, then specify the fix
-slice below it. Do not change game code in this slice.
+figures, as a line here starting `RR-7 answer:`, then specify the fix
+slice below it, with its own `queue` block. Do not change game code in this slice.
 
 **Related.** TS-1 (`plans/now/typeface-size.md`) changes `_fit_hex_label`'s
 `base` per typeface; RR-7's fix lands first, and TS-1 keeps
-`tests.test_rr7_silkscreen_fit` green.
+`tests.test_rr7_silkscreen_fit` green. TS-1 is gated on that fix: when
+the fix slice lands, open TS-1's `queue-gated` fence and drop its line
+under "Not in the queue, and why" in `NEXTSTEPS.md`.
+
+```queue
+**[Claude] RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation)**
+- Plan: `plans/now/run-repairs.md` -- "RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word"
+- Files: `tests/rr7_silkscreen_fit_test.gd`, `tests/test_rr7_silkscreen_fit.py`, `plans/now/run-repairs.md`
+- Check: `python -m unittest tests.test_rr7_silkscreen_fit` runs and prints, for the Challenge 1 hexagon's title in Silkscreen at text scale 2, the hexagon's available size, the size `hex_fit_size` returns, whether `hex_text_fits` holds at that size, and the line count the Label itself lays out at it; the answer line and the fix slice it implies are written into this section.
+- Proof: `present: scripts/main_menu.gd :: static func hex_fit_size(`
+- Next after: RR-8 -- the fix RR-7's answer names, which RR-7 specifies in this section; TS-1 (`plans/now/typeface-size.md`) waits for it
+```
 
 RR-1 shipped 2026-10-13; its specification is `plans/archive/RR-1_2026-10-13.md`.
 
