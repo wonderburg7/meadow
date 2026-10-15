@@ -327,14 +327,15 @@ def _action_summary(actions: list[dict[str, Any]]) -> dict[str, Any]:
     wasn't a clean "accepted" -- a rejected action, or one whose "when"
     never fired before the run ended -- so a scenario author doesn't have
     to grep the raw jsonl to find out a strategy script didn't do what it
-    said.
+    said. "recorded" is a log line a system writes (pollination.gd's
+    ledger), never a problem: it is counted in `by_result` only.
     """
     by_result: dict[str, int] = {}
     for a in actions:
         by_result[a["result"]] = by_result.get(a["result"], 0) + 1
     problems = [
         {"do": a["do"], "target": a["target"], "result": a["result"], "reason": a["reason"]}
-        for a in actions if a["result"] != "accepted"
+        for a in actions if a["result"] not in ("accepted", "recorded")
     ]
     return {"total": len(actions), "by_result": by_result, "problems": problems}
 

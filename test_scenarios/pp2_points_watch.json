@@ -1,0 +1,18 @@
+{
+  "cells": 16, "nectar_foragers": 16, "pollen_foragers": 8,
+  "nurses": 0, "builders": 0, "miners": 0, "honey_makers": 0,
+  "weather": false, "disease": false, "rival_hive": false, "winter": false,
+  "random_seed": 6202,
+  "snapshot_seconds": 30,
+  "pollination_log": true,
+  "actions": [
+    {"do": "set_config", "key": "bee_bread_ripen_hours", "value": 1.0},
+    {"do": "set_cell_contents", "cell": {"built_index": 1}, "resource": "nectar", "amount": 200},
+    {"do": "set_cell_contents", "cell": {"built_index": 2}, "resource": "nectar", "amount": 200},
+    {"do": "designate_cell", "hex": [0, 0], "content": "bee_bread"},
+    {"do": "set_cell_contents", "hex": [0, 0], "resource": "bee_bread", "amount": 60},
+    {"do": "grant_skill", "skill": "skill.foraging.weighted_flower_choice"},
+    {"do": "grant_skill", "skill": "skill.foraging.pollinator_points"}
+  ],
+  "stop": {"max_days": 6}
+}
