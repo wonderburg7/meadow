@@ -77,7 +77,7 @@ static func fill_frame(levels: Array, fraction: float) -> int:
 ## the 32x32 frame: the table's anchor row (y 22, the middle of the 16-tall
 ## slice that starts 14px down). The 14px left above the floor is the
 ## cup's back wall, drawn there so it overlaps whichever cell is behind
-## this one -- see `_ready`'s z_index.
+## this one -- see `Shapes.hex_draw_depth`.
 const EMPTY_FLOOR_MID_Y: float = SpriteCatalogue.WAX_CELL_NECTAR_ANCHOR.y
 
 ## Fine visual nudge on top of the derived offset below, in screen pixels
@@ -358,13 +358,10 @@ func _ready() -> void:
 	squashed = Session.use_sprite_hex_grid
 
 	# Cells are built one at a time as the comb grows, in whatever order
-	# the player or the queen happens to add them, but the resprite's cup
-	# wall (see EMPTY_FLOOR_MID_Y) has to paint over the cell
-	# behind it -- so draw order needs to run screen-top to screen-bottom
-	# regardless of build order. `Shapes.hex_to_pixel`'s y is always a
-	# positive multiple of (2r + q), squashed or not, so that alone gives
-	# every cell's relative order without caring where comb_centre sits.
-	z_index = 2 * axial.y + axial.x
+	# the player or the queen happens to add them, but the cup's wall (see
+	# EMPTY_FLOOR_MID_Y) has to paint over the cell behind it. The shared
+	# depth (see Shapes.hex_draw_depth) keeps that order whatever the build order.
+	z_index = Shapes.hex_draw_depth(axial)
 
 	polygon = Shapes.hexagon_points(cell_size, squashed)
 	color = EMPTY_COLOR
