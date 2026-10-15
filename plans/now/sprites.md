@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-11 then SP-8a, from Dave's 14 Oct 2026 pass (rings trace the rim; the soil draw order, SP-10, is on claude/SP-10 with hands-on check C-133 in checks/ready/), then SP-8a (SP-1 to SP-5, SP-7 and SP-9 landed; the skep is in the meadow and hive soil is drawn from the art); SP-6 waits for Dave's forager sheet on a 16x16 `sheet` grid (his 11 Oct repack, `bees/foragers_meadow_view.png`, is committed unexported and is not on that grid yet); the hive and menu art is planned in `plans/now/hive-and-menu-art.md`; SP-8a, the meadow floor drawn in blocks with everything on it lifted, is specified below and gated on FC-2 (Codex lane) releasing `scripts/main.gd` and the save files -- CD-3 released `scripts/bee.gd` on 12 Oct 2026, and Dave put FC-2 first on 13 Oct 2026; height's effects (rest of SP-8) are cut after it | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-14
+Status: active | Owner: Dave / Claude Code | Next: SP-11 then SP-8a, from Dave's 14 Oct 2026 pass (rings trace the rim; the soil draw order, SP-10, landed 15 Oct 2026 with hands-on check C-133 in checks/ready/), then SP-8a (SP-1 to SP-5, SP-7 and SP-9 landed; the skep is in the meadow and hive soil is drawn from the art); SP-6 waits for Dave's forager sheet on a 16x16 `sheet` grid (his 11 Oct repack, `bees/foragers_meadow_view.png`, is committed unexported and is not on that grid yet); the hive and menu art is planned in `plans/now/hive-and-menu-art.md`; SP-8a, the meadow floor drawn in blocks with everything on it lifted, is specified below and gated on FC-2 (Codex lane) releasing `scripts/main.gd` and the save files -- CD-3 released `scripts/bee.gd` on 12 Oct 2026, and Dave put FC-2 first on 13 Oct 2026; height's effects (rest of SP-8) are cut after it | Dependency: none to start; the files it shared with BB-2 and NF-4 are free since both landed 10 Oct 2026 (SP-1, BB-1 and NF-3 landed 9 Oct 2026) | Verified: 2026-10-14
 
 ## Objective
 
@@ -80,7 +80,7 @@ Verified 9 Oct 2026 against master and the main checkout:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-11 | every ring on a cell traces the cup's rim (C-125, 14 Oct 2026) | `scripts/hive_cell.gd`, tests | yes, after SP-10 (shares `hive_cell.gd`) | medium |
+| SP-11 | every ring on a cell traces the cup's rim (C-125, 14 Oct 2026) | `scripts/hive_cell.gd`, tests | yes (SP-10, which shares `hive_cell.gd`, landed 15 Oct 2026) | medium |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for the sheet on a 16x16 `sheet` grid | high (per-bee hot path) |
 | SP-8a | the meadow floor drawn in blocks, with everything on it lifted | see its `Files:` line below | no -- waits for FC-2 (Codex lane) to release `main.gd` and the save files (Dave put FC-2 first, 13 Oct 2026; CD-3 released `bee.gd` 12 Oct 2026) | high |
 | SP-8 (rest) | height's effects: flight cost, where flowers grow, scouting reach | to be cut after SP-8a | no -- after SP-8a | high (balance) |

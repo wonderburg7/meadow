@@ -1,7 +1,7 @@
 # Typeface size -- every typeface the same width at the same text scale
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: TS-1 (theme, menu, comb and Dr Gallerin sizes); TS-2 (the HUD's own size overrides) waits for GP-4 and FC-2 to release `scripts/hud.gd` | Dependency: TS-1 after RR-7's fix (`plans/now/run-repairs.md`); TS-2 after TS-1 | Verified: 2026-10-14
+Status: active | Owner: Dave / Claude Code | Next: TS-1 (theme, menu, comb and Dr Gallerin sizes); TS-2 (the HUD's own size overrides) waits for FC-2 to release `scripts/hud.gd` (GP-4 released it 15 Oct 2026) | Dependency: TS-1 after RR-7's fix (`plans/now/run-repairs.md`); TS-2 after TS-1 | Verified: 2026-10-15
 
 ## Objective
 
@@ -31,8 +31,8 @@ Verified 14 Oct 2026 against master `3e37ea6`.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| TS-1 | width-matched size per typeface, applied to the theme, menu hexes, comb labels and Dr Gallerin | `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/gallerin_panel.gd`, `scripts/hive_cell.gd`, tests | no -- after RR-7's fix (`plans/now/run-repairs.md`), and after SP-10 and SP-11, which share `hive_cell.gd` | medium |
-| TS-2 | the same for `hud.gd`'s own size overrides | `scripts/hud.gd`, tests | no -- after TS-1, and after GP-4 and FC-2 release `hud.gd` | low |
+| TS-1 | width-matched size per typeface, applied to the theme, menu hexes, comb labels and Dr Gallerin | `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/gallerin_panel.gd`, `scripts/hive_cell.gd`, tests | no -- after RR-7's fix (`plans/now/run-repairs.md`), and after SP-11, which shares `hive_cell.gd` (SP-10 landed 15 Oct 2026) | medium |
+| TS-2 | the same for `hud.gd`'s own size overrides | `scripts/hud.gd`, tests | no -- after TS-1, and after FC-2 releases `hud.gd` (GP-4 released it 15 Oct 2026) | low |
 
 TS-1 -> TS-2. TS-1 runs after RR-7's fix (`plans/now/run-repairs.md`), which owns the menu hexagon fit TS-1's `base` feeds, and keeps `tests.test_rr7_silkscreen_fit` green, so its block is gated until that fix lands. A slice reads its own section only.
 
@@ -89,8 +89,8 @@ C-137.
 ```
 ## TS-2 -- the HUD's own size overrides
 
-Level: low. **Gate:** TS-1 landed, and `scripts/hud.gd` released by GP-4
-(Claude lane) and FC-2 (Codex lane).
+Level: low. **Gate:** TS-1 landed, and `scripts/hud.gd` released by FC-2
+(Codex lane; GP-4 released it 15 Oct 2026).
 
 **True afterwards.** Each `base * Session.text_scale` font size in
 `hud.gd` (the completed goal line, the goal lines, the corner readouts)
@@ -100,4 +100,4 @@ is `UiTheme.font_px(base)`, and the corner `signature` adds
 ## Not in the queue, and why
 
 - **TS-1** -- width-matched typeface sizes; waits for RR-7's fix (`plans/now/run-repairs.md`), which owns the menu hexagon fit TS-1's `base` feeds.
-- **TS-2** -- the HUD's size overrides; waits for TS-1 and for GP-4 and FC-2 to release `scripts/hud.gd`.
+- **TS-2** -- the HUD's size overrides; waits for TS-1 and for FC-2 to release `scripts/hud.gd` (GP-4 released it 15 Oct 2026).

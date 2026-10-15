@@ -56,7 +56,7 @@ Verified 7 Oct 2026 against master:
 | --- | --- | --- | --- | --- |
 | T2-10 | a miner on Dig on its own starts as soon as Automation is bought; idle miners and comb workers say they need Automation (Dave's 14 Oct 2026 pass) | `scripts/bee.gd`, tests | yes | medium |
 | T2-11 | investigation: why comb workers build unevenly, one bounded question | tests, this plan | yes, after T2-10 | high |
-| T2-12 | Dig on its own offered only once Automation is owned | `scripts/hud.gd`, tests | no -- after GP-4 and FC-2 release `hud.gd` | low |
+| T2-12 | Dig on its own offered only once Automation is owned | `scripts/hud.gd`, tests | no -- after FC-2 releases `hud.gd` (GP-4 released it 15 Oct 2026) | low |
 | T2-7b | The tier-2 price sweep T2-7 deferred: tier-2 costs set so the arc's first tier-2 purchase lands around day 5 | `scripts/skills.gd`, `plans/design/progression.md`, tests; specified when AR-4 lands | no -- after AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker | medium |
 
 **Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
@@ -201,8 +201,8 @@ the fix slice (or none) below it. Do not change game code in this slice.
 ## T2-12 -- Dig on its own is offered only once Automation is owned
 
 Level: low. Dave, 14 Oct 2026: hide the toggle until Automation is owned,
-as Fermenting waits for Bee bread. **Gate:** `scripts/hud.gd` is held by
-GP-4 (Claude lane) and then FC-2 (Codex lane); queue this once both release it.
+as Fermenting waits for Bee bread. **Gate:** `scripts/hud.gd` is next
+held by FC-2 (Codex lane; GP-4 released it 15 Oct 2026); queue this once FC-2 releases it.
 
 **True now.** `hud.gd`'s mode column skips a mode whose `mode_query`
 fails only for Honey and Comb worker; its comment says the Miner's toggle
@@ -223,7 +223,7 @@ C-136.
 
 ## Not in the queue, and why
 
-- **T2-12** -- hide "Dig on its own" until Automation is owned (Dave, 14 Oct 2026); waits for GP-4 and then FC-2 to release `scripts/hud.gd`.
+- **T2-12** -- hide "Dig on its own" until Automation is owned (Dave, 14 Oct 2026); waits for FC-2 (Codex lane) to release `scripts/hud.gd` (GP-4 released it 15 Oct 2026).
 - **T2-7b** -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker, and is specified when it lands.
 
 T2-8b shipped 2026-10-09; its specification is `plans/archive/T2-8b_2026-10-09.md`.
