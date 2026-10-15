@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/T2-10` (`claude/T2-10`) | Claude | a miner on Dig on its own starts as soon as Automation is bought, and an idle miner or comb worker says it needs Automation | Claude | in progress | none | `plans/now/tier-two.md` T2-10 -- a miner on Dig on its own starts as soon as Automation is bought |
