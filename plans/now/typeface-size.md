@@ -36,14 +36,6 @@ Verified 14 Oct 2026 against master `3e37ea6`.
 
 TS-1 -> TS-2. TS-1 runs after RR-7's fix (`plans/now/run-repairs.md`), which owns the menu hexagon fit TS-1's `base` feeds, and keeps `tests.test_rr7_silkscreen_fit` green, so its block is gated until that fix lands. A slice reads its own section only.
 
-```queue-gated
-**[Claude] TS-1 -- every typeface is the same width as Standard at the same text scale**
-- Plan: `plans/now/typeface-size.md` -- "TS-1 -- width-matched typeface sizes"
-- Files: `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/gallerin_panel.gd`, `scripts/hive_cell.gd`, `tests/ts1_typeface_size_test.gd`, `tests/test_ts1_typeface_size.py`
-- Check: `python -m unittest tests.test_ts1_typeface_size` passes: at text scale 1 and 2, for every typeface in the Typeface setting, `REFERENCE_TEXT` drawn at `UiTheme.font_px(TYPE_SIZES["Body"])` in that face is within 8 % of its width in Standard; `python -m unittest tests.test_ho15_menu_hex_fit tests.test_rr5_hex_refit` still pass.
-- Proof: `absent: scripts/ui_theme.gd :: typeface_size_factor`
-- Next after: TS-2 -- the HUD's own size overrides follow the typeface too
-```
 ## TS-1 -- width-matched typeface sizes
 
 Level: medium.
@@ -80,13 +72,14 @@ multiple and the exact width.
 C-137.
 
 ```queue-gated
-**[Claude] TS-2 -- the HUD's own size overrides follow the typeface too**
-- Plan: `plans/now/typeface-size.md` -- "TS-2 -- the HUD's own size overrides"
-- Files: `scripts/hud.gd`, `tests/ts2_hud_typeface_size_test.gd`, `tests/test_ts2_hud_typeface_size.py`
-- Check: `python -m unittest tests.test_ts2_hud_typeface_size` passes: with OpenDyslexic at text scale 1, the corner readouts and goal lines carry `UiTheme.font_px` of their base sizes, and switching typeface rebuilds the corner.
-- Proof: `absent: scripts/hud.gd :: UiTheme.font_px`
-- Next after: none -- plans/now/typeface-size.md is complete
+**[Claude] TS-1 -- every typeface is the same width as Standard at the same text scale**
+- Plan: `plans/now/typeface-size.md` -- "TS-1 -- width-matched typeface sizes"
+- Files: `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/gallerin_panel.gd`, `scripts/hive_cell.gd`, `tests/ts1_typeface_size_test.gd`, `tests/test_ts1_typeface_size.py`
+- Check: `python -m unittest tests.test_ts1_typeface_size` passes: at text scale 1 and 2, for every typeface in the Typeface setting, `REFERENCE_TEXT` drawn at `UiTheme.font_px(TYPE_SIZES["Body"])` in that face is within 8 % of its width in Standard; `python -m unittest tests.test_ho15_menu_hex_fit tests.test_rr5_hex_refit` still pass.
+- Proof: `absent: scripts/ui_theme.gd :: typeface_size_factor`
+- Next after: TS-2 -- the HUD's own size overrides follow the typeface too
 ```
+
 ## TS-2 -- the HUD's own size overrides
 
 Level: low. **Gate:** TS-1 landed, and `scripts/hud.gd` released by FC-2
@@ -96,6 +89,15 @@ Level: low. **Gate:** TS-1 landed, and `scripts/hud.gd` released by FC-2
 `hud.gd` (the completed goal line, the goal lines, the corner readouts)
 is `UiTheme.font_px(base)`, and the corner `signature` adds
 `Session.ui_typeface` so a typeface change rebuilds the corner.
+
+```queue-gated
+**[Claude] TS-2 -- the HUD's own size overrides follow the typeface too**
+- Plan: `plans/now/typeface-size.md` -- "TS-2 -- the HUD's own size overrides"
+- Files: `scripts/hud.gd`, `tests/ts2_hud_typeface_size_test.gd`, `tests/test_ts2_hud_typeface_size.py`
+- Check: `python -m unittest tests.test_ts2_hud_typeface_size` passes: with OpenDyslexic at text scale 1, the corner readouts and goal lines carry `UiTheme.font_px` of their base sizes, and switching typeface rebuilds the corner.
+- Proof: `absent: scripts/hud.gd :: UiTheme.font_px`
+- Next after: none -- plans/now/typeface-size.md is complete
+```
 
 ## Not in the queue, and why
 

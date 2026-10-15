@@ -77,14 +77,6 @@ PP-4 shipped 2026-10-12; its specification is `plans/archive/PP-4_2026-10-12.md`
 
 PP-5 shipped 2026-10-13; its specification is `plans/archive/PP-5_2026-10-13.md`.
 
-```queue
-**[Claude] PP-7 -- pollination-logging scenarios stop reporting failed, and C-129 gets a run Dave can watch**
-- Plan: `plans/now/pollination.md` -- "PP-7 -- pollination-logging scenarios stop reporting failed"
-- Files: `tools/analyze_session.py`, `docs/headless-run-contract.md`, `test_scenarios/pp2_points_watch.json`, `tests/test_pp7_recorded_actions.py`
-- Check: `python -m unittest tests.test_pp7_recorded_actions` passes: an action entry with result "recorded" is counted in `by_result` but is not in `problems`, while "rejected" and "unresolved" still are; and `python tools/run_scenario.py test_scenarios/pp2_points_spendable.json` prints `status=passed`.
-- Proof: `absent: tools/analyze_session.py :: "recorded"`
-- Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
-```
 PP-7 shipped 2026-10-15; its specification is `plans/archive/PP-7_2026-10-15.md`.
 
 ## PP-8 -- the C-129 watch run plays at real time

@@ -34,22 +34,9 @@ hands-on feedback questions, not diagnostics.
 | --- | --- | --- | --- | --- |
 | AR-4 | a scripted Colony Run reaches and records all five gates | the alpha scenario and its new evidence test | no -- after Tier 2 automation and the gyne route are playable (Bee Bread finished 11 Oct 2026) | high |
 
-AR-1 shipped 2026-10-07; its specification is `plans/archive/AR-1_2026-10-07.md`.
-
-AR-2 shipped 2026-10-07; its specification is `plans/archive/AR-2_2026-10-07.md`.
-
-AR-3 shipped 2026-10-07; its specification is `plans/archive/AR-3_2026-10-07.md`.
+AR-1, AR-2 and AR-3 shipped 7 Oct 2026; each has its record in `plans/archive/`, named by id and date.
 
 ## Not in the queue, and why
-
-```queue-gated
-**[Codex] AR-4 -- a scripted Colony Run reaches and records all five gates**
-- Plan: `plans/now/alpha-route-evidence.md` -- "AR-4 -- a scripted Colony Run reaches and records all five gates"
-- Files: `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
-- Check: `python -m unittest tests.test_pacing_gates` and the scripted Colony Run record all five product-scope gates
-- Proof: `present: tools/pacing_gates.py :: Not instrumented: 20m forage/weather crisis; 90m gyne release.`
-- Next after: None -- plan complete
-```
 
 AR-4 is gated on Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026); the gyne
 route is `plans/now/pollination.md`, whose last slice, PP-6, opens AR-4. T2-7
@@ -63,7 +50,7 @@ first three slices make that absence visible instead of faking a successful run.
 
 <!-- LAYER: design -->
 
-Its gated block is above. Decision (Dave, 14 Oct 2026): **the 90-minute
+Its gated block is at the end of this section. Decision (Dave, 14 Oct 2026): **the 90-minute
 gyne/victory gate is judged on the run's calendar, not on minutes.** It
 passes when the run's first counted gyne -- one sent inside the mating
 window, so `first_gyne_day` -- leaves inside the second summer's mating
@@ -76,3 +63,13 @@ conversion puts 90 minutes at day 27, before the first winter ends, so the
 gate could never pass. PP-6 (`plans/now/pollination.md`) sets the day Gyne
 rearing becomes affordable to the first 11 days after winter, which leaves
 this window reachable.
+
+```queue-gated
+**[Codex] AR-4 -- a scripted Colony Run reaches and records all five gates**
+- Plan: `plans/now/alpha-route-evidence.md` -- "AR-4 -- a scripted Colony Run reaches and records all five gates"
+- Files: `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
+- Check: `python -m unittest tests.test_pacing_gates` and the scripted Colony Run record all five product-scope gates
+- Proof: `present: tools/pacing_gates.py :: Not instrumented: 20m forage/weather crisis; 90m gyne release.`
+- Next after: None -- plan complete
+```
+

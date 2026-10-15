@@ -1,7 +1,7 @@
 # Crisis readiness -- decide a readable first pressure event before implementing it
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: FC-2 -- implement the accepted crisis and deterministic scenario after its file owners land | Dependency: COL-8's season change and CD-2's diagnostic vocabulary landed; Dave accepted FC-1 option A; FC-2 waits for CD-3 (BB-2 landed 10 Oct 2026; T2-4b, NF-3, BB-1 and NF-5 landed 9 Oct 2026) | Verified: 2026-10-10
+Status: active | Owner: Dave / Codex | Next: FC-2 -- implement the accepted crisis and deterministic scenario, once GD-2b (Codex lane) releases `scripts/save_game.gd` and `scripts/saving.gd` | Dependency: COL-8's season change and CD-2's diagnostic vocabulary landed; Dave accepted FC-1 option A; WP-2, SG-2, ED-1 and SP-8a (`plans/now/meadow-terrain.md`) wait for FC-2 to release the save files | Verified: 2026-10-15
 
 ## Objective
 
@@ -14,7 +14,7 @@ Run's archived CR-1 and CR-2 already hold those ids.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FC-2 | implement the accepted crisis and deterministic scenario | see its `Files:` line below | after CD-3 lands (FC-1, T2-4b, NF-3, BB-1, NF-5 and BB-2 have) | high |
+| FC-2 | implement the accepted crisis and deterministic scenario | see its `Files:` line below | no -- after GD-2b releases the save files | high |
 
 FC-1 shipped 2026-10-09; its specification is `plans/archive/FC-1_2026-10-09.md`.
 
@@ -31,12 +31,15 @@ pre-rain response on the fallback path, actual rain, forage and store effects,
 plus save/restore across the trigger; a displayed warning alone is not proof.
 File a hands-on check for whether a player can diagnose and answer the event.
 
-BB-2 (`plans/archive/bee-bread_2026-10-11.md`) released `scripts/save_game.gd`,
-`scripts/saving.gd` and `scripts/hud.gd` on 10 Oct 2026 (NF-3, BB-1 and
-NF-5 landed 9 Oct 2026; NF-5 released `scripts/main.gd` and
-`scripts/scenario_actions.gd`). The one file still held is
-`scripts/colony_diagnostics.gd`, owned by CD-3. Recheck ownership and the
-file list when it lands; FC-2 stays gated until then.
+**Reads.** This section, and FC-1's accepted option A with its evidence
+contract (the window, the reserve predicate, the warning lead and the
+saved one-shot state), which lives only in FC-1's record: `git show
+HEAD:plans/archive/FC-1_2026-10-09.md` (95 lines; the archive is closed to
+file tools, so read it through Git).
+
+**Gate.** Every file on the `Files:` line is free except `scripts/save_game.gd`
+and `scripts/saving.gd`, which GD-2b (`plans/now/guidance-explanations.md`,
+Codex lane) holds. Recheck the line against the queue before opening the fence.
 
 ```queue-gated
 **[Codex] FC-2 -- implement the accepted crisis and deterministic scenario**
