@@ -23,12 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] GP-4 -- The problem strip stops blocking play, keeps red visible and lets the player remove a warning**
-   - Plan: `plans/now/goal-presentation.md` -- "GP-4 -- the problem strip stops blocking play"
-   - Files: `scripts/hud.gd`, `scripts/problem_messages.gd`, `tests/gp4_problem_strip_test.gd`, `tests/test_gp4_problem_strip.py`
-   - Check: `python -m unittest tests.test_gp4_problem_strip` passes (a strip line's click area is its text's width; at most four lines show, then "+N more"; no severity-0 line shows; in a Colony Run red lines show with the strip unstarred; a removed line stays away until its problem clears, then returns); `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/hud.gd :: SIGNAL_LINE_CAP`
-   - Next after: none -- the goal-presentation plan is complete
+1. **[Claude] PP-7 -- pollination-logging scenarios stop reporting failed, and C-129 gets a run Dave can watch**
+   - Plan: `plans/now/pollination.md` -- "PP-7 -- pollination-logging scenarios stop reporting failed"
+   - Files: `tools/analyze_session.py`, `docs/headless-run-contract.md`, `test_scenarios/pp2_points_watch.json`, `tests/test_pp7_recorded_actions.py`
+   - Check: `python -m unittest tests.test_pp7_recorded_actions` passes: an action entry with result "recorded" is counted in `by_result` but is not in `problems`, while "rejected" and "unresolved" still are; and `python tools/run_scenario.py test_scenarios/pp2_points_spendable.json` prints `status=passed`.
+   - Proof: `absent: tools/analyze_session.py :: "recorded"`
+   - Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
+
+2. **[Claude] RR-6 -- every new run gets its own default name, saved or not**
+   - Plan: `plans/now/run-repairs.md` -- "RR-6 -- every new run gets its own default name, saved or not"
+   - Files: `scripts/save_slots.gd`, `tests/test_rr3_fresh_run_name.py`
+   - Check: `python -m unittest tests.test_rr3_fresh_run_name` passes, including a new case: with no slots at all, two calls to `SaveSlots.fresh_run_name("My colony")` return "My colony" and then "My colony 2", and a third with "My colony 2" saved returns "My colony 3".
+   - Proof: `absent: scripts/save_slots.gd :: _issued_run_slugs`
+   - Next after: RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation)
+
+3. **[Claude] SP-10 -- hive soil blocks draw front over back everywhere**
+   - Plan: `plans/now/sprites.md` -- "SP-10 -- hive soil blocks draw front over back everywhere"
+   - Files: `scripts/shapes.gd`, `scripts/soil_block.gd`, `scripts/rock_block.gd`, `scripts/hive_cell.gd`, `tests/sp10_soil_depth_test.gd`, `tests/test_sp10_soil_depth.py`
+   - Check: `python -m unittest tests.test_sp10_soil_depth` passes: every soil and rock block in a fresh hive has `z_index == Shapes.hex_draw_depth(axial)`, a block one row lower on screen has a higher `z_index` than the block above it, and a comb cell and a soil block on neighbouring hexes order the same way.
+   - Proof: `absent: scripts/soil_block.gd :: z_index`
+   - Next after: SP-11 -- every ring on a cell traces the cup's rim
+
+4. **[Claude] SP-11 -- every ring on a cell traces the cup's rim**
+   - Plan: `plans/now/sprites.md` -- "SP-11 -- every ring on a cell traces the cup's rim"
+   - Files: `scripts/hive_cell.gd`, `tests/sp11_cell_rim_test.gd`, `tests/test_sp11_cell_rim.py`
+   - Check: `python -m unittest tests.test_sp11_cell_rim` passes: with Cell art on, the selection ring's points are `EMPTY_RIM` taken through `_silhouette_point_to_local` and scaled about the rim's centre; the designation, zone and base rings use the same six points at their own sizes; with Cell art off every ring is still the hexagon.
+   - Proof: `absent: scripts/hive_cell.gd :: EMPTY_RIM`
+   - Next after: SP-8a -- the meadow floor drawn in blocks, with everything on it lifted
+
+5. **[Claude] T2-10 -- a miner on Dig on its own starts as soon as Automation is bought, and an idle miner or comb worker says it needs Automation**
+   - Plan: `plans/now/tier-two.md` -- "T2-10 -- a miner on Dig on its own starts as soon as Automation is bought"
+   - Files: `scripts/bee.gd`, `tests/t2_10_automine_wake_test.gd`, `tests/test_t2_10_automine_wake.py`
+   - Check: `python -m unittest tests.test_t2_10_automine_wake` passes: a miner with `automine` on and Automation not owned finds no work and its `idle_reason()` names Automation; Automation is then granted and `Availability.invalidate()` called, with no block marked and `hive.mining_work_epoch` unchanged, and the miner's next `_try_role_work(Role.MINER)` returns true; a comb worker in Build mode with nothing marked, room to build and no Automation gives an `idle_reason()` naming Automation.
+   - Proof: `absent: scripts/bee.gd :: _mining_no_work_gate_epoch`
+   - Next after: T2-11 -- why comb workers build comb unevenly (investigation)
 
 ### Codex lane
 

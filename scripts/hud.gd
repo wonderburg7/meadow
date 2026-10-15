@@ -550,6 +550,15 @@ var _pending_warning: Dictionary = {}
 ## corner can be rebuilt without main.gd having to resend it.
 var shown_signals: Array = []
 
+## Most lines the corner strip shows; any more collapse into one
+## non-interactive "+N more" line (GP-4). The Colony and Nursery windows
+## still list every line.
+const SIGNAL_LINE_CAP := 4
+
+## Ids of lines the player removed with the x. Presentation state only, not
+## saved; an id is forgotten as soon as a refresh no longer reports it.
+var removed_signal_ids: Array = []
+
 ## Severity colours for the at-a-glance strip: 0 is background
 ## information, 1 is worth looking at, 2 is losing you something now.
 ## These resolve through UiTheme so Light and High Contrast do not inherit
@@ -2747,10 +2756,37 @@ func update_fps(average: int, frame_ms: float, worst_ms: float, game_speed: floa
 	corner_texts["fps"] = "%d fps   %s   %.1f ms   worst %.0f ms" % [average, speed_text, frame_ms, worst_ms]
 	_refresh_corner()
 
-## `lines` is an array of [text, severity] pairs from main.gd.
+## `lines` is an array of [text, severity, action, category, id] from main.gd.
 func update_signals(lines: Array) -> void:
 	shown_signals = lines
+	var reported: Array = lines.map(func(e): return str(e[4]))
+	removed_signal_ids = removed_signal_ids.filter(func(id): return reported.has(id))
 	corner_texts["signals"] = "\n".join(lines.map(func(e): return "• %s" % e[0]))
+	_refresh_corner()
+
+## True in a Colony Run, where red lines stay on screen with the strip unstarred.
+func _red_always_shows() -> bool:
+	return main != null and main.colony_milestones != null and main.colony_milestones.applies()
+
+## The lines the corner strip draws: no severity-0 line, none the player
+## removed, and only the red ones when the strip is unstarred in a Colony Run.
+func strip_lines() -> Array:
+	var starred: bool = Session.pinned_stats.has("signals")
+	if not starred and not _red_always_shows():
+		return []
+	var out: Array = []
+	for entry in shown_signals:
+		var severity := int(entry[1])
+		if severity <= 0 or removed_signal_ids.has(str(entry[4])):
+			continue
+		if not starred and severity < 2:
+			continue
+		out.append(entry)
+	return out
+
+func _remove_signal(id: String) -> void:
+	if not removed_signal_ids.has(id):
+		removed_signal_ids.append(id)
 	_refresh_corner()
 
 ## Rebuilds the corner from the starred readouts. Only actually does the
@@ -2765,10 +2801,10 @@ func _refresh_corner() -> void:
 	for key in CORNER_ORDER:
 		if Session.pinned_stats.has(key):
 			signature += "%s=%s\n" % [key, corner_texts.get(key, "")]
-	var show_signals: bool = Session.pinned_stats.has("signals")
-	if show_signals:
-		for entry in shown_signals:
-			signature += "s%d|%s\n" % [entry[1], entry[0]]
+	var strip := strip_lines()
+	var show_signals: bool = not strip.is_empty()
+	for entry in strip:
+		signature += "s%d|%s|%s\n" % [entry[1], entry[0], entry[2]]
 	if signature == corner_signature:
 		Perf.end("corner_refresh")
 		return
@@ -2819,7 +2855,11 @@ func _refresh_corner() -> void:
 	# what it is about. Being told there are hungry larvae and then having
 	# to go and find them yourself is most of the work of acting on it.
 	Perf.begin("corner_rebuild_signals")
-	for entry in shown_signals:
+	for entry in strip.slice(0, SIGNAL_LINE_CAP):
+		var row := HBoxContainer.new()
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		row.add_theme_constant_override("separation", 2)
 		var line := Button.new()
 		_style_button(line)
 		line.text = "• %s" % entry[0]
@@ -2827,15 +2867,36 @@ func _refresh_corner() -> void:
 		line.flat = true
 		line.focus_mode = Control.FOCUS_NONE
 		line.theme_type_variation = "Body"
+		line.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		line.add_theme_color_override("font_color", _signal_color(int(entry[1])))
 		line.add_theme_color_override("font_hover_color", UiTheme.color("text_primary"))
 		line.add_theme_color_override("font_pressed_color", UiTheme.color("text_primary"))
-		var action: String = entry[2] if entry.size() > 2 else ""
+		var action: String = str(entry[2])
 		if action != "":
 			line.tooltip_text = "Click to select what this is about."
 			line.pressed.connect(func(): signal_clicked.emit(action))
-		corner_column.add_child(line)
+		row.add_child(line)
+		var remove := Button.new()
+		_style_button(remove)
+		remove.text = "×"
+		remove.flat = true
+		remove.focus_mode = Control.FOCUS_NONE
+		remove.theme_type_variation = "Body"
+		remove.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		remove.tooltip_text = "Remove this warning until the problem clears and comes back."
+		remove.add_theme_color_override("font_color", _signal_color(int(entry[1])))
+		var id: String = str(entry[4])
+		remove.pressed.connect(func(): _remove_signal(id))
+		row.add_child(remove)
+		corner_column.add_child(row)
 		_fit_corner_line(line)
+	if strip.size() > SIGNAL_LINE_CAP:
+		var more := Label.new()
+		more.text = "• +%d more -- open the Colony window" % (strip.size() - SIGNAL_LINE_CAP)
+		more.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		more.theme_type_variation = "Body"
+		more.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+		corner_column.add_child(more)
 	Perf.end("corner_rebuild_signals")
 	corner_column.move_child(pause_label, corner_column.get_child_count() - 1)
 	Perf.end("corner_refresh")
