@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/SP-11` (`claude/SP-11`) | Claude | every ring on a cell traces the cup's rim | Claude | in progress | none | `plans/now/sprites.md` SP-11 -- every ring on a cell traces the cup's rim |
