@@ -86,10 +86,13 @@ Either edit may be left uncommitted: `finish` commits it first. A branch that
 did the archive or the deletion by hand passes straight through, because each
 tool runs only when its step is still owed.
 
-**`finish` takes about a minute, or 4-10 minutes when the branch touches
-workflow tooling** (`tools/`, `.codex/` or a lifecycle test module): its
-branch verify then runs the lifecycle suite, and waits if another worktree's
-suite is already running, since only one runs at a time. Do not run
+**`finish` takes about a minute when the branch reaches no game file and no
+lifecycle tooling, 4-6 minutes when it touches lifecycle tooling, and 6-10
+when it reaches the game** (14 Oct 2026, on Dave's laptop). Its branch verify
+runs the game tests (the modules that boot Godot) only when a changed file
+can reach them, and the lifecycle suite only when the branch touches a file
+its fixtures copy; the suite waits if another worktree's is already running,
+since only one runs at a time. `verify.ps1 -Full` runs both regardless. Do not run
 `verify.ps1` yourself before it -- `finish` is the verify. The long case is
 past the 10-minute cap on a foreground Bash call, so always run it with
 `run_in_background` and wait for the notification. It has ended only when it prints `Slice landed:` or a `slice finish stopped` block; a
