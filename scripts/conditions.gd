@@ -1,6 +1,9 @@
 extends RefCounted
-## Read-only evaluator shared by Challenge goals, scenario triggers and future
-## level conditions. Nothing calls it yet: C2 and C3 adopt it separately.
+## Read-only evaluator shared by Challenge stage goals (challenge_runner.gd),
+## Colony Run milestones (colony_milestones.gd) and scenario triggers
+## (scenario_actions.gd). A new rule about the colony's state is a leaf here,
+## not a second evaluator: short-term goals take their income, built-cell and
+## winter facts from these leaves (plans/now/short-term-goals.md, SG-2).
 ##
 ## The evaluator deliberately reads main's cached role counts and hive's cached
 ## totals/content buckets. It never reaches into a scene group or writes state.
