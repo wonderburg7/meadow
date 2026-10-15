@@ -59,7 +59,10 @@ header.
      "Not in the queue, and why" naming what it waits for; name the slice id.
    - **Decided**: asked of Dave in the session with the options and their
      costs; the answer is written into the file where the rule lives, and
-     the record says which file.
+     the record says which file. A review run as a `/run-reviews` subagent
+     cannot ask: it returns the question to the coordinator, which asks
+     Dave once for the whole batch, and writes the record only after the
+     answer comes back (`plans/reference/review-runner.md`).
    - **Rejected**: one line in the record giving the reason.
 6. **Write slices a lower-reasoning model can finish without deciding
    anything.** Follow `plans/README.md` (plan schema; "Writing or editing a

@@ -2,6 +2,7 @@
 
 <!-- CONTEXT: review-prompt | LOAD: only when running this review -->
 Record key: ui-review
+Reasoning: medium
 Watches: scripts/ui_layout.gd scripts/ui_theme.gd scripts/hud.gd scripts/scenario_actions.gd plans/reference/ui-rules.md GAME_MODEL.md assets
 
 **Owns:** presentation and interaction: HUD readouts, panels and windows,

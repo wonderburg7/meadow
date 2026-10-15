@@ -2,6 +2,7 @@
 
 <!-- CONTEXT: review-prompt | LOAD: only when running this review -->
 Record key: gameplay-review
+Reasoning: high
 Watches: scripts test_scenarios docs/known-pitfalls.md checks .claude/rules/simulation.md GAME_MODEL.md
 
 **Owns:** behavioural correctness across simulation systems: rules that

@@ -2,6 +2,7 @@
 
 <!-- CONTEXT: review-prompt | LOAD: only when running this review -->
 Record key: product-review
+Reasoning: high
 Watches: ROADMAP.md DESIGN_BACKLOG.md plans/design docs/challenge-stages.md scripts/game_config.gd scripts/settings_catalogue.gd tools/pacing_gates.py
 
 **Owns:** whether the work being done is the right work: `ROADMAP.md` (the

@@ -224,6 +224,11 @@ class ReviewDueTest(unittest.TestCase):
         self.assertTrue(any(prompt.watches for prompt in prompts))
         self.assertEqual(review_due.missing_watches(prompts), [])
 
+    def test_every_review_in_the_repo_states_a_level_a_runner_exists_for(self):
+        # /run-reviews dispatches review-runner-<level>; only these two exist.
+        for prompt in review_due.load_prompts():
+            self.assertIn(prompt.reasoning, ("medium", "high"), prompt.path)
+
 
 if __name__ == "__main__":
     unittest.main()

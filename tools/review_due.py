@@ -35,18 +35,22 @@ class Prompt:
     path: Path
     key: str | None
     watches: list[str]
+    reasoning: str = "unstated"
 
 
 def parse_prompt(path: Path, text: str) -> Prompt:
     key = None
     watches: list[str] = []
+    reasoning = "unstated"
     for line in text.splitlines()[:8]:
         if line.startswith("Record key:"):
             value = line.split(":", 1)[1].strip().split()[0] if line.split(":", 1)[1].strip() else ""
             key = None if value in ("", "none") else value.strip("`")
         elif line.startswith("Watches:"):
             watches = line.split(":", 1)[1].split()
-    return Prompt(path, key, watches)
+        elif line.startswith("Reasoning:"):
+            reasoning = line.split(":", 1)[1].strip() or "unstated"
+    return Prompt(path, key, watches, reasoning)
 
 
 def load_prompts(root: Path = ROOT) -> list[Prompt]:
@@ -149,10 +153,10 @@ def summary(root: Path = ROOT) -> int:
             verdict = "moved" if status.changed else "quiet"
             last = status.date or "-"
             since = f"{status.commits} commits, {len(status.changed or [])} files since {status.since}"
-        rows.append((prompt.key or prompt.path.stem, verdict, last, since))
+        rows.append((prompt.key or prompt.path.stem, prompt.reasoning, verdict, last, since))
     width = max(len(row[0]) for row in rows)
-    for key, verdict, last, since in rows:
-        print(f"{key:<{width}}  {verdict:<5}  last {last:<10}  {since}")
+    for key, reasoning, verdict, last, since in rows:
+        print(f"{key:<{width}}  {reasoning:<6}  {verdict:<5}  last {last:<10}  {since}")
     print(check_backlog(root))
     for problem in missing_watches(prompts, root):
         print(f"warning: {problem}")
@@ -167,7 +171,7 @@ def detail(key: str, root: Path = ROOT) -> int:
         return 2
     prompt = prompts[key]
     status = status_of(prompt, git("ls-files", "docs", "plans/archive", root=root).split(), root)
-    print(f"prompt:   {prompt.path.as_posix()}")
+    print(f"prompt:   {prompt.path.as_posix()} (reasoning: {prompt.reasoning})")
     print(f"record:   {status.record or 'none'}")
     if status.problem:
         print(f"SINCE:    unknown -- {status.problem}")
