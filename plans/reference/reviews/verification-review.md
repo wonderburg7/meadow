@@ -1,0 +1,47 @@
+# Verification, test and build health review
+
+<!-- CONTEXT: review-prompt | LOAD: only when running this review -->
+Record key: verification-review
+Watches: tools/verify.ps1 tools/run_tests.py tools/prefinish.py tools/check_docs.py tools/run_scenario.py tools/run_headless.ps1 tools/pacing_gates.py tools/equivalence.py tools/build_alpha.ps1 tests test_scenarios export_presets.cfg plans/reference/check-runner.md .claude/agents
+
+**Owns:** the instruments that prove the game works: `tools/verify.ps1` and
+`tools/run_tests.py` (stages, parallel workers, which tests a change reaches);
+`tools/prefinish.py` and the boot check; `tests/` and the GDScript tests;
+`test_scenarios/` and the headless runner; `tests/source_checks.py`;
+`tools/check_docs.py`; `tools/pacing_gates.py`; `tools/equivalence.py`; the
+hands-on check system as a whole, including the check-runner subagents and
+how well `Runner:` lines are calibrated; and the alpha build path
+(`tools/build_alpha.ps1`, `export_presets.cfg`, `tests/test_alpha_build.py`).
+
+**Hand-offs:** a test a particular finding needs belongs to the review that
+owns the finding. Processing check results belongs to the check processor.
+How long verification takes inside real sessions: agent workflow review.
+
+Background: `docs/headless-run-contract.md`.
+
+## Steps
+
+1. **Cost and reliability.** Run `.\tools\verify.ps1` once and read its
+   stage timings, not its log. Note what it skipped and why (game tests no
+   change reaches). Find flaky tests from the diagnostic events (`python
+   tools/session_cost.py --events`) and recent failures. Name tests slower
+   than their value, and failure output that floods an agent's context.
+2. **Guard coverage.** List the invariants in `.claude/rules/*.md`,
+   `docs/agent-rules.md` rule 2, `docs/known-pitfalls.md` and the
+   check-loop rules. For each: is there an automated guard (test, source
+   check, doc check or scenario assertion)? Rank unguarded invariants by how
+   often they have broken. A pitfall that recurred with no guard is a top
+   finding.
+3. **Tests that cannot fail.** Vacuous assertions, scenarios whose verdict
+   ignores their expectations, source checks with over-broad escapes. Where
+   cheap, spot-check by mutation: delete the guarded line and confirm the
+   test fails.
+4. **Dead or duplicated instruments.** Scenarios nothing runs, two tools
+   doing one job, tests for removed features.
+5. **Hands-on check load.** Checks that have waited long in
+   `checks/ready.md`; checks existing instruments (layout assertions, the
+   scenario runner) could now automate; checks that do not say what a
+   failure would change; `Runner:` lines that the archived pass notes show
+   were raised or that sent a `dave` check a subagent could have run.
+6. **Build readiness.** Does the alpha build still build and boot headless?
+   Is any part of the export path untested?
