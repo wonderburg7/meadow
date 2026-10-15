@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-11 -- every ring on a cell traces the cup's rim (Dave's 14 Oct 2026 pass); SP-6 waits for Dave's forager sheet on a 16x16 `sheet` grid; the meadow floor in blocks (SP-8, SP-8a) moved to `plans/now/meadow-terrain.md` on 15 Oct 2026, and the hive and menu art is `plans/now/hive-and-menu-art.md` | Dependency: none for SP-11; SP-6 waits for Dave's art | Verified: 2026-10-15
+Status: active | Owner: Dave / Claude Code | Next: SP-6 waits for Dave's forager sheet on a 16x16 `sheet` grid; the meadow floor in blocks (SP-8, SP-8a) moved to `plans/now/meadow-terrain.md` on 15 Oct 2026, and the hive and menu art is `plans/now/hive-and-menu-art.md` | Dependency: none for SP-11; SP-6 waits for Dave's art | Verified: 2026-10-15
 
 ## Objective
 
@@ -46,8 +46,7 @@ sharp-pixel shader, the skep stands in the meadow, and hive soil is drawn
 from the art in front-over-back order. What the open slices build on:
 
 - Every ring on a cell goes through `hive_cell.gd::_apply_outline_points`;
-  with Cell art on it walks `EMPTY_SILHOUETTE`, the whole cup (SP-11's
-  "True now" has the detail).
+  with Cell art on it walks `EMPTY_RIM`, the cup's top face (SP-11).
 - The forager sheet (13 Oct 2026) is `bees/foragers_meadow_view.png`,
   48x104, 8 rows x 4 wing frames, row order as in Decisions item 4. Its
   columns sit on a 12-px pitch; its rows do not (they start at
@@ -63,7 +62,6 @@ from the art in front-over-back order. What the open slices build on:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-11 | every ring on a cell traces the cup's rim (C-125, 14 Oct 2026) | `scripts/hive_cell.gd`, tests | yes | medium |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for the sheet on a 16x16 `sheet` grid | high (per-bee hot path) |
 
 **Dependencies.** RR-11 (`plans/now/run-repairs.md`) waits for SP-11 to
@@ -74,68 +72,7 @@ SP-1, SP-2, SP-4, SP-5, SP-7 (ad-hoc, on Dave's request), SP-9 and SP-10
 shipped 9-15 Oct 2026; each has its record in `plans/archive/`, named by id
 and date.
 
-## SP-11 -- every ring on a cell traces the cup's rim
-
-Level: medium. Dave, 14 Oct 2026 (C-125): with the new cell art the
-selection ring "should now highlight the flat top of each of the cells
-(the rim), rather than the whole shape", and every ring on a cell does
-the same (his answer in the pass session), so they cannot disagree.
-
-**True now** (verified 14 Oct 2026 against master `3e37ea6`).
-
-- Every ring on a cell (`outline`, `designation_ring`, `selection_ring`,
-  `zone_halo`, `zone_glow`) goes through `_apply_outline_points`; with
-  Cell art on, `_set_outline_points_cup` walks the eight-point
-  `EMPTY_SILHOUETTE` (the whole cup: rim, walls and base) and scales it
-  by `size / cell_size` about the cell origin.
-- The cup's rim is the bright outline (255,208,0 and 255,234,0) round
-  the top face of frame 0 of `assets/sprites/comb/wax_cell_nectar_sheet.png`.
-  Measured on 14 Oct 2026 by printing that frame's pixels as a grid
-  (Python, PIL): a flat-topped hexagon with outer pixel edges top y 5
-  (x 9..26), bottom y 21 (x 8..26), left x 1 and right x 32 at y 13.
-
-**True afterwards.**
-
-- `EMPTY_RIM` (const, six `Vector2`, in the frame's pixel space) holds
-  the rim's outer edge: `(9,5), (26,5), (32,13), (26,21), (8,21),
-  (1,13)`. Its comment states how it was measured, as `EMPTY_SILHOUETTE`'s
-  does. Re-measure it the same way first; if any vertex is off by more
-  than one pixel from the values above, use the new measurement and say
-  so in the commit.
-- `_set_outline_points_cup` walks `EMPTY_RIM`. Each point goes through
-  `_silhouette_point_to_local` and is then scaled by `size / cell_size`
-  about the rim's own centre (the mean of the six local points), not
-  about the cell origin, so the larger zone rings stay centred on the rim.
-- `_silhouette_point_to_local` no longer adds `RING_Y_NUDGE` (it
-  corrected `EMPTY_SILHOUETTE`'s two-pixel-high measurement, and the rim
-  is measured fresh). Delete `RING_Y_NUDGE` and `EMPTY_SILHOUETTE` if
-  nothing else reads them (`git grep` first).
-- Cell art off: unchanged, every ring is the hexagon.
-
-**Invariants.** One rim definition for every ring; the sprite's own
-placement (`EMPTY_SPRITE_Y_NUDGE`, `empty_scale`) is untouched; the ring
-rebuild still happens only when `Session.use_cell_sprites` changes.
-
-**Escalate** if the measured rim is not a six-sided figure: that means
-the art changed, and Dave chooses the shape.
-
-**Supersedes C-20's one-pixel nudge.** C-20 (`docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`)
-asked for the rings to sit 1 px higher, to ride with the next slice that
-opens the cell-art drawing. This is that slice: the rim is measured fresh
-and `RING_Y_NUDGE` goes, so no separate nudge is applied; C-134 judges the
-alignment.
-
-**Hands-on check on landing** (move from `checks/blocked.md` to ready):
-C-134.
-
-```queue
-**[Claude] SP-11 -- every ring on a cell traces the cup's rim**
-- Plan: `plans/now/sprites.md` -- "SP-11 -- every ring on a cell traces the cup's rim"
-- Files: `scripts/hive_cell.gd`, `tests/sp11_cell_rim_test.gd`, `tests/test_sp11_cell_rim.py`
-- Check: `python -m unittest tests.test_sp11_cell_rim` passes: with Cell art on, the selection ring's points are `EMPTY_RIM` taken through `_silhouette_point_to_local` and scaled about the rim's centre; the designation, zone and base rings use the same six points at their own sizes; with Cell art off every ring is still the hexagon.
-- Proof: `absent: scripts/hive_cell.gd :: EMPTY_RIM`
-- Next after: SP-8a -- the meadow floor drawn in blocks, with everything on it lifted
-```
+SP-11 shipped 2026-10-15; its specification is `plans/archive/SP-11_2026-10-15.md`.
 
 ## SP-6 -- meadow foragers drawn from the sheet
 
