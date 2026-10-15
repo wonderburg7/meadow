@@ -182,7 +182,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | T2-1 to T2-8 -- progression step 8: tier-2 skills gated and built, bodies, rain in the Colony Run, Shiver Cluster | `plans/now/tier-two.md` |
 | BB-1 to BB-4 -- Bee Bread: Fermenters, larval feeding, the tier-3 currency, re-pacing | `plans/archive/bee-bread_2026-10-11.md` |
 | GD-2a, GD-2b -- Dr Gallerin's first explanations and the persistent Why list, then saving them | `plans/now/guidance-explanations.md` |
-| GP-1 to GP-4 -- goal presentation: the goals drop-down and long-term line, favourites, short-term goals, the problem strip fix | `plans/now/goal-presentation.md` |
+| GP-1 to GP-4 -- goal presentation: the goals drop-down and long-term line, favourites, short-term goals, the problem strip fix | `plans/archive/goal-presentation_2026-10-15.md` |
 | PP-1 to PP-6 -- pollination: Pollinator Points, the gyne and jelly gates, seed set, Priority cells, the route's pricing | `plans/now/pollination.md` |
 | FR-1 to FR-3 -- forager recruitment: Orientation flight, then Auto scouting, then Auto-recruitment, each measured better than the last | `plans/now/forager-recruitment.md` |
 | T3-1, T3-2 -- tier three over behaviour that already ships: Weighted flower choice and Restocking become purchases | `plans/archive/tier-three_2026-10-14.md` |
