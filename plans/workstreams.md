@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/GD-2b` (`codex/GD-2b`) | Codex | the shown ledger and Why history saved with the run | Codex | in progress | none | `plans/now/guidance-explanations.md` GD-2b -- the shown ledger and Why history saved with the run |
+| `.worktrees/RR-6` (`claude/RR-6`) | Claude | every new run gets its own default name, saved or not | Claude | in progress | none | `plans/now/run-repairs.md` RR-6 -- every new run gets its own default name, saved or not |
