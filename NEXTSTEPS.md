@@ -49,6 +49,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `absent: scripts/save_game.gd :: guidance`
    - Next after: none -- guidance explanations are complete
 
+2. **[Codex] GD-3 -- Dr Gallerin explains hungry brood and starving bees**
+   - Plan: `plans/now/guidance-explanations.md` -- "GD-3 -- hungry brood and starving bees explained"
+   - Files: `scripts/guidance_catalogue.gd`, `tests/test_gd3_guidance_hunger.py`
+   - Check: `python -m unittest tests.test_gd3_guidance_hunger` passes (hungry brood and starving bees each start one explanation with their evidence and two conditional responses; a workforce explanation is offered before either; both reopen in Why with recorded evidence and a "cleared" current state); the day each fact first exceeds 0 in the alpha scenario is recorded in this section; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/guidance_catalogue.gd :: hungry_brood`
+   - Next after: none -- guidance explanations are complete
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
