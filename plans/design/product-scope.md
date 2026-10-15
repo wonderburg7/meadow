@@ -821,7 +821,7 @@ legal decisions for the release stream, not alpha blockers.
   is settled in §10's 10 Oct 2026 decisions);
 - Standard and harder difficulty rules;
 - ~~short-term-goal selection, concurrency and dismissal behaviour~~ --
-  settled in `plans/now/goal-presentation.md` decision 5 (Dave, 12 Oct 2026);
+  settled in `plans/archive/goal-presentation_2026-10-15.md` decision 5 (Dave, 12 Oct 2026);
 - named-save count, naming, overwrite and deletion UX;
 - detailed post-alpha threat, ecosystem and environment order;
 - Early Access content volume, price, demo, studio identity and charity model.

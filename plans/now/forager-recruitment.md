@@ -124,6 +124,38 @@ campaign, so `tools/scenario_sweep.py`'s `LONG_RUNNING` gains `^fr1_` and
 the short sweep leaves it out. The `foraging_features_` fixtures are an
 earlier campaign over the same toggles; reuse their setup where it fits.
 
+**Settled by the 15 Oct 2026 plan review, so the slice decides nothing:**
+
+- **Colony.** The `foraging_features_on_seed7_test.json` colony (15 cells,
+  8 nectar and 3 pollen foragers, 2 nurses, 2 builders, 2 miners; weather,
+  disease, rival and winter off; `seconds_per_day` 20), with
+  `"stop": {"max_days": 20}`. A lone-queen Colony Run start has too few
+  foragers for a per-forager figure to mean anything; "starts as the Colony
+  Run does" means the Colony Run's skills, not its population.
+- **The other behaviours.** Every row sets `tarsal_markers_on` and
+  `adaptive_constancy_on` true in `config_overrides` and owns Associative
+  learning through the scenario's `"skill_grants":
+  ["skill.foraging.associative_learning"]` (it has no `GameConfig` toggle;
+  `run_availability.gd::starting_skills` reads the list, as
+  `test_scenarios/bb1_bee_bread.json` uses it).
+- **Every row writes all four toggles explicitly.** Orientation flight and
+  Auto scouting are alternatives (`prerequisites.gd::MUTUALLY_EXCLUSIVE`),
+  but `levels.gd::apply_config_overrides` sets fields directly, with no
+  cascade, so a row that leaves one on measures both at once -- as the
+  `foraging_features_on_` fixtures do. Row 1: `orientation_flight_on` true,
+  `scouting_on`, `auto_recruitment_on`, `floral_constancy_on` false.
+  Row 2: `scouting_on` true, the other three false. Row 3: `scouting_on`
+  and `auto_recruitment_on` true, the others false. Row 4: all but
+  `orientation_flight_on` true.
+- **The figure.** Each run's `report.json` `summary.forager_delivery_amount`
+  divided by (days run x 11, the starting forager count); the median over
+  the five seeds is the cell, and the tool prints the five values beside it.
+  "vs stage before" is the ratio of medians. Seeds: 7, 555, 2026, 12345 and
+  90210, the earlier campaign's.
+- **Escalate** if a row's runs log `orientation_flights` above 0 with
+  `orientation_flight_on` false, or `scouting_settled` above 0 with
+  `scouting_on` false: the toggles are not isolating the stages.
+
 ```queue
 **[Codex] FR-1 -- the three foraging stages measured on the same Colony Run seeds**
 - Plan: `plans/now/forager-recruitment.md` -- "FR-1 -- the three foraging stages measured on the same Colony Run seeds"

@@ -702,4 +702,66 @@ explicit request from Dave.
 - Consequence: warnings every agent reads on every verify and learns to ignore.
 - Candidate direction: Hypothesis -- plan review archives delivered sprite
   slices and re-verifies check-loop.md.
-- Disposition: untriaged
+- Disposition: superseded -- fixed by the 15 Oct 2026 plan review
+  (`docs/plan-review-2026-10-15.md`): `plans/now/sprites.md` is 167 lines,
+  the meadow floor moved to `plans/now/meadow-terrain.md`, and
+  `plans/reference/check-loop.md` was re-verified.
+
+### 2026-10-15 — archiving a slice carries off the next slice's queue block
+
+- Source: plan review, 15 Oct 2026 (`docs/plan-review-2026-10-15.md`, F1)
+- Area: tooling / `tools/archive_slice.py::archive`, `tools/check_docs.py`
+- Signal: `archive` moves a slice's section from its heading to the next
+  heading. Plans often write slice N+1's `queue` block at the end of slice
+  N's section, just above N+1's heading, so the block leaves with N. It has
+  happened twice: `plans/archive/RR-6_2026-10-15.md` holds RR-7's block (RR-7's
+  was rewritten by hand in 7952bbb) and `plans/archive/SP-10_2026-10-15.md`
+  holds SP-11's (SP-11 had no live block until the plan review restored it).
+  On 15 Oct six more blocks sat that way in `plans/now/run-repairs.md` and
+  `plans/now/tier-two.md`.
+- Evidence: `git show HEAD:plans/archive/SP-10_2026-10-15.md | grep -n "SP-11"`.
+- Consequence: a gated block lost this way leaves the backlog silently, and
+  nothing fails; an admissible one costs a hand repair at closeout.
+- Candidate direction: Hypothesis -- `check_docs.py` fails a `queue` block
+  whose nearest `## ` heading does not name its id (the plan review's rule
+  11 in `plans/README.md` is the written rule), and `archive` refuses, or
+  leaves behind, a block for another id inside the section it cuts. This is
+  the second recurrence, so CLAUDE.md's instrument rule applies.
+- Disposition: untriaged (hand-off to the agent-workflow review)
+
+### 2026-10-15 — archiving a plan repoints its routing row instead of dropping it
+
+- Source: plan review, 15 Oct 2026 (`docs/plan-review-2026-10-15.md`, F2)
+- Area: tooling / `tools/archive_slice.py::archive_plan`, `plans/README.md`
+- Signal: `archive_plan` rewrites every citing file's path to the archive,
+  including `plans/README.md`'s "Current routing" row, so each finished plan
+  leaves a routing row pointing into `plans/archive/`. The 30 Sep plan
+  review cut the table to one row per live plan (its F2); by 15 Oct it had
+  30 rows, 16 for archived plans, and none for five live plans
+  (`sprites.md`, `run-repairs.md`, `crisis-readiness.md`,
+  `hive-and-menu-art.md`, `typeface-size.md`).
+- Evidence: `git show aa80f67:plans/README.md` against `git show b5e6751:plans/README.md`, "Current routing".
+- Consequence: an agent routed by the table opens archived plans or finds
+  no route to live work; each plan review re-cuts it by hand.
+- Candidate direction: Hypothesis -- `archive_plan` deletes the routing row
+  naming the plan rather than repointing it, and `check_docs.py` warns when
+  a live plan has no routing row or a row names `plans/archive/`.
+- Disposition: untriaged (hand-off to the agent-workflow review)
+
+### 2026-10-15 — a Codex finish stalled for a day, and nothing surfaced it
+
+- Source: plan review, 15 Oct 2026 (`docs/plan-review-2026-10-15.md`, F3)
+- Area: process / `tools/slice.ps1 finish`, `plans/workstreams.md`
+- Signal: `codex/GD-2b` holds the built slice (guidance_policy.gd, save
+  files, test) and its archive commit from 14 Oct 2026 12:15, unmerged; the
+  ledger row still says "in progress" and the queue still leads the Codex
+  lane with GD-2b. FC-2, then WP-2, SG-2, ED-1 and SP-8a, all wait on GD-2b
+  releasing the save files, so Dave's ordered chain has not moved.
+- Evidence: `git log --oneline master..codex/GD-2b`; `plans/workstreams.md`
+  GD-2b row.
+- Consequence: a stalled closeout in one lane silently blocks the other
+  lane's gated work.
+- Candidate direction: Hypothesis -- `doctor` (or the queue steward) flags a
+  ledger row whose branch has an archive commit but no merge after some
+  hours, naming the integrate prompt.
+- Disposition: untriaged (hand-off to the agent-workflow review)

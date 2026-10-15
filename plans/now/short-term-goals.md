@@ -12,7 +12,7 @@ context-sensitive outcomes such as "establish a pollen surplus", stating an
 outcome rather than a click sequence, with no failure penalty -- do not.
 §6.1 lists the goal layers as essential for the closed alpha.
 
-**Supersedes** `plans/now/goal-presentation.md` decisions 5 and 6 and its
+**Supersedes** `plans/archive/goal-presentation_2026-10-15.md` decisions 5 and 6 and its
 GP-3 (Dave, 13 Oct 2026, choosing these answers over his 12 Oct ones). That
 plan still owns the Goals drop-down (GP-1, GP-2) that SG-3 draws into.
 
@@ -49,7 +49,7 @@ Verified 13 Oct 2026 against master `06bd26c`:
    goal is offered and shown on it. A headless sweep confirms the quarter-day
    intent and sets any floor in `GameConfig`.
 3. **Shown in the Colony Run and in Scenarios**, in the Goals drop-down
-   (`plans/now/goal-presentation.md` decision 2) under the milestone, so
+   (`plans/archive/goal-presentation_2026-10-15.md` decision 2) under the milestone, so
    long-term, milestone, short-term and urgent read top to bottom. Each goal
    line carries a favourite star like the others (its decision 4). A
    Scenario, which has no milestones, shows the drop-down with its

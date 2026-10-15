@@ -1,7 +1,7 @@
 # The hands-on check loop — how findings become fixes
 
 <!-- CONTEXT: plan | LAYER: reference -->
-Status: reference | Owner: Dave / Claude Code | Next: nothing further -- its one open slice shipped as P-2, 2026-09-04; record in `plans/archive/CHECK_LOOP_P2_2026-09-04.md` | Dependency: none | Verified: 2026-09-09
+Status: reference | Owner: Dave / Claude Code | Next: nothing further -- its one open slice shipped as P-2, 2026-09-04; record in `plans/archive/CHECK_LOOP_P2_2026-09-04.md` | Dependency: none | Verified: 2026-10-15
 
 **Objective.** Make the slice -> check -> report -> fix loop cheap and
 reliable, so a slice cannot pass its own acceptance while missing what Dave
@@ -10,8 +10,9 @@ asked for. This plan is about the loop, not about any one feature.
 **Why this file exists.** Dave's 3 Sep 2026 pass asked, alongside the fixes
 themselves, for the way this work is navigated, planned and designed to
 change so the same failures stop recurring. Its slices are complete; this
-file now stands as the durable rule set the 3 Sep 2026 pass produced, cited
-by `CLAUDE.md` ("Three admission rules") and `NEXTSTEPS.md`.
+file now stands as the durable rule set the 3 Sep 2026 pass produced;
+`CLAUDE.md`'s routing table sends "how checks, slices and acceptance work"
+here.
 
 ## What the 3 Sep pass actually showed
 
@@ -42,8 +43,9 @@ disagree.
 <!-- LAYER: durable-rules -->
 
 1. **One acceptance, written from the player's seat, in two places.** A
-   slice's `Acceptance` paragraph and the `checks/ready.md` entry it files
-   are the same sentences. If the acceptance cannot be written as something
+   slice's `Acceptance` paragraph and the check it files (one record in
+   `checks/ready/`, written with `python tools/new_check.py`) are the same
+   sentences. If the acceptance cannot be written as something
    Dave does and sees, the slice is not specified yet.
 2. **A highlight that must match art is cut from the art.** Never re-derive
    a shape the sprite already defines. Measure the asset, record the
@@ -94,7 +96,7 @@ disagree.
    them in the checks -- it was just a temporary request in one session, I
    didn't intend decisions to go in the checks forever more." Ask, get the
    answer, and write the answer into the file the rule lives in.
-   `checks/ready.md` holds checks and nothing else. A decision that genuinely
+   `checks/` holds checks and nothing else. A decision that genuinely
    cannot be taken this session goes under `NEXTSTEPS.md`'s "Not in the
    queue, and why", with the choice and its cost stated in one line.
 9. **An ask of Dave names the file, the place in it, and what to type.**
