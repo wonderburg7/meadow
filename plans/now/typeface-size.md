@@ -34,7 +34,7 @@ Verified 14 Oct 2026 against master `3e37ea6`.
 | TS-1 | width-matched size per typeface, applied to the theme, menu hexes, comb labels and Dr Gallerin | `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/gallerin_panel.gd`, `scripts/hive_cell.gd`, tests | yes (after SP-10 and SP-11, which share `hive_cell.gd`) | medium |
 | TS-2 | the same for `hud.gd`'s own size overrides | `scripts/hud.gd`, tests | no -- after TS-1, and after GP-4 and FC-2 release `hud.gd` | low |
 
-TS-1 -> TS-2. A slice reads its own section only.
+TS-1 -> TS-2. TS-1 runs after RR-7's fix (`plans/now/run-repairs.md`), which owns the menu hexagon fit TS-1's `base` feeds, and keeps `tests.test_rr7_silkscreen_fit` green. A slice reads its own section only.
 
 ```queue
 **[Claude] TS-1 -- every typeface is the same width as Standard at the same text scale**

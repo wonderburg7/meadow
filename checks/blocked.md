@@ -296,3 +296,17 @@ Runner: dave -- a +1 that rises and fades is motion stills cannot show
 Owner: `plans/now/pollination.md`
 
 Blocked by: PP-7 (`plans/now/pollination.md`) -- the scenario reports failed on its own pollination log and runs too fast to watch (Dave and a Sonnet runner, 14-15 Oct 2026); PP-7 replaces the command.
+
+### C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface
+
+What this checks: on the main menu, open the cog -> Appearance. Set Text scale to 1, then to 2; at each, choose every Typeface in its list in turn and look at the Challenge and Scenario hexagons after each choice.
+
+PASS: every hexagon shows its whole name at both scales in every typeface: no word is split across two lines, and no line is missing or cut off.
+
+If it fails, HO-15 reopens: the fit in `scripts/main_menu.gd::hex_fit_size`.
+
+Runner: sonnet -- many typeface and scale combinations, each read for clipped hexagon names
+
+Owner: `plans/now/run-repairs.md`
+
+Blocked by: RR-7 (`plans/now/run-repairs.md`) and the fix it specifies -- at text scale 2 in Silkscreen the Challenge hexagons split "CHALLENG / E 1" (failed 15 Oct 2026, Sonnet; an interrupted Opus re-run saw the same).

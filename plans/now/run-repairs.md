@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-6 -- every new run gets its own default name, saved or not (C-124 failed, 14 Oct 2026; RR-1 to RR-5 landed 13 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-15
+Status: active | Owner: Dave / Claude Code | Next: RR-6 -- every new run gets its own default name, saved or not (C-124 failed, 14 Oct 2026); RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (C-99 failed, 15 Oct 2026, investigation) ( RR-1 to RR-5 landed 13 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-15
 
 ## Objective
 
@@ -38,6 +38,7 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
+| RR-7 | investigation: why Silkscreen at text scale 2 still splits "Challenge" in a menu hexagon (C-99) | tests, this plan | yes | high |
 | RR-6 | every new run gets its own default name, saved or not (C-124) | `scripts/save_slots.gd`, tests | yes | low |
 
 Each slice reads its own section only. Do not change skill prices, the
@@ -50,7 +51,7 @@ format.
 - Files: `scripts/save_slots.gd`, `tests/test_rr3_fresh_run_name.py`
 - Check: `python -m unittest tests.test_rr3_fresh_run_name` passes, including a new case: with no slots at all, two calls to `SaveSlots.fresh_run_name("My colony")` return "My colony" and then "My colony 2", and a third with "My colony 2" saved returns "My colony 3".
 - Proof: `absent: scripts/save_slots.gd :: _issued_run_slugs`
-- Next after: none -- plans/now/run-repairs.md is complete
+- Next after: RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation)
 ```
 ## RR-6 -- every new run gets its own default name, saved or not
 
@@ -77,6 +78,40 @@ types in the Saves window is untouched (`saves_panel.gd`).
 
 **Hands-on check on landing** (move from `checks/blocked.md` to ready):
 C-124.
+
+```queue
+**[Claude] RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation)**
+- Plan: `plans/now/run-repairs.md` -- "RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word"
+- Files: `tests/rr7_silkscreen_fit_test.gd`, `tests/test_rr7_silkscreen_fit.py`, `plans/now/run-repairs.md`
+- Check: `python -m unittest tests.test_rr7_silkscreen_fit` runs and prints, for every Challenge and Scenario hexagon at text scale 1 and 2 in every typeface, the base size, the size `hex_fit_size` chose, the label's available width, the widest word's width at that size and the rendered label's line count; the answer and the fix slice it implies are written into this section.
+- Proof: `absent: plans/now/run-repairs.md :: RR-7 answer:`
+- Next after: none -- plans/now/run-repairs.md is complete
+```
+## RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word
+
+Level: high (ambiguous bug). C-99 failed on 15 Oct 2026 (Sonnet; an Opus
+re-run interrupted after one screenshot saw the same): at text scale 2 with
+Silkscreen, the Challenge 1 and 2 hexagons show "CHALLENG" with "E 1" on
+the next line. Not yet diagnosed.
+
+**True now** (verified 15 Oct 2026 against master `e3e7adc`).
+`main_menu.gd::_fit_hex_label` runs on the label's `draw` signal, keyed on
+font instance, base size and available size, and calls `hex_fit_size`,
+which steps down from `base` until `hex_text_fits` (each word's
+`Font.get_string_size` within the width, and the wrapped block within the
+height) or returns `HEX_MIN_FONT_SIZE` (6) whether or not that fits.
+
+**The one question.** At text scale 2 in Silkscreen, for "Challenge 1"'s
+title: does `hex_fit_size` return a size at which `hex_text_fits` is true
+but the rendered Label still breaks the word (a measurement mismatch, e.g.
+the Label's own spacing or oversampling), or does no size from `base` down
+to 6 fit, so the floor is returned (the floor)? Answer with the printed
+figures, as a line starting `RR-7 answer:` here, then specify the fix
+slice below it. Do not change game code in this slice.
+
+**Related.** TS-1 (`plans/now/typeface-size.md`) changes `_fit_hex_label`'s
+`base` per typeface; RR-7's fix lands first, and TS-1 keeps
+`tests.test_rr7_silkscreen_fit` green.
 
 RR-1 shipped 2026-10-13; its specification is `plans/archive/RR-1_2026-10-13.md`.
 

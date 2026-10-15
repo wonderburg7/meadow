@@ -20,4 +20,3 @@ unblocker.
 - [C-128 -- The skep sits where the hive square was, and the rival hive is a darker skep](ready/C-128.md)
 - [C-131 -- Goals drop-down in a Colony Run: collapse, long-term line, remembered after restart](ready/C-131.md)
 - [C-132 -- Star goals in the Goals drop-down and collapse it](ready/C-132.md)
-- [C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface](ready/C-99.md)
