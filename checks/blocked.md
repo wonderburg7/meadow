@@ -185,20 +185,6 @@ Owner: `plans/archive/hands-on-findings_2026-10-05.md`
 
 Blocked by: RR-1 (`plans/now/run-repairs.md`) and T2-9 (`plans/now/tier-two.md`) -- Challenge 2 has no way to make new cells: the queen's Build cell is Challenge 1 only and Comb worker is blocked at 2.7 (Dave, 11 Oct 2026).
 
-### C-135 -- A miner on Dig on its own starts digging by itself once Automation is bought
-
-What this checks: start a Colony Run. Make one bee a Miner and turn on "Dig on its own" in its Job panel before you own Automation (Skills > Hive Mind). Mark nothing. Buy Automation, then watch the miner for a minute.
-
-PASS: after Automation is bought the miner walks to the soil and starts digging without any block being marked.
-
-If it fails, T2-10 reopens: the no-work guard in `scripts/bee.gd::_try_role_work`.
-
-Runner: sonnet -- a skill purchase and a short wait, judged from still screenshots
-
-Owner: `plans/now/tier-two.md`
-
-Blocked by: T2-10 (`plans/now/tier-two.md`).
-
 ### C-136 -- Without Automation, a miner's Job panel offers no Dig on its own
 
 What this checks: start a Colony Run without Automation (Skills > Hive Mind), select a Miner and read its Job panel; then open a comb cell's raise menu and read the Miner entries.

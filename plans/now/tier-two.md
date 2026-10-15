@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-10, then T2-11 (from Dave's 14 Oct 2026 pass: miners on Dig on its own, comb workers building unevenly); T2-12 waits for `hud.gd`; T2-13 (a role change drops a carried body; gameplay review, 15 Oct 2026) waits for T2-10; then T2-7b (T2-9 landed 12 Oct 2026: branch-tier progress counts only the lower-tier skills the run offers, C-113) -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker) | Dependency: COL-4, COL-6, T2-4a, T2-4b, T2-6 and T2-7 landed (T2-7 on 11 Oct 2026, as the rule, snapshot field and pacing row); T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`) | Verified: 2026-10-14
+Status: active | Owner: Dave / Claude Code | Next: T2-11 (T2-10 landed 16 Oct 2026: a miner wakes when Automation is bought, C-135) (from Dave's 14 Oct 2026 pass: miners on Dig on its own, comb workers building unevenly); T2-12 waits for `hud.gd`; T2-13 (a role change drops a carried body; gameplay review, 15 Oct 2026) waits for T2-10; then T2-7b (T2-9 landed 12 Oct 2026: branch-tier progress counts only the lower-tier skills the run offers, C-113) -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker) | Dependency: COL-4, COL-6, T2-4a, T2-4b, T2-6 and T2-7 landed (T2-7 on 11 Oct 2026, as the rule, snapshot field and pacing row); T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`) | Verified: 2026-10-14
 
 ## Objective
 
