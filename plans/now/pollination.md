@@ -132,6 +132,9 @@ within 20-30 s, too fast to watch.
   this path; the likely suspect is the `--fixed-fps` pacing, not yet verified.
   Escalated: C-129 stays in `checks/blocked.md` until Dave chooses how the
   watch run is paced.
+  Re-measured 15 Oct 2026 without `--fixed-fps` (Dave chose option A): the same
+  scenario simulated 1000.75 seconds in about 19 s wall time (16:46:33 to 16:46:52),
+  still far faster than real time, so C-129 is not yet rewritten or moved.
 - On landing, rewrite C-129's command in `checks/blocked.md` to that one,
   then move C-129 to `checks/ready.md` (`--runner dave`).
 
