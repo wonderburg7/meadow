@@ -63,11 +63,11 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] GD-2b -- the shown ledger and Why history saved with the run**
-   - Plan: `plans/now/guidance-explanations.md` -- "GD-2b -- the shown ledger and Why history saved with the run"
-   - Files: `scripts/guidance_policy.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/test_gd2b_guidance_saved.py`
-   - Check: `python -m unittest tests.test_gd2b_guidance_saved` passes (an explanation shown before a save is not shown again after loading it, and the Why history survives; an older save loads with an empty ledger); `tools/verify.ps1` is green
-   - Proof: `absent: scripts/save_game.gd :: guidance`
+1. **[Codex] GD-3 -- Dr Gallerin explains hungry brood and starving bees**
+   - Plan: `plans/now/guidance-explanations.md` -- "GD-3 -- hungry brood and starving bees explained"
+   - Files: `scripts/guidance_catalogue.gd`, `tests/test_gd3_guidance_hunger.py`
+   - Check: `python -m unittest tests.test_gd3_guidance_hunger` passes (hungry brood and starving bees each start one explanation with their evidence and two conditional responses; a workforce explanation is offered before either; both reopen in Why with recorded evidence and a "cleared" current state); the day each fact first exceeds 0 in the alpha scenario is recorded in this section; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/guidance_catalogue.gd :: hungry_brood`
    - Next after: none -- guidance explanations are complete
 
 2. **[Codex] FR-1 -- the three foraging stages measured on the same Colony Run seeds**
