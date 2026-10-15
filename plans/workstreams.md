@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/GD-2b` (`codex/GD-2b`) | Codex | the shown ledger and Why history saved with the run | Codex | in progress | none | `plans/now/guidance-explanations.md` GD-2b -- the shown ledger and Why history saved with the run |
