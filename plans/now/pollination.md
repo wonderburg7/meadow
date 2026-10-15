@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter (PP-5 landed 13 Oct 2026: once Priority cells is owned, the cell popup's "Feed first" box marks a brood cell, nurses feed a hungry larva there before any unmarked one, and saves carry each cell's `priority_cell`; PP-4 landed 12 Oct 2026: a flower that set seed replants its own species nearby, the year's seed weights spring regrowth, and saves carry a `seed_bank` record and each flower's lifespan; PP-2 landed 12 Oct 2026, its hands-on check is C-129) | Dependency: PP-6 waits for FR-2 (`plans/now/forager-recruitment.md`, Dave 14 Oct 2026); AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-14
+Status: active | Owner: Dave / Claude Code | Next: PP-7 -- pollination-logging scenarios stop reporting failed, and C-129 gets a watchable run (14 Oct 2026 pass); then PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter (PP-5 landed 13 Oct 2026: once Priority cells is owned, the cell popup's "Feed first" box marks a brood cell, nurses feed a hungry larva there before any unmarked one, and saves carry each cell's `priority_cell`; PP-4 landed 12 Oct 2026: a flower that set seed replants its own species nearby, the year's seed weights spring regrowth, and saves carry a `seed_bank` record and each flower's lifespan; PP-2 landed 12 Oct 2026, its hands-on check is C-129) | Dependency: PP-6 waits for FR-2 (`plans/now/forager-recruitment.md`, Dave 14 Oct 2026); AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-15
 
 ## Objective
 
@@ -49,6 +49,7 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
+| PP-7 | pollination-logging scenarios stop reporting failed, and C-129 gets a run Dave can watch | `tools/analyze_session.py`, `docs/headless-run-contract.md`, `test_scenarios/pp2_points_watch.json`, tests | yes | low |
 | PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after FR-2 (`plans/now/forager-recruitment.md`) puts Auto scouting on the route; PP-5 landed 13 Oct 2026 | medium |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
@@ -75,6 +76,52 @@ PP-2 shipped 2026-10-12; its specification is `plans/archive/PP-2_2026-10-12.md`
 PP-4 shipped 2026-10-12; its specification is `plans/archive/PP-4_2026-10-12.md`.
 
 PP-5 shipped 2026-10-13; its specification is `plans/archive/PP-5_2026-10-13.md`.
+
+```queue
+**[Claude] PP-7 -- pollination-logging scenarios stop reporting failed, and C-129 gets a run Dave can watch**
+- Plan: `plans/now/pollination.md` -- "PP-7 -- pollination-logging scenarios stop reporting failed"
+- Files: `tools/analyze_session.py`, `docs/headless-run-contract.md`, `test_scenarios/pp2_points_watch.json`, `tests/test_pp7_recorded_actions.py`
+- Check: `python -m unittest tests.test_pp7_recorded_actions` passes: an action entry with result "recorded" is counted in `by_result` but is not in `problems`, while "rejected" and "unresolved" still are; and `python tools/run_scenario.py test_scenarios/pp2_points_spendable.json` prints `status=passed`.
+- Proof: `absent: tools/analyze_session.py :: "recorded"`
+- Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
+```
+## PP-7 -- pollination-logging scenarios stop reporting failed
+
+Level: low. Found by C-129 on 14-15 Oct 2026: Dave's run of its command
+printed `status=failed ... reason=action`, and a runner saw the window close
+within 20-30 s, too fast to watch.
+
+**True now** (verified 15 Oct 2026 against master `191e5ed`).
+
+- `pollination.gd` writes its log through `DiagnosticLog.log_action(...,
+  "recorded", ...)` (six calls; `pollination_withered` is one). Nothing
+  else uses "recorded", and `docs/headless-run-contract.md` does not list it.
+- `analyze_session.py::_action_summary` puts every entry whose result is not
+  "accepted" into `problems`, and `run_scenario.py` turns a passed run with
+  any problem into `failed` with `reason.kind == "action"`. So every
+  scenario with `"pollination_log": true` fails: `pp2_points_spendable.json`
+  ran 430 simulated seconds, 1209 entries "recorded", none failed, and
+  still reported failed.
+- `pp2_points_spendable.json` stops when its actions resolve (430
+  simulated seconds), and `--windowed` keeps the default `--fixed-fps 30`,
+  which runs faster than real time (`run_scenario.py`, `DEFAULT_FIXED_FPS`).
+
+**True afterwards.**
+
+- `_action_summary` leaves "recorded" out of `problems` (it still counts
+  it in `by_result`); the docstring and the contract's list of action
+  results say "recorded" is a log entry, never a problem.
+- `test_scenarios/pp2_points_watch.json`: the same setup as
+  `pp2_points_spendable.json` up to and including the two `grant_skill`
+  actions, no buy, assert or save steps, and `"stop": {"max_days": 6}`.
+- Measure once: `python tools/run_scenario.py
+  test_scenarios/pp2_points_watch.json --windowed --fixed-fps 0` should
+  take roughly as long in wall time as it simulates. Record the two
+  figures here. If it still runs much faster than real time, find what
+  sets `Engine.time_scale` on that path and **escalate** with it rather
+  than changing it.
+- On landing, rewrite C-129's command in `checks/blocked.md` to that one,
+  then move C-129 to `checks/ready.md` (`--runner dave`).
 
 ## PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
 

@@ -50,6 +50,25 @@ Owner: `plans/now/run-repairs.md`
 
 Confirmed 15 Oct 2026: run by sonnet: C-108 -- the Colony Run tile started a Day 1 lone queen with no difficulty choice, and after quit and relaunch the saved run loaded as the same lone-queen Colony Run; C-123 -- the queen's Build cell on dug floor beside her made a site that she finished into a wax cell by day 0.5.
 
+### C-126 -- Saves... opens from the main menu on a fresh launch
+
+What this checks: Launch the game fresh and, from the main menu (before
+starting or loading a run), open Settings and press Saves... . The Saves
+window should open and list your saved runs; pressing Delete on a run
+should ask to confirm and, once confirmed, remove it from the list.
+
+PASS: Saves... opens the Saves window from the main menu at launch, and a confirmed Delete removes the run.
+
+If it fails, RR-2 reopens: the boot-time Saves window built in
+scripts/main.gd, or its no-hud confirm path in scripts/saves_panel.gd,
+is changed.
+
+Runner: sonnet
+
+Owner: `plans/now/run-repairs.md`
+
+Confirmed 15 Oct 2026: run by sonnet and Dave: on a fresh launch the main menu's Settings > Saves... opened the Saves window listing the runs and Delete asked to confirm (sonnet); Dave confirmed a Delete removes the run (pass).
+
 ## 14 Oct 2026 -- Dave's hands-on pass
 
 ### C-125 -- Filled comb cells show the nectar and pollen fill-level art

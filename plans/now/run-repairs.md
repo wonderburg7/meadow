@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: nothing further -- RR-1 to RR-5 have all landed (13 Oct 2026); archive this plan at closeout | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude Code | Next: RR-6 -- every new run gets its own default name, saved or not (C-124 failed, 14 Oct 2026; RR-1 to RR-5 landed 13 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-15
 
 ## Objective
 
@@ -38,10 +38,45 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
+| RR-6 | every new run gets its own default name, saved or not (C-124) | `scripts/save_slots.gd`, tests | yes | low |
 
 Each slice reads its own section only. Do not change skill prices, the
 branch-tier rule (settled by `plans/now/tier-two.md` T2-9, landed 12 Oct 2026), or the save
 format.
+
+```queue
+**[Claude] RR-6 -- every new run gets its own default name, saved or not**
+- Plan: `plans/now/run-repairs.md` -- "RR-6 -- every new run gets its own default name, saved or not"
+- Files: `scripts/save_slots.gd`, `tests/test_rr3_fresh_run_name.py`
+- Check: `python -m unittest tests.test_rr3_fresh_run_name` passes, including a new case: with no slots at all, two calls to `SaveSlots.fresh_run_name("My colony")` return "My colony" and then "My colony 2", and a third with "My colony 2" saved returns "My colony 3".
+- Proof: `absent: scripts/save_slots.gd :: _issued_run_slugs`
+- Next after: none -- plans/now/run-repairs.md is complete
+```
+## RR-6 -- every new run gets its own default name, saved or not
+
+Level: low. C-124 failed on 14 Oct 2026 (Sonnet, confirmed by Opus): a
+Colony Run that never saved or reached a checkpoint leaves no slot, so the
+next run is offered the same name. Dave chose (pass session, 15 Oct 2026)
+that every run gets its own name even unsaved.
+
+**True now** (verified 15 Oct 2026 against master `191e5ed`).
+`save_slots.gd::fresh_run_name` skips only slugs in `list_slots()`;
+`main.gd::_on_level_chosen` and `_on_scenario_chosen` call it once per run
+start. A checkpoint (`saving.gd::checkpoint`, on a day boundary) is what
+first writes a slot.
+
+**True afterwards.** `save_slots.gd` gains `static var _issued_run_slugs:
+Dictionary`; `fresh_run_name` treats an issued slug as taken and records
+the slug of the name it returns. It is per launch: a static var survives
+`reload_current_scene`, and after a relaunch an unsaved name may be offered
+again, which cannot pair a run with another run's checkpoint. No file is
+written and the index format does not change.
+
+**Invariants.** Names already saved are skipped as before; a name the player
+types in the Saves window is untouched (`saves_panel.gd`).
+
+**Hands-on check on landing** (move from `checks/blocked.md` to ready):
+C-124.
 
 RR-1 shipped 2026-10-13; its specification is `plans/archive/RR-1_2026-10-13.md`.
 
