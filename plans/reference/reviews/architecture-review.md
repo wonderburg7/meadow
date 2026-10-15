@@ -2,6 +2,7 @@
 
 <!-- CONTEXT: review-prompt | LOAD: only when running this review -->
 Record key: architecture-review
+Reasoning: high
 Watches: scripts scenes project.godot
 
 **Owns:** how Meadow is structured for change: where each rule, value and

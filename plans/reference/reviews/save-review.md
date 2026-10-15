@@ -2,6 +2,7 @@
 
 <!-- CONTEXT: review-prompt | LOAD: only when running this review -->
 Record key: save-review
+Reasoning: high
 Watches: scripts/save_game.gd scripts/saving.gd scripts/save_migrations.gd scripts/save_slots.gd scripts/tutorial_checkpoint.gd tests/test_save_migrations.py .claude/rules/saving.md
 
 **Owns:** `scripts/save_game.gd`, `scripts/saving.gd`,

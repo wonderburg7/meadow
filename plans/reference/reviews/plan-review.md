@@ -2,6 +2,7 @@
 
 <!-- CONTEXT: review-prompt | LOAD: only when running this review -->
 Record key: plan-review
+Reasoning: high
 Watches: plans/now plans/design plans/reference plans/README.md NEXTSTEPS.md checks
 
 **Owns:** every live file in `plans/now/`, `plans/design/` and

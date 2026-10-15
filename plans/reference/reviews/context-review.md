@@ -2,6 +2,7 @@
 
 <!-- CONTEXT: review-prompt | LOAD: only when running this review -->
 Record key: context-review
+Reasoning: medium
 Watches: CLAUDE.md AGENTS.md CHATGPT.md README.md GAME_MODEL.md FUNCTION_MAP.md docs/agent-rules.md .claude/rules .claude/settings.json .claude/agents .claude/skills .agents .codex plans/reference/reviews
 
 **Owns:** everything an agent loads, or is routed to, that is not a plan:

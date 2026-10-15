@@ -2,6 +2,7 @@
 
 <!-- CONTEXT: review-prompt | LOAD: only when running this review -->
 Record key: none (the check records and plans are its record)
+Reasoning: medium
 
 Act as coordinator for a hands-on check pass. Run in an Opus session; take no
 screenshots in this session. Contract rules 1, 3 and 5 to 7 apply; this

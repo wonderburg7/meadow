@@ -2,6 +2,7 @@
 
 <!-- CONTEXT: review-prompt | LOAD: only when running this review -->
 Record key: performance-review
+Reasoning: high
 Watches: scripts docs/PERFORMANCE_BASELINE.md docs/performance.md .claude/rules/performance.md test_scenarios
 
 **Owns:** how often things run and what they cost as the colony grows:
