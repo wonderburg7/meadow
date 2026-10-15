@@ -20,3 +20,4 @@ unblocker.
 - [C-128 -- The skep sits where the hive square was, and the rival hive is a darker skep](ready/C-128.md)
 - [C-131 -- Goals drop-down in a Colony Run: collapse, long-term line, remembered after restart](ready/C-131.md)
 - [C-132 -- Star goals in the Goals drop-down and collapse it](ready/C-132.md)
+- [C-138 -- Problem strip stays out of the way, keeps red warnings and lets you remove one](ready/C-138.md)
