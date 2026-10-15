@@ -120,6 +120,18 @@ within 20-30 s, too fast to watch.
   figures here. If it still runs much faster than real time, find what
   sets `Engine.time_scale` on that path and **escalate** with it rather
   than changing it.
+- Measured 15 Oct 2026 with `--windowed --fixed-fps 0` (Windows, local clock):
+  `pp2_points_watch.json` simulated 1000.1 seconds (6 days, `status=passed`,
+  `outcome=max_days`) between about 10:45:50 and 10:46:30, roughly 40 s of wall
+  time. `pp2_points_spendable.json` (430 simulated seconds) took about the same
+  40 s. So the run is far faster than real time and is not watchable yet.
+  Nothing in `scripts/scenario_actions.gd` or the run path sets
+  `Engine.time_scale`; the only setters are the speed buttons
+  (`scripts/camera_view.gd`, `_on_speed_requested`) and resets to 1.0
+  (`scripts/main.gd`, `scripts/debug_panel.gd`). The cause is not in game code on
+  this path; the likely suspect is the `--fixed-fps` pacing, not yet verified.
+  Escalated: C-129 stays in `checks/blocked.md` until Dave chooses how the
+  watch run is paced.
 - On landing, rewrite C-129's command in `checks/blocked.md` to that one,
   then move C-129 to `checks/ready.md` (`--runner dave`).
 

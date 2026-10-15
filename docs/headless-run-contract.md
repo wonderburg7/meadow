@@ -288,6 +288,8 @@ run causally.
 }
 ```
 
+`actions.problems` lists every action entry whose result is not `accepted` or `recorded`: `rejected`, `failed` and `unresolved` are problems. `recorded` is a log line a system writes (for example the pollination ledger lines under `"pollination_log": true`), so it is counted in `actions.by_result` and never fails `actions_clean`.
+
 An expectation has a unique optional `id`, a required allowlisted metric path
 and `op`. `eq`, `ne`, `lt`, `lte`, `gt`, `gte` require `value`; `between`
 requires numeric `min` and `max`; and `empty`, `not_empty`, `all_true`, and
