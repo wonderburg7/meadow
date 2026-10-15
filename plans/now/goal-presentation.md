@@ -1,7 +1,7 @@
 # Goal presentation -- the four goal layers on screen in a Colony Run
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: GP-4 -- the problem strip stops blocking play (GP-1 and GP-2 built 13 Oct 2026) | Dependency: GP-1 → GP-2 → GP-4 (Dave's order, 12 Oct 2026); short-term goals left this plan on 13 Oct 2026 (Dave) for `plans/now/short-term-goals.md` (SG-1 to SG-3), whose SG-3 draws into GP-1's drop-down after GP-2 | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude Code | Next: nothing further -- GP-1, GP-2 and GP-4 built (GP-4 15 Oct 2026); archive the plan at closeout | Dependency: GP-1 → GP-2 → GP-4 (Dave's order, 12 Oct 2026); short-term goals left this plan on 13 Oct 2026 (Dave) for `plans/now/short-term-goals.md` (SG-1 to SG-3), whose SG-3 draws into GP-1's drop-down after GP-2 | Verified: 2026-10-15
 
 ## Objective
 
