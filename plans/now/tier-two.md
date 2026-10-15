@@ -35,7 +35,6 @@ What the open slices build on:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-10 | a miner on Dig on its own starts as soon as Automation is bought; idle miners and comb workers say they need Automation (Dave's 14 Oct 2026 pass) | `scripts/bee.gd`, tests | yes | medium |
 | T2-11 | investigation: why comb workers build unevenly, one bounded question | tests, this plan | yes, after T2-10 | high |
 | T2-12 | Dig on its own offered only once Automation is owned | `scripts/hud.gd`, tests | no -- after FC-2 releases `hud.gd` (GP-4 released it 15 Oct 2026) | low |
 | T2-13 | a bee whose role changes while it carries a body puts the body down (gameplay review, 15 Oct 2026) | `scripts/bee.gd`, tests | no -- after T2-10 releases `scripts/bee.gd` | low |
@@ -57,63 +56,7 @@ plans/design/progression.md "11. Implementation sequence"`, step 8 only).
 
 T2-1 to T2-6, T2-8b, T2-9 and COL-4 shipped 7-12 Oct 2026; each has its record in `plans/archive/`, named by id and date.
 
-## T2-10 -- a miner on Dig on its own starts as soon as Automation is bought
-
-Level: medium (one guard on the idle think path; no new per-tick work).
-Dave's 14 Oct 2026 pass: "dig on their own" miners do not dig without
-the player stepping in.
-
-**True now** (verified 14 Oct 2026 against master `3e37ea6`).
-
-- `actions.gd`'s `mine_automine_block` row (and `comb_build_outward`)
-  names `skill.hive_mind.automation`; without it the row is skipped, by
-  design since T2-2.
-- `bee.gd::_try_role_work` remembers a miner's failed search in
-  `_mining_no_work_epoch` / `_mining_no_work_automine` and returns false
-  without searching while `hive.mining_work_epoch` and `automine` are
-  unchanged. Buying a skill calls `Availability.invalidate()`
-  (`skill_tree_panel.gd`), which advances `Availability.gate_epoch`, not
-  the mining epoch. So a miner that looked while Automation was unowned
-  stays idle after it is bought until something advances the mining
-  epoch: the player marking a block is what wakes it.
-- `bee.gd::idle_reason`, `State.MINE_IDLE` with `automine` on, says "No
-  soil left within reach" even when the real cause is Automation not
-  being owned. `State.BUILD_IDLE` in Build mode returns "" when there is
-  room to build, so a comb worker idle for want of Automation says nothing.
-
-**True afterwards.**
-
-- `bee.gd` adds `_mining_no_work_gate_epoch`, set beside the other two
-  where a search fails, and the guard also requires it to equal
-  `Availability.gate_epoch`. Nothing else in the guard changes.
-- `idle_reason`, `MINE_IDLE`, `automine` on and the
-  `mine_automine_block` row unavailable (`_action_available`): "Dig on its
-  own needs the Automation skill. Until then, mark blocks with Mine."
-- `idle_reason`, `BUILD_IDLE`, Build or Both mode, `hive.create_next_cell_site`
-  finds a site but `comb_build_outward` is unavailable: "Nothing marked to
-  build. Mark cells to build, or get the Automation skill so comb workers
-  build outward on their own."
-- The test pair follows `tests/t2_2_automation_gate_test.gd` and
-  `tests/test_t2_2_automation_gate.py`.
-
-**Invariants.** The no-work guard still stops an idle miner walking the
-soil every think tick (`tests/source_checks.py` keeps its
-`_try_role_work` rule green); marked blocks still come before automine.
-
-**Escalate** if a granted Automation still leaves the miner idle with the
-guard fixed: the cause is then elsewhere and this section is wrong.
-
-**Hands-on check on landing** (move from `checks/blocked.md` to ready):
-C-135.
-
-```queue
-**[Claude] T2-10 -- a miner on Dig on its own starts as soon as Automation is bought, and an idle miner or comb worker says it needs Automation**
-- Plan: `plans/now/tier-two.md` -- "T2-10 -- a miner on Dig on its own starts as soon as Automation is bought"
-- Files: `scripts/bee.gd`, `tests/t2_10_automine_wake_test.gd`, `tests/test_t2_10_automine_wake.py`
-- Check: `python -m unittest tests.test_t2_10_automine_wake` passes: a miner with `automine` on and Automation not owned finds no work and its `idle_reason()` names Automation; Automation is then granted and `Availability.invalidate()` called, with no block marked and `hive.mining_work_epoch` unchanged, and the miner's next `_try_role_work(Role.MINER)` returns true; a comb worker in Build mode with nothing marked, room to build and no Automation gives an `idle_reason()` naming Automation.
-- Proof: `absent: scripts/bee.gd :: _mining_no_work_gate_epoch`
-- Next after: T2-11 -- why comb workers build comb unevenly (investigation)
-```
+T2-10 shipped 2026-10-16; its specification is `plans/archive/T2-10_2026-10-16.md`.
 
 ## T2-11 -- why comb workers build comb unevenly (investigation)
 
