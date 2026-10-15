@@ -48,34 +48,38 @@ const COLLECTIONS := [
 # --- the tunables table -------------------------------------------
 const TUNABLES := [
 	# --- World & start ---
+	# The five starting-colony rows are dev_only (Dave, 15 Oct 2026,
+	# architecture review F5): every startable run takes its cells and bees
+	# from its levels.gd row, so these shape only the level-0 fallback world
+	# built before a load replays a save.
 	{
 		"persist": "run",
 		"key": "hive_cell_count", "label": "Starting cells", "step": 1.0, "min": 1.0,
-		"category": "World & start",
+		"category": "World & start", "dev_only": true,
 		"tip": "How many finished comb cells the hive begins with. Builders add more on top of these.",
 	},
 	{
 		"persist": "run",
 		"key": "starting_bees", "label": "Starting foragers", "step": 1.0, "min": 1.0,
-		"category": "World & start",
+		"category": "World & start", "dev_only": true,
 		"tip": "How many foragers exist at the start of a run.",
 	},
 	{
 		"persist": "run",
 		"key": "starting_nurses", "label": "Starting nurses", "step": 1.0, "min": 0.0,
-		"category": "World & start",
+		"category": "World & start", "dev_only": true,
 		"tip": "Nurses feed developing larvae. Brood does not develop at all without one, so a colony with no nurse never grows.",
 	},
 	{
 		"persist": "run",
 		"key": "starting_builders", "label": "Starting builders", "step": 1.0, "min": 0.0,
-		"category": "World & start",
+		"category": "World & start", "dev_only": true,
 		"tip": "Builders draw new comb and shift stores between cells. With none, the hive can only expand once you assign a bee to build.",
 	},
 	{
 		"persist": "run",
 		"key": "starting_honey_makers", "label": "Starting honey makers", "step": 1.0, "min": 0.0,
-		"category": "World & start",
+		"category": "World & start", "dev_only": true,
 		"tip": "Honey makers turn stored nectar into honey. None to begin with by default -- a young colony needs the nectar as it is.",
 	},
 	{

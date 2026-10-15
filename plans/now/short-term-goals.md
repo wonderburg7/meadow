@@ -80,7 +80,7 @@ Verified 13 Oct 2026 against master `06bd26c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SG-2 | Goals offered, completed and paid in Colony Runs and Scenarios, and saved | `scripts/short_term_goals.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/sg2_short_term_goals.json`, `tests/test_sg2_short_term_goals.py` | no -- after WP-3 (SG-1 landed 14 Oct 2026), and once the Codex lane's FC-2 releases the save files | high |
+| SG-2 | Goals offered, completed and paid in Colony Runs and Scenarios, and saved | `scripts/short_term_goals.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/conditions.gd`, `scripts/hive.gd`, `scripts/bee_honey.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/sg2_short_term_goals.json`, `tests/test_sg2_short_term_goals.py` | no -- after WP-3 (SG-1 landed 14 Oct 2026), and once the Codex lane's FC-2 releases the save files | high |
 | SG-3 | The goals in the Goals drop-down, with progress, reward, star and Dismiss | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/guidance_catalogue.gd`, `test_scenarios/sg3_goal_shelf.json`, `tests/test_sg3_goal_shelf.py` | no -- after SG-2 | medium |
 
 SG-1 supplies the standalone catalogue and rules. SG-2 and SG-3 are Claude lane, after Work
@@ -124,11 +124,55 @@ removes the entry and returns the reward fixed at offer. Facts add
 `winter_coming` and `winter_ready` to the diagnostics snapshot. Thresholds
 are `few_free_cells`, `many_waiting_bees` and `few_waiting_bees`.
 
+**Where the facts come from** (architecture review, 15 Oct 2026; decision 1
+says no second condition evaluator). Each added fact already has one
+authority in `conditions.gd`; read it there, never recompute it.
+
+- `conditions.gd` gains two public wrappers and one leaf, and nothing else:
+  `income(main, resource, days) -> Dictionary` returns `_net_income`'s result
+  (`{net, collected}`, or `{}` while the window is not full), and
+  `built_cell_count(main) -> int` returns `_built_cell_count`. The milestone
+  leaves keep their behaviour.
+- `net_daily_income[r]` is `income(main, r, 1).net`; `gross_daily_income[r]`
+  is its `collected`. Nectar and pollen are already sampled
+  (`main.gd::_sample_day_stores`, from `hive.gd`'s lifetime counters).
+  Honey has no counter yet: `hive.gd::record_collection` gains a `"honey"`
+  branch adding to a new `lifetime_honey_made`; `bee_honey.gd::honey_deposit`
+  calls it with the amount each deposit adds to the cell (the change in
+  `bee.honey_load`); `_sample_day_stores` adds `"honey"` (`hive.total`) and
+  `"honey_collected"` (`lifetime_honey_made`), so `_net_income`'s
+  `resource + "_collected"` reads honey unchanged.
+- **The window is not saved.** `day_store_totals` refills over the first day
+  of a run and after every load, and `income()` returns `{}` until it does.
+  A resource with no window is left out of both income maps, and
+  `short_term_goals.gd` treats a missing key as unknown, not zero:
+  `available` offers no goal whose resource's gross income is missing (the
+  reward is fixed at offer, so it would pay nothing), and `_trigger` and
+  `progress` for `pollen_surplus` neither offer nor advance on a missing net.
+  Today `_trigger` reads a missing net as 0.0, which would offer "Build a
+  pollen surplus" on every load.
+- `built_cells` is `built_cell_count(main)`.
+- **Winter on track** (Dave, 15 Oct 2026, architecture review D1: option B).
+  `conditions.gd` gains a `winter_on_track` leaf in `_met_key`, backed by a
+  new `_winter_on_track(main) -> bool`: false unless `Session.winter_coming`
+  and not `Session.winter_here`; otherwise the same forecast comparison
+  `_winter_ready` makes (`held_energy >= required_energy` from
+  `main.year_winter._winter_forecast(bees)`, bees counted as `_winter_ready`
+  counts them) on **any** countdown day, with no `days_left` gate.
+  `_winter_ready` keeps its last-day rule unchanged, so the CR-2 milestone
+  and every Challenge or scenario spec reading `winter_ready` behave as
+  before; it may call `_winter_on_track` after its `days_left` check. The
+  SG-1 fact keeps its name: `facts.winter_ready` is
+  `Conditions.met(main, {"winter_on_track": true})`, so "Lay in honey for
+  winter" finishes on the first day the comb holds what winter needs, and
+  `short_term_goals.gd` is unchanged by this. `winter_coming` is
+  `Session.winter_coming`.
+
 ```queue-gated
 **[Claude] SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved**
 - Plan: `plans/now/short-term-goals.md` -- "SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved"
-- Files: `scripts/short_term_goals.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/sg2_short_term_goals.json`, `tests/test_sg2_short_term_goals.py`
-- Check: `python -m unittest tests.test_sg2_short_term_goals` passes (in a Colony Run with no pollen income the pollen goal is offered, and finishing it pays pollen worth about a quarter of a day's gross income; no goal is offered in Challenge 1 or 2; offered and finished goals survive save and restore; an old save loads with none); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
+- Files: `scripts/short_term_goals.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/conditions.gd`, `scripts/hive.gd`, `scripts/bee_honey.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/sg2_short_term_goals.json`, `tests/test_sg2_short_term_goals.py`
+- Check: `python -m unittest tests.test_sg2_short_term_goals` passes (in a Colony Run with no pollen income the pollen goal is offered, and finishing it pays pollen worth about a quarter of a day's gross income; "Lay in honey for winter" can finish before the countdown's last day while the CR-2 winter milestone still waits for it; no goal is offered in Challenge 1 or 2; offered and finished goals survive save and restore; an old save loads with none); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
 - Proof: `absent: scripts/save_game.gd :: short_term_goals`
 - Next after: SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss
 ```
@@ -143,7 +187,11 @@ and a Dismiss button reachable by keyboard. `colony_milestones.gd`'s
 favourites restore keeps short-term ids. In a Scenario the drop-down shows
 the short-term goals alone. Finishing one shows a brief completion note and a Dr Gallerin line
 (`guidance_catalogue.gd`), shown once per goal per run. Goals never open a
-modal or pause the game.
+modal or pause the game. The completion lines are their own table in
+`guidance_catalogue.gd`, keyed by goal id, not rows of `ENTRIES`: `ENTRIES`
+holds diagnostic explanations keyed by `ColonyDiagnostics` fact ids, and
+`explanation()`'s evidence line covers only the two workforce facts (its
+`else` branch is the comb one), so a goal row there would show comb evidence.
 
 ```queue-gated
 **[Claude] SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss**

@@ -430,26 +430,26 @@ The headless verbs, `when` clauses and layout assertions.
 1693 static func _log(do: String, target_desc: String, result: String, reason: String) -> void
 ```
 
-## settings_catalogue.gd (1,578 lines)
+## settings_catalogue.gd (1,582 lines)
 
 Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
 
 ```
 22   # --- preloads and collection order --------------------------------
 48   # --- the tunables table -------------------------------------------
-1453 # --- settings owned by Session ------------------------------------
-1467 # --- reading and writing a setting --------------------------------
-1468 static func setting_get(key: String)
-1471 static func setting_set(key: String, value) -> void
-1478 # --- resetting ----------------------------------------------------
-1495 static func reset_config_to_defaults() -> void
-1507 static func reset_config_keys(keys: Array) -> void
-1513 # --- applying a setting with its cascades -------------------------
-1522 static func apply_setting(key: String, value) -> void
-1533 # --- the cascade helpers ------------------------------------------
-1538 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1556 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1570 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+1457 # --- settings owned by Session ------------------------------------
+1471 # --- reading and writing a setting --------------------------------
+1472 static func setting_get(key: String)
+1475 static func setting_set(key: String, value) -> void
+1482 # --- resetting ----------------------------------------------------
+1499 static func reset_config_to_defaults() -> void
+1511 static func reset_config_keys(keys: Array) -> void
+1517 # --- applying a setting with its cascades -------------------------
+1526 static func apply_setting(key: String, value) -> void
+1537 # --- the cascade helpers ------------------------------------------
+1542 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1560 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1574 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
 ## bee_foraging.gd (1,526 lines)
