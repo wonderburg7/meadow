@@ -14,7 +14,7 @@ Reviewed: 0be134c | Since: b9854e5 | Scope: a full verify.ps1 run and the diagno
 | F5 -- test `.gd.uid` files | Shipped -- `scripts_missing_uid` covers `tests/`; the boot left the worktree clean |
 | F6 -- alpha build never worked | Shipped -- `tools/build_alpha.ps1` built a 39 MB zip in 31 s today |
 | F7 -- flaky layout/timeouts | Rejected last run; the only failures since are 6 on one branch (below), no recurrence |
-| Hand-offs of 7 Oct (finish lock, Codex sandbox) | Not mine to confirm; they live in the signal log |
+| Hand-offs of 7 Oct (finish lock, Codex sandbox) | Rejected -- agent workflow review owns both; they stay in the signal log |
 
 ## Findings
 
