@@ -15,10 +15,7 @@ unblocker.
 ## Ready to run
 
 - [C-103 -- the command tray shows all of a comb cell's actions at the smallest window](ready/C-103.md)
-- [C-108 -- Colony Run starts from the menu as a lone queen and reloads as a Colony Run](ready/C-108.md)
-- [C-113 -- Challenge 2 offers Comb worker at 2.7 and Miner at 2.8 as free buys](ready/C-113.md)
 - [C-122 -- Dr Gallerin explains a missing nurse and a missing comb worker, and Why keeps both](ready/C-122.md)
-- [C-123 -- A Colony Run queen builds her own first cell](ready/C-123.md)
 - [C-124 -- A new Colony Run never offers an earlier run's checkpoint](ready/C-124.md)
 - [C-126 -- Saves... opens from the main menu on a fresh launch](ready/C-126.md)
 - [C-127 -- The comb draws honey, jelly, brood, bee bread and wax caps from Dave's art](ready/C-127.md)

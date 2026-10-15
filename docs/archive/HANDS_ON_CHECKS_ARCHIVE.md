@@ -6,6 +6,50 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 15 Oct 2026 -- Dave's hands-on pass
+
+### C-113 -- Challenge 2 offers Comb worker at 2.7 and Miner at 2.8 as free buys
+
+What this checks: start Challenge 2 from the main menu and play to stage 2.7 ("raise a Comb worker and build more comb"), or jump there with the debug stage arrows. Open the skill tree and check Comb worker is offered as a free buy and the Job menu does not list Comb worker until you buy it. Buy it, raise a Comb worker, then go on to 2.8 ("raise a miner, dig new space and build a cell in it") and check Miner is likewise free in the tree and only appears in the Job menu once bought.
+
+PASS: At 2.7 and 2.8 the tree shows Comb worker and then Miner as free buys, and each role appears in the Job menu only after you buy it.
+
+If it fails, the stage data in scripts/challenge_stages.gd (free_skills at 2.7 and 2.8) or the Job row gating in scripts/hud.gd is wrong; T2-9 (`plans/now/tier-two.md`) is the fix filed for the 11 Oct 2026 failure.
+
+Runner: sonnet -- debug stage arrows, then the tree and Job menu read twice
+
+Owner: `plans/now/tier-two.md`
+
+Confirmed 15 Oct 2026: run by opus (re-run after a sonnet fail that read the queen's Job menu, which offers Comb worker and Nurse without their skills by design, Availability.QUEEN_FREE_ROLES): at 2.7 Comb worker showed Cost: Free and a worker's Change to... listed it only after the free buy; at 2.8 Miner showed Cost: Free and appeared in a Comb worker's Change to... only after its buy.
+
+### C-108 -- Colony Run starts from the menu as a lone queen and reloads as a Colony Run
+
+What this checks: On the main menu, pick the "Colony Run" tile at the left of the Scenarios row and press Start (it shows no difficulty choice). Play a few seconds, save from the Saves window under a new name, quit Godot, start it again and load that save from the Saves window on the menu, then press Restart Run in the settings window (the cog).
+
+PASS: the run opens with only the queen, no workers and no comb, and after the reboot the save loads back as the same lone-queen Colony Run, not a different start, and Restart Run then begins a fresh lone-queen Colony Run.
+
+If it fails, CR-1 reopens: the level 8 row in `scripts/levels.gd`, the menu tile in `scripts/main_menu.gd`, or `SaveGame.apply_starting_level` in `scripts/save_game.gd` and the Load calls in `scripts/saves_panel.gd`.
+
+Runner: sonnet -- a save, quit, relaunch and reload sequence
+
+Owner: `plans/now/run-repairs.md`
+
+Confirmed 15 Oct 2026: run by sonnet: C-108 -- the Colony Run tile started a Day 1 lone queen with no difficulty choice, and after quit and relaunch the saved run loaded as the same lone-queen Colony Run; C-123 -- the queen's Build cell on dug floor beside her made a site that she finished into a wax cell by day 0.5.
+
+### C-123 -- A Colony Run queen builds her own first cell
+
+What this checks: from the main menu start a Colony Run (the first tile in the Scenarios strip). Click the queen so she is the only bee selected, press "Build cell" in her panel's Job column, then click an empty spot of dug floor next to her.
+
+PASS: the queen walks to the spot and a new wax cell appears there within two game days.
+
+If it fails, RR-1 (`plans/now/run-repairs.md`) reopens: a missing button is `hud.gd::set_queen_build_button_visible`, a click that does nothing is `input_selection.gd::_place_queen_build_cell` or `orders_zones.gd::queen_build_at`.
+
+Runner: sonnet -- one selection, one button and one click, then a short wait
+
+Owner: `plans/now/run-repairs.md`
+
+Confirmed 15 Oct 2026: run by sonnet: C-108 -- the Colony Run tile started a Day 1 lone queen with no difficulty choice, and after quit and relaunch the saved run loaded as the same lone-queen Colony Run; C-123 -- the queen's Build cell on dug floor beside her made a site that she finished into a wax cell by day 0.5.
+
 ## 14 Oct 2026 -- Dave's hands-on pass
 
 ### C-125 -- Filled comb cells show the nectar and pollen fill-level art
