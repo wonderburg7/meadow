@@ -15,40 +15,21 @@ never re-argue them.
 
 ## Current state
 
-Verified 7 Oct 2026 against master:
+Verified 15 Oct 2026 against master `b5e6751`. T2-1 to T2-6, T2-8b, T2-9 and
+COL-4 have landed (T2-7 too, as the rule, snapshot field and pacing row).
+What the open slices build on:
 
-- Only Nurses and Honey worker gate a role (`roles.gd` `skill` field, read
-  by `availability.gd::role_query` and `action_query`). Comb worker and
-  Miner carry `"skill": ""`.
-- `action_query` lets the queen nurse without Nurses (BS-9) through an
-  inline `Roles.NURSE` check. `role_query`, which the HUD's Job row
-  (`hud.gd::_role_offered`) and `orders_zones.gd::_role_permitted` read,
-  has no bee argument and no queen exemption.
-- `mode_query` checks stage gates only; no mode is skill-gated. The Miner's
-  "Dig on its own" is `actions.gd`'s `mine_automine_block` row; Comb
-  workers' outward building is `comb_build` over `hive.gd`'s outward hex
-  spiral.
-- Value-switch skills use `enable_behaviour` effects read through a helper
-  such as `bee_foraging.gd::tarsal_markers_on`. Adaptive constancy reads
-  `GameConfig.adaptive_constancy_on` directly (three places in
-  `bee_foraging.gd`, off by default).
-- "Seeding implies owning" (`run_availability.gd::_seeded_skills`) is
-  generic over every role with a skill and a `start_count_key`, so a run
-  that seeds builders or miners will own their skills with no new code.
-- Challenge 2 introduces Comb worker at stage 2.7 and Miner, with "Dig on
-  its own", at 2.8 (`challenge_stages.gd`). A stage's `free_skills` waive
-  cost while it is current; a skill must also be in `unlocked_keys` to be
-  permitted. A tier opens only when every node of the tier below in that
-  branch is owned (`progression.gd::branch_tier_open`), so Hive Mind tier 2
-  needs Backup roles owned.
-- Clearing (`comb_clean_cell`, Comb worker "maintain" mode, gated on
-  Cleaning) clears dead larvae first and then, since T2-4b, carries out the
-  bodies of bees who died inside the hive (`hive.gd`'s `bodies`,
-  `scripts/hive_body.gd`), which count towards disease like dead larvae.
-  A meadow death still leaves only the presentation-only death marker.
-- Rain runs only while `GameConfig.weather_on` (false by default) and the
-  level row allow it (`main.gd`, weather advance). `bee_status.gd` keeps
-  bees in above `rain_forage_limit`.
+- Comb worker and Miner are skill-gated roles (`roles.gd`:
+  `skill.colony.comb_worker`, `skill.colony.miner`), read by
+  `availability.gd::role_query` and `action_query`.
+- The Miner's "Dig on its own" (`actions.gd`'s `mine_automine_block`) and
+  Comb workers' outward building (`comb_build_outward`) need
+  `skill.hive_mind.automation`.
+- A tier opens only when the lower-tier skills the run offers in that branch
+  are owned (`progression.gd::branch_tier_open`, T2-9).
+- Bodies of bees who die inside the hive lie in `hive.gd`'s `bodies`
+  (`scripts/hive_body.gd`); a Comb worker in "maintain" mode carries them
+  out (`bee_building.gd`), and they count towards disease.
 
 ## Open slices
 
@@ -60,59 +41,22 @@ Verified 7 Oct 2026 against master:
 | T2-13 | a bee whose role changes while it carries a body puts the body down (gameplay review, 15 Oct 2026) | `scripts/bee.gd`, tests | no -- after T2-10 releases `scripts/bee.gd` | low |
 | T2-7b | The tier-2 price sweep T2-7 deferred: tier-2 costs set so the arc's first tier-2 purchase lands around day 5 | `scripts/skills.gd`, `plans/design/progression.md`, tests; specified when AR-4 lands | no -- after AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker | medium |
 
-**Dependencies.** T2-1, T2-2 and T2-3 run in that order in the Claude lane:
-T2-1 and T2-2 share `roles.gd`, `availability.gd` and `challenge_stages.gd`,
-and each adds a test module. They depend on
-nothing else. T2-4a follows T2-2 (`actions.gd`, `challenge_stages.gd`).
-T2-4b landed 9 Oct 2026, so it no longer shares files with NF-3
-(`plans/archive/nectar-fermentation_2026-10-10.md`) or Bee Bread's BB-1
-(`plans/archive/bee-bread_2026-10-11.md`).
-T2-7 (landed 11 Oct 2026) measures the gates T2-1 to T2-3 built; T2-7b prices them. T2-6 shared `skills.gd` with
-T2-7, so it ran after it in the Claude lane (NF-4 and BB-2, which shared
-`skills.gd`, `bee_foraging.gd`, `game_config.gd` and `settings_catalogue.gd`, landed 10 Oct 2026).
-Pollinator Points (`plans/now/pollination.md` PP-1) needs T2-6: foraging
-tier 3 opens only when Associative learning is owned. T2-8 multiplies COL-6's one-step winter (landed 7 Oct 2026).
-NF-4 (`plans/archive/nectar-fermentation_2026-10-10.md`) added a Colony tier-2 node in
-`skills.gd` and landed 10 Oct 2026, before T2-7b, which prices it. T2-7b runs after
-BB-2 (`plans/archive/bee-bread_2026-10-11.md`), so its sweep includes the 15-day
-unfed-worker rule; BB-4 moves stage thresholds only, never prices.
-T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`): the alpha arc
-makes no honey, so the sweep's median cannot land in band before AR-4's arc
-buys a Honey worker (Dave, 11 Oct 2026). Open when T2-7b is specified:
-whether BB-4's Challenge routes are re-checked at the new prices. A new test module no longer edits
-`tools/verify.ps1`, which finds them itself since 7 Oct 2026, so adding a
-test puts no shared file in either lane.
+**Dependencies.** T2-10 and T2-13 both edit `scripts/bee.gd`, so T2-13
+opens when T2-10 lands; T2-11 runs after T2-10, whose miner fix its
+question assumes. T2-12 waits for FC-2 (`plans/now/crisis-readiness.md`,
+Codex lane) to release `scripts/hud.gd`. T2-7b waits for AR-4
+(`plans/now/alpha-route-evidence.md`): the alpha arc makes no honey, so the
+sweep's median cannot land in band before AR-4's arc buys a Honey worker
+(Dave, 11 Oct 2026); it prices NF-4's Colony tier-2 node and includes
+BB-2's 15-day unfed-worker rule. Open when T2-7b is specified: whether
+BB-4's Challenge routes are re-checked at the new prices.
 
 **Reads.** A slice reads its own section below and the step 8 decisions in
 `plans/design/progression.md` (`python tools/heading.py
 plans/design/progression.md "11. Implementation sequence"`, step 8 only).
 
-T2-1 shipped 2026-10-07; its specification is `plans/archive/T2-1_2026-10-07.md`.
+T2-1 to T2-6, T2-8b, T2-9 and COL-4 shipped 7-12 Oct 2026; each has its record in `plans/archive/`, named by id and date.
 
-T2-2 shipped 2026-10-07; its specification is `plans/archive/T2-2_2026-10-07.md`.
-
-T2-3 shipped 2026-10-07; its specification is `plans/archive/T2-3_2026-10-07.md`.
-
-COL-4 shipped 2026-10-07; its specification is `plans/archive/COL-4_2026-10-07.md`.
-
-T2-4a shipped 2026-10-08; its specification is `plans/archive/T2-4a_2026-10-08.md`.
-
-T2-5 shipped 2026-10-09; its specification is `plans/archive/T2-5_2026-10-09.md`.
-
-T2-4b shipped 2026-10-09; its specification is `plans/archive/T2-4b_2026-10-09.md`.
-
-T2-6 shipped 2026-10-11; its specification is `plans/archive/T2-6_2026-10-11.md`.
-
-T2-9 shipped 2026-10-12; its specification is `plans/archive/T2-9_2026-10-12.md`.
-
-```queue
-**[Claude] T2-10 -- a miner on Dig on its own starts as soon as Automation is bought, and an idle miner or comb worker says it needs Automation**
-- Plan: `plans/now/tier-two.md` -- "T2-10 -- a miner on Dig on its own starts as soon as Automation is bought"
-- Files: `scripts/bee.gd`, `tests/t2_10_automine_wake_test.gd`, `tests/test_t2_10_automine_wake.py`
-- Check: `python -m unittest tests.test_t2_10_automine_wake` passes: a miner with `automine` on and Automation not owned finds no work and its `idle_reason()` names Automation; Automation is then granted and `Availability.invalidate()` called, with no block marked and `hive.mining_work_epoch` unchanged, and the miner's next `_try_role_work(Role.MINER)` returns true; a comb worker in Build mode with nothing marked, room to build and no Automation gives an `idle_reason()` naming Automation.
-- Proof: `absent: scripts/bee.gd :: _mining_no_work_gate_epoch`
-- Next after: T2-11 -- why comb workers build comb unevenly (investigation)
-```
 ## T2-10 -- a miner on Dig on its own starts as soon as Automation is bought
 
 Level: medium (one guard on the idle think path; no new per-tick work).
@@ -163,13 +107,14 @@ guard fixed: the cause is then elsewhere and this section is wrong.
 C-135.
 
 ```queue
-**[Claude] T2-11 -- why comb workers build comb unevenly (investigation)**
-- Plan: `plans/now/tier-two.md` -- "T2-11 -- why comb workers build comb unevenly (investigation)"
-- Files: `tests/t2_11_comb_cadence_test.gd`, `tests/test_t2_11_comb_cadence.py`, `plans/now/tier-two.md`
-- Check: `python -m unittest tests.test_t2_11_comb_cadence` runs and prints, for each idle spell longer than 10 game-seconds, the comb worker's mode, `idle_reason()` and which finder returned nothing; the answer and the fix slice it implies are written into this section.
-- Proof: `present: scripts/bee.gd :: func idle_reason() -> String:`
-- Next after: T2-12 -- Dig on its own is offered only once Automation is owned
+**[Claude] T2-10 -- a miner on Dig on its own starts as soon as Automation is bought, and an idle miner or comb worker says it needs Automation**
+- Plan: `plans/now/tier-two.md` -- "T2-10 -- a miner on Dig on its own starts as soon as Automation is bought"
+- Files: `scripts/bee.gd`, `tests/t2_10_automine_wake_test.gd`, `tests/test_t2_10_automine_wake.py`
+- Check: `python -m unittest tests.test_t2_10_automine_wake` passes: a miner with `automine` on and Automation not owned finds no work and its `idle_reason()` names Automation; Automation is then granted and `Availability.invalidate()` called, with no block marked and `hive.mining_work_epoch` unchanged, and the miner's next `_try_role_work(Role.MINER)` returns true; a comb worker in Build mode with nothing marked, room to build and no Automation gives an `idle_reason()` naming Automation.
+- Proof: `absent: scripts/bee.gd :: _mining_no_work_gate_epoch`
+- Next after: T2-11 -- why comb workers build comb unevenly (investigation)
 ```
+
 ## T2-11 -- why comb workers build comb unevenly (investigation)
 
 Level: high (ambiguous bug). Dave, 14 Oct 2026: comb workers "seem to
@@ -191,14 +136,15 @@ explains what Dave saw, and the fix is T2-10 plus T2-12.
 Write the result as a line starting `T2-11 answer:` here, then specify
 the fix slice (or none) below it. Do not change game code in this slice.
 
-```queue-gated
-**[Claude] T2-12 -- Dig on its own is offered only once Automation is owned**
-- Plan: `plans/now/tier-two.md` -- "T2-12 -- Dig on its own is offered only once Automation is owned"
-- Files: `scripts/hud.gd`, `tests/t2_12_automine_offer_test.gd`, `tests/test_t2_12_automine_offer.py`
-- Check: `python -m unittest tests.test_t2_12_automine_offer` passes: without Automation a selected miner's Job panel shows no "Dig on its own" toggle and a cell's raise menu offers no "Miner — Dig on its own"; with Automation owned both are offered.
-- Proof: `present: scripts/hud.gd :: the Miner's "Dig on its own" has shown regardless`
-- Next after: T2-7b -- the tier-2 price sweep T2-7 deferred
+```queue
+**[Claude] T2-11 -- why comb workers build comb unevenly (investigation)**
+- Plan: `plans/now/tier-two.md` -- "T2-11 -- why comb workers build comb unevenly (investigation)"
+- Files: `tests/t2_11_comb_cadence_test.gd`, `tests/test_t2_11_comb_cadence.py`, `plans/now/tier-two.md`
+- Check: `python -m unittest tests.test_t2_11_comb_cadence` runs and prints, for each idle spell longer than 10 game-seconds, the comb worker's mode, `idle_reason()` and which finder returned nothing; the answer and the fix slice it implies are written into this section.
+- Proof: `present: scripts/bee.gd :: func idle_reason() -> String:`
+- Next after: T2-12 -- Dig on its own is offered only once Automation is owned
 ```
+
 ## T2-12 -- Dig on its own is offered only once Automation is owned
 
 Level: low. Dave, 14 Oct 2026: hide the toggle until Automation is owned,
@@ -223,13 +169,14 @@ T2-10's idle reason explains them.
 C-136.
 
 ```queue-gated
-**[Claude] T2-13 -- a bee whose role changes while it carries a body puts the body down**
-- Plan: `plans/now/tier-two.md` -- "T2-13 -- a bee whose role changes while it carries a body puts the body down"
-- Files: `scripts/bee.gd`, `tests/t2_13_carried_body_test.gd`, `tests/test_t2_13_carried_body.py`
-- Check: `python -m unittest tests.test_t2_13_carried_body` passes: a comb worker inside the hive that has lifted a body, made a Forager, has `carrying_corpse` and `corpse_is_bee` false, `hive.bodies` is one longer, and once given 30 nectar its `carrying_text()` names the nectar, not a dead bee; a comb worker carrying a dead larva, made a Forager, has `carrying_corpse` false and `hive.bodies` unchanged; `python -m unittest tests.test_t2_4b_bodies` still passes.
-- Proof: `absent: scripts/bee.gd :: func _put_down_body(`
+**[Claude] T2-12 -- Dig on its own is offered only once Automation is owned**
+- Plan: `plans/now/tier-two.md` -- "T2-12 -- Dig on its own is offered only once Automation is owned"
+- Files: `scripts/hud.gd`, `tests/t2_12_automine_offer_test.gd`, `tests/test_t2_12_automine_offer.py`
+- Check: `python -m unittest tests.test_t2_12_automine_offer` passes: without Automation a selected miner's Job panel shows no "Dig on its own" toggle and a cell's raise menu offers no "Miner — Dig on its own"; with Automation owned both are offered.
+- Proof: `present: scripts/hud.gd :: the Miner's "Dig on its own" has shown regardless`
 - Next after: T2-7b -- the tier-2 price sweep T2-7 deferred
 ```
+
 ## T2-13 -- a bee whose role changes while it carries a body puts the body down
 
 Level: low (one helper on the role-change choke point). Gameplay review
@@ -265,10 +212,17 @@ format unchanged. No per-tick work.
 **Escalate** if `carrying_corpse` is read anywhere outside `bee.gd`,
 `bee_building.gd` and the save files by then.
 
+```queue-gated
+**[Claude] T2-13 -- a bee whose role changes while it carries a body puts the body down**
+- Plan: `plans/now/tier-two.md` -- "T2-13 -- a bee whose role changes while it carries a body puts the body down"
+- Files: `scripts/bee.gd`, `tests/t2_13_carried_body_test.gd`, `tests/test_t2_13_carried_body.py`
+- Check: `python -m unittest tests.test_t2_13_carried_body` passes: a comb worker inside the hive that has lifted a body, made a Forager, has `carrying_corpse` and `corpse_is_bee` false, `hive.bodies` is one longer, and once given 30 nectar its `carrying_text()` names the nectar, not a dead bee; a comb worker carrying a dead larva, made a Forager, has `carrying_corpse` false and `hive.bodies` unchanged; `python -m unittest tests.test_t2_4b_bodies` still passes.
+- Proof: `absent: scripts/bee.gd :: func _put_down_body(`
+- Next after: T2-7b -- the tier-2 price sweep T2-7 deferred
+```
+
 ## Not in the queue, and why
 
 - **T2-12** -- hide "Dig on its own" until Automation is owned (Dave, 14 Oct 2026); waits for FC-2 (Codex lane) to release `scripts/hud.gd` (GP-4 released it 15 Oct 2026).
 - **T2-13** -- a bee whose role changes while it carries a body puts the body down (gameplay review, 15 Oct 2026); waits for T2-10 to release `scripts/bee.gd`.
 - **T2-7b** -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker, and is specified when it lands.
-
-T2-8b shipped 2026-10-09; its specification is `plans/archive/T2-8b_2026-10-09.md`.

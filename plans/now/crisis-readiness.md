@@ -40,6 +40,10 @@ file tools, so read it through Git).
 **Gate.** Every file on the `Files:` line is free except `scripts/save_game.gd`
 and `scripts/saving.gd`, which GD-2b (`plans/now/guidance-explanations.md`,
 Codex lane) holds. Recheck the line against the queue before opening the fence.
+GD-2b is built on `codex/GD-2b` but its closeout stopped on 14 Oct 2026;
+Dave decided on 15 Oct 2026 (plan review D1) that a Claude session
+integrates it ("Integrate the finished Codex branch and close it out."),
+after which this gate clears.
 
 ```queue-gated
 **[Codex] FC-2 -- implement the accepted crisis and deterministic scenario**

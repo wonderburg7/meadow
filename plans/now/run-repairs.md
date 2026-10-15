@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (C-99 failed, 15 Oct 2026, investigation); RR-9 and RR-10 from the 15 Oct 2026 gameplay review (winter ferments nothing; fermented nectar buys no skill); RR-11 after SP-11 (`plans/now/sprites.md`) releases `scripts/hive_cell.gd` (RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-15
+Status: active | Owner: Dave / Claude Code | Next: RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (C-99 failed, 15 Oct 2026, investigation); RR-9 and RR-10 from the 15 Oct 2026 gameplay review (winter ferments nothing; fermented nectar buys no skill), in the Codex lane since the 15 Oct 2026 plan review; RR-11 after SP-11 (`plans/now/sprites.md`) releases `scripts/hive_cell.gd` (RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-15
 
 ## Objective
 
@@ -43,22 +43,18 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-7 | investigation: why Silkscreen at text scale 2 still splits "Challenge" in a menu hexagon (C-99) | tests, this plan | yes | high |
-| RR-9 | a skipped winter ages no nectar and no sealed bee bread | `scripts/season.gd`, tests | yes | low |
-| RR-10 | fermented nectar is neither counted nor spent by skill purchases | `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, tests | yes, after RR-9 | low |
+| RR-9 | a skipped winter ages no nectar and no sealed bee bread | `scripts/season.gd`, tests | yes -- Codex lane | low |
+| RR-10 | fermented nectar is neither counted nor spent by skill purchases | `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, tests | yes, after RR-9 -- Codex lane | low |
 | RR-11 | nectar shows a pre-fermented colour before it ferments, as a warning | `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | no -- after SP-11 releases `scripts/hive_cell.gd`, and after RR-10 | medium |
+
+RR-9 and RR-10 are Codex-lane slices (Dave, 15 Oct 2026, plan review D3:
+the Claude lane was full and the Codex backlog dry); RR-7 and RR-11 stay in
+the Claude lane, and RR-11 opens only once SP-11 and RR-10 have both landed.
 
 Each slice reads its own section only. Do not change skill prices, the
 branch-tier rule (settled by `plans/now/tier-two.md` T2-9, landed 12 Oct 2026), or the save
 format.
 
-```queue
-**[Claude] RR-6 -- every new run gets its own default name, saved or not**
-- Plan: `plans/now/run-repairs.md` -- "RR-6 -- every new run gets its own default name, saved or not"
-- Files: `scripts/save_slots.gd`, `tests/test_rr3_fresh_run_name.py`
-- Check: `python -m unittest tests.test_rr3_fresh_run_name` passes, including a new case: with no slots at all, two calls to `SaveSlots.fresh_run_name("My colony")` return "My colony" and then "My colony 2", and a third with "My colony 2" saved returns "My colony 3".
-- Proof: `absent: scripts/save_slots.gd :: _issued_run_slugs`
-- Next after: RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation)
-```
 RR-6 shipped 2026-10-15; its specification is `plans/archive/RR-6_2026-10-15.md`.
 
 ## RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word
@@ -100,14 +96,6 @@ under "Not in the queue, and why" in `NEXTSTEPS.md`.
 
 RR-1 shipped 2026-10-13; its specification is `plans/archive/RR-1_2026-10-13.md`.
 
-```queue
-**[Claude] RR-9 -- a skipped winter ages no nectar and no sealed bee bread**
-- Plan: `plans/now/run-repairs.md` -- "RR-9 -- a skipped winter ages no nectar and no sealed bee bread"
-- Files: `scripts/season.gd`, `tests/rr9_winter_ages_nothing_test.gd`, `tests/test_rr9_winter_ages_nothing.py`
-- Check: `python -m unittest tests.test_rr9_winter_ages_nothing` passes: a sealed nectar cell stocked one game-day before winter and a full bee-bread cell sealed one game-day before it come out of `season.gd::_resolve_winter` with `nectar_age()` and `bee_bread_ripen_fraction()` unchanged (to 0.01), the nectar cell's `is_fermented()` false, and `Session.sim_time` still moved on by `winter_length_days`; `python -m unittest tests.test_col6_winter_skip tests.test_col8_winter_dieback` still passes.
-- Proof: `absent: scripts/season.gd :: nectar_since`
-- Next after: RR-10 -- fermented nectar is neither counted nor spent by skill purchases
-```
 ## RR-9 -- a skipped winter ages no nectar and no sealed bee bread
 
 Level: low (one loop in one function, no per-tick work). Gameplay review
@@ -150,13 +138,14 @@ directly.
 whether winter freezes it too.
 
 ```queue
-**[Claude] RR-10 -- fermented nectar is neither counted nor spent by skill purchases**
-- Plan: `plans/now/run-repairs.md` -- "RR-10 -- fermented nectar is neither counted nor spent by skill purchases"
-- Files: `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, `test_scenarios/rr10_fermented_not_currency.json`, `tests/test_rr10_fermented_not_currency.py`
-- Check: `python -m unittest tests.test_rr10_fermented_not_currency` passes: with one fermented nectar cell and one fresh one, a skill whose nectar price exceeds the fresh stock alone is refused and leaves both cells unchanged, and one priced within the fresh stock is bought, spends only fresh nectar and leaves the fermented cell's amount unchanged; `python -m unittest tests.test_bb3_bee_bread_currency tests.test_nf4_fermentation_sense` still passes.
-- Proof: `absent: scripts/skill_tree_panel.gd :: is_fermented`
-- Next after: RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning
+**[Codex] RR-9 -- a skipped winter ages no nectar and no sealed bee bread**
+- Plan: `plans/now/run-repairs.md` -- "RR-9 -- a skipped winter ages no nectar and no sealed bee bread"
+- Files: `scripts/season.gd`, `tests/rr9_winter_ages_nothing_test.gd`, `tests/test_rr9_winter_ages_nothing.py`
+- Check: `python -m unittest tests.test_rr9_winter_ages_nothing` passes: a sealed nectar cell stocked one game-day before winter and a full bee-bread cell sealed one game-day before it come out of `season.gd::_resolve_winter` with `nectar_age()` and `bee_bread_ripen_fraction()` unchanged (to 0.01), the nectar cell's `is_fermented()` false, and `Session.sim_time` still moved on by `winter_length_days`; `python -m unittest tests.test_col6_winter_skip tests.test_col8_winter_dieback` still passes.
+- Proof: `absent: scripts/season.gd :: nectar_since`
+- Next after: RR-10 -- fermented nectar is neither counted nor spent by skill purchases
 ```
+
 ## RR-10 -- fermented nectar is neither counted nor spent by skill purchases
 
 Level: low (two guards). Gameplay review 15 Oct 2026, finding F2; Dave's
@@ -193,14 +182,15 @@ fixture does it.
 **Escalate** if a caller of `hive.take("nectar", ...)` other than
 `skill_tree_panel.gd::buy_skill` and `debug_panel.gd` exists by then.
 
-```queue-gated
-**[Claude] RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning**
-- Plan: `plans/now/run-repairs.md` -- "RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning"
-- Files: `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/rr11_pre_fermented_test.gd`, `tests/test_rr11_pre_fermented.py`
-- Check: `python -m unittest tests.test_rr11_pre_fermented` passes: a nectar cell aged 0.5, 0.8 and 1.1 times `nectar_ferment_hours` gives `is_pre_fermented()` false, true, false and `is_fermented()` false, false, true; at 0.8 with cell sprites off the cell's flat colour is `PRE_FERMENTED_NECTAR_COLOR`, `hive.find_honey_source` returns it and `hive.take("nectar", 1.0)` takes from it; `python -m unittest tests.test_sp3_content_colours tests.test_nf2_fermentation` still passes.
-- Proof: `absent: scripts/hive_cell.gd :: func is_pre_fermented(`
-- Next after: none -- `plans/now/run-repairs.md` is complete once RR-8 has landed
+```queue
+**[Codex] RR-10 -- fermented nectar is neither counted nor spent by skill purchases**
+- Plan: `plans/now/run-repairs.md` -- "RR-10 -- fermented nectar is neither counted nor spent by skill purchases"
+- Files: `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, `test_scenarios/rr10_fermented_not_currency.json`, `tests/test_rr10_fermented_not_currency.py`
+- Check: `python -m unittest tests.test_rr10_fermented_not_currency` passes: with one fermented nectar cell and one fresh one, a skill whose nectar price exceeds the fresh stock alone is refused and leaves both cells unchanged, and one priced within the fresh stock is bought, spends only fresh nectar and leaves the fermented cell's amount unchanged; `python -m unittest tests.test_bb3_bee_bread_currency tests.test_nf4_fermentation_sense` still passes.
+- Proof: `absent: scripts/skill_tree_panel.gd :: is_fermented`
+- Next after: RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning
 ```
+
 ## RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning
 
 Level: medium (a new cell state the player reads; colour). Dave's decision
@@ -253,8 +243,15 @@ slightly olive tint for its last game-hour before it turns fermented, and
 reads "turning" in colour-blind mode. If the tint is too faint or too
 strong, retune `PRE_FERMENTED_ART_TINT` and `PRE_FERMENTED_NECTAR_COLOR`.
 
+```queue-gated
+**[Claude] RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning**
+- Plan: `plans/now/run-repairs.md` -- "RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning"
+- Files: `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/rr11_pre_fermented_test.gd`, `tests/test_rr11_pre_fermented.py`
+- Check: `python -m unittest tests.test_rr11_pre_fermented` passes: a nectar cell aged 0.5, 0.8 and 1.1 times `nectar_ferment_hours` gives `is_pre_fermented()` false, true, false and `is_fermented()` false, false, true; at 0.8 with cell sprites off the cell's flat colour is `PRE_FERMENTED_NECTAR_COLOR`, `hive.find_honey_source` returns it and `hive.take("nectar", 1.0)` takes from it; `python -m unittest tests.test_sp3_content_colours tests.test_nf2_fermentation` still passes.
+- Proof: `absent: scripts/hive_cell.gd :: func is_pre_fermented(`
+- Next after: none -- `plans/now/run-repairs.md` is complete once RR-8 has landed
+```
+
 ## Not in the queue, and why
 
 - **RR-11** -- the pre-fermented warning colour; waits for SP-11 (`plans/now/sprites.md`) to release `scripts/hive_cell.gd`, then runs after RR-10.
-
-RR-1's gate cleared when PP-3 landed (12 Oct 2026). It shares `scripts/input_selection.gd` with SP-8a (`plans/now/sprites.md`, gated) and `scripts/hud.gd` and `scripts/orders_zones.gd` with PP-5, which landed 13 Oct 2026.
