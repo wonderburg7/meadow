@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-11 -- every ring on a cell traces the cup's rim (Dave's 14 Oct 2026 pass); SP-6 waits for Dave's forager sheet on a 16x16 `sheet` grid; the meadow floor in blocks (SP-8, SP-8a) moved to `plans/now/meadow-terrain.md` on 15 Oct 2026, and the hive and menu art is `plans/now/hive-and-menu-art.md` | Dependency: none for SP-11; SP-6 waits for Dave's art | Verified: 2026-10-15
+Status: active | Owner: Dave / Claude Code | Next: SP-6 waits for Dave's forager sheet on a 16x16 `sheet` grid; the meadow floor in blocks (SP-8, SP-8a) moved to `plans/now/meadow-terrain.md` on 15 Oct 2026, and the hive and menu art is `plans/now/hive-and-menu-art.md` | Dependency: none for SP-11; SP-6 waits for Dave's art | Verified: 2026-10-15
 
 ## Objective
 
@@ -46,8 +46,7 @@ sharp-pixel shader, the skep stands in the meadow, and hive soil is drawn
 from the art in front-over-back order. What the open slices build on:
 
 - Every ring on a cell goes through `hive_cell.gd::_apply_outline_points`;
-  with Cell art on it walks `EMPTY_SILHOUETTE`, the whole cup (SP-11's
-  "True now" has the detail).
+  with Cell art on it walks `EMPTY_RIM`, the cup's top face (SP-11).
 - The forager sheet (13 Oct 2026) is `bees/foragers_meadow_view.png`,
   48x104, 8 rows x 4 wing frames, row order as in Decisions item 4. Its
   columns sit on a 12-px pitch; its rows do not (they start at

@@ -22,4 +22,5 @@ unblocker.
 - [C-131 -- Goals drop-down in a Colony Run: collapse, long-term line, remembered after restart](ready/C-131.md)
 - [C-132 -- Star goals in the Goals drop-down and collapse it](ready/C-132.md)
 - [C-133 -- Hive soil blocks overlap front over back across the whole hive](ready/C-133.md)
+- [C-134 -- Every ring on a comb cell traces the cup's rim](ready/C-134.md)
 - [C-138 -- Problem strip stays out of the way, keeps red warnings and lets you remove one](ready/C-138.md)

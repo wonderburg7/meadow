@@ -185,20 +185,6 @@ Owner: `plans/archive/hands-on-findings_2026-10-05.md`
 
 Blocked by: RR-1 (`plans/now/run-repairs.md`) and T2-9 (`plans/now/tier-two.md`) -- Challenge 2 has no way to make new cells: the queen's Build cell is Challenge 1 only and Comb worker is blocked at 2.7 (Dave, 11 Oct 2026).
 
-### C-134 -- Every ring on a comb cell traces the cup's rim
-
-What this checks: start a run with Settings > Appearance > Cell art on, open the hive view and zoom in on the comb. Click a filled cell to select it, then mark a cell for a role so its marked-cell ring shows.
-
-PASS: the selection ring and the marked-cell ring each outline the flat top (the rim) of the cup, not the whole cup with its walls.
-
-If it fails, SP-11 reopens: the measured `EMPTY_RIM` points in `scripts/hive_cell.gd` or how the rings are scaled about the rim's centre.
-
-Runner: dave -- whether the ring looks right on the art is Dave's judgement (C-125 failed on exactly this)
-
-Owner: `plans/now/sprites.md`
-
-Blocked by: SP-11 (`plans/now/sprites.md`).
-
 ### C-135 -- A miner on Dig on its own starts digging by itself once Automation is bought
 
 What this checks: start a Colony Run. Make one bee a Miner and turn on "Dig on its own" in its Job panel before you own Automation (Skills > Hive Mind). Mark nothing. Buy Automation, then watch the miner for a minute.
