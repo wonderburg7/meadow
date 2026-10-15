@@ -155,40 +155,33 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
    around a small task costs the same context as boilerplate around a large
    one and buys nothing.
 
+11. **A slice's `queue` block sits inside its own section**, under the
+   heading its `Plan:` line names, never above it or in the section before.
+   `tools/archive_slice.py` moves a shipped slice's section from its heading
+   to the next one, so a block written ahead of its own heading leaves with
+   the slice before it: on 15 Oct 2026 RR-6's and SP-10's archives carried
+   off RR-7's and SP-11's blocks, and RR-7's had to be rewritten by hand.
+   Added 15 Oct 2026 by the plan review.
+
 ## Current routing
 
 | If the queue names | Read |
 | --- | --- |
-| SK-2 -- the skill tree as a full-screen, paused view with names in the hexes | `plans/archive/skill-screen_2026-10-01.md` |
-| BS-4, BS-6, BS-7, BS-8, BS-9 -- the Brood spine: bought Nurses and Honey worker, one availability sheet per run, the queen's own nursing | `plans/archive/brood-spine_2026-10-05.md` |
-| GC-1, GC-2, GC-3 -- an Idle bee stays put, a job change delivers the load, honey conserves energy | `plans/archive/gameplay-consistency_2026-10-06.md` |
-| PE-1 -- the headless pacing gates timed to the hour | `plans/archive/pacing-evidence_2026-10-01.md` |
-| AR-1 to AR-4 -- alpha-route evidence: recorded gates, their diagnostic boundary, then an end-to-end scripted route | `plans/now/alpha-route-evidence.md` |
-| CX-1, CX-2 -- coordinator context: a per-run cost report, then a queue-steward subagent for the /run-queue housekeeping | `plans/archive/coordinator-context_2026-10-12.md` |
-| WC-1 to WC-5 -- workflow checks: stale deferrals, the dry-lane report, Codex's hooks, spaced ids, level-to-model parity | `plans/archive/workflow-checks_2026-10-10.md` |
-| WO-1 -- winter's countdown opens by itself on a set day | `plans/archive/winter-onset_2026-10-01.md` |
-| UI-F-1, UI-F-2, UI-F-3 -- the game-over screen's theme, warning severity, comb label scale | `plans/archive/ui-feedback_2026-10-01.md` |
-| FBB-1 -- the skill tree hides the cut skills and says which are not built | `plans/archive/feedback-build_2026-10-05.md` |
-| HO-1 to HO-8 -- the 2 Oct 2026 hands-on findings: Escape and names in the skill tree, Triggers behind Developer mode, the Saves window, text overflow, Challenge 2 stage pacing and 2.9's readout | `plans/archive/hands-on-findings_2026-10-05.md` |
-| BS-10, BS-11 -- C-81 rewritten for Challenge 2; the developer table's cut-skill and feature rows | `plans/archive/brood-spine_2026-10-05.md` |
-| GC-4 -- a nurse's brood food survives a job change | `plans/archive/gameplay-consistency_2026-10-06.md` |
-| SR-1 to SR-5 -- the four red scenarios and the red SF-1 test from the 30 Sep verification review | `plans/archive/scenario-reds_2026-10-04.md` |
-| CR-1, CR-2, PE-2, COL-1 to COL-8 -- the Colony Run: started from the menu and remembered by a save, its milestones, the played arc, the milestone shelf, victory, restore, the year and the unread level keys | `plans/archive/colony-run_2026-10-08.md` |
-| L-16, L-17 -- the slice lifecycle in `tools/slice.ps1` (L-1 to L-15 are archived) | `plans/now/agent-lifecycle.md` |
-| SPR-1 -- a windowed render baseline for the procedural bees, before any sprite pass | `plans/archive/sprites_2026-10-06.md` |
-| NF-1, NF-2 -- unprocessed nectar ferments, and tipsy bees pay for it | `plans/archive/nectar-fermentation_2026-10-10.md` |
-| SPR-2 -- the windowed render baseline at 500 and 1,000 bees | `plans/archive/render-scale_2026-10-07.md` |
-| SI-1 to SI-3 -- save integrity: run state a load misses, exact Challenge rollback, all-or-nothing writes | `plans/archive/save-integrity_2026-10-09.md` |
-| T2-1 to T2-8 -- progression step 8: tier-2 skills gated and built, bodies, rain in the Colony Run, Shiver Cluster | `plans/now/tier-two.md` |
-| BB-1 to BB-4 -- Bee Bread: Fermenters, larval feeding, the tier-3 currency, re-pacing | `plans/archive/bee-bread_2026-10-11.md` |
-| GD-2a, GD-2b -- Dr Gallerin's first explanations and the persistent Why list, then saving them | `plans/now/guidance-explanations.md` |
-| GP-1 to GP-4 -- goal presentation: the goals drop-down and long-term line, favourites, short-term goals, the problem strip fix | `plans/archive/goal-presentation_2026-10-15.md` |
-| PP-1 to PP-6 -- pollination: Pollinator Points, the gyne and jelly gates, seed set, Priority cells, the route's pricing | `plans/now/pollination.md` |
-| FR-1 to FR-3 -- forager recruitment: Orientation flight, then Auto scouting, then Auto-recruitment, each measured better than the last | `plans/now/forager-recruitment.md` |
-| T3-1, T3-2 -- tier three over behaviour that already ships: Weighted flower choice and Restocking become purchases | `plans/archive/tier-three_2026-10-14.md` |
-| WP-1 to WP-3 -- Work Priorities: Hive Mind tier 3, each bee's backup an ordered list, a colony default | `plans/now/work-priorities.md` |
-| SG-1 to SG-3 -- short-term goals: the catalogue, offered and paid in runs, shown under the milestone shelf | `plans/now/short-term-goals.md` |
+| AR-4 -- alpha-route evidence: a scripted Colony Run records all five gates | `plans/now/alpha-route-evidence.md` |
+| FC-2 -- the first crisis: an announced heavy-rain episode the colony can prepare for | `plans/now/crisis-readiness.md` |
 | ED-1 to ED-3 -- difficulty: health for every bee, Easy's rules, choosing Easy at run start | `plans/now/difficulty.md` |
+| FR-1 to FR-3 -- forager recruitment: Orientation flight, then Auto scouting, then Auto-recruitment, each measured better than the last | `plans/now/forager-recruitment.md` |
+| GD-2b -- Dr Gallerin's shown ledger and Why history saved with the run | `plans/now/guidance-explanations.md` |
+| HM-1, HM-2 -- Dave's meadow hives and top-bar menu icons | `plans/now/hive-and-menu-art.md` |
+| SP-8, SP-8a -- the meadow floor in stacked blocks, then height's effects | `plans/now/meadow-terrain.md` |
+| PP-6, PP-8 -- pollination: the C-129 watch run, then pricing the route to Gyne rearing | `plans/now/pollination.md` |
+| RR-7 to RR-11 -- run repairs: the Silkscreen hexagon split, winter and fermented nectar, the pre-fermented colour | `plans/now/run-repairs.md` |
+| SG-2, SG-3 -- short-term goals offered, paid and saved in runs, then shown in the Goals drop-down | `plans/now/short-term-goals.md` |
+| SP-6, SP-11 -- comb and bee art: the cup-rim rings, the meadow forager sheet | `plans/now/sprites.md` |
+| T2-10 to T2-13, T2-7b -- tier two: Automation wakes miners, comb cadence, bodies on a role change, the deferred price sweep | `plans/now/tier-two.md` |
+| TS-1, TS-2 -- every typeface the same width at the same text scale | `plans/now/typeface-size.md` |
+| WP-2, WP-3 -- Work Priorities: each bee's backup an ordered list, a colony default | `plans/now/work-priorities.md` |
+| The slice lifecycle's completion-gate measurement (no open slice; L-1 to L-26 are archived) | `plans/now/agent-lifecycle.md` |
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates (the Colony Run definition itself is `plans/archive/colony-run_2026-10-08.md`) | `plans/design/product-scope.md` |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |
@@ -198,7 +191,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | Running one of Dave's reviews | `plans/reference/review-contract.md`, then the review's file in `plans/reference/reviews/` |
 | Running several reviews in one session | `/run-reviews` (`.claude/skills/run-reviews/SKILL.md`); its subagents follow `plans/reference/review-runner.md` |
 | System, architecture, organisation or process friction noticed during delivery | `plans/observations/system-improvement-signals.md` (signals only; triage promotes validated work into the appropriate plan) |
-| Provenance for a shipped slice (E1, F1s, F2s, G3, C1F, CB, SF, SM, UI-X, WD, PERF, AP, BS-1 to BS-5, SK-1, L-1 to L-15, ...) | `plans/archive/` (search only) |
+| Provenance for a shipped slice or a finished plan (E1, BS, GC, CR and COL, BB, SI, GP, T3, L-1 to L-26, ...) | `plans/archive/` (search only: `git grep -n <id> HEAD -- plans/archive`) |
 
 Create a new file in `plans/now/` only when a selected slice cannot fit in the
 existing area's immediate-task section. On completion, distil durable rules,
@@ -222,8 +215,9 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
    worked in its plan (UI-D, UI-P-5 and UI-R-1, all shipped, were the cases).
 5. If progression is selected, follow `plans/design/progression.md` section
    11's order. Phase A (catalogue, resolver, run definition, modifiers, the
-   tier-1 vertical slice) shipped; Phase B runs through
-   `plans/archive/brood-spine_2026-10-05.md`. Do not begin adaptations, campaign meta, or
+   tier-1 vertical slice) shipped, and so did Phase B's step 7
+   (`plans/archive/brood-spine_2026-10-05.md`); step 8 is
+   `plans/now/tier-two.md`. Do not begin adaptations, campaign meta, or
    legacy-path removal first.
 6. A Challenge stage that means "the player drives this bee" says so once,
    in the stage data, and one choke point enforces it. Do not add a sixth
@@ -261,8 +255,8 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
     one open slice names it, the plan review writes one order here, and a
     slice naming the file that is not next in that order is not startable,
     whatever its own plan says. The 17 Sep 2026 list (E1, C1F-1, F2s, G3)
-    has entirely shipped and, as of 30 Sep 2026, no open slice names the
-    file, so there is no order to keep. Added 11 Sep 2026 by the plan
+    has entirely shipped and, as of 15 Oct 2026, no open slice names the
+    file in its `Files:` line, so there is no order to keep. Added 11 Sep 2026 by the plan
     review; rule 9 applies to this guardrail as much as to a plan.
 15. **Cite the symbol, not the line.** A plan may give a line number as a
     hint, never as the address: `challenge-1.md` carried five numbers that

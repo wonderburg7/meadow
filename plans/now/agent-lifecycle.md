@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: the completion-gate measurement only (L-26 makes short-lane warnings use the refill admission test; the seven-day outcome and cost gate remains) | Dependency: none | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude | Next: the completion-gate measurement only (L-26 makes short-lane warnings use the refill admission test; the seven-day outcome and cost gate remains) | Dependency: none | Verified: 2026-10-15
 
 ## Objective
 
@@ -42,48 +42,21 @@ between 12 and 30 Sep, no slice claimed twice since 20 Sep, a median
 claim-to-close of 26 minutes; but 7 pull-type merges on master, 56 of 117
 merges from branches the lifecycle never saw, 23 hand-written closeout or
 queue-repair commits on master, and seven ad-hoc encoding fixes to the
-lifecycle scripts. L-16 and L-17 below are the two mechanisms that evidence
-supports; the ad-hoc-branch share is recorded there as a finding with no
-slice until the next measurement says what those sessions were doing.
+lifecycle scripts. L-16 and L-17 (shipped 2 Oct 2026) answered that
+evidence; the ad-hoc-branch share stays a finding with no slice until a
+measurement says what those sessions were doing.
 
 ## Open slices
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
 
-WC-1 to WC-5 (`plans/archive/workflow-checks_2026-10-10.md`, Codex lane, 7 Oct 2026) extend
-this plan's `tools/check_docs.py` and `tools/refill_lane.py` without changing
-`tools/slice.ps1` or any format: stale deferrals, the dry-lane report,
-Codex's hooks, spaced ids and level-to-model parity.
-
-L-21 to L-24 come from `docs/agent-workflow-review-2026-10-05.md` (F1 to F5);
-L-23 and L-24 are Dave's 5 Oct 2026 choices. L-22 follows L-19 and L-24
-follows L-18 (shared `tools/slice.ps1`; L-18's machine-readable dry run).
-
-L-15 shipped 2026-09-29; its specification is `plans/archive/L-15_2026-09-29.md`.
-
-L-18 and L-19 change `tools/slice.ps1`, whose suite skips off Windows
-(`workflow_test_support.windows_powershell`), so each is implemented in a
-local Windows session, never a cloud one; L-19 follows L-18 (both edit
-`tools/slice.ps1` and `tools/refill_lane.py`).
-
-L-16 shipped 2026-10-02; its specification is `plans/archive/L-16_2026-10-02.md`.
-
-L-17 shipped 2026-10-02; its specification is `plans/archive/L-17_2026-10-02.md`.
-
-L-18 shipped 2026-10-05; its specification is `plans/archive/L-18_2026-10-05.md`.
-
-L-19 shipped 2026-10-05; its specification is `plans/archive/L-19_2026-10-05.md`.
-
-L-21 shipped 2026-10-06; its specification is `plans/archive/L-21_2026-10-06.md`.
-
-L-22 shipped 2026-10-06; its specification is `plans/archive/L-22_2026-10-06.md`.
-
-L-23 shipped 2026-10-06; its specification is `plans/archive/L-23_2026-10-06.md`.
-
-L-24 shipped 2026-10-06; its specification is `plans/archive/L-24_2026-10-06.md`.
-
-L-26 shipped 2026-10-13; its specification is `plans/archive/L-26_2026-10-13.md`.
+None. L-16 to L-26 shipped 2 to 13 Oct 2026, each with its record in
+`plans/archive/` named by id and date; WC-1 to WC-5 shipped with
+`plans/archive/workflow-checks_2026-10-10.md`. What remains is the
+completion gate in "Objective", which the agent-workflow review measures
+(`plans/reference/reviews/agent-workflow-review.md`); a slice is written
+here only when a measurement names a mechanism.
 
 ## Standing rules
 
@@ -107,8 +80,7 @@ never the formats.
 F12 in the 12 Sep review and F1, F2 in the 30 Sep review are the evidence and
 do not need rereading to implement.
 
-Shipped: L-1 to L-15, one archive record each in `plans/archive/`, named
+Shipped: L-1 to L-26, one archive record each in `plans/archive/`, named
 by id and date (L-1's is `plans/archive/AGENT_LIFECYCLE_L1_2026-09-12.md`).
-None needs rereading to
-work on L-16 or L-17; L-2's classify baseline still disagrees with the 12 Sep
-review's Part 1 figures by more than 10%, an open follow-up recorded there.
+L-2's classify baseline still disagrees with the 12 Sep review's Part 1
+figures by more than 10%, an open follow-up recorded there.
