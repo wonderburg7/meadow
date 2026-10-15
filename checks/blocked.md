@@ -269,20 +269,6 @@ Owner: `plans/now/sprites.md`
 
 Blocked by: SP-10 (`plans/now/sprites.md`) -- the blocks draw in the wrong order outside the bottom right of the hive (Dave, 14 Oct 2026), so whether they sit on their hexes cannot be judged until it lands.
 
-### C-124 -- A new Colony Run never offers an earlier run's checkpoint
-
-What this checks: start a Colony Run from the main menu and note the run's name in the Saves window (cog, then "Saves..."). Return to the main menu, start a second Colony Run, and open the Saves window again.
-
-PASS: the second run has its own name ("My colony 2" or later), different from the first run's.
-
-If it fails, RR-3 (`plans/now/run-repairs.md`) reopens: two runs sharing a name share a slot, so the game-over screen can offer the other run's checkpoint (`save_slots.gd::fresh_run_name`, `main.gd::_on_level_chosen`).
-
-Runner: sonnet -- two run starts and a name read twice
-
-Owner: `plans/now/run-repairs.md`
-
-Blocked by: RR-6 (`plans/now/run-repairs.md`) -- a run that never saved leaves no slot, so the next run reuses its name (failed 14 Oct 2026, Sonnet and Opus).
-
 ### C-129 -- A +1 rises over a flower that earns a Pollinator Point, and the stores line counts points
 
 What this checks: In Windows PowerShell, run `cd C:\Users\dl13860\Documents\Meadow\meadow; python tools/run_scenario.py test_scenarios/pp2_points_spendable.json --windowed`. The colony already owns Pollinator points; watch foragers working the meadow for a minute, and the stores line in the top-left corner (Nectar / Pollen / Honey / Jelly).

@@ -16,6 +16,7 @@ unblocker.
 
 - [C-103 -- the command tray shows all of a comb cell's actions at the smallest window](ready/C-103.md)
 - [C-122 -- Dr Gallerin explains a missing nurse and a missing comb worker, and Why keeps both](ready/C-122.md)
+- [C-124 -- A new Colony Run never offers an earlier run's checkpoint](ready/C-124.md)
 - [C-127 -- The comb draws honey, jelly, brood, bee bread and wax caps from Dave's art](ready/C-127.md)
 - [C-128 -- The skep sits where the hive square was, and the rival hive is a darker skep](ready/C-128.md)
 - [C-131 -- Goals drop-down in a Colony Run: collapse, long-term line, remembered after restart](ready/C-131.md)

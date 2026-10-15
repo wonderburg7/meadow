@@ -166,7 +166,7 @@ C-135.
 - Plan: `plans/now/tier-two.md` -- "T2-11 -- why comb workers build comb unevenly (investigation)"
 - Files: `tests/t2_11_comb_cadence_test.gd`, `tests/test_t2_11_comb_cadence.py`, `plans/now/tier-two.md`
 - Check: `python -m unittest tests.test_t2_11_comb_cadence` runs and prints, for each idle spell longer than 10 game-seconds, the comb worker's mode, `idle_reason()` and which finder returned nothing; the answer and the fix slice it implies are written into this section.
-- Proof: `absent: plans/now/tier-two.md :: T2-11 answer:`
+- Proof: `present: scripts/bee.gd :: func idle_reason() -> String:`
 - Next after: T2-12 -- Dig on its own is offered only once Automation is owned
 ```
 ## T2-11 -- why comb workers build comb unevenly (investigation)

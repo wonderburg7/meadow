@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-6 -- every new run gets its own default name, saved or not (C-124 failed, 14 Oct 2026); RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (C-99 failed, 15 Oct 2026, investigation) ( RR-1 to RR-5 landed 13 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-15
+Status: active | Owner: Dave / Claude Code | Next: RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (C-99 failed, 15 Oct 2026, investigation) (RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-15
 
 ## Objective
 
@@ -39,7 +39,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-7 | investigation: why Silkscreen at text scale 2 still splits "Challenge" in a menu hexagon (C-99) | tests, this plan | yes | high |
-| RR-6 | every new run gets its own default name, saved or not (C-124) | `scripts/save_slots.gd`, tests | yes | low |
 
 Each slice reads its own section only. Do not change skill prices, the
 branch-tier rule (settled by `plans/now/tier-two.md` T2-9, landed 12 Oct 2026), or the save
@@ -53,40 +52,8 @@ format.
 - Proof: `absent: scripts/save_slots.gd :: _issued_run_slugs`
 - Next after: RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation)
 ```
-## RR-6 -- every new run gets its own default name, saved or not
+RR-6 shipped 2026-10-15; its specification is `plans/archive/RR-6_2026-10-15.md`.
 
-Level: low. C-124 failed on 14 Oct 2026 (Sonnet, confirmed by Opus): a
-Colony Run that never saved or reached a checkpoint leaves no slot, so the
-next run is offered the same name. Dave chose (pass session, 15 Oct 2026)
-that every run gets its own name even unsaved.
-
-**True now** (verified 15 Oct 2026 against master `191e5ed`).
-`save_slots.gd::fresh_run_name` skips only slugs in `list_slots()`;
-`main.gd::_on_level_chosen` and `_on_scenario_chosen` call it once per run
-start. A checkpoint (`saving.gd::checkpoint`, on a day boundary) is what
-first writes a slot.
-
-**True afterwards.** `save_slots.gd` gains `static var _issued_run_slugs:
-Dictionary`; `fresh_run_name` treats an issued slug as taken and records
-the slug of the name it returns. It is per launch: a static var survives
-`reload_current_scene`, and after a relaunch an unsaved name may be offered
-again, which cannot pair a run with another run's checkpoint. No file is
-written and the index format does not change.
-
-**Invariants.** Names already saved are skipped as before; a name the player
-types in the Saves window is untouched (`saves_panel.gd`).
-
-**Hands-on check on landing** (move from `checks/blocked.md` to ready):
-C-124.
-
-```queue
-**[Claude] RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation)**
-- Plan: `plans/now/run-repairs.md` -- "RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word"
-- Files: `tests/rr7_silkscreen_fit_test.gd`, `tests/test_rr7_silkscreen_fit.py`, `plans/now/run-repairs.md`
-- Check: `python -m unittest tests.test_rr7_silkscreen_fit` runs and prints, for every Challenge and Scenario hexagon at text scale 1 and 2 in every typeface, the base size, the size `hex_fit_size` chose, the label's available width, the widest word's width at that size and the rendered label's line count; the answer and the fix slice it implies are written into this section.
-- Proof: `absent: plans/now/run-repairs.md :: RR-7 answer:`
-- Next after: none -- plans/now/run-repairs.md is complete
-```
 ## RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word
 
 Level: high (ambiguous bug). C-99 failed on 15 Oct 2026 (Sonnet; an Opus
@@ -106,12 +73,23 @@ title: does `hex_fit_size` return a size at which `hex_text_fits` is true
 but the rendered Label still breaks the word (a measurement mismatch, e.g.
 the Label's own spacing or oversampling), or does no size from `base` down
 to 6 fit, so the floor is returned (the floor)? Answer with the printed
-figures, as a line starting `RR-7 answer:` here, then specify the fix
-slice below it. Do not change game code in this slice.
+figures, as a line here starting `RR-7 answer:`, then specify the fix
+slice below it, with its own `queue` block. Do not change game code in this slice.
 
 **Related.** TS-1 (`plans/now/typeface-size.md`) changes `_fit_hex_label`'s
 `base` per typeface; RR-7's fix lands first, and TS-1 keeps
-`tests.test_rr7_silkscreen_fit` green.
+`tests.test_rr7_silkscreen_fit` green. TS-1 is gated on that fix: when
+the fix slice lands, open TS-1's `queue-gated` fence and drop its line
+under "Not in the queue, and why" in `NEXTSTEPS.md`.
+
+```queue
+**[Claude] RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation)**
+- Plan: `plans/now/run-repairs.md` -- "RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word"
+- Files: `tests/rr7_silkscreen_fit_test.gd`, `tests/test_rr7_silkscreen_fit.py`, `plans/now/run-repairs.md`
+- Check: `python -m unittest tests.test_rr7_silkscreen_fit` runs and prints, for the Challenge 1 hexagon's title in Silkscreen at text scale 2, the hexagon's available size, the size `hex_fit_size` returns, whether `hex_text_fits` holds at that size, and the line count the Label itself lays out at it; the answer line and the fix slice it implies are written into this section.
+- Proof: `present: scripts/main_menu.gd :: static func hex_fit_size(`
+- Next after: RR-8 -- the fix RR-7's answer names, which RR-7 specifies in this section; TS-1 (`plans/now/typeface-size.md`) waits for it
+```
 
 RR-1 shipped 2026-10-13; its specification is `plans/archive/RR-1_2026-10-13.md`.
 

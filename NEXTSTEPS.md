@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] RR-6 -- every new run gets its own default name, saved or not**
-   - Plan: `plans/now/run-repairs.md` -- "RR-6 -- every new run gets its own default name, saved or not"
-   - Files: `scripts/save_slots.gd`, `tests/test_rr3_fresh_run_name.py`
-   - Check: `python -m unittest tests.test_rr3_fresh_run_name` passes, including a new case: with no slots at all, two calls to `SaveSlots.fresh_run_name("My colony")` return "My colony" and then "My colony 2", and a third with "My colony 2" saved returns "My colony 3".
-   - Proof: `absent: scripts/save_slots.gd :: _issued_run_slugs`
-   - Next after: RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation)
-
-2. **[Claude] SP-10 -- hive soil blocks draw front over back everywhere**
+1. **[Claude] SP-10 -- hive soil blocks draw front over back everywhere**
    - Plan: `plans/now/sprites.md` -- "SP-10 -- hive soil blocks draw front over back everywhere"
    - Files: `scripts/shapes.gd`, `scripts/soil_block.gd`, `scripts/rock_block.gd`, `scripts/hive_cell.gd`, `tests/sp10_soil_depth_test.gd`, `tests/test_sp10_soil_depth.py`
    - Check: `python -m unittest tests.test_sp10_soil_depth` passes: every soil and rock block in a fresh hive has `z_index == Shapes.hex_draw_depth(axial)`, a block one row lower on screen has a higher `z_index` than the block above it, and a comb cell and a soil block on neighbouring hexes order the same way.
    - Proof: `absent: scripts/soil_block.gd :: z_index`
    - Next after: SP-11 -- every ring on a cell traces the cup's rim
 
-3. **[Claude] SP-11 -- every ring on a cell traces the cup's rim**
+2. **[Claude] SP-11 -- every ring on a cell traces the cup's rim**
    - Plan: `plans/now/sprites.md` -- "SP-11 -- every ring on a cell traces the cup's rim"
    - Files: `scripts/hive_cell.gd`, `tests/sp11_cell_rim_test.gd`, `tests/test_sp11_cell_rim.py`
    - Check: `python -m unittest tests.test_sp11_cell_rim` passes: with Cell art on, the selection ring's points are `EMPTY_RIM` taken through `_silhouette_point_to_local` and scaled about the rim's centre; the designation, zone and base rings use the same six points at their own sizes; with Cell art off every ring is still the hexagon.
    - Proof: `absent: scripts/hive_cell.gd :: EMPTY_RIM`
    - Next after: SP-8a -- the meadow floor drawn in blocks, with everything on it lifted
 
-4. **[Claude] T2-10 -- a miner on Dig on its own starts as soon as Automation is bought, and an idle miner or comb worker says it needs Automation**
+3. **[Claude] T2-10 -- a miner on Dig on its own starts as soon as Automation is bought, and an idle miner or comb worker says it needs Automation**
    - Plan: `plans/now/tier-two.md` -- "T2-10 -- a miner on Dig on its own starts as soon as Automation is bought"
    - Files: `scripts/bee.gd`, `tests/t2_10_automine_wake_test.gd`, `tests/test_t2_10_automine_wake.py`
    - Check: `python -m unittest tests.test_t2_10_automine_wake` passes: a miner with `automine` on and Automation not owned finds no work and its `idle_reason()` names Automation; Automation is then granted and `Availability.invalidate()` called, with no block marked and `hive.mining_work_epoch` unchanged, and the miner's next `_try_role_work(Role.MINER)` returns true; a comb worker in Build mode with nothing marked, room to build and no Automation gives an `idle_reason()` naming Automation.
    - Proof: `absent: scripts/bee.gd :: _mining_no_work_gate_epoch`
    - Next after: T2-11 -- why comb workers build comb unevenly (investigation)
 
-5. **[Claude] TS-1 -- every typeface is the same width as Standard at the same text scale**
-   - Plan: `plans/now/typeface-size.md` -- "TS-1 -- width-matched typeface sizes"
-   - Files: `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/gallerin_panel.gd`, `scripts/hive_cell.gd`, `tests/ts1_typeface_size_test.gd`, `tests/test_ts1_typeface_size.py`
-   - Check: `python -m unittest tests.test_ts1_typeface_size` passes: at text scale 1 and 2, for every typeface in the Typeface setting, `REFERENCE_TEXT` drawn at `UiTheme.font_px(TYPE_SIZES["Body"])` in that face is within 8 % of its width in Standard; `python -m unittest tests.test_ho15_menu_hex_fit tests.test_rr5_hex_refit` still pass.
-   - Proof: `absent: scripts/ui_theme.gd :: typeface_size_factor`
-   - Next after: TS-2 -- the HUD's own size overrides follow the typeface too
+4. **[Claude] PP-8 -- the C-129 watch run plays at real time**
+   - Plan: `plans/now/pollination.md` -- "PP-8 -- the C-129 watch run plays at real time"
+   - Files: `test_scenarios/pp2_points_watch.json`, `tests/test_pp8_watch_pacing.py`
+   - Check: `python -m unittest tests.test_pp8_watch_pacing tests.test_pp7_recorded_actions` passes: `pp2_points_watch.json` has `"time_scale": 1`, still has no purchase and still stops on days; and the measured run (this section) shows its simulated seconds within 10 % of wall time, recorded here with the first point's simulated second.
+   - Proof: `absent: test_scenarios/pp2_points_watch.json :: time_scale`
+   - Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
+
+5. **[Claude] RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation)**
+   - Plan: `plans/now/run-repairs.md` -- "RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word"
+   - Files: `tests/rr7_silkscreen_fit_test.gd`, `tests/test_rr7_silkscreen_fit.py`, `plans/now/run-repairs.md`
+   - Check: `python -m unittest tests.test_rr7_silkscreen_fit` runs and prints, for the Challenge 1 hexagon's title in Silkscreen at text scale 2, the hexagon's available size, the size `hex_fit_size` returns, whether `hex_text_fits` holds at that size, and the line count the Label itself lays out at it; the answer line and the fix slice it implies are written into this section.
+   - Proof: `present: scripts/main_menu.gd :: static func hex_fit_size(`
+   - Next after: RR-8 -- the fix RR-7's answer names, which RR-7 specifies in this section; TS-1 (`plans/now/typeface-size.md`) waits for it
 
 ### Codex lane
 
@@ -99,6 +99,8 @@ One line each: the id, its plan, and the single thing it waits for.
 - **PP-6** (`plans/now/pollination.md`) -- the sweep prices the gyne route so Gyne rearing is first affordable in the 11 days after the first winter; waits for FR-2, which puts Auto scouting on the route (Dave, 14 Oct 2026).
 - **FR-2** (`plans/now/forager-recruitment.md`) -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight; waits for FR-1's measurement to show Auto scouting forages better (Dave, 14 Oct 2026).
 - **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-6, which shares `scripts/skills.gd`.
+- **TS-1** (`plans/now/typeface-size.md`) -- every typeface the same width as Standard at the same text scale; waits for RR-7's fix (`plans/now/run-repairs.md`), which owns the menu hexagon fit TS-1's `base` feeds.
+- **TS-2** (`plans/now/typeface-size.md`) -- the HUD's own size overrides follow the typeface; waits for TS-1, and for FC-2 (Codex lane) to release `scripts/hud.gd`.
 - **The cell-art rings' last pixel** -- rides with the next slice that opens the cell-art drawing (C-20 in `docs/archive/HANDS_ON_CHECKS_ARCHIVE.md`).
 ## Copy-paste prompts
 
