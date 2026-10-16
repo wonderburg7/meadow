@@ -1,7 +1,7 @@
 # Guidance explanations -- turn colony facts into a causal player answer
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: GD-3 -- Dr Gallerin also explains hungry brood and starving bees (GD-2a landed 10 Oct 2026; GD-2b landed 14 Oct 2026; hands-on check C-122) | Dependency: GD-1 to GD-2b landed; GD-3 shares no file with the Claude lane | Verified: 2026-10-15
+Status: complete | Owner: Dave / Codex | Next: Dave's GD-3 hands-on wording check (GD-2a landed 10 Oct 2026; GD-2b landed 14 Oct 2026; GD-3 implemented 16 Oct 2026; hands-on check C-122) | Dependency: GD-1 to GD-2b landed; GD-3 shared no file with the Claude lane | Verified: 2026-10-16
 
 ## Objective
 
@@ -11,12 +11,13 @@ or prescribing a single colony organisation.
 
 ## Current state
 
-**Status:** GD-2a's two workforce explanations and the Why list ship, and
-GD-2b's rendered ledger and bounded Why history save and restore with the
-run (an older save begins with neither). `guidance_catalogue.gd::supported_ids`
-names only `missing_nurse_workforce` and `missing_comb_workforce`.
+**Status:** GD-2a's two workforce explanations and the Why list ship, GD-2b's
+rendered ledger and bounded Why history save and restore with the run (an
+older save begins with neither), and GD-3 adds hungry-brood and starving-bee
+explanations. `guidance_catalogue.gd::supported_ids` puts both workforce
+entries before `hungry_brood` and `starving`.
 
-**Next:** GD-3, below.
+**Next:** Dave's GD-3 hands-on wording check; no further implementation slice is planned.
 
 ## GD-1 decision record -- accepted
 
@@ -105,6 +106,10 @@ list holds them with their recorded evidence and a "cleared" current state
 once the fact returns to 0. The test also records, from a short headless
 Colony Run of the alpha scenario, the day each of the two facts first
 exceeds 0, in this section, so Dave sees whether either would start on day 1.
+
+**Alpha observation (16 Oct 2026).** In the pinned alpha route at seed
+`20260923`, `starving` first exceeded 0 on day 6 and `hungry_brood` first
+exceeded 0 on day 17. Neither starts on day 1.
 
 **Hands-on (Dave).** Let brood go unfed and read Dr Gallerin's line; let a
 bee run out of energy and read hers; open Why and see both listed. File this
