@@ -52,7 +52,7 @@ first three slices make that absence visible instead of faking a successful run.
 <!-- LAYER: design -->
 
 Level: medium. From the product review of 16 Oct 2026
-(its findings F3 and F4).
+(`docs/product-review-2026-10-16.md`, F3 and F4).
 
 Decision (Dave, 16 Oct 2026, product review D2): **the 5- and 10-minute
 gates are judged on the run's calendar, as the 60- and 90-minute gates are.**
@@ -142,8 +142,8 @@ this window reachable.
 ```queue-gated
 **[Codex] AR-4 -- a scripted Colony Run reaches and records all five gates**
 - Plan: `plans/now/alpha-route-evidence.md` -- "AR-4 -- a scripted Colony Run reaches and records all five gates"
-- Files: `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
-- Check: `python -m unittest tests.test_pacing_gates` and the scripted Colony Run record all five product-scope gates
+- Files: `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `plans/design/product-scope.md`
+- Check: `python -m unittest tests.test_pacing_gates` and the scripted Colony Run record all five product-scope gates; `pacing_gates.py` also prints the median of each seed's peak population, and twice that figure replaces the provisional 500 bees in `plans/design/product-scope.md` §6.1's frame-budget line (Dave, 16 Oct 2026)
 - Proof: `present: tools/pacing_gates.py :: Not instrumented: 20m forage/weather crisis; 90m gyne release.`
 - Next after: None -- plan complete
 ```

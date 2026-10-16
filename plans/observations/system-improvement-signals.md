@@ -839,4 +839,4 @@ explicit request from Dave.
   largest colony the 90-minute route should hold at 60 fps (or records the
   peak population a Colony Run reaches), written once in
   `plans/design/product-scope.md`.
-- Disposition: untriaged
+- Disposition: promoted -- `plans/design/product-scope.md` §6.1 (provisional 500 bees at 60 fps) and AR-4's check, which replaces it with twice the measured peak (Dave, 16 Oct 2026, product review D5)
