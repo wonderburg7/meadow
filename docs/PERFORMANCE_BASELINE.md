@@ -150,3 +150,25 @@ Run by Claude Code on Dave's Windows 11 development machine, headless, with
 Run it from the primary checkout, or from a worktree whose Godot import cache
 has been primed: the same command stalled at its config line four times
 inside a fresh A3 worktree.
+
+## Performance review re-measure -- 16 Oct 2026
+
+The pinned fixture at `--fixed-fps 60`, master `12c1393`, same machine,
+headless, from the review's worktree. Runs 2 and 3 used scratch copies of
+the fixture that only list more sections; the fixture is otherwise
+identical. Run 1 seeded the worktree's Godot cache and is shown only to
+say why it is discarded (`docs/performance.md`, "Repeatability").
+
+| Row | run 1 (discarded) mean / p95 | run 2 mean / p95 | run 3 mean / p95 |
+| --- | --- | --- | --- |
+| `frame_time_ms` | 27.20 / 66.33 | 15.43 / 36.06 | 16.78 / 38.34 |
+| `bee_state_miner` | 0.137 / 0.318 | 0.090 / 0.140 | 0.098 / 0.176 |
+| `fog_of_war_update` | 5.81 / 26.01 | 3.14 / 24.93 | 3.33 / 25.82 |
+| `fog_of_war_relight` | 5.61 / 25.82 | 3.01 / 24.70 | 3.19 / 25.61 |
+
+Against the 13 Sep row below, the miner row is unchanged and fog's mean is
+within 20% (its p95 is higher); "measured, not a bottleneck" still holds
+for fog. The frame is dominated by a section the pinned table does not
+carry: in run 3 `bee_state_forager` was 7.07 ms, of which `bee_search`
+(SEARCHING's per-frame flower check) was 6.42 ms. HP-1
+(`plans/now/hot-path-cadence.md`) moves that check onto the think tick.

@@ -57,6 +57,9 @@ order the work stops for Dave (decision 3). Auto scouting sits on the gyne
 route (decision 1), so PP-6 (`plans/now/pollination.md`) prices the route
 only after FR-2 lands, and AR-4 (`plans/now/alpha-route-evidence.md`)
 still waits for PP-6. FR-3 shares `skills.gd` with PP-6, so it follows it.
+HP-1 (`plans/now/hot-path-cadence.md`) moves SEARCHING's flower check onto
+the think tick; if it lands after FR-1, it re-runs FR-1's table and stops
+if the stage order changes.
 
 **Reads.** A slice reads its own section and the durable rules below; FR-2
 and FR-3 also read `.claude/rules/performance.md`.

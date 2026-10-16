@@ -88,7 +88,19 @@ SPR-2 scenarios use 100 cells (500 bees) and 150 cells (1,000 bees).
 | 500 | 253 | 409 | 20,112 | 17.1 / 19.4 | 33.2-39.4 / 62.0-69.7 |
 | 1,000 | 1,181 | 1,337 | 27,112 | 32.1 / 39.4 | 26.4 / 33.5 |
 
-The slow 500-bee headless frame reproduced in two runs (33.2 and 39.4 ms mean) and is slower than the
-1,000-bee headless frame, so it is not noise. The cause is not yet known; one candidate is cell
-density (500 bees in 100 cells, 1,000 bees in 150). Separately, the 500-bee draw calls equal the
-200-bee figure, which is an observation only. The windowed p95 first passes 16.7 ms at 500 bees.
+The slow 500-bee headless frame (33.2 and 39.4 ms mean on 7 Oct) did not reproduce in the
+performance review's re-run on 16 Oct 2026 at `12c1393`: 17.4 ms mean (p95 25.3) at 500 bees and
+32.1 ms (p95 47.8) at 1,000, so the per-bee cost is linear (the `bees` section 13.3 and 27.2 ms).
+The 500-bee draw calls equal the 200-bee figure, which is an observation only. The windowed p95
+first passes 16.7 ms at 500 bees.
+
+**What the 500-bee frame is made of** (same review, windowed, 228 draw calls): of an 18.0 ms
+frame, bee scripts (`bees`) take 11.9 ms -- `bee_state_nurse` 4.6, `bee_burn` 2.0, `bee_label` 2.0
+-- and flowers 1.8 ms, leaving about 6 ms for drawing and everything else. A sprite or batching
+pass can recover at most that remainder; the script cadence work in `plans/now/hot-path-cadence.md`
+is the larger lever. An unchanged-colour guard on each bee's `body.color` write measured no gain.
+
+**Repeatability.** Discard a capture whose run printed `godot cache: seeded from the primary`: the
+run that seeded a fresh worktree's cache read 27.2 ms against 15.4 ms for the next run of the same
+pinned fixture. Two consecutive windowed runs of one build differed by 20%, so compare at least
+two runs a side and compare sections, not single frame totals.
