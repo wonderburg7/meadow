@@ -813,9 +813,9 @@ explicit request from Dave.
   every `queue-gated` block and every `checks/blocked.md` entry naming the
   closed id, and the closing session moves them; `check_docs.py` warns on a
   blocked check whose every named unblocker is in `plans/archive/`.
-- Disposition: confirmed by the agent-workflow review, 16 Oct 2026 (finding F7): 10 of the 15
-  blocked checks name only archived unblockers. Waiting on Dave's answer to
-  its question D1, which decides who moves them.
+- Disposition: promoted by the agent-workflow review, 16 Oct 2026 (finding F7) as
+  L-30 in `plans/now/agent-lifecycle.md`. Dave chose to surface it: the queue
+  steward clears deferrals and fences, the check processor moves the checks.
 
 ### 2026-10-16 — no colony size or frame budget to judge performance against (from the performance review)
 

@@ -181,7 +181,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | T2-10 to T2-13, T2-7b -- tier two: Automation wakes miners, comb cadence, bodies on a role change, the deferred price sweep | `plans/now/tier-two.md` |
 | TS-1, TS-2 -- every typeface the same width at the same text scale | `plans/now/typeface-size.md` |
 | WP-2, WP-3 -- Work Priorities: each bee's backup an ordered list, a colony default | `plans/now/work-priorities.md` |
-| L-27, L-28, L-29 -- the slice lifecycle: re-verify a resumed finish, keep the next queue block, measure subagents | `plans/now/agent-lifecycle.md` |
+| L-27 to L-30 -- the slice lifecycle: re-verify a resumed finish, keep the next queue block, measure subagents, show released work | `plans/now/agent-lifecycle.md` |
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates (the Colony Run definition itself is `plans/archive/colony-run_2026-10-08.md`) | `plans/design/product-scope.md` |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |

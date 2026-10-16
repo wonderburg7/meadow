@@ -16,7 +16,10 @@ this run, the stop block and slice worktree, or the coordinator's worktree).
 ## JOB: gates
 
 Given the ids landed in this run (the coordinator batches them: usually
-every slice of the run at once, at its end): update every line under
+every slice of the run at once, at its end), plus every id
+`python tools/check_docs.py` warns a deferral "waits for a shipped slice"
+(a landing outside this run, such as the other lane's; Dave, 16 Oct 2026):
+update every line under
 `## Not in the queue, and why` and every plan slice-table row that names one
 of them, to say what it now waits for. Open any `queue-gated` fence whose
 gate has cleared (its gate line under that heading goes too). `finish`
