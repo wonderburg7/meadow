@@ -38,7 +38,7 @@ HEAD:plans/archive/FC-1_2026-10-09.md` (95 lines; the archive is closed to
 file tools, so read it through Git).
 
 **Gate.** Every file on the `Files:` line is free except `scripts/save_game.gd`
-and `scripts/saving.gd`, which GD-2b (`plans/now/guidance-explanations.md`,
+and `scripts/saving.gd`, which GD-2b (`plans/archive/guidance-explanations_2026-10-16.md`,
 Codex lane) holds. Recheck the line against the queue before opening the fence.
 GD-2b is built on `codex/GD-2b` but its closeout stopped on 14 Oct 2026;
 Dave decided on 15 Oct 2026 (plan review D1) that a Claude session

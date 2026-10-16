@@ -171,7 +171,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | FC-2 -- the first crisis: an announced heavy-rain episode the colony can prepare for | `plans/now/crisis-readiness.md` |
 | ED-1 to ED-3 -- difficulty: health for every bee, Easy's rules, choosing Easy at run start | `plans/now/difficulty.md` |
 | FR-1 to FR-3 -- forager recruitment: Orientation flight, then Auto scouting, then Auto-recruitment, each measured better than the last | `plans/now/forager-recruitment.md` |
-| GD-3 -- Dr Gallerin also explains hungry brood and starving bees | `plans/now/guidance-explanations.md` |
+| GD-3 -- Dr Gallerin also explains hungry brood and starving bees | `plans/archive/guidance-explanations_2026-10-16.md` |
 | HM-1, HM-2 -- Dave's meadow hives and top-bar menu icons | `plans/now/hive-and-menu-art.md` |
 | SP-8, SP-8a -- the meadow floor in stacked blocks, then height's effects | `plans/now/meadow-terrain.md` |
 | PP-6, PP-8 -- pollination: the C-129 watch run, then pricing the route to Gyne rearing | `plans/now/pollination.md` |
