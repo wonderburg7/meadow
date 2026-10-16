@@ -227,20 +227,6 @@ Owner: `plans/now/sprites.md`
 
 Blocked by: SP-10 (`plans/now/sprites.md`) -- the blocks draw in the wrong order outside the bottom right of the hive (Dave, 14 Oct 2026), so whether they sit on their hexes cannot be judged until it lands.
 
-### C-129 -- A +1 rises over a flower that earns a Pollinator Point, and the stores line counts points
-
-What this checks: In Windows PowerShell, run `cd C:\Users\dl13860\Documents\Meadow\meadow; python tools/run_scenario.py test_scenarios/pp2_points_spendable.json --windowed`. The colony already owns Pollinator points; watch foragers working the meadow for a minute, and the stores line in the top-left corner (Nectar / Pollen / Honey / Jelly).
-
-PASS: a small gold "+1" rises and fades over a flower when a forager earns a point there, and the stores line ends with "Points: N", which climbs as they appear.
-
-If it fails, PP-2's pollination_pop.gd (the "+1": size, colour, rise or z-order) or hud.gd's stores readout is reopened before PP-6 prices points.
-
-Runner: dave -- a +1 that rises and fades is motion stills cannot show
-
-Owner: `plans/now/pollination.md`
-
-Blocked by: PP-7 (`plans/now/pollination.md`) -- the scenario reports failed on its own pollination log and runs too fast to watch (Dave and a Sonnet runner, 14-15 Oct 2026); PP-7 replaces the command.
-
 ### C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface
 
 What this checks: on the main menu, open the cog -> Appearance. Set Text scale to 1, then to 2; at each, choose every Typeface in its list in turn and look at the Challenge and Scenario hexagons after each choice.

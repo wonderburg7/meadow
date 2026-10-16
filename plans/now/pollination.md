@@ -111,6 +111,13 @@ command in `checks/blocked.md` is rewritten to that one, with how long
 Dave should expect to wait for the first "+1", and C-129 moves to
 `checks/ready.md` (`--runner dave`). No game code changes.
 
+**Measured (16 Oct 2026).** The command above, run for its 120 s
+`--timeout`: 112.6 simulated seconds at the last log line against about
+114 s of wall time (log opened 06:42:07, last written 06:44:00), well
+inside 10 %. The first Pollinator Point was awarded at simulated second
+10.7, so no slower-watch decision is needed. The run was killed by the
+timeout, so it printed no summary; the figures are from its session log.
+
 **Measure, then stop if it is slow.** Run that command once for about two
 minutes of wall time and record here the wall time against the simulated
 seconds its snapshots report, and the simulated second at which the first
