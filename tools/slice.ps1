@@ -1962,6 +1962,35 @@ function Save-SliceBranchWork {
     }
 }
 
+function Get-RefillRefusalReason {
+    # The stop ledger keeps only the cause, and "its reason is printed above"
+    # left 17 refill refusals (5 to 16 Oct 2026) with no reason to count.
+    # refill_lane.py prints "not written: ..." then one indented line per
+    # check_docs error, or a one-line "not added: ..." or lock refusal.
+    param([object[]]$Output)
+    $lines = @($Output | ForEach-Object { "$_".Trim() } | Where-Object { $_ })
+    $reason = $null
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -like "not written:*" -and $i + 1 -lt $lines.Count) { $reason = $lines[$i + 1]; break }
+        if ($lines[$i] -like "not added:*" -or $lines[$i] -like "*lifecycle is busy*") { $reason = $lines[$i]; break }
+    }
+    if (-not $reason) { $reason = if ($lines.Count) { $lines[-1] } else { "(no output)" } }
+    if ($reason.Length -gt 160) { $reason = $reason.Substring(0, 160) }
+    return $reason
+}
+
+function Get-BranchBehindNote {
+    # A branch behind master reads its own stale NEXTSTEPS.md, so a refill
+    # that already happened on master looks missing (AR-3, 7 Oct 2026, 40
+    # commits behind). Say so in the cause rather than leave it to be dug out.
+    param([string]$Root)
+    $count = (Invoke-GitText -C $Root rev-list --count HEAD..master).Text.Trim()
+    if ($count -match '^\d+$' -and [int]$count -gt 0) {
+        return " (this branch is $count commit(s) behind master: git merge master in the worktree first, then retry)"
+    }
+    return ""
+}
+
 function Invoke-SlicePythonTool {
     # Run one of the repository's Python tools and hand back its exit code
     # and every output line. Local "Continue": PowerShell 5.1 turns a
@@ -2073,7 +2102,7 @@ function Invoke-SliceArchiveAndRefill {
             # Keep the archive move committed under its own name, so the
             # session's fix and the retry's refill are not filed under it.
             if ($done) { Save-SliceBranchWork -Root $Root -Message "$Id -- closeout: $($done -join ' and ')`n`n$Trailer" }
-            Stop-Slice -Cause "$Id -- tools/refill_lane.py refused (exit $($run.Exit)); its reason is printed above and NEXTSTEPS.md is unchanged" -Fix "on this branch give its successor ($($Item.NextAfter)) a ``````queue block in its own plan section -- or, if that says the plan is complete, the next ready, file-disjoint slice from an owning plan -- then retry finish; it deletes $Id, tops the $Lane lane up and commits both. If the successor is not startable yet, put it under '## Not in the queue, and why' with what it waits for instead"
+            Stop-Slice -Cause "$Id -- tools/refill_lane.py refused (exit $($run.Exit)): $(Get-RefillRefusalReason -Output $run.Output); NEXTSTEPS.md is unchanged$(Get-BranchBehindNote -Root $Root)" -Fix "on this branch give its successor ($($Item.NextAfter)) a ``````queue block in its own plan section -- or, if that says the plan is complete, the next ready, file-disjoint slice from an owning plan -- then retry finish; it deletes $Id, tops the $Lane lane up and commits both. If the successor is not startable yet, put it under '## Not in the queue, and why' with what it waits for instead"
         }
         $done += "refill the $Lane lane"
     }
@@ -2383,7 +2412,7 @@ function Invoke-SliceFinish {
             if ($successorId -and -not ($branchItems | Where-Object { $_.Id -eq $successorId })) {
                 $branchQueueText = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $worktreeRoot "NEXTSTEPS.md")
                 if (-not (Test-SuccessorDeferred -Text $branchQueueText -Id $successorId)) {
-                    Stop-Slice -Cause "$id -- Next after: names '$successorId', which is neither in the [$lane] lane nor under '## Not in the queue, and why'" -Fix "on this branch, either add '$successorId' to ### $lane lane with full Plan/Files/Check/Proof/Next after lines (its plan section is the source; python tools/heading.py <plan> '$successorId' prints it), or -- if it is not startable yet -- give it a one-line bullet under '## Not in the queue, and why' whose bolded lead is its id and whose line says what it waits for; then run python tools/check_docs.py, commit, and retry"
+                    Stop-Slice -Cause "$id -- Next after: names '$successorId', which is neither in the [$lane] lane nor under '## Not in the queue, and why'$(Get-BranchBehindNote -Root $worktreeRoot)" -Fix "on this branch, either add '$successorId' to ### $lane lane with full Plan/Files/Check/Proof/Next after lines (its plan section is the source; python tools/heading.py <plan> '$successorId' prints it), or -- if it is not startable yet -- give it a one-line bullet under '## Not in the queue, and why' whose bolded lead is its id and whose line says what it waits for; then run python tools/check_docs.py, commit, and retry"
                 }
             }
         }
@@ -2442,6 +2471,13 @@ function Invoke-SliceFinish {
     }
     if ($primaryVerifyCmd.Parameters.ContainsKey("Scope")) {
         $primaryVerifyArgs["Scope"] = "primary"
+    }
+    # -Quiet as the branch run has it: unquiet, verify.ps1 streams each Python
+    # stage, and under this script's "Stop" a redirected stderr line becomes a
+    # terminating NativeCommandError -- every primary stop from 5 to 16 Oct
+    # 2026 named only that, never its stage, and the stage logged no event.
+    if ($primaryVerifyCmd.Parameters.ContainsKey("Quiet")) {
+        $primaryVerifyArgs["Quiet"] = $true
     }
     try {
         $primaryVerifyOutput = & $primaryVerifyScript @primaryVerifyArgs 2>&1

@@ -171,7 +171,6 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | FC-2 -- the first crisis: an announced heavy-rain episode the colony can prepare for | `plans/now/crisis-readiness.md` |
 | ED-1 to ED-3 -- difficulty: health for every bee, Easy's rules, choosing Easy at run start | `plans/now/difficulty.md` |
 | FR-1 to FR-3 -- forager recruitment: Orientation flight, then Auto scouting, then Auto-recruitment, each measured better than the last | `plans/now/forager-recruitment.md` |
-| GD-3 -- Dr Gallerin also explains hungry brood and starving bees | `plans/archive/guidance-explanations_2026-10-16.md` |
 | HM-1, HM-2 -- Dave's meadow hives and top-bar menu icons | `plans/now/hive-and-menu-art.md` |
 | SP-8, SP-8a -- the meadow floor in stacked blocks, then height's effects | `plans/now/meadow-terrain.md` |
 | PP-6, PP-8 -- pollination: the C-129 watch run, then pricing the route to Gyne rearing | `plans/now/pollination.md` |
@@ -181,7 +180,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | T2-10 to T2-13, T2-7b -- tier two: Automation wakes miners, comb cadence, bodies on a role change, the deferred price sweep | `plans/now/tier-two.md` |
 | TS-1, TS-2 -- every typeface the same width at the same text scale | `plans/now/typeface-size.md` |
 | WP-2, WP-3 -- Work Priorities: each bee's backup an ordered list, a colony default | `plans/now/work-priorities.md` |
-| The slice lifecycle's completion-gate measurement (no open slice; L-1 to L-26 are archived) | `plans/now/agent-lifecycle.md` |
+| L-27, L-28, L-29 -- the slice lifecycle: re-verify a resumed finish, keep the next queue block, measure subagents | `plans/now/agent-lifecycle.md` |
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates (the Colony Run definition itself is `plans/archive/colony-run_2026-10-08.md`) | `plans/design/product-scope.md` |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |

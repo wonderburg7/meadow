@@ -88,7 +88,7 @@ explicit request from Dave.
 - Candidate direction: Hypothesis — the UI review decides with Dave whether
   the readouts should continue across a load; if yes, it returns to the save
   review as an additive-field question under `.claude/rules/saving.md`.
-- Disposition: untriaged
+- Disposition: untriaged (read by the agent-workflow review, 16 Oct 2026: the UI review's lane, then the save review's)
 
 ### 2026-10-07 — sessions still try to read the four denied paths, and a hint hook would widen the deny list
 
@@ -109,7 +109,10 @@ explicit request from Dave.
 - Candidate direction: Hypothesis — the agent workflow review checks whether
   the remaining cases come from review prompts that name those files, and
   if so has the prompts say `git show HEAD:` up front.
-- Disposition: untriaged
+- Disposition: rejected by the agent-workflow review, 16 Oct 2026: 42 refused calls in 11 days (32 naming
+  `plans/archive/`, 36 behind a `cd … &&` prefix), the queue steward the
+  largest source (9) although its brief already forbids `plans/archive/`.
+  About four turns a day is below the bar; re-measure at the next review.
 
 ### 2026-10-07 — a queue id with a space still breaks `slice.ps1 start`
 
@@ -144,7 +147,7 @@ explicit request from Dave.
   pointer into a denied file.
 - Candidate direction: Hypothesis — the plan and queue review replaces the
   two restatements with pointers and repoints the three references.
-- Disposition: untriaged
+- Disposition: untriaged (read by the agent-workflow review, 16 Oct 2026: the plan review's lane)
 
 ### 2026-10-07 — `session_cost.py` keeps a second copy of the level-to-model rule with no parity test
 
@@ -556,7 +559,9 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- judge the gate against master's queue,
   or have the stop say "the branch is N commits behind master: merge it in"
   instead of reporting a dry lane.
-- Disposition: untriaged
+- Disposition: fixed by the agent-workflow review, 16 Oct 2026: both refill stops in `tools/slice.ps1`
+  (`Get-BranchBehindNote`) now say how many commits the branch is behind
+  master and to merge it in first.
 
 ### 2026-10-07 — "primary checkout is not on master" names no holder
 
@@ -572,7 +577,8 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- the stop names the branch's lane and
   ledger row and the count of uncommitted files, and says whether a live
   session is on that branch.
-- Disposition: untriaged
+- Disposition: rejected by the agent-workflow review, 16 Oct 2026: one occurrence (7 Oct) in 11 days;
+  reopen on a second.
 
 ### 2026-10-07 — a ledger row committed off master fails every lane's verify
 
@@ -587,7 +593,8 @@ explicit request from Dave.
   closeout.
 - Candidate direction: Hypothesis -- registering a worktree lands its row on
   master, or the check names the branch that holds the row.
-- Disposition: untriaged
+- Disposition: rejected by the agent-workflow review, 16 Oct 2026: one occurrence (7 Oct) in 11 days;
+  reopen on a second.
 
 ### 2026-10-07 — a lane move can split a file-sharing sequence
 
@@ -603,7 +610,8 @@ explicit request from Dave.
   the other lane.
 - Candidate direction: Hypothesis -- refuse or warn when a queued item's
   slice-table row says "after X" and X is unlanded, wherever X is queued.
-- Disposition: untriaged
+- Disposition: rejected by the agent-workflow review, 16 Oct 2026: one occurrence, during a lane move
+  Dave authorised; lane moves are rare. Reopen on a second.
 
 ### 2026-10-07 — slice file lists miss the UI file a readout needs
 
@@ -618,7 +626,7 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- a writing rule (a section that changes
   what a readout, panel or window shows lists the file that builds it), or a
   `check_docs.py` heuristic on "readout"/"panel" with no UI file listed.
-- Disposition: untriaged
+- Disposition: untriaged (read by the agent-workflow review, 16 Oct 2026: a plan-writing rule, the plan review's lane)
 
 ### 2026-10-07 — workers settle open gameplay points themselves
 
@@ -635,7 +643,9 @@ explicit request from Dave.
   section leaves open that decides who lives or dies, a win or a save is a
   `blocked` question, never an "As built" note (CLAUDE.md rule 5 applied to
   workers).
-- Disposition: untriaged
+- Disposition: rejected by the agent-workflow review, 16 Oct 2026: `plans/reference/slice-worker.md`
+  "Stop and return `blocked`, never decide" has said so since 1 Oct; one
+  occurrence, which the slice reviewer caught. Reopen on a second.
 
 ### 2026-10-08 — a plan finish kept live leaves the next closeout red
 
@@ -655,7 +665,11 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- `finish` treats "plan kept live" for a
   terminal plan as a stop, not a note, or `--complete-plans` repoints plain
   mentions in `NEXTSTEPS.md` and refuses only on queue items and ledger rows.
-- Disposition: untriaged
+- Disposition: fixed by the agent-workflow review, 16 Oct 2026 after its second occurrence (GD-3,
+  16 Oct, stopped RR-7's primary verify): `tools/archive_slice.py`
+  `_queue_holds` keeps a plan live only for a queue item or an id-led
+  bullet, and repoints a prose mention; test
+  `test_repoints_a_prose_mention_in_the_queue_file`.
 
 ### 2026-10-09 — finish skips branch verify after a master merge
 
@@ -674,7 +688,10 @@ explicit request from Dave.
 - Consequence: a resumed closeout can land code that no verify has seen.
 - Candidate direction: Hypothesis -- the verified record stores and compares
   `HEAD` (or the tree hash), so any new commit forces a fresh branch verify.
-- Disposition: untriaged
+- Disposition: promoted by the agent-workflow review, 16 Oct 2026 as L-27 in
+  `plans/now/agent-lifecycle.md`: 4499fb6 (12 Oct) ties the verified
+  record to HEAD, but the closing journal's `verified` phase still skips
+  the check.
 
 ### 2026-10-12 — a merged sprite leaves the primary's import cache unbootable
 
@@ -691,7 +708,8 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- when the primary fails on an
   unresolved resource, `ensure_cache` runs `--import` on the primary once
   before refusing.
-- Disposition: untriaged
+- Disposition: superseded: ca6f34c (12 Oct) seeds a worktree's cache
+  whether or not the primary boots; no cache stop since (read by the agent-workflow review, 16 Oct 2026).
 
 ### 2026-10-15 — `plans/now/sprites.md` is over its soft limit (from the verification review)
 
@@ -727,7 +745,9 @@ explicit request from Dave.
   11 in `plans/README.md` is the written rule), and `archive` refuses, or
   leaves behind, a block for another id inside the section it cuts. This is
   the second recurrence, so CLAUDE.md's instrument rule applies.
-- Disposition: untriaged (hand-off to the agent-workflow review)
+- Disposition: promoted by the agent-workflow review, 16 Oct 2026 as L-28 in
+  `plans/now/agent-lifecycle.md` (the archive leaves another id's block in
+  the plan). The `check_docs.py` half waits: an unmerged branch owns that file.
 
 ### 2026-10-15 — archiving a plan repoints its routing row instead of dropping it
 
@@ -746,7 +766,9 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- `archive_plan` deletes the routing row
   naming the plan rather than repointing it, and `check_docs.py` warns when
   a live plan has no routing row or a row names `plans/archive/`.
-- Disposition: untriaged (hand-off to the agent-workflow review)
+- Disposition: fixed by the agent-workflow review, 16 Oct 2026: `tools/archive_slice.py`
+  `_drop_routing_rows` drops a `plans/README.md` row whose Read cell is the
+  archived plan; test `test_drops_the_routing_row_whose_read_cell_is_the_plan`.
 
 ### 2026-10-15 — a Codex finish stalled for a day, and nothing surfaced it
 
@@ -764,7 +786,8 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- `doctor` (or the queue steward) flags a
   ledger row whose branch has an archive commit but no merge after some
   hours, naming the integrate prompt.
-- Disposition: untriaged (hand-off to the agent-workflow review)
+- Disposition: merged by the agent-workflow review, 16 Oct 2026 into the 16 Oct entry below
+  (finding F7, question D1).
 
 ### 2026-10-16 — a landed unblocker releases nothing that waits on it
 
@@ -786,5 +809,6 @@ explicit request from Dave.
   every `queue-gated` block and every `checks/blocked.md` entry naming the
   closed id, and the closing session moves them; `check_docs.py` warns on a
   blocked check whose every named unblocker is in `plans/archive/`.
-- Disposition: untriaged (hand-off to the agent-workflow review; the nine
-  checks to the check processor)
+- Disposition: confirmed by the agent-workflow review, 16 Oct 2026 (finding F7): 10 of the 15
+  blocked checks name only archived unblockers. Waiting on Dave's answer to
+  its question D1, which decides who moves them.
