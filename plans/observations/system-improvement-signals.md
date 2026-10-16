@@ -88,7 +88,11 @@ explicit request from Dave.
 - Candidate direction: Hypothesis — the UI review decides with Dave whether
   the readouts should continue across a load; if yes, it returns to the save
   review as an additive-field question under `.claude/rules/saving.md`.
-- Disposition: untriaged (read by the agent-workflow review, 16 Oct 2026: the UI review's lane, then the save review's)
+- UI review, 16 Oct 2026: confirmed (no reader in `save_game.gd`). Not purely
+  presentation: `day_store_totals` also feeds `conditions.gd` (line ~205) and
+  `colony_milestones.gd` (line ~52), so a load can change a gameplay readout
+  or condition. Question D1 sent to Dave through the /run-reviews coordinator.
+- Disposition: pending Dave's answer (UI review decide phase), then the save review if yes
 
 ### 2026-10-07 — sessions still try to read the four denied paths, and a hint hook would widen the deny list
 
