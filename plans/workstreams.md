@@ -48,5 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/RR-7` (`claude/RR-7`) | Claude | why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation) | Claude | in progress | none | `plans/now/run-repairs.md` RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word |
 | `.worktrees/FR-1` (`codex/FR-1`) | Codex | the three foraging stages measured on the same Colony Run seeds | Codex | in progress | none | `plans/now/forager-recruitment.md` FR-1 -- the three foraging stages measured on the same Colony Run seeds |
