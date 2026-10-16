@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/PP-8` (`claude/PP-8`) | Claude | the C-129 watch run plays at real time | Claude | in progress | none | `plans/now/pollination.md` PP-8 -- the C-129 watch run plays at real time |
