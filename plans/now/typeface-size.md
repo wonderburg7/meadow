@@ -83,7 +83,7 @@ C-137.
 ## TS-2 -- the HUD's own size overrides
 
 Level: low. **Gate:** TS-1 landed, and `scripts/hud.gd` released by FC-2
-(Codex lane; GP-4 released it 15 Oct 2026).
+(Claude lane; GP-4 released it 15 Oct 2026).
 
 **True afterwards.** Each `base * Session.text_scale` font size in
 `hud.gd` (the completed goal line, the goal lines, the corner readouts)
