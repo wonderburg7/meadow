@@ -36,6 +36,11 @@ are for the pass and for whoever files a check, not for you.
   anything. The check pass does those.
 - Keep screenshots few: take one when the check's condition is on screen,
   not after every click.
+- Two attempts at most. If a second attempt fails the way the first did (the
+  run dies, the condition never shows), stop and return `cannot-run`, or
+  `fail` if what you saw contradicts the PASS line, saying what blocked it.
+  A third try is the pass's decision: one C-109 runner spent 81M tokens on
+  four Colony Runs a known defect made impossible (10 Oct 2026).
 
 ## What you return
 

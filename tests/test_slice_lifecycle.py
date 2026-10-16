@@ -1982,11 +1982,16 @@ class ArchiveCompletePlansTest(unittest.TestCase):
         self.assertIn(new_rel, staged)
 
     def test_keeps_a_plan_live_while_the_queue_or_ledger_still_cites_it(self):
-        for citer in ("NEXTSTEPS.md", "plans/workstreams.md"):
-            with self.subTest(citer=citer):
+        citations = (
+            ("NEXTSTEPS.md", "1. **[Claude] D-2 -- more**\n   - Plan: `plans/now/done.md`\n"),
+            ("NEXTSTEPS.md", "## Not in the queue, and why\n\n- **D-3** (`plans/now/done.md`) -- waits for D-2.\n"),
+            ("plans/workstreams.md", "`plans/now/done.md`\n"),
+        )
+        for citer, citation in citations:
+            with self.subTest(citer=citer, citation=citation):
                 path = self.root / citer
                 original = path.read_text(encoding="utf-8")
-                path.write_text(original + "`plans/now/done.md`\n", encoding="utf-8")
+                path.write_text(original + citation, encoding="utf-8")
                 self.git("commit", "-q", "-am", f"cite from {citer}")
 
                 result = self.run_tool()
@@ -1998,6 +2003,41 @@ class ArchiveCompletePlansTest(unittest.TestCase):
                 self.assertEqual("", self.git("status", "--porcelain").stdout)
                 path.write_text(original, encoding="utf-8")
                 self.git("commit", "-q", "-am", f"uncite from {citer}")
+
+    def test_repoints_a_prose_mention_in_the_queue_file(self):
+        # GD-3, 16 Oct 2026: a reason naming the plan kept it live, and the
+        # next closeout's primary verify failed on the terminal-plan rule.
+        path = self.root / "NEXTSTEPS.md"
+        path.write_text(path.read_text(encoding="utf-8")
+                        + "## Not in the queue, and why\n\n"
+                        "- **The event director** -- needs a design pass. The guide has its plan, `plans/now/done.md`.\n",
+                        encoding="utf-8")
+        self.git("commit", "-q", "-am", "prose mention")
+
+        result = self.run_tool()
+
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertFalse((self.root / "plans" / "now" / "done.md").exists())
+        self.assertIn("its plan, `plans/archive/done_2026-09-23.md`.", path.read_text(encoding="utf-8"))
+
+    def test_drops_the_routing_row_whose_read_cell_is_the_plan(self):
+        readme = self.root / "plans" / "README.md"
+        readme.write_text(
+            "## Current routing\n\n| If the queue names | Read |\n| --- | --- |\n"
+            "| D-1 -- the done plan | `plans/now/done.md` |\n"
+            "| O-2 -- the open plan | `plans/now/open.md` |\n"
+            "| Scope (its first draft is `plans/now/done.md`) | `plans/design/scope.md` |\n",
+            encoding="utf-8")
+        self.git("add", ".")
+        self.git("commit", "-q", "-m", "routing")
+
+        result = self.run_tool()
+
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        body = readme.read_text(encoding="utf-8")
+        self.assertNotIn("D-1 -- the done plan", body)
+        self.assertIn("| O-2 -- the open plan | `plans/now/open.md` |\n", body)
+        self.assertIn("| Scope (its first draft is `plans/archive/done_2026-09-23.md`) | `plans/design/scope.md` |", body)
 
     def test_keeps_a_plan_live_when_a_file_it_would_touch_is_dirty(self):
         (self.root / "plans" / "observations" / "notes.md").write_text(self.NOTE + "edit\n", encoding="utf-8")

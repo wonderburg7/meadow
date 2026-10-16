@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: the completion-gate measurement only (L-26 makes short-lane warnings use the refill admission test; the seven-day outcome and cost gate remains) | Dependency: none | Verified: 2026-10-15
+Status: active | Owner: Dave / Claude | Next: L-27 -- a resumed finish re-verifies a branch that gained commits | Dependency: none | Verified: 2026-10-16
 
 ## Objective
 
@@ -50,13 +50,157 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
+| L-27 | A resumed `finish` re-verifies a branch that gained code commits | `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | medium |
+| L-28 | Archiving a slice leaves another slice's queue block in the plan | `tools/archive_slice.py`, `tests/test_slice_lifecycle.py` | medium |
+| L-29 | `session_cost.py` counts subagent transcripts and scripted edits | `tools/session_cost.py`, `tests/test_session_cost_scope.py` | medium |
 
-None. L-16 to L-26 shipped 2 to 13 Oct 2026, each with its record in
+L-16 to L-26 shipped 2 to 13 Oct 2026, each with its record in
 `plans/archive/` named by id and date; WC-1 to WC-5 shipped with
-`plans/archive/workflow-checks_2026-10-10.md`. What remains is the
-completion gate in "Objective", which the agent-workflow review measures
-(`plans/reference/reviews/agent-workflow-review.md`); a slice is written
-here only when a measurement names a mechanism.
+`plans/archive/workflow-checks_2026-10-10.md`. The 16 Oct 2026
+agent-workflow review measured the mechanisms behind L-27, L-28 and L-29. L-27 and L-28 share a
+test file, so L-28 follows L-27. Each slice's acceptance names a
+before-figure from that review and one real canary closeout.
+
+## L-27 -- a resumed finish re-verifies a branch that gained commits
+
+<!-- LAYER: immediate-task -->
+
+Level: medium. **Now:** `Write-ClosingJournal` (`tools/slice.ps1`) writes
+`{id, branch, lane, phase}`. `Test-BranchVerified` returns true as soon as
+the journal's phase is `verified` or later, before it reads the
+`meadow-slice-verified.json` record that 4499fb6 (12 Oct 2026) tied to
+HEAD. A finish that stops after its branch verify (at the refill gate, at
+primary verification: 7 primary stops from 5 to 16 Oct) keeps that journal,
+so a fix committed on the branch, or master merged into it, lands with
+"already passed this closeout; skipping" (T2-4a, 9 Oct, twice).
+
+**After:**
+
+- `Write-ClosingJournal` also writes `head`: the worktree's
+  `git rev-parse HEAD` at the moment it writes (after finish's own commit for
+  that phase, if any). The `merged` and `queue-reapplying` writes, made in
+  the primary checkout, record it the same way; nothing reads it there.
+- New `function Test-JournalVerifiedHead` (params `$Journal`,
+  `$WorktreeRoot`) returns true only when the journal has a `head` and either
+  it equals the worktree's HEAD, or `git diff --name-only <head> HEAD` lists
+  only `*.md` paths (a queue or plan fix after a refill refusal, which
+  `refill_lane.py` has already run `check_docs` over).
+- `Test-BranchVerified`: a journal phase at `verified` or later counts only
+  when `Test-JournalVerifiedHead` is true; otherwise it falls through to the
+  record check as now. A journal written before this slice (no `head`)
+  therefore costs one extra verify, once.
+
+**Must not change:** `$script:ClosingPhaseOrder`, the journal's path, the
+record's format, and the skipping of every phase after `verified` on resume
+(archive and refill must never run twice). No new stop.
+
+**Tests** in `tests/test_slice_lifecycle.py`, using the fixture's existing
+`Invoke-InjectedLifecycleFailure` phases to stop a finish after `verified`:
+(1) then commit a change to a non-Markdown file on the branch and rerun
+`finish`: verify runs again; (2) the same with only a `.md` change: verify
+is skipped; (3) a journal without `head`: verify runs.
+
+**Acceptance:** the next real finish that is retried after a branch commit
+prints a verify run, not "already passed this closeout; skipping" (before:
+T2-4a skipped twice on 9 Oct). Stop and return `blocked` if the fixture
+cannot stop a finish after `verified` without a new injection point.
+
+```queue
+**[Claude] L-27 -- a resumed finish re-verifies a branch that gained commits**
+- Plan: `plans/now/agent-lifecycle.md` -- "L-27 -- a resumed finish re-verifies a branch that gained commits"
+- Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
+- Check: `python -m unittest tests.test_slice_lifecycle` passes, including the three resume cases (code commit re-verifies, Markdown-only commit skips, a journal without head re-verifies); `.\tools\verify.ps1` is green
+- Proof: `absent: tools/slice.ps1 :: function Test-JournalVerifiedHead`
+- Next after: L-28 -- archiving a slice leaves another slice's queue block in the plan
+```
+
+## L-28 -- archiving a slice leaves another slice's queue block in the plan
+
+<!-- LAYER: immediate-task -->
+
+Level: medium. **Now:** `tools/archive_slice.py::archive` moves everything
+from the slice's heading to the next heading into the archive. A plan that
+writes slice N+1's `queue` (or `queue-gated`) block at the end of slice
+N's section loses it with N: RR-6's archive took RR-7's
+block and SP-10's took SP-11's (15 Oct 2026, the second recurrence;
+`plans/README.md` rule 11 is the written rule).
+
+**After:** new `def _foreign_queue_blocks(section_text, slice_id)` returns
+each fenced `queue` or `queue-gated` block in the cut section whose first
+line's id (check_docs' `QUEUE_ITEM_HEAD`, `**[Lane] <id> --`) is not
+`slice_id`. `archive` writes the section to the archive without those
+blocks and leaves them in the live plan directly below the one-line
+pointer, byte for byte, and prints `kept in plan: <id>'s queue block` for
+each. The slice's own block still goes to the archive.
+
+**Must not change:** the archived text apart from the removed blocks; the
+dirty-tree refusal; the open-slices-table row removal; `tools/check_docs.py`
+(a branch, `claude/terminal-plan-state-field`, owns it; its half of the
+signal, failing a block under the wrong heading, waits for that branch).
+
+**Tests** in `tests/test_slice_lifecycle.py`: a section holding its own
+`queue` block and a following slice's `queue-gated` block archives only its
+own; the live plan keeps the pointer then the other block unchanged.
+
+**Acceptance:** the next closeout of a slice whose section ends with its
+successor's block leaves that block live (before: two lost on 15 Oct).
+
+```queue
+**[Claude] L-28 -- archiving a slice leaves another slice's queue block in the plan**
+- Plan: `plans/now/agent-lifecycle.md` -- "L-28 -- archiving a slice leaves another slice's queue block in the plan"
+- Files: `tools/archive_slice.py`, `tests/test_slice_lifecycle.py`
+- Check: `python -m unittest tests.test_slice_lifecycle` passes, including the case where a section ends with the next slice's queue-gated block; `.\tools\verify.ps1` is green
+- Proof: `absent: tools/archive_slice.py :: def _foreign_queue_blocks`
+- Next after: None -- L-29 is independent
+```
+
+## L-29 -- session_cost.py counts subagent transcripts and scripted edits
+
+<!-- LAYER: immediate-task -->
+
+Level: medium. **Now:** `_transcript_files` returns top-level transcripts
+only. From 5 to 16 Oct 2026, 185 subagent transcripts held 1,053M of the
+2,339M context tokens and were outside `--days`, `--classify` and
+`--phases`. Slice workers cannot use Edit in `.worktrees/` and edit through
+Python scripts written to their scratchpad (0 Edit, 255 Write, 2,538 Bash
+calls in 59 dispatches), so `_product_edit` saw 11 implementing requests in
+11,700. `--phases`' 11.0% implementing and 55.1% "no product edit" is an
+artefact, and this plan's completion gate cannot be judged.
+
+**After:**
+
+- New `def _subagent_transcripts(files)`: each top-level file's
+  `<stem>/subagents/agent-*.jsonl`. `--days`, `--classify` and `--phases`
+  read top-level plus subagent files; the header prints
+  `transcripts  N sessions (P primary, W worktree directories) + S subagent transcripts`.
+- `_product_edit` also counts (a) a Write or Edit outside the repository
+  whose `content` names a `.worktrees/<id>/` path followed by one of
+  `PRODUCT_DIRS` (a scratchpad edit script), and (b) a Bash command holding
+  `sed -i` or `cp ` and such a path.
+- After the `--phases` table, one line:
+  `slice workers (subagents named slice-worker-*): <tokens> = <share>% of all context`,
+  the type read from each transcript's `.meta.json` `agentType`.
+
+**Must not change:** `--coordinator`, `--events`, `--stops` and
+`--model-check` output; the four phase rows and their order.
+
+**Tests** in `tests/test_session_cost_scope.py` with fixture transcripts: a
+subagent file is counted; each of (a) and (b) counts as a product edit; a
+scratchpad script naming no worktree path does not.
+
+**Acceptance:** `python tools/session_cost.py --days 11 --phases` prints a
+subagent count above zero and a slice-worker share (before, 16 Oct: 80
+sessions, 1,286M, 11.0% implementing; workers 447M, 19% of 2,339M), and the
+next agent-workflow review judges the completion gate from it.
+
+```queue
+**[Claude] L-29 -- session_cost.py counts subagent transcripts and scripted edits**
+- Plan: `plans/now/agent-lifecycle.md` -- "L-29 -- session_cost.py counts subagent transcripts and scripted edits"
+- Files: `tools/session_cost.py`, `tests/test_session_cost_scope.py`
+- Check: `python -m unittest tests.test_session_cost_scope` passes, including subagent files and both scripted-edit forms; `python tools/session_cost.py --days 11 --phases` prints a subagent transcript count and a slice-worker share; `.\tools\verify.ps1` is green
+- Proof: `absent: tools/session_cost.py :: def _subagent_transcripts`
+- Next after: None -- plan complete once L-27 and L-28 land
+```
 
 ## Standing rules
 
