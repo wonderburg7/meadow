@@ -174,6 +174,10 @@ These are part of alpha stabilisation. They should continue through
 - Easy difficulty rules, a standard difficulty baseline and understandable
   failure/victory/continue states;
 - balance and pacing evidence at the 5/10/20/60/90-minute gates;
+- a frame budget: 60 fps (16.7 ms a frame) with 500 bees, a provisional
+  figure until AR-4's reference Colony Run records its peak population,
+  when the target becomes 60 fps at twice that peak (Dave, 16 Oct 2026,
+  product review D5; `docs/performance.md` holds the measured costs);
 - a simple feedback process for friends and family.
 
 ### 6.2 Shared foundations that precede content expansion
