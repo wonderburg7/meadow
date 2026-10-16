@@ -1,7 +1,7 @@
 # Meadow — Skill Tree, Colony Adaptations and Progression Plan
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only after progression is selected -->
-Status: active -- Phase A finished with step 4, landed 7 Sep 2026 | Owner: Dave / Claude Code | Next: Phase B step 8 is sliced in `plans/now/tier-two.md` (T2-1 to T2-8, Shiver Cluster as T2-8), from the plan-ahead decisions of 6-7 Oct 2026 in step 8 and section 5.6; Phase C step 12 (Bee bread) is sliced in `plans/archive/bee-bread_2026-10-11.md`; step 7 (`plans/archive/brood-spine_2026-10-05.md`) is built | Dependency: none blocking -- the skill-gating question is settled in section 11, step 6 (Dave, 17 Sep 2026). Two skill definitions still open (section 5.9) | Verified: 2026-10-07
+Status: active -- Phase A finished with step 4, landed 7 Sep 2026 | Owner: Dave / Claude Code | Next: step 8's last slices are in `plans/now/tier-two.md` (T2-11 to T2-13, then the T2-7b price sweep); step 13's Work Priorities is `plans/now/work-priorities.md` (tier three's gating is built, `plans/archive/tier-three_2026-10-14.md`); step 15's gyne route is `plans/now/pollination.md` (PP-6 prices it); steps 7 and 12 are built (`plans/archive/brood-spine_2026-10-05.md`, `plans/archive/bee-bread_2026-10-11.md`) | Dependency: none blocking -- the skill-gating question is settled in section 11, step 6 (Dave, 17 Sep 2026). Two skill definitions still open (section 5.9) | Verified: 2026-10-16
 
 Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Rewritten 1 Sep 2026 against Dave's revised skill catalogue — six sectors, four resource-gated tiers, a hexagonal wedge grid and a HUD Skills button. It supersedes the 26 Aug catalogue outright: the sectors, tier meaning, costs and node list below are the design, and the earlier ones are not.
 
@@ -241,7 +241,7 @@ Dave will supply these. Everything else in this plan is specified around them, s
 
 1. **`skill.defence.medicine` (Defence T3)** — what it does. A disease system already exists in `bee_survival.gd`/`game_config.gd`, so a hygienic/propolis reading of it would have a foundation, but this is not confirmed.
 2. **`skill.hive_mind.chemical_cascade` (Hive Mind T4)** — what it does.
-3. **`skill.brood.bee_bread` exact recipe (Brood T2)** — who makes it, from what inputs and where it is stored are now answered: a Honey worker in the Fermenter sub-role seals pollen and honey into a designated cell for a seven-day ferment; nurses feed the result automatically, and the later Priority Cells skill allows deliberate allocation when supply is scarce (`product-scope.md` §9). **Still open:** the exact pollen/honey recipe, cell capacity and larval ration — these need the scenario harness, not a guess (`product-scope.md` §9, §16).
+3. **`skill.brood.bee_bread` exact recipe (Brood T2)** — no longer open: BB-1 to BB-4 built it (`plans/archive/bee-bread_2026-10-11.md`), and the recipe, cell capacity, ripening time and larval effect are `GameConfig`'s `bee_bread_*` values.
 
 `skill.foraging.pollinator_points` (Foraging T3) is no longer open — see §4.2, §5.1 and §5.2 above. `product-scope.md` §10 defines it as two ledgers and it replaces royal jelly as the universal tier-4 gate. Its window duration and seed/quality formula remain open (`product-scope.md` §16).
 

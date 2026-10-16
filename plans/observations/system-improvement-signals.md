@@ -765,3 +765,26 @@ explicit request from Dave.
   ledger row whose branch has an archive commit but no merge after some
   hours, naming the integrate prompt.
 - Disposition: untriaged (hand-off to the agent-workflow review)
+
+### 2026-10-16 — a landed unblocker releases nothing that waits on it
+
+- Source: product review, 16 Oct 2026 (`docs/product-review-2026-10-16.md`)
+- Area: process / closeout, `checks/blocked.md`, `queue-gated` blocks
+- Signal: when the slice a gate names lands, nothing reopens what waited on
+  it. RR-1 landed 13 Oct 2026, yet eight Colony Run checks (C-109, C-110,
+  C-111, C-114 to C-118) still sit in `checks/blocked.md` naming it, and
+  C-84 names RR-1 and T2-9 (landed 12 Oct). GD-2b merged 15 Oct 2026 at
+  23:41, but FC-2's fence stayed `queue-gated` until this review opened it,
+  so the alpha route's crisis and the seven slices behind it stood still.
+- Evidence: `grep -n "Blocked by: RR-1" checks/blocked.md`;
+  `git log -1 --format=%ci fd7afd4` (GD-2b's merge) against
+  `plans/now/crisis-readiness.md` at `d7ad7de`.
+- Consequence: the closed alpha's hands-on evidence (goals, victory,
+  checkpoint, gynes, winter, rain, Shiver Cluster) is never run, and
+  critical-path slices wait on gates that have already cleared.
+- Candidate direction: Hypothesis -- `finish` (or the queue steward) lists
+  every `queue-gated` block and every `checks/blocked.md` entry naming the
+  closed id, and the closing session moves them; `check_docs.py` warns on a
+  blocked check whose every named unblocker is in `plans/archive/`.
+- Disposition: untriaged (hand-off to the agent-workflow review; the nine
+  checks to the check processor)
