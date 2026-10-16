@@ -46,6 +46,7 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | RR-9 | a skipped winter ages no nectar and no sealed bee bread | `scripts/season.gd`, tests | yes -- Codex lane | low |
 | RR-10 | fermented nectar is neither counted nor spent by skill purchases | `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, tests | yes, after RR-9 -- Codex lane | low |
 | RR-11 | nectar shows a pre-fermented colour before it ferments, as a warning | `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | no -- after SP-11 releases `scripts/hive_cell.gd`, and after RR-10 | medium |
+| RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
 
 RR-9 and RR-10 are Codex-lane slices (Dave, 15 Oct 2026, plan review D3:
 the Claude lane was full and the Codex backlog dry); RR-7 and RR-11 stay in
@@ -260,6 +261,61 @@ strong, retune `PRE_FERMENTED_ART_TINT` and `PRE_FERMENTED_NECTAR_COLOR`.
 - Next after: none -- `plans/now/run-repairs.md` is complete once RR-8 has landed
 ```
 
+## RR-12 -- a loaded run keeps its readout history
+
+Level: medium (one additive save key, four collections, an exactness test).
+UI review 16 Oct 2026, hand-off from the save review; Dave's decision D1:
+"A -- save all four as additive optional fields".
+
+**True now** (verified 16 Oct 2026). `save_game.gd::save` writes no readout
+history, so after a load `main.gd`'s `history_samples` (colony graph; entries
+`{t, bees, nectar, pollen, honey}`), `emergence_log` (`{t, key}`),
+`day_store_totals` (`{day, nectar, pollen, nectar_collected,
+pollen_collected}`, read by `conditions.gd` and `colony_milestones.gd`) and
+`foraging_stats.gd`'s counters (`trips_recorded`, `total_flowers_visited`,
+`total_search_flight_seconds`, `total_handling_seconds`, `total_trip_seconds`,
+`empty_returns`, `_by_species`) all start empty. The comment above
+`day_store_totals` in `main.gd` says "Not saved".
+
+**True afterwards.** `save_game.gd::save` writes
+`"readout_history": {"history_samples": [...], "emergence_log": [...],
+"day_store_totals": [...], "foraging": world.foraging_stats.save_data()}`.
+`foraging_stats.gd` gains `save_data() -> Dictionary` (the six counters and
+`_by_species`) and `restore(data) -> void`. `saving.gd`'s restore reads
+`data.get("readout_history", {})` and assigns each collection, each through a
+`.get(key, [])` default, trimmed to its cap (`GameConfig.history_points`,
+`DAY_STORE_SAMPLES`, and the emergence window as `_trim_emergence_log`
+does). The `t` values are `Session.sim_time` values, which a load already
+restores, so no re-basing is needed. The `day_store_totals` comment in
+`main.gd` is corrected. No `FORMAT_VERSION` bump and no migration
+(`.claude/rules/saving.md`, additive fields).
+
+**Must not change.** `FORMAT_VERSION` (6); an old save with no key loads and
+starts the four empty exactly as today; a malformed entry (wrong type) is
+skipped, never an error; the checkpoint restore stays exact; nothing in
+`foraging_stats.gd::record_trip`'s behaviour.
+
+**Check.** `python -m unittest tests.test_rr12_readout_history` runs
+`tests/rr12_readout_history_test.gd` (model on `tests/bs14_saved_skill_policy_test.gd`):
+run a seeded scene long enough to hold at least three history samples and two
+day-store entries and one recorded trip, save, load, and the four collections
+equal what was saved; load a save with the key deleted and all four are empty
+and the load succeeds. `python -m unittest tests.test_save_migrations` still passes.
+
+**Stop and escalate** if the saved size grows by more than about 20 KB, or a
+test shows `day_store_totals` changing a condition's result across a load
+(report the figures; do not tune).
+
+```queue-gated
+**[Claude] RR-12 -- a loaded run keeps its readout history**
+- Plan: `plans/now/run-repairs.md` -- "RR-12 -- a loaded run keeps its readout history"
+- Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, `tests/rr12_readout_history_test.gd`, `tests/test_rr12_readout_history.py`
+- Check: `python -m unittest tests.test_rr12_readout_history` passes: after a save and load of a run holding history samples, day-store entries, an emergence entry and a recorded trip, `history_samples`, `emergence_log`, `day_store_totals` and `foraging_stats.save_data()` equal their saved values, and a save with `readout_history` removed loads with all four empty; `python -m unittest tests.test_save_migrations` still passes.
+- Proof: `absent: scripts/save_game.gd :: readout_history`
+- Next after: none -- `plans/now/run-repairs.md` is complete once RR-8 and RR-11 have landed
+```
+
 ## Not in the queue, and why
 
 - **RR-11** -- the pre-fermented warning colour; waits for SP-11 (`plans/now/sprites.md`) to release `scripts/hive_cell.gd`, then runs after RR-10.
+- **RR-12** -- a loaded run keeps its readout history; waits for ED-3, the last of the alpha chain, because FC-2 to ED-3 share `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.

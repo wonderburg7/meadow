@@ -92,7 +92,7 @@ explicit request from Dave.
   presentation: `day_store_totals` also feeds `conditions.gd` (line ~205) and
   `colony_milestones.gd` (line ~52), so a load can change a gameplay readout
   or condition. Question D1 sent to Dave through the /run-reviews coordinator.
-- Disposition: pending Dave's answer (UI review decide phase), then the save review if yes
+- Disposition: gated -- Dave chose to save all four (16 Oct 2026); RR-12 in plans/now/run-repairs.md, rule written into .claude/rules/saving.md
 
 ### 2026-10-07 — sessions still try to read the four denied paths, and a hint hook would widen the deny list
 
