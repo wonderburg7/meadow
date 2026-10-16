@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/GD-3` (`codex/GD-3`) | Codex | Dr Gallerin explains hungry brood and starving bees | Codex | in progress | none | `plans/now/guidance-explanations.md` GD-3 -- hungry brood and starving bees explained |
+| `.worktrees/RR-7` (`claude/RR-7`) | Claude | why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation) | Claude | in progress | none | `plans/now/run-repairs.md` RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word |
