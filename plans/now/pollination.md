@@ -49,7 +49,6 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-8 | the C-129 watch run plays at real time | `test_scenarios/pp2_points_watch.json`, tests | yes | low |
 | PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after FR-2 (`plans/now/forager-recruitment.md`) puts Auto scouting on the route; PP-5 landed 13 Oct 2026 | medium |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
@@ -79,55 +78,7 @@ PP-5 shipped 2026-10-13; its specification is `plans/archive/PP-5_2026-10-13.md`
 
 PP-7 shipped 2026-10-15; its specification is `plans/archive/PP-7_2026-10-15.md`.
 
-## PP-8 -- the C-129 watch run plays at real time
-
-Level: low. PP-7 landed its analyser fix on 15 Oct 2026, but the watch
-run it wrote was not watchable: `pp2_points_watch.json` simulated 1000 s
-in about 40 s wall with `--windowed --fixed-fps 0`, and in about 19 s
-with `--windowed` and no `--fixed-fps`. C-129 stays in `checks/blocked.md`.
-Dave chose (15 Oct 2026) to have a follow-up find why the run is not paced
-to real time.
-
-**Found while queueing this slice (15 Oct 2026, from the code, not yet
-confirmed by a run).** Two things together explain both figures:
-
-- `scripts/main.gd::_apply_scenario_boot_arg` sets `Engine.time_scale` to
-  the scenario's `time_scale` field, which defaults to 30 when the file
-  has none. `pp2_points_watch.json` has none, so it runs at 30x: 1000
-  simulated seconds in about 40 s is about 25x, the frame-rate-limited
-  side of 30x. PP-7's note that nothing on this path sets
-  `Engine.time_scale` missed this default.
-- `tools/run_scenario.py`'s `--fixed-fps` defaults to 30
-  (`DEFAULT_FIXED_FPS`), so leaving the flag off does not remove it: each
-  frame then advances a fixed 1/30 s with real-time sync off, and a
-  windowed run (vsync off) draws well over 30 frames a second -- the 19 s
-  figure. Only `--fixed-fps 0` gives wall-clock pacing.
-
-**True afterwards.** `pp2_points_watch.json` carries `"time_scale": 1`,
-which is what Dave asked for: the run paced to real time. Run as
-`python tools/run_scenario.py test_scenarios/pp2_points_watch.json
---windowed --fixed-fps 0`, its simulated seconds track wall time. C-129's
-command in `checks/blocked.md` is rewritten to that one, with how long
-Dave should expect to wait for the first "+1", and C-129 moves to
-`checks/ready.md` (`--runner dave`). No game code changes.
-
-**Measure, then stop if it is slow.** Run that command once for about two
-minutes of wall time and record here the wall time against the simulated
-seconds its snapshots report, and the simulated second at which the first
-Pollinator Point is awarded (the run's pollination log). The run's
-default `--timeout` (300 s) ends it after five minutes. If no point is
-awarded in the first 120 simulated seconds, real time is too slow to
-watch: stop and put the watch speed to Dave (for example 2x or 4x) rather
-than choosing one.
-
-```queue
-**[Claude] PP-8 -- the C-129 watch run plays at real time**
-- Plan: `plans/now/pollination.md` -- "PP-8 -- the C-129 watch run plays at real time"
-- Files: `test_scenarios/pp2_points_watch.json`, `tests/test_pp8_watch_pacing.py`
-- Check: `python -m unittest tests.test_pp8_watch_pacing tests.test_pp7_recorded_actions` passes: `pp2_points_watch.json` has `"time_scale": 1`, still has no purchase and still stops on days; and the measured run (this section) shows its simulated seconds within 10 % of wall time, recorded here with the first point's simulated second.
-- Proof: `absent: test_scenarios/pp2_points_watch.json :: time_scale`
-- Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
-```
+PP-8 shipped 2026-10-16; its specification is `plans/archive/PP-8_2026-10-16.md`.
 
 ## PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
 

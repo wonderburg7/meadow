@@ -19,6 +19,7 @@ unblocker.
 - [C-124 -- A new Colony Run never offers an earlier run's checkpoint](ready/C-124.md)
 - [C-127 -- The comb draws honey, jelly, brood, bee bread and wax caps from Dave's art](ready/C-127.md)
 - [C-128 -- The skep sits where the hive square was, and the rival hive is a darker skep](ready/C-128.md)
+- [C-129 -- A +1 rises over a flower that earns a Pollinator Point, and the stores line counts points](ready/C-129.md)
 - [C-131 -- Goals drop-down in a Colony Run: collapse, long-term line, remembered after restart](ready/C-131.md)
 - [C-132 -- Star goals in the Goals drop-down and collapse it](ready/C-132.md)
 - [C-133 -- Hive soil blocks overlap front over back across the whole hive](ready/C-133.md)
