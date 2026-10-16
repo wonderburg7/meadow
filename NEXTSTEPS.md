@@ -23,19 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation)**
-   - Plan: `plans/now/run-repairs.md` -- "RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word"
-   - Files: `tests/rr7_silkscreen_fit_test.gd`, `tests/test_rr7_silkscreen_fit.py`, `plans/now/run-repairs.md`
-   - Check: `python -m unittest tests.test_rr7_silkscreen_fit` runs and prints, for the Challenge 1 hexagon's title in Silkscreen at text scale 2, the hexagon's available size, the size `hex_fit_size` returns, whether `hex_text_fits` holds at that size, and the line count the Label itself lays out at it; the answer line and the fix slice it implies are written into this section.
-   - Proof: `present: scripts/main_menu.gd :: static func hex_fit_size(`
-   - Next after: RR-8 -- the fix RR-7's answer names, which RR-7 specifies in this section; TS-1 (`plans/now/typeface-size.md`) waits for it
-
-2. **[Claude] T2-11 -- why comb workers build comb unevenly (investigation)**
+1. **[Claude] T2-11 -- why comb workers build comb unevenly (investigation)**
    - Plan: `plans/now/tier-two.md` -- "T2-11 -- why comb workers build comb unevenly (investigation)"
    - Files: `tests/t2_11_comb_cadence_test.gd`, `tests/test_t2_11_comb_cadence.py`, `plans/now/tier-two.md`
    - Check: `python -m unittest tests.test_t2_11_comb_cadence` runs and prints, for each idle spell longer than 10 game-seconds, the comb worker's mode, `idle_reason()` and which finder returned nothing; the answer and the fix slice it implies are written into this section.
    - Proof: `present: scripts/bee.gd :: func idle_reason() -> String:`
    - Next after: T2-12 -- Dig on its own is offered only once Automation is owned
+
+2. **[Claude] RR-8 -- a menu hexagon repaints at the size its name was fitted to**
+   - Plan: `plans/now/run-repairs.md` -- "RR-8 -- a menu hexagon repaints at the size its name was fitted to"
+   - Files: `scripts/main_menu.gd`, `tests/rr7_silkscreen_fit_test.gd`, `tests/test_rr7_silkscreen_fit.py`
+   - Check: `python -m unittest tests.test_rr7_silkscreen_fit` passes and fails on any step of its walk (text scale 1 then 2, every typeface in list order) where the Challenge 1 name's last painted font size differs from `hex_fit_size`'s or its painted lines split a word; `python -m unittest tests.test_rr5_hex_refit tests.test_ho15_menu_hex_fit` still pass.
+   - Proof: `absent: scripts/main_menu.gd :: label.queue_redraw.call_deferred()`
+   - Next after: TS-1 -- every typeface is the same width as Standard at the same text scale
 
 ### Codex lane
 
