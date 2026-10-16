@@ -49,19 +49,26 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] GD-3 -- Dr Gallerin explains hungry brood and starving bees**
-   - Plan: `plans/now/guidance-explanations.md` -- "GD-3 -- hungry brood and starving bees explained"
-   - Files: `scripts/guidance_catalogue.gd`, `tests/test_gd3_guidance_hunger.py`
-   - Check: `python -m unittest tests.test_gd3_guidance_hunger` passes (hungry brood and starving bees each start one explanation with their evidence and two conditional responses; a workforce explanation is offered before either; both reopen in Why with recorded evidence and a "cleared" current state); the day each fact first exceeds 0 in the alpha scenario is recorded in this section; `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/guidance_catalogue.gd :: hungry_brood`
-   - Next after: none -- guidance explanations are complete
-
-2. **[Codex] FR-1 -- the three foraging stages measured on the same Colony Run seeds**
+1. **[Codex] FR-1 -- the three foraging stages measured on the same Colony Run seeds**
    - Plan: `plans/now/forager-recruitment.md` -- "FR-1 -- the three foraging stages measured on the same Colony Run seeds"
    - Files: `tools/forager_stages.py`, `tests/test_forager_stages.py`, `test_scenarios/fr1_forager_stages_test.json`, `tools/scenario_sweep.py`
    - Check: `python -m unittest tests.test_forager_stages` passes; `python tools/forager_stages.py` prints food per forager per day for the four stages on five seeds, and the table is recorded in this plan's FR-1 section; `tools/verify.ps1` is green
    - Proof: `absent: tools/scenario_sweep.py :: ^fr1_`
    - Next after: FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
+
+2. **[Codex] RR-9 -- a skipped winter ages no nectar and no sealed bee bread**
+   - Plan: `plans/now/run-repairs.md` -- "RR-9 -- a skipped winter ages no nectar and no sealed bee bread"
+   - Files: `scripts/season.gd`, `tests/rr9_winter_ages_nothing_test.gd`, `tests/test_rr9_winter_ages_nothing.py`
+   - Check: `python -m unittest tests.test_rr9_winter_ages_nothing` passes: a sealed nectar cell stocked one game-day before winter and a full bee-bread cell sealed one game-day before it come out of `season.gd::_resolve_winter` with `nectar_age()` and `bee_bread_ripen_fraction()` unchanged (to 0.01), the nectar cell's `is_fermented()` false, and `Session.sim_time` still moved on by `winter_length_days`; `python -m unittest tests.test_col6_winter_skip tests.test_col8_winter_dieback` still passes.
+   - Proof: `absent: scripts/season.gd :: nectar_since`
+   - Next after: RR-10 -- fermented nectar is neither counted nor spent by skill purchases
+
+3. **[Codex] RR-10 -- fermented nectar is neither counted nor spent by skill purchases**
+   - Plan: `plans/now/run-repairs.md` -- "RR-10 -- fermented nectar is neither counted nor spent by skill purchases"
+   - Files: `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, `test_scenarios/rr10_fermented_not_currency.json`, `tests/test_rr10_fermented_not_currency.py`
+   - Check: `python -m unittest tests.test_rr10_fermented_not_currency` passes: with one fermented nectar cell and one fresh one, a skill whose nectar price exceeds the fresh stock alone is refused and leaves both cells unchanged, and one priced within the fresh stock is bought, spends only fresh nectar and leaves the fermented cell's amount unchanged; `python -m unittest tests.test_bb3_bee_bread_currency tests.test_nf4_fermentation_sense` still passes.
+   - Proof: `absent: scripts/skill_tree_panel.gd :: is_fermented`
+   - Next after: RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning
 
 ## Not in the queue, and why
 
