@@ -1,7 +1,7 @@
 # Guidance explanations -- turn colony facts into a causal player answer
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: GD-3 -- Dr Gallerin also explains hungry brood and starving bees (GD-2a landed 10 Oct 2026; GD-2b landed 14 Oct 2026; hands-on check C-122) | Dependency: GD-1 to GD-2b landed; GD-3 shares no file with the Claude lane | Verified: 2026-10-15
+Status: complete | Owner: Dave / Codex | Next: Dave's GD-3 hands-on wording check (GD-2a landed 10 Oct 2026; GD-2b landed 14 Oct 2026; GD-3 implemented 16 Oct 2026; hands-on check C-122) | Dependency: GD-1 to GD-2b landed; GD-3 shared no file with the Claude lane | Verified: 2026-10-16
 
 ## Objective
 
@@ -11,12 +11,13 @@ or prescribing a single colony organisation.
 
 ## Current state
 
-**Status:** GD-2a's two workforce explanations and the Why list ship, and
-GD-2b's rendered ledger and bounded Why history save and restore with the
-run (an older save begins with neither). `guidance_catalogue.gd::supported_ids`
-names only `missing_nurse_workforce` and `missing_comb_workforce`.
+**Status:** GD-2a's two workforce explanations and the Why list ship, GD-2b's
+rendered ledger and bounded Why history save and restore with the run (an
+older save begins with neither), and GD-3 adds hungry-brood and starving-bee
+explanations. `guidance_catalogue.gd::supported_ids` puts both workforce
+entries before `hungry_brood` and `starving`.
 
-**Next:** GD-3, below.
+**Next:** Dave's GD-3 hands-on wording check; no further implementation slice is planned.
 
 ## GD-1 decision record -- accepted
 
@@ -78,47 +79,7 @@ GD-1 shipped 2026-10-09 and GD-2a shipped 2026-10-10.
 
 GD-2b shipped 2026-10-14; its specification is `plans/archive/GD-2b_2026-10-14.md`.
 
-## GD-3 -- hungry brood and starving bees explained
-
-<!-- LAYER: immediate-task -->
-
-Level: medium
-
-**When done.** `guidance_catalogue.gd` gains two entries, `hungry_brood` and
-`starving`, after the two workforce entries in `supported_ids()` (so a
-workforce explanation, which names a cause, is always offered first). Each is
-written in Dr Gallerin's voice like the two beside it: the evidence line (how
-many brood cells are unfed, how many bees are starving, from the fact
-snapshot), the cause as far as the counter shows it, the likely consequence,
-and two conditional responses that name their trade-off and prescribe no
-single colony layout. `explanation()` and `current_state()` handle the new
-ids (their `else` branches today assume the comb-worker entry, so change
-them to a lookup per id). `guidance_policy.gd`, `gallerin_panel.gd`, the
-save files and `colony_diagnostics.gd` do not change: the ledger already
-saves by id.
-
-**Test.** `tests/test_gd3_guidance_hunger.py`, in the style of
-`tests/test_gd2a_guidance.py`: each new fact alone is offered with evidence
-containing its count and with the two responses; with a workforce fact also
-active the workforce explanation comes first; after both are rendered the Why
-list holds them with their recorded evidence and a "cleared" current state
-once the fact returns to 0. The test also records, from a short headless
-Colony Run of the alpha scenario, the day each of the two facts first
-exceeds 0, in this section, so Dave sees whether either would start on day 1.
-
-**Hands-on (Dave).** Let brood go unfed and read Dr Gallerin's line; let a
-bee run out of energy and read hers; open Why and see both listed. File this
-as one check for the wording only: it is rewritten in one file if it reads
-wrongly.
-
-```queue
-**[Codex] GD-3 -- Dr Gallerin explains hungry brood and starving bees**
-- Plan: `plans/now/guidance-explanations.md` -- "GD-3 -- hungry brood and starving bees explained"
-- Files: `scripts/guidance_catalogue.gd`, `tests/test_gd3_guidance_hunger.py`
-- Check: `python -m unittest tests.test_gd3_guidance_hunger` passes (hungry brood and starving bees each start one explanation with their evidence and two conditional responses; a workforce explanation is offered before either; both reopen in Why with recorded evidence and a "cleared" current state); the day each fact first exceeds 0 in the alpha scenario is recorded in this section; `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/guidance_catalogue.gd :: hungry_brood`
-- Next after: none -- guidance explanations are complete
-```
+GD-3 shipped 2026-10-16; its specification is `plans/archive/GD-3_2026-10-16.md`.
 
 ## Not in the queue, and why
 
