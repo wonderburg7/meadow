@@ -48,5 +48,32 @@ class StopLedgerReportTest(unittest.TestCase):
         self.assertNotIn("open worktree", ranking)
 
 
+    def test_days_keeps_only_stops_inside_the_window(self):
+        from datetime import datetime, timedelta
+        recent = (datetime.now() - timedelta(days=1)).isoformat(timespec="seconds")
+        old = (datetime.now() - timedelta(days=30)).isoformat(timespec="seconds")
+        records = [
+            {"at": recent, "command": "finish", "step": "verify", "cause": "tests failed"},
+            {"at": old, "command": "finish", "step": "verify", "cause": "tests failed"},
+            {"at": old, "command": "start", "step": "", "cause": "lifecycle is busy"},
+        ]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            ledger = Path(temp_dir) / "meadow-slice-stops.jsonl"
+            ledger.write_text("\n".join(json.dumps(r) for r in records) + "\n", encoding="utf-8")
+            reports = []
+            for days in (7, None):
+                output = io.StringIO()
+                with mock.patch.object(session_cost, "_stops_ledger_path", return_value=ledger):
+                    with contextlib.redirect_stdout(output):
+                        session_cost.run_stops(days)
+                reports.append(output.getvalue())
+
+        self.assertIn("window                       last 7 days", reports[0])
+        self.assertIn("stops recorded               1", reports[0])
+        self.assertIn("preflight refusals           0", reports[0])
+        self.assertNotIn("window", reports[1])
+        self.assertIn("stops recorded               3", reports[1])
+
+
 if __name__ == "__main__":
     unittest.main()

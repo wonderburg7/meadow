@@ -866,13 +866,17 @@ def _stops_ledger_path():
     return common / "meadow-slice-stops.jsonl"
 
 
-def run_stops():
+def run_stops(days=None):
     """Tally tools/slice.ps1's recorded stops by the step that raised them.
 
     `--classify` counts lifecycle_failure outcomes but cannot say which phase
     produced them, so the fix was always chosen by anecdote. This names the
     step, which is what decides whether automating a gate is worth it.
+    `days` (an explicit `--days`) keeps only stops recorded in that window;
+    without it the whole ledger is read, as before. The agent-workflow review
+    compares one window with the last, and wrote its own filter each time.
     """
+    since = (datetime.now() - timedelta(days=days)).isoformat(timespec="seconds") if days else None
     path = _stops_ledger_path()
     if path is None or not path.exists():
         print("no stop ledger yet -- tools/slice.ps1 writes one the next time a command stops")
@@ -903,6 +907,8 @@ def run_stops():
             record = json.loads(line)
         except Exception:
             continue
+        if since and str(record.get("at") or "") < since:
+            continue
         total += 1
         by_command[record.get("command") or "?"] += 1
         step = record.get("step")
@@ -913,6 +919,8 @@ def run_stops():
             preflight_total += 1
             preflight_by_cause[record.get("cause") or "?"] += 1
 
+    if since:
+        print(f"window                       last {days} days (since {since})")
     print(f"stops recorded               {total}")
     print(f"stops in steps               {step_total}")
     print(f"preflight refusals           {preflight_total}")
@@ -929,7 +937,7 @@ def run_stops():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--days", type=int, default=7)
+    parser.add_argument("--days", type=int, default=None, help="window in days (default 7; --stops reads the whole ledger unless given)")
     parser.add_argument("--classify", action="store_true")
     parser.add_argument("--phases", action="store_true")
     parser.add_argument("--no-edit-reasons", action="store_true")
@@ -951,6 +959,9 @@ def main():
         help="print a warning when SESSION's model does not suit plan LEVEL (slice.ps1 start)",
     )
     args = parser.parse_args()
+    stops_days = args.days
+    if args.days is None:
+        args.days = 7
 
     if args.model_check:
         line = model_check(*args.model_check)
@@ -961,7 +972,7 @@ def main():
     # The stop ledger is repository state, not session transcripts, so it is
     # readable even when no session directory exists.
     if args.stops:
-        run_stops()
+        run_stops(stops_days)
         return 0
 
     # --events reads the diagnostic event log, likewise not the transcripts.
