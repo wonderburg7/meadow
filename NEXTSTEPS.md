@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] PP-8 -- the C-129 watch run plays at real time**
-   - Plan: `plans/now/pollination.md` -- "PP-8 -- the C-129 watch run plays at real time"
-   - Files: `test_scenarios/pp2_points_watch.json`, `tests/test_pp8_watch_pacing.py`
-   - Check: `python -m unittest tests.test_pp8_watch_pacing tests.test_pp7_recorded_actions` passes: `pp2_points_watch.json` has `"time_scale": 1`, still has no purchase and still stops on days; and the measured run (this section) shows its simulated seconds within 10 % of wall time, recorded here with the first point's simulated second.
-   - Proof: `absent: test_scenarios/pp2_points_watch.json :: time_scale`
-   - Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
-
-2. **[Claude] RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation)**
+1. **[Claude] RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word (investigation)**
    - Plan: `plans/now/run-repairs.md` -- "RR-7 -- why Silkscreen at text scale 2 still splits a menu hexagon's word"
    - Files: `tests/rr7_silkscreen_fit_test.gd`, `tests/test_rr7_silkscreen_fit.py`, `plans/now/run-repairs.md`
    - Check: `python -m unittest tests.test_rr7_silkscreen_fit` runs and prints, for the Challenge 1 hexagon's title in Silkscreen at text scale 2, the hexagon's available size, the size `hex_fit_size` returns, whether `hex_text_fits` holds at that size, and the line count the Label itself lays out at it; the answer line and the fix slice it implies are written into this section.
    - Proof: `present: scripts/main_menu.gd :: static func hex_fit_size(`
    - Next after: RR-8 -- the fix RR-7's answer names, which RR-7 specifies in this section; TS-1 (`plans/now/typeface-size.md`) waits for it
 
-3. **[Claude] T2-11 -- why comb workers build comb unevenly (investigation)**
+2. **[Claude] T2-11 -- why comb workers build comb unevenly (investigation)**
    - Plan: `plans/now/tier-two.md` -- "T2-11 -- why comb workers build comb unevenly (investigation)"
    - Files: `tests/t2_11_comb_cadence_test.gd`, `tests/test_t2_11_comb_cadence.py`, `plans/now/tier-two.md`
    - Check: `python -m unittest tests.test_t2_11_comb_cadence` runs and prints, for each idle spell longer than 10 game-seconds, the comb worker's mode, `idle_reason()` and which finder returned nothing; the answer and the fix slice it implies are written into this section.
