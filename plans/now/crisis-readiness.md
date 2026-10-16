@@ -1,7 +1,7 @@
 # Crisis readiness -- decide a readable first pressure event before implementing it
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: FC-2 -- implement the accepted crisis and deterministic scenario, startable since GD-2b landed (15 Oct 2026; product review, 16 Oct 2026) | Dependency: COL-8's season change and CD-2's diagnostic vocabulary landed; Dave accepted FC-1 option A; WP-2, SG-2, ED-1 and SP-8a (`plans/now/meadow-terrain.md`) wait for FC-2 to release the save files | Verified: 2026-10-15
+Status: active | Owner: Dave / Claude Code | Next: FC-2 -- implement the accepted crisis and deterministic scenario, startable since GD-2b landed (15 Oct 2026), in the Claude lane (Dave, 16 Oct 2026, product review D1) | Dependency: COL-8's season change and CD-2's diagnostic vocabulary landed; Dave accepted FC-1 option A; WP-2, SG-2 and ED-1 wait for FC-2 to release the save files, and SP-8a (`plans/now/meadow-terrain.md`) for the chain after them | Verified: 2026-10-15
 
 ## Objective
 
@@ -44,7 +44,7 @@ on the `Files:` line was clear. Recheck the line against the queue before
 starting.
 
 ```queue
-**[Codex] FC-2 -- implement the accepted crisis and deterministic scenario**
+**[Claude] FC-2 -- implement the accepted crisis and deterministic scenario**
 - Plan: `plans/now/crisis-readiness.md` -- "FC-2 -- implement the accepted crisis and deterministic scenario"
 - Files: `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `scripts/colony_diagnostics.gd`, `scripts/scenario_actions.gd`, `test_scenarios/fc2_first_crisis_prepared.json`, `test_scenarios/fc2_first_crisis_unprepared.json`, `tests/test_fc2_first_crisis.py`, `plans/now/crisis-readiness.md`
 - Check: `python tests/test_fc2_first_crisis.py` passes and traces one announced crisis, a usable warning-to-rain lead with a completed pre-rain forage response on the unprepared path, its weather/forage/store effect, and save/restore on both paths; file a played comprehension check

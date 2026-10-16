@@ -1,7 +1,7 @@
 # Difficulty -- Easy rules, a Standard baseline, and the choice at run start
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: ED-1 -- every bee has health, then ED-2 and ED-3, all gated (specified 13 Oct 2026) | Dependency: ED-1 waits for SG-3 (`plans/now/short-term-goals.md`) in Dave's order, and for FC-2 (`plans/now/crisis-readiness.md`, Codex lane) to release the save files | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: ED-1 -- every bee has health, then ED-2 and ED-3, all gated (specified 13 Oct 2026) | Dependency: ED-1 waits for SG-3 (`plans/now/short-term-goals.md`) in Dave's order, and for FC-2 (`plans/now/crisis-readiness.md`, Claude lane) to release the save files | Verified: 2026-10-12
 
 ## Objective
 
@@ -69,7 +69,7 @@ Verified 12 Oct 2026 against master `06bd26c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| ED-1 | Every bee has health; exhaustion drains it; spiders take it; rest restores it; a spent bee crawls home | `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/crab_spider.gd`, `scripts/game_config.gd`, `scripts/hud.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/ed1_exhaustion.json`, `tests/ed1_health_test.gd`, `tests/test_ed1_health.py` | no -- after SG-3, and once the Codex lane's FC-2 releases the save files | high |
+| ED-1 | Every bee has health; exhaustion drains it; spiders take it; rest restores it; a spent bee crawls home | `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/crab_spider.gd`, `scripts/game_config.gd`, `scripts/hud.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/ed1_exhaustion.json`, `tests/ed1_health_test.gd`, `tests/test_ed1_health.py` | no -- after SG-3, and once FC-2 (Claude lane) releases the save files | high |
 | ED-2 | A run's difficulty, and Easy's rules: health floors at one, the queen cannot die, brood waits, winter spares | `scripts/session.gd`, `scripts/bee_survival.gd`, `scripts/bee_nursery.gd`, `scripts/season.gd`, `scripts/crab_spider.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed2_easy_rules_test.gd`, `tests/test_ed2_easy_rules.py` | no -- after ED-1 | high |
 | ED-3 | Choosing Easy: the Colony Run tile, Relaxed and Custom, and the Saves window | `scripts/main_menu.gd`, `scripts/scenario_presets.gd`, `scripts/main.gd`, `scripts/levels.gd`, `scripts/saves_panel.gd`, `tests/test_ed3_difficulty_choice.py` | no -- after ED-2 | medium |
 

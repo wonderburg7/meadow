@@ -49,7 +49,7 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after FR-2 (`plans/now/forager-recruitment.md`) puts Auto scouting on the route; PP-5 landed 13 Oct 2026 | medium |
+| PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after FR-2 (`plans/now/forager-recruitment.md`) puts Auto scouting on the route, and AR-5 (`plans/now/alpha-route-evidence.md`) gives the reference player an early-laying queen; PP-5 landed 13 Oct 2026 | medium |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
 once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
@@ -84,7 +84,7 @@ PP-8 shipped 2026-10-16; its specification is `plans/archive/PP-8_2026-10-16.md`
 
 <!-- LAYER: design -->
 
-Its block is gated: it waits for FR-2 (`plans/now/forager-recruitment.md`), which puts Auto scouting on the route (Dave, 14 Oct 2026). PP-5 landed 13 Oct 2026 (PP-1 to PP-4 and T2-7 landed 11-12 Oct 2026). Intent (Dave, 10 Oct
+Its block is gated: it waits for FR-2 (`plans/now/forager-recruitment.md`), which puts Auto scouting on the route (Dave, 14 Oct 2026), and for AR-5 (`plans/now/alpha-route-evidence.md`), whose reference queen lays from her first free cell instead of day 17, so this sweep prices for a colony that grows (Dave, 16 Oct 2026, product review D2). PP-5 landed 13 Oct 2026 (PP-1 to PP-4 and T2-7 landed 11-12 Oct 2026). Intent (Dave, 10 Oct
 2026): a reasonably played Colony Run first affords Gyne rearing after the
 first winter. The reference player in `alpha_arc_test.json` buys along the
 route; `pacing_gates.py` reports the day Gyne rearing becomes affordable;
@@ -127,4 +127,4 @@ Decisions (Dave, 14 Oct 2026):
 
 ## Not in the queue, and why
 
-- Nothing: PP-6, the plan's last slice, is startable since PP-5 landed (13 Oct 2026), and its sweep settles the final numbers.
+- **PP-6** waits for FR-2 (`plans/now/forager-recruitment.md`) and AR-5 (`plans/now/alpha-route-evidence.md`); PP-5 landed 13 Oct 2026.

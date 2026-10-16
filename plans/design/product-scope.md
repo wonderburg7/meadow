@@ -73,6 +73,16 @@ reaches for them without being told to.
 | About 60 minutes | The colony enters and survives its first winter. |
 | About 90 minutes | After emerging from winter, the colony raises and releases gynes, reaches formal victory and may continue. |
 
+**How the gates are judged (Dave, 14 and 16 Oct 2026).** The headless
+pacing report (`tools/pacing_gates.py`) judges every timed gate on the run's
+calendar, not on minutes converted at 1x: the first worker by day 3; first
+automation on days 5 to 8 (the first tier-2 purchase lands around day 5,
+and Automation needs two other tier-2 nodes); winter survival on the run's
+winter schedule; the first gyne inside the second summer's mating window.
+The minutes above stay the experience budget a played run is checked
+against (C-139 for the first worker). Built by AR-5 and AR-4
+(`plans/now/alpha-route-evidence.md`).
+
 The 20-minute crisis uses the bounded readiness gate accepted for FC-1 in
 `plans/now/crisis-readiness.md`: early automation, an able forager and food
 cover may bring forward one announced heavy-rain episode inside a measured
