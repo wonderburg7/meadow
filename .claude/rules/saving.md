@@ -25,6 +25,14 @@ how an old save behaved, with no `FORMAT_VERSION` bump and no migration, as
 CR-1's `starting_level` and BS-14's `skill_policy` did. Bump and add a
 `_migrate_N_to_N+1` step only when a field's meaning or shape changes.
 
+**A loaded run keeps its readout history** (Dave, 16 Oct 2026, UI review D1).
+`history_samples`, `emergence_log`, `day_store_totals` and the foraging
+counters in `foraging_stats.gd` are saved under one additive `readout_history`
+key, so the colony graphs, the nursery's recent-emergence figures, the
+net-income condition and the foraging window continue across a load. An old
+save has no key and starts them empty, as before (slice RR-12 in
+`plans/now/run-repairs.md`; it lands after the alpha chain releases the save files).
+
 **A checkpoint restore is exact** (Dave, 7 Oct 2026, save review). An
 in-place `_restore` (Challenge 2's rollback, the `restore_slot` scenario
 action) must leave the world as the checkpoint recorded it, soil included,
