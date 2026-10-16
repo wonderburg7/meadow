@@ -816,3 +816,27 @@ explicit request from Dave.
 - Disposition: confirmed by the agent-workflow review, 16 Oct 2026 (finding F7): 10 of the 15
   blocked checks name only archived unblockers. Waiting on Dave's answer to
   its question D1, which decides who moves them.
+
+### 2026-10-16 — no colony size or frame budget to judge performance against (from the performance review)
+
+- Source: performance review, 16 Oct 2026 (`docs/performance-review-2026-10-16.md`, hand-off to the product review)
+- Area: product scope / performance budgets
+- Signal: the performance review's steps ask for cost "at the target
+  population (from `ROADMAP.md` or the pacing targets; do not invent
+  one)", and none exists. `ROADMAP.md` names no colony size;
+  `plans/design/product-scope.md` lists "performance budgets" for the
+  closed alpha and "Record pacing, balance and performance baselines" in
+  its stage 0 diagram without a number. Measured 16 Oct: 17.4 ms a frame
+  at 500 bees, 32.1 ms at 1,000 (headless), so whether today's cost is a
+  problem depends entirely on the answer.
+- Evidence: `git show HEAD:ROADMAP.md | grep -n -i bees` (nothing);
+  `grep -n -i "performance budget" plans/design/product-scope.md`;
+  `docs/performance.md`, "Canvas cost by colony size".
+- Consequence: every performance review and the sprite/batching decision
+  (`docs/performance.md`) has to rank work without knowing what "fast
+  enough" means at the colony size the 90-minute route reaches.
+- Candidate direction: Hypothesis -- the product review asks Dave for the
+  largest colony the 90-minute route should hold at 60 fps (or records the
+  peak population a Colony Run reaches), written once in
+  `plans/design/product-scope.md`.
+- Disposition: untriaged
