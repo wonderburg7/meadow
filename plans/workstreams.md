@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PP-8` (`claude/PP-8`) | Claude | the C-129 watch run plays at real time | Claude | in progress | none | `plans/now/pollination.md` PP-8 -- the C-129 watch run plays at real time |
+| `.worktrees/GD-3` (`codex/GD-3`) | Codex | Dr Gallerin explains hungry brood and starving bees | Codex | in progress | none | `plans/now/guidance-explanations.md` GD-3 -- hungry brood and starving bees explained |
