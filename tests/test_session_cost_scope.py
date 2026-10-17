@@ -143,6 +143,11 @@ class ScriptedEditTest(unittest.TestCase):
             _tool("Bash", command=f"cp /tmp/n.py {wt}"), None))
         self.assertFalse(session_cost._product_edit(
             _tool("Write", file_path="/tmp/s/e.py", content="print('hi')"), None))
+        # A note that merely cites a worktree product path is not an edit.
+        self.assertFalse(session_cost._product_edit(
+            _tool("Write", file_path="/tmp/s/note.md", content=f"Please write up {wt}"), None))
+        self.assertFalse(session_cost._product_edit(
+            _tool("Write", file_path="/tmp/s/e.py", content=f"print('{wt}')"), None))
         self.assertFalse(session_cost._product_edit(
             _tool("Bash", command=f"cat {wt}"), None))
 

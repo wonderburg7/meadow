@@ -119,14 +119,24 @@ _WORKTREE_PRODUCT_PATH = re.compile(
 )
 
 
+_SCRIPT_SUFFIXES = (".py", ".sh", ".ps1")
+_WRITES_FILE = re.compile(r"write|open\(|sed -i|\bcp\b|Set-Content|shutil", re.IGNORECASE)
+
+
 def _scripted_product_edit(block):
     """True for a scratchpad edit script or a sed -i / cp command aimed at a
     product path inside a slice worktree."""
     inp = block.get("input", {}) or {}
     name = block.get("name")
     if name in ("Write", "Edit"):
+        # Judge the file written: only a script (not a note or doc) that names
+        # a worktree product path and performs a write is an edit script.
+        target = str(inp.get("file_path") or "").lower()
         text = inp.get("content") or inp.get("new_string") or ""
-        return isinstance(text, str) and bool(_WORKTREE_PRODUCT_PATH.search(text.replace("\\", "/")))
+        if not target.endswith(_SCRIPT_SUFFIXES) or not isinstance(text, str):
+            return False
+        text = text.replace("\\", "/")
+        return bool(_WORKTREE_PRODUCT_PATH.search(text) and _WRITES_FILE.search(text))
     if name == "Bash":
         command = inp.get("command") or ""
         if not isinstance(command, str):
