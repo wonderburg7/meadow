@@ -109,6 +109,44 @@ class SessionCostScopeTest(unittest.TestCase):
         self.assertIn("verify skips                 lifecycle tests=1", text)
 
 
+def _tool(name, **inp):
+    return {"type": "tool_use", "name": name, "input": inp}
+
+
+class ScriptedEditTest(unittest.TestCase):
+    """L-29: subagent transcripts and scripted edits count."""
+
+    def test_subagent_file_is_counted_and_worker_share_printed(self):
+        with tempfile.TemporaryDirectory() as temp:
+            home = Path(temp)
+            top = home / SLUG / "S1.jsonl"
+            rows = [_user("go")] + [_assistant("m")] * 3
+            _write(top, rows)
+            sub = home / SLUG / "S1" / "subagents" / "agent-1.jsonl"
+            _write(sub, rows)
+            sub.with_name("agent-1.meta.json").write_text('{"agentType": "slice-worker-medium"}', encoding="utf-8")
+            files, _, _ = session_cost._transcript_files(7, home)
+            subs = session_cost._subagent_transcripts(files)
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                session_cost.run_phases(files, subs)
+        self.assertEqual(subs, [sub])
+        self.assertIn("slice workers (subagents named slice-worker-*): 3 = 50.0% of all context", out.getvalue())
+
+    def test_scripted_forms_count_and_plain_script_does_not(self):
+        wt = "C:/x/meadow/.worktrees/L-29/tools/session_cost.py"
+        self.assertTrue(session_cost._product_edit(
+            _tool("Write", file_path="/tmp/s/e.py", content=f"open('{wt}')"), None))
+        self.assertTrue(session_cost._product_edit(
+            _tool("Bash", command=f"sed -i 's/a/b/' {wt}"), None))
+        self.assertTrue(session_cost._product_edit(
+            _tool("Bash", command=f"cp /tmp/n.py {wt}"), None))
+        self.assertFalse(session_cost._product_edit(
+            _tool("Write", file_path="/tmp/s/e.py", content="print('hi')"), None))
+        self.assertFalse(session_cost._product_edit(
+            _tool("Bash", command=f"cat {wt}"), None))
+
+
 class WorkerAgentModelTest(unittest.TestCase):
     """Each slice-worker agent's pinned model is one its level allows, so the
     drift report never flags the routing it was built from (8 Oct 2026)."""
