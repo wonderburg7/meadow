@@ -37,7 +37,6 @@ Verified 16 Oct 2026 against master `12c1393` by the performance review
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HP-1 | a searching forager looks for flowers on her think tick | `scripts/bee_foraging.gd`, `test_scenarios/hp1_forager_search_perf.json`, `docs/PERFORMANCE_BASELINE.md` | yes | medium |
 | HP-2 | idle nurses, comb workers and honey makers look for work on the think tick | `scripts/bee.gd`, `test_scenarios/hp2_idle_nurses_perf.json`, `docs/PERFORMANCE_BASELINE.md` | yes | medium |
 | HP-3 | the bee label refreshes on the think tick, if it measures worth it | `scripts/bee.gd`, `test_scenarios/hp2_idle_nurses_perf.json`, `docs/PERFORMANCE_BASELINE.md` | yes | low |
 
@@ -47,65 +46,7 @@ reads its own section only. **Do not change** in any of them: `MINE_IDLE`'s
 `_miner_dispatch_due` cadence, the think-tick jitter in `bee.gd::_process`,
 or anything in `docs/performance.md` "Explicitly do not change".
 
-## HP-1 -- a searching forager looks for flowers on her think tick
-
-**True now.** `bee_foraging.gd::search_for_flower` calls
-`_perceive_flower(bee)` on every frame of SEARCHING, before the spiral and
-the movement. A searching bee has by definition found nothing, so most
-calls run both the strict and the relaxed grid pass.
-
-**True afterwards.** Only that perception block is gated:
-
-```gdscript
-	if bee.thinking:
-		var best := _perceive_flower(bee)
-		if best != null:
-			_commit_to_flower(bee, best)
-			return
-```
-
-and the later `best = nearest_flower(...)` line in the give-up branch
-declares its own `var best`. The indoors walk-out, the grounded check, the
-spiral radius and give-up branch, and `BeeMovement.move_towards` stay
-per-frame. The function's doc comment says she re-checks "on each think
-tick (`bee.gd::THINKS_PER_SECOND`, 8 a second)" instead of "each frame".
-`bee.thinking` is set at the top of `bee.gd::_process` before the state
-`match`, so it is current here. At `GameConfig.bee_speed` 110 px/s a bee
-moves about 14 px between ticks against a 320 px perception radius.
-
-**Invariants.** `seek_flower`, `nearest_flower`, the grid and every accept
-rule are unchanged. No random call is added. Expected and accepted:
-`tarsal_rejections` (counted per perception call) falls when tarsal markers
-are on, and with weighted choice on the random sequence shifts, so a
-single run no longer matches master trajectory for trajectory.
-
-**Check, in this order.** (1) Before editing, create
-`test_scenarios/hp1_forager_search_perf.json` as a copy of
-`recommendation_slice0_baseline.json` whose `sections` are
-`frame_time_ms`, `bee_state_forager`, `bee_search`, and run it twice with
-`--fixed-fps 60 --report brief`; after the edit run it twice more.
-`bee_search` mean must fall by at least half; record the four rows in a new
-`docs/PERFORMANCE_BASELINE.md` section "HP-1 measurement". (2) Run
-`python tools/run_scenario.py test_scenarios/foraging_features_off_seed12345_test.json --seeds 12345,2026,555 --report brief`
-before and after: the three-seed mean of `forager_deliveries` and of
-`flower_visits` each stays within 10% of before; record them too.
-(3) If FR-1 has landed (its table is in `plans/now/forager-recruitment.md`'s
-FR-1 section or its archive), run `python tools/forager_stages.py`: the
-stage order must be unchanged. (4) `.\tools\verify.ps1` is green. Discard a
-run whose output says `godot cache: seeded from the primary`, and rerun.
-
-**Escalate** if `search_for_flower` is called from anywhere but the
-SEARCHING arm of `bee.gd::_process`, if step 1 falls short, or if step 2
-or 3 moves outside its bound.
-
-```queue
-**[Claude] HP-1 -- a searching forager looks for flowers on her think tick**
-- Plan: `plans/now/hot-path-cadence.md` -- "HP-1 -- a searching forager looks for flowers on her think tick"
-- Files: `scripts/bee_foraging.gd`, `test_scenarios/hp1_forager_search_perf.json`, `docs/PERFORMANCE_BASELINE.md`, `plans/now/hot-path-cadence.md`
-- Check: `bee_search` mean in `test_scenarios/hp1_forager_search_perf.json` (`--fixed-fps 60`, two runs each side) falls by at least half; the three-seed means of `forager_deliveries` and `flower_visits` in `foraging_features_off_seed12345_test.json` (`--seeds 12345,2026,555`) stay within 10% of before; both recorded in `docs/PERFORMANCE_BASELINE.md`; FR-1's stage order unchanged if FR-1 has landed; `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/bee_foraging.gd :: bee.thinking`
-- Next after: HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick
-```
+HP-1 shipped 2026-10-17; its specification is `plans/archive/HP-1_2026-10-17.md`.
 
 ## HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick
 
