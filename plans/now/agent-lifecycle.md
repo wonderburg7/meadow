@@ -50,7 +50,6 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-27 | A resumed `finish` re-verifies a branch that gained code commits | `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | medium |
 | L-28 | Archiving a slice leaves another slice's queue block in the plan | `tools/archive_slice.py`, `tests/test_slice_lifecycle.py` | medium |
 | L-29 | `session_cost.py` counts subagent transcripts and scripted edits | `tools/session_cost.py`, `tests/test_session_cost_scope.py` | medium |
 | L-30 | Released work is visible: finish shows doc warnings, and a blocked check whose unblockers landed is named | `tools/verify.ps1`, `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py` | medium |
@@ -62,58 +61,7 @@ agent-workflow review measured the mechanisms behind L-27, L-28 and L-29. L-27 a
 test file, so L-28 follows L-27. Each slice's acceptance names a
 before-figure from that review and one real canary closeout.
 
-## L-27 -- a resumed finish re-verifies a branch that gained commits
-
-<!-- LAYER: immediate-task -->
-
-Level: medium. **Now:** `Write-ClosingJournal` (`tools/slice.ps1`) writes
-`{id, branch, lane, phase}`. `Test-BranchVerified` returns true as soon as
-the journal's phase is `verified` or later, before it reads the
-`meadow-slice-verified.json` record that 4499fb6 (12 Oct 2026) tied to
-HEAD. A finish that stops after its branch verify (at the refill gate, at
-primary verification: 7 primary stops from 5 to 16 Oct) keeps that journal,
-so a fix committed on the branch, or master merged into it, lands with
-"already passed this closeout; skipping" (T2-4a, 9 Oct, twice).
-
-**After:**
-
-- `Write-ClosingJournal` also writes `head`: the worktree's
-  `git rev-parse HEAD` at the moment it writes (after finish's own commit for
-  that phase, if any). The `merged` and `queue-reapplying` writes, made in
-  the primary checkout, record it the same way; nothing reads it there.
-- New `function Test-JournalVerifiedHead` (params `$Journal`,
-  `$WorktreeRoot`) returns true only when the journal has a `head` and either
-  it equals the worktree's HEAD, or `git diff --name-only <head> HEAD` lists
-  only `*.md` paths (a queue or plan fix after a refill refusal, which
-  `refill_lane.py` has already run `check_docs` over).
-- `Test-BranchVerified`: a journal phase at `verified` or later counts only
-  when `Test-JournalVerifiedHead` is true; otherwise it falls through to the
-  record check as now. A journal written before this slice (no `head`)
-  therefore costs one extra verify, once.
-
-**Must not change:** `$script:ClosingPhaseOrder`, the journal's path, the
-record's format, and the skipping of every phase after `verified` on resume
-(archive and refill must never run twice). No new stop.
-
-**Tests** in `tests/test_slice_lifecycle.py`, using the fixture's existing
-`Invoke-InjectedLifecycleFailure` phases to stop a finish after `verified`:
-(1) then commit a change to a non-Markdown file on the branch and rerun
-`finish`: verify runs again; (2) the same with only a `.md` change: verify
-is skipped; (3) a journal without `head`: verify runs.
-
-**Acceptance:** the next real finish that is retried after a branch commit
-prints a verify run, not "already passed this closeout; skipping" (before:
-T2-4a skipped twice on 9 Oct). Stop and return `blocked` if the fixture
-cannot stop a finish after `verified` without a new injection point.
-
-```queue
-**[Claude] L-27 -- a resumed finish re-verifies a branch that gained commits**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-27 -- a resumed finish re-verifies a branch that gained commits"
-- Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
-- Check: `python -m unittest tests.test_slice_lifecycle` passes, including the three resume cases (code commit re-verifies, Markdown-only commit skips, a journal without head re-verifies); `.\tools\verify.ps1` is green
-- Proof: `absent: tools/slice.ps1 :: function Test-JournalVerifiedHead`
-- Next after: L-28 -- archiving a slice leaves another slice's queue block in the plan
-```
+L-27 shipped 2026-10-17; its specification is `plans/archive/L-27_2026-10-17.md`.
 
 ## L-28 -- archiving a slice leaves another slice's queue block in the plan
 
