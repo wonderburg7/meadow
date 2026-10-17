@@ -1,7 +1,7 @@
 # Crisis readiness -- decide a readable first pressure event before implementing it
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: FC-2 -- implement the accepted crisis and deterministic scenario, startable since GD-2b landed (15 Oct 2026), in the Claude lane (Dave, 16 Oct 2026, product review D1) | Dependency: COL-8's season change and CD-2's diagnostic vocabulary landed; Dave accepted FC-1 option A; WP-2, SG-2 and ED-1 wait for FC-2 to release the save files, and SP-8a (`plans/now/meadow-terrain.md`) for the chain after them | Verified: 2026-10-15
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete; the one follow-up is the played comprehension check C-140 (`checks/ready/C-140.md`, runner Dave), whose failure reopens FC-2's warning, corner line or Why? entry | Dependency: COL-8's season change and CD-2's diagnostic vocabulary landed; Dave accepted FC-1 option A; FC-2's merge releases the save files to WP-2, SG-2 and ED-1, and SP-8a (`plans/now/meadow-terrain.md`) for the chain after them | Verified: 2026-10-17
 
 ## Objective
 
@@ -43,6 +43,15 @@ integrated it on 15 Oct 2026 (plan review D1), and on 16 Oct 2026 every file
 on the `Files:` line was clear. Recheck the line against the queue before
 starting.
 
+**Decisions (Dave, 17 Oct 2026).** (1) The persistent explanation is an
+entry in Dr Gallerin's "Why is this happening?" list, so FC-2 also owns
+`scripts/guidance_catalogue.gd`: `ColonyDiagnostics.compute` states the
+crisis-rain facts and the catalogue's `first_crisis_rain` entry words them.
+(2) The window, the warning lead and the readiness tick are GameConfig
+balance values (`first_crisis_window_open`, `first_crisis_window_close`,
+`first_crisis_warning_lead`, `first_crisis_check_seconds`) rather than
+`main.gd` constants, so FC-2 also owns `scripts/game_config.gd`.
+
 **Built and measured (17 Oct 2026, `claude/FC-2`).** `main.gd`'s
 `_advance_first_crisis`, called from `_advance_weather`, runs only in a Colony
 Run with weather on. The window is 1080-1500 s of run time with the 1200 s
@@ -64,12 +73,17 @@ both paths, forage income stopped from peak to end, and the colony's stores
 plus the bees' own energy fell through the 130 s of rain. Foragers flew again
 in the recovery. Restoring the save taken at the warning, and then the one
 taken during the rain, put each state and its times back without a second
-warning.
+warning. While the rain fell, the Why? list held "Heavy rain keeping foragers
+in". It gives the rain's intensity, the foragers kept in by it and those too
+low on energy to fly at all. It explains the cause (watered-down nectar, soaked
+wings, foragers staying in) and the fall in stores, then offers two responses.
+The entry left the list's "Now" items once the rain had passed. The played
+comprehension check is C-140.
 
 ```queue
 **[Claude] FC-2 -- implement the accepted crisis and deterministic scenario**
 - Plan: `plans/now/crisis-readiness.md` -- "FC-2 -- implement the accepted crisis and deterministic scenario"
-- Files: `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `scripts/colony_diagnostics.gd`, `scripts/scenario_actions.gd`, `test_scenarios/fc2_first_crisis_prepared.json`, `test_scenarios/fc2_first_crisis_unprepared.json`, `tests/test_fc2_first_crisis.py`, `plans/now/crisis-readiness.md`
+- Files: `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `scripts/colony_diagnostics.gd`, `scripts/game_config.gd`, `scripts/guidance_catalogue.gd`, `scripts/scenario_actions.gd`, `test_scenarios/fc2_first_crisis_prepared.json`, `test_scenarios/fc2_first_crisis_unprepared.json`, `tests/test_fc2_first_crisis.py`, `plans/now/crisis-readiness.md`
 - Check: `python tests/test_fc2_first_crisis.py` passes and traces one announced crisis, a usable warning-to-rain lead with a completed pre-rain forage response on the unprepared path, its weather/forage/store effect, and save/restore on both paths; file a played comprehension check
 - Proof: `present: scripts/main.gd :: func _advance_weather`
 - Next after: none -- crisis readiness is complete
@@ -77,4 +91,4 @@ warning.
 
 ## Not in the queue, and why
 
-- Nothing: FC-2 is startable. GD-2b landed 15 Oct 2026 and released `scripts/save_game.gd` and `scripts/saving.gd`, the last of its files; the product review of 16 Oct 2026 opened its fence after `tools/slice.ps1 owner` reported every file on its `Files:` line clear.
+- Nothing: FC-2 was the plan's last slice; it was startable. GD-2b landed 15 Oct 2026 and released `scripts/save_game.gd` and `scripts/saving.gd`, the last of its files; the product review of 16 Oct 2026 opened its fence after `tools/slice.ps1 owner` reported every file on its `Files:` line clear.

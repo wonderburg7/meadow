@@ -16,7 +16,10 @@ withholds both and, at the warning, sends one worker out, whose trip must
 come home before the rain. Both save at the warning and restore that save
 once the rain has begun, then save during the rain and restore it once the
 rain is over, so the crisis record is proved to round-trip across the
-trigger: a restore that dropped it would leave the later state live.
+trigger: a restore that dropped it would leave the later state live. While
+the rain falls, the trace shows Dr Gallerin's "Why is this happening?" list
+holding the crisis entry (guidance_catalogue.gd's first_crisis_rain) and its
+text. The window, lead and readiness tick are GameConfig's (Dave, 17 Oct 2026).
 
 What the traces show is that the cause and a response are available to a
 player in time; whether a player understands them is the played check filed
@@ -43,6 +46,7 @@ UNPREPARED = ROOT / "test_scenarios" / "fc2_first_crisis_unprepared.json"
 MAIN = ROOT / "scripts" / "main.gd"
 SAVE_GAME = ROOT / "scripts" / "save_game.gd"
 SAVING = ROOT / "scripts" / "saving.gd"
+GAME_CONFIG = ROOT / "scripts" / "game_config.gd"
 # GameConfig's defaults, which neither fixture overrides.
 RAIN_FORAGE_LIMIT = 0.5
 RAIN_MAX_SECONDS = 130.0
@@ -158,6 +162,21 @@ class CrisisRunChecks:
         self.assertGreaterEqual(recovery["t"] - end["t"], 120.0 - 1e-6)
         self.assertEqual(recovery["rain_target"], 0.0)
 
+    def test_why_explains_the_rain_while_it_falls(self):
+        trace = self.trace()
+        peak, recovery = _last(trace, "peak"), _last(trace, "recovery")
+        # The "Why is this happening?" list holds the crisis entry while the
+        # rain falls, and drops it from "Now" once the rain has passed.
+        self.assertIn("first_crisis_rain", peak["why_now"])
+        self.assertNotIn("first_crisis_rain", recovery["why_now"])
+        text = peak["why_text"]
+        self.assertIn("Rain at 100% intensity.", text)
+        self.assertIn("Foragers kept in by it: %d." % peak["readiness"]["able_foragers"], text)
+        self.assertIn("Too low on energy to fly at all: %d." % peak["readiness"]["unable_foragers"], text)
+        for cause in ("waters down the nectar", "soaks the bees' wings", "foragers stay at the hive",
+                      "cannot fly for that reason", "the colony eats from its stores"):
+            self.assertIn(cause, text)
+
     def test_the_crisis_record_survives_save_and_restore(self):
         trace = self.trace()
         warning = _last(trace, "warning")
@@ -241,7 +260,17 @@ class CrisisSourceTest(unittest.TestCase):
             "_advance_first_crisis", "_warn_first_crisis", "_start_first_crisis"))
         for forbidden in ("set_cell_contents", ".energy =", "die(", "colony_lost"):
             self.assertNotIn(forbidden, crisis)
-        self.assertRegex(function_body(main, "_advance_first_crisis"), re.compile(r"FIRST_CRISIS_CHECK_SECONDS"))
+        self.assertRegex(function_body(main, "_advance_first_crisis"),
+                         re.compile(r"GameConfig\.first_crisis_check_seconds"))
+        # GameConfig owns the window, the lead and the readiness tick (Dave,
+        # 17 Oct 2026); main.gd keeps no copy of them.
+        config = GAME_CONFIG.read_text(encoding="utf-8")
+        for name, value in (("first_crisis_window_open", "1080.0"), ("first_crisis_window_close", "1500.0"),
+                            ("first_crisis_warning_lead", "120.0"), ("first_crisis_check_seconds", "1.0")):
+            self.assertIn("var %s: float = %s" % (name, value), config)
+        for stale in ("FIRST_CRISIS_WINDOW_OPEN", "FIRST_CRISIS_WINDOW_CLOSE",
+                      "FIRST_CRISIS_WARNING_LEAD", "FIRST_CRISIS_CHECK_SECONDS"):
+            self.assertNotIn(stale, main)
         self.assertIn('"first_crisis": world.first_crisis.duplicate(true)', SAVE_GAME.read_text(encoding="utf-8"))
         self.assertIn('main.restore_first_crisis(data.get("first_crisis"))',
                       function_body(SAVING.read_text(encoding="utf-8"), "_restore"))

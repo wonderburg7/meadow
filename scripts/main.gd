@@ -270,20 +270,13 @@ var rain_effect: Node2D
 ## working forager and holds food cover for the episode is warned at once and
 ## the rain follows a full lead later; one that has not qualified by the cutoff
 ## is warned there anyway and the rain starts at window close. Once warned,
-## nothing reschedules or cancels it. The window, lead and readiness inputs
-## were measured on the pinned prepared and unprepared runs
-## (test_scenarios/fc2_first_crisis_*.json, tests/test_fc2_first_crisis.py):
-## the 1200 s gate is inside it, and 120 s lets a worker reassigned at the
-## warning finish a forage round trip before the rain. The episode is the
-## longest ordinary shower (GameConfig.rain_max_seconds) at full intensity;
-## its outcome is the ordinary rain rules, never a scripted loss.
-const FIRST_CRISIS_WINDOW_OPEN := 1080.0
-const FIRST_CRISIS_WINDOW_CLOSE := 1500.0
-const FIRST_CRISIS_WARNING_LEAD := 120.0
+## nothing reschedules or cancels it. The window, the lead and the readiness
+## tick are GameConfig's (first_crisis_*), measured on the pinned prepared
+## and unprepared runs (test_scenarios/fc2_first_crisis_*.json,
+## tests/test_fc2_first_crisis.py). The episode is the longest ordinary
+## shower (GameConfig.rain_max_seconds) at full intensity; its outcome is the
+## ordinary rain rules, never a scripted loss.
 const FIRST_CRISIS_INTENSITY := 1.0
-## How often a pending crisis reads readiness inside the window -- a bounded
-## tick, not a per-bee or per-frame walk.
-const FIRST_CRISIS_CHECK_SECONDS := 1.0
 ## How long after the rain ends ordinary rain stays away, so the recovery is
 ## the episode's own and no ordinary storm runs on into it.
 const FIRST_CRISIS_RECOVERY_SECONDS := 120.0
@@ -1024,13 +1017,13 @@ func _apply_rain_overlay() -> void:
 		rain_effect.visible = showing
 
 # --- the first crisis ----------------------------------------------
-## FC-2: see FIRST_CRISIS_WINDOW_OPEN for the contract. Called from
+## FC-2: see FIRST_CRISIS_INTENSITY for the contract. Called from
 ## _advance_weather every unpaused frame; the readiness walk inside it runs
-## at most once a FIRST_CRISIS_CHECK_SECONDS, and only while pending inside
-## the window.
+## at most once every GameConfig.first_crisis_check_seconds, and only while
+## pending inside the window.
 
 static func first_crisis_cutoff() -> float:
-	return FIRST_CRISIS_WINDOW_CLOSE - FIRST_CRISIS_WARNING_LEAD
+	return GameConfig.first_crisis_window_close - GameConfig.first_crisis_warning_lead
 
 func _first_crisis_applies() -> bool:
 	return colony_milestones != null and colony_milestones.applies() and Levels.weather_enabled(Session.starting_level)
@@ -1044,7 +1037,7 @@ func _first_crisis_holds_weather() -> bool:
 		return false
 	match str(first_crisis.state):
 		"pending":
-			return Session.sim_time >= FIRST_CRISIS_WINDOW_OPEN - GameConfig.rain_max_seconds
+			return Session.sim_time >= GameConfig.first_crisis_window_open - GameConfig.rain_max_seconds
 		"warned", "active":
 			return true
 		"spent":
@@ -1061,19 +1054,19 @@ func _advance_first_crisis(delta: float) -> void:
 	var now: float = Session.sim_time
 	match str(first_crisis.state):
 		"pending":
-			if now < FIRST_CRISIS_WINDOW_OPEN:
+			if now < GameConfig.first_crisis_window_open:
 				return
 			first_crisis_check_timer -= delta
 			var at_cutoff: bool = now >= first_crisis_cutoff()
 			if first_crisis_check_timer > 0.0 and not at_cutoff:
 				return
-			first_crisis_check_timer = FIRST_CRISIS_CHECK_SECONDS
+			first_crisis_check_timer = GameConfig.first_crisis_check_seconds
 			var readiness := _first_crisis_readiness()
 			if at_cutoff:
 				# Never on the warning's own tick, even after a late load.
-				_warn_first_crisis(maxf(FIRST_CRISIS_WINDOW_CLOSE, now + 1.0), "fallback", readiness)
+				_warn_first_crisis(maxf(GameConfig.first_crisis_window_close, now + 1.0), "fallback", readiness)
 			elif bool(readiness.ready):
-				_warn_first_crisis(now + FIRST_CRISIS_WARNING_LEAD, "prepared", readiness)
+				_warn_first_crisis(now + GameConfig.first_crisis_warning_lead, "prepared", readiness)
 		"warned":
 			if now >= float(first_crisis.starts_at):
 				_start_first_crisis()
@@ -1174,8 +1167,8 @@ func _trace_first_crisis(phase: String, readiness: Dictionary = {}, extra: Dicti
 	var detail := {
 		"phase": phase, "t": Session.sim_time, "day": day,
 		"state": first_crisis.state, "path": first_crisis.path,
-		"window_open": FIRST_CRISIS_WINDOW_OPEN, "window_close": FIRST_CRISIS_WINDOW_CLOSE,
-		"warning_lead": FIRST_CRISIS_WARNING_LEAD, "cutoff": first_crisis_cutoff(),
+		"window_open": GameConfig.first_crisis_window_open, "window_close": GameConfig.first_crisis_window_close,
+		"warning_lead": GameConfig.first_crisis_warning_lead, "cutoff": first_crisis_cutoff(),
 		"warned_at": first_crisis.warned_at, "starts_at": first_crisis.starts_at,
 		"started_at": first_crisis.started_at, "ended_at": first_crisis.ended_at,
 		"rain_intensity": Session.rain_intensity, "rain_target": rain_target,
@@ -1188,6 +1181,15 @@ func _trace_first_crisis(phase: String, readiness: Dictionary = {}, extra: Dicti
 		"note": _first_crisis_note,
 		"readiness": readiness,
 	}
+	# What the "Why is this happening?" list holds now, and the crisis entry's
+	# text when it is there (gallerin_panel.gd's guidance ledger).
+	if is_instance_valid(gallerin_panel):
+		var why_now: Array = []
+		for entry in gallerin_panel.guidance_policy.current_entries():
+			why_now.append(str(entry.id))
+			if str(entry.id) == "first_crisis_rain":
+				detail["why_text"] = str(entry.text)
+		detail["why_now"] = why_now
 	detail.merge(extra)
 	DiagnosticLog.log_action("first_crisis", phase, "recorded", JSON.stringify(detail))
 

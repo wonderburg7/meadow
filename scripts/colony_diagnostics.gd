@@ -54,7 +54,28 @@ static func compute(main: Node2D, bees: Array, counts: Dictionary) -> Dictionary
 	var missing_comb_workforce: int = int(blocked_cells > 0 and comb_workers == 0)
 	var blocked_work: int = brood_cells.size() * missing_nurse_workforce + blocked_cells * missing_comb_workforce
 
+	# FC-2: while the first crisis's rain falls, the facts its "Why is this
+	# happening?" entry states -- how hard it rains, which foragers the rain
+	# keeps in and which cannot fly for another reason, and how long the
+	# stores last. Read only while it is active, so the walk is bounded.
+	var crisis_rain := 0
+	var rain_grounded_foragers := 0
+	var rain_unable_foragers := 0
+	var food_cover_minutes := 0
+	var crisis = main.get("first_crisis")
+	if typeof(crisis) == TYPE_DICTIONARY and str(crisis.get("state", "")) == "active":
+		var readiness: Dictionary = crisis_readiness(main, bees, false, GameConfig.rain_max_seconds)
+		crisis_rain = 1
+		rain_grounded_foragers = int(readiness.able_foragers)
+		rain_unable_foragers = int(readiness.unable_foragers)
+		food_cover_minutes = int(float(readiness.food_cover_seconds) / 60.0)
+
 	return {
+		"first_crisis_rain": crisis_rain,
+		"rain_percent": int(round(Session.rain_intensity * 100.0)),
+		"rain_grounded_foragers": rain_grounded_foragers,
+		"rain_unable_foragers": rain_unable_foragers,
+		"food_cover_minutes": food_cover_minutes,
 		"bees_count": bees.size(),
 		"starving": starving,
 		"hungry": hungry,
