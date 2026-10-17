@@ -1,7 +1,7 @@
 # Difficulty -- Easy rules, a Standard baseline, and the choice at run start
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: ED-1 -- every bee has health, then ED-2 and ED-3, all gated (specified 13 Oct 2026) | Dependency: ED-1 waits for SG-3 (`plans/now/short-term-goals.md`) in Dave's order, and for FC-2 (`plans/now/crisis-readiness.md`, Claude lane) to release the save files | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: ED-1 -- every bee has health, then ED-2 and ED-3, all gated (specified 13 Oct 2026) | Dependency: ED-1 waits for SG-3 (`plans/now/short-term-goals.md`) in Dave's order, and for FC-2 (`plans/archive/crisis-readiness_2026-10-17.md`, Claude lane) to release the save files | Verified: 2026-10-12
 
 ## Objective
 

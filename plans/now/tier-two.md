@@ -43,7 +43,7 @@ What the open slices build on:
 **Dependencies.** T2-10 and T2-13 both edit `scripts/bee.gd`; T2-10
 landed 16 Oct 2026, so T2-13 is open. T2-14 edits `scripts/bee.gd` too,
 so it runs after T2-13, and `scripts/hive.gd`, held by RR-10 (Codex
-lane). T2-12 waits for FC-2 (`plans/now/crisis-readiness.md`,
+lane). T2-12 waits for FC-2 (`plans/archive/crisis-readiness_2026-10-17.md`,
 Codex lane) to release `scripts/hud.gd`. T2-7b waits for AR-4
 (`plans/now/alpha-route-evidence.md`): the alpha arc makes no honey, so the
 sweep's median cannot land in band before AR-4's arc buys a Honey worker

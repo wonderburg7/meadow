@@ -805,7 +805,7 @@ explicit request from Dave.
   so the alpha route's crisis and the seven slices behind it stood still.
 - Evidence: `grep -n "Blocked by: RR-1" checks/blocked.md`;
   `git log -1 --format=%ci fd7afd4` (GD-2b's merge) against
-  `plans/now/crisis-readiness.md` at `d7ad7de`.
+  `plans/archive/crisis-readiness_2026-10-17.md` at `d7ad7de`.
 - Consequence: the closed alpha's hands-on evidence (goals, victory,
   checkpoint, gynes, winter, rain, Shiver Cluster) is never run, and
   critical-path slices wait on gates that have already cleared.

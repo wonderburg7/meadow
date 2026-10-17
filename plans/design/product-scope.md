@@ -1,7 +1,7 @@
 # Meadow — product scope and development sequence
 
 <!-- CONTEXT: plan | LAYER: design -->
-Status: selected design, not scheduled | Owner: Dave | Next: the closed alpha's remaining route is sliced in live plans -- the crisis (FC-2, `plans/now/crisis-readiness.md`), Work Priorities, short-term goals and Easy (`plans/now/work-priorities.md`, `short-term-goals.md`, `difficulty.md`, in Dave's order), the gyne route (PP-6, `plans/now/pollination.md`) and the five-gate evidence (AR-4, `plans/now/alpha-route-evidence.md`); the Colony Run definition is built (`plans/archive/colony-run_2026-10-08.md`); the event director's selection logic still needs its own pass; the goal model's data, the job catalogue/dispatcher and the stable catalogues are `plans/archive/architecture-review_2026-09-24.md`'s C, G and B chains (Dave, 11 Sep 2026) | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-10-16
+Status: selected design, not scheduled | Owner: Dave | Next: the closed alpha's remaining route is sliced in live plans -- the crisis (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`), Work Priorities, short-term goals and Easy (`plans/now/work-priorities.md`, `short-term-goals.md`, `difficulty.md`, in Dave's order), the gyne route (PP-6, `plans/now/pollination.md`) and the five-gate evidence (AR-4, `plans/now/alpha-route-evidence.md`); the Colony Run definition is built (`plans/archive/colony-run_2026-10-08.md`); the event director's selection logic still needs its own pass; the goal model's data, the job catalogue/dispatcher and the stable catalogues are `plans/archive/architecture-review_2026-09-24.md`'s C, G and B chains (Dave, 11 Sep 2026) | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-10-16
 
 This is Meadow's high-level product map. It defines what the game is trying to
 prove, what is essential for the first feedback build, which foundations later
@@ -84,7 +84,7 @@ against (C-139 for the first worker). Built by AR-5 and AR-4
 (`plans/now/alpha-route-evidence.md`).
 
 The 20-minute crisis uses the bounded readiness gate accepted for FC-1 in
-`plans/now/crisis-readiness.md`: early automation, an able forager and food
+`plans/archive/crisis-readiness_2026-10-17.md`: early automation, an able forager and food
 cover may bring forward one announced heavy-rain episode inside a measured
 window; if preparation is absent, a warning with time for a forage response
 precedes rain at the window's end. The 20-minute gate remains a player outcome,

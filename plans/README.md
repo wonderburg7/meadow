@@ -168,7 +168,6 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | If the queue names | Read |
 | --- | --- |
 | AR-4 -- alpha-route evidence: a scripted Colony Run records all five gates | `plans/now/alpha-route-evidence.md` |
-| FC-2 -- the first crisis: an announced heavy-rain episode the colony can prepare for | `plans/now/crisis-readiness.md` |
 | ED-1 to ED-3 -- difficulty: health for every bee, Easy's rules, choosing Easy at run start | `plans/now/difficulty.md` |
 | FR-1 to FR-3 -- forager recruitment: Orientation flight, then Auto scouting, then Auto-recruitment, each measured better than the last | `plans/now/forager-recruitment.md` |
 | HP-1 to HP-3 -- hot-path cadence: forager search, idle work dispatch and the bee label on the think tick | `plans/now/hot-path-cadence.md` |

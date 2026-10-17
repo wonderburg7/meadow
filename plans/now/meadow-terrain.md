@@ -24,7 +24,7 @@ names `MeadowTerrain`. SP-8a's "True now" has the detail.
 | SP-8a | the meadow floor drawn in blocks, with everything on it lifted | see its `Files:` line below | no -- after ED-3, the last of the alpha chain behind FC-2 (Dave, 16 Oct 2026) | high |
 | SP-8 (rest) | height's effects: flight cost, where flowers grow, scouting reach | to be cut after SP-8a | no -- after SP-8a and AR-4 (`plans/now/alpha-route-evidence.md`) | high (balance) |
 
-**Dependencies.** SP-8a waits for the alpha chain behind FC-2 (`plans/now/crisis-readiness.md`): WP-2 and WP-3 (`plans/now/work-priorities.md`), SG-2 and SG-3 (`plans/now/short-term-goals.md`) and ED-1 to ED-3 (`plans/now/difficulty.md`), in Dave's order, because the closed alpha runs on placeholder art (Dave, 16 Oct 2026, product review D3). Height's simulation effects (SP-8's rest) wait for AR-4 (`plans/now/alpha-route-evidence.md`), so they cannot move balance under PP-6's and T2-7b's price sweeps.
+**Dependencies.** SP-8a waits for the alpha chain behind FC-2 (`plans/archive/crisis-readiness_2026-10-17.md`): WP-2 and WP-3 (`plans/now/work-priorities.md`), SG-2 and SG-3 (`plans/now/short-term-goals.md`) and ED-1 to ED-3 (`plans/now/difficulty.md`), in Dave's order, because the closed alpha runs on placeholder art (Dave, 16 Oct 2026, product review D3). Height's simulation effects (SP-8's rest) wait for AR-4 (`plans/now/alpha-route-evidence.md`), so they cannot move balance under PP-6's and T2-7b's price sweeps.
 SP-8a and HM-1 (`plans/now/hive-and-menu-art.md`) both edit `scripts/hive.gd`
 and `scripts/rival_hive.gd`; both are Claude lane, so whichever lands second
 merges master first.

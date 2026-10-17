@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/FC-2` (`claude/FC-2`) | Claude | implement the accepted crisis and deterministic scenario | Claude | in progress | none | `plans/now/crisis-readiness.md` FC-2 -- implement the accepted crisis and deterministic scenario |

@@ -1,7 +1,7 @@
 # Work Priorities -- Hive Mind tier 3: one colony-wide order of fallback jobs
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: WP-2 -- owned, each bee follows an ordered backup list (WP-1 catalogue landed 14 Oct 2026), then WP-3 | Dependency: WP-2 waits only for FC-2 (`plans/now/crisis-readiness.md`, Claude lane) to release the save files (WP-1 landed 14 Oct 2026) | Verified: 2026-10-14
+Status: active | Owner: Dave / Claude Code | Next: WP-2 -- owned, each bee follows an ordered backup list (WP-1 catalogue landed 14 Oct 2026), then WP-3 | Dependency: WP-2 waits only for FC-2 (`plans/archive/crisis-readiness_2026-10-17.md`, Claude lane) to release the save files (WP-1 landed 14 Oct 2026) | Verified: 2026-10-14
 
 ## Objective
 

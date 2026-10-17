@@ -36,7 +36,7 @@ None.
 - WP-2's "roles the run has not unlocked are skipped" already has its query: `Availability.role_query`.
 - ED-1's crawl speed has one step site, `bee_movement.gd::move_towards`, beside the tipsy factor.
 - ED-2's Easy rules become `Session` checks in four files: Easy is one bundle (difficulty decision 7, one checkbox), so a rules table would have one row.
-- `plans/now/crisis-readiness.md` FC-2 says `colony_diagnostics.gd` is held by CD-3, while `NEXTSTEPS.md` says FC-2 waits only for GD-2b; FC-2 rechecks ownership itself.
+- `plans/archive/crisis-readiness_2026-10-17.md` FC-2 says `colony_diagnostics.gd` is held by CD-3, while `NEXTSTEPS.md` says FC-2 waits only for GD-2b; FC-2 rechecks ownership itself.
 - A new short-term goal touches four places in `short_term_goals.gd` (row, `_trigger`, `progress`, the whole-day list): one file, acceptable.
 
 ## Not reviewed

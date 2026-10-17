@@ -105,7 +105,7 @@ NF-4, landed 10 Oct 2026. All are in the Claude lane, which runs them one
 branch at a time, so none may move to the Codex lane while another is
 queued (T2-4b, which shared them too, landed 9 Oct 2026). NF-5 has
 released `hud.gd`, `main.gd` and `scenario_actions.gd` to
-`plans/now/crisis-readiness.md` FC-2. NF-4's node joins Colony tier 2, which
+`plans/archive/crisis-readiness_2026-10-17.md` FC-2. NF-4's node joins Colony tier 2, which
 `plans/now/tier-two.md` T2-7 prices if NF-4 has landed by then.
 
 NF-1 shipped 2026-10-06; its specification is `plans/archive/NF-1_2026-10-06.md`.

@@ -1,7 +1,7 @@
 # Short-term goals -- optional outcomes the colony's state suggests
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: SG-2 -- goals offered, met and paid in Colony Runs and Scenarios, and saved (Claude lane, gated), then SG-3 | Dependency: SG-2 waits for WP-3 (`plans/now/work-priorities.md`) in Dave's order and for FC-2 (`plans/now/crisis-readiness.md`, Claude lane) to release the save files; SG-3 waits for SG-2 (GP-2 landed 13 Oct 2026) | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude Code | Next: SG-2 -- goals offered, met and paid in Colony Runs and Scenarios, and saved (Claude lane, gated), then SG-3 | Dependency: SG-2 waits for WP-3 (`plans/now/work-priorities.md`) in Dave's order and for FC-2 (`plans/archive/crisis-readiness_2026-10-17.md`, Claude lane) to release the save files; SG-3 waits for SG-2 (GP-2 landed 13 Oct 2026) | Verified: 2026-10-13
 
 ## Objective
 
