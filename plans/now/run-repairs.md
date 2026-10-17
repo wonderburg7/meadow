@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-8 -- a menu hexagon repaints at the size its name was fitted to (RR-7 found the fit is right but never repainted, 16 Oct 2026); RR-9 and RR-10 from the 15 Oct 2026 gameplay review (winter ferments nothing; fermented nectar buys no skill), in the Codex lane since the 15 Oct 2026 plan review; RR-11 after SP-11 (`plans/now/sprites.md`) releases `scripts/hive_cell.gd` (RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-15
+Status: active | Owner: Dave / Claude Code | Next: RR-9 and RR-10 from the 15 Oct 2026 gameplay review (winter ferments nothing; fermented nectar buys no skill), in the Codex lane since the 15 Oct 2026 plan review; RR-11 after SP-11 (`plans/now/sprites.md`) releases `scripts/hive_cell.gd` (RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026, RR-8 17 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-15
 
 ## Objective
 
@@ -42,7 +42,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| RR-8 | a menu hexagon repaints at the size its name was fitted to | `scripts/main_menu.gd`, the RR-7 test | yes, after RR-7 | medium |
 | RR-9 | a skipped winter ages no nectar and no sealed bee bread | `scripts/season.gd`, tests | yes -- Codex lane | low |
 | RR-10 | fermented nectar is neither counted nor spent by skill purchases | `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, tests | yes, after RR-9 -- Codex lane | low |
 | RR-11 | nectar shows a pre-fermented colour before it ferments, as a warning | `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | no -- after SP-11 releases `scripts/hive_cell.gd`, and after RR-10 | medium |
@@ -60,50 +59,7 @@ RR-6 shipped 2026-10-15; its specification is `plans/archive/RR-6_2026-10-15.md`
 
 RR-7 shipped 2026-10-16; its specification is `plans/archive/RR-7_2026-10-16.md`.
 
-## RR-8 -- a menu hexagon repaints at the size its name was fitted to
-
-Level: medium (one-function fix with an acceptance check). From RR-7's
-answer (16 Oct 2026): `main_menu.gd::_fit_hex_label` is connected to each
-hexagon label's `draw` signal and sets or removes the `font_size` override
-there. The Label has already painted by the time `draw` fires, and the
-redraw the override asks for is dropped while that draw is still running,
-so the label keeps showing the previous size: at text scale 2, Silkscreen
-paints at 22 ("CHALLENG / E 1") though the fit is 20, and OpenDyslexic
-paints at 22 though its fit is 17.
-
-**The fix.** In `_fit_hex_label`, when the fitted size differs from what the
-label currently has (the override is added, changed or removed), request a
-repaint after the current draw has finished:
-`label.queue_redraw.call_deferred()`. The next draw finds the cache key
-unchanged and returns at once, so it costs one extra draw per change and
-cannot loop. Keep the fit on the `draw` signal: it is what catches every
-text-scale, typeface and resize change without separate hooks.
-
-**The test.** Turn `tests/rr7_silkscreen_fit_test.gd`'s walk into the guard:
-after each step print as now, and fail ("RR7 FAIL: ...") when the last
-painted size differs from `hex_fit_size`'s size for the face and scale in
-effect, or when the painted lines split a word. Before the fix it fails on
-Silkscreen and OpenDyslexic at scale 2; after it, it passes. Update the
-script's and the Python wrapper's header comments to say it is now a
-regression guard.
-
-**On landing.** C-99 (`checks/blocked.md`) is blocked only by RR-7 and this
-fix: move it to `checks/ready.md` unchanged. Open TS-1's `queue-gated`
-fence in `plans/now/typeface-size.md` and drop its line under "Not in the
-queue, and why" in `NEXTSTEPS.md` (see RR-7's "Related").
-
-**Escalate** if the deferred repair still leaves a stale paint in the walk:
-that would mean another path sets the size, and moving the fit off the
-`draw` signal changes when it runs for every hexagon.
-
-```queue
-**[Claude] RR-8 -- a menu hexagon repaints at the size its name was fitted to**
-- Plan: `plans/now/run-repairs.md` -- "RR-8 -- a menu hexagon repaints at the size its name was fitted to"
-- Files: `scripts/main_menu.gd`, `tests/rr7_silkscreen_fit_test.gd`, `tests/test_rr7_silkscreen_fit.py`
-- Check: `python -m unittest tests.test_rr7_silkscreen_fit` passes and fails on any step of its walk (text scale 1 then 2, every typeface in list order) where the Challenge 1 name's last painted font size differs from `hex_fit_size`'s or its painted lines split a word; `python -m unittest tests.test_rr5_hex_refit tests.test_ho15_menu_hex_fit` still pass.
-- Proof: `absent: scripts/main_menu.gd :: label.queue_redraw.call_deferred()`
-- Next after: TS-1 -- every typeface is the same width as Standard at the same text scale
-```
+RR-8 shipped 2026-10-17; its specification is `plans/archive/RR-8_2026-10-17.md`.
 
 ## RR-9 -- a skipped winter ages no nectar and no sealed bee bread
 

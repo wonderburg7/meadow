@@ -27,3 +27,4 @@ unblocker.
 - [C-135 -- A miner on Dig on its own starts digging by itself once Automation is bought](ready/C-135.md)
 - [C-138 -- Problem strip stays out of the way, keeps red warnings and lets you remove one](ready/C-138.md)
 - [C-139 -- A new Colony Run's first worker: what to do is readable, and it comes in about five minutes](ready/C-139.md)
+- [C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface](ready/C-99.md)
