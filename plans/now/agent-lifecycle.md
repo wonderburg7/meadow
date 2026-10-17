@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-27 -- a resumed finish re-verifies a branch that gained commits | Dependency: L-30 waits for `claude/terminal-plan-state-field` to merge | Verified: 2026-10-16
+Status: active | Owner: Dave / Claude | Next: L-28 -- archiving a slice leaves another slice's queue block in the plan | Dependency: L-30 waits for `claude/terminal-plan-state-field` to merge | Verified: 2026-10-17
 
 ## Objective
 
