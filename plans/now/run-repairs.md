@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-9 and RR-10 from the 15 Oct 2026 gameplay review (winter ferments nothing; fermented nectar buys no skill), in the Codex lane since the 15 Oct 2026 plan review; RR-11 after SP-11 (`plans/now/sprites.md`) releases `scripts/hive_cell.gd` (RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026, RR-8 17 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-15
+Status: active | Owner: Dave / Claude Code | Next: RR-10 from the 15 Oct 2026 gameplay review (fermented nectar buys no skill), in the Codex lane; RR-11 after SP-11 (`plans/now/sprites.md`) releases `scripts/hive_cell.gd` (RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026, RR-8 17 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-17
 
 ## Objective
 
@@ -42,7 +42,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| RR-9 | a skipped winter ages no nectar and no sealed bee bread | `scripts/season.gd`, tests | yes -- Codex lane | low |
 | RR-10 | fermented nectar is neither counted nor spent by skill purchases | `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, tests | yes, after RR-9 -- Codex lane | low |
 | RR-11 | nectar shows a pre-fermented colour before it ferments, as a warning | `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | no -- after SP-11 releases `scripts/hive_cell.gd`, and after RR-10 | medium |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
@@ -61,55 +60,7 @@ RR-7 shipped 2026-10-16; its specification is `plans/archive/RR-7_2026-10-16.md`
 
 RR-8 shipped 2026-10-17; its specification is `plans/archive/RR-8_2026-10-17.md`.
 
-## RR-9 -- a skipped winter ages no nectar and no sealed bee bread
-
-Level: low (one loop in one function, no per-tick work). Gameplay review
-15 Oct 2026, finding F1; Dave's decision D1: "Over winter it's too cold for
-the nectar to ferment".
-
-**True now** (verified 15 Oct 2026 against master `9c490df`).
-`season.gd::_resolve_winter` pays the winter bill and then sets
-`Session.sim_time` to `spring_time`, `days * GameConfig.seconds_per_day`
-later (10 days, 240 game-hours, at the defaults), touching no cell.
-`hive_cell.gd::is_fermented` compares `Session.sim_time - nectar_since` with
-`GameConfig.nectar_ferment_hours` (96), so every nectar cell in the comb is
-fermented on spring's first day. The review's probe: 40 nectar stored the
-day before winter read fermented, age 240 h, on day 41. Then honey makers
-skip it (`hive.gd::find_honey_source`), eaters go tipsy
-(`bee_survival.gd::feed_self`) and foragers top up sour cells. Sealed bee
-bread (`bee_bread_sealed_at`) likewise comes out ripe.
-
-**True afterwards.** In `_resolve_winter`, after the flowers' `die_back`
-loop and before `Session.sim_time = spring_time`, one loop over
-`world.hive.cells` (skip any `not is_instance_valid(cell)`) adds
-`spring_time - Session.sim_time` to `cell.nectar_since` where it is
-`>= 0.0`, and to `cell.bee_bread_sealed_at` where it is `>= 0.0`. A comment
-cites `.claude/rules/simulation.md`, "Nothing ferments over winter". No
-`world.hive.announce()` is needed: no content changes.
-
-**Invariants.** An unstamped cell (-1) stays unstamped. The bill, losses,
-bodies, die-back and `winter_survived` are unchanged, and in the same order.
-Brood, honey ripening (`ripen_progress`, progress-based) and bodies'
-`died_at` are not touched. Save format unchanged: the stamps are saved and
-restored as they are today. A winter that is played through rather than
-skipped (no such path today) is out of scope.
-
-**Test.** The pair follows `tests/col8_winter_dieback_test.gd` and
-`tests/test_col8_winter_dieback.py`, which already drive `_resolve_winter`
-directly.
-
-**Escalate** if any other cell field holds an absolute `sim_time` stamp
-(grep `Session.sim_time` in `scripts/hive_cell.gd`): it needs Dave's call on
-whether winter freezes it too.
-
-```queue
-**[Codex] RR-9 -- a skipped winter ages no nectar and no sealed bee bread**
-- Plan: `plans/now/run-repairs.md` -- "RR-9 -- a skipped winter ages no nectar and no sealed bee bread"
-- Files: `scripts/season.gd`, `tests/rr9_winter_ages_nothing_test.gd`, `tests/test_rr9_winter_ages_nothing.py`
-- Check: `python -m unittest tests.test_rr9_winter_ages_nothing` passes: a sealed nectar cell stocked one game-day before winter and a full bee-bread cell sealed one game-day before it come out of `season.gd::_resolve_winter` with `nectar_age()` and `bee_bread_ripen_fraction()` unchanged (to 0.01), the nectar cell's `is_fermented()` false, and `Session.sim_time` still moved on by `winter_length_days`; `python -m unittest tests.test_col6_winter_skip tests.test_col8_winter_dieback` still passes.
-- Proof: `absent: scripts/season.gd :: nectar_since`
-- Next after: RR-10 -- fermented nectar is neither counted nor spent by skill purchases
-```
+RR-9 shipped 2026-10-17; its specification is `plans/archive/RR-9_2026-10-17.md`.
 
 ## RR-10 -- fermented nectar is neither counted nor spent by skill purchases
 

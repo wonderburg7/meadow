@@ -175,6 +175,15 @@ func _resolve_winter(days: float) -> void:
 	for flower in world.get_tree().get_nodes_in_group("flowers"):
 		if is_instance_valid(flower):
 			flower.die_back(spring_time)
+	# Nothing ferments over winter (.claude/rules/simulation.md): preserve
+	# absolute cell stamps while the skipped time carries the run to spring.
+	for cell in world.hive.cells:
+		if not is_instance_valid(cell):
+			continue
+		if cell.nectar_since >= 0.0:
+			cell.nectar_since += spring_time - Session.sim_time
+		if cell.bee_bread_sealed_at >= 0.0:
+			cell.bee_bread_sealed_at += spring_time - Session.sim_time
 	Session.sim_time = spring_time
 	Session.winter_here = false
 	Session.winter_coming = false
