@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/L-29` (`claude/L-29`) | Claude | session_cost.py counts subagent transcripts and scripted edits | Claude | in progress | none | `plans/now/agent-lifecycle.md` L-29 -- session_cost.py counts subagent transcripts and scripted edits |
