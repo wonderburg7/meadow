@@ -464,7 +464,11 @@ function Get-ClosingJournal {
 function Write-ClosingJournal {
     param([string]$Root, [string]$Id, [string]$Branch, [string]$Lane, [string]$Phase)
     $path = Get-ClosingJournalPath -Root $Root
-    ([ordered]@{ id = $Id; branch = $Branch; lane = $Lane; phase = $Phase } | ConvertTo-Json -Compress) |
+    # head: the commit $Root stood on when the phase was recorded, so a resume
+    # can tell a branch that gained commits since (Test-JournalVerifiedHead).
+    $head = ""
+    try { $head = ([string](git -C $Root rev-parse HEAD 2>$null)).Trim() } catch { $head = "" }
+    ([ordered]@{ id = $Id; branch = $Branch; lane = $Lane; phase = $Phase; head = $head } | ConvertTo-Json -Compress) |
         Set-Content -LiteralPath $path -NoNewline
 }
 
@@ -2205,10 +2209,31 @@ function Get-BranchVerifyFilePath {
     return Join-Path $gitDir $Name
 }
 
+function Test-JournalVerifiedHead {
+    # True only when the journal recorded a head and the worktree is still on
+    # it, or has gained only Markdown changes since (a queue or plan fix after
+    # a refill refusal, which refill_lane.py already ran check_docs over). A
+    # journal written before the head was recorded is not trusted.
+    param($Journal, [string]$WorktreeRoot)
+    if (-not $Journal) { return $false }
+    $recorded = [string]$Journal.head
+    if (-not $recorded) { return $false }
+    $current = (git -C $WorktreeRoot rev-parse HEAD 2>$null | Out-String).Trim()
+    if (-not $current) { return $false }
+    if ($recorded -eq $current) { return $true }
+    $changed = @(git -C $WorktreeRoot diff --name-only $recorded $current 2>$null)
+    if ($LASTEXITCODE -ne 0) { return $false }
+    foreach ($path in $changed) {
+        if ($path -and $path -notlike "*.md") { return $false }
+    }
+    return $true
+}
+
 function Test-BranchVerified {
     param($Target)
     $journal = Get-ClosingJournal -Root $Target.WorktreeRoot -Branch $Target.Branch
-    if (Test-ClosingPhaseDone -Journal $journal -Phase "verified") { return $true }
+    if ((Test-ClosingPhaseDone -Journal $journal -Phase "verified") -and
+        (Test-JournalVerifiedHead -Journal $journal -WorktreeRoot $Target.WorktreeRoot)) { return $true }
     $recordPath = Get-BranchVerifyFilePath -WorktreeRoot $Target.WorktreeRoot -Name "meadow-slice-verified.json"
     if (-not (Test-Path -LiteralPath $recordPath)) { return $false }
     try { $record = Get-Content -Raw -LiteralPath $recordPath | ConvertFrom-Json } catch { return $false }
@@ -2330,7 +2355,8 @@ function Invoke-SliceFinish {
     # Normally a no-op: `finish` verified before taking the lock. `resume`
     # reaches here without that, and verifies under the lock as before.
     Invoke-SliceBranchVerify -Target $target -PythonPath $PythonPath
-    if (-not (Test-ClosingPhaseDone -Journal $journal -Phase "verified")) {
+    if (-not (Test-ClosingPhaseDone -Journal $journal -Phase "verified") -or
+        ([string]$journal.phase -eq "verified" -and -not (Test-JournalVerifiedHead -Journal $journal -WorktreeRoot $worktreeRoot))) {
         Write-ClosingJournal -Root $worktreeRoot -Id $id -Branch $branch -Lane $lane -Phase "verified"
     }
 
