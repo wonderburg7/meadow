@@ -1,7 +1,7 @@
 # Hot-path cadence -- judgements on the think tick, as bee.gd already says they run
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HP-1 -- a searching forager looks for flowers on her think tick | Dependency: HP-1 → HP-2 → HP-3 in lane order, all startable; HP-1 re-runs FR-1's table if FR-1 has landed (`plans/now/forager-recruitment.md`) | Verified: 2026-10-16
+Status: active | Owner: Dave / Claude Code | Next: HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick | Dependency: HP-1 → HP-2 → HP-3 in lane order, all startable; HP-1 re-runs FR-1's table if FR-1 has landed (`plans/now/forager-recruitment.md`) | Verified: 2026-10-16
 
 ## Objective
 
