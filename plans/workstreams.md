@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/L-27` (`claude/L-27`) | Claude | a resumed finish re-verifies a branch that gained commits | Claude | in progress | none | `plans/now/agent-lifecycle.md` L-27 -- a resumed finish re-verifies a branch that gained commits |
