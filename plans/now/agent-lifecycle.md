@@ -100,7 +100,7 @@ successor's block leaves that block live (before: two lost on 15 Oct).
 - Files: `tools/archive_slice.py`, `tests/test_slice_lifecycle.py`
 - Check: `python -m unittest tests.test_slice_lifecycle` passes, including the case where a section ends with the next slice's queue-gated block; `.\tools\verify.ps1` is green
 - Proof: `absent: tools/archive_slice.py :: def _foreign_queue_blocks`
-- Next after: None -- L-29 is independent
+- Next after: L-29 -- session_cost.py counts subagent transcripts and scripted edits
 ```
 
 ## L-29 -- session_cost.py counts subagent transcripts and scripted edits

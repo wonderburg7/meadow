@@ -103,6 +103,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **T2-12** (`plans/now/tier-two.md`) -- Dig on its own is offered only once Automation is owned (Dave, 14 Oct 2026); waits for FC-2 (Claude lane) to release `scripts/hud.gd`.
 - **T2-13** (`plans/now/tier-two.md`) -- a bee whose role changes while it carries a body puts the body down; waits for T2-10 to release `scripts/bee.gd`.
 - **RR-11** (`plans/now/run-repairs.md`) -- nectar shows a pre-fermented warning colour before it ferments (Dave, 15 Oct 2026); waits for SP-11 to release `scripts/hive_cell.gd`, then runs after RR-10.
+- **L-28** (`plans/now/agent-lifecycle.md`) -- archiving a slice leaves another slice's queue block in the plan; its block is written and startable, and waits only for a place in the Claude lane, which holds five (17 Oct 2026).
 - **L-30** (`plans/now/agent-lifecycle.md`) -- released work is visible to the sessions that release it; waits for the unmerged branch `claude/terminal-plan-state-field`, which owns `tools/check_docs.py`, to merge (Dave, 16 Oct 2026).
 ## Copy-paste prompts
 
