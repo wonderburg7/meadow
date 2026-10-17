@@ -1,7 +1,7 @@
 # Crisis readiness -- decide a readable first pressure event before implementing it
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Codex | Next: FC-2 -- implement the accepted crisis and deterministic scenario after its file owners land | Dependency: COL-8's season change and CD-2's diagnostic vocabulary landed; Dave accepted FC-1 option A; FC-2 waits for CD-3 (BB-2 landed 10 Oct 2026; T2-4b, NF-3, BB-1 and NF-5 landed 9 Oct 2026) | Verified: 2026-10-10
+Status: active | Owner: Dave / Claude Code | Next: FC-2 -- implement the accepted crisis and deterministic scenario, startable since GD-2b landed (15 Oct 2026), in the Claude lane (Dave, 16 Oct 2026, product review D1) | Dependency: COL-8's season change and CD-2's diagnostic vocabulary landed; Dave accepted FC-1 option A; WP-2, SG-2 and ED-1 wait for FC-2 to release the save files, and SP-8a (`plans/now/meadow-terrain.md`) for the chain after them | Verified: 2026-10-15
 
 ## Objective
 
@@ -14,7 +14,7 @@ Run's archived CR-1 and CR-2 already hold those ids.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FC-2 | implement the accepted crisis and deterministic scenario | see its `Files:` line below | after CD-3 lands (FC-1, T2-4b, NF-3, BB-1, NF-5 and BB-2 have) | high |
+| FC-2 | implement the accepted crisis and deterministic scenario | see its `Files:` line below | yes -- GD-2b released the save files 15 Oct 2026 | high |
 
 FC-1 shipped 2026-10-09; its specification is `plans/archive/FC-1_2026-10-09.md`.
 
@@ -31,15 +31,20 @@ pre-rain response on the fallback path, actual rain, forage and store effects,
 plus save/restore across the trigger; a displayed warning alone is not proof.
 File a hands-on check for whether a player can diagnose and answer the event.
 
-BB-2 (`plans/archive/bee-bread_2026-10-11.md`) released `scripts/save_game.gd`,
-`scripts/saving.gd` and `scripts/hud.gd` on 10 Oct 2026 (NF-3, BB-1 and
-NF-5 landed 9 Oct 2026; NF-5 released `scripts/main.gd` and
-`scripts/scenario_actions.gd`). The one file still held is
-`scripts/colony_diagnostics.gd`, owned by CD-3. Recheck ownership and the
-file list when it lands; FC-2 stays gated until then.
+**Reads.** This section, and FC-1's accepted option A with its evidence
+contract (the window, the reserve predicate, the warning lead and the
+saved one-shot state), which lives only in FC-1's record: `git show
+HEAD:plans/archive/FC-1_2026-10-09.md` (95 lines; the archive is closed to
+file tools, so read it through Git).
 
-```queue-gated
-**[Codex] FC-2 -- implement the accepted crisis and deterministic scenario**
+**Gate.** Cleared. GD-2b (`plans/archive/guidance-explanations_2026-10-16.md`)
+held `scripts/save_game.gd` and `scripts/saving.gd`; a Claude session
+integrated it on 15 Oct 2026 (plan review D1), and on 16 Oct 2026 every file
+on the `Files:` line was clear. Recheck the line against the queue before
+starting.
+
+```queue
+**[Claude] FC-2 -- implement the accepted crisis and deterministic scenario**
 - Plan: `plans/now/crisis-readiness.md` -- "FC-2 -- implement the accepted crisis and deterministic scenario"
 - Files: `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `scripts/colony_diagnostics.gd`, `scripts/scenario_actions.gd`, `test_scenarios/fc2_first_crisis_prepared.json`, `test_scenarios/fc2_first_crisis_unprepared.json`, `tests/test_fc2_first_crisis.py`, `plans/now/crisis-readiness.md`
 - Check: `python tests/test_fc2_first_crisis.py` passes and traces one announced crisis, a usable warning-to-rain lead with a completed pre-rain forage response on the unprepared path, its weather/forage/store effect, and save/restore on both paths; file a played comprehension check
@@ -49,4 +54,4 @@ file list when it lands; FC-2 stays gated until then.
 
 ## Not in the queue, and why
 
-- **FC-2** waits only for the Claude lane's GP-4 to release `scripts/hud.gd` (the restocking purchase slice released it 14 Oct 2026); `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd` and `scripts/scenario_actions.gd` were released 13 Oct 2026, and `scripts/colony_diagnostics.gd` 12 Oct 2026. Recheck its `Files:` line before admitting it.
+- Nothing: FC-2 is startable. GD-2b landed 15 Oct 2026 and released `scripts/save_game.gd` and `scripts/saving.gd`, the last of its files; the product review of 16 Oct 2026 opened its fence after `tools/slice.ps1 owner` reported every file on its `Files:` line clear.

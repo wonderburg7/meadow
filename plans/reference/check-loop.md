@@ -1,7 +1,7 @@
 # The hands-on check loop — how findings become fixes
 
 <!-- CONTEXT: plan | LAYER: reference -->
-Status: reference | Owner: Dave / Claude Code | Next: nothing further -- its one open slice shipped as P-2, 2026-09-04; record in `plans/archive/CHECK_LOOP_P2_2026-09-04.md` | Dependency: none | Verified: 2026-09-09
+Status: reference | Owner: Dave / Claude Code | Next: nothing further -- its one open slice shipped as P-2, 2026-09-04; record in `plans/archive/CHECK_LOOP_P2_2026-09-04.md` | Dependency: none | Verified: 2026-10-15
 
 **Objective.** Make the slice -> check -> report -> fix loop cheap and
 reliable, so a slice cannot pass its own acceptance while missing what Dave
@@ -10,8 +10,9 @@ asked for. This plan is about the loop, not about any one feature.
 **Why this file exists.** Dave's 3 Sep 2026 pass asked, alongside the fixes
 themselves, for the way this work is navigated, planned and designed to
 change so the same failures stop recurring. Its slices are complete; this
-file now stands as the durable rule set the 3 Sep 2026 pass produced, cited
-by `CLAUDE.md` ("Three admission rules") and `NEXTSTEPS.md`.
+file now stands as the durable rule set the 3 Sep 2026 pass produced;
+`CLAUDE.md`'s routing table sends "how checks, slices and acceptance work"
+here.
 
 ## What the 3 Sep pass actually showed
 
@@ -42,8 +43,9 @@ disagree.
 <!-- LAYER: durable-rules -->
 
 1. **One acceptance, written from the player's seat, in two places.** A
-   slice's `Acceptance` paragraph and the `checks/ready.md` entry it files
-   are the same sentences. If the acceptance cannot be written as something
+   slice's `Acceptance` paragraph and the check it files (one record in
+   `checks/ready/`, written with `python tools/new_check.py`) are the same
+   sentences. If the acceptance cannot be written as something
    Dave does and sees, the slice is not specified yet.
 2. **A highlight that must match art is cut from the art.** Never re-derive
    a shape the sprite already defines. Measure the asset, record the
@@ -94,7 +96,7 @@ disagree.
    them in the checks -- it was just a temporary request in one session, I
    didn't intend decisions to go in the checks forever more." Ask, get the
    answer, and write the answer into the file the rule lives in.
-   `checks/ready.md` holds checks and nothing else. A decision that genuinely
+   `checks/` holds checks and nothing else. A decision that genuinely
    cannot be taken this session goes under `NEXTSTEPS.md`'s "Not in the
    queue, and why", with the choice and its cost stated in one line.
 9. **An ask of Dave names the file, the place in it, and what to type.**
@@ -104,6 +106,34 @@ disagree.
    without its location is not an ask, it is a puzzle. Give the repo-relative
    path, say which part of the file changes, and paste the exact text --
    whether the ask is in a plan, a queue entry or a session report.
+
+10. **A check states one condition.** C-7 bundled five behaviours behind one
+    `PASS:` line -- multi-flower foraging, pollen starting, pollen depositing,
+    the camera and the speed reset. When Dave ran it on 9 Sep 2026 it came
+    back as five findings against four different slices, and nothing in the
+    entry said which of them "C-7 fails" meant. Split a multi-condition check
+    before filing it, even when the conditions ship in one slice: a check is
+    how a failure gets attributed, and one that cannot be attributed has to be
+    re-diagnosed from prose.
+
+11. **An `Owner:` line names a section that still exists.** C-7's owner was
+    "`plans/archive/CHALLENGE1_2026-09-15.md` Slice 14", a slice archived on 3 Sep 2026, so
+    the check pointed at a specification nobody could open. Two habits keep
+    this true: re-point every check an archived slice owned in the same pass
+    that archives it, and never reuse a retired slice number -- Challenge 1's
+    new slices start at 16 for exactly that reason.
+
+12. **A control's size is asserted, not eyeballed.** Rule 7's instrument
+    argument applies one level below the panel. Three separate controls
+    shipped in a state a screenshot showed instantly and no check could see:
+    tray columns bunched left, two buttons collapsed to 10px, a menu drawing
+    with no button behind it (`plans/archive/HUD_CONTROLS_2026-09-11.md`). A slice that
+    places a control inside a container asserts the resulting rectangle
+    through LAY-6's `control_rect`/`even_columns`/`no_collapsed_controls`
+    assertions (`scripts/scenario_actions.gd`,
+    `plans/archive/LAYOUT_REGRESSION_2026-09-09.md`), because "a container
+    gives a child its minimum size" is a rule about every container, not
+    about the one that was noticed.
 
 ## Read on demand
 
@@ -118,31 +148,3 @@ disagree.
 - `plans/reference/check-runner.md` -- a hands-on check pass dispatches each
   check to the `check-runner` subagent (`.claude/agents/check-runner.md`),
   whose brief this is.
-
-8. **A check states one condition.** C-7 bundled five behaviours behind one
-   `PASS:` line -- multi-flower foraging, pollen starting, pollen depositing,
-   the camera and the speed reset. When Dave ran it on 9 Sep 2026 it came
-   back as five findings against four different slices, and nothing in the
-   entry said which of them "C-7 fails" meant. Split a multi-condition check
-   before filing it, even when the conditions ship in one slice: a check is
-   how a failure gets attributed, and one that cannot be attributed has to be
-   re-diagnosed from prose.
-
-9. **An `Owner:` line names a section that still exists.** C-7's owner was
-   "`plans/archive/CHALLENGE1_2026-09-15.md` Slice 14", a slice archived on 3 Sep 2026, so
-   the check pointed at a specification nobody could open. Two habits keep
-   this true: re-point every check an archived slice owned in the same pass
-   that archives it, and never reuse a retired slice number -- Challenge 1's
-   new slices start at 16 for exactly that reason.
-
-10. **A control's size is asserted, not eyeballed.** Rule 7's instrument
-    argument applies one level below the panel. Three separate controls
-    shipped in a state a screenshot showed instantly and no check could see:
-    tray columns bunched left, two buttons collapsed to 10px, a menu drawing
-    with no button behind it (`plans/archive/HUD_CONTROLS_2026-09-11.md`). A slice that
-    places a control inside a container asserts the resulting rectangle
-    through LAY-6's `control_rect`/`even_columns`/`no_collapsed_controls`
-    assertions (`scripts/scenario_actions.gd`,
-    `plans/archive/LAYOUT_REGRESSION_2026-09-09.md`), because "a container
-    gives a child its minimum size" is a rule about every container, not
-    about the one that was noticed.

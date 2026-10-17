@@ -13,6 +13,11 @@ param(
     # before refusing. Tests set it to seconds, or 0 to refuse at once.
     [int]$LockWaitSeconds = 600,
 
+    # `start` only: a slice-worker subagent will implement the slice (the
+    # /run-queue coordinator), so this session's own model is not checked
+    # against the plan level.
+    [switch]$Dispatched,
+
     # `owner` only: the repository-relative paths an ad-hoc session means to edit.
     [Parameter(Position = 1, ValueFromRemainingArguments = $true)]
     [string[]]$Path
@@ -406,10 +411,12 @@ function Invoke-WithLifecycleLock {
 
 # The order closeout phases happen in. A phase journal only ever records one
 # of these; "done through phase X" means every phase up to and including X's
-# index. Post-merge phases (worktree-removed, branch-deleted, ledger-deleted,
-# pushed) are shared with Invoke-SlicePostMergeCleanup, which resume already
-# reaches once Test-SliceBranchMerged is true -- ground truth, not the
-# journal, is what makes that leg resumable, so it is not re-litigated here.
+# index. Post-merge phases (worktree-removed, branch-deleted, ledger-edited,
+# closeout-committed, pushed) are shared with Invoke-SlicePostMergeCleanup,
+# which resume already reaches once Test-SliceBranchMerged is true -- ground
+# truth, not the journal, is what makes that leg resumable, so it is not
+# re-litigated here. (The journal's "merged" only names the slice once its
+# ledger row is gone.)
 #
 # "actions-committed" (L-13) was inserted between "branch-committed" and
 # "archived". A journal only ever holds a phase *name*, and every name the
@@ -1459,6 +1466,16 @@ function Invoke-SliceStart {
         $waiting = if (@($result.advice.gated_waiting).Count -gt 0) { "gated blocks waiting: $(@($result.advice.gated_waiting) -join ', ')" } else { "no gated block is waiting either" }
         [Console]::Error.WriteLine("warning: $id is the $Lane lane's last admissible item and the backlog is dry behind it; finish will stop at the refill gate unless a slice is specified first ($waiting)")
     }
+    if ($Lane -eq "Claude" -and -not $Dispatched -and $env:CLAUDE_CODE_SESSION_ID) {
+        # COL-8 and PP-2 ran at the wrong level because their sessions were
+        # opened on the wrong model; say so at the claim. Advice only: any
+        # failure to read the transcript says nothing.
+        try {
+            $check = Invoke-SlicePythonTool -Root $root -PythonPath $PythonPath -Arguments @((Join-Path $root "tools\session_cost.py"), "--model-check", $env:CLAUDE_CODE_SESSION_ID, $result.advice.level)
+            @($check.Output | Where-Object { "$_" -like "warning:*" }) | ForEach-Object { [Console]::Error.WriteLine("$_") }
+        }
+        catch { }
+    }
     $result | ConvertTo-Json -Compress
 }
 
@@ -1493,7 +1510,9 @@ function Test-SliceBranchMerged {
 }
 
 function Remove-SliceLedgerRow {
-    param([string]$Root, [object]$Target, [switch]$SkipPush)
+    # -NoCommit only rewrites the file: post-merge cleanup folds the removal
+    # into its one closeout commit.
+    param([string]$Root, [object]$Target, [switch]$SkipPush, [switch]$NoCommit)
     $ledgerPath = Join-Path $Root "plans\workstreams.md"
     $marker = '`' + $Target.WorktreeRelative + '`'
     $utf8 = New-Object System.Text.UTF8Encoding($false)
@@ -1501,6 +1520,7 @@ function Remove-SliceLedgerRow {
     $keep = @($lines | Where-Object { $_.IndexOf($marker, [System.StringComparison]::Ordinal) -lt 0 })
     if ($keep.Count -eq $lines.Count) { return $false }
     [System.IO.File]::WriteAllLines($ledgerPath, [string[]]$keep, $utf8)
+    if ($NoCommit) { return $true }
     git -C $Root add "plans/workstreams.md"
     if ($LASTEXITCODE -ne 0) { throw "git add failed" }
     git -C $Root commit -m "Remove the $($Target.Id) worktree row from the ledger`n`n$(Get-LaneTrailer -Lane $Target.Lane)" | Out-Null
@@ -1518,34 +1538,16 @@ function Invoke-SlicePostMergeCleanup {
     # Everything that happens once the branch is known to be merged: it is
     # the single tail both Invoke-SliceFinish (the common case) and
     # Invoke-SliceResume (recovering after an interrupted finish) call, so
-    # there is exactly one place that regenerates the ready-check index,
-    # removes the worktree/branch/ledger row, and pushes -- once, at the end,
-    # with every commit the transaction made. Before this unification, finish
-    # pushed after the ready-index commit *and* after the ledger commit,
-    # while resume's own repair path skipped the ready-index step entirely.
+    # there is exactly one place that removes the worktree/branch, drops the
+    # ledger row, archives a finished plan, regenerates the ready-check index
+    # and pushes -- once, at the end. The three master edits share one
+    # "closeout on master" commit (14 Oct 2026); a commit each was half of
+    # master's history in the week before. Every edit is a function of the
+    # files, not of a commit, so a resume after a failure part-way redoes
+    # whatever is still owed and commits it all.
     param([string]$Root, [object]$Target, [string]$PythonPath)
 
     $trailer = Get-LaneTrailer -Lane $Target.Lane
-
-    # The ready-check page is a shared index, deliberately generated only
-    # here, once the feature branch is known to be merged. This keeps
-    # parallel branches from appending to the same Markdown file.
-    $indexGenerator = Join-Path $Root "tools\check_docs.py"
-    $verifyScript = Join-Path $Root "tools\verify.ps1"
-    $python = if ($PythonPath) { $PythonPath } else { & $verifyScript -ResolvePythonOnly }
-    if (-not $python -or -not (Test-Path -LiteralPath $python -PathType Leaf)) {
-        throw "could not resolve Python for the ready-check index"
-    }
-    & $python $indexGenerator --write-ready-index
-    if ($LASTEXITCODE -ne 0) { throw "could not regenerate checks/ready.md" }
-    git -C $Root add -- checks/ready.md
-    if ($LASTEXITCODE -ne 0) { throw "git add failed" }
-    git -C $Root diff --cached --quiet -- checks/ready.md
-    if ($LASTEXITCODE -ne 0) {
-        git -C $Root commit -m "$($Target.Id) -- refresh ready-check index`n`n$trailer" | Out-Null
-        if ($LASTEXITCODE -ne 0) { throw "git commit failed while refreshing ready-check index" }
-    }
-    Invoke-InjectedLifecycleFailure -Phase "ready-index"
 
     if (Test-Path -LiteralPath $Target.WorktreePath) {
         # No stderr redirect here: PowerShell 5.1 wraps a redirected native
@@ -1584,16 +1586,24 @@ function Invoke-SlicePostMergeCleanup {
     }
     Invoke-InjectedLifecycleFailure -Phase "branch-deleted"
 
-    $removed = Remove-SliceLedgerRow -Root $Root -Target $Target -SkipPush
-    if ($removed) { Invoke-InjectedLifecycleFailure -Phase "ledger-deleted" }
+    $parts = @()
+    $paths = @()
+
+    $removed = Remove-SliceLedgerRow -Root $Root -Target $Target -NoCommit
+    if ($removed) { Invoke-InjectedLifecycleFailure -Phase "ledger-edited" }
+    # Read the file against HEAD, not $removed: a resume after a failure just
+    # above finds the row already gone from the file but not yet committed.
+    git -C $Root diff HEAD --quiet -- plans/workstreams.md
+    if ($LASTEXITCODE -ne 0) { $parts += "drop its ledger row"; $paths += "plans/workstreams.md" }
 
     # A closeout that archives a plan's last slice leaves the plan itself live
     # and marked complete, which check_docs' terminal-plan rule then fails on
     # every later branch (CB-2, T-3, V-4, ST-1). The plan can only move once
     # nothing in flight cites it -- the queue item went with the merge, the
-    # ledger row just above -- so it moves here, on master, and travels in
-    # the same push. A plan the tool keeps live is reported, not fatal: the
-    # merge is already done, and check_docs still names what is left.
+    # ledger row just above (archive_slice.py reads the working tree, so the
+    # uncommitted removal counts) -- so it moves here, on master, in the same
+    # commit. A plan the tool keeps live is reported, not fatal: the merge is
+    # already done, and check_docs still names what is left.
     $archiveTool = Join-Path $Root "tools\archive_slice.py"
     if (Test-Path -LiteralPath $archiveTool -PathType Leaf) {
         $run = Invoke-SlicePythonTool -Root $Root -PythonPath $PythonPath -Arguments @($archiveTool, "--complete-plans", "--root", $Root)
@@ -1601,16 +1611,44 @@ function Invoke-SlicePostMergeCleanup {
         $touched = @($run.Output | Where-Object { $_ -like "touched: *" } | ForEach-Object { $_.Substring(9).Trim() })
         if ($touched) {
             $archived = @($run.Output | Where-Object { $_ -like "plan archived: *" } | ForEach-Object { ($_.Substring(15) -split " -> ")[0] })
-            git -C $Root commit -m "$($Target.Id) -- archive the finished plan $($archived -join ', ')`n`n$trailer" -- @touched | Out-Null
-            if ($LASTEXITCODE -ne 0) { throw "git commit failed while archiving a finished plan" }
+            $parts += "archive the finished plan $($archived -join ', ')"
+            $paths += $touched
         }
         if ($run.Exit -ne 0) {
             Write-Output "$($Target.Id) -- a finished plan was kept live (reason above); check_docs will name it until it is moved to plans/archive/"
         }
     }
 
-    # The one push for the whole transaction: every commit the merge, the
-    # ready-index refresh and the ledger removal made travels together.
+    # The ready-check page is a shared index, deliberately generated only
+    # here, once the feature branch is known to be merged. This keeps
+    # parallel branches from appending to the same Markdown file. It runs
+    # after the plan archive, which may repoint a check record's Owner line.
+    $indexGenerator = Join-Path $Root "tools\check_docs.py"
+    $verifyScript = Join-Path $Root "tools\verify.ps1"
+    $python = if ($PythonPath) { $PythonPath } else { & $verifyScript -ResolvePythonOnly }
+    if (-not $python -or -not (Test-Path -LiteralPath $python -PathType Leaf)) {
+        throw "could not resolve Python for the ready-check index"
+    }
+    & $python $indexGenerator --write-ready-index
+    if ($LASTEXITCODE -ne 0) { throw "could not regenerate checks/ready.md" }
+    git -C $Root diff HEAD --quiet -- checks/ready.md
+    if ($LASTEXITCODE -ne 0) { $parts += "refresh the ready-check index"; $paths += "checks/ready.md" }
+
+    if ($paths) {
+        # archive_slice.py stages its own move (`git mv` leaves the old path
+        # in no tree for `git add` to match); only the other two need it.
+        $plain = @($paths | Where-Object { $_ -in @("plans/workstreams.md", "checks/ready.md") } | Select-Object -Unique)
+        if ($plain) {
+            git -C $Root add -- @plain
+            if ($LASTEXITCODE -ne 0) { throw "git add failed" }
+        }
+        git -C $Root commit -m "$($Target.Id) -- closeout on master: $($parts -join '; ')`n`n$trailer" -- @($paths | Select-Object -Unique) | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "git commit failed for the closeout on master" }
+        Invoke-InjectedLifecycleFailure -Phase "closeout-committed"
+    }
+
+    # The one push for the whole transaction: the merge and the closeout
+    # commit travel together.
     Sync-PrimaryMaster -Root $Root -Reason "pushing the closeout"
     if ((Invoke-GitQuiet -c http.sslBackend=openssl -C $Root push) -ne 0) { throw "git push failed" }
     Invoke-InjectedLifecycleFailure -Phase "pushed"
@@ -1802,6 +1840,26 @@ function Invoke-SliceResume {
     $root = Get-PrimaryRoot
     $openRow = Get-LedgerLaneRows -Root $root | Where-Object { $_.Lane -eq $Lane } | Select-Object -First 1
     if (-not $openRow) {
+        # The ledger row can be gone while the closeout on master is not: the
+        # removal is edited first and committed with the plan archive and the
+        # ready index, then pushed. The journal still says "merged" until all
+        # of that is done, so it names the slice to finish cleaning up.
+        $journalPath = Get-ClosingJournalPath -Root $root
+        $journal = $null
+        if (Test-Path -LiteralPath $journalPath) {
+            try { $journal = Get-Content -Raw -LiteralPath $journalPath | ConvertFrom-Json } catch { $journal = $null }
+        }
+        if ($journal -and [string]$journal.lane -eq $Lane -and [string]$journal.phase -eq "merged" -and (Test-SliceBranchMerged -Root $root -Branch ([string]$journal.branch))) {
+            $relative = ".worktrees/$($journal.id)"
+            $target = [PSCustomObject]@{
+                Id = [string]$journal.id; Lane = $Lane; Branch = [string]$journal.branch
+                WorktreeRelative = $relative; WorktreePath = (Join-Path $root $relative)
+            }
+            Invoke-SlicePostMergeCleanup -Root $root -Target $target -PythonPath $PythonPath
+            Remove-ClosingJournal -Root $root
+            Write-Output "Slice resumed: $($target.Id) -- post-merge cleanup complete"
+            return
+        }
         Write-Output "Slice resume: no open $Lane lifecycle remains; cleanup is already complete"
         return
     }
@@ -1904,6 +1962,35 @@ function Save-SliceBranchWork {
     }
 }
 
+function Get-RefillRefusalReason {
+    # The stop ledger keeps only the cause, and "its reason is printed above"
+    # left 17 refill refusals (5 to 16 Oct 2026) with no reason to count.
+    # refill_lane.py prints "not written: ..." then one indented line per
+    # check_docs error, or a one-line "not added: ..." or lock refusal.
+    param([object[]]$Output)
+    $lines = @($Output | ForEach-Object { "$_".Trim() } | Where-Object { $_ })
+    $reason = $null
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -like "not written:*" -and $i + 1 -lt $lines.Count) { $reason = $lines[$i + 1]; break }
+        if ($lines[$i] -like "not added:*" -or $lines[$i] -like "*lifecycle is busy*") { $reason = $lines[$i]; break }
+    }
+    if (-not $reason) { $reason = if ($lines.Count) { $lines[-1] } else { "(no output)" } }
+    if ($reason.Length -gt 160) { $reason = $reason.Substring(0, 160) }
+    return $reason
+}
+
+function Get-BranchBehindNote {
+    # A branch behind master reads its own stale NEXTSTEPS.md, so a refill
+    # that already happened on master looks missing (AR-3, 7 Oct 2026, 40
+    # commits behind). Say so in the cause rather than leave it to be dug out.
+    param([string]$Root)
+    $count = (Invoke-GitText -C $Root rev-list --count HEAD..master).Text.Trim()
+    if ($count -match '^\d+$' -and [int]$count -gt 0) {
+        return " (this branch is $count commit(s) behind master: git merge master in the worktree first, then retry)"
+    }
+    return ""
+}
+
 function Invoke-SlicePythonTool {
     # Run one of the repository's Python tools and hand back its exit code
     # and every output line. Local "Continue": PowerShell 5.1 turns a
@@ -1979,9 +2066,12 @@ function Invoke-SliceArchiveAndRefill {
     # session used to rewrite out of plan prose are a copy. The archive runs
     # first on purpose: it takes the closing slice's section, and with it the
     # block, out of the plan before the top-up looks for candidates.
+    # Both edits travel in one "closeout" commit (14 Oct 2026): a commit each
+    # doubled the branch's bookkeeping and nobody ever reverted one alone.
     param([string]$Root, [object]$Item, [string]$Id, [string]$Lane, [string]$Trailer, [string]$PythonPath)
     if (-not $Item) { return }
 
+    $done = @()
     $archiveTool = Join-Path $Root "tools\archive_slice.py"
     $archive = Get-SliceArchiveState -Root $Root -Item $Item -Id $Id
     if ($archive.HeadingLive -and (Test-Path -LiteralPath $archiveTool -PathType Leaf)) {
@@ -1993,7 +2083,7 @@ function Invoke-SliceArchiveAndRefill {
         if ($run.Exit -ne 0) {
             Stop-Slice -Cause "$Id -- tools/archive_slice.py $Id refused (exit $($run.Exit)); its reason is printed above and nothing was moved" -Fix "fix what it names on this branch (or move the section under '$($Item.Heading)' into plans/archive/$Id`_$(Get-Date -Format yyyy-MM-dd).md by hand), commit, and retry"
         }
-        Save-SliceBranchWork -Root $Root -Message "$Id -- archive its plan section`n`n$Trailer"
+        $done += "archive its plan section"
     }
 
     $refillTool = Join-Path $Root "tools\refill_lane.py"
@@ -2009,10 +2099,14 @@ function Invoke-SliceArchiveAndRefill {
         $run = Invoke-SlicePythonTool -Root $Root -PythonPath $PythonPath -Arguments $refillArgs
         $run.Output | ForEach-Object { Write-Output $_ }
         if ($run.Exit -ne 0) {
-            Stop-Slice -Cause "$Id -- tools/refill_lane.py refused (exit $($run.Exit)); its reason is printed above and NEXTSTEPS.md is unchanged" -Fix "on this branch give its successor ($($Item.NextAfter)) a ``````queue block in its own plan section -- or, if that says the plan is complete, the next ready, file-disjoint slice from an owning plan -- then retry finish; it deletes $Id, tops the $Lane lane up and commits both. If the successor is not startable yet, put it under '## Not in the queue, and why' with what it waits for instead"
+            # Keep the archive move committed under its own name, so the
+            # session's fix and the retry's refill are not filed under it.
+            if ($done) { Save-SliceBranchWork -Root $Root -Message "$Id -- closeout: $($done -join ' and ')`n`n$Trailer" }
+            Stop-Slice -Cause "$Id -- tools/refill_lane.py refused (exit $($run.Exit)): $(Get-RefillRefusalReason -Output $run.Output); NEXTSTEPS.md is unchanged$(Get-BranchBehindNote -Root $Root)" -Fix "on this branch give its successor ($($Item.NextAfter)) a ``````queue block in its own plan section -- or, if that says the plan is complete, the next ready, file-disjoint slice from an owning plan -- then retry finish; it deletes $Id, tops the $Lane lane up and commits both. If the successor is not startable yet, put it under '## Not in the queue, and why' with what it waits for instead"
         }
-        Save-SliceBranchWork -Root $Root -Message "$Id -- refill the $Lane lane`n`n$Trailer"
+        $done += "refill the $Lane lane"
     }
+    if ($done) { Save-SliceBranchWork -Root $Root -Message "$Id -- closeout: $($done -join ' and ')`n`n$Trailer" }
 }
 
 function Invoke-SliceQueueReapply {
@@ -2318,7 +2412,7 @@ function Invoke-SliceFinish {
             if ($successorId -and -not ($branchItems | Where-Object { $_.Id -eq $successorId })) {
                 $branchQueueText = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $worktreeRoot "NEXTSTEPS.md")
                 if (-not (Test-SuccessorDeferred -Text $branchQueueText -Id $successorId)) {
-                    Stop-Slice -Cause "$id -- Next after: names '$successorId', which is neither in the [$lane] lane nor under '## Not in the queue, and why'" -Fix "on this branch, either add '$successorId' to ### $lane lane with full Plan/Files/Check/Proof/Next after lines (its plan section is the source; python tools/heading.py <plan> '$successorId' prints it), or -- if it is not startable yet -- give it a one-line bullet under '## Not in the queue, and why' whose bolded lead is its id and whose line says what it waits for; then run python tools/check_docs.py, commit, and retry"
+                    Stop-Slice -Cause "$id -- Next after: names '$successorId', which is neither in the [$lane] lane nor under '## Not in the queue, and why'$(Get-BranchBehindNote -Root $worktreeRoot)" -Fix "on this branch, either add '$successorId' to ### $lane lane with full Plan/Files/Check/Proof/Next after lines (its plan section is the source; python tools/heading.py <plan> '$successorId' prints it), or -- if it is not startable yet -- give it a one-line bullet under '## Not in the queue, and why' whose bolded lead is its id and whose line says what it waits for; then run python tools/check_docs.py, commit, and retry"
                 }
             }
         }
@@ -2377,6 +2471,13 @@ function Invoke-SliceFinish {
     }
     if ($primaryVerifyCmd.Parameters.ContainsKey("Scope")) {
         $primaryVerifyArgs["Scope"] = "primary"
+    }
+    # -Quiet as the branch run has it: unquiet, verify.ps1 streams each Python
+    # stage, and under this script's "Stop" a redirected stderr line becomes a
+    # terminating NativeCommandError -- every primary stop from 5 to 16 Oct
+    # 2026 named only that, never its stage, and the stage logged no event.
+    if ($primaryVerifyCmd.Parameters.ContainsKey("Quiet")) {
+        $primaryVerifyArgs["Quiet"] = $true
     }
     try {
         $primaryVerifyOutput = & $primaryVerifyScript @primaryVerifyArgs 2>&1
@@ -2438,7 +2539,7 @@ function Invoke-SliceFinish {
         Id = $id; Lane = $lane; Branch = $branch
         WorktreeRelative = $worktreeRelative; WorktreePath = (Join-Path $root $worktreeRelative)
     }
-    Set-SliceStep "post-merge cleanup (ready-check index, worktree, branch, ledger row, push)"
+    Set-SliceStep "post-merge cleanup (worktree, branch, one closeout commit for the ledger row, finished plan and ready-check index, push)"
     Invoke-SlicePostMergeCleanup -Root $root -Target $target -PythonPath $PythonPath
     Remove-ClosingJournal -Root $root
     Set-SliceStep "printing the report (the merge and cleanup are done)"

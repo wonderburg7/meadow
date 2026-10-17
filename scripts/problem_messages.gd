@@ -15,8 +15,8 @@ const Season = preload("res://scripts/season.gd")
 ## decisions living in year_winter.gd. `condition` deliberately uses the
 ## shared condition vocabulary's `custom` leaf: these facts are already
 ## computed by ColonyDiagnostics, and the signal-specific comparisons do not
-## belong in that general-purpose evaluator. A null action/category means the
-## corresponding optional array element is omitted, preserving HUD's shape.
+## belong in that general-purpose evaluator. A null action/category becomes "" in
+## the line, which keeps every line the same five-element shape.
 const SIGNALS := [
 	{"id": "starving", "condition": {"custom": "starving"}, "severity": 2, "action": "starving", "category": null, "message": "signal_starving"},
 	{"id": "hungry_brood", "condition": {"custom": "hungry_brood"}, "severity": 2, "action": "hungry_brood", "category": "brood", "message": "signal_hungry_brood"},
@@ -39,12 +39,12 @@ static func signal_lines(state: Dictionary) -> Array:
 	for entry in SIGNALS:
 		if not _matches(state, entry.condition):
 			continue
-		var line: Array = [_dispatch(str(entry.message), state), int(entry.severity)]
-		if entry.action != null:
-			line.append(entry.action)
-		if entry.category != null:
-			line.append(entry.category)
-		lines.append(line)
+		# Fixed shape [text, severity, action, category, id]: action and
+		# category are "" when the row has none, so readers can index
+		# [2], [3] and [4] without a size check (GP-4 added the id).
+		var action: String = "" if entry.action == null else str(entry.action)
+		var category: String = "" if entry.category == null else str(entry.category)
+		lines.append([_dispatch(str(entry.message), state), int(entry.severity), action, category, str(entry.id)])
 	return lines
 
 

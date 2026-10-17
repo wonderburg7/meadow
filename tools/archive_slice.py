@@ -28,7 +28,10 @@ tracked Markdown file that names the old path (an archived slice record's
 live, and says why, while NEXTSTEPS.md or plans/workstreams.md still cite it
 -- the queue item and ledger row `finish` removes first -- or while a file it
 would touch has uncommitted changes. `tools/slice.ps1 finish` runs it after
-the merge, once the ledger row is gone.
+the merge, once the ledger row is gone. NEXTSTEPS.md holds a plan live only
+through a queue item or an id-led "Not in the queue" bullet; a prose mention
+is repointed. A `plans/README.md` routing row whose Read cell is the plan is
+dropped, not repointed: the table routes to live work only.
 """
 
 from __future__ import annotations
@@ -137,6 +140,10 @@ def archive(root: Path, slice_id: str, plan_rel: str, heading: str, when: str,
 # the worktree ledger row. Both must go before the plan moves, or the move
 # leaves check_docs a dangling backticked path.
 IN_FLIGHT_CITERS = ("NEXTSTEPS.md", "plans/workstreams.md")
+QUEUE_FILE = "NEXTSTEPS.md"
+ROUTING_FILE = "plans/README.md"
+ID_LED_BULLET = re.compile(r"^-\s+\*\*(.+?)\*\*(.*)$", re.MULTILINE)
+SLICE_ID_TOKEN = re.compile(r"\b[A-Z][A-Za-z0-9]*-[A-Za-z0-9]+\b")
 STATUS_FIELD = re.compile(r"^Status:\s*([^|\n]*)", re.MULTILINE)
 
 
@@ -147,6 +154,33 @@ def _citing_files(root: Path, plan_rel: str) -> list[str]:
                   if line.strip() and line.strip() != plan_rel)
 
 
+def _queue_holds(root: Path, plan_rel: str) -> bool:
+    """True while NEXTSTEPS.md has work in flight on `plan_rel`.
+
+    That is a queue item naming it, or a bullet whose bolded lead names a
+    slice id (a deferred slice). Any other mention is a pointer in prose and
+    is repointed like any other citer: on 8 and 16 Oct 2026 one such pointer
+    kept a finished plan live, and the next closeout's primary verify failed
+    on check_docs' terminal-plan rule.
+    """
+    text = (root / QUEUE_FILE).read_text(encoding="utf-8")
+    if any(plan_rel in chunk for _, chunk in queue_item_chunks(text) or []):
+        return True
+    return any(SLICE_ID_TOKEN.search(bullet.group(1)) and plan_rel in bullet.group(0)
+               for bullet in ID_LED_BULLET.finditer(text))
+
+
+def _drop_routing_rows(body: str, plan_rel: str) -> str:
+    """plans/README.md without the routing rows whose Read cell is `plan_rel`.
+
+    Repointing them left a row per finished plan aimed into plans/archive/:
+    16 of 30 rows by 15 Oct 2026, each plan review cutting them by hand. A row
+    that only mentions the plan in its first cell is repointed as before.
+    """
+    row = re.compile(rf"^\|[^\n]*\|[ \t]*`{re.escape(plan_rel)}`[^|\n]*\|[ \t]*\n", re.MULTILINE)
+    return row.sub("", body)
+
+
 def archive_plan(root: Path, plan: Path, when: str) -> tuple[list[str], str]:
     """Move one terminal plan into plans/archive/: (touched paths, why it was kept)."""
     plan_rel = plan.relative_to(root).as_posix()
@@ -154,7 +188,8 @@ def archive_plan(root: Path, plan: Path, when: str) -> tuple[list[str], str]:
     if (root / archive_rel).exists():
         return [], f"{archive_rel} already exists"
     citing = _citing_files(root, plan_rel)
-    in_flight = [path for path in citing if path in IN_FLIGHT_CITERS]
+    in_flight = [path for path in citing if path in IN_FLIGHT_CITERS
+                 and (path != QUEUE_FILE or _queue_holds(root, plan_rel))]
     if in_flight:
         return [], f"{' and '.join(in_flight)} still cite it; the queue item and ledger row go first"
     dirty = _git(root, "status", "--porcelain", "--", plan_rel, *citing).stdout.strip()
@@ -178,6 +213,8 @@ def archive_plan(root: Path, plan: Path, when: str) -> tuple[list[str], str]:
     for rel in citing:
         path = root / rel
         body = live_line.sub(f"Live plan: `{archive_rel}` (archived)", path.read_text(encoding="utf-8"))
+        if rel == ROUTING_FILE:
+            body = _drop_routing_rows(body, plan_rel)
         path.write_text(body.replace(plan_rel, archive_rel), encoding="utf-8")
     _git(root, "add", "--", archive_rel, *citing)
     return [plan_rel, archive_rel, *citing], ""

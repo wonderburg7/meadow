@@ -77,33 +77,28 @@ static func fill_frame(levels: Array, fraction: float) -> int:
 ## the 32x32 frame: the table's anchor row (y 22, the middle of the 16-tall
 ## slice that starts 14px down). The 14px left above the floor is the
 ## cup's back wall, drawn there so it overlaps whichever cell is behind
-## this one -- see `_ready`'s z_index.
+## this one -- see `Shapes.hex_draw_depth`.
 const EMPTY_FLOOR_MID_Y: float = SpriteCatalogue.WAX_CELL_NECTAR_ANCHOR.y
 
 ## Fine visual nudge on top of the derived offset below, in screen pixels
 ## (negative = up). This stays separate from the export measurements so a
 ## future resprite export cannot silently undo an alignment tuned by eye.
 const EMPTY_SPRITE_Y_NUDGE := -1.0
-## Rings only, not the sprite: EMPTY_SILHOUETTE was measured two pixels
-## above where the drawn cup reads, so every ring built from it sat high
-## on the art (Dave, 8 Sep 2026, C-9). Applied in
-## _silhouette_point_to_local after the sprite's own arithmetic, so the
-## two still cannot drift apart.
-const RING_Y_NUDGE := 2.0
+
 ## Makes the cup fractionally larger than exact tessellation if a filtering
 ## seam needs closing. 1.0 keeps the exported sprite at its exact size.
 const EMPTY_SPRITE_SCALE_NUDGE := 1.0
 
-## The empty-cell sprite's own outline, in pixels on its 32x32 canvas.
-## Measured off the empty frame's alpha: opaque rows 4..30, a 16px flat top
-## edge at y=4 (x=8..23), a 16px flat bottom edge at y=30, and the full
-## 32px width held between y=12 and y=22. Eight corners, not six -- the
-## cup has vertical sides, which is why a hexagon can never trace it.
-## Re-measure this if the cup layer of wax_cell_nectar.aseprite is redrawn.
-const EMPTY_SILHOUETTE: Array = [
-	Vector2(8.0, 4.0), Vector2(24.0, 4.0), Vector2(32.0, 12.0),
-	Vector2(32.0, 23.0), Vector2(24.0, 31.0), Vector2(8.0, 31.0),
-	Vector2(0.0, 23.0), Vector2(0.0, 12.0),
+## The cup's rim -- the bright outline round the top face of the empty
+## frame -- in the frame's own pixel space (outer pixel edges). Measured
+## 14 Oct 2026 off frame 0 of wax_cell_nectar_sheet.png by printing its
+## pixels as a grid: top y 5 (x 9..26), bottom y 21 (x 8..26), left x 1 and
+## right x 32 at y 13. A flat-topped hexagon, which every ring on the cell
+## traces. Re-measure this if the cup layer of wax_cell_nectar.aseprite is
+## redrawn.
+const EMPTY_RIM: Array = [
+	Vector2(9.0, 5.0), Vector2(26.0, 5.0), Vector2(32.0, 13.0),
+	Vector2(26.0, 21.0), Vector2(8.0, 21.0), Vector2(1.0, 13.0),
 ]
 
 ## SP-3. Nectar is the sprite lime (187, 248, 36), exactly.
@@ -358,13 +353,10 @@ func _ready() -> void:
 	squashed = Session.use_sprite_hex_grid
 
 	# Cells are built one at a time as the comb grows, in whatever order
-	# the player or the queen happens to add them, but the resprite's cup
-	# wall (see EMPTY_FLOOR_MID_Y) has to paint over the cell
-	# behind it -- so draw order needs to run screen-top to screen-bottom
-	# regardless of build order. `Shapes.hex_to_pixel`'s y is always a
-	# positive multiple of (2r + q), squashed or not, so that alone gives
-	# every cell's relative order without caring where comb_centre sits.
-	z_index = 2 * axial.y + axial.x
+	# the player or the queen happens to add them, but the cup's wall (see
+	# EMPTY_FLOOR_MID_Y) has to paint over the cell behind it. The shared
+	# depth (see Shapes.hex_draw_depth) keeps that order whatever the build order.
+	z_index = Shapes.hex_draw_depth(axial)
 
 	polygon = Shapes.hexagon_points(cell_size, squashed)
 	color = EMPTY_COLOR
@@ -562,7 +554,7 @@ func _set_outline_points(line: Line2D, size: float) -> void:
 		line.add_point(p)
 	line.add_point(pts[0])   # close the loop
 
-## Converts one point of EMPTY_SILHOUETTE (in the empty frame's own pixel
+## Converts one point of EMPTY_RIM (in the empty frame's own pixel
 ## space) into this cell's local space, using exactly the arithmetic
 ## `_ready()` uses to place `empty_sprite` -- so a ring built from this can
 ## never drift away from the sprite it is meant to trace.
@@ -570,19 +562,25 @@ func _silhouette_point_to_local(p: Vector2) -> Vector2:
 	var s: float = empty_scale * EMPTY_SPRITE_SCALE_NUDGE
 	return Vector2(
 		(p.x - EMPTY_FRAME_SIZE.x * 0.5) * s,
-		(p.y - EMPTY_FLOOR_MID_Y) * s + EMPTY_SPRITE_Y_NUDGE + RING_Y_NUDGE
+		(p.y - EMPTY_FLOOR_MID_Y) * s + EMPTY_SPRITE_Y_NUDGE
 	)
 
-## Cell art's cup sprite has vertical sides and a flat top and bottom, not
-## a hexagon -- so this walks EMPTY_SILHOUETTE, the shape measured off the
-## sprite's own alpha, rather than nudging hexagon corners. Reached only
-## via `_apply_outline_points`.
+## With cell art on every ring traces the cup's rim (EMPTY_RIM), scaled
+## about the rim's own centre so the larger zone rings stay centred on it.
+## Reached only via `_apply_outline_points`.
 func _set_outline_points_cup(line: Line2D, size: float) -> void:
 	line.clear_points()
 	var ring_scale := size / cell_size
+	var local: Array = []
+	var centre := Vector2.ZERO
+	for p in EMPTY_RIM:
+		var q := _silhouette_point_to_local(p)
+		local.append(q)
+		centre += q
+	centre /= float(local.size())
 	var pts: Array = []
-	for p in EMPTY_SILHOUETTE:
-		pts.append(_silhouette_point_to_local(p) * ring_scale)
+	for q in local:
+		pts.append(centre + (q - centre) * ring_scale)
 	for p in pts:
 		line.add_point(p)
 	line.add_point(pts[0])   # close the loop

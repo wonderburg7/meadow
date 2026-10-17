@@ -97,19 +97,26 @@ static func list_slots() -> Array:
 	result.sort_custom(func(a, b): return int(a["last_saved"]) > int(b["last_saved"]))
 	return result
 
-## A default run name no listed slot uses yet: `base`, else `base 2`,
-## `base 3`... for the lowest number whose slug is free (RR-3). Reads the
-## index file only; call it when a new run starts, not per frame.
+## Names this launch has already handed out (RR-6). A run that never saves
+## writes no slot, so without this the next run would be offered the same
+## name. Static, so it lasts until the game is relaunched; nothing is written.
+static var _issued_run_slugs: Dictionary = {}
+
+## A default run name that no listed slot and no name issued this launch
+## uses yet: `base`, else `base 2`, `base 3`... for the lowest number whose
+## slug is free (RR-3, RR-6). Reads the index file only; call it when a new
+## run starts, not per frame.
 static func fresh_run_name(base: String) -> String:
-	var taken := {}
+	var taken := _issued_run_slugs.duplicate()
 	for slot in list_slots():
 		taken[slot["slug"]] = true
-	if not taken.has(slugify(base)):
-		return base
+	var run_name := base
 	var n := 2
-	while taken.has(slugify("%s %d" % [base, n])):
+	while taken.has(slugify(run_name)):
+		run_name = "%s %d" % [base, n]
 		n += 1
-	return "%s %d" % [base, n]
+	_issued_run_slugs[slugify(run_name)] = true
+	return run_name
 
 ## Called after the player's own save has been written.
 static func record_save(slug: String, display_name: String, day: int) -> void:

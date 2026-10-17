@@ -33,12 +33,16 @@ sitting in a `.worktrees/` directory:
    (`python tools/heading.py <plan> "<heading>" | grep -i reasoning`, not
    the whole section), go to 5 with that level, and count it toward the
    maximum. Any other held state stops the run. If the lane is empty,
-   dispatch the steward with `JOB=refill` (below), then rerun `doctor`.
+   dispatch the steward with `JOB=refill` (below), plus `gates` and the
+   ids landed so far if there are any, then rerun `doctor`.
 2. **Claim.** Read `advice.dry_after` from `doctor`. When it is true, dispatch the
-   steward with `JOB=refill` (below) or ask Dave *before* `start`, never after:
+   steward with `JOB=gates refill` and the ids landed so far (below) or ask
+   Dave *before* `start`, never after:
    a slice built with nothing admissible behind it is stranded at `finish`'s
-   refill gate (BS-12, 4 Oct 2026). Then run `start`. Keep its JSON, and note
-   `advice.level`.
+   refill gate (BS-12, 4 Oct 2026). Then run
+   `tools/slice.ps1 start -Lane Claude -Dispatched`. `-Dispatched` tells it a
+   worker implements the slice, so it does not check this session's own
+   model against the plan level. Keep its JSON, and note `advice.level`.
 3. **Dispatch.** Spawn the worker in the foreground
    (`run_in_background: false`). Its `subagent_type` comes from the level:
    `slice-worker-low` (Haiku 5.5), `-medium` (Sonnet 5.5) or `-high`
@@ -92,18 +96,24 @@ sitting in a `.worktrees/` directory:
      rerun. The refill gate (backlog dry), or a block whose `Proof:`
      fails on master or names a successor with no block, is planning work:
      dispatch the steward with `JOB=finish-stop`, the stop block and the
-     slice worktree, then rerun. Add `gates` to the job so the lane does not
-     run dry one slice later.
+     slice worktree, then rerun. Add `gates` with the ids landed so far, so
+     the lane does not run dry one slice later.
      The lifecycle lock held by another lane's `finish` (the cause names
      its PID): wait for it and rerun in one background call,
      `powershell.exe -NoProfile -Command "Wait-Process -Id <pid>"; (cd <ROOT>/.worktrees/<id> && powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 finish)`.
      Anything else stops the run.
 7. **Record.** Keep only the `Slice landed:` block and the worker's
    one-line summary. Drop everything else from your working notes.
-8. **Clear stale gates.** Dispatch the steward with `JOB=gates` and the ids
-   landed in this run. Add `refill` when `finish` left the lane short. Do it
-   even after the last slice of the run: `finish` never rewrites those
-   lines (T2-4a, 7 Oct 2026).
+8. **Clear stale gates once per run, not once per slice.** Add the id to
+   the run's list of landed ids. Dispatch the steward with `JOB=gates` and
+   that whole list only once, after the run's last slice, or earlier only
+   if the lane needs it now: `finish` left the lane short, or the next
+   `doctor` says `advice.dry_after`. Then send `JOB=gates refill` together,
+   and clear the list. `finish` never rewrites those lines (T2-4a, 7 Oct
+   2026). Gates after every slice cost three master commits and a steward
+   dispatch each time, while housekeeping was a median 28.5% of a
+   coordinator's context (14 Oct 2026). A gate one slice cleared waits for
+   the batch; a short lane is the one case that cannot wait.
 
 An empty or short lane is not a reason to stop: refill it. Stop only when
 the maximum is reached, a `start` refuses for any reason but an empty lane,
@@ -116,7 +126,9 @@ does all plan and queue editing, so this session never reads a plan section.
 Dispatch it in the foreground (`run_in_background: false`) with `ROOT=<ROOT>`,
 `JOB=<gates | refill | finish-stop, one or more>`, and what the job needs:
 the ids landed, the `finish` stop block and slice worktree, or this session's
-worktree path. It returns one JSON line.
+worktree path. It returns one JSON line. Its docs-only edits on this
+session's worktree branch register no ledger row (`plans/reference/closeout.md`,
+"Branches follow the lanes").
 
 - `done`: check it with `git -C <ROOT> show --stat <commit>` and rerun
   `python tools/check_docs.py`. Do not read the plan sections it touched.

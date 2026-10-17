@@ -1265,6 +1265,9 @@ var thinking: bool = false
 ## collection again on every think tick when there is no work.
 var _mining_no_work_epoch: int = -1
 var _mining_no_work_automine: bool = false
+## Buying a skill advances Availability.gate_epoch, not the mining epoch, so a
+## failed search is also stale once the gate epoch has moved (T2-10).
+var _mining_no_work_gate_epoch: int = -1
 var _miner_dispatch_timer: float = 0.0
 var _miner_dispatch_due: bool = false
 
@@ -1896,7 +1899,7 @@ func _try_role_work(r: int) -> bool:
 	# The Hive owns mining-work invalidation. Keep this guard outside the
 	# catalogue walk: otherwise an idle miner would still call all three
 	# mining finders after it had already established this epoch has no work.
-	if r == Role.MINER and _mining_no_work_epoch == hive.mining_work_epoch and _mining_no_work_automine == automine:
+	if r == Role.MINER and _mining_no_work_epoch == hive.mining_work_epoch and _mining_no_work_automine == automine and _mining_no_work_gate_epoch == Availability.gate_epoch:
 		return false
 	var finder = ROLE_ACTION_FINDERS.get(r)
 	if finder == null:
@@ -1914,6 +1917,7 @@ func _try_role_work(r: int) -> bool:
 	if r == Role.MINER:
 		_mining_no_work_epoch = hive.mining_work_epoch
 		_mining_no_work_automine = automine
+		_mining_no_work_gate_epoch = Availability.gate_epoch
 	return false
 
 
@@ -2515,11 +2519,15 @@ func idle_reason() -> String:
 				return "Nothing to clear. No dead larvae and no cells waiting to be emptied."
 			if hive.create_next_cell_site(home_hex if has_home_hex else Vector2i.ZERO) == null:
 				return "Nowhere left to build. The open floor is full — put miners on the soil to make more room, or clear a keep-clear tile."
+			if not _action_available("comb_build_outward"):
+				return "Nothing marked to build. Mark cells to build, or get the Automation skill so comb workers build outward on their own."
 			return ""
 		State.MINE_IDLE:
 			if not mine_queue.is_empty():
 				return "The blocks you marked are still buried. They will be dug once the soil in front of them is gone."
 			if automine:
+				if not _action_available("mine_automine_block"):
+					return "Dig on its own needs the Automation skill. Until then, mark blocks with Mine."
 				return "No soil left within reach. Everything diggable has been dug, or what's left is behind bedrock."
 			return "Nothing marked to dig, and this miner isn't digging on its own. Use Mine to give it a block, or turn on \"Dig on its own\"."
 		State.HONEY_IDLE:

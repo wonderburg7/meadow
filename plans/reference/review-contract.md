@@ -1,14 +1,15 @@
 # Review contract -- how a Meadow review runs
 
 <!-- CONTEXT: plan | LAYER: reference | LOAD: only when running a review from Dave's prompt library -->
-Status: reference | Owner: Dave / Claude Code | Next: nothing -- revise a rule when a review shows it is wrong | Dependency: none | Verified: 2026-10-07
+Status: reference | Owner: Dave / Claude Code | Next: nothing -- revise a rule when a review shows it is wrong | Dependency: none | Verified: 2026-10-15
 
-Dave's review prompts live in Notion ("Meadow review prompt library"). Each
-prompt names its record key, what it owns, what it hands off, and its own
-steps; this file is the part they all share, so it is kept once, here, next
-to the tools it names. A prompt's own steps win where the two differ (a
-higher headless-run allowance, for example). `tools/check_docs.py` enforces
-rule 5 on every record that carries the rule 8 header.
+Each review's own steps -- its record key, what it owns, what it hands off --
+live in `plans/reference/reviews/` (index: `plans/reference/reviews/README.md`);
+Dave's Notion library holds only a launcher naming this file and that one.
+This file is the part every review shares. A review's own steps win where the
+two differ (a higher headless-run allowance, for example).
+`tools/check_docs.py` enforces rule 5 on every record that carries the rule 8
+header.
 
 ## Contract
 
@@ -23,15 +24,16 @@ rule 5 on every record that carries the rule 8 header.
    `git show HEAD:<path>` piped through `grep` or `sed` for the part you
    need. At most five headless runs unless the prompt says otherwise, and
    extract only the fields you need from each.
-2. **Start from the last run.** Find the review's latest record
-   (`git ls-files docs plans/archive | grep <record key>`). First audit its
-   follow-through: every finding must now be shipped (confirm it in the
-   code), queued, gated, decided or rejected. Route any orphan before
-   starting anything new. Then review only what changed since the prompt's
-   `SINCE` commit (`git diff --stat <commit>..HEAD -- <owned paths>`), plus
-   anything the last record did not cover. Do not reopen a recorded
-   "deliberately not applied" decision unless new evidence contradicts its
-   reason. If nothing the review owns has changed and nothing is orphaned,
+2. **Start from the last run.** `python tools/review_due.py <record key>`
+   prints the latest record, its `Reviewed:` commit (the default `SINCE`)
+   and the watched files changed since. Read that record's Follow-through,
+   Findings and "Patterns deliberately not applied" sections, not the whole
+   record. First audit its follow-through: every finding must now be shipped
+   (confirm it in the code), queued, gated, decided or rejected. Route any
+   orphan before starting anything new. Then review only what changed since
+   `SINCE`, plus anything the last record did not cover. Do not reopen a
+   recorded "deliberately not applied" decision unless new evidence
+   contradicts its reason. If nothing the review owns has changed and nothing is orphaned,
    stop, report that, and write no record.
 3. **Evidence and materiality.** Every finding cites file and symbol plus the
    command that shows it; line numbers are hints only. Label inference as
@@ -57,7 +59,10 @@ rule 5 on every record that carries the rule 8 header.
      "Not in the queue, and why" naming what it waits for; name the slice id.
    - **Decided**: asked of Dave in the session with the options and their
      costs; the answer is written into the file where the rule lives, and
-     the record says which file.
+     the record says which file. A review run as a `/run-reviews` subagent
+     cannot ask: it returns the question to the coordinator, which asks
+     Dave once for the whole batch, and writes the record only after the
+     answer comes back (`plans/reference/review-runner.md`).
    - **Rejected**: one line in the record giving the reason.
 6. **Write slices a lower-reasoning model can finish without deciding
    anything.** Follow `plans/README.md` (plan schema; "Writing or editing a
@@ -82,9 +87,13 @@ rule 5 on every record that carries the rule 8 header.
    specifications live in plans, not in the record. Work on a branch, run
    `python tools/check_docs.py` (and `.\tools\verify.ps1` if code changed),
    and merge as `plans/reference/closeout.md` describes.
-9. **Report in chat, briefly:** the count for each disposition; decisions
-   still needed; slices added (id, plan, level); hand-offs. If you name a
-   next slice, add `CLAUDE.md`'s `Next model` and `Toggle` lines.
+9. **Report in chat, in at most about 15 lines:** the count for each
+   disposition; decisions still needed; slices added (id, plan, level);
+   hand-offs; the record's path. Do not repeat the record's tables. If you
+   name a next slice, add `CLAUDE.md`'s `Next model` and `Toggle` lines.
+10. **Fix the prompt you ran.** If a step in your review file named a path,
+    tool, flag or rule that no longer holds, correct that file on the same
+    branch and say so in the record's "Noted, not pursued".
 
 ## Record
 
@@ -128,19 +137,24 @@ Reviewed: <commit> | Since: <commit or "first run"> | Scope: <what was covered> 
 
 <!-- LAYER: on-demand -->
 
-| Record key | Prompt | First-run baseline |
-| --- | --- | --- |
-| plan-review | Plan and queue review | `docs/codebase-review-2026-09-18.md` section A |
-| context-review | Context and instruction-surface review | `docs/codebase-review-2026-09-18.md` section B |
-| agent-workflow-review | Agent workflow review, stages 1 and 2 | `docs/agent-workflow-review-2026-09-12.md` |
-| architecture-review | Architecture patterns review | `plans/archive/architecture-review_2026-09-24.md` |
-| gameplay-review | Gameplay systems consistency review | none |
-| performance-review | Runtime performance and update-policy review | `docs/PERFORMANCE_BASELINE.md` |
-| save-review | Save, restore and migration review | none |
-| ui-review | UI, feedback and accessibility review | none |
-| verification-review | Verification, test and build health review | none |
-| product-review | Product direction, pacing and balance review | none |
+The record key is the stem of a review's dated record and the `Record key:`
+line of its file in `plans/reference/reviews/`. Every review except the
+performance review has a record now, so only that one needs a first-run
+baseline: `docs/PERFORMANCE_BASELINE.md`.
 
-The hands-on check processor writes no record: the check records and plans
-are its record, and `python tools/new_check.py --confirm C-<n>` archives a
-pass.
+| Record key | Review file |
+| --- | --- |
+| plan-review | `plans/reference/reviews/plan-review.md` |
+| product-review | `plans/reference/reviews/product-review.md` |
+| architecture-review | `plans/reference/reviews/architecture-review.md` |
+| gameplay-review | `plans/reference/reviews/gameplay-review.md` |
+| performance-review | `plans/reference/reviews/performance-review.md` |
+| save-review | `plans/reference/reviews/save-review.md` |
+| ui-review | `plans/reference/reviews/ui-review.md` |
+| verification-review | `plans/reference/reviews/verification-review.md` |
+| context-review | `plans/reference/reviews/context-review.md` |
+| agent-workflow-review | `plans/reference/reviews/agent-workflow-review.md` (stage 2; stage 1, `plans/reference/reviews/agent-workflow-codex.md`, writes no record) |
+
+The hands-on check processor (`plans/reference/reviews/check-processor.md`)
+writes no record: the check records and plans are its record, and `python
+tools/new_check.py --confirm C-<n>` archives a pass.

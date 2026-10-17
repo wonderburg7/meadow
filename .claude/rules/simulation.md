@@ -72,11 +72,26 @@ management of those routes and rules is a separate future feature -- design
 that before adding any allocation behaviour.
 
 **Nectar-to-honey work converts and stores nectar; it must not create
-energy.** Nectar spoilage is a separate future feature, not part of this
-conversion. Before changing the conversion values, model the whole
+energy.** Nectar spoilage (fermentation, NF-1 to NF-5) is separate from
+this conversion. Before changing the conversion values, model the whole
 colony/winter economy and validate it over several seasons -- a
 single-season figure is not evidence. See `docs/headless-run-contract.md`.
 Since GC-3 (6 Oct 2026, Dave's decision of 30 Sep) `nectar_per_honey`
 equals `honey_energy_factor` (4.0), so honey is four times as dense as
 nectar but holds the same energy; `tests/source_checks.py`
 (`check_honey_conserves_energy`) fails if the factor exceeds the cost.
+
+**Nothing ferments over winter** (Dave, 15 Oct 2026: "Over winter it's too
+cold for the nectar to ferment"). A skipped winter
+(`season.gd::_resolve_winter`) moves every cell's `nectar_since` and
+`bee_bread_sealed_at` stamp forward by the seconds it skips, so nectar and
+sealed bee bread come out of winter exactly as old as they went in. Any new
+age stamp on a cell follows the same rule (run-repairs RR-9).
+
+**Fermented nectar is not currency** (Dave, 15 Oct 2026). Skill purchases
+neither count nor spend it: `skill_tree_panel.gd::_stores` and
+`hive.gd::take("nectar")` skip fermented cells together, so a purchase can
+never fall short (RR-10). Before it ferments, nectar goes through a
+**pre-fermented** stage, a colour between fresh and fermented, which is a
+warning only: pre-fermented nectar is still nectar for every purpose,
+skills included (RR-11).

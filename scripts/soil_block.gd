@@ -108,6 +108,9 @@ func set_selected(value: bool) -> void:
 
 func setup(hex: Vector2i) -> void:
 	axial = hex
+	# Set here, not in _ready: the block is added before setup, and axial is
+	# still zero in _ready. The side wall must paint over the block behind it.
+	z_index = Shapes.hex_draw_depth(hex)
 
 ## Marking and unmarking is just a change of intent, so the digging
 ## already done is kept. It used to be thrown away on unmark, which meant

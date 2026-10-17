@@ -40,7 +40,7 @@ equally.
 Block anchors sit at the middle of the block's top face, where the floor
 and anything growing on it stand. A full block's side is 14 art pixels
 tall and a half block's 7, so a block stacked on another draws that much
-higher. How the terrain stacks them is `plans/now/sprites.md`, SP-8.
+higher. How the terrain stacks them is `plans/now/meadow-terrain.md`, SP-8.
 - **Anchor**: `x,y` in art pixels within one frame; `-` means the centre.
 - **Variants**: recolours the exporter applies, `name: RRGGBB>RRGGBB,...`
   separated by `;`; each adds `<name>_<variant>_sheet.png`. `-` for none.

@@ -655,6 +655,45 @@ def _print_bash_calls(events):
 PROJECT_SLUG = "C--Users-dl13860-Documents-Meadow-meadow"
 
 
+def session_model(session, home=None):
+    """The model of `session`'s latest assistant row, or "" when its
+    transcript is not found. Reads only that session's own transcript."""
+    home = Path(home) if home else Path.home() / ".claude" / "projects"
+    model = ""
+    for f in home.glob(PROJECT_SLUG + "*/" + session + ".jsonl"):
+        try:
+            with f.open("r", encoding="utf-8") as fh:
+                for line in fh:
+                    if '"assistant"' not in line:
+                        continue
+                    try:
+                        row = json.loads(line)
+                    except Exception:
+                        continue
+                    if row.get("type") == "assistant":
+                        model = row.get("message", {}).get("model") or model
+        except OSError:
+            continue
+    return model
+
+
+def model_check(session, level, home=None):
+    """One warning line when the session claiming a slice runs a model its
+    plan level does not allow, else "". COL-8 (high) ran on Sonnet and PP-2
+    (medium) on Opus, each a direct "implement the next slice" session opened
+    on the wrong model (14 Oct 2026); `start` prints this so the session can
+    stop before the work, not after."""
+    if level not in LEVEL_MODELS or not session:
+        return ""
+    model = session_model(session, home)
+    if not model or model.startswith("<") or _level_allows(level, model):
+        return ""
+    wanted = " or ".join(LEVEL_MODELS[level])
+    return (f"warning: this session runs {model}, but the plan level is {level} ({wanted}*); "
+            "unless a worker subagent will implement it, stop and ask Dave to switch the "
+            "session's model before starting the work")
+
+
 def _level_allows(level: str, model: str) -> bool:
     return any(model.startswith(prefix) for prefix in LEVEL_MODELS[level])
 
@@ -827,13 +866,17 @@ def _stops_ledger_path():
     return common / "meadow-slice-stops.jsonl"
 
 
-def run_stops():
+def run_stops(days=None):
     """Tally tools/slice.ps1's recorded stops by the step that raised them.
 
     `--classify` counts lifecycle_failure outcomes but cannot say which phase
     produced them, so the fix was always chosen by anecdote. This names the
     step, which is what decides whether automating a gate is worth it.
+    `days` (an explicit `--days`) keeps only stops recorded in that window;
+    without it the whole ledger is read, as before. The agent-workflow review
+    compares one window with the last, and wrote its own filter each time.
     """
+    since = (datetime.now() - timedelta(days=days)).isoformat(timespec="seconds") if days else None
     path = _stops_ledger_path()
     if path is None or not path.exists():
         print("no stop ledger yet -- tools/slice.ps1 writes one the next time a command stops")
@@ -864,6 +907,8 @@ def run_stops():
             record = json.loads(line)
         except Exception:
             continue
+        if since and str(record.get("at") or "") < since:
+            continue
         total += 1
         by_command[record.get("command") or "?"] += 1
         step = record.get("step")
@@ -874,6 +919,8 @@ def run_stops():
             preflight_total += 1
             preflight_by_cause[record.get("cause") or "?"] += 1
 
+    if since:
+        print(f"window                       last {days} days (since {since})")
     print(f"stops recorded               {total}")
     print(f"stops in steps               {step_total}")
     print(f"preflight refusals           {preflight_total}")
@@ -890,7 +937,7 @@ def run_stops():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--days", type=int, default=7)
+    parser.add_argument("--days", type=int, default=None, help="window in days (default 7; --stops reads the whole ledger unless given)")
     parser.add_argument("--classify", action="store_true")
     parser.add_argument("--phases", action="store_true")
     parser.add_argument("--no-edit-reasons", action="store_true")
@@ -905,12 +952,27 @@ def main():
         action="store_true",
         help="summarise the diagnostic event log: verify stages, sessions, cost by branch",
     )
+    parser.add_argument(
+        "--model-check",
+        nargs=2,
+        metavar=("SESSION", "LEVEL"),
+        help="print a warning when SESSION's model does not suit plan LEVEL (slice.ps1 start)",
+    )
     args = parser.parse_args()
+    stops_days = args.days
+    if args.days is None:
+        args.days = 7
+
+    if args.model_check:
+        line = model_check(*args.model_check)
+        if line:
+            print(line)
+        return 0
 
     # The stop ledger is repository state, not session transcripts, so it is
     # readable even when no session directory exists.
     if args.stops:
-        run_stops()
+        run_stops(stops_days)
         return 0
 
     # --events reads the diagnostic event log, likewise not the transcripts.

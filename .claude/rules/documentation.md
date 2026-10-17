@@ -39,7 +39,11 @@ it had shipped.
 A slice that is specified but not yet admissible is fenced `queue-gated`
 instead: it stays out of every lane and every count until whoever clears the
 gate changes the fence, and the reason it waits still goes under
-`## Not in the queue, and why` as one line. **Five is a ceiling, not a
+`## Not in the queue, and why` as one line. In a `/run-queue` run the queue
+steward rewrites those lines once per run for every id the run landed, or
+sooner when the lane runs short, not after each slice (14 Oct 2026); such a
+docs-only edit, merged at once, takes no ledger row
+(`plans/reference/closeout.md`). **Five is a ceiling, not a
 quota** (Dave, 21 Sep 2026). A top-up refuses a candidate whose `Proof:` no
 longer holds, whose `Files:` collide with the other lane, or that is already
 queued or deferred, and leaves the lane short rather than padding it -- the

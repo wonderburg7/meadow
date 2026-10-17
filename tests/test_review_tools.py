@@ -1,5 +1,6 @@
-"""Review-library tooling: new_check.py's --confirm mode and check_docs.py's
-review-record rule (plans/reference/review-contract.md rules 5 and 8)."""
+"""Review-library tooling: new_check.py's --confirm mode, check_docs.py's
+review-record rule (plans/reference/review-contract.md rules 5 and 8) and
+review_due.py (rule 2)."""
 
 from datetime import date
 from pathlib import Path
@@ -168,6 +169,65 @@ class ReviewRecordTest(unittest.TestCase):
         self.assertIsNotNone(
             check_docs.REVIEW_RECORD_MARKER.search("<!-- CONTEXT: review-record | LOAD: on-demand -->")
         )
+
+
+REVIEW_DUE_SPEC = importlib.util.spec_from_file_location(
+    "review_due", CHECK_DOCS_PATH.with_name("review_due.py")
+)
+review_due = importlib.util.module_from_spec(REVIEW_DUE_SPEC)
+sys.modules["review_due"] = review_due  # its dataclasses look their module up
+REVIEW_DUE_SPEC.loader.exec_module(review_due)
+
+
+class ReviewDueTest(unittest.TestCase):
+    def test_a_prompt_header_gives_its_key_and_watches(self):
+        prompt = review_due.parse_prompt(
+            Path("x.md"),
+            "# X\n\n<!-- CONTEXT: review-prompt -->\nRecord key: save-review\n"
+            "Watches: scripts/saving.gd tests\n",
+        )
+        self.assertEqual(prompt.key, "save-review")
+        self.assertEqual(prompt.watches, ["scripts/saving.gd", "tests"])
+
+    def test_a_prompt_without_a_record_has_no_key(self):
+        prompt = review_due.parse_prompt(Path("x.md"), "# X\nRecord key: none (stage 2 writes it)\n")
+        self.assertIsNone(prompt.key)
+        self.assertEqual(prompt.watches, [])
+
+    def test_the_newest_record_wins_and_other_keys_are_ignored(self):
+        tracked = [
+            "docs/save-review-2026-09-30.md",
+            "docs/save-review-2026-10-07.md",
+            "docs/agent-workflow-review-2026-10-09.md",
+            "plans/archive/save-review_2026-09-01.md",
+        ]
+        self.assertEqual(
+            review_due.latest_record("save-review", tracked),
+            ("docs/save-review-2026-10-07.md", "2026-10-07"),
+        )
+        self.assertIsNone(review_due.latest_record("ui-review", tracked))
+
+    def test_an_archived_record_counts(self):
+        tracked = ["plans/archive/architecture-review_2026-09-24.md"]
+        self.assertEqual(
+            review_due.latest_record("architecture-review", tracked)[0],
+            "plans/archive/architecture-review_2026-09-24.md",
+        )
+
+    def test_the_reviewed_commit_comes_from_the_header(self):
+        text = "# R\n\nReviewed: b9854e5 | Since: first run | Scope: all\n"
+        self.assertEqual(review_due.reviewed_commit(text), "b9854e5")
+        self.assertIsNone(review_due.reviewed_commit("# R\nno header\n"))
+
+    def test_every_review_in_the_repo_watches_paths_that_exist(self):
+        prompts = review_due.load_prompts()
+        self.assertTrue(any(prompt.watches for prompt in prompts))
+        self.assertEqual(review_due.missing_watches(prompts), [])
+
+    def test_every_review_in_the_repo_states_a_level_a_runner_exists_for(self):
+        # /run-reviews dispatches review-runner-<level>; only these two exist.
+        for prompt in review_due.load_prompts():
+            self.assertIn(prompt.reasoning, ("medium", "high"), prompt.path)
 
 
 if __name__ == "__main__":

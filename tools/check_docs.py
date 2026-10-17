@@ -862,6 +862,7 @@ DOC_GLOBS = (
     "checks/*.md",
     "checks/ready/*.md",
     ".claude/rules/*.md",
+    "plans/reference/reviews/*.md",
 )
 BACKTICK_TOKEN = re.compile(r"`([^`\n]+)`")
 ROUTABLE_SUFFIX = re.compile(r"\.(md|gd|py|ps1|json|tscn|tres|cfg)$")

@@ -5,7 +5,9 @@
 Edit this file only from the primary checkout (never from inside a feature
 branch/worktree -- parallel branches editing this file will conflict on
 merge). Add a row when a branch/worktree is created; remove it the moment
-that work is integrated and closed out. `tools/check_docs.py` fails
+that work is integrated and closed out. A docs-only edit merged and pushed
+in the same sitting takes no row (`plans/reference/closeout.md`, "Branches
+follow the lanes"). `tools/check_docs.py` fails
 verification if a row's worktree/branch no longer exists, or if a registered
 `.worktrees/*` worktree has no row here.
 
@@ -46,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/FR-1` (`codex/FR-1`) | Codex | the three foraging stages measured on the same Colony Run seeds | Codex | in progress | none | `plans/now/forager-recruitment.md` FR-1 -- the three foraging stages measured on the same Colony Run seeds |

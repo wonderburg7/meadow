@@ -1,7 +1,7 @@
 # Goal presentation -- the four goal layers on screen in a Colony Run
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: GP-4 -- the problem strip stops blocking play (GP-1 and GP-2 built 13 Oct 2026) | Dependency: GP-1 → GP-2 → GP-4 (Dave's order, 12 Oct 2026); short-term goals left this plan on 13 Oct 2026 (Dave) for `plans/now/short-term-goals.md` (SG-1 to SG-3), whose SG-3 draws into GP-1's drop-down after GP-2 | Verified: 2026-10-13
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete (GP-1, GP-2 and GP-4 built, GP-4 on 15 Oct 2026; archived by the 15 Oct 2026 plan review) | Dependency: GP-1 → GP-2 → GP-4 (Dave's order, 12 Oct 2026); short-term goals left this plan on 13 Oct 2026 (Dave) for `plans/now/short-term-goals.md` (SG-1 to SG-3), whose SG-3 draws into GP-1's drop-down after GP-2 | Verified: 2026-10-15
 
 ## Objective
 
@@ -51,7 +51,6 @@ Verified 12 Oct 2026 against master `291e5a3`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| GP-4 | Problem strip: clicks only on text, 4-line cap, red shown when unstarred, × until it clears | `scripts/hud.gd`, `scripts/problem_messages.gd`, `tests/gp4_problem_strip_test.gd`, `tests/test_gp4_problem_strip.py` | yes (GP-2 landed 13 Oct 2026) | medium |
 
 Each slice reads this plan's "Decisions" and its own section only. Do not
 change `GameConfig`, a milestone's condition, the victory rule or the
@@ -112,35 +111,7 @@ GP-1 shipped 2026-10-13; its specification is `plans/archive/GP-1_2026-10-13.md`
 
 GP-2 shipped 2026-10-13; its specification is `plans/archive/GP-2_2026-10-13.md`.
 
-## GP-4 -- the problem strip stops blocking play
-
-<!-- LAYER: immediate-task -->
-
-**When done.** Decisions 7 and 8, in `hud.gd`'s problem strip. Each line's
-button is sized to its text, so the column's empty width no longer catches
-clicks. At most four lines show (a `SIGNAL_LINE_CAP` constant), then a
-non-interactive "+N more -- open the Colony window" line. Severity 0 lines
-are dropped from the strip. In a Colony Run, red lines show while
-`"signals"` is unstarred. Each yellow or red line carries a ×. Removed ids are
-held in `hud.gd` (presentation state, not saved) and forgotten when a refresh
-no longer reports them. That needs each line to carry its catalogue id, so
-`problem_messages.gd::signal_lines` appends it as an extra element; check
-every reader of the array's indices (`nursery_panel.gd` reads `[3]`). The
-Colony and Nursery windows' lists are unchanged.
-
-**Hands-on (Dave).** With warnings showing, click a bee next to a warning
-line and see the bee selected. Unstar the strip in a Colony Run and see red
-warnings stay. Remove one with × and see it stay away until the problem
-clears.
-
-```queue
-**[Claude] GP-4 -- The problem strip stops blocking play, keeps red visible and lets the player remove a warning**
-- Plan: `plans/now/goal-presentation.md` -- "GP-4 -- the problem strip stops blocking play"
-- Files: `scripts/hud.gd`, `scripts/problem_messages.gd`, `tests/gp4_problem_strip_test.gd`, `tests/test_gp4_problem_strip.py`
-- Check: `python -m unittest tests.test_gp4_problem_strip` passes (a strip line's click area is its text's width; at most four lines show, then "+N more"; no severity-0 line shows; in a Colony Run red lines show with the strip unstarred; a removed line stays away until its problem clears, then returns); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/hud.gd :: SIGNAL_LINE_CAP`
-- Next after: none -- the goal-presentation plan is complete
-```
+GP-4 shipped 2026-10-15; its specification is `plans/archive/GP-4_2026-10-15.md`.
 
 ## Open questions
 

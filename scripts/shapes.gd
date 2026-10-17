@@ -162,6 +162,15 @@ static func hex_to_pixel(q: int, r: int, size: float, squashed: bool = false) ->
 	var y := size * sqrt(3.0) * (r + q / 2.0) * y_scale
 	return Vector2(x, y)
 
+## Draw order for anything sitting on the hex grid (comb cells, hive soil
+## and rock blocks). It rises down the screen whatever order the things
+## were built in: `hex_to_pixel`'s y is always a positive multiple of
+## (2r + q), squashed or not, so that alone gives every hex's relative
+## order without caring where the comb centre sits. Things that paint
+## over the one behind them (a cup's wall, a block's side) need this.
+static func hex_draw_depth(hex: Vector2i) -> int:
+	return 2 * hex.y + hex.x
+
 ## Points along a circular arc, centred on origin, from `from_degrees`
 ## round to `to_degrees` (anticlockwise). Used to draw the hive wall as
 ## a near-complete ring with a gap left for the entrance.

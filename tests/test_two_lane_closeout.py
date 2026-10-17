@@ -626,8 +626,20 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         log = subprocess.run(
             ["git", "log", "--format=%s", "master"], cwd=self.root, capture_output=True, text=True, check=True
         ).stdout
-        self.assertIn("A-1 -- archive its plan section", log)
-        self.assertIn("A-1 -- refill the Claude lane", log)
+        # One branch commit carries both edits (14 Oct 2026), not one each.
+        self.assertIn("A-1 -- closeout: archive its plan section and refill the Claude lane", log)
+        self.assertNotIn("A-1 -- refill the Claude lane", log)
+        # On master: the claim's ledger row, the merge, and one closeout
+        # commit for the ledger row's removal and the ready index -- not a
+        # commit each.
+        first_parent = subprocess.run(
+            ["git", "log", "--first-parent", "--format=%s", "master"],
+            cwd=self.root, capture_output=True, text=True, check=True,
+        ).stdout.splitlines()
+        base = first_parent.index("real closeout tools")
+        self.assertEqual(3, base, first_parent[:base])
+        self.assertTrue(first_parent[0].startswith("A-1 -- closeout on master: drop its ledger row"), first_parent[0])
+        self.assertTrue(first_parent[1].startswith("Merge claude/A-1"), first_parent[1])
 
     def test_failure_after_the_actions_resumes_to_a_clean_merge(self):
         self.use_real_closeout_tools()

@@ -88,7 +88,11 @@ explicit request from Dave.
 - Candidate direction: Hypothesis — the UI review decides with Dave whether
   the readouts should continue across a load; if yes, it returns to the save
   review as an additive-field question under `.claude/rules/saving.md`.
-- Disposition: untriaged
+- UI review, 16 Oct 2026: confirmed (no reader in `save_game.gd`). Not purely
+  presentation: `day_store_totals` also feeds `conditions.gd` (line ~205) and
+  `colony_milestones.gd` (line ~52), so a load can change a gameplay readout
+  or condition. Question D1 sent to Dave through the /run-reviews coordinator.
+- Disposition: gated -- Dave chose to save all four (16 Oct 2026); RR-12 in plans/now/run-repairs.md, rule written into .claude/rules/saving.md
 
 ### 2026-10-07 — sessions still try to read the four denied paths, and a hint hook would widen the deny list
 
@@ -109,7 +113,10 @@ explicit request from Dave.
 - Candidate direction: Hypothesis — the agent workflow review checks whether
   the remaining cases come from review prompts that name those files, and
   if so has the prompts say `git show HEAD:` up front.
-- Disposition: untriaged
+- Disposition: rejected by the agent-workflow review, 16 Oct 2026: 42 refused calls in 11 days (32 naming
+  `plans/archive/`, 36 behind a `cd … &&` prefix), the queue steward the
+  largest source (9) although its brief already forbids `plans/archive/`.
+  About four turns a day is below the bar; re-measure at the next review.
 
 ### 2026-10-07 — a queue id with a space still breaks `slice.ps1 start`
 
@@ -144,7 +151,7 @@ explicit request from Dave.
   pointer into a denied file.
 - Candidate direction: Hypothesis — the plan and queue review replaces the
   two restatements with pointers and repoints the three references.
-- Disposition: untriaged
+- Disposition: untriaged (read by the agent-workflow review, 16 Oct 2026: the plan review's lane)
 
 ### 2026-10-07 — `session_cost.py` keeps a second copy of the level-to-model rule with no parity test
 
@@ -556,7 +563,9 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- judge the gate against master's queue,
   or have the stop say "the branch is N commits behind master: merge it in"
   instead of reporting a dry lane.
-- Disposition: untriaged
+- Disposition: fixed by the agent-workflow review, 16 Oct 2026: both refill stops in `tools/slice.ps1`
+  (`Get-BranchBehindNote`) now say how many commits the branch is behind
+  master and to merge it in first.
 
 ### 2026-10-07 — "primary checkout is not on master" names no holder
 
@@ -572,7 +581,8 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- the stop names the branch's lane and
   ledger row and the count of uncommitted files, and says whether a live
   session is on that branch.
-- Disposition: untriaged
+- Disposition: rejected by the agent-workflow review, 16 Oct 2026: one occurrence (7 Oct) in 11 days;
+  reopen on a second.
 
 ### 2026-10-07 — a ledger row committed off master fails every lane's verify
 
@@ -587,7 +597,8 @@ explicit request from Dave.
   closeout.
 - Candidate direction: Hypothesis -- registering a worktree lands its row on
   master, or the check names the branch that holds the row.
-- Disposition: untriaged
+- Disposition: rejected by the agent-workflow review, 16 Oct 2026: one occurrence (7 Oct) in 11 days;
+  reopen on a second.
 
 ### 2026-10-07 — a lane move can split a file-sharing sequence
 
@@ -603,7 +614,8 @@ explicit request from Dave.
   the other lane.
 - Candidate direction: Hypothesis -- refuse or warn when a queued item's
   slice-table row says "after X" and X is unlanded, wherever X is queued.
-- Disposition: untriaged
+- Disposition: rejected by the agent-workflow review, 16 Oct 2026: one occurrence, during a lane move
+  Dave authorised; lane moves are rare. Reopen on a second.
 
 ### 2026-10-07 — slice file lists miss the UI file a readout needs
 
@@ -618,7 +630,7 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- a writing rule (a section that changes
   what a readout, panel or window shows lists the file that builds it), or a
   `check_docs.py` heuristic on "readout"/"panel" with no UI file listed.
-- Disposition: untriaged
+- Disposition: untriaged (read by the agent-workflow review, 16 Oct 2026: a plan-writing rule, the plan review's lane)
 
 ### 2026-10-07 — workers settle open gameplay points themselves
 
@@ -635,7 +647,9 @@ explicit request from Dave.
   section leaves open that decides who lives or dies, a win or a save is a
   `blocked` question, never an "As built" note (CLAUDE.md rule 5 applied to
   workers).
-- Disposition: untriaged
+- Disposition: rejected by the agent-workflow review, 16 Oct 2026: `plans/reference/slice-worker.md`
+  "Stop and return `blocked`, never decide" has said so since 1 Oct; one
+  occurrence, which the slice reviewer caught. Reopen on a second.
 
 ### 2026-10-08 — a plan finish kept live leaves the next closeout red
 
@@ -655,7 +669,11 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- `finish` treats "plan kept live" for a
   terminal plan as a stop, not a note, or `--complete-plans` repoints plain
   mentions in `NEXTSTEPS.md` and refuses only on queue items and ledger rows.
-- Disposition: untriaged
+- Disposition: fixed by the agent-workflow review, 16 Oct 2026 after its second occurrence (GD-3,
+  16 Oct, stopped RR-7's primary verify): `tools/archive_slice.py`
+  `_queue_holds` keeps a plan live only for a queue item or an id-led
+  bullet, and repoints a prose mention; test
+  `test_repoints_a_prose_mention_in_the_queue_file`.
 
 ### 2026-10-09 — finish skips branch verify after a master merge
 
@@ -674,7 +692,10 @@ explicit request from Dave.
 - Consequence: a resumed closeout can land code that no verify has seen.
 - Candidate direction: Hypothesis -- the verified record stores and compares
   `HEAD` (or the tree hash), so any new commit forces a fresh branch verify.
-- Disposition: untriaged
+- Disposition: promoted by the agent-workflow review, 16 Oct 2026 as L-27 in
+  `plans/now/agent-lifecycle.md`: 4499fb6 (12 Oct) ties the verified
+  record to HEAD, but the closing journal's `verified` phase still skips
+  the check.
 
 ### 2026-10-12 — a merged sprite leaves the primary's import cache unbootable
 
@@ -691,4 +712,131 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- when the primary fails on an
   unresolved resource, `ensure_cache` runs `--import` on the primary once
   before refusing.
-- Disposition: untriaged
+- Disposition: superseded: ca6f34c (12 Oct) seeds a worktree's cache
+  whether or not the primary boots; no cache stop since (read by the agent-workflow review, 16 Oct 2026).
+
+### 2026-10-15 — `plans/now/sprites.md` is over its soft limit (from the verification review)
+
+- Signal: `tools/check_docs.py` warns "plans/now/sprites.md: 326 lines (soft
+  limit 260) -- check it is not holding delivered slices", and "plans/reference/check-loop.md:
+  verification date is 36 days old". Both warnings print on every verify run.
+- Evidence: `python tools/check_docs.py | grep WARNING`, 15 Oct 2026.
+- Consequence: warnings every agent reads on every verify and learns to ignore.
+- Candidate direction: Hypothesis -- plan review archives delivered sprite
+  slices and re-verifies check-loop.md.
+- Disposition: superseded -- fixed by the 15 Oct 2026 plan review
+  (`docs/plan-review-2026-10-15.md`): `plans/now/sprites.md` is 167 lines,
+  the meadow floor moved to `plans/now/meadow-terrain.md`, and
+  `plans/reference/check-loop.md` was re-verified.
+
+### 2026-10-15 — archiving a slice carries off the next slice's queue block
+
+- Source: plan review, 15 Oct 2026 (`docs/plan-review-2026-10-15.md`, F1)
+- Area: tooling / `tools/archive_slice.py::archive`, `tools/check_docs.py`
+- Signal: `archive` moves a slice's section from its heading to the next
+  heading. Plans often write slice N+1's `queue` block at the end of slice
+  N's section, just above N+1's heading, so the block leaves with N. It has
+  happened twice: `plans/archive/RR-6_2026-10-15.md` holds RR-7's block (RR-7's
+  was rewritten by hand in 7952bbb) and `plans/archive/SP-10_2026-10-15.md`
+  holds SP-11's (SP-11 had no live block until the plan review restored it).
+  On 15 Oct six more blocks sat that way in `plans/now/run-repairs.md` and
+  `plans/now/tier-two.md`.
+- Evidence: `git show HEAD:plans/archive/SP-10_2026-10-15.md | grep -n "SP-11"`.
+- Consequence: a gated block lost this way leaves the backlog silently, and
+  nothing fails; an admissible one costs a hand repair at closeout.
+- Candidate direction: Hypothesis -- `check_docs.py` fails a `queue` block
+  whose nearest `## ` heading does not name its id (the plan review's rule
+  11 in `plans/README.md` is the written rule), and `archive` refuses, or
+  leaves behind, a block for another id inside the section it cuts. This is
+  the second recurrence, so CLAUDE.md's instrument rule applies.
+- Disposition: promoted by the agent-workflow review, 16 Oct 2026 as L-28 in
+  `plans/now/agent-lifecycle.md` (the archive leaves another id's block in
+  the plan). The `check_docs.py` half waits: an unmerged branch owns that file.
+
+### 2026-10-15 — archiving a plan repoints its routing row instead of dropping it
+
+- Source: plan review, 15 Oct 2026 (`docs/plan-review-2026-10-15.md`, F2)
+- Area: tooling / `tools/archive_slice.py::archive_plan`, `plans/README.md`
+- Signal: `archive_plan` rewrites every citing file's path to the archive,
+  including `plans/README.md`'s "Current routing" row, so each finished plan
+  leaves a routing row pointing into `plans/archive/`. The 30 Sep plan
+  review cut the table to one row per live plan (its F2); by 15 Oct it had
+  30 rows, 16 for archived plans, and none for five live plans
+  (`sprites.md`, `run-repairs.md`, `crisis-readiness.md`,
+  `hive-and-menu-art.md`, `typeface-size.md`).
+- Evidence: `git show aa80f67:plans/README.md` against `git show b5e6751:plans/README.md`, "Current routing".
+- Consequence: an agent routed by the table opens archived plans or finds
+  no route to live work; each plan review re-cuts it by hand.
+- Candidate direction: Hypothesis -- `archive_plan` deletes the routing row
+  naming the plan rather than repointing it, and `check_docs.py` warns when
+  a live plan has no routing row or a row names `plans/archive/`.
+- Disposition: fixed by the agent-workflow review, 16 Oct 2026: `tools/archive_slice.py`
+  `_drop_routing_rows` drops a `plans/README.md` row whose Read cell is the
+  archived plan; test `test_drops_the_routing_row_whose_read_cell_is_the_plan`.
+
+### 2026-10-15 — a Codex finish stalled for a day, and nothing surfaced it
+
+- Source: plan review, 15 Oct 2026 (`docs/plan-review-2026-10-15.md`, F3)
+- Area: process / `tools/slice.ps1 finish`, `plans/workstreams.md`
+- Signal: `codex/GD-2b` holds the built slice (guidance_policy.gd, save
+  files, test) and its archive commit from 14 Oct 2026 12:15, unmerged; the
+  ledger row still says "in progress" and the queue still leads the Codex
+  lane with GD-2b. FC-2, then WP-2, SG-2, ED-1 and SP-8a, all wait on GD-2b
+  releasing the save files, so Dave's ordered chain has not moved.
+- Evidence: `git log --oneline master..codex/GD-2b`; `plans/workstreams.md`
+  GD-2b row.
+- Consequence: a stalled closeout in one lane silently blocks the other
+  lane's gated work.
+- Candidate direction: Hypothesis -- `doctor` (or the queue steward) flags a
+  ledger row whose branch has an archive commit but no merge after some
+  hours, naming the integrate prompt.
+- Disposition: merged by the agent-workflow review, 16 Oct 2026 into the 16 Oct entry below
+  (finding F7, question D1).
+
+### 2026-10-16 — a landed unblocker releases nothing that waits on it
+
+- Source: product review, 16 Oct 2026 (`docs/product-review-2026-10-16.md`)
+- Area: process / closeout, `checks/blocked.md`, `queue-gated` blocks
+- Signal: when the slice a gate names lands, nothing reopens what waited on
+  it. RR-1 landed 13 Oct 2026, yet eight Colony Run checks (C-109, C-110,
+  C-111, C-114 to C-118) still sit in `checks/blocked.md` naming it, and
+  C-84 names RR-1 and T2-9 (landed 12 Oct). GD-2b merged 15 Oct 2026 at
+  23:41, but FC-2's fence stayed `queue-gated` until this review opened it,
+  so the alpha route's crisis and the seven slices behind it stood still.
+- Evidence: `grep -n "Blocked by: RR-1" checks/blocked.md`;
+  `git log -1 --format=%ci fd7afd4` (GD-2b's merge) against
+  `plans/now/crisis-readiness.md` at `d7ad7de`.
+- Consequence: the closed alpha's hands-on evidence (goals, victory,
+  checkpoint, gynes, winter, rain, Shiver Cluster) is never run, and
+  critical-path slices wait on gates that have already cleared.
+- Candidate direction: Hypothesis -- `finish` (or the queue steward) lists
+  every `queue-gated` block and every `checks/blocked.md` entry naming the
+  closed id, and the closing session moves them; `check_docs.py` warns on a
+  blocked check whose every named unblocker is in `plans/archive/`.
+- Disposition: promoted by the agent-workflow review, 16 Oct 2026 (finding F7) as
+  L-30 in `plans/now/agent-lifecycle.md`. Dave chose to surface it: the queue
+  steward clears deferrals and fences, the check processor moves the checks.
+
+### 2026-10-16 — no colony size or frame budget to judge performance against (from the performance review)
+
+- Source: performance review, 16 Oct 2026 (`docs/performance-review-2026-10-16.md`, hand-off to the product review)
+- Area: product scope / performance budgets
+- Signal: the performance review's steps ask for cost "at the target
+  population (from `ROADMAP.md` or the pacing targets; do not invent
+  one)", and none exists. `ROADMAP.md` names no colony size;
+  `plans/design/product-scope.md` lists "performance budgets" for the
+  closed alpha and "Record pacing, balance and performance baselines" in
+  its stage 0 diagram without a number. Measured 16 Oct: 17.4 ms a frame
+  at 500 bees, 32.1 ms at 1,000 (headless), so whether today's cost is a
+  problem depends entirely on the answer.
+- Evidence: `git show HEAD:ROADMAP.md | grep -n -i bees` (nothing);
+  `grep -n -i "performance budget" plans/design/product-scope.md`;
+  `docs/performance.md`, "Canvas cost by colony size".
+- Consequence: every performance review and the sprite/batching decision
+  (`docs/performance.md`) has to rank work without knowing what "fast
+  enough" means at the colony size the 90-minute route reaches.
+- Candidate direction: Hypothesis -- the product review asks Dave for the
+  largest colony the 90-minute route should hold at 60 fps (or records the
+  peak population a Colony Run reaches), written once in
+  `plans/design/product-scope.md`.
+- Disposition: promoted -- `plans/design/product-scope.md` §6.1 (provisional 500 bees at 60 fps) and AR-4's check, which replaces it with twice the measured peak (Dave, 16 Oct 2026, product review D5)

@@ -184,3 +184,59 @@ Runner: dave -- a long unassisted Challenge 2 playthrough judged on whether the 
 Owner: `plans/archive/hands-on-findings_2026-10-05.md`
 
 Blocked by: RR-1 (`plans/now/run-repairs.md`) and T2-9 (`plans/now/tier-two.md`) -- Challenge 2 has no way to make new cells: the queen's Build cell is Challenge 1 only and Comb worker is blocked at 2.7 (Dave, 11 Oct 2026).
+
+### C-136 -- Without Automation, a miner's Job panel offers no Dig on its own
+
+What this checks: start a Colony Run without Automation (Skills > Hive Mind), select a Miner and read its Job panel; then open a comb cell's raise menu and read the Miner entries.
+
+PASS: neither the Job panel nor the raise menu offers "Dig on its own" until Automation is owned.
+
+If it fails, T2-12 reopens: the mode filter in `scripts/hud.gd` (the mode column or `_fill_hatch_menu`).
+
+Runner: haiku -- reading two menus for one label
+
+Owner: `plans/now/tier-two.md`
+
+Blocked by: T2-12 (`plans/now/tier-two.md`), which waits for `scripts/hud.gd`.
+
+### C-137 -- OpenDyslexic text is no wider than Standard at the same text scale
+
+What this checks: on the main menu, open the cog > Appearance. With Text scale at 1, switch Typeface between Standard and OpenDyslexic and compare the settings panel's text; repeat at Text scale 2.
+
+PASS: at each scale, OpenDyslexic's lines take about the same width as Standard's, not visibly more.
+
+If it fails, TS-1 reopens: `UiTheme.typeface_size_factor` in `scripts/ui_theme.gd`.
+
+Runner: sonnet -- a settings change and a width comparison between two still screenshots
+
+Owner: `plans/now/typeface-size.md`
+
+Blocked by: TS-1 (`plans/now/typeface-size.md`).
+
+### C-130 -- Hive soil blocks show Dave's art and crumble as they are dug
+
+What this checks: Start a game with Cell art on (Settings), open the hive view and zoom in on the soil wall. Mark one soil block for digging and watch it while a bee mines it.
+
+PASS: The blocks look like Dave's soil art, sit on their hexes like the comb cups, and the marked block crumbles through four pictures before vanishing.
+
+If it fails, SP-9 reopens: the block offset (side height 14 px in scripts/soil_block.gd) or the quarter-to-picture mapping needs adjusting.
+
+Runner: dave
+
+Owner: `plans/now/sprites.md`
+
+Blocked by: SP-10 (`plans/now/sprites.md`) -- the blocks draw in the wrong order outside the bottom right of the hive (Dave, 14 Oct 2026), so whether they sit on their hexes cannot be judged until it lands.
+
+### C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface
+
+What this checks: on the main menu, open the cog -> Appearance. Set Text scale to 1, then to 2; at each, choose every Typeface in its list in turn and look at the Challenge and Scenario hexagons after each choice.
+
+PASS: every hexagon shows its whole name at both scales in every typeface: no word is split across two lines, and no line is missing or cut off.
+
+If it fails, HO-15 reopens: the fit in `scripts/main_menu.gd::hex_fit_size`.
+
+Runner: sonnet -- many typeface and scale combinations, each read for clipped hexagon names
+
+Owner: `plans/now/run-repairs.md`
+
+Blocked by: RR-7 (`plans/now/run-repairs.md`) and the fix it specifies -- at text scale 2 in Silkscreen the Challenge hexagons split "CHALLENG / E 1" (failed 15 Oct 2026, Sonnet; an interrupted Opus re-run saw the same).

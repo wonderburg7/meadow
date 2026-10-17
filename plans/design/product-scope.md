@@ -1,7 +1,7 @@
 # Meadow — product scope and development sequence
 
 <!-- CONTEXT: plan | LAYER: design -->
-Status: selected design, not scheduled | Owner: Dave | Next: the Colony Run definition is the next design pass, after BS-4 (Dave, 30 Sep 2026; §6.2 "Next design pass"); the event director's selection logic still needs its own pass; the goal model's data, the job catalogue/dispatcher and the stable catalogues are `plans/archive/architecture-review_2026-09-24.md`'s C, G and B chains (Dave, 11 Sep 2026) | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-09-30
+Status: selected design, not scheduled | Owner: Dave | Next: the closed alpha's remaining route is sliced in live plans -- the crisis (FC-2, `plans/now/crisis-readiness.md`), Work Priorities, short-term goals and Easy (`plans/now/work-priorities.md`, `short-term-goals.md`, `difficulty.md`, in Dave's order), the gyne route (PP-6, `plans/now/pollination.md`) and the five-gate evidence (AR-4, `plans/now/alpha-route-evidence.md`); the Colony Run definition is built (`plans/archive/colony-run_2026-10-08.md`); the event director's selection logic still needs its own pass; the goal model's data, the job catalogue/dispatcher and the stable catalogues are `plans/archive/architecture-review_2026-09-24.md`'s C, G and B chains (Dave, 11 Sep 2026) | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-10-16
 
 This is Meadow's high-level product map. It defines what the game is trying to
 prove, what is essential for the first feedback build, which foundations later
@@ -72,6 +72,16 @@ reaches for them without being told to.
 | About 20 minutes | A serious, readable forage-and-weather crisis tests preparation and response. |
 | About 60 minutes | The colony enters and survives its first winter. |
 | About 90 minutes | After emerging from winter, the colony raises and releases gynes, reaches formal victory and may continue. |
+
+**How the gates are judged (Dave, 14 and 16 Oct 2026).** The headless
+pacing report (`tools/pacing_gates.py`) judges every timed gate on the run's
+calendar, not on minutes converted at 1x: the first worker by day 3; first
+automation on days 5 to 8 (the first tier-2 purchase lands around day 5,
+and Automation needs two other tier-2 nodes); winter survival on the run's
+winter schedule; the first gyne inside the second summer's mating window.
+The minutes above stay the experience budget a played run is checked
+against (C-139 for the first worker). Built by AR-5 and AR-4
+(`plans/now/alpha-route-evidence.md`).
 
 The 20-minute crisis uses the bounded readiness gate accepted for FC-1 in
 `plans/now/crisis-readiness.md`: early automation, an able forager and food
@@ -164,6 +174,10 @@ These are part of alpha stabilisation. They should continue through
 - Easy difficulty rules, a standard difficulty baseline and understandable
   failure/victory/continue states;
 - balance and pacing evidence at the 5/10/20/60/90-minute gates;
+- a frame budget: 60 fps (16.7 ms a frame) with 500 bees, a provisional
+  figure until AR-4's reference Colony Run records its peak population,
+  when the target becomes 60 fps at twice that peak (Dave, 16 Oct 2026,
+  product review D5; `docs/performance.md` holds the measured costs);
 - a simple feedback process for friends and family.
 
 ### 6.2 Shared foundations that precede content expansion
@@ -813,11 +827,15 @@ legal decisions for the release stream, not alpha blockers.
   `plans/now/work-priorities.md`, 13 Oct 2026);
 - Bee Bread recipe quantities, rationing and fermentation feedback;
 - exact skill discovery milestones and costs in the 90-minute route;
+- what genetic points buy -- gynes earn them (COL-7) and the notice names
+  them, but nothing spends them; Dave deferred it (14 Oct 2026). It blocks
+  nothing in the alpha, since victory is the first counted gyne, and it
+  blocks lineage (§6.3);
 - the seed-set and offspring-quality formulas (the Pollinator Point window
   is settled in §10's 10 Oct 2026 decisions);
 - Standard and harder difficulty rules;
 - ~~short-term-goal selection, concurrency and dismissal behaviour~~ --
-  settled in `plans/now/goal-presentation.md` decision 5 (Dave, 12 Oct 2026);
+  settled in `plans/archive/goal-presentation_2026-10-15.md` decision 5 (Dave, 12 Oct 2026);
 - named-save count, naming, overwrite and deletion UX;
 - detailed post-alpha threat, ecosystem and environment order;
 - Early Access content volume, price, demo, studio identity and charity model.

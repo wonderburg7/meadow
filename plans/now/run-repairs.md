@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: nothing further -- RR-1 to RR-5 have all landed (13 Oct 2026); archive this plan at closeout | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude Code | Next: RR-8 -- a menu hexagon repaints at the size its name was fitted to (RR-7 found the fit is right but never repainted, 16 Oct 2026); RR-9 and RR-10 from the 15 Oct 2026 gameplay review (winter ferments nothing; fermented nectar buys no skill), in the Codex lane since the 15 Oct 2026 plan review; RR-11 after SP-11 (`plans/now/sprites.md`) releases `scripts/hive_cell.gd` (RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-15
 
 ## Objective
 
@@ -9,6 +9,10 @@ Five faults the 10-11 Oct 2026 check pass confirmed in areas whose plans are
 archived (Colony Run, saving, scenario reds), so they start here
 (`plans/README.md`, "Plan schema"). Each slice comes from one failed check and
 Dave's decision in that session (11 Oct 2026).
+RR-9 to RR-11 come from the 15 Oct 2026 gameplay review
+(`docs/gameplay-review-2026-10-15.md`) and Dave's decisions that day, recorded
+in `.claude/rules/simulation.md` ("Nothing ferments over winter", "Fermented
+nectar is not currency").
 
 ## Current state
 
@@ -38,13 +42,280 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
+| RR-8 | a menu hexagon repaints at the size its name was fitted to | `scripts/main_menu.gd`, the RR-7 test | yes, after RR-7 | medium |
+| RR-9 | a skipped winter ages no nectar and no sealed bee bread | `scripts/season.gd`, tests | yes -- Codex lane | low |
+| RR-10 | fermented nectar is neither counted nor spent by skill purchases | `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, tests | yes, after RR-9 -- Codex lane | low |
+| RR-11 | nectar shows a pre-fermented colour before it ferments, as a warning | `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | no -- after SP-11 releases `scripts/hive_cell.gd`, and after RR-10 | medium |
+| RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
+
+RR-9 and RR-10 are Codex-lane slices (Dave, 15 Oct 2026, plan review D3:
+the Claude lane was full and the Codex backlog dry); RR-7 and RR-11 stay in
+the Claude lane, and RR-11 opens only once SP-11 and RR-10 have both landed.
 
 Each slice reads its own section only. Do not change skill prices, the
 branch-tier rule (settled by `plans/now/tier-two.md` T2-9, landed 12 Oct 2026), or the save
 format.
 
-RR-1 shipped 2026-10-13; its specification is `plans/archive/RR-1_2026-10-13.md`.
+RR-6 shipped 2026-10-15; its specification is `plans/archive/RR-6_2026-10-15.md`.
+
+RR-7 shipped 2026-10-16; its specification is `plans/archive/RR-7_2026-10-16.md`.
+
+## RR-8 -- a menu hexagon repaints at the size its name was fitted to
+
+Level: medium (one-function fix with an acceptance check). From RR-7's
+answer (16 Oct 2026): `main_menu.gd::_fit_hex_label` is connected to each
+hexagon label's `draw` signal and sets or removes the `font_size` override
+there. The Label has already painted by the time `draw` fires, and the
+redraw the override asks for is dropped while that draw is still running,
+so the label keeps showing the previous size: at text scale 2, Silkscreen
+paints at 22 ("CHALLENG / E 1") though the fit is 20, and OpenDyslexic
+paints at 22 though its fit is 17.
+
+**The fix.** In `_fit_hex_label`, when the fitted size differs from what the
+label currently has (the override is added, changed or removed), request a
+repaint after the current draw has finished:
+`label.queue_redraw.call_deferred()`. The next draw finds the cache key
+unchanged and returns at once, so it costs one extra draw per change and
+cannot loop. Keep the fit on the `draw` signal: it is what catches every
+text-scale, typeface and resize change without separate hooks.
+
+**The test.** Turn `tests/rr7_silkscreen_fit_test.gd`'s walk into the guard:
+after each step print as now, and fail ("RR7 FAIL: ...") when the last
+painted size differs from `hex_fit_size`'s size for the face and scale in
+effect, or when the painted lines split a word. Before the fix it fails on
+Silkscreen and OpenDyslexic at scale 2; after it, it passes. Update the
+script's and the Python wrapper's header comments to say it is now a
+regression guard.
+
+**On landing.** C-99 (`checks/blocked.md`) is blocked only by RR-7 and this
+fix: move it to `checks/ready.md` unchanged. Open TS-1's `queue-gated`
+fence in `plans/now/typeface-size.md` and drop its line under "Not in the
+queue, and why" in `NEXTSTEPS.md` (see RR-7's "Related").
+
+**Escalate** if the deferred repair still leaves a stale paint in the walk:
+that would mean another path sets the size, and moving the fit off the
+`draw` signal changes when it runs for every hexagon.
+
+```queue
+**[Claude] RR-8 -- a menu hexagon repaints at the size its name was fitted to**
+- Plan: `plans/now/run-repairs.md` -- "RR-8 -- a menu hexagon repaints at the size its name was fitted to"
+- Files: `scripts/main_menu.gd`, `tests/rr7_silkscreen_fit_test.gd`, `tests/test_rr7_silkscreen_fit.py`
+- Check: `python -m unittest tests.test_rr7_silkscreen_fit` passes and fails on any step of its walk (text scale 1 then 2, every typeface in list order) where the Challenge 1 name's last painted font size differs from `hex_fit_size`'s or its painted lines split a word; `python -m unittest tests.test_rr5_hex_refit tests.test_ho15_menu_hex_fit` still pass.
+- Proof: `absent: scripts/main_menu.gd :: label.queue_redraw.call_deferred()`
+- Next after: TS-1 -- every typeface is the same width as Standard at the same text scale
+```
+
+## RR-9 -- a skipped winter ages no nectar and no sealed bee bread
+
+Level: low (one loop in one function, no per-tick work). Gameplay review
+15 Oct 2026, finding F1; Dave's decision D1: "Over winter it's too cold for
+the nectar to ferment".
+
+**True now** (verified 15 Oct 2026 against master `9c490df`).
+`season.gd::_resolve_winter` pays the winter bill and then sets
+`Session.sim_time` to `spring_time`, `days * GameConfig.seconds_per_day`
+later (10 days, 240 game-hours, at the defaults), touching no cell.
+`hive_cell.gd::is_fermented` compares `Session.sim_time - nectar_since` with
+`GameConfig.nectar_ferment_hours` (96), so every nectar cell in the comb is
+fermented on spring's first day. The review's probe: 40 nectar stored the
+day before winter read fermented, age 240 h, on day 41. Then honey makers
+skip it (`hive.gd::find_honey_source`), eaters go tipsy
+(`bee_survival.gd::feed_self`) and foragers top up sour cells. Sealed bee
+bread (`bee_bread_sealed_at`) likewise comes out ripe.
+
+**True afterwards.** In `_resolve_winter`, after the flowers' `die_back`
+loop and before `Session.sim_time = spring_time`, one loop over
+`world.hive.cells` (skip any `not is_instance_valid(cell)`) adds
+`spring_time - Session.sim_time` to `cell.nectar_since` where it is
+`>= 0.0`, and to `cell.bee_bread_sealed_at` where it is `>= 0.0`. A comment
+cites `.claude/rules/simulation.md`, "Nothing ferments over winter". No
+`world.hive.announce()` is needed: no content changes.
+
+**Invariants.** An unstamped cell (-1) stays unstamped. The bill, losses,
+bodies, die-back and `winter_survived` are unchanged, and in the same order.
+Brood, honey ripening (`ripen_progress`, progress-based) and bodies'
+`died_at` are not touched. Save format unchanged: the stamps are saved and
+restored as they are today. A winter that is played through rather than
+skipped (no such path today) is out of scope.
+
+**Test.** The pair follows `tests/col8_winter_dieback_test.gd` and
+`tests/test_col8_winter_dieback.py`, which already drive `_resolve_winter`
+directly.
+
+**Escalate** if any other cell field holds an absolute `sim_time` stamp
+(grep `Session.sim_time` in `scripts/hive_cell.gd`): it needs Dave's call on
+whether winter freezes it too.
+
+```queue
+**[Codex] RR-9 -- a skipped winter ages no nectar and no sealed bee bread**
+- Plan: `plans/now/run-repairs.md` -- "RR-9 -- a skipped winter ages no nectar and no sealed bee bread"
+- Files: `scripts/season.gd`, `tests/rr9_winter_ages_nothing_test.gd`, `tests/test_rr9_winter_ages_nothing.py`
+- Check: `python -m unittest tests.test_rr9_winter_ages_nothing` passes: a sealed nectar cell stocked one game-day before winter and a full bee-bread cell sealed one game-day before it come out of `season.gd::_resolve_winter` with `nectar_age()` and `bee_bread_ripen_fraction()` unchanged (to 0.01), the nectar cell's `is_fermented()` false, and `Session.sim_time` still moved on by `winter_length_days`; `python -m unittest tests.test_col6_winter_skip tests.test_col8_winter_dieback` still passes.
+- Proof: `absent: scripts/season.gd :: nectar_since`
+- Next after: RR-10 -- fermented nectar is neither counted nor spent by skill purchases
+```
+
+## RR-10 -- fermented nectar is neither counted nor spent by skill purchases
+
+Level: low (two guards). Gameplay review 15 Oct 2026, finding F2; Dave's
+decision D2: "skills skip fermented nectar".
+
+**True now** (verified 15 Oct 2026 against master `9c490df`).
+`skill_tree_panel.gd::_stores` counts every withdrawable nectar cell,
+fermented or not, and `buy_skill` spends through `hive.gd::take`, which
+skips unripe honey but nothing sour. So fermented nectar buys skills,
+though NF decision 2 says it "can only be drunk or hauled out".
+
+**True afterwards.**
+
+- `_stores`: beside the honey and bee-bread guards,
+  `if key == Skills.NECTAR and cell.is_fermented(): continue`. Its doc
+  comment adds "and nectar only while it has not fermented".
+- `hive.gd::take`: beside the unripe-honey guard,
+  `if resource_type == "nectar" and cell.is_fermented(): continue`, with a
+  comment that fermented nectar is not spendable (RR-10). The two guards
+  keep AP-4's promise that `take` cannot fall short of `_stores`.
+
+**Invariants.** Eating (`take_energy`, `find_food_cell`), nurses, honey
+makers, restocking and NF-5's clear orders are unchanged: none calls
+`take`. `hive._stock()` still counts fermented nectar, so goals and the
+winter forecast are unchanged (Dave's decision covers skills only).
+`debug_panel.gd`'s nectar trim also goes through `take` and now leaves
+fermented cells alone, which is acceptable for a debug control.
+
+**Test.** The fixture and test follow `test_bb3_bee_bread_currency.py` and
+its fixture (a purchase refused, then bought); the fermented cell comes
+from a short `nectar_ferment_hours`, as `tests/test_nf2_fermentation.py`'s
+fixture does it.
+
+**Escalate** if a caller of `hive.take("nectar", ...)` other than
+`skill_tree_panel.gd::buy_skill` and `debug_panel.gd` exists by then.
+
+```queue
+**[Codex] RR-10 -- fermented nectar is neither counted nor spent by skill purchases**
+- Plan: `plans/now/run-repairs.md` -- "RR-10 -- fermented nectar is neither counted nor spent by skill purchases"
+- Files: `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, `test_scenarios/rr10_fermented_not_currency.json`, `tests/test_rr10_fermented_not_currency.py`
+- Check: `python -m unittest tests.test_rr10_fermented_not_currency` passes: with one fermented nectar cell and one fresh one, a skill whose nectar price exceeds the fresh stock alone is refused and leaves both cells unchanged, and one priced within the fresh stock is bought, spends only fresh nectar and leaves the fermented cell's amount unchanged; `python -m unittest tests.test_bb3_bee_bread_currency tests.test_nf4_fermentation_sense` still passes.
+- Proof: `absent: scripts/skill_tree_panel.gd :: is_fermented`
+- Next after: RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning
+```
+
+## RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning
+
+Level: medium (a new cell state the player reads; colour). Dave's decision
+D2, 15 Oct 2026: "there should also be a "pre-fermented" nectar type, which
+has a slight colour shift between the normal and fermented, and can be used
+as normal (and still used for skills) which acts as a warning mode for
+players". **Gate:** `scripts/hive_cell.gd` is held by SP-11
+(`plans/now/sprites.md`); open this fence when SP-11 has landed, and run it
+after RR-10, whose test it extends.
+
+**True now.** A nectar cell is fresh (`NECTAR_COLOR`) until
+`is_fermented()`, then `FERMENTED_NECTAR_COLOR` and the `fermented` art
+sheet, with no warning before the change.
+
+**True afterwards.**
+
+- `game_config.gd`, beside `nectar_ferment_hours`:
+  `var nectar_pre_ferment_fraction: float = 0.75`, commented: nectar older
+  than this fraction of `nectar_ferment_hours` shows as pre-fermented; 0.75
+  of 96 h gives one game-day's warning (Dave, 15 Oct 2026).
+- `settings_catalogue.gd`, the entry after `nectar_ferment_hours`, same
+  shape: `"persist": "none"`, key `nectar_pre_ferment_fraction`, label
+  "Pre-ferment at x", step 0.05, min 0.0, max 1.0, category "Honey", tip
+  "Raw nectar older than this share of its fermenting time shows a warning
+  colour. It is still ordinary nectar until it ferments."
+- `hive_cell.gd`: `const PRE_FERMENTED_NECTAR_COLOR := Color(0.64, 0.83, 0.27)`
+  (the midpoint of fresh and fermented) and
+  `const PRE_FERMENTED_ART_TINT := Color(0.9, 0.92, 0.78)`, beside
+  `FERMENTED_NECTAR_COLOR`. `func is_pre_fermented() -> bool`, after
+  `is_fermented`: false unless nectar, `amount > 0.0` and
+  `nectar_since >= 0.0`; false if `is_fermented()`; otherwise age above
+  `nectar_pre_ferment_fraction * nectar_ferment_hours` hours (the same
+  hour as `is_fermented`). Derived on every call, like `is_fermented`.
+- `_refresh`, the `"nectar"` branch: `elif is_pre_fermented():` after the
+  fermented block sets `color = PRE_FERMENTED_NECTAR_COLOR` and
+  `art_tint = PRE_FERMENTED_ART_TINT`, keeps the `nectar` sheet, and in
+  colour-blind mode prefixes "turning " to the label.
+
+**Invariants.** Every reader of `is_fermented()` is unchanged, so
+pre-fermented nectar makes honey, feeds bees without tipsiness, goes to
+brood and buys skills. Save format unchanged (derived from the saved
+stamp). No new per-frame work.
+
+**Escalate** if `tests/test_sp3_content_colours.py` or the cell-art tests
+fail on the new constants, rather than moving another content's colour.
+
+**Hands-on check on landing** (file in `checks/ready.md`): with "Nectar
+ferments h" at 4 and cell art on and then off, a nectar cell shows a
+slightly olive tint for its last game-hour before it turns fermented, and
+reads "turning" in colour-blind mode. If the tint is too faint or too
+strong, retune `PRE_FERMENTED_ART_TINT` and `PRE_FERMENTED_NECTAR_COLOR`.
+
+```queue-gated
+**[Claude] RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning**
+- Plan: `plans/now/run-repairs.md` -- "RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning"
+- Files: `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/rr11_pre_fermented_test.gd`, `tests/test_rr11_pre_fermented.py`
+- Check: `python -m unittest tests.test_rr11_pre_fermented` passes: a nectar cell aged 0.5, 0.8 and 1.1 times `nectar_ferment_hours` gives `is_pre_fermented()` false, true, false and `is_fermented()` false, false, true; at 0.8 with cell sprites off the cell's flat colour is `PRE_FERMENTED_NECTAR_COLOR`, `hive.find_honey_source` returns it and `hive.take("nectar", 1.0)` takes from it; `python -m unittest tests.test_sp3_content_colours tests.test_nf2_fermentation` still passes.
+- Proof: `absent: scripts/hive_cell.gd :: func is_pre_fermented(`
+- Next after: none -- `plans/now/run-repairs.md` is complete once RR-8 has landed
+```
+
+## RR-12 -- a loaded run keeps its readout history
+
+Level: medium (one additive save key, four collections, an exactness test).
+UI review 16 Oct 2026, hand-off from the save review; Dave's decision D1:
+"A -- save all four as additive optional fields".
+
+**True now** (verified 16 Oct 2026). `save_game.gd::save` writes no readout
+history, so after a load `main.gd`'s `history_samples` (colony graph; entries
+`{t, bees, nectar, pollen, honey}`), `emergence_log` (`{t, key}`),
+`day_store_totals` (`{day, nectar, pollen, nectar_collected,
+pollen_collected}`, read by `conditions.gd` and `colony_milestones.gd`) and
+`foraging_stats.gd`'s counters (`trips_recorded`, `total_flowers_visited`,
+`total_search_flight_seconds`, `total_handling_seconds`, `total_trip_seconds`,
+`empty_returns`, `_by_species`) all start empty. The comment above
+`day_store_totals` in `main.gd` says "Not saved".
+
+**True afterwards.** `save_game.gd::save` writes
+`"readout_history": {"history_samples": [...], "emergence_log": [...],
+"day_store_totals": [...], "foraging": world.foraging_stats.save_data()}`.
+`foraging_stats.gd` gains `save_data() -> Dictionary` (the six counters and
+`_by_species`) and `restore(data) -> void`. `saving.gd`'s restore reads
+`data.get("readout_history", {})` and assigns each collection, each through a
+`.get(key, [])` default, trimmed to its cap (`GameConfig.history_points`,
+`DAY_STORE_SAMPLES`, and the emergence window as `_trim_emergence_log`
+does). The `t` values are `Session.sim_time` values, which a load already
+restores, so no re-basing is needed. The `day_store_totals` comment in
+`main.gd` is corrected. No `FORMAT_VERSION` bump and no migration
+(`.claude/rules/saving.md`, additive fields).
+
+**Must not change.** `FORMAT_VERSION` (6); an old save with no key loads and
+starts the four empty exactly as today; a malformed entry (wrong type) is
+skipped, never an error; the checkpoint restore stays exact; nothing in
+`foraging_stats.gd::record_trip`'s behaviour.
+
+**Check.** `python -m unittest tests.test_rr12_readout_history` runs
+`tests/rr12_readout_history_test.gd` (model on `tests/bs14_saved_skill_policy_test.gd`):
+run a seeded scene long enough to hold at least three history samples and two
+day-store entries and one recorded trip, save, load, and the four collections
+equal what was saved; load a save with the key deleted and all four are empty
+and the load succeeds. `python -m unittest tests.test_save_migrations` still passes.
+
+**Stop and escalate** if the saved size grows by more than about 20 KB, or a
+test shows `day_store_totals` changing a condition's result across a load
+(report the figures; do not tune).
+
+```queue-gated
+**[Claude] RR-12 -- a loaded run keeps its readout history**
+- Plan: `plans/now/run-repairs.md` -- "RR-12 -- a loaded run keeps its readout history"
+- Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, `tests/rr12_readout_history_test.gd`, `tests/test_rr12_readout_history.py`
+- Check: `python -m unittest tests.test_rr12_readout_history` passes: after a save and load of a run holding history samples, day-store entries, an emergence entry and a recorded trip, `history_samples`, `emergence_log`, `day_store_totals` and `foraging_stats.save_data()` equal their saved values, and a save with `readout_history` removed loads with all four empty; `python -m unittest tests.test_save_migrations` still passes.
+- Proof: `absent: scripts/save_game.gd :: readout_history`
+- Next after: none -- `plans/now/run-repairs.md` is complete once RR-8 and RR-11 have landed
+```
 
 ## Not in the queue, and why
 
-Nothing: RR-1's gate cleared when PP-3 landed (12 Oct 2026). It shares `scripts/input_selection.gd` with SP-8a (`plans/now/sprites.md`, gated) and `scripts/hud.gd` and `scripts/orders_zones.gd` with PP-5, which landed 13 Oct 2026.
+- **RR-11** -- the pre-fermented warning colour; waits for SP-11 (`plans/now/sprites.md`) to release `scripts/hive_cell.gd`, then runs after RR-10.
+- **RR-12** -- a loaded run keeps its readout history; waits for ED-3, the last of the alpha chain, because FC-2 to ED-3 share `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.

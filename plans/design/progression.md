@@ -1,7 +1,7 @@
 # Meadow — Skill Tree, Colony Adaptations and Progression Plan
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only after progression is selected -->
-Status: active -- Phase A finished with step 4, landed 7 Sep 2026 | Owner: Dave / Claude Code | Next: Phase B step 8 is sliced in `plans/now/tier-two.md` (T2-1 to T2-8, Shiver Cluster as T2-8), from the plan-ahead decisions of 6-7 Oct 2026 in step 8 and section 5.6; Phase C step 12 (Bee bread) is sliced in `plans/archive/bee-bread_2026-10-11.md`; step 7 (`plans/archive/brood-spine_2026-10-05.md`) is built | Dependency: none blocking -- the skill-gating question is settled in section 11, step 6 (Dave, 17 Sep 2026). Two skill definitions still open (section 5.9) | Verified: 2026-10-07
+Status: active -- Phase A finished with step 4, landed 7 Sep 2026 | Owner: Dave / Claude Code | Next: step 8's last slices are in `plans/now/tier-two.md` (T2-11 to T2-13, then the T2-7b price sweep); step 13's Work Priorities is `plans/now/work-priorities.md` (tier three's gating is built, `plans/archive/tier-three_2026-10-14.md`); step 15's gyne route is `plans/now/pollination.md` (PP-6 prices it); steps 7 and 12 are built (`plans/archive/brood-spine_2026-10-05.md`, `plans/archive/bee-bread_2026-10-11.md`) | Dependency: none blocking -- the skill-gating question is settled in section 11, step 6 (Dave, 17 Sep 2026). Two skill definitions still open (section 5.9) | Verified: 2026-10-16
 
 Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Rewritten 1 Sep 2026 against Dave's revised skill catalogue — six sectors, four resource-gated tiers, a hexagonal wedge grid and a HUD Skills button. It supersedes the 26 Aug catalogue outright: the sectors, tier meaning, costs and node list below are the design, and the earlier ones are not.
 
@@ -131,13 +131,14 @@ Where Dave's brief joined two names with `+` ("Auto-mining + Auto-building"), th
 | `skill.foraging.tarsal_secretions` | 1 | Existing | — | Bees respond to recent scent marks, reducing crowding at recently-visited flowers. Cross-sector prereq for Alarm pheromone. |
 | `skill.foraging.orientation_flight` | 1 | Existing | — | A new forager scouts a working area instead of heading for the nearest flower. |
 | `skill.foraging.associative_learning` | 2 | New | — | Handling time drops with repeated visits to one flower species. Familiarity is per bee **per species**, not per flower, and must be saved. Rates need simulation before build. |
+| `skill.foraging.auto_scouting` | 2 | Existing behaviour, node new | Orientation flight | Replaces Orientation flight: a new forager samples several starting areas and keeps the best. The middle of three stages (Dave, 14 Oct 2026, `plans/now/forager-recruitment.md`). |
 | `skill.foraging.adaptive_constancy` | 2 | Existing foundation | — | The old `floral_constancy`: a forager specialises in one species, but re-evaluates and switches when that species stops paying rather than locking to it permanently. |
 | `skill.foraging.weighted_flower_choice` | 3 | New | Associative learning | Foragers score candidate flowers on expected yield, handling time and distance instead of picking nearest-first. |
 | `skill.foraging.pollinator_points` | 3 | New | — | Two ledgers: **Spendable Pollinator Points**, required by every tier-4 skill purchase in every branch (replacing royal jelly as the universal tier-4 gate), and **Pollination Contribution**, never spent, driving ecological goals and seed outcomes. Full mechanic — award rule, compatible/incompatible visits, offspring quality — in `product-scope.md` §10. Window duration and the seed/quality formula stay open (`product-scope.md` §16). |
 | `skill.foraging.nectar_robbing` | 4 | New | Weighted flower choice | Piercing the flower base to skip handling time, at the cost of no pollination and faster patch depletion. Needs its own balance pass — a pure speed-up with no downside would dominate. |
-| `skill.foraging.auto_recruitment` | 4 | Existing | — | Successful foragers share productive areas at the entrance. When Adaptive constancy is also owned, recruitment can pass species too. |
+| `skill.foraging.auto_recruitment` | 4 | Existing behaviour, not wired to the node | Auto scouting | Successful foragers share productive areas at the entrance. When Adaptive constancy is also owned, recruitment passes species too. The last of three stages; wired by FR-3 (`plans/now/forager-recruitment.md`). |
 
-**Auto scouting is no longer a node** — it is baseline (section 5.7).
+**Auto scouting is a node again** (Dave, 14 Oct 2026): Orientation flight → Auto scouting → Auto-recruitment, each foraging better than the one before. This supersedes the 1 Sep baseline decision in section 5.7; the rules are `plans/now/forager-recruitment.md`'s.
 
 ### 5.2 Brood
 
@@ -216,7 +217,7 @@ Colony-level automation and standing policy. New sector.
 
 Per Dave, 1 Sep: these are on from the beginning of a game and are **not** purchasable nodes. That may change later, so **reserve their IDs and leave them in `skills.gd` marked `baseline: true`** rather than deleting them — that way promoting one to a node later is a data change, not a rewrite.
 
-- Auto scouting (`skill.foraging.auto_scouting`) — samples several starting areas, keeps the best.
+- ~~Auto scouting (`skill.foraging.auto_scouting`)~~ — superseded (Dave, 14 Oct 2026): a Foraging tier-2 node again, section 5.1. FR-2 promotes the reserved entry.
 - Cell priority (`skill.colony.cell_priority`, renamed from `skill.colony.work_priorities` by WP-1, 13 Oct 2026) — priority tiers for cells, zones and orders.
 - Standing instructions (`skill.hive_mind.standing_instructions`) — persistent instructions such as role retention and work-from-here.
 - Landscape memory (`skill.ecology.landscape_memory`) — explored meadow stays remembered rather than dimming back to uncertain. Feature dependency: fog of war.
@@ -240,7 +241,7 @@ Dave will supply these. Everything else in this plan is specified around them, s
 
 1. **`skill.defence.medicine` (Defence T3)** — what it does. A disease system already exists in `bee_survival.gd`/`game_config.gd`, so a hygienic/propolis reading of it would have a foundation, but this is not confirmed.
 2. **`skill.hive_mind.chemical_cascade` (Hive Mind T4)** — what it does.
-3. **`skill.brood.bee_bread` exact recipe (Brood T2)** — who makes it, from what inputs and where it is stored are now answered: a Honey worker in the Fermenter sub-role seals pollen and honey into a designated cell for a seven-day ferment; nurses feed the result automatically, and the later Priority Cells skill allows deliberate allocation when supply is scarce (`product-scope.md` §9). **Still open:** the exact pollen/honey recipe, cell capacity and larval ration — these need the scenario harness, not a guess (`product-scope.md` §9, §16).
+3. **`skill.brood.bee_bread` exact recipe (Brood T2)** — no longer open: BB-1 to BB-4 built it (`plans/archive/bee-bread_2026-10-11.md`), and the recipe, cell capacity, ripening time and larval effect are `GameConfig`'s `bee_bread_*` values.
 
 `skill.foraging.pollinator_points` (Foraging T3) is no longer open — see §4.2, §5.1 and §5.2 above. `product-scope.md` §10 defines it as two ledgers and it replaces royal jelly as the universal tier-4 gate. Its window duration and seed/quality formula remain open (`product-scope.md` §16).
 
