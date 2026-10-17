@@ -36,9 +36,25 @@ func checkpoint() -> void:
 	var every: int = maxi(1, int(GameConfig.checkpoint_every_days))
 	if main.day % every != 0:
 		return
+	_write_checkpoint()
+
+## FC-2: the checkpoint written immediately before the first crisis's
+## warning (main.gd::_warn_first_crisis), outside the five-day cadence -- the
+## next of the same three rotating files, never the named save. Once a run:
+## main.gd sets first_crisis.checkpointed before calling this, so the file
+## carries the flag, and reloading it re-warns without writing another one
+## (three reloads would otherwise fill the rotation with the same moment).
+func crisis_checkpoint() -> bool:
+	if Session.starting_level in [1, 2]:
+		return false
+	return _write_checkpoint()
+
+func _write_checkpoint() -> bool:
 	var slug := SaveSlots.slugify(Session.run_name)
 	if main.SaveGame.save(main, SaveSlots.checkpoint(slug)):
 		SaveSlots.record_checkpoint(slug, Session.run_name, main.day)
+		return true
+	return false
 
 ## Replays a saved run over the freshly built world. Order matters: the
 ## comb has to exist before bees can be pointed at it, and mined-out soil
@@ -111,6 +127,8 @@ func _restore(data: Dictionary) -> void:
 	main.hive.invalidate_stock()
 	main.hive.announce()
 	main._update_population_readout(new_bees)
+	# FC-2: after the clock, which decides how a save without the record reads.
+	main.restore_first_crisis(data.get("first_crisis"))
 	main.hud.show_warning("Run loaded — day %d." % main.day)
 
 func _restore_soil(soil: Dictionary) -> void:

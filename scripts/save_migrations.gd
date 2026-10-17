@@ -6,8 +6,9 @@ extends RefCounted
 ## own history comment above FORMAT_VERSION): 1->2 for the hex/entrance
 ## geometry change, 2->3 for fog of war's explored-cells map, 3->4 for
 ## explicit-versus-automatic cell designations, 4->5 for the eight
-## balance fields D1 moved into the save, and 5->6 for the skills a run
-## has bought (AP-4). The first two are
+## balance fields D1 moved into the save, 5->6 for the skills a run
+## has bought (AP-4), and 6->7 for the first crisis's four settings (FC-2).
+## The first two are
 ## already handled defensively at restore time -- saving.gd::_restore_cells
 ## evicts whatever a fresh dig placed on a saved cell's tile (the 1->2
 ## case), and a missing "fog" key already means "nothing explored yet" via
@@ -29,6 +30,14 @@ extends RefCounted
 const MIGRATED_SETTINGS_V5 := [
 	"seasons_on", "season_length_days", "disease_on", "rival_hive_on",
 	"fog_of_war_on", "lay_weight_low", "lay_weight_medium", "lay_weight_high",
+]
+
+## FC-2 (Dave, 17 Oct 2026): the first crisis's window, warning lead and
+## readiness tick, saved with the run from FORMAT_VERSION 7. An older save
+## has none of these in its "settings" dict.
+const MIGRATED_SETTINGS_V7 := [
+	"first_crisis_window_open", "first_crisis_window_close",
+	"first_crisis_warning_lead", "first_crisis_check_seconds",
 ]
 
 ## Applies every known migration step in order until `data`'s version
@@ -57,6 +66,9 @@ static func upgrade(data: Dictionary, target_version: int) -> Dictionary:
 			5:
 				out = _migrate_5_to_6(out)
 				version = 6
+			6:
+				out = _migrate_6_to_7(out)
+				version = 7
 			_:
 				return out
 		out["version"] = version
@@ -111,4 +123,15 @@ static func _migrate_5_to_6(data: Dictionary) -> Dictionary:
 	if typeof(skills.get("temporary")) != TYPE_ARRAY:
 		skills["temporary"] = []
 	data["skills"] = skills
+	return data
+
+## 6->7: the first crisis's four settings went into the save (FC-2). An older
+## save lacks them; default each to GameConfig's own value, so it loads with
+## the window and lead every run had before it was saved.
+static func _migrate_6_to_7(data: Dictionary) -> Dictionary:
+	var settings: Dictionary = data.get("settings", {})
+	for key in MIGRATED_SETTINGS_V7:
+		if not settings.has(key):
+			settings[key] = GameConfig.get(key)
+	data["settings"] = settings
 	return data

@@ -53,7 +53,7 @@ const LOCAL_WHEN_KEYS := [
 	"food_stores_at_least", "challenge_stage_id", "queen_inside_hive", "queen_load_empty",
 	"queen_watch_hits_at_most", "in_hive_view", "camera_following_queen",
 	"challenge_overflow_discards", "cell_empty", "selected_mine_queue_at_least",
-	"challenge_goal_met", "queen_build_offered",
+	"challenge_goal_met", "queen_build_offered", "first_crisis_state", "first_crisis_recovered",
 ]
 
 # --- run_pending --------------------------------------------------
@@ -306,6 +306,18 @@ static func _when_met(main: Node2D, when: Dictionary) -> bool:
 		var runner: Node = main.challenge_runner
 		var goal_met: bool = runner.active and runner._goal_met(str(runner._stages()[runner._stage_index].get("goal", "")))
 		if goal_met != bool(when["challenge_goal_met"]):
+			return false
+	if when.has("first_crisis_state"):
+		# FC-2: the first crisis's state (main.gd's first_crisis), so a route
+		# can respond to the warning the moment it is posted.
+		if str(main.first_crisis.get("state", "")) != str(when["first_crisis_state"]):
+			return false
+	if when.has("first_crisis_recovered"):
+		# FC-2: the rain has ended and its recovery checkpoint has passed.
+		var crisis: Dictionary = main.first_crisis
+		var recovered: bool = (str(crisis.get("state", "")) == "spent" and float(crisis.get("ended_at", -1.0)) >= 0.0
+			and Session.sim_time >= float(crisis.ended_at) + main.FIRST_CRISIS_RECOVERY_SECONDS)
+		if recovered != bool(when["first_crisis_recovered"]):
 			return false
 	if when.has("queen_build_offered"):
 		# RR-1: the Build cell button's flag, as the queen's panel reads it.
@@ -1150,10 +1162,20 @@ static func _do_grant_skill(action: Dictionary) -> void:
 
 ## SV-1: {"do": "restore_slot", "name": "Run name"} -- replays that run's
 ## named save over the live world in place, the way tutorial_checkpoint.gd
-## restores, since a scene reload would end the scenario.
+## restores, since a scene reload would end the scenario. FC-2:
+## "checkpoint": "latest" replays the run's most recent rotating checkpoint
+## instead (the one before the index's next_checkpoint).
 static func _do_restore_slot(main: Node2D, action: Dictionary) -> void:
 	var display_name := str(action.get("name", ""))
-	var data: Dictionary = main.SaveGame.read(SaveSlots.slot_path(SaveSlots.slugify(display_name)))
+	var slug := SaveSlots.slugify(display_name)
+	var path := SaveSlots.slot_path(slug)
+	if str(action.get("checkpoint", "")) == "latest":
+		var next_number := 1
+		for slot in SaveSlots.list_slots():
+			if slot["slug"] == slug:
+				next_number = int(slot.get("next_checkpoint", 1))
+		path = SaveSlots.checkpoint_path(slug, posmod(next_number - 2, SaveSlots.CHECKPOINTS) + 1)
+	var data: Dictionary = main.SaveGame.read(path)
 	if data.is_empty():
 		_log("restore_slot", str(action), "rejected", "no readable save for that name")
 		return

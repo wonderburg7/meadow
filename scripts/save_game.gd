@@ -49,7 +49,12 @@ const SAVE_PATH := "user://meadow_save.json"
 ## save simply has none of them in its "settings" dict; the migration
 ## defaults each to GameConfig's own value rather than leaving that to be
 ## discovered as a missing-key default at restore time.
-const FORMAT_VERSION := 6
+##
+## Bumped 17 Oct 2026 (FC-2, Dave's decision): the first crisis's four
+## GameConfig values (save_migrations.gd's MIGRATED_SETTINGS_V7) are saved
+## with the run. An older save has none of them; _migrate_6_to_7 fills in
+## GameConfig's defaults, which is how every older run behaved.
+const FORMAT_VERSION := 7
 
 ## Every GameConfig field worth carrying across, derived from
 ## settings_catalogue.gd's TUNABLES rather than hand-maintained here --
@@ -95,6 +100,10 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 			"target": world.rain_target,
 			"seconds_left": world.rain_seconds_left,
 		},
+		# FC-2: the first crisis's state (pending, warned, active or spent)
+		# and the times that schedule it, so a load neither repeats nor skips
+		# it. Additive: main.gd::restore_first_crisis reads a save without it.
+		"first_crisis": world.first_crisis.duplicate(true),
 		"totals": {
 			"nectar": world.hive.lifetime_nectar_collected,
 			"pollen": world.hive.lifetime_pollen_collected,

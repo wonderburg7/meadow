@@ -3,6 +3,23 @@ extends RefCounted
 ## facts; this catalogue only turns a supplied fact snapshot into copy.
 
 const ENTRIES := {
+	# FC-2 (plans/now/crisis-readiness.md): the first crisis's persistent
+	# explanation, current while its heavy rain falls.
+	"first_crisis_rain": {
+		"title": "Heavy rain keeping foragers in",
+		"evidence": "Rain at %d%% intensity. Foragers kept in by it: %d. Too low on energy to fly at all: %d.",
+		"evidence_facts": ["rain_percent", "rain_grounded_foragers", "rain_unable_foragers"],
+		"current_state": "Rain at %d%%; the stores feed the colony for about %d more minutes. %s",
+		"state_facts": ["rain_percent", "food_cover_minutes"],
+		"active_state": "Foragers are still kept in.",
+		"cleared_state": "The heavy rain has passed; foragers can fly again.",
+		"cause": "Heavy rain waters down the nectar in the open flowers and soaks the bees' wings, so a trip would cost more energy than it brings home. Past that point foragers stay at the hive. A forager who is low on energy cannot fly for that reason, rain or not.",
+		"consequence": "Nothing is foraged while it lasts, so the colony eats from its stores, and they fall until the rain eases.",
+		"responses": [
+			"If the stores are low, keep indoor work light while it rains, and have foragers ready to go out as soon as it clears.",
+			"If a forager is too low on energy to fly, let her refuel from the comb first; another job will not get her airborne sooner.",
+		],
+	},
 	"missing_nurse_workforce": {
 		"title": "Brood waiting for a nurse",
 		"evidence": "%d brood cells waiting; %d nurses assigned.",
@@ -66,7 +83,7 @@ const ENTRIES := {
 }
 
 static func supported_ids() -> Array[String]:
-	return ["missing_nurse_workforce", "missing_comb_workforce", "hungry_brood", "starving"]
+	return ["first_crisis_rain", "missing_nurse_workforce", "missing_comb_workforce", "hungry_brood", "starving"]
 
 static func explanation(fact_id: String, facts: Dictionary) -> Dictionary:
 	if not ENTRIES.has(fact_id):

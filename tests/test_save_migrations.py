@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 FIXTURES = ROOT / "tests" / "fixtures"
 
-FORMAT_VERSION = 6  # must match scripts/save_game.gd's FORMAT_VERSION
+FORMAT_VERSION = 7  # must match scripts/save_game.gd's FORMAT_VERSION
 
 # The eight fields save_migrations.gd::_migrate_4_to_5 backfills into an
 # older save's "settings" dict, with their defaults read from
@@ -48,6 +48,13 @@ def read_game_config_defaults(keys):
 
 
 GAME_CONFIG_DEFAULTS = read_game_config_defaults(MIGRATED_SETTINGS_V5)
+
+# FC-2: the first crisis's four settings, backfilled by _migrate_6_to_7.
+MIGRATED_SETTINGS_V7 = (
+    "first_crisis_window_open", "first_crisis_window_close",
+    "first_crisis_warning_lead", "first_crisis_check_seconds",
+)
+GAME_CONFIG_DEFAULTS_V7 = read_game_config_defaults(MIGRATED_SETTINGS_V7)
 
 
 def load_fixture(name):
@@ -87,6 +94,13 @@ def migrate_5_to_6(data):
     return data
 
 
+def migrate_6_to_7(data):
+    settings = data.setdefault("settings", {})
+    for key, default in GAME_CONFIG_DEFAULTS_V7.items():
+        settings.setdefault(key, default)
+    return data
+
+
 def upgrade(data, target_version=FORMAT_VERSION):
     version = int(data.get("version", 0))
     out = data
@@ -106,6 +120,9 @@ def upgrade(data, target_version=FORMAT_VERSION):
         elif version == 5:
             out = migrate_5_to_6(out)
             version = 6
+        elif version == 6:
+            out = migrate_6_to_7(out)
+            version = 7
         else:
             return out
         out["version"] = version
@@ -199,13 +216,16 @@ class SaveMigrationsSourceTest(unittest.TestCase):
     def test_migration_ladder_is_contiguous_up_to_format_version(self):
         steps = re.findall(r"_migrate_(\d+)_to_(\d+)", self.source)
         pairs = sorted({(int(a), int(b)) for a, b in steps})
-        self.assertEqual([(1, 2), (2, 3), (3, 4), (4, 5), (5, 6)], pairs)
+        self.assertEqual([(1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7)], pairs)
         self.assertEqual(FORMAT_VERSION, max(b for _, b in pairs))
 
     def test_migrated_settings_match_the_gdscript_list(self):
         block = re.search(r"const MIGRATED_SETTINGS_V5 := \[(.*?)\]", self.source, re.DOTALL)
         self.assertIsNotNone(block, "MIGRATED_SETTINGS_V5 not found in save_migrations.gd")
         self.assertEqual(MIGRATED_SETTINGS_V5, tuple(re.findall(r'"([a-z_]+)"', block.group(1))))
+        block = re.search(r"const MIGRATED_SETTINGS_V7 := \[(.*?)\]", self.source, re.DOTALL)
+        self.assertIsNotNone(block, "MIGRATED_SETTINGS_V7 not found in save_migrations.gd")
+        self.assertEqual(MIGRATED_SETTINGS_V7, tuple(re.findall(r'"([a-z_]+)"', block.group(1))))
 
     def test_read_never_weakens_the_newer_than_current_rejection(self):
         with open(SCRIPTS / "save_game.gd", encoding="utf-8") as handle:
@@ -224,14 +244,14 @@ class SaveMigrationsFixtureTest(unittest.TestCase):
         self.assertEqual(FORMAT_VERSION, data["version"])
         self.assertIn("fog", data)
         self.assertEqual([], data["fog"])
-        self.assertEqual(GAME_CONFIG_DEFAULTS, data["settings"])
+        self.assertEqual({**GAME_CONFIG_DEFAULTS, **GAME_CONFIG_DEFAULTS_V7}, data["settings"])
 
     def test_v2_fixture_upgrades_to_current_format(self):
         data = upgrade(load_fixture("save_v2.json"))
         self.assertEqual(FORMAT_VERSION, data["version"])
         self.assertIn("fog", data)
         self.assertEqual([], data["fog"])
-        self.assertEqual(GAME_CONFIG_DEFAULTS, data["settings"])
+        self.assertEqual({**GAME_CONFIG_DEFAULTS, **GAME_CONFIG_DEFAULTS_V7}, data["settings"])
 
     def test_v4_fixture_backfills_the_eight_reclassified_settings(self):
         data = upgrade({"version": 4, "settings": {"queen_eat_rate": 2.0}})
@@ -259,7 +279,7 @@ class SaveMigrationsFixtureTest(unittest.TestCase):
 
     def test_v5_save_owns_no_skills(self):
         data = upgrade({"version": 5, "settings": {}})
-        self.assertEqual(6, data["version"])
+        self.assertEqual(FORMAT_VERSION, data["version"])
         self.assertEqual({"temporary": []}, data["skills"])
 
     def test_v5_to_6_keeps_skills_already_recorded(self):
@@ -272,6 +292,17 @@ class SaveMigrationsFixtureTest(unittest.TestCase):
         self.assertIn('"skills": _skills_data()', save_game)
         self.assertIn("static func _migrate_5_to_6", migrations)
         self.assertIn('skills["temporary"] = []', migrations)
+
+    def test_v6_save_loads_the_first_crisis_defaults(self):
+        data = upgrade({"version": 6, "settings": {"rain_max_seconds": 90.0}})
+        self.assertEqual(7, data["version"])
+        self.assertEqual(90.0, data["settings"]["rain_max_seconds"])
+        for key, default in GAME_CONFIG_DEFAULTS_V7.items():
+            self.assertEqual(default, data["settings"][key])
+
+    def test_v6_to_7_keeps_a_crisis_value_already_present(self):
+        data = upgrade({"version": 6, "settings": {"first_crisis_warning_lead": 90.0}})
+        self.assertEqual(90.0, data["settings"]["first_crisis_warning_lead"])
 
     def test_unknown_future_version_is_left_untouched(self):
         data = upgrade({"version": 99, "marker": "future"})
@@ -499,7 +530,9 @@ class DroneFieldsTest(unittest.TestCase):
         migrations = (SCRIPTS / "save_migrations.gd").read_text(encoding="utf-8")
         for field in ("drone", "mated"):
             self.assertNotIn(field, migrations)
-        self.assertEqual(6, FORMAT_VERSION)
+        # COL-9's fields arrived at version 6 with no bump of their own; the
+        # next bump, 7, is FC-2's first-crisis settings (17 Oct 2026).
+        self.assertNotIn("drone", migrations.split("func _migrate_6_to_7(", 1)[1])
 
 
 if __name__ == "__main__":

@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] FC-2 -- implement the accepted crisis and deterministic scenario**
-   - Plan: `plans/now/crisis-readiness.md` -- "FC-2 -- implement the accepted crisis and deterministic scenario"
-   - Files: `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `scripts/colony_diagnostics.gd`, `scripts/scenario_actions.gd`, `test_scenarios/fc2_first_crisis_prepared.json`, `test_scenarios/fc2_first_crisis_unprepared.json`, `tests/test_fc2_first_crisis.py`, `plans/now/crisis-readiness.md`
-   - Check: `python tests/test_fc2_first_crisis.py` passes and traces one announced crisis, a usable warning-to-rain lead with a completed pre-rain forage response on the unprepared path, its weather/forage/store effect, and save/restore on both paths; file a played comprehension check
-   - Proof: `present: scripts/main.gd :: func _advance_weather`
-   - Next after: none -- crisis readiness is complete
-
-2. **[Claude] L-27 -- a resumed finish re-verifies a branch that gained commits**
+1. **[Claude] L-27 -- a resumed finish re-verifies a branch that gained commits**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-27 -- a resumed finish re-verifies a branch that gained commits"
    - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
    - Check: `python -m unittest tests.test_slice_lifecycle` passes, including the three resume cases (code commit re-verifies, Markdown-only commit skips, a journal without head re-verifies); `.\tools\verify.ps1` is green
    - Proof: `absent: tools/slice.ps1 :: function Test-JournalVerifiedHead`
    - Next after: L-28 -- archiving a slice leaves another slice's queue block in the plan
 
-3. **[Claude] L-29 -- session_cost.py counts subagent transcripts and scripted edits**
+2. **[Claude] L-29 -- session_cost.py counts subagent transcripts and scripted edits**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-29 -- session_cost.py counts subagent transcripts and scripted edits"
    - Files: `tools/session_cost.py`, `tests/test_session_cost_scope.py`
    - Check: `python -m unittest tests.test_session_cost_scope` passes, including subagent files and both scripted-edit forms; `python tools/session_cost.py --days 11 --phases` prints a subagent transcript count and a slice-worker share; `.\tools\verify.ps1` is green
    - Proof: `absent: tools/session_cost.py :: def _subagent_transcripts`
    - Next after: None -- plan complete once L-27 and L-28 land
 
-4. **[Claude] HP-1 -- a searching forager looks for flowers on her think tick**
+3. **[Claude] HP-1 -- a searching forager looks for flowers on her think tick**
    - Plan: `plans/now/hot-path-cadence.md` -- "HP-1 -- a searching forager looks for flowers on her think tick"
    - Files: `scripts/bee_foraging.gd`, `test_scenarios/hp1_forager_search_perf.json`, `docs/PERFORMANCE_BASELINE.md`, `plans/now/hot-path-cadence.md`
    - Check: `bee_search` mean in `test_scenarios/hp1_forager_search_perf.json` (`--fixed-fps 60`, two runs each side) falls by at least half; the three-seed means of `forager_deliveries` and `flower_visits` in `foraging_features_off_seed12345_test.json` (`--seeds 12345,2026,555`) stay within 10% of before; both recorded in `docs/PERFORMANCE_BASELINE.md`; FR-1's stage order unchanged if FR-1 has landed; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/bee_foraging.gd :: bee.thinking`
    - Next after: HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick
 
-5. **[Claude] TS-1 -- every typeface is the same width as Standard at the same text scale**
+4. **[Claude] TS-1 -- every typeface is the same width as Standard at the same text scale**
    - Plan: `plans/now/typeface-size.md` -- "TS-1 -- width-matched typeface sizes"
    - Files: `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/gallerin_panel.gd`, `scripts/hive_cell.gd`, `tests/ts1_typeface_size_test.gd`, `tests/test_ts1_typeface_size.py`
    - Check: `python -m unittest tests.test_ts1_typeface_size` passes: at text scale 1 and 2, for every typeface in the Typeface setting, `REFERENCE_TEXT` drawn at `UiTheme.font_px(TYPE_SIZES["Body"])` in that face is within 8 % of its width in Standard; `python -m unittest tests.test_ho15_menu_hex_fit tests.test_rr5_hex_refit` still pass.
    - Proof: `absent: scripts/ui_theme.gd :: typeface_size_factor`
    - Next after: TS-2 -- the HUD's own size overrides follow the typeface too
+
+5. **[Claude] HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick**
+   - Plan: `plans/now/hot-path-cadence.md` -- "HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick"
+   - Files: `scripts/bee.gd`, `test_scenarios/hp2_idle_nurses_perf.json`, `docs/PERFORMANCE_BASELINE.md`, `plans/now/hot-path-cadence.md`
+   - Check: `bee_state_nurse` mean in `test_scenarios/hp2_idle_nurses_perf.json` (two runs each side) falls by at least 40% and is recorded in `docs/PERFORMANCE_BASELINE.md`; `bs3_nurse_gate_test.json`, `bs4_honey_gate_test.json`, `c6_nurse_feed_test.json` and `h3_restock_delivery_test.json` each pass under `python tools/run_scenario.py`; `.\tools\verify.ps1` is green
+   - Proof: `present: scripts/bee.gd :: ## Called every frame a bee is sitting in one of the three "waiting for`
+   - Next after: HP-3 -- the bee label refreshes on the think tick, if it measures worth it
 
 ### Codex lane
 

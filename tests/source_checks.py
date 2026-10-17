@@ -1337,6 +1337,11 @@ ORIGINAL_SAVED_SETTINGS = frozenset({
     "fog_of_war_on", "lay_weight_low", "lay_weight_medium", "lay_weight_high",
     # C4 (13 Sep 2026): warning thresholds are run-tunable catalogue values.
     "pollen_warning_stock_multiplier", "nectar_warning_total", "honey_warning_total",
+    # FC-2 (Dave, 17 Oct 2026): the first crisis's window, lead and readiness
+    # tick are run-saved, with FORMAT_VERSION 7 and save_migrations.gd's 6->7
+    # step covering an older save.
+    "first_crisis_window_open", "first_crisis_window_close",
+    "first_crisis_warning_lead", "first_crisis_check_seconds",
 })
 
 PERSIST_VALUES = {"run", "player", "none"}
