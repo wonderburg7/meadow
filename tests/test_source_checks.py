@@ -266,6 +266,36 @@ class ChallengeOneOverflowContractTest(unittest.TestCase):
         self.assertIn("_c1_overflow_discard_count = 0", stage_entry)
 
 
+class TerminalPlanRuleTest(unittest.TestCase):
+    """Only the Status state, or Next: None, makes a plan terminal (14 Oct
+    2026: an SG-2 title saying "completed" failed master's verify)."""
+
+    @staticmethod
+    def _plan(status: str) -> str:
+        return f"# Plan\n\n{status}\n\nBody.\n"
+
+    def test_terminal_word_in_next_title_is_live(self):
+        text = self._plan(
+            "Status: active | Owner: Dave / Claude Code | Next: SG-2 -- goals "
+            "offered, completed and paid | Dependency: none | Verified: 2026-10-14"
+        )
+        self.assertFalse(check_docs.plan_is_terminal(text))
+
+    def test_terminal_state_is_terminal(self):
+        for state in ("complete", "Completed 14 Oct", "archived", "abandoned", "retired"):
+            text = self._plan(f"Status: {state} | Owner: Dave | Next: x | Dependency: none")
+            self.assertTrue(check_docs.plan_is_terminal(text), state)
+
+    def test_next_none_plan_complete_is_terminal(self):
+        text = self._plan(
+            "Status: active | Owner: Dave | Next: None -- plan complete | Dependency: none"
+        )
+        self.assertTrue(check_docs.plan_is_terminal(text))
+
+    def test_no_status_line_is_live(self):
+        self.assertFalse(check_docs.plan_is_terminal("# Plan\n\nNo status.\n"))
+
+
 class QueueSchemaChecksTest(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()

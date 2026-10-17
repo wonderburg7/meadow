@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PLAN_PATTERN = re.compile(r"^Status:\s*(.+)$", re.MULTILINE)
 REQUIRED_STATUS_FIELDS = ("owner:", "next:", "dependency:", "verified:")
 TERMINAL_STATES = ("complete", "completed", "archived", "abandoned", "retired")
+TERMINAL_NEXT = re.compile(r"\|\s*next:\s*none\b")
 MD_LINK_PATTERN = re.compile(r"(?<!!)\[[^]]*\]\(([^)]+)\)")
 
 
@@ -32,11 +33,18 @@ def current_plans(root: Path | None = None) -> list[Path]:
 
 
 def plan_is_terminal(text: str) -> bool:
-    """The terminal-plan rule: a Status line in the first 8 lines naming a
-    finished state. tools/archive_slice.py --complete-plans archives exactly
-    the plans this says belong in plans/archive/."""
+    """The terminal-plan rule: a Status line in the first 8 lines whose state
+    (the field before the first `|`) names a finished state, or whose Next
+    field is `None` (closeout's "Next: None -- plan complete"). Other fields
+    are free text: a Next slice title that says "completed" is not terminal.
+    tools/archive_slice.py --complete-plans archives exactly the plans this
+    says belong in plans/archive/."""
     match = PLAN_PATTERN.search("\n".join(text.splitlines()[:8]))
-    return bool(match) and any(state in match.group(1).lower() for state in TERMINAL_STATES)
+    if not match:
+        return False
+    status = match.group(1).lower()
+    state = status.split("|", 1)[0]
+    return any(word in state for word in TERMINAL_STATES) or bool(TERMINAL_NEXT.search(status))
 
 
 def terminal_plan_awaits_closeout(plan: Path) -> bool:
