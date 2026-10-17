@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/FR-1` (`codex/FR-1`) | Codex | the three foraging stages measured on the same Colony Run seeds | Codex | in progress | none | `plans/now/forager-recruitment.md` FR-1 -- the three foraging stages measured on the same Colony Run seeds |
+| `.worktrees/FC-2` (`claude/FC-2`) | Claude | implement the accepted crisis and deterministic scenario | Claude | in progress | none | `plans/now/crisis-readiness.md` FC-2 -- implement the accepted crisis and deterministic scenario |
