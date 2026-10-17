@@ -172,3 +172,32 @@ for fog. The frame is dominated by a section the pinned table does not
 carry: in run 3 `bee_state_forager` was 7.07 ms, of which `bee_search`
 (SEARCHING's per-frame flower check) was 6.42 ms. HP-1
 (`plans/now/hot-path-cadence.md`) moves that check onto the think tick.
+
+## HP-1 measurement
+
+`test_scenarios/hp1_forager_search_perf.json`, `--fixed-fps 60`, same machine,
+headless, from the HP-1 worktree. Each side's first run seeded or re-imported
+the Godot cache and is discarded (`docs/performance.md`, "Repeatability");
+the table shows the two kept runs per side, mean / p95 in ms.
+
+| Row | before run 2 | before run 3 | after run 2 | after run 3 |
+| --- | --- | --- | --- | --- |
+| `frame_time_ms` | 13.78 / 31.19 | 13.64 / 32.55 | 9.67 / 26.19 | 9.43 / 26.38 |
+| `bee_state_forager` | 5.66 / 7.93 | 5.67 / 7.92 | 1.84 / 2.69 | 1.80 / 2.62 |
+| `bee_search` | 5.13 / 7.42 | 5.14 / 7.38 | 1.33 / 2.13 | 1.29 / 2.12 |
+
+`bee_search` mean falls from about 5.13 ms to about 1.31 ms (-74%), against a
+bound of at least half.
+
+Behaviour guard: `foraging_features_off_seed12345_test.json --seeds
+12345,2026,555`, three-seed means of the final `forager_deliveries` and
+`flower_visits`, before and after:
+
+| Counter | before (per seed; mean) | after (per seed; mean) |
+| --- | --- | --- |
+| `forager_deliveries` | 52, 40, 36; 42.67 | 52, 40, 36; 42.67 |
+| `flower_visits` | 188, 179, 187; 184.67 | 188, 179, 187; 184.67 |
+
+Identical, as that scenario's foragers do not reach SEARCHING in a way the
+tick gate changes. `python tools/forager_stages.py` gives the same table
+before and after (stage order and ratios 0.97x, 0.82x, 0.69x unchanged).
