@@ -40,7 +40,10 @@ func checkpoint() -> void:
 
 ## FC-2: the checkpoint written immediately before the first crisis's
 ## warning (main.gd::_warn_first_crisis), outside the five-day cadence -- the
-## next of the same three rotating files, never the named save. Once a run.
+## next of the same three rotating files, never the named save. Once a run:
+## main.gd sets first_crisis.checkpointed before calling this, so the file
+## carries the flag, and reloading it re-warns without writing another one
+## (three reloads would otherwise fill the rotation with the same moment).
 func crisis_checkpoint() -> bool:
 	if Session.starting_level in [1, 2]:
 		return false

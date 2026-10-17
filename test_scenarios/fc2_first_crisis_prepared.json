@@ -18,6 +18,10 @@
   },
   "actions": [
     {
+      "do": "save_run",
+      "name": "FC2 run"
+    },
+    {
       "do": "assign_role",
       "target": {
         "current_role": "nurse"
@@ -134,6 +138,14 @@
       },
       "do": "restore_slot",
       "name": "FC2 active"
+    },
+    {
+      "when": {
+        "first_crisis_state": "spent"
+      },
+      "do": "restore_slot",
+      "name": "FC2 run",
+      "checkpoint": "latest"
     }
   ]
 }

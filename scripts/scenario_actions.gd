@@ -1155,10 +1155,20 @@ static func _do_grant_skill(action: Dictionary) -> void:
 
 ## SV-1: {"do": "restore_slot", "name": "Run name"} -- replays that run's
 ## named save over the live world in place, the way tutorial_checkpoint.gd
-## restores, since a scene reload would end the scenario.
+## restores, since a scene reload would end the scenario. FC-2:
+## "checkpoint": "latest" replays the run's most recent rotating checkpoint
+## instead (the one before the index's next_checkpoint).
 static func _do_restore_slot(main: Node2D, action: Dictionary) -> void:
 	var display_name := str(action.get("name", ""))
-	var data: Dictionary = main.SaveGame.read(SaveSlots.slot_path(SaveSlots.slugify(display_name)))
+	var slug := SaveSlots.slugify(display_name)
+	var path := SaveSlots.slot_path(slug)
+	if str(action.get("checkpoint", "")) == "latest":
+		var next_number := 1
+		for slot in SaveSlots.list_slots():
+			if slot["slug"] == slug:
+				next_number = int(slot.get("next_checkpoint", 1))
+		path = SaveSlots.checkpoint_path(slug, posmod(next_number - 2, SaveSlots.CHECKPOINTS) + 1)
+	var data: Dictionary = main.SaveGame.read(path)
 	if data.is_empty():
 		_log("restore_slot", str(action), "rejected", "no readable save for that name")
 		return

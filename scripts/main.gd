@@ -284,15 +284,17 @@ const FIRST_CRISIS_STATES := ["pending", "warned", "active", "spent"]
 ## pending -> warned -> active -> spent, with the times that schedule it and
 ## the readiness read when the warning was posted. Saved whole
 ## (save_game.gd's "first_crisis"), so a load can neither repeat nor skip it.
-var first_crisis: Dictionary = {
-	"state": "pending", "path": "", "warned_at": -1.0, "starts_at": -1.0,
-	"started_at": -1.0, "ended_at": -1.0, "duration": 0.0, "readiness": {},
-}
+## `checkpointed` says the crisis checkpoint has been written this run.
+var first_crisis: Dictionary = _blank_first_crisis()
 var first_crisis_check_timer: float = 0.0
 ## Which trace checkpoints this stretch of play has logged -- not saved, so
 ## a restore logs the replayed ones again.
 var _first_crisis_traced: Dictionary = {}
 var _first_crisis_note: String = ""
+## What the corner line was last built from, so it is formatted only when
+## the state or its ten-second step changes, not every frame.
+var _first_crisis_note_state: String = ""
+var _first_crisis_note_step: int = -1
 
 var warning_check_timer: float = 5.0 + randf()
 ## The periodic sweeps below are each given a random starting phase.
@@ -1022,8 +1024,26 @@ func _apply_rain_overlay() -> void:
 ## at most once every GameConfig.first_crisis_check_seconds, and only while
 ## pending inside the window.
 
+static func _blank_first_crisis() -> Dictionary:
+	return {
+		"state": "pending", "path": "", "warned_at": -1.0, "starts_at": -1.0,
+		"started_at": -1.0, "ended_at": -1.0, "duration": 0.0, "readiness": {},
+		"checkpointed": false,
+	}
+
+## The four tunable GameConfig values, made consistent where they are read:
+## a lead of at least ten seconds, a window that opens at or after zero, and
+## a close no earlier than open + lead, so the fallback warning always gives
+## its full lead whatever the settings window holds.
+static func first_crisis_bounds() -> Dictionary:
+	var lead: float = maxf(10.0, GameConfig.first_crisis_warning_lead)
+	var open: float = maxf(0.0, GameConfig.first_crisis_window_open)
+	var close: float = maxf(GameConfig.first_crisis_window_close, open + lead)
+	return {"open": open, "close": close, "lead": lead, "check": maxf(0.1, GameConfig.first_crisis_check_seconds)}
+
 static func first_crisis_cutoff() -> float:
-	return GameConfig.first_crisis_window_close - GameConfig.first_crisis_warning_lead
+	var bounds := first_crisis_bounds()
+	return float(bounds.close) - float(bounds.lead)
 
 func _first_crisis_applies() -> bool:
 	return colony_milestones != null and colony_milestones.applies() and Levels.weather_enabled(Session.starting_level)
@@ -1037,7 +1057,7 @@ func _first_crisis_holds_weather() -> bool:
 		return false
 	match str(first_crisis.state):
 		"pending":
-			return Session.sim_time >= GameConfig.first_crisis_window_open - GameConfig.rain_max_seconds
+			return Session.sim_time >= float(first_crisis_bounds().open) - GameConfig.rain_max_seconds
 		"warned", "active":
 			return true
 		"spent":
@@ -1054,19 +1074,21 @@ func _advance_first_crisis(delta: float) -> void:
 	var now: float = Session.sim_time
 	match str(first_crisis.state):
 		"pending":
-			if now < GameConfig.first_crisis_window_open:
+			var bounds := first_crisis_bounds()
+			if now < float(bounds.open):
 				return
 			first_crisis_check_timer -= delta
-			var at_cutoff: bool = now >= first_crisis_cutoff()
+			var at_cutoff: bool = now >= float(bounds.close) - float(bounds.lead)
 			if first_crisis_check_timer > 0.0 and not at_cutoff:
 				return
-			first_crisis_check_timer = GameConfig.first_crisis_check_seconds
+			first_crisis_check_timer = float(bounds.check)
 			var readiness := _first_crisis_readiness()
 			if at_cutoff:
-				# Never on the warning's own tick, even after a late load.
-				_warn_first_crisis(maxf(GameConfig.first_crisis_window_close, now + 1.0), "fallback", readiness)
+				# Rain at window close, but never with less than the full lead,
+				# even after a late load.
+				_warn_first_crisis(maxf(float(bounds.close), now + float(bounds.lead)), "fallback", readiness)
 			elif bool(readiness.ready):
-				_warn_first_crisis(now + GameConfig.first_crisis_warning_lead, "prepared", readiness)
+				_warn_first_crisis(now + float(bounds.lead), "prepared", readiness)
 		"warned":
 			if now >= float(first_crisis.starts_at):
 				_start_first_crisis()
@@ -1088,7 +1110,21 @@ func _advance_first_crisis(delta: float) -> void:
 ## first, while the crisis is still pending, so loading it replays the warning
 ## and its whole lead rather than landing the player in the rain.
 func _warn_first_crisis(starts_at: float, path: String, readiness: Dictionary) -> void:
-	var checkpointed: bool = saving.crisis_checkpoint()
+	# Once a run: the flag goes in before the write, so the checkpoint itself
+	# carries it and a reload of it re-warns without writing another.
+	var checkpointed := false
+	if not bool(first_crisis.get("checkpointed", false)):
+		first_crisis.checkpointed = true
+		checkpointed = saving.crisis_checkpoint()
+		if not checkpointed:
+			first_crisis.checkpointed = false
+	# The lead is dry: an ordinary shower still falling (one a save from
+	# before FC-2 brought back) ends now, as a fresh run's hold would have
+	# kept it from starting.
+	if rain_seconds_left > 0.0:
+		rain_seconds_left = 0.0
+		rain_target = 0.0
+		rain_changed.emit(false)
 	first_crisis.state = "warned"
 	first_crisis.path = path
 	first_crisis.warned_at = Session.sim_time
@@ -1111,7 +1147,9 @@ func _first_crisis_warning_text(readiness: Dictionary, lead: float) -> String:
 		foragers = "You have 1 worker able to forage."
 	elif int(readiness.able_foragers) > 1:
 		foragers = "You have %d workers able to forage." % int(readiness.able_foragers)
-	if int(readiness.unable_foragers) > 0:
+	if int(readiness.unable_foragers) == 1:
+		foragers += " 1 assigned forager is too low on energy to fly."
+	elif int(readiness.unable_foragers) > 1:
 		foragers += " %d assigned foragers are too low on energy to fly." % int(readiness.unable_foragers)
 	return "Heavy rain is coming in about %s. While it falls your foragers stay at the hive and nectar in the flowers is watered down, so forage income stops. Your stores feed the colony for about %s at its current rate. %s Build up stores, or put a worker on foraging now so a trip comes home before the rain." % [
 		_minutes_text(lead), _minutes_text(float(readiness.food_cover_seconds)), foragers,
@@ -1135,17 +1173,25 @@ func _start_first_crisis() -> void:
 ## The persistent line under the day counter, from the warning until the
 ## recovery is over.
 func _show_first_crisis_note() -> void:
+	var state: String = str(first_crisis.state)
+	var step := 0
+	if state == "warned":
+		# Ten-second steps, so the line changes a few times a minute.
+		step = int(ceil(maxf(0.0, float(first_crisis.starts_at) - Session.sim_time) / 10.0))
+	elif state == "spent" and Session.sim_time < float(first_crisis.ended_at) + FIRST_CRISIS_RECOVERY_SECONDS:
+		step = 1
+	if state == _first_crisis_note_state and step == _first_crisis_note_step:
+		return
+	_first_crisis_note_state = state
+	_first_crisis_note_step = step
 	var note := ""
-	match str(first_crisis.state):
+	match state:
 		"warned":
-			# Ten-second steps, so the corner rebuilds a few times a minute
-			# rather than every frame.
-			var left: float = ceil(maxf(0.0, float(first_crisis.starts_at) - Session.sim_time) / 10.0) * 10.0
-			note = "Heavy rain due in %s" % _minutes_text(left)
+			note = "Heavy rain due in %s" % _minutes_text(step * 10.0)
 		"active":
 			note = "Heavy rain: foragers kept in"
 		"spent":
-			if Session.sim_time < float(first_crisis.ended_at) + FIRST_CRISIS_RECOVERY_SECONDS:
+			if step == 1:
 				note = "Heavy rain has passed"
 	if note == _first_crisis_note:
 		return
@@ -1164,11 +1210,13 @@ func _trace_first_crisis(phase: String, readiness: Dictionary = {}, extra: Dicti
 	_first_crisis_traced[phase] = true
 	if readiness.is_empty():
 		readiness = _first_crisis_readiness()
+	var bounds := first_crisis_bounds()
 	var detail := {
 		"phase": phase, "t": Session.sim_time, "day": day,
 		"state": first_crisis.state, "path": first_crisis.path,
-		"window_open": GameConfig.first_crisis_window_open, "window_close": GameConfig.first_crisis_window_close,
-		"warning_lead": GameConfig.first_crisis_warning_lead, "cutoff": first_crisis_cutoff(),
+		"window_open": bounds.open, "window_close": bounds.close,
+		"warning_lead": bounds.lead, "cutoff": first_crisis_cutoff(),
+		"checkpointed": first_crisis.get("checkpointed", false),
 		"warned_at": first_crisis.warned_at, "starts_at": first_crisis.starts_at,
 		"started_at": first_crisis.started_at, "ended_at": first_crisis.ended_at,
 		"rain_intensity": Session.rain_intensity, "rain_target": rain_target,
@@ -1198,13 +1246,11 @@ func _trace_first_crisis(phase: String, readiness: Dictionary = {}, extra: Dicti
 ## give its full lead, and spent otherwise, so an old run is never rained on
 ## without warning.
 func restore_first_crisis(saved) -> void:
-	var restored := {
-		"state": "pending", "path": "", "warned_at": -1.0, "starts_at": -1.0,
-		"started_at": -1.0, "ended_at": -1.0, "duration": 0.0, "readiness": {},
-	}
+	var restored := _blank_first_crisis()
 	if typeof(saved) == TYPE_DICTIONARY and FIRST_CRISIS_STATES.has(str(saved.get("state", ""))):
 		restored.state = str(saved.state)
 		restored.path = str(saved.get("path", ""))
+		restored.checkpointed = bool(saved.get("checkpointed", false))
 		for key in ["warned_at", "starts_at", "started_at", "ended_at", "duration"]:
 			restored[key] = float(saved.get(key, restored[key]))
 		if typeof(saved.get("readiness")) == TYPE_DICTIONARY:
