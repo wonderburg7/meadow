@@ -43,6 +43,29 @@ integrated it on 15 Oct 2026 (plan review D1), and on 16 Oct 2026 every file
 on the `Files:` line was clear. Recheck the line against the queue before
 starting.
 
+**Built and measured (17 Oct 2026, `claude/FC-2`).** `main.gd`'s
+`_advance_first_crisis`, called from `_advance_weather`, runs only in a Colony
+Run with weather on. The window is 1080-1500 s of run time with the 1200 s
+gate inside it; the warning lead is 120 s, so the cutoff is 1380 s. Readiness
+is read once a second while pending inside the window, through
+`ColonyDiagnostics.crisis_readiness`: the automation skill owned, at least
+one living worker on foraging above the starving line, and nectar plus ripe
+honey covering `GameConfig.rain_max_seconds` (130 s) at `energy_burn_rate`
+for every adult. The episode is that longest ordinary shower at full
+intensity, through the ordinary rain rules. Ordinary rolls wait from 130 s
+before the window opens until 120 s after the episode ends. The rotating
+checkpoint is written just before the warning (`saving.gd::crisis_checkpoint`),
+and the state with its times is saved as the additive `first_crisis` key. On
+the pinned seed 20261017 (`test_scenarios/fc2_first_crisis_*.json`), the
+prepared colony was warned at 1080.1 s and rained on at 1200.1 s. The
+unprepared one was warned at 1380.1 s and rained on at 1500.1 s. The worker it
+sent out at the warning came home with 100 nectar before the rain began. On
+both paths, forage income stopped from peak to end, and the colony's stores
+plus the bees' own energy fell through the 130 s of rain. Foragers flew again
+in the recovery. Restoring the save taken at the warning, and then the one
+taken during the rain, put each state and its times back without a second
+warning.
+
 ```queue
 **[Claude] FC-2 -- implement the accepted crisis and deterministic scenario**
 - Plan: `plans/now/crisis-readiness.md` -- "FC-2 -- implement the accepted crisis and deterministic scenario"

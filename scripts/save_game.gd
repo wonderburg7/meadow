@@ -95,6 +95,10 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 			"target": world.rain_target,
 			"seconds_left": world.rain_seconds_left,
 		},
+		# FC-2: the first crisis's state (pending, warned, active or spent)
+		# and the times that schedule it, so a load neither repeats nor skips
+		# it. Additive: main.gd::restore_first_crisis reads a save without it.
+		"first_crisis": world.first_crisis.duplicate(true),
 		"totals": {
 			"nectar": world.hive.lifetime_nectar_collected,
 			"pollen": world.hive.lifetime_pollen_collected,

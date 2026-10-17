@@ -110,6 +110,7 @@ const OrdersZones = preload("res://scripts/orders_zones.gd")
 const ForagingStats = preload("res://scripts/foraging_stats.gd")
 const YearWinter = preload("res://scripts/year_winter.gd")
 const ColonyMilestones = preload("res://scripts/colony_milestones.gd")
+const ColonyDiagnostics = preload("res://scripts/colony_diagnostics.gd")
 const Pollination = preload("res://scripts/pollination.gd")
 const CameraView = preload("res://scripts/camera_view.gd")
 const FogOfWar = preload("res://scripts/fog_of_war.gd")
@@ -260,6 +261,45 @@ var rain_target: float = 0.0
 var rain_seconds_left: float = 0.0
 var rain_overlay: ColorRect
 var rain_effect: Node2D
+
+## FC-2 (plans/now/crisis-readiness.md, FC-1's accepted option A): the Colony
+## Run's first crisis, one announced heavy-rain episode in a bounded window
+## around the 20-minute experience gate, in seconds of run time
+## (Session.sim_time). From window open until the cutoff (close less the
+## lead), a colony that has reached the early automation milestone, has a
+## working forager and holds food cover for the episode is warned at once and
+## the rain follows a full lead later; one that has not qualified by the cutoff
+## is warned there anyway and the rain starts at window close. Once warned,
+## nothing reschedules or cancels it. The window, lead and readiness inputs
+## were measured on the pinned prepared and unprepared runs
+## (test_scenarios/fc2_first_crisis_*.json, tests/test_fc2_first_crisis.py):
+## the 1200 s gate is inside it, and 120 s lets a worker reassigned at the
+## warning finish a forage round trip before the rain. The episode is the
+## longest ordinary shower (GameConfig.rain_max_seconds) at full intensity;
+## its outcome is the ordinary rain rules, never a scripted loss.
+const FIRST_CRISIS_WINDOW_OPEN := 1080.0
+const FIRST_CRISIS_WINDOW_CLOSE := 1500.0
+const FIRST_CRISIS_WARNING_LEAD := 120.0
+const FIRST_CRISIS_INTENSITY := 1.0
+## How often a pending crisis reads readiness inside the window -- a bounded
+## tick, not a per-bee or per-frame walk.
+const FIRST_CRISIS_CHECK_SECONDS := 1.0
+## How long after the rain ends ordinary rain stays away, so the recovery is
+## the episode's own and no ordinary storm runs on into it.
+const FIRST_CRISIS_RECOVERY_SECONDS := 120.0
+const FIRST_CRISIS_STATES := ["pending", "warned", "active", "spent"]
+## pending -> warned -> active -> spent, with the times that schedule it and
+## the readiness read when the warning was posted. Saved whole
+## (save_game.gd's "first_crisis"), so a load can neither repeat nor skip it.
+var first_crisis: Dictionary = {
+	"state": "pending", "path": "", "warned_at": -1.0, "starts_at": -1.0,
+	"started_at": -1.0, "ended_at": -1.0, "duration": 0.0, "readiness": {},
+}
+var first_crisis_check_timer: float = 0.0
+## Which trace checkpoints this stretch of play has logged -- not saved, so
+## a restore logs the replayed ones again.
+var _first_crisis_traced: Dictionary = {}
+var _first_crisis_note: String = ""
 
 var warning_check_timer: float = 5.0 + randf()
 ## The periodic sweeps below are each given a random starting phase.
@@ -945,12 +985,15 @@ func _advance_weather(delta: float) -> void:
 		_apply_rain_overlay()
 		return
 
+	# FC-2: the first crisis schedules and starts its own rain; ordinary
+	# rolls wait while it is announced, falling or recovering.
+	_advance_first_crisis(delta)
 	if rain_seconds_left > 0.0:
 		rain_seconds_left -= delta
 		if rain_seconds_left <= 0.0:
 			rain_target = 0.0
 			rain_changed.emit(false)
-	else:
+	elif not _first_crisis_holds_weather():
 		# one roll per in-game day, spread evenly over it
 		weather_timer -= delta
 		if weather_timer <= 0.0:
@@ -979,6 +1022,201 @@ func _apply_rain_overlay() -> void:
 	# about it the way the colony does -- the foragers stop coming back.
 	if rain_effect != null:
 		rain_effect.visible = showing
+
+# --- the first crisis ----------------------------------------------
+## FC-2: see FIRST_CRISIS_WINDOW_OPEN for the contract. Called from
+## _advance_weather every unpaused frame; the readiness walk inside it runs
+## at most once a FIRST_CRISIS_CHECK_SECONDS, and only while pending inside
+## the window.
+
+static func first_crisis_cutoff() -> float:
+	return FIRST_CRISIS_WINDOW_CLOSE - FIRST_CRISIS_WARNING_LEAD
+
+func _first_crisis_applies() -> bool:
+	return colony_milestones != null and colony_milestones.applies() and Levels.weather_enabled(Session.starting_level)
+
+## True while ordinary rain must not roll, so no ordinary storm overlaps the
+## episode: from the longest ordinary shower before the window opens (the
+## warning may come at any moment inside it, and its lead must be flyable)
+## to the end of the recovery.
+func _first_crisis_holds_weather() -> bool:
+	if not _first_crisis_applies():
+		return false
+	match str(first_crisis.state):
+		"pending":
+			return Session.sim_time >= FIRST_CRISIS_WINDOW_OPEN - GameConfig.rain_max_seconds
+		"warned", "active":
+			return true
+		"spent":
+			return Session.sim_time < float(first_crisis.ended_at) + FIRST_CRISIS_RECOVERY_SECONDS
+	return false
+
+func _first_crisis_readiness() -> Dictionary:
+	var automation: bool = Session.progression != null and Session.progression.is_owned(ColonyMilestones.AUTOMATION_SKILL)
+	return ColonyDiagnostics.crisis_readiness(self, get_tree().get_nodes_in_group("bees"), automation, GameConfig.rain_max_seconds)
+
+func _advance_first_crisis(delta: float) -> void:
+	if not _first_crisis_applies():
+		return
+	var now: float = Session.sim_time
+	match str(first_crisis.state):
+		"pending":
+			if now < FIRST_CRISIS_WINDOW_OPEN:
+				return
+			first_crisis_check_timer -= delta
+			var at_cutoff: bool = now >= first_crisis_cutoff()
+			if first_crisis_check_timer > 0.0 and not at_cutoff:
+				return
+			first_crisis_check_timer = FIRST_CRISIS_CHECK_SECONDS
+			var readiness := _first_crisis_readiness()
+			if at_cutoff:
+				# Never on the warning's own tick, even after a late load.
+				_warn_first_crisis(maxf(FIRST_CRISIS_WINDOW_CLOSE, now + 1.0), "fallback", readiness)
+			elif bool(readiness.ready):
+				_warn_first_crisis(now + FIRST_CRISIS_WARNING_LEAD, "prepared", readiness)
+		"warned":
+			if now >= float(first_crisis.starts_at):
+				_start_first_crisis()
+		"active":
+			if rain_seconds_left <= 0.0:
+				first_crisis.state = "spent"
+				first_crisis.ended_at = now
+				_show_first_crisis_note()
+				_trace_first_crisis("end")
+				hud.show_warning("The heavy rain has passed. Foragers can fly again, and nectar in the flowers recovers as it refills.", "", 0.0, hud.SEVERITY_INFO)
+			elif now >= float(first_crisis.started_at) + float(first_crisis.duration) * 0.5 and not _first_crisis_traced.has("peak"):
+				_trace_first_crisis("peak")
+		"spent":
+			if first_crisis.ended_at >= 0.0 and now >= float(first_crisis.ended_at) + FIRST_CRISIS_RECOVERY_SECONDS and not _first_crisis_traced.has("recovery"):
+				_trace_first_crisis("recovery")
+	_show_first_crisis_note()
+
+## Posts the warning and fixes the onset. The rotating checkpoint is written
+## first, while the crisis is still pending, so loading it replays the warning
+## and its whole lead rather than landing the player in the rain.
+func _warn_first_crisis(starts_at: float, path: String, readiness: Dictionary) -> void:
+	var checkpointed: bool = saving.crisis_checkpoint()
+	first_crisis.state = "warned"
+	first_crisis.path = path
+	first_crisis.warned_at = Session.sim_time
+	first_crisis.starts_at = starts_at
+	first_crisis.readiness = {
+		"automation": readiness.automation,
+		"able_foragers": readiness.able_foragers,
+		"unable_foragers": readiness.unable_foragers,
+		"food_cover_seconds": readiness.food_cover_seconds,
+		"food_ready": readiness.food_ready,
+	}
+	var text := _first_crisis_warning_text(readiness, starts_at - Session.sim_time)
+	hud.show_warning(text, "", 0.0, hud.SEVERITY_DANGER)
+	_show_first_crisis_note()
+	_trace_first_crisis("warning", readiness, {"checkpoint_written": checkpointed, "text": text})
+
+func _first_crisis_warning_text(readiness: Dictionary, lead: float) -> String:
+	var foragers: String = "You have no worker able to forage."
+	if int(readiness.able_foragers) == 1:
+		foragers = "You have 1 worker able to forage."
+	elif int(readiness.able_foragers) > 1:
+		foragers = "You have %d workers able to forage." % int(readiness.able_foragers)
+	if int(readiness.unable_foragers) > 0:
+		foragers += " %d assigned foragers are too low on energy to fly." % int(readiness.unable_foragers)
+	return "Heavy rain is coming in about %s. While it falls your foragers stay at the hive and nectar in the flowers is watered down, so forage income stops. Your stores feed the colony for about %s at its current rate. %s Build up stores, or put a worker on foraging now so a trip comes home before the rain." % [
+		_minutes_text(lead), _minutes_text(float(readiness.food_cover_seconds)), foragers,
+	]
+
+func _start_first_crisis() -> void:
+	first_crisis.state = "active"
+	first_crisis.started_at = Session.sim_time
+	first_crisis.duration = GameConfig.rain_max_seconds
+	# The episode takes over the one rain state, so an ordinary shower still
+	# falling becomes part of it rather than a second storm.
+	rain_target = FIRST_CRISIS_INTENSITY
+	rain_seconds_left = float(first_crisis.duration)
+	rain_changed.emit(true)
+	var readiness := _first_crisis_readiness()
+	var text := "Heavy rain has arrived. Wet wings cost more to fly on, nectar in the open flowers is watered down, and your foragers are staying in, so nothing comes in until it eases. The colony lives on its stores now: about %s at its current rate." % _minutes_text(float(readiness.food_cover_seconds))
+	hud.show_warning(text, "", 0.0, hud.SEVERITY_DANGER)
+	_show_first_crisis_note()
+	_trace_first_crisis("onset", readiness, {"text": text})
+
+## The persistent line under the day counter, from the warning until the
+## recovery is over.
+func _show_first_crisis_note() -> void:
+	var note := ""
+	match str(first_crisis.state):
+		"warned":
+			# Ten-second steps, so the corner rebuilds a few times a minute
+			# rather than every frame.
+			var left: float = ceil(maxf(0.0, float(first_crisis.starts_at) - Session.sim_time) / 10.0) * 10.0
+			note = "Heavy rain due in %s" % _minutes_text(left)
+		"active":
+			note = "Heavy rain: foragers kept in"
+		"spent":
+			if Session.sim_time < float(first_crisis.ended_at) + FIRST_CRISIS_RECOVERY_SECONDS:
+				note = "Heavy rain has passed"
+	if note == _first_crisis_note:
+		return
+	_first_crisis_note = note
+	if hud != null:
+		hud.set_weather_note(note)
+
+static func _minutes_text(seconds: float) -> String:
+	var whole: int = maxi(0, int(round(seconds)))
+	return "%d:%02d" % [floori(whole / 60.0), whole % 60]
+
+## A scenario trace line (DiagnosticLog's "recorded" action) at each fixed
+## checkpoint: warning, onset, peak, end and recovery, plus every restore. In
+## ordinary play it is a handful of lines in the session log.
+func _trace_first_crisis(phase: String, readiness: Dictionary = {}, extra: Dictionary = {}) -> void:
+	_first_crisis_traced[phase] = true
+	if readiness.is_empty():
+		readiness = _first_crisis_readiness()
+	var detail := {
+		"phase": phase, "t": Session.sim_time, "day": day,
+		"state": first_crisis.state, "path": first_crisis.path,
+		"window_open": FIRST_CRISIS_WINDOW_OPEN, "window_close": FIRST_CRISIS_WINDOW_CLOSE,
+		"warning_lead": FIRST_CRISIS_WARNING_LEAD, "cutoff": first_crisis_cutoff(),
+		"warned_at": first_crisis.warned_at, "starts_at": first_crisis.starts_at,
+		"started_at": first_crisis.started_at, "ended_at": first_crisis.ended_at,
+		"rain_intensity": Session.rain_intensity, "rain_target": rain_target,
+		"rain_seconds_left": rain_seconds_left,
+		"nectar_collected": hive.lifetime_nectar_collected,
+		"pollen_collected": hive.lifetime_pollen_collected,
+		"bees": get_tree().get_nodes_in_group("bees").size(),
+		"brood_cells": hive.cells_holding("brood").size(),
+		"deaths": DiagnosticLog.event_count("death"),
+		"note": _first_crisis_note,
+		"readiness": readiness,
+	}
+	detail.merge(extra)
+	DiagnosticLog.log_action("first_crisis", phase, "recorded", JSON.stringify(detail))
+
+## saving.gd::_restore, after the clock: puts back the saved crisis. A save
+## from before FC-2 has none; it is still pending if the warning could yet
+## give its full lead, and spent otherwise, so an old run is never rained on
+## without warning.
+func restore_first_crisis(saved) -> void:
+	var restored := {
+		"state": "pending", "path": "", "warned_at": -1.0, "starts_at": -1.0,
+		"started_at": -1.0, "ended_at": -1.0, "duration": 0.0, "readiness": {},
+	}
+	if typeof(saved) == TYPE_DICTIONARY and FIRST_CRISIS_STATES.has(str(saved.get("state", ""))):
+		restored.state = str(saved.state)
+		restored.path = str(saved.get("path", ""))
+		for key in ["warned_at", "starts_at", "started_at", "ended_at", "duration"]:
+			restored[key] = float(saved.get(key, restored[key]))
+		if typeof(saved.get("readiness")) == TYPE_DICTIONARY:
+			restored.readiness = saved.readiness.duplicate(true)
+	elif Session.sim_time > first_crisis_cutoff():
+		restored.state = "spent"
+	first_crisis = restored
+	first_crisis_check_timer = 0.0
+	_first_crisis_traced.clear()
+	_show_first_crisis_note()
+	if _first_crisis_applies():
+		# No readiness walk here: until the frame ends, the bees group still
+		# holds the bees the restore is retiring (saving.gd's _retire_node).
+		_trace_first_crisis("restored", {"read": false})
 
 ## The queen is the only bee that can lay. When she dies the oldest adult
 ## gyne takes her place (COL-10, _promote_gyne_to_queen); only with no

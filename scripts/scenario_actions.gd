@@ -53,7 +53,7 @@ const LOCAL_WHEN_KEYS := [
 	"food_stores_at_least", "challenge_stage_id", "queen_inside_hive", "queen_load_empty",
 	"queen_watch_hits_at_most", "in_hive_view", "camera_following_queen",
 	"challenge_overflow_discards", "cell_empty", "selected_mine_queue_at_least",
-	"challenge_goal_met", "queen_build_offered",
+	"challenge_goal_met", "queen_build_offered", "first_crisis_state",
 ]
 
 # --- run_pending --------------------------------------------------
@@ -306,6 +306,11 @@ static func _when_met(main: Node2D, when: Dictionary) -> bool:
 		var runner: Node = main.challenge_runner
 		var goal_met: bool = runner.active and runner._goal_met(str(runner._stages()[runner._stage_index].get("goal", "")))
 		if goal_met != bool(when["challenge_goal_met"]):
+			return false
+	if when.has("first_crisis_state"):
+		# FC-2: the first crisis's state (main.gd's first_crisis), so a route
+		# can respond to the warning the moment it is posted.
+		if str(main.first_crisis.get("state", "")) != str(when["first_crisis_state"]):
 			return false
 	if when.has("queen_build_offered"):
 		# RR-1: the Build cell button's flag, as the queen's panel reads it.

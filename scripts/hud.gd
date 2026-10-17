@@ -2676,10 +2676,28 @@ func _apply_discard() -> void:
 ## got away -- both live beside the day counter because together they are
 ## the run: how far through, and how much to show for it.
 func update_day(day: int, note: String = "") -> void:
+	_day_shown = day
+	_day_note = note
 	corner_texts["day"] = "Day %d" % day
 	if note != "":
 		corner_texts["day"] += "\n%s" % note
+	if weather_note != "":
+		corner_texts["day"] += "\n%s" % weather_note
 	_refresh_corner()
+
+## FC-2: the first crisis's line under the day -- the forecast while the
+## heavy rain is due, then the rain, then its passing (main.gd's
+## _show_first_crisis_note). "" removes it. The day and season note are kept
+## so the line can change between days.
+var weather_note: String = ""
+var _day_shown: int = 1
+var _day_note: String = ""
+
+func set_weather_note(text: String) -> void:
+	if text == weather_note:
+		return
+	weather_note = text
+	update_day(_day_shown, _day_note)
 
 ## Honey is counted only once it's fully fanned dry -- wet mix still
 ## drying in a cell isn't a store the colony can use yet. Anything sealed

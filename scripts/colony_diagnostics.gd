@@ -73,3 +73,57 @@ static func compute(main: Node2D, bees: Array, counts: Dictionary) -> Dictionary
 		"missing_required_workforce": missing_nurse_workforce + missing_comb_workforce,
 		"blocked_work": blocked_work,
 	}
+
+
+## FC-2 (plans/now/crisis-readiness.md): the first crisis's readiness inputs,
+## from FC-1's contract. A working forager is a living worker -- not the
+## queen, a drone or a gyne -- assigned to foraging and able to fly now: one
+## below the starving line, or held in by the season, is counted apart as
+## assigned but unable, so the explanation can tell her from a bee the rain
+## keeps in. Food cover is the comb's adult food (nectar plus ripe honey at
+## honey_energy_factor, the same units as season.gd's winter_stores) over what
+## every adult burns at energy_burn_rate, in seconds. The episode needs
+## `rain_seconds` of cover. main.gd calls this on its bounded crisis tick (once
+## a second inside the window) and for the crisis trace, never per bee frame.
+## `skill_owned` says whether the early automation milestone is reached; the
+## caller asks progression, the only reader of the skill catalogue.
+static func crisis_readiness(main: Node2D, bees: Array, skill_owned: bool, rain_seconds: float) -> Dictionary:
+	var able_foragers := 0
+	var unable_foragers := 0
+	var foragers_outside := 0
+	var bee_energy := 0.0
+	var season_stopped: bool = main.season != null and is_instance_valid(main.season) and main.season.foraging_stopped()
+	for b in bees:
+		bee_energy += b.energy
+		if b.is_queen or b.is_drone or b.is_gyne or b.role != Roles.FORAGER:
+			continue
+		if not b._is_inside_hive():
+			foragers_outside += 1
+		if season_stopped or b.energy < GameConfig.energy_capacity * 0.15:
+			unable_foragers += 1
+		else:
+			able_foragers += 1
+	var nectar: float = main.hive.total("nectar")
+	var honey: float = main.hive.total_honey()
+	var food: float = nectar + honey * GameConfig.honey_energy_factor
+	var consumption: float = float(bees.size()) * GameConfig.energy_burn_rate
+	var cover: float = food / maxf(consumption, 0.001)
+	var food_ready: bool = cover >= rain_seconds
+	return {
+		"automation": skill_owned,
+		"able_foragers": able_foragers,
+		"unable_foragers": unable_foragers,
+		"foragers_outside": foragers_outside,
+		"food_stores": food,
+		"stored_nectar": nectar,
+		"stored_honey": honey,
+		"stored_pollen": main.hive.total("pollen"),
+		"consumption_per_second": consumption,
+		# What the bees carry in their own reserves, so a trace can follow
+		# the colony's whole food (comb plus bodies) through the rain.
+		"bee_energy": bee_energy,
+		"food_cover_seconds": cover,
+		"food_cover_needed": rain_seconds,
+		"food_ready": food_ready,
+		"ready": skill_owned and able_foragers > 0 and food_ready,
+	}
