@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-11 (T2-10 landed 16 Oct 2026: a miner wakes when Automation is bought, C-135) (from Dave's 14 Oct 2026 pass: miners on Dig on its own, comb workers building unevenly); T2-12 waits for `hud.gd`; T2-13 (a role change drops a carried body; gameplay review, 15 Oct 2026) waits for T2-10; then T2-7b (T2-9 landed 12 Oct 2026: branch-tier progress counts only the lower-tier skills the run offers, C-113) -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker) | Dependency: COL-4, COL-6, T2-4a, T2-4b, T2-6 and T2-7 landed (T2-7 on 11 Oct 2026, as the rule, snapshot field and pacing row); T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`) | Verified: 2026-10-14
+Status: active | Owner: Dave / Claude Code | Next: T2-13 (a role change drops a carried body; gameplay review, 15 Oct 2026), open since T2-10 landed 16 Oct 2026 (a miner wakes when Automation is bought, C-135); T2-14 after T2-13 (both edit `scripts/bee.gd`) and once RR-10 (Codex lane) releases `scripts/hive.gd` (T2-11 answered 17 Oct 2026: a comb worker's idle reason starts a site, so without Automation comb grows outward only while one is selected); T2-12 waits for `hud.gd`; then T2-7b (T2-9 landed 12 Oct 2026: branch-tier progress counts only the lower-tier skills the run offers, C-113) -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker) | Dependency: COL-4, COL-6, T2-4a, T2-4b, T2-6 and T2-7 landed (T2-7 on 11 Oct 2026, as the rule, snapshot field and pacing row); T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`) | Verified: 2026-10-17
 
 ## Objective
 
@@ -35,14 +35,15 @@ What the open slices build on:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-11 | investigation: why comb workers build unevenly, one bounded question | tests, this plan | yes, after T2-10 | high |
+| T2-14 | a comb worker's idle reason asks whether there is room to build without starting a site (found by T2-11) | `scripts/bee.gd`, `scripts/hive.gd`, tests | no -- after T2-13 (`scripts/bee.gd`) and once RR-10 (Codex lane) releases `scripts/hive.gd` | low |
 | T2-12 | Dig on its own offered only once Automation is owned | `scripts/hud.gd`, tests | no -- after FC-2 releases `hud.gd` (GP-4 released it 15 Oct 2026) | low |
-| T2-13 | a bee whose role changes while it carries a body puts the body down (gameplay review, 15 Oct 2026) | `scripts/bee.gd`, tests | no -- after T2-10 releases `scripts/bee.gd` | low |
+| T2-13 | a bee whose role changes while it carries a body puts the body down (gameplay review, 15 Oct 2026) | `scripts/bee.gd`, tests | yes (T2-10 landed 16 Oct 2026) | low |
 | T2-7b | The tier-2 price sweep T2-7 deferred: tier-2 costs set so the arc's first tier-2 purchase lands around day 5 | `scripts/skills.gd`, `plans/design/progression.md`, tests; specified when AR-4 lands | no -- after AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker | medium |
 
-**Dependencies.** T2-10 and T2-13 both edit `scripts/bee.gd`, so T2-13
-opens when T2-10 lands; T2-11 runs after T2-10, whose miner fix its
-question assumes. T2-12 waits for FC-2 (`plans/now/crisis-readiness.md`,
+**Dependencies.** T2-10 and T2-13 both edit `scripts/bee.gd`; T2-10
+landed 16 Oct 2026, so T2-13 is open. T2-14 edits `scripts/bee.gd` too,
+so it runs after T2-13, and `scripts/hive.gd`, held by RR-10 (Codex
+lane). T2-12 waits for FC-2 (`plans/now/crisis-readiness.md`,
 Codex lane) to release `scripts/hud.gd`. T2-7b waits for AR-4
 (`plans/now/alpha-route-evidence.md`): the alpha arc makes no honey, so the
 sweep's median cannot land in band before AR-4's arc buys a Honey worker
@@ -58,34 +59,53 @@ T2-1 to T2-6, T2-8b, T2-9 and COL-4 shipped 7-12 Oct 2026; each has its record i
 
 T2-10 shipped 2026-10-16; its specification is `plans/archive/T2-10_2026-10-16.md`.
 
-## T2-11 -- why comb workers build comb unevenly (investigation)
+T2-11 shipped 2026-10-17; its specification is `plans/archive/T2-11_2026-10-17.md`.
 
-Level: high (ambiguous bug). Dave, 14 Oct 2026: comb workers "seem to
-not be creating combs automatically in a consistent way". Not yet
-diagnosed. Two hypotheses, neither confirmed: (a) without Automation a
-comb worker only finishes half-built sites and builds marked ones, so it
-builds some cells and then stops, which reads as uneven; (b) with
-Automation, `hive.create_next_cell_site` returns null once the open floor
-is full, which happens sooner while miners stay idle (T2-10's bug).
+## T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site
 
-**The one question.** In a Colony Run started from the menu's defaults,
-with Automation owned from the start, two comb workers in Build mode and
-two miners on Dig on its own, over five game-days: does a comb worker
-ever sit idle for more than 10 game-seconds while
-`hive.create_next_cell_site` would return a site? If yes, which finder
-row refused and why (file::function). If no, hypothesis (b) or (a)
-explains what Dave saw, and the fix is T2-10 plus T2-12.
+Level: low (one query split out of one function, two files). Found by
+T2-11 (17 Oct 2026). T2-2 already decided the player-visible outcome:
+building comb outward is Automation's. This slice removes a way round
+that gate; it decides nothing new. **Gate:** it runs after T2-13, which
+also edits `scripts/bee.gd`, and `scripts/hive.gd` is held by RR-10
+(Codex lane); queue this once both are done.
 
-Write the result as a line starting `T2-11 answer:` here, then specify
-the fix slice (or none) below it. Do not change game code in this slice.
+**True now** (verified 17 Oct 2026 against master `ea181c9`).
+`bee.gd::idle_reason`'s BUILD_IDLE branch tests
+`hive.create_next_cell_site(home_hex if has_home_hex else Vector2i.ZERO) == null`.
+`hive.gd::create_next_cell_site` starts a site (`_start_site_at`) at the
+first buildable spiral tile. `hud.gd::_refresh_selection_text` calls
+`idle_reason()` on its refresh cadence while one bee is selected. So
+selecting an idle Build-mode comb worker without Automation starts
+outward sites, which `comb_build` then builds
+(`bee_building.gd::create_cell_site_at` falls back to
+`hive.find_unfinished_cell`). `tests.test_t2_11_comb_cadence`'s
+no-Automation case prints "0 sites started that day" for day 1, with
+nothing selected, and "5 sites started that day" for day 2, with one comb
+worker selected.
 
-```queue
-**[Claude] T2-11 -- why comb workers build comb unevenly (investigation)**
-- Plan: `plans/now/tier-two.md` -- "T2-11 -- why comb workers build comb unevenly (investigation)"
-- Files: `tests/t2_11_comb_cadence_test.gd`, `tests/test_t2_11_comb_cadence.py`, `plans/now/tier-two.md`
-- Check: `python -m unittest tests.test_t2_11_comb_cadence` runs and prints, for each idle spell longer than 10 game-seconds, the comb worker's mode, `idle_reason()` and which finder returned nothing; the answer and the fix slice it implies are written into this section.
-- Proof: `present: scripts/bee.gd :: func idle_reason() -> String:`
-- Next after: T2-12 -- Dig on its own is offered only once Automation is owned
+**True afterwards.** `hive.gd` gains
+`func has_room_to_build(around: Vector2i = Vector2i.ZERO) -> bool`. The
+spiral walk moves into one private helper that both it and
+`create_next_cell_site` call, so the two cannot drift
+(`.claude/rules/simulation.md`, two loops over the same range).
+`create_next_cell_site` keeps its behaviour and its `_no_room_frame`
+memo. `idle_reason` calls `hive.has_room_to_build(...)`, with the same
+argument, in place of `create_next_cell_site`; its wording does not
+change. A comment cites T2-14.
+
+**Invariants.** Save format unchanged. No per-tick work added:
+`idle_reason` runs only from the HUD and tests. Building with Automation
+is unchanged. `python -m unittest tests.test_t2_10_automine_wake` still
+passes.
+
+```queue-gated
+**[Claude] T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site**
+- Plan: `plans/now/tier-two.md` -- "T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site"
+- Files: `scripts/bee.gd`, `scripts/hive.gd`, `tests/t2_14_idle_reason_pure_test.gd`, `tests/test_t2_14_idle_reason_pure.py`
+- Check: `python -m unittest tests.test_t2_14_idle_reason_pure` passes: a comb worker in Build mode without Automation, in BUILD_IDLE with room to build, gives the Automation idle reason, and `hive.cells.size()` is unchanged after 20 `idle_reason()` calls; `hive.has_room_to_build()` is true exactly when `create_next_cell_site()` then returns a site; in `python -m unittest tests.test_t2_11_comb_cadence`'s no-Automation case the DAY 2 line, with a comb worker selected, says "0 sites started that day".
+- Proof: `present: scripts/bee.gd :: if hive.create_next_cell_site(home_hex if has_home_hex else Vector2i.ZERO) == null:`
+- Next after: T2-7b -- the tier-2 price sweep T2-7 deferred
 ```
 
 ## T2-12 -- Dig on its own is offered only once Automation is owned
@@ -124,8 +144,8 @@ C-136.
 
 Level: low (one helper on the role-change choke point). Gameplay review
 15 Oct 2026, finding F3 (Dave's decision D3 put it here, beside T2-4b's
-bodies). **Gate:** `scripts/bee.gd` is held by T2-10; open this fence when
-T2-10 has landed.
+bodies). Opened when T2-10 landed (16 Oct 2026), which held
+`scripts/bee.gd`.
 
 **True now** (verified 15 Oct 2026 against master `9c490df`). Only
 `bee_building.gd::builder_dump_waste` clears `carrying_corpse` and
@@ -155,7 +175,7 @@ format unchanged. No per-tick work.
 **Escalate** if `carrying_corpse` is read anywhere outside `bee.gd`,
 `bee_building.gd` and the save files by then.
 
-```queue-gated
+```queue
 **[Claude] T2-13 -- a bee whose role changes while it carries a body puts the body down**
 - Plan: `plans/now/tier-two.md` -- "T2-13 -- a bee whose role changes while it carries a body puts the body down"
 - Files: `scripts/bee.gd`, `tests/t2_13_carried_body_test.gd`, `tests/test_t2_13_carried_body.py`
@@ -167,5 +187,5 @@ format unchanged. No per-tick work.
 ## Not in the queue, and why
 
 - **T2-12** -- hide "Dig on its own" until Automation is owned (Dave, 14 Oct 2026); waits for FC-2 (Codex lane) to release `scripts/hud.gd` (GP-4 released it 15 Oct 2026).
-- **T2-13** -- a bee whose role changes while it carries a body puts the body down (gameplay review, 15 Oct 2026); waits for T2-10 to release `scripts/bee.gd`.
+- **T2-14** -- a comb worker's idle reason asks whether there is room to build, without starting a site (found by T2-11, 17 Oct 2026); runs after T2-13 (both edit `scripts/bee.gd`) and waits for RR-10 (Codex lane) to release `scripts/hive.gd`.
 - **T2-7b** -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker, and is specified when it lands.
