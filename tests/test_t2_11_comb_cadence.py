@@ -2,7 +2,8 @@
 
 Runs tests/t2_11_comb_cadence_test.gd in a headless Godot at a fixed frame
 rate: a Colony Run with two comb workers in Build mode and two miners on Dig
-on its own, five game-days with Automation owned and two without. Prints
+on its own: five game-days with Automation owned, then two without it,
+the second with one comb worker selected in the HUD. Prints
 every comb-worker idle spell longer than 10 game-seconds with its mode,
 idle_reason() and what each catalogue row would have found, plus a line per
 game-day. The answer it gave is written in plans/now/tier-two.md, section
@@ -62,8 +63,8 @@ class T211CombCadenceTest(unittest.TestCase):
     def test_reports_idle_spells_over_five_days_with_automation(self):
         self._run([])
 
-    def test_reports_idle_spells_over_two_days_without_automation(self):
-        self._run(["--no-automation", "--days=2"])
+    def test_reports_two_days_without_automation_the_second_with_a_comb_worker_selected(self):
+        self._run(["--no-automation", "--days=2", "--select-from-day=2"])
 
 
 if __name__ == "__main__":

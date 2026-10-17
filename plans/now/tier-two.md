@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-14 once RR-10 (Codex lane) releases `scripts/hive.gd` (T2-11 answered 17 Oct 2026: a comb worker's idle reason starts a site, so without Automation comb grows outward only while one is selected); T2-12 waits for `hud.gd`; T2-13 (a role change drops a carried body; gameplay review, 15 Oct 2026) waits for T2-10; then T2-7b (T2-9 landed 12 Oct 2026: branch-tier progress counts only the lower-tier skills the run offers, C-113) -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker) | Dependency: COL-4, COL-6, T2-4a, T2-4b, T2-6 and T2-7 landed (T2-7 on 11 Oct 2026, as the rule, snapshot field and pacing row); T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`) | Verified: 2026-10-17
+Status: active | Owner: Dave / Claude Code | Next: T2-13 (a role change drops a carried body; gameplay review, 15 Oct 2026), open since T2-10 landed 16 Oct 2026 (a miner wakes when Automation is bought, C-135); T2-14 after T2-13 (both edit `scripts/bee.gd`) and once RR-10 (Codex lane) releases `scripts/hive.gd` (T2-11 answered 17 Oct 2026: a comb worker's idle reason starts a site, so without Automation comb grows outward only while one is selected); T2-12 waits for `hud.gd`; then T2-7b (T2-9 landed 12 Oct 2026: branch-tier progress counts only the lower-tier skills the run offers, C-113) -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker) | Dependency: COL-4, COL-6, T2-4a, T2-4b, T2-6 and T2-7 landed (T2-7 on 11 Oct 2026, as the rule, snapshot field and pacing row); T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`) | Verified: 2026-10-17
 
 ## Objective
 
@@ -36,14 +36,15 @@ What the open slices build on:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | T2-11 | investigation: why comb workers build unevenly, one bounded question | tests, this plan | yes, after T2-10 | high |
-| T2-14 | a comb worker's idle reason asks whether there is room to build without starting a site (found by T2-11) | `scripts/bee.gd`, `scripts/hive.gd`, tests | no -- after RR-10 (Codex lane) releases `scripts/hive.gd` | low |
+| T2-14 | a comb worker's idle reason asks whether there is room to build without starting a site (found by T2-11) | `scripts/bee.gd`, `scripts/hive.gd`, tests | no -- after T2-13 (`scripts/bee.gd`) and once RR-10 (Codex lane) releases `scripts/hive.gd` | low |
 | T2-12 | Dig on its own offered only once Automation is owned | `scripts/hud.gd`, tests | no -- after FC-2 releases `hud.gd` (GP-4 released it 15 Oct 2026) | low |
-| T2-13 | a bee whose role changes while it carries a body puts the body down (gameplay review, 15 Oct 2026) | `scripts/bee.gd`, tests | no -- after T2-10 releases `scripts/bee.gd` | low |
+| T2-13 | a bee whose role changes while it carries a body puts the body down (gameplay review, 15 Oct 2026) | `scripts/bee.gd`, tests | yes (T2-10 landed 16 Oct 2026) | low |
 | T2-7b | The tier-2 price sweep T2-7 deferred: tier-2 costs set so the arc's first tier-2 purchase lands around day 5 | `scripts/skills.gd`, `plans/design/progression.md`, tests; specified when AR-4 lands | no -- after AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker | medium |
 
-**Dependencies.** T2-10 and T2-13 both edit `scripts/bee.gd`, so T2-13
-opens when T2-10 lands; T2-11 runs after T2-10, whose miner fix its
-question assumes. T2-12 waits for FC-2 (`plans/now/crisis-readiness.md`,
+**Dependencies.** T2-10 and T2-13 both edit `scripts/bee.gd`; T2-10
+landed 16 Oct 2026, so T2-13 is open. T2-14 edits `scripts/bee.gd` too,
+so it runs after T2-13, and `scripts/hive.gd`, held by RR-10 (Codex
+lane). T2-12 waits for FC-2 (`plans/now/crisis-readiness.md`,
 Codex lane) to release `scripts/hud.gd`. T2-7b waits for AR-4
 (`plans/now/alpha-route-evidence.md`): the alpha arc makes no honey, so the
 sweep's median cannot land in band before AR-4's arc buys a Honey worker
@@ -83,26 +84,32 @@ the fix slice (or none) below it. Do not change game code in this slice.
 T2-11 answer: no. With Automation owned, neither comb worker sat idle
 for more than 3 game-seconds in total over five game-days: no idle
 spell over 10 game-seconds and no 10-second stretch without building.
-They built 21 cells at a steady 4-5 a day, both on one site at a time
-(`cell_build_time` is 90 s). On day 5 the open floor still had room, so
+They built 21 cells, 4-5 a day, both on one site at a time
+(`cell_build_time` is 90 s). The test never called `idle_reason()` in
+that run (it calls it only inside a spell over 10 s, and none came), so
+the rate is the game's own. On day 5 the open floor still had room, so
 hypothesis (b) did not come up in five days (the miners dug 12 blocks;
-`block_mine_time` is 120 s). Hypothesis (a) holds, and the run found why
-it looks uneven rather than simply stopped: `bee.gd::idle_reason` calls
+`block_mine_time` is 120 s).
+
+Hypothesis (a) holds, and the run found why it looks uneven rather than
+simply stopped: `bee.gd::idle_reason` calls
 `hive.gd::create_next_cell_site`, which *starts* a site rather than
-asking whether there is one. So without Automation, an idle comb worker
-in Build (or Both) mode gets a new outward site every time something
-reads its idle reason. In play that is `hud.gd::_refresh_selection_text`,
-on its refresh cadence, while that one bee is selected. Every idle comb
-worker then builds the site through `comb_build`
+asking whether there is one. `hud.gd::_refresh_selection_text` calls
+`idle_reason()` every 0.1 s (`POPUP_REFRESH_CADENCE`) while one bee is
+selected. So without Automation, a selected idle comb worker in Build
+(or Both) mode gets a new outward site at once, and every idle comb
+worker builds it through `comb_build`
 (`bee_building.gd::create_cell_site_at` -> `hive.find_unfinished_cell`).
-Without Automation, then, comb grows outward only while Dave has an idle
-comb worker selected, and stops when he selects something else. The
-two-day run without Automation (`-- --no-automation --days=2`, the
-test's second case) shows it. Each of its 8 idle spells ended at the
-10-second mark, when the test's own `idle_reason()` call started the site
-the workers then built: 7 cells that no catalogue row would have
-started. Finders at each spell: `comb_build` found nothing or the
-previous probe's site, and `comb_build_outward` was gated off.
+The test's second case shows it, without the test itself calling
+`idle_reason()` while a site is free (it names the branch instead). That
+case runs two days without Automation and selects one comb worker in the
+HUD, as a click does, from day 2. Day 1, nothing selected: 0 sites
+started and 0 cells built. Both workers sat idle all day with a site
+free: `comb_build` found nothing and `comb_build_outward` was gated off.
+Day 2, one worker selected: 5 sites started and 4 cells built, the same
+rate as with Automation. So without Automation, comb grows outward only
+while Dave has a comb worker selected, and stops when he selects
+something else.
 
 **Fix slice: T2-14** (its own section below): `idle_reason` asks a
 side-effect-free `hive.has_room_to_build` instead. Once it lands, comb
@@ -124,8 +131,9 @@ is needed for hypothesis (b): T2-10 already wakes the miners.
 Level: low (one query split out of one function, two files). Found by
 T2-11 (17 Oct 2026). T2-2 already decided the player-visible outcome:
 building comb outward is Automation's. This slice removes a way round
-that gate; it decides nothing new. **Gate:** `scripts/hive.gd` is held by
-RR-10 (Codex lane); queue this once RR-10 releases it.
+that gate; it decides nothing new. **Gate:** it runs after T2-13, which
+also edits `scripts/bee.gd`, and `scripts/hive.gd` is held by RR-10
+(Codex lane); queue this once both are done.
 
 **True now** (verified 17 Oct 2026 against master `ea181c9`).
 `bee.gd::idle_reason`'s BUILD_IDLE branch tests
@@ -137,8 +145,9 @@ selecting an idle Build-mode comb worker without Automation starts
 outward sites, which `comb_build` then builds
 (`bee_building.gd::create_cell_site_at` falls back to
 `hive.find_unfinished_cell`). `tests.test_t2_11_comb_cadence`'s
-no-Automation case prints "[idle_reason() started a site]" on every idle
-spell.
+no-Automation case prints "0 sites started that day" for day 1, with
+nothing selected, and "5 sites started that day" for day 2, with one comb
+worker selected.
 
 **True afterwards.** `hive.gd` gains
 `func has_room_to_build(around: Vector2i = Vector2i.ZERO) -> bool`. The
@@ -159,7 +168,7 @@ passes.
 **[Claude] T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site**
 - Plan: `plans/now/tier-two.md` -- "T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site"
 - Files: `scripts/bee.gd`, `scripts/hive.gd`, `tests/t2_14_idle_reason_pure_test.gd`, `tests/test_t2_14_idle_reason_pure.py`
-- Check: `python -m unittest tests.test_t2_14_idle_reason_pure` passes: a comb worker in Build mode without Automation, in BUILD_IDLE with room to build, gives the Automation idle reason, and `hive.cells.size()` is unchanged after 20 `idle_reason()` calls; `hive.has_room_to_build()` is true exactly when `create_next_cell_site()` then returns a site; `python -m unittest tests.test_t2_11_comb_cadence` no longer prints "[idle_reason() started a site]".
+- Check: `python -m unittest tests.test_t2_14_idle_reason_pure` passes: a comb worker in Build mode without Automation, in BUILD_IDLE with room to build, gives the Automation idle reason, and `hive.cells.size()` is unchanged after 20 `idle_reason()` calls; `hive.has_room_to_build()` is true exactly when `create_next_cell_site()` then returns a site; in `python -m unittest tests.test_t2_11_comb_cadence`'s no-Automation case the DAY 2 line, with a comb worker selected, says "0 sites started that day".
 - Proof: `present: scripts/bee.gd :: if hive.create_next_cell_site(home_hex if has_home_hex else Vector2i.ZERO) == null:`
 - Next after: T2-7b -- the tier-2 price sweep T2-7 deferred
 ```
@@ -200,8 +209,8 @@ C-136.
 
 Level: low (one helper on the role-change choke point). Gameplay review
 15 Oct 2026, finding F3 (Dave's decision D3 put it here, beside T2-4b's
-bodies). **Gate:** `scripts/bee.gd` is held by T2-10; open this fence when
-T2-10 has landed.
+bodies). Opened when T2-10 landed (16 Oct 2026), which held
+`scripts/bee.gd`.
 
 **True now** (verified 15 Oct 2026 against master `9c490df`). Only
 `bee_building.gd::builder_dump_waste` clears `carrying_corpse` and
@@ -231,7 +240,7 @@ format unchanged. No per-tick work.
 **Escalate** if `carrying_corpse` is read anywhere outside `bee.gd`,
 `bee_building.gd` and the save files by then.
 
-```queue-gated
+```queue
 **[Claude] T2-13 -- a bee whose role changes while it carries a body puts the body down**
 - Plan: `plans/now/tier-two.md` -- "T2-13 -- a bee whose role changes while it carries a body puts the body down"
 - Files: `scripts/bee.gd`, `tests/t2_13_carried_body_test.gd`, `tests/test_t2_13_carried_body.py`
@@ -243,6 +252,5 @@ format unchanged. No per-tick work.
 ## Not in the queue, and why
 
 - **T2-12** -- hide "Dig on its own" until Automation is owned (Dave, 14 Oct 2026); waits for FC-2 (Codex lane) to release `scripts/hud.gd` (GP-4 released it 15 Oct 2026).
-- **T2-13** -- a bee whose role changes while it carries a body puts the body down (gameplay review, 15 Oct 2026); waits for T2-10 to release `scripts/bee.gd`.
-- **T2-14** -- a comb worker's idle reason asks whether there is room to build, without starting a site (found by T2-11, 17 Oct 2026); waits for RR-10 (Codex lane) to release `scripts/hive.gd`.
+- **T2-14** -- a comb worker's idle reason asks whether there is room to build, without starting a site (found by T2-11, 17 Oct 2026); runs after T2-13 (both edit `scripts/bee.gd`) and waits for RR-10 (Codex lane) to release `scripts/hive.gd`.
 - **T2-7b** -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker, and is specified when it lands.
