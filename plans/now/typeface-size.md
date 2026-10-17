@@ -1,7 +1,7 @@
 # Typeface size -- every typeface the same width at the same text scale
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: TS-1 (theme, menu, comb and Dr Gallerin sizes); TS-2 (the HUD's own size overrides) waits for FC-2 to release `scripts/hud.gd` (GP-4 released it 15 Oct 2026) | Dependency: TS-1 after RR-7's fix (`plans/now/run-repairs.md`); TS-2 after TS-1 | Verified: 2026-10-15
+Status: active | Owner: Dave / Claude Code | Next: TS-2 (the HUD's own size overrides; TS-1 landed 17 Oct 2026, `scripts/hud.gd` released by GP-4) | Dependency: TS-2 after TS-1 | Verified: 2026-10-17
 
 ## Objective
 
@@ -90,7 +90,7 @@ Level: low. **Gate:** TS-1 landed, and `scripts/hud.gd` released by FC-2
 is `UiTheme.font_px(base)`, and the corner `signature` adds
 `Session.ui_typeface` so a typeface change rebuilds the corner.
 
-```queue-gated
+```queue
 **[Claude] TS-2 -- the HUD's own size overrides follow the typeface too**
 - Plan: `plans/now/typeface-size.md` -- "TS-2 -- the HUD's own size overrides"
 - Files: `scripts/hud.gd`, `tests/ts2_hud_typeface_size_test.gd`, `tests/test_ts2_hud_typeface_size.py`
@@ -101,5 +101,4 @@ is `UiTheme.font_px(base)`, and the corner `signature` adds
 
 ## Not in the queue, and why
 
-- **TS-1** -- width-matched typeface sizes; waits for RR-7's fix (`plans/now/run-repairs.md`), which owns the menu hexagon fit TS-1's `base` feeds.
-- **TS-2** -- the HUD's size overrides; waits for TS-1 and for FC-2 to release `scripts/hud.gd` (GP-4 released it 15 Oct 2026).
+- Nothing: TS-2 is queued.

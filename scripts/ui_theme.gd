@@ -378,6 +378,32 @@ const TYPE_SIZES := {
 	"Tiny": 11,
 }
 
+## TS-1: sample sentence used to match each typeface's width to Standard's.
+const REFERENCE_TEXT := "The quick brown fox jumps over the lazy dog 0123456789"
+const _FACTOR_MEASURE_SIZE := 64
+static var _typeface_factors: Dictionary = {}
+
+## How much to scale a font size so `typeface` draws REFERENCE_TEXT as wide as
+## Standard does. 1.0 for "sans" or a missing font. Measured once per face.
+static func typeface_size_factor(typeface: String) -> float:
+	if typeface == "sans":
+		return 1.0
+	if _typeface_factors.has(typeface):
+		return _typeface_factors[typeface]
+	var factor := 1.0
+	var font: Font = _typeface_font(typeface)
+	if font != null:
+		var own: float = font.get_string_size(REFERENCE_TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, _FACTOR_MEASURE_SIZE).x
+		var base: float = ThemeDB.fallback_font.get_string_size(REFERENCE_TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, _FACTOR_MEASURE_SIZE).x
+		if own > 0.0 and base > 0.0:
+			factor = base / own
+	_typeface_factors[typeface] = factor
+	return factor
+
+## A base size scaled by the text scale and the typeface's width factor.
+static func font_px(base: float) -> int:
+	return maxi(1, int(round(base * Session.text_scale * typeface_size_factor(Session.ui_typeface))))
+
 ## Returns the shared mutable Theme used by every panel. Keeping one resource
 ## means refresh() updates controls that are already open, rather than only
 ## controls created after an appearance setting changes.
@@ -450,18 +476,17 @@ static func refresh() -> void:
 	_refresh_color_bindings()
 
 static func _refresh_theme_resource(theme: Theme) -> void:
-	var scale: float = Session.text_scale
 	var font: Font = _typeface_font(Session.ui_typeface)
 	for variation in TYPE_SIZES:
 		theme.set_type_variation(variation, "Label")
-		theme.set_font_size("font_size", variation, int(round(TYPE_SIZES[variation] * scale)))
+		theme.set_font_size("font_size", variation, font_px(TYPE_SIZES[variation]))
 		theme.set_color("font_color", variation, color("text_primary"))
 		if font != null:
 			theme.set_font("font", variation, font)
 		elif theme.has_font("font", variation):
 			theme.clear_font("font", variation)
 	for base_type in ["Label", "Button"]:
-		theme.set_font_size("font_size", base_type, int(round(TYPE_SIZES["Body"] * scale)))
+		theme.set_font_size("font_size", base_type, font_px(TYPE_SIZES["Body"]))
 		theme.set_color("font_color", base_type, color("text_primary"))
 		if font != null:
 			theme.set_font("font", base_type, font)

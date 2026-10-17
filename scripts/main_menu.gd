@@ -422,7 +422,7 @@ func _fit_hex_label(label: Label) -> void:
 	var font := label.get_theme_font("font")
 	# The themed size, read from UiTheme rather than the label: the label's
 	# own size is this function's override once it has run.
-	var base := int(round(UiTheme.TYPE_SIZES["Tiny"] * Session.text_scale))
+	var base := UiTheme.font_px(UiTheme.TYPE_SIZES["Tiny"])
 	var avail := label.size - label.get_theme_stylebox("normal").get_minimum_size()
 	# The font's instance id, not its RID: every FontFile reports RID 0, so a
 	# typeface change at the same scale would keep the previous face's fit.

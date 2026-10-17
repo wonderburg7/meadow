@@ -114,14 +114,14 @@ func _all_fitted(face: Font) -> bool:
 	for label in _hex_labels:
 		if not is_instance_valid(label) or label.get_theme_font("font").get_instance_id() != face.get_instance_id():
 			return false
-		if label.get_theme_font_size("font_size") != _expected_size(label, face):
+		if label.get_theme_font_size("font_size") != _expected_size(label, face, _face_name(face)):
 			return false
 	return true
 
 
-func _expected_size(label: Label, face: Font) -> int:
+func _expected_size(label: Label, face: Font, face_name: String) -> int:
 	var avail: Vector2 = label.size - label.get_theme_stylebox("normal").get_minimum_size()
-	var base := int(round(_ui_theme().TYPE_SIZES["Tiny"] * TEXT_SCALE))
+	var base := int(round(_ui_theme().TYPE_SIZES["Tiny"] * TEXT_SCALE * _ui_theme().typeface_size_factor(face_name)))
 	return _menu_script().hex_fit_size(face, label.text, avail, base, label.get_theme_constant("line_spacing"))
 
 
@@ -131,11 +131,11 @@ func _check_hex_labels() -> void:
 		if not is_instance_valid(label):
 			_check(false, "a hexagon name label was freed before the check")
 			continue
-		var expected := _expected_size(label, _opendyslexic)
+		var expected := _expected_size(label, _opendyslexic, "opendyslexic")
 		var actual: int = label.get_theme_font_size("font_size")
 		_check(actual == expected,
 			"'%s' is at font size %d after the switch to OpenDyslexic, expected %d" % [label.text, actual, expected])
-		if _expected_size(label, _munro) != expected:
+		if _expected_size(label, _munro, "munro") != expected:
 			differs = true
 	# If Munro and OpenDyslexic fit every name the same, a stale size passes
 	# too, and this check proves nothing.
@@ -182,3 +182,7 @@ func _report() -> void:
 		for line in _failures:
 			print("RR5 FAIL: " + line)
 		quit(1)
+
+
+func _face_name(face: Font) -> String:
+	return "munro" if face == _munro else "opendyslexic"

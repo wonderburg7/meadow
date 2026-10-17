@@ -53,6 +53,7 @@ var _last_message: String = ""
 ## see _process(). Dave's 29 Aug report: the bubble's text stayed the old
 ## size after changing the text-scale setting mid-session.
 var _last_text_scale: float = 1.0
+var _last_typeface: String = "sans"
 ## The line currently typing out and how many of its characters are
 ## revealed so far -- see _show_bubble() and _process()'s typing block.
 var _typing_target: String = ""
@@ -92,6 +93,7 @@ func _ready() -> void:
 	_build_icon()
 	_build_bubble()
 	_last_text_scale = Session.text_scale
+	_last_typeface = Session.ui_typeface
 	visible = Session.gallerin_enabled
 	get_viewport().size_changed.connect(_apply_layout)
 	# The settings window is built before this node (main.gd), so it's
@@ -114,8 +116,9 @@ func _process(delta: float) -> void:
 	# from what they're reading.
 	if _history_index == _history.size() - 1:
 		_fire_due_prompts()
-	if Session.text_scale != _last_text_scale:
+	if Session.text_scale != _last_text_scale or Session.ui_typeface != _last_typeface:
 		_last_text_scale = Session.text_scale
+		_last_typeface = Session.ui_typeface
 		_apply_bubble_font_size()
 	if _typed_characters < _typing_target.length():
 		# Godot multiplies the delta reaching _process() by Engine.time_scale
@@ -429,7 +432,7 @@ func _position_bubble_pointer() -> void:
 	_bubble_pointer.position = Vector2(bubble.size.x, bubble.size.y - ICON_SIZE.y / 2.0)
 
 func _apply_bubble_font_size() -> void:
-	_bubble_label.add_theme_font_size_override("font_size", int(round(BUBBLE_TEXT_SIZE * Session.text_scale)))
+	_bubble_label.add_theme_font_size_override("font_size", UiTheme.font_px(BUBBLE_TEXT_SIZE))
 
 ## Reveals the rest of the current line at once -- shared by click-to-finish
 ## and by _show_bubble() replacing a still-typing line with a new one.
