@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/FR-1` (`codex/FR-1`) | Codex | the three foraging stages measured on the same Colony Run seeds | Codex | in progress | none | `plans/now/forager-recruitment.md` FR-1 -- the three foraging stages measured on the same Colony Run seeds |
+| `.worktrees/RR-8` (`claude/RR-8`) | Claude | a menu hexagon repaints at the size its name was fitted to | Claude | in progress | none | `plans/now/run-repairs.md` RR-8 -- a menu hexagon repaints at the size its name was fitted to |
