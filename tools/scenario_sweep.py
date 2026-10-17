@@ -31,7 +31,7 @@ from godot_compile_check import find_godot  # noqa: E402
 # each takes minutes, so the sweep leaves them to whoever asked for them.
 LONG_RUNNING = (
     r"^foraging_features_", r"^alpha_arc_", r"^a2_seed_", r"^a3_fixedfps_",
-    r"^perf2_", r"^slice3_timescale_", r"^recommendation_slice5_", r"evidence",
+    r"^perf2_", r"^slice3_timescale_", r"^recommendation_slice5_", r"^fr1_", r"evidence",
 )
 
 

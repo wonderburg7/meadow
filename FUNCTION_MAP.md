@@ -452,7 +452,7 @@ Every setting's key, label, range and tip, plus the read/write and Prerequisites
 1574 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
-## bee_foraging.gd (1,526 lines)
+## bee_foraging.gd (1,528 lines)
 
 The forager's search, scouting, recruitment and species-preference
 behaviour.
@@ -529,16 +529,16 @@ behaviour.
 1233 static func start_scouting(bee: Node2D) -> void
 1251 # --- waiting at the entrance --------------------------------------
 1256 static func wait_at_entrance(bee: Node2D, delta: float) -> void
-1360 # --- the recruitment dance ----------------------------------------
-1368 static func _update_dance_eligibility(bee: Node2D) -> void
-1391 static func leave_recruitment(bee: Node2D) -> void
-1413 static func check_dance_proximity(bee: Node2D, _delta: float) -> void
-1438 static func _start_dance(mentor: Node2D, seeker: Node2D) -> void
-1458 static func dance(bee: Node2D, delta: float) -> void
-1470 static func _end_dance(bee: Node2D) -> void
-1492 static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void
-1519 # --- remote deposit -----------------------------------------------
-1521 static func deposit_everything_remotely(bee: Node2D) -> void
+1362 # --- the recruitment dance ----------------------------------------
+1370 static func _update_dance_eligibility(bee: Node2D) -> void
+1393 static func leave_recruitment(bee: Node2D) -> void
+1415 static func check_dance_proximity(bee: Node2D, _delta: float) -> void
+1440 static func _start_dance(mentor: Node2D, seeker: Node2D) -> void
+1460 static func dance(bee: Node2D, delta: float) -> void
+1472 static func _end_dance(bee: Node2D) -> void
+1494 static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void
+1521 # --- remote deposit -----------------------------------------------
+1523 static func deposit_everything_remotely(bee: Node2D) -> void
 ```
 
 ## hive_cell.gd (1,483 lines)

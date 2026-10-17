@@ -1278,7 +1278,9 @@ static func wait_at_entrance(bee: Node2D, delta: float) -> void:
 	# seeker either.
 	var i := 0
 	while i < bee.hive.entrance_mentors.size():
-		var mentor: Node2D = bee.hive.entrance_mentors[i]
+		# Keep this untyped until the validity check: assigning a freed
+		# Object to Node2D itself raises before is_instance_valid can prune it.
+		var mentor = bee.hive.entrance_mentors[i]
 		if not is_instance_valid(mentor):
 			bee.hive.entrance_mentors.remove_at(i)
 			continue

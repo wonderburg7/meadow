@@ -1,7 +1,7 @@
 # Forager recruitment -- Orientation flight, then Auto scouting, then Auto-recruitment
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: FR-1 -- the three foraging stages measured on the same Colony Run seeds | Dependency: FR-1 → FR-2 → PP-6 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-14
+Status: active | Owner: Dave / Claude Code | Next: FR-1b -- tune the measured foraging-stage order | Dependency: FR-1 → FR-1b → FR-2 → PP-6 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-17
 
 ## Objective
 
@@ -106,14 +106,29 @@ Decisions (Dave, 14 Oct 2026):
 
 <!-- LAYER: immediate-task -->
 
-Evidence only; no game file changes. A new scenario starts as the Colony
-Run does, with the route's other foraging behaviours on (Tarsal secretions,
-Associative learning, Adaptive constancy), winter off, run to day 20.
+Evidence campaign; no intended foraging or balance change. A new scenario
+starts as the Colony Run does, with the route's other foraging behaviours on
+(Tarsal secretions, Associative learning, Adaptive constancy), winter off,
+run to day 20. The Auto-recruitment row exposed a freed entrance-mentor
+reference; its validity guard prevents the scenario runner crashing without
+altering the recruitment decision.
 `tools/forager_stages.py` runs it on five seeds under four settings and
 prints one table, recorded in this section with the commit:
 
-| Stage | Food per forager per day (median) | vs stage before |
+Campaign, 17 Oct 2026. Window: days 1--20; divisor: 20 days x 11
+starting foragers. Values are the five seeds in the specified order.
+
+| Stage | Food per forager per day (median; five seeds) | vs stage before |
 | --- | --- | --- |
+| Orientation flight | 6.0133 (4.8253, 6.0133, 8.3810, 4.8707, 6.3986) | -- |
+| Auto scouting | 5.8454 (4.4272, 7.4413, 9.2718, 5.1354, 5.8454) | 0.97x |
+| Auto scouting + Auto-recruitment | 4.7757 (3.2282, 6.4012, 7.8084, 3.0379, 4.7757) | 0.82x |
+| Auto scouting + Auto-recruitment + species passing | 3.3102 (3.0415, 2.5565, 5.0416, 3.3543, 3.3102) | 0.69x |
+
+Every stage after Orientation flight is lower than its predecessor. Per
+durable rule 3, FR-2 cannot start: a tuning sweep over the existing
+`GameConfig` values is required first, with Dave deciding the next step if
+that cannot restore the specified order.
 
 Rows: Orientation flight (`orientation_flight_on`); Auto scouting
 (`scouting_on`); Auto scouting plus Auto-recruitment
@@ -162,6 +177,26 @@ earlier campaign over the same toggles; reuse their setup where it fits.
 - Files: `tools/forager_stages.py`, `tests/test_forager_stages.py`, `test_scenarios/fr1_forager_stages_test.json`, `tools/scenario_sweep.py`
 - Check: `python -m unittest tests.test_forager_stages` passes; `python tools/forager_stages.py` prints food per forager per day for the four stages on five seeds, and the table is recorded in this plan's FR-1 section; `tools/verify.ps1` is green
 - Proof: `absent: tools/scenario_sweep.py :: ^fr1_`
+- Next after: FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
+```
+
+## FR-1b -- tune the measured foraging-stage order
+
+<!-- LAYER: immediate-task -->
+
+Use the FR-1 scenario and its five seeds to sweep the existing `GameConfig`
+foraging values, without adding a new behaviour or save field. Find a
+configuration in which each row is better than its predecessor and
+Auto-recruitment is at least 30% above Auto scouting; record the resulting
+table and selected values here. If no existing-value combination can meet
+both conditions, stop for Dave with the failed sweep evidence and choices.
+
+```queue
+**[Codex] FR-1b -- tune the measured foraging-stage order**
+- Plan: `plans/now/forager-recruitment.md` -- "FR-1b -- tune the measured foraging-stage order"
+- Files: `tools/forager_tuning.py`, `tests/test_forager_tuning.py`, `test_scenarios/fr1_forager_stages_test.json`, `plans/now/forager-recruitment.md`
+- Check: `python -m unittest tests.test_forager_tuning` passes; `python tools/forager_tuning.py` records the five-seed stage table and chosen existing values in this section; `tools/verify.ps1` is green
+- Proof: `contains: plans/now/forager-recruitment.md :: Auto-recruitment is at least 30% above Auto scouting`
 - Next after: FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
 ```
 
