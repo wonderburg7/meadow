@@ -142,7 +142,7 @@ func _avail() -> Vector2:
 
 
 func _base() -> int:
-	return int(round(_ui_theme().TYPE_SIZES["Tiny"] * TEXT_SCALE))
+	return _ui_theme().font_px(_ui_theme().TYPE_SIZES["Tiny"])
 
 
 func _spacing() -> int:
@@ -220,7 +220,7 @@ func _print_step(step: Array) -> void:
 	var font: Font = _label.get_theme_font("font")
 	var drawn: int = _label.get_theme_font_size("font_size")
 	var avail := _avail()
-	var base := int(round(_ui_theme().TYPE_SIZES["Tiny"] * root.get_node("Session").text_scale))
+	var base: int = _ui_theme().font_px(_ui_theme().TYPE_SIZES["Tiny"])
 	var fit: int = _menu_script().hex_fit_size(font, _label.text, avail, base, _spacing())
 	var lines := _paragraph_lines_in(font, _painted_size, avail.x)
 	var step_name := "%s=%s" % [step[0], str(step[1])]
