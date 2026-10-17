@@ -51,7 +51,6 @@ measurement says what those sessions were doing.
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
 | L-28 | Archiving a slice leaves another slice's queue block in the plan | `tools/archive_slice.py`, `tests/test_slice_lifecycle.py` | medium |
-| L-29 | `session_cost.py` counts subagent transcripts and scripted edits | `tools/session_cost.py`, `tests/test_session_cost_scope.py` | medium |
 | L-30 | Released work is visible: finish shows doc warnings, and a blocked check whose unblockers landed is named | `tools/verify.ps1`, `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py` | medium |
 
 L-16 to L-26 shipped 2 to 13 Oct 2026, each with its record in
@@ -103,53 +102,7 @@ successor's block leaves that block live (before: two lost on 15 Oct).
 - Next after: L-29 -- session_cost.py counts subagent transcripts and scripted edits
 ```
 
-## L-29 -- session_cost.py counts subagent transcripts and scripted edits
-
-<!-- LAYER: immediate-task -->
-
-Level: medium. **Now:** `_transcript_files` returns top-level transcripts
-only. From 5 to 16 Oct 2026, 185 subagent transcripts held 1,053M of the
-2,339M context tokens and were outside `--days`, `--classify` and
-`--phases`. Slice workers cannot use Edit in `.worktrees/` and edit through
-Python scripts written to their scratchpad (0 Edit, 255 Write, 2,538 Bash
-calls in 59 dispatches), so `_product_edit` saw 11 implementing requests in
-11,700. `--phases`' 11.0% implementing and 55.1% "no product edit" is an
-artefact, and this plan's completion gate cannot be judged.
-
-**After:**
-
-- New `def _subagent_transcripts(files)`: each top-level file's
-  `<stem>/subagents/agent-*.jsonl`. `--days`, `--classify` and `--phases`
-  read top-level plus subagent files; the header prints
-  `transcripts  N sessions (P primary, W worktree directories) + S subagent transcripts`.
-- `_product_edit` also counts (a) a Write or Edit outside the repository
-  whose `content` names a `.worktrees/<id>/` path followed by one of
-  `PRODUCT_DIRS` (a scratchpad edit script), and (b) a Bash command holding
-  `sed -i` or `cp ` and such a path.
-- After the `--phases` table, one line:
-  `slice workers (subagents named slice-worker-*): <tokens> = <share>% of all context`,
-  the type read from each transcript's `.meta.json` `agentType`.
-
-**Must not change:** `--coordinator`, `--events`, `--stops` and
-`--model-check` output; the four phase rows and their order.
-
-**Tests** in `tests/test_session_cost_scope.py` with fixture transcripts: a
-subagent file is counted; each of (a) and (b) counts as a product edit; a
-scratchpad script naming no worktree path does not.
-
-**Acceptance:** `python tools/session_cost.py --days 11 --phases` prints a
-subagent count above zero and a slice-worker share (before, 16 Oct: 80
-sessions, 1,286M, 11.0% implementing; workers 447M, 19% of 2,339M), and the
-next agent-workflow review judges the completion gate from it.
-
-```queue
-**[Claude] L-29 -- session_cost.py counts subagent transcripts and scripted edits**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-29 -- session_cost.py counts subagent transcripts and scripted edits"
-- Files: `tools/session_cost.py`, `tests/test_session_cost_scope.py`
-- Check: `python -m unittest tests.test_session_cost_scope` passes, including subagent files and both scripted-edit forms; `python tools/session_cost.py --days 11 --phases` prints a subagent transcript count and a slice-worker share; `.\tools\verify.ps1` is green
-- Proof: `absent: tools/session_cost.py :: def _subagent_transcripts`
-- Next after: None -- plan complete once L-27 and L-28 land
-```
+L-29 shipped 2026-10-17; its specification is `plans/archive/L-29_2026-10-17.md`.
 
 ## L-30 -- released work is visible to the sessions that release it
 
