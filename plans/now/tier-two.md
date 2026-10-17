@@ -35,7 +35,6 @@ What the open slices build on:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-11 | investigation: why comb workers build unevenly, one bounded question | tests, this plan | yes, after T2-10 | high |
 | T2-14 | a comb worker's idle reason asks whether there is room to build without starting a site (found by T2-11) | `scripts/bee.gd`, `scripts/hive.gd`, tests | no -- after T2-13 (`scripts/bee.gd`) and once RR-10 (Codex lane) releases `scripts/hive.gd` | low |
 | T2-12 | Dig on its own offered only once Automation is owned | `scripts/hud.gd`, tests | no -- after FC-2 releases `hud.gd` (GP-4 released it 15 Oct 2026) | low |
 | T2-13 | a bee whose role changes while it carries a body puts the body down (gameplay review, 15 Oct 2026) | `scripts/bee.gd`, tests | yes (T2-10 landed 16 Oct 2026) | low |
@@ -60,71 +59,7 @@ T2-1 to T2-6, T2-8b, T2-9 and COL-4 shipped 7-12 Oct 2026; each has its record i
 
 T2-10 shipped 2026-10-16; its specification is `plans/archive/T2-10_2026-10-16.md`.
 
-## T2-11 -- why comb workers build comb unevenly (investigation)
-
-Level: high (ambiguous bug). Dave, 14 Oct 2026: comb workers "seem to
-not be creating combs automatically in a consistent way". Not yet
-diagnosed. Two hypotheses, neither confirmed: (a) without Automation a
-comb worker only finishes half-built sites and builds marked ones, so it
-builds some cells and then stops, which reads as uneven; (b) with
-Automation, `hive.create_next_cell_site` returns null once the open floor
-is full, which happens sooner while miners stay idle (T2-10's bug).
-
-**The one question.** In a Colony Run started from the menu's defaults,
-with Automation owned from the start, two comb workers in Build mode and
-two miners on Dig on its own, over five game-days: does a comb worker
-ever sit idle for more than 10 game-seconds while
-`hive.create_next_cell_site` would return a site? If yes, which finder
-row refused and why (file::function). If no, hypothesis (b) or (a)
-explains what Dave saw, and the fix is T2-10 plus T2-12.
-
-Write the result as a line starting `T2-11 answer:` here, then specify
-the fix slice (or none) below it. Do not change game code in this slice.
-
-T2-11 answer: no. With Automation owned, neither comb worker sat idle
-for more than 3 game-seconds in total over five game-days: no idle
-spell over 10 game-seconds and no 10-second stretch without building.
-They built 21 cells, 4-5 a day, both on one site at a time
-(`cell_build_time` is 90 s). The test never called `idle_reason()` in
-that run (it calls it only inside a spell over 10 s, and none came), so
-the rate is the game's own. On day 5 the open floor still had room, so
-hypothesis (b) did not come up in five days (the miners dug 12 blocks;
-`block_mine_time` is 120 s).
-
-Hypothesis (a) holds, and the run found why it looks uneven rather than
-simply stopped: `bee.gd::idle_reason` calls
-`hive.gd::create_next_cell_site`, which *starts* a site rather than
-asking whether there is one. `hud.gd::_refresh_selection_text` calls
-`idle_reason()` every 0.1 s (`POPUP_REFRESH_CADENCE`) while one bee is
-selected. So without Automation, a selected idle comb worker in Build
-(or Both) mode gets a new outward site at once, and every idle comb
-worker builds it through `comb_build`
-(`bee_building.gd::create_cell_site_at` -> `hive.find_unfinished_cell`).
-The test's second case shows it, without the test itself calling
-`idle_reason()` while a site is free (it names the branch instead). That
-case runs two days without Automation and selects one comb worker in the
-HUD, as a click does, from day 2. Day 1, nothing selected: 0 sites
-started and 0 cells built. Both workers sat idle all day with a site
-free: `comb_build` found nothing and `comb_build_outward` was gated off.
-Day 2, one worker selected: 5 sites started and 4 cells built, the same
-rate as with Automation. So without Automation, comb grows outward only
-while Dave has a comb worker selected, and stops when he selects
-something else.
-
-**Fix slice: T2-14** (its own section below): `idle_reason` asks a
-side-effect-free `hive.has_room_to_build` instead. Once it lands, comb
-grows outward only with Automation or by marking cells, as T2-2 decided.
-T2-12 (hide Dig on its own until Automation is owned) still stands. Nothing more
-is needed for hypothesis (b): T2-10 already wakes the miners.
-
-```queue
-**[Claude] T2-11 -- why comb workers build comb unevenly (investigation)**
-- Plan: `plans/now/tier-two.md` -- "T2-11 -- why comb workers build comb unevenly (investigation)"
-- Files: `tests/t2_11_comb_cadence_test.gd`, `tests/test_t2_11_comb_cadence.py`, `plans/now/tier-two.md`
-- Check: `python -m unittest tests.test_t2_11_comb_cadence` runs and prints, for each idle spell longer than 10 game-seconds, the comb worker's mode, `idle_reason()` and which finder returned nothing; the answer and the fix slice it implies are written into this section.
-- Proof: `present: scripts/bee.gd :: func idle_reason() -> String:`
-- Next after: T2-12 -- Dig on its own is offered only once Automation is owned
-```
+T2-11 shipped 2026-10-17; its specification is `plans/archive/T2-11_2026-10-17.md`.
 
 ## T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site
 
