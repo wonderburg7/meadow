@@ -16,7 +16,9 @@ withholds both and, at the warning, sends one worker out, whose trip must
 come home before the rain. Both save at the warning and restore that save
 once the rain has begun, then save during the rain and restore it once the
 rain is over, so the crisis record is proved to round-trip across the
-trigger: a restore that dropped it would leave the later state live. While
+trigger: a restore that dropped it would leave the later state live. At the
+very end the prepared run reloads the crisis checkpoint itself, which must
+warn again without writing a second checkpoint (once a run). While
 the rain falls, the trace shows Dr Gallerin's "Why is this happening?" list
 holding the crisis entry (guidance_catalogue.gd's first_crisis_rain) and its
 text. The window, lead and readiness tick are GameConfig's (Dave, 17 Oct 2026).
@@ -109,7 +111,13 @@ class CrisisRunChecks:
     path: str
 
     def trace(self) -> list[dict]:
-        return _run(self.fixture, self)
+        """The crisis up to any reload of its own checkpoint (prepared only),
+        which replays it from before the warning and is checked apart."""
+        trace = _run(self.fixture, self)
+        for index, line in enumerate(trace):
+            if line["phase"] == "restored" and line["state"] == "pending":
+                return trace[:index]
+        return trace
 
     def test_exactly_one_announced_crisis_inside_the_window(self):
         trace = self.trace()
@@ -122,6 +130,10 @@ class CrisisRunChecks:
         self.assertGreaterEqual(warning["t"], warning["window_open"])
         self.assertLessEqual(warning["t"], warning["cutoff"] + FRAME)
         self.assertTrue(warning["checkpoint_written"], "no checkpoint before the crisis")
+        self.assertTrue(warning["checkpointed"])
+        # The lead is dry: no ordinary shower runs into the warning.
+        self.assertEqual(warning["rain_target"], 0.0)
+        self.assertLessEqual(warning["rain_seconds_left"], 0.0)
         self.assertIn("Heavy rain is coming", warning["text"])
         self.assertIn("Your stores feed the colony for about", warning["text"])
         self.assertTrue(warning["note"].startswith("Heavy rain due in"), warning["note"])
@@ -135,7 +147,8 @@ class CrisisRunChecks:
             self.assertAlmostEqual(onset["warned_at"], warning["t"], delta=1e-3)
             self.assertGreaterEqual(onset["t"], onset["starts_at"])
             self.assertLess(onset["t"] - onset["starts_at"], FRAME)
-            self.assertLessEqual(onset["t"], warning["window_close"] + FRAME)
+            # At window close, give or take the frame the cutoff fell in.
+            self.assertLessEqual(onset["t"], warning["window_close"] + 2 * FRAME)
             self.assertEqual(onset["note"], "Heavy rain: foragers kept in")
 
     def test_warning_gives_a_usable_lead(self):
@@ -219,6 +232,22 @@ class PreparedCrisisTest(CrisisRunChecks, unittest.TestCase):
         self.assertAlmostEqual(warning["starts_at"] - warning["t"], warning["warning_lead"], delta=1e-6)
         self.assertGreater(warning["nectar_collected"], 0.0, "the foragers brought nothing in")
 
+    def test_reloading_the_crisis_checkpoint_warns_again_without_another_checkpoint(self):
+        full = _run(self.fixture, self)
+        first = _last(self.trace(), "warning")
+        cut = len(self.trace())
+        self.assertLess(cut, len(full), "the crisis checkpoint was never reloaded")
+        reloaded, tail = full[cut], full[cut + 1:]
+        # The checkpoint was written on the warning's tick, still pending,
+        # and carries the flag that says it has been written.
+        self.assertEqual(reloaded["state"], "pending")
+        self.assertTrue(reloaded["checkpointed"])
+        self.assertAlmostEqual(reloaded["t"], first["t"], delta=1e-3)
+        warnings = _phase(tail, "warning")
+        self.assertEqual(len(warnings), 1)
+        self.assertFalse(warnings[0]["checkpoint_written"], "a reload wrote another crisis checkpoint")
+        self.assertTrue(_phase(tail, "onset"), "the replayed crisis never rained")
+
     def test_foragers_fly_again_after_the_rain(self):
         trace = self.trace()
         end, recovery = _last(trace, "end"), _last(trace, "recovery")
@@ -236,7 +265,9 @@ class UnpreparedCrisisTest(CrisisRunChecks, unittest.TestCase):
         self.assertFalse(readiness["automation"])
         self.assertEqual(readiness["able_foragers"], 0)
         self.assertAlmostEqual(warning["t"], warning["cutoff"], delta=FRAME)
-        self.assertEqual(warning["starts_at"], warning["window_close"])
+        # Rain at window close, never with less than the full lead.
+        self.assertAlmostEqual(warning["starts_at"],
+                               max(warning["window_close"], warning["t"] + warning["warning_lead"]), delta=1e-6)
         self.assertIn("You have no worker able to forage.", warning["text"])
         self.assertEqual(warning["nectar_collected"], 0.0)
 
@@ -286,6 +317,18 @@ func _process(_delta: float) -> bool:
 	save_game.apply_settings(written)
 	for key in keys:
 		print("FC2 LOADED %s %s" % [key, config.get(key)])
+	# Inconsistent settings are made consistent where main.gd reads them.
+	config.first_crisis_window_open = 1080.0
+	config.first_crisis_window_close = 1100.0
+	config.first_crisis_warning_lead = 120.0
+	var main_script = load("res://scripts/main.gd")
+	var bounds: Dictionary = main_script.first_crisis_bounds()
+	print("FC2 BOUNDS close %s" % bounds.close)
+	print("FC2 BOUNDS cutoff %s" % main_script.first_crisis_cutoff())
+	config.first_crisis_warning_lead = 2.0
+	print("FC2 BOUNDS lead %s" % main_script.first_crisis_bounds().lead)
+	for key in keys:
+		config.set(key, defaults[key])
 	return true
 """
 
@@ -324,6 +367,11 @@ class CrisisSettingsSaveTest(unittest.TestCase):
             self.assertEqual(seen.get(("SAVED", key)), "true", "%s is not saved with the run" % key)
             self.assertEqual(float(seen[("OLD", key)]), defaults[key], "old save: %s" % key)
             self.assertEqual(float(seen[("LOADED", key)]), changed[key], "saved run: %s" % key)
+        # open 1080, close 1100, lead 120: close moves to open + lead, so the
+        # fallback still warns a full lead ahead; a 2 s lead becomes 10 s.
+        self.assertEqual(float(seen[("BOUNDS", "close")]), 1200.0)
+        self.assertEqual(float(seen[("BOUNDS", "cutoff")]), 1080.0)
+        self.assertEqual(float(seen[("BOUNDS", "lead")]), 10.0)
 
 
 class CrisisSourceTest(unittest.TestCase):
@@ -331,15 +379,20 @@ class CrisisSourceTest(unittest.TestCase):
         main = MAIN.read_text(encoding="utf-8")
         self.assertIn("_advance_first_crisis(delta)", function_body(main, "_advance_weather"))
         self.assertIn("ColonyDiagnostics.crisis_readiness(", function_body(main, "_first_crisis_readiness"))
-        self.assertIn("saving.crisis_checkpoint()", function_body(main, "_warn_first_crisis"))
+        warn = function_body(main, "_warn_first_crisis")
+        self.assertIn("saving.crisis_checkpoint()", warn)
+        # Once a run: the flag is set before the write, so the file carries it.
+        self.assertLess(warn.index("first_crisis.checkpointed = true"), warn.index("saving.crisis_checkpoint()"))
+        # A shower still falling ends at the warning.
+        self.assertIn("rain_seconds_left = 0.0", warn)
         # The outcome is the ordinary rain rules: the crisis never writes the
         # stores, a bee's health or a death.
         crisis = "\n".join(function_body(main, name) for name in (
             "_advance_first_crisis", "_warn_first_crisis", "_start_first_crisis"))
         for forbidden in ("set_cell_contents", ".energy =", "die(", "colony_lost"):
             self.assertNotIn(forbidden, crisis)
-        self.assertRegex(function_body(main, "_advance_first_crisis"),
-                         re.compile(r"GameConfig\.first_crisis_check_seconds"))
+        self.assertIn("first_crisis_check_timer = float(bounds.check)", function_body(main, "_advance_first_crisis"))
+        self.assertIn("maxf(0.1, GameConfig.first_crisis_check_seconds)", main)
         # GameConfig owns the window, the lead and the readiness tick (Dave,
         # 17 Oct 2026); main.gd keeps no copy of them.
         config = GAME_CONFIG.read_text(encoding="utf-8")

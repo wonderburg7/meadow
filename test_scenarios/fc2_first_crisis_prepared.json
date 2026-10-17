@@ -141,7 +141,7 @@
     },
     {
       "when": {
-        "first_crisis_state": "spent"
+        "first_crisis_recovered": true
       },
       "do": "restore_slot",
       "name": "FC2 run",
