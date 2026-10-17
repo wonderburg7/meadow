@@ -71,7 +71,7 @@ multiple and the exact width.
 **Hands-on check on landing** (move from `checks/blocked.md` to ready):
 C-137.
 
-```queue-gated
+```queue
 **[Claude] TS-1 -- every typeface is the same width as Standard at the same text scale**
 - Plan: `plans/now/typeface-size.md` -- "TS-1 -- width-matched typeface sizes"
 - Files: `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/gallerin_panel.gd`, `scripts/hive_cell.gd`, `tests/ts1_typeface_size_test.gd`, `tests/test_ts1_typeface_size.py`

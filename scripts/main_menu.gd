@@ -435,6 +435,11 @@ func _fit_hex_label(label: Label) -> void:
 		label.remove_theme_font_size_override("font_size")
 	else:
 		label.add_theme_font_size_override("font_size", target)
+	# This runs inside the label's `draw` signal, after it has painted, and a
+	# redraw asked for during that draw is dropped, so the label would keep
+	# showing the previous size. Ask again once the draw has finished; the next
+	# draw finds the key unchanged and returns at once, so this cannot loop.
+	label.queue_redraw.call_deferred()
 
 func _make_hex_tile(stage: Dictionary) -> Control:
 	var bbox := Vector2(HEX_SIZE * 2.0, HEX_SIZE * sqrt(3.0))

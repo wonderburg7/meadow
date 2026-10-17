@@ -11,8 +11,9 @@
 ## width at the returned size, and the lines a TextParagraph shaped the way a
 ## word-smart Label shapes breaks the title into.
 ##
-## Diagnostic, not a regression guard: it fails only when it cannot reach the
-## figures. Run by tests/test_rr7_silkscreen_fit.py:
+## A regression guard (RR-8): after each step of the walk it fails when the
+## last painted size differs from hex_fit_size's, or the painted lines split a
+## word, as well as when it cannot reach the figures. Run by tests/test_rr7_silkscreen_fit.py:
 ##   godot --headless --fixed-fps 60 --path <repo> --script res://tests/rr7_silkscreen_fit_test.gd
 ## Prints "RR7 ..." figure lines, then "RR7 DONE" and exits 0, or "RR7 FAIL" lines and exits 1.
 
@@ -222,6 +223,11 @@ func _print_step(step: Array) -> void:
 	var base := int(round(_ui_theme().TYPE_SIZES["Tiny"] * root.get_node("Session").text_scale))
 	var fit: int = _menu_script().hex_fit_size(font, _label.text, avail, base, _spacing())
 	var lines := _paragraph_lines_in(font, _painted_size, avail.x)
+	var step_name := "%s=%s" % [step[0], str(step[1])]
+	if _painted_size != fit:
+		_failures.append("RR7 walk %s: painted size %d, fit %d (%s)" % [step_name, _painted_size, fit, font.resource_path.get_file()])
+	if _splits_a_word(lines):
+		_failures.append("RR7 walk %s: painted lines split a word %s" % [step_name, str(lines)])
 	print("RR7 walk %s=%s: face %s  scale %s  override %d  fit %d  painted %d (%s, draw %d)  painted split %s  %s" % [
 		step[0], str(step[1]), font.resource_path.get_file(), str(root.get_node("Session").text_scale),
 		drawn, fit, _painted_size, _painted_face, _draws, str(_splits_a_word(lines)), str(lines)])

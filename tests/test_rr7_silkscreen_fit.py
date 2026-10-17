@@ -4,8 +4,9 @@ Runs tests/rr7_silkscreen_fit_test.gd in a headless Godot at a fixed frame
 rate and prints its "RR7" figure lines: for the Challenge 1 hexagon's title in
 Silkscreen at text scale 2, the available size, the size
 MainMenu.hex_fit_size returns, whether hex_text_fits holds at it, and the
-line count the Label itself lays out. A diagnostic: it fails only when the
-script cannot reach those figures.
+line count the Label itself lays out. A regression guard (RR-8): it also
+fails on any step of its walk (text scale 1 then 2, every typeface) where the
+last painted size differs from the fit or the painted lines split a word.
 
 Requires a real Godot executable -- skips where none is installed.
 
