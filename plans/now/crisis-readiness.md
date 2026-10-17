@@ -51,6 +51,13 @@ crisis-rain facts and the catalogue's `first_crisis_rain` entry words them.
 balance values (`first_crisis_window_open`, `first_crisis_window_close`,
 `first_crisis_warning_lead`, `first_crisis_check_seconds`) rather than
 `main.gd` constants, so FC-2 also owns `scripts/game_config.gd`.
+(3) Those four values are saved with the run: their
+`scripts/settings_catalogue.gd` rows (category Weather) say `"persist":
+"run"`. Under D1's rule (12 Sep 2026, in `tests/source_checks.py`), they join
+the frozen SAVED_SETTINGS set, `FORMAT_VERSION` goes from 6 to 7 in
+`scripts/save_game.gd`, and `save_migrations.gd::_migrate_6_to_7` gives an
+older save GameConfig's defaults. `tests/test_save_migrations.py` follows the
+new version.
 
 **Built and measured (17 Oct 2026, `claude/FC-2`).** `main.gd`'s
 `_advance_first_crisis`, called from `_advance_weather`, runs only in a Colony
@@ -78,12 +85,15 @@ in". It gives the rain's intensity, the foragers kept in by it and those too
 low on energy to fly at all. It explains the cause (watered-down nectar, soaked
 wings, foragers staying in) and the fall in stores, then offers two responses.
 The entry left the list's "Now" items once the rain had passed. The played
-comprehension check is C-140.
+comprehension check is C-140. Through the real save code, a version 6 save
+comes out of the migration with the defaults (1080, 1500, 120 and 1 s). A run
+saved with changed values gets them back when its settings are applied on
+load.
 
 ```queue
 **[Claude] FC-2 -- implement the accepted crisis and deterministic scenario**
 - Plan: `plans/now/crisis-readiness.md` -- "FC-2 -- implement the accepted crisis and deterministic scenario"
-- Files: `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `scripts/colony_diagnostics.gd`, `scripts/game_config.gd`, `scripts/guidance_catalogue.gd`, `scripts/scenario_actions.gd`, `test_scenarios/fc2_first_crisis_prepared.json`, `test_scenarios/fc2_first_crisis_unprepared.json`, `tests/test_fc2_first_crisis.py`, `plans/now/crisis-readiness.md`
+- Files: `scripts/main.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/hud.gd`, `scripts/colony_diagnostics.gd`, `scripts/game_config.gd`, `scripts/guidance_catalogue.gd`, `scripts/settings_catalogue.gd`, `scripts/save_migrations.gd`, `scripts/scenario_actions.gd`, `test_scenarios/fc2_first_crisis_prepared.json`, `test_scenarios/fc2_first_crisis_unprepared.json`, `tests/test_fc2_first_crisis.py`, `tests/source_checks.py`, `tests/test_save_migrations.py`, `plans/now/crisis-readiness.md`
 - Check: `python tests/test_fc2_first_crisis.py` passes and traces one announced crisis, a usable warning-to-rain lead with a completed pre-rain forage response on the unprepared path, its weather/forage/store effect, and save/restore on both paths; file a played comprehension check
 - Proof: `present: scripts/main.gd :: func _advance_weather`
 - Next after: none -- crisis readiness is complete

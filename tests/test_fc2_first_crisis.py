@@ -30,13 +30,16 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 
+import godot_compile_check as gcc  # noqa: E402
 from analyze_session import load_entries  # noqa: E402
 from godot_compile_check import find_godot  # noqa: E402
 from run_scenario import run_once  # noqa: E402
@@ -246,6 +249,81 @@ class UnpreparedCrisisTest(CrisisRunChecks, unittest.TestCase):
         self.assertGreater(onset["nectar_collected"], warning["nectar_collected"],
                            "the response's forage trip did not come home before the rain")
         self.assertLess(onset["t"], warning["starts_at"] + FRAME)
+
+
+# The four crisis settings through the real save code (Dave, 17 Oct 2026:
+# persist "run", FORMAT_VERSION 7): a version 6 save, which has none of them,
+# comes out of save_migrations.gd with GameConfig's defaults, and a run saved
+# with changed values (save_game.gd's own settings writer, through JSON) puts
+# them back when the save's settings are applied on load.
+SETTINGS_SCRIPT = """extends SceneTree
+var _frame := 0
+
+func _process(_delta: float) -> bool:
+	_frame += 1
+	if _frame < 3:
+		return false
+	var config: Node = root.get_node("GameConfig")
+	var save_game = load("res://scripts/save_game.gd")
+	var migrations = load("res://scripts/save_migrations.gd")
+	var keys := ["first_crisis_window_open", "first_crisis_window_close",
+		"first_crisis_warning_lead", "first_crisis_check_seconds"]
+	var defaults := {}
+	for key in keys:
+		defaults[key] = config.get(key)
+		print("FC2 SAVED %s %s" % [key, save_game.saved_settings().has(key)])
+	var old: Dictionary = migrations.upgrade({"version": 6, "settings": {}}, save_game.FORMAT_VERSION)
+	print("FC2 OLD version %d" % int(old["version"]))
+	for key in keys:
+		print("FC2 OLD %s %s" % [key, old["settings"][key]])
+	config.first_crisis_window_open = 900.0
+	config.first_crisis_window_close = 1320.0
+	config.first_crisis_warning_lead = 90.0
+	config.first_crisis_check_seconds = 2.0
+	var written: Dictionary = JSON.parse_string(JSON.stringify({"settings": save_game._settings_dict()}))
+	for key in keys:
+		config.set(key, defaults[key])
+	save_game.apply_settings(written)
+	for key in keys:
+		print("FC2 LOADED %s %s" % [key, config.get(key)])
+	return true
+"""
+
+
+class CrisisSettingsSaveTest(unittest.TestCase):
+    def test_an_old_save_gets_the_defaults_and_a_saved_run_keeps_its_values(self):
+        godot = gcc.find_godot()
+        if not godot:
+            self.skipTest("no Godot executable found -- this test needs a real boot")
+        gcc.ensure_writable_user_dir()
+        if not gcc.engine_can_boot(godot):
+            self.skipTest("the installed Godot engine cannot initialise headlessly here")
+        self.assertTrue(gcc.prepare_cache(godot), "could not prepare the Godot import cache")
+        with tempfile.TemporaryDirectory() as folder:
+            script = Path(folder) / "fc2_settings.gd"
+            script.write_text(SETTINGS_SCRIPT, encoding="utf-8")
+            finished = subprocess.run(
+                [godot, "--headless", "--disable-crash-handler", "--path", str(ROOT),
+                 "--script", str(script)],
+                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180,
+            )
+        output = gcc.combined_output(finished)
+        self.assertEqual(gcc.failing_lines(output), [], "script errors:\n" + output[-2000:])
+        seen = {}
+        for line in output.splitlines():
+            if line.startswith("FC2 "):
+                kind, rest = line[4:].split(" ", 1)
+                key, value = rest.rsplit(" ", 1)
+                seen[(kind, key)] = value
+        defaults = {"first_crisis_window_open": 1080.0, "first_crisis_window_close": 1500.0,
+                    "first_crisis_warning_lead": 120.0, "first_crisis_check_seconds": 1.0}
+        changed = {"first_crisis_window_open": 900.0, "first_crisis_window_close": 1320.0,
+                   "first_crisis_warning_lead": 90.0, "first_crisis_check_seconds": 2.0}
+        self.assertEqual(seen.get(("OLD", "version")), "7", output[-2000:])
+        for key in defaults:
+            self.assertEqual(seen.get(("SAVED", key)), "true", "%s is not saved with the run" % key)
+            self.assertEqual(float(seen[("OLD", key)]), defaults[key], "old save: %s" % key)
+            self.assertEqual(float(seen[("LOADED", key)]), changed[key], "saved run: %s" % key)
 
 
 class CrisisSourceTest(unittest.TestCase):

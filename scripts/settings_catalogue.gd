@@ -782,6 +782,32 @@ const TUNABLES := [
 		"category": "Weather",
 		"tip": "Rain intensity past which a trip costs more than it brings back, so foragers stay at the hive until it eases.",
 	},
+	# FC-2: the Colony Run's first crisis. Saved with the run (Dave, 17 Oct
+	# 2026), with save_migrations.gd's 6->7 step for an older save.
+	{
+		"persist": "run",
+		"key": "first_crisis_window_open", "label": "Crisis window opens s", "step": 30.0, "min": 0.0,
+		"category": "Weather",
+		"tip": "Seconds of play before the Colony Run's first heavy-rain crisis can be announced. A colony ready by then is warned straight away.",
+	},
+	{
+		"persist": "run",
+		"key": "first_crisis_window_close", "label": "Crisis window closes s", "step": 30.0, "min": 60.0,
+		"category": "Weather",
+		"tip": "Seconds of play by which the first crisis's rain has started, ready or not. A colony not ready a warning lead before this is warned then.",
+	},
+	{
+		"persist": "run",
+		"key": "first_crisis_warning_lead", "label": "Crisis warning lead s", "step": 10.0, "min": 10.0,
+		"category": "Weather",
+		"tip": "How long the first crisis's warning comes before its rain: time to put a worker on foraging and get a trip home.",
+	},
+	{
+		"persist": "run",
+		"key": "first_crisis_check_seconds", "label": "Crisis readiness check s", "step": 0.5, "min": 0.5,
+		"category": "Weather",
+		"tip": "How often, inside the window, the game checks whether the colony is ready for the first crisis.",
+	},
 
 	# --- Seasons & health ---
 	{
