@@ -37,6 +37,7 @@ is `plans/reference/review-runner.md`.
 | `product-review.md` | Product direction, pacing and balance | high |
 | `plan-review.md` | Plan and queue | high |
 | `architecture-review.md` | Architecture patterns | high |
+| `data-catalogue-review.md` | Data catalogues, configuration and magic numbers | high |
 | `gameplay-review.md` | Gameplay systems consistency | high |
 | `performance-review.md` | Runtime performance and update policy | high |
 | `save-review.md` | Save, restore and migration | high |
