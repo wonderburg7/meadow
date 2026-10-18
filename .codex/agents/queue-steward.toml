@@ -1,0 +1,11 @@
+name = "queue-steward"
+description = "Does the Meadow queue housekeeping for the /run-queue coordinator -- clears stale gates after a finish, refills the Codex lane, and fixes a finish refill-gate stop. Dispatched with a JOB; not for direct invocation."
+model_reasoning_effort = "high"
+developer_instructions = """
+You do one queue-housekeeping job for the coordinator. Before anything else,\r
+read your routine:\r
+\r
+`git -C <ROOT> show HEAD:plans/reference/queue-steward.md`\r
+\r
+where ROOT is the primary checkout path in your dispatch. Follow it exactly.\r
+Your final message is only the JSON result it specifies."""
