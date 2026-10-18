@@ -227,3 +227,19 @@ Behaviour guard: `bs3_nurse_gate_test.json`, `c6_nurse_feed_test.json` and
 `bs4_honey_gate_test.json` fails identically before and after (its last
 `buy_skill` for `skill.colony.comb_worker` is rejected `block.already_owned`)
 so the edit did not change it.
+
+## HP-3 measurement
+
+`test_scenarios/hp2_idle_nurses_perf.json` with `bee_label_text` added to its
+sections (a nested span around `_update_label()` in `bee.gd::_process`),
+`--fixed-fps 60`, headless, same machine, from the HP-3 worktree. The first
+run (after the edit re-imported the cache) is discarded; mean / p95 in ms.
+
+| Row | run 2 | run 3 |
+| --- | --- | --- |
+| `bee_label` | 8.21 / 11.76 | 8.84 / 11.41 |
+| `bee_label_text` | 2.26 / 3.31 | 2.43 / 3.21 |
+
+`bee_label_text` is 27.5% and 27.4% of `bee_label`, under the half the plan
+requires. Measured, not worth changing: `_update_label` stays per-frame and
+the span stays in `bee.gd` as a permanent measurement point.

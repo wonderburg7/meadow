@@ -1560,7 +1560,9 @@ func _process(delta: float) -> void:
 		Perf.end("recruitment_dance")
 
 	Perf.begin("bee_label")
+	Perf.begin("bee_label_text")
 	_update_label()
+	Perf.end("bee_label_text")
 	_update_alarm_ring()
 	_update_heading_marker()
 	_update_search_ring()

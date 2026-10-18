@@ -1,7 +1,7 @@
 # Hot-path cadence -- judgements on the think tick, as bee.gd already says they run
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HP-3 -- the bee label refreshes on the think tick, if it measures worth it | Dependency: HP-1 and HP-2 landed 18 Oct; HP-3 startable; HP-1 re-runs FR-1's table if FR-1 has landed (`plans/now/forager-recruitment.md`) | Verified: 2026-10-16
+Status: active | Owner: Dave / Claude Code | Next: None -- plan complete (HP-3 measured `bee_label_text` at 27% of `bee_label`, under the half bar, so no change; follow-up CQ-R4 is already filed in `plans/now/code-health.md`) | Dependency: HP-1, HP-2 and HP-3 landed 18 Oct | Verified: 2026-10-18
 
 ## Objective
 
