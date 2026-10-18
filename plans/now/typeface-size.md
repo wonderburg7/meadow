@@ -31,7 +31,7 @@ Verified 14 Oct 2026 against master `3e37ea6`.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| TS-2 | the same for `hud.gd`'s own size overrides | `scripts/hud.gd`, tests | no -- after TS-1, and after FC-2 releases `hud.gd` (GP-4 released it 15 Oct 2026) | low |
+| TS-2 | the same for `hud.gd`'s own size overrides | `scripts/hud.gd`, tests | yes (TS-1 landed 18 Oct 2026; FC-2 released `hud.gd` 17 Oct 2026) | low |
 
 TS-1 -> TS-2. TS-1 runs after RR-7's fix (`plans/now/run-repairs.md`), which owns the menu hexagon fit TS-1's `base` feeds, and keeps `tests.test_rr7_silkscreen_fit` green, so its block is gated until that fix lands. A slice reads its own section only.
 
@@ -39,8 +39,8 @@ TS-1 shipped 2026-10-18; its specification is `plans/archive/TS-1_2026-10-18.md`
 
 ## TS-2 -- the HUD's own size overrides
 
-Level: low. **Gate:** TS-1 landed, and `scripts/hud.gd` released by FC-2
-(Claude lane; GP-4 released it 15 Oct 2026).
+Level: low. **Gate** (cleared): TS-1 landed 18 Oct 2026, and FC-2 released
+`scripts/hud.gd` on 17 Oct 2026.
 
 **True afterwards.** Each `base * Session.text_scale` font size in
 `hud.gd` (the completed goal line, the goal lines, the corner readouts)

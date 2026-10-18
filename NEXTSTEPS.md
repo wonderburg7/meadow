@@ -30,6 +30,34 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/bee.gd :: bee_label_text`
    - Next after: none -- hot-path-cadence is complete
 
+2. **[Claude] L-28 -- archiving a slice leaves another slice's queue block in the plan**
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-28 -- archiving a slice leaves another slice's queue block in the plan"
+   - Files: `tools/archive_slice.py`, `tests/test_slice_lifecycle.py`
+   - Check: `python -m unittest tests.test_slice_lifecycle` passes, including the case where a section ends with the next slice's queue-gated block; `.\tools\verify.ps1` is green
+   - Proof: `absent: tools/archive_slice.py :: def _foreign_queue_blocks`
+   - Next after: L-30 -- released work is visible to the sessions that release it
+
+3. **[Claude] L-30 -- released work is visible to the sessions that release it**
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-30 -- released work is visible to the sessions that release it"
+   - Files: `tools/verify.ps1`, `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py`
+   - Check: `python -m unittest tests.test_wc1_stale_deferrals` passes, including the four blocked-check cases; `python tools/check_docs.py` warns for each blocked check whose unblockers have all shipped; `.\tools\verify.ps1 -Quiet` prints the doc-check WARNING lines after `doc checks: OK`; `.\tools\verify.ps1` is green
+   - Proof: `absent: tools/check_docs.py :: def check_released_blocked_checks`
+   - Next after: None -- L-30 is the last slice specified; the session_cost.py undercount follow-up (see Status) is still to specify
+
+4. **[Claude] T2-12 -- Dig on its own is offered only once Automation is owned**
+   - Plan: `plans/now/tier-two.md` -- "T2-12 -- Dig on its own is offered only once Automation is owned"
+   - Files: `scripts/hud.gd`, `tests/t2_12_automine_offer_test.gd`, `tests/test_t2_12_automine_offer.py`
+   - Check: `python -m unittest tests.test_t2_12_automine_offer` passes: without Automation a selected miner's Job panel shows no "Dig on its own" toggle and a cell's raise menu offers no "Miner — Dig on its own"; with Automation owned both are offered.
+   - Proof: `present: scripts/hud.gd :: the Miner's "Dig on its own" has shown regardless`
+   - Next after: T2-7b -- the tier-2 price sweep T2-7 deferred
+
+5. **[Claude] T2-13 -- a bee whose role changes while it carries a body puts the body down**
+   - Plan: `plans/now/tier-two.md` -- "T2-13 -- a bee whose role changes while it carries a body puts the body down"
+   - Files: `scripts/bee.gd`, `tests/t2_13_carried_body_test.gd`, `tests/test_t2_13_carried_body.py`
+   - Check: `python -m unittest tests.test_t2_13_carried_body` passes: a comb worker inside the hive that has lifted a body, made a Forager, has `carrying_corpse` and `corpse_is_bee` false, `hive.bodies` is one longer, and once given 30 nectar its `carrying_text()` names the nectar, not a dead bee; a comb worker carrying a dead larva, made a Forager, has `carrying_corpse` false and `hive.bodies` unchanged; `python -m unittest tests.test_t2_4b_bodies` still passes.
+   - Proof: `absent: scripts/bee.gd :: func _put_down_body(`
+   - Next after: T2-7b -- the tier-2 price sweep T2-7 deferred
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -55,28 +83,23 @@ One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
 - **RR-12** (`plans/now/run-repairs.md`) -- a loaded run keeps its readout history (Dave, 16 Oct 2026); waits for ED-3, the last of the alpha chain, which shares `scripts/main.gd` and the save files.
-- **SP-8a** (`plans/now/meadow-terrain.md`) -- the meadow floor drawn in blocks, with everything on it lifted (Dave, 12 Oct 2026); waits for ED-3, the last of the alpha chain behind FC-2 (WP-2 to ED-3), which shares `scripts/main.gd` and the save files (Dave, 16 Oct 2026).
+- **SP-8a** (`plans/now/meadow-terrain.md`) -- the meadow floor drawn in blocks, with everything on it lifted (Dave, 12 Oct 2026); waits for ED-3, the last of the alpha chain (WP-2 to ED-3), which shares `scripts/main.gd` and the save files (Dave, 16 Oct 2026).
 - **SP-6** (`plans/now/sprites.md`) -- meadow foragers drawn from the sheet (eight directions, flapping wings); waits for Dave's forager sheet on a 16x16 `sheet` grid in an `.aseprite` (the 11 Oct repack, committed 13 Oct as `bees/foragers_meadow_view.png`, is not on it yet), and is queued once that is committed (SP-5 landed 12 Oct 2026).
 - **HM-2** (`plans/now/hive-and-menu-art.md`) -- five top-bar buttons drawn from Dave's menu icons; waits for Dave to queue it (his call, 13 Oct 2026); its gated block is written.
 - **HM-1** (`plans/now/hive-and-menu-art.md`) -- your hive and rival hives drawn from Dave's meadow hive art; waits for Dave to fit the large hive's layer 0 on its 54x41 canvas in Aseprite.
 - **T2-7b** (`plans/now/tier-two.md`) -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4, whose arc buys a Honey worker, and is specified when it lands.
-- **WP-2** (`plans/now/work-priorities.md`) -- each bee's backup an ordered list; waits only for FC-2 (Claude lane) to release the save files (WP-1 landed 14 Oct 2026; Dave's order, 13 Oct 2026: tier 3, then short-term goals, then Easy).
 - **WP-3** (`plans/now/work-priorities.md`) -- the ordered list in the selection panel and the colony default; waits for WP-2.
-- **SG-2** (`plans/now/short-term-goals.md`) -- goals offered, paid and saved in runs; waits for WP-3 (Dave's order) and FC-2 releasing the save files (SG-1 landed 14 Oct 2026).
+- **SG-2** (`plans/now/short-term-goals.md`) -- goals offered, paid and saved in runs; waits for WP-3 (Dave's order; FC-2 landed 17 Oct 2026, freeing the save files; SG-1 landed 14 Oct 2026).
 - **SG-3** (`plans/now/short-term-goals.md`) -- the goals shown in the Goals drop-down; waits for SG-2 (GP-2 landed 13 Oct 2026).
-- **ED-1** (`plans/now/difficulty.md`) -- every bee has health; waits for SG-3 (Dave's order) and FC-2 releasing the save files.
+- **ED-1** (`plans/now/difficulty.md`) -- every bee has health; waits for SG-3 (Dave's order; FC-2 landed 17 Oct 2026, freeing the save files).
 - **ED-2** (`plans/now/difficulty.md`) -- a run's difficulty and Easy's rules; waits for ED-1.
 - **ED-3** (`plans/now/difficulty.md`) -- choosing Easy at run start; waits for ED-2.
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces.
 - **PP-6** (`plans/now/pollination.md`) -- the sweep prices the gyne route so Gyne rearing is first affordable in the 11 days after the first winter; waits for FR-2, which puts Auto scouting on the route (Dave, 14 Oct 2026), and AR-5 (`plans/now/alpha-route-evidence.md`), whose reference queen lays early (Dave, 16 Oct 2026).
-- **FR-2** (`plans/now/forager-recruitment.md`) -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight; waits for FR-1's measurement to show Auto scouting forages better (Dave, 14 Oct 2026).
+- **FR-2** (`plans/now/forager-recruitment.md`) -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight; waits for FR-1b (Codex backlog) to tune the stage order FR-1 measured, so Auto scouting forages better (FR-1 landed 17 Oct 2026; Dave, 14 Oct 2026).
 - **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-6, which shares `scripts/skills.gd`.
-- **TS-2** (`plans/now/typeface-size.md`) -- the HUD's own size overrides follow the typeface; waits for TS-1, and for FC-2 (Claude lane) to release `scripts/hud.gd`.
-- **T2-12** (`plans/now/tier-two.md`) -- Dig on its own is offered only once Automation is owned (Dave, 14 Oct 2026); waits for FC-2 (Claude lane) to release `scripts/hud.gd`.
-- **T2-13** (`plans/now/tier-two.md`) -- a bee whose role changes while it carries a body puts the body down; waits for T2-10 to release `scripts/bee.gd`.
-- **RR-11** (`plans/now/run-repairs.md`) -- nectar shows a pre-fermented warning colour before it ferments (Dave, 15 Oct 2026); waits for SP-11 to release `scripts/hive_cell.gd`, then runs after RR-10.
-- **L-28** (`plans/now/agent-lifecycle.md`) -- archiving a slice leaves another slice's queue block in the plan; its block is written and startable, and waits only for a place in the Claude lane, which holds five (17 Oct 2026).
-- **L-30** (`plans/now/agent-lifecycle.md`) -- released work is visible to the sessions that release it; waits for the unmerged branch `claude/terminal-plan-state-field`, which owns `tools/check_docs.py`, to merge (Dave, 16 Oct 2026).
+- **RR-11** (`plans/now/run-repairs.md`) -- nectar shows a pre-fermented warning colour before it ferments (Dave, 15 Oct 2026); waits for RR-10 (Codex lane), whose test it extends (SP-11 landed 15 Oct 2026, releasing `scripts/hive_cell.gd`).
+- **T2-14** (`plans/now/tier-two.md`) -- a comb worker's idle reason asks whether there is room to build, without starting a site (found by T2-11, which landed 17 Oct 2026); waits for RR-10 (Codex lane) to release `scripts/hive.gd`, and runs after T2-13 (both edit `scripts/bee.gd`).
 ## Copy-paste prompts
 
 Claude, implementing: `Implement the next slice.`

@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-28 -- archiving a slice leaves another slice's queue block in the plan | Dependency: L-30 waits for `claude/terminal-plan-state-field` to merge | Verified: 2026-10-17
+Status: active | Owner: Dave / Claude | Next: L-28 -- archiving a slice leaves another slice's queue block in the plan, then L-30 (its gate cleared: `claude/terminal-plan-state-field` merged); after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none | Verified: 2026-10-17
 
 ## Objective
 
@@ -99,7 +99,7 @@ successor's block leaves that block live (before: two lost on 15 Oct).
 - Files: `tools/archive_slice.py`, `tests/test_slice_lifecycle.py`
 - Check: `python -m unittest tests.test_slice_lifecycle` passes, including the case where a section ends with the next slice's queue-gated block; `.\tools\verify.ps1` is green
 - Proof: `absent: tools/archive_slice.py :: def _foreign_queue_blocks`
-- Next after: L-29 -- session_cost.py counts subagent transcripts and scripted edits
+- Next after: L-30 -- released work is visible to the sessions that release it
 ```
 
 L-29 shipped 2026-10-17; its specification is `plans/archive/L-29_2026-10-17.md`.
@@ -150,13 +150,13 @@ exactly the ten checks above (fewer if the check processor has moved some),
 and the next `finish`'s output shows the doc-check warnings; the next check
 pass moves the released checks first.
 
-```queue-gated
+```queue
 **[Claude] L-30 -- released work is visible to the sessions that release it**
 - Plan: `plans/now/agent-lifecycle.md` -- "L-30 -- released work is visible to the sessions that release it"
 - Files: `tools/verify.ps1`, `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py`
 - Check: `python -m unittest tests.test_wc1_stale_deferrals` passes, including the four blocked-check cases; `python tools/check_docs.py` warns for each blocked check whose unblockers have all shipped; `.\tools\verify.ps1 -Quiet` prints the doc-check WARNING lines after `doc checks: OK`; `.\tools\verify.ps1` is green
 - Proof: `absent: tools/check_docs.py :: def check_released_blocked_checks`
-- Next after: None -- plan complete once L-27 to L-29 land
+- Next after: None -- L-30 is the last slice specified; the session_cost.py undercount follow-up (see Status) is still to specify
 ```
 
 ## Standing rules

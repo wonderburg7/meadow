@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-10 from the 15 Oct 2026 gameplay review (fermented nectar buys no skill), in the Codex lane; RR-11 after SP-11 (`plans/now/sprites.md`) releases `scripts/hive_cell.gd` (RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026, RR-8 17 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-17
+Status: active | Owner: Dave / Claude Code | Next: RR-10 from the 15 Oct 2026 gameplay review (fermented nectar buys no skill), in the Codex lane; RR-11 after RR-10, whose test it extends (SP-11 released `scripts/hive_cell.gd` 15 Oct 2026; RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026, RR-8 17 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-17
 
 ## Objective
 
@@ -43,7 +43,7 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-10 | fermented nectar is neither counted nor spent by skill purchases | `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, tests | yes, after RR-9 -- Codex lane | low |
-| RR-11 | nectar shows a pre-fermented colour before it ferments, as a warning | `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | no -- after SP-11 releases `scripts/hive_cell.gd`, and after RR-10 | medium |
+| RR-11 | nectar shows a pre-fermented colour before it ferments, as a warning | `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | no -- after RR-10 (SP-11 released `scripts/hive_cell.gd` 15 Oct 2026) | medium |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
 
 RR-9 and RR-10 are Codex-lane slices (Dave, 15 Oct 2026, plan review D3:
@@ -113,9 +113,9 @@ Level: medium (a new cell state the player reads; colour). Dave's decision
 D2, 15 Oct 2026: "there should also be a "pre-fermented" nectar type, which
 has a slight colour shift between the normal and fermented, and can be used
 as normal (and still used for skills) which acts as a warning mode for
-players". **Gate:** `scripts/hive_cell.gd` is held by SP-11
-(`plans/now/sprites.md`); open this fence when SP-11 has landed, and run it
-after RR-10, whose test it extends.
+players". **Gate:** RR-10 (Codex lane), whose test it extends; open this fence
+when RR-10 has landed (SP-11, `plans/now/sprites.md`, released
+`scripts/hive_cell.gd` on 15 Oct 2026).
 
 **True now.** A nectar cell is fresh (`NECTAR_COLOR`) until
 `is_fermented()`, then `FERMENTED_NECTAR_COLOR` and the `fermented` art
@@ -224,5 +224,5 @@ test shows `day_store_totals` changing a condition's result across a load
 
 ## Not in the queue, and why
 
-- **RR-11** -- the pre-fermented warning colour; waits for SP-11 (`plans/now/sprites.md`) to release `scripts/hive_cell.gd`, then runs after RR-10.
-- **RR-12** -- a loaded run keeps its readout history; waits for ED-3, the last of the alpha chain, because FC-2 to ED-3 share `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.
+- **RR-11** -- the pre-fermented warning colour; waits for RR-10 (Codex lane), whose test it extends (SP-11 released `scripts/hive_cell.gd` 15 Oct 2026).
+- **RR-12** -- a loaded run keeps its readout history; waits for ED-3, the last of the alpha chain, because WP-2 to ED-3 share `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.

@@ -1,7 +1,7 @@
 # Work Priorities -- Hive Mind tier 3: one colony-wide order of fallback jobs
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: WP-2 -- owned, each bee follows an ordered backup list (WP-1 catalogue landed 14 Oct 2026), then WP-3 | Dependency: WP-2 waits only for FC-2 (`plans/archive/crisis-readiness_2026-10-17.md`, Claude lane) to release the save files (WP-1 landed 14 Oct 2026) | Verified: 2026-10-14
+Status: active | Owner: Dave / Claude Code | Next: WP-2 -- owned, each bee follows an ordered backup list (WP-1 catalogue landed 14 Oct 2026), then WP-3 | Dependency: none for WP-2 (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`, released the save files 17 Oct 2026; WP-1 landed 14 Oct 2026); WP-3 after WP-2 | Verified: 2026-10-14
 
 ## Objective
 
@@ -55,7 +55,7 @@ Verified 13 Oct 2026 against master `06bd26c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| WP-2 | Owned, each bee follows an ordered backup list; a saved colony default | `scripts/bee.gd`, `scripts/session.gd`, `scripts/skills.gd`, `scripts/orders_zones.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/wp2_backup_order_test.gd`, `tests/test_wp2_backup_order.py` | no -- once FC-2 (Claude lane) releases the save files (WP-1 landed 14 Oct 2026) | high |
+| WP-2 | Owned, each bee follows an ordered backup list; a saved colony default | `scripts/bee.gd`, `scripts/session.gd`, `scripts/skills.gd`, `scripts/orders_zones.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/wp2_backup_order_test.gd`, `tests/test_wp2_backup_order.py` | yes (FC-2 released the save files 17 Oct 2026; WP-1 landed 14 Oct 2026) | high |
 | WP-3 | The ordered list in the selection panel and the colony default in the Colony window | `scripts/hud.gd`, `scripts/colony_panel.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `test_scenarios/wp3_backup_order_ui.json`, `tests/test_wp3_backup_order_ui.py` | no -- after WP-2 | medium |
 
 WP-1, then WP-2, then WP-3: each needs the one before. Dave's order (13 Oct
@@ -92,7 +92,7 @@ whole selection's order at once. `skills.gd`: status `existing`. Saves carry
 each bee's `backup_order` and the default; a save without them gives each
 bee `[secondary_role]` and the default order.
 
-```queue-gated
+```queue
 **[Claude] WP-2 -- owned, each bee follows an ordered backup list**
 - Plan: `plans/now/work-priorities.md` -- "WP-2 -- owned, each bee follows an ordered backup list"
 - Files: `scripts/bee.gd`, `scripts/session.gd`, `scripts/skills.gd`, `scripts/orders_zones.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/wp2_backup_order_test.gd`, `tests/test_wp2_backup_order.py`
