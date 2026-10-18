@@ -159,7 +159,7 @@ claim while `dry_after`).
   - RR-10 (`plans/now/run-repairs.md`, Codex lane) holds `hive.gd` and
     `skill_tree_panel.gd`: CQ-L1 waits for it.
   - L-30 (`plans/now/agent-lifecycle.md`) holds `tools/verify.ps1`: CQ-L1 runs after it.
-  - HP-3 (`plans/now/hot-path-cadence.md`) changes `bee.gd::_process`: CQ-R4 profiles
+  - HP-3 (`plans/archive/hot-path-cadence_2026-10-18.md`) changes `bee.gd::_process`: CQ-R4 profiles
     after it.
   - T2-12, T2-13 and T2-14 (`plans/now/tier-two.md`) hold `hud.gd` and `bee.gd`, and
     T2-14 fixes `idle_reason`: CQ-R3 waits for T2-14.

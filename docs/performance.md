@@ -97,7 +97,7 @@ first passes 16.7 ms at 500 bees.
 **What the 500-bee frame is made of** (same review, windowed, 228 draw calls): of an 18.0 ms
 frame, bee scripts (`bees`) take 11.9 ms -- `bee_state_nurse` 4.6, `bee_burn` 2.0, `bee_label` 2.0
 -- and flowers 1.8 ms, leaving about 6 ms for drawing and everything else. A sprite or batching
-pass can recover at most that remainder; the script cadence work in `plans/now/hot-path-cadence.md`
+pass can recover at most that remainder; the script cadence work in `plans/archive/hot-path-cadence_2026-10-18.md`
 is the larger lever. An unchanged-colour guard on each bee's `body.color` write measured no gain.
 
 **Repeatability.** Discard a capture whose run printed `godot cache: seeded from the primary`: the

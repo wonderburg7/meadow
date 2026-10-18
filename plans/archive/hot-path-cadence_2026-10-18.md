@@ -1,7 +1,7 @@
 # Hot-path cadence -- judgements on the think tick, as bee.gd already says they run
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: None -- plan complete (HP-3 measured `bee_label_text` at 27% of `bee_label`, under the half bar, so no change; follow-up CQ-R4 is already filed in `plans/now/code-health.md`) | Dependency: HP-1, HP-2 and HP-3 landed 18 Oct | Verified: 2026-10-18
+Status: complete | Owner: Dave / Claude Code | Next: None -- plan complete (HP-3 measured `bee_label_text` at 27% of `bee_label`, under the half bar, so no change; follow-up CQ-R4 is already filed in `plans/now/code-health.md`) | Dependency: HP-1, HP-2 and HP-3 landed 18 Oct | Verified: 2026-10-18
 
 ## Objective
 

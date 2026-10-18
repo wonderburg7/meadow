@@ -170,7 +170,6 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | AR-4 -- alpha-route evidence: a scripted Colony Run records all five gates | `plans/now/alpha-route-evidence.md` |
 | ED-1 to ED-3 -- difficulty: health for every bee, Easy's rules, choosing Easy at run start | `plans/now/difficulty.md` |
 | FR-1 to FR-3 -- forager recruitment: Orientation flight, then Auto scouting, then Auto-recruitment, each measured better than the last | `plans/now/forager-recruitment.md` |
-| HP-1 to HP-3 -- hot-path cadence: forager search, idle work dispatch and the bee label on the think tick | `plans/now/hot-path-cadence.md` |
 | HM-1, HM-2 -- Dave's meadow hives and top-bar menu icons | `plans/now/hive-and-menu-art.md` |
 | SP-8, SP-8a -- the meadow floor in stacked blocks, then height's effects | `plans/now/meadow-terrain.md` |
 | PP-6, PP-8 -- pollination: the C-129 watch run, then pricing the route to Gyne rearing | `plans/now/pollination.md` |

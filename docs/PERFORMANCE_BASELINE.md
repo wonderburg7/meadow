@@ -171,7 +171,7 @@ within 20% (its p95 is higher); "measured, not a bottleneck" still holds
 for fog. The frame is dominated by a section the pinned table does not
 carry: in run 3 `bee_state_forager` was 7.07 ms, of which `bee_search`
 (SEARCHING's per-frame flower check) was 6.42 ms. HP-1
-(`plans/now/hot-path-cadence.md`) moves that check onto the think tick.
+(`plans/archive/hot-path-cadence_2026-10-18.md`) moves that check onto the think tick.
 
 ## HP-1 measurement
 
