@@ -201,3 +201,29 @@ Behaviour guard: `foraging_features_off_seed12345_test.json --seeds
 Identical, as that scenario's foragers do not reach SEARCHING in a way the
 tick gate changes. `python tools/forager_stages.py` gives the same table
 before and after (stage order and ratios 0.97x, 0.82x, 0.69x unchanged).
+
+## HP-2 measurement
+
+`test_scenarios/hp2_idle_nurses_perf.json` (500 nurses, a copy of
+`spr2_render_500.json` with sections `frame_time_ms`, `bees`,
+`bee_state_nurse`, `bee_label`), `--fixed-fps 60`, same machine, headless,
+from the HP-2 worktree. Each side's first run is discarded (the first after
+the edit re-imported the cache); the table shows the two kept runs per side,
+mean / p95 in ms.
+
+| Row | before run 2 | before run 3 | after run 2 | after run 3 |
+| --- | --- | --- | --- | --- |
+| `frame_time_ms` | 107.50 / 117.40 | 98.43 / 106.26 | 76.15 / 83.69 | 76.93 / 84.20 |
+| `bees` | 85.17 / 93.80 | 77.75 / 84.59 | 55.75 / 61.74 | 56.28 / 62.27 |
+| `bee_state_nurse` | 32.76 / 36.55 | 29.53 / 32.40 | 9.72 / 11.03 | 9.68 / 11.16 |
+| `bee_label` | 13.12 / 14.83 | 12.02 / 13.07 | 11.62 / 13.06 | 11.73 / 13.05 |
+
+`bee_state_nurse` mean falls from about 31.1 ms to about 9.7 ms (-69%),
+against a bound of at least 40%. The absolute frame times are large because
+the headless 500-nurse fixture is dense; the ratio is what carries.
+
+Behaviour guard: `bs3_nurse_gate_test.json`, `c6_nurse_feed_test.json` and
+`h3_restock_delivery_test.json` pass after the edit.
+`bs4_honey_gate_test.json` fails identically before and after (its last
+`buy_skill` for `skill.colony.comb_worker` is rejected `block.already_owned`)
+so the edit did not change it.

@@ -1,7 +1,7 @@
 # Hot-path cadence -- judgements on the think tick, as bee.gd already says they run
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick | Dependency: HP-1 → HP-2 → HP-3 in lane order, all startable; HP-1 re-runs FR-1's table if FR-1 has landed (`plans/now/forager-recruitment.md`) | Verified: 2026-10-16
+Status: active | Owner: Dave / Claude Code | Next: HP-3 -- the bee label refreshes on the think tick, if it measures worth it | Dependency: HP-1 and HP-2 landed 18 Oct; HP-3 startable; HP-1 re-runs FR-1's table if FR-1 has landed (`plans/now/forager-recruitment.md`) | Verified: 2026-10-16
 
 ## Objective
 
@@ -37,7 +37,6 @@ Verified 16 Oct 2026 against master `12c1393` by the performance review
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HP-2 | idle nurses, comb workers and honey makers look for work on the think tick | `scripts/bee.gd`, `test_scenarios/hp2_idle_nurses_perf.json`, `docs/PERFORMANCE_BASELINE.md` | yes | medium |
 | HP-3 | the bee label refreshes on the think tick, if it measures worth it | `scripts/bee.gd`, `test_scenarios/hp2_idle_nurses_perf.json`, `docs/PERFORMANCE_BASELINE.md` | yes | low |
 
 HP-1 → HP-2 → HP-3 is lane order, not a code dependency; HP-2 and HP-3
@@ -48,50 +47,7 @@ or anything in `docs/performance.md` "Explicitly do not change".
 
 HP-1 shipped 2026-10-17; its specification is `plans/archive/HP-1_2026-10-17.md`.
 
-## HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick
-
-**True now.** In `bee.gd::_process`'s state `match`, the `NURSE_IDLE`,
-`BUILD_IDLE` and `HONEY_IDLE` arms each call `_idle_dispatch()` every
-frame. `_idle_dispatch`'s doc comment opens "Called every frame a bee is
-sitting in one of the three "waiting for work" states" and lists three
-states where there are four.
-
-**True afterwards.** Each of those three arms calls `_idle_dispatch()`
-only `if thinking:`, the shape `MINE_IDLE` already has with
-`_miner_dispatch_due`. The doc comment says it is called on the think tick
-in `NURSE_IDLE`, `BUILD_IDLE` and `HONEY_IDLE`, and on the miner dispatch
-tick in `MINE_IDLE`. A bee that reaches an idle state notices work within
-one tick (at most about 145 ms with the jitter), the contract miners
-already have (`docs/PERFORMANCE_BASELINE.md`, "Invalidation contracts").
-
-**Invariants.** `MINE_IDLE`, `_idle_dispatch`'s body, `_try_role_work`
-and the think-tick block above the `match` are unchanged. No random call is
-added or removed. Save format unchanged.
-
-**Check, in this order.** (1) Before editing, create
-`test_scenarios/hp2_idle_nurses_perf.json` as a copy of
-`spr2_render_500.json` whose `sections` are `frame_time_ms`, `bees`,
-`bee_state_nurse`, `bee_label`; run it twice with `--report brief`, then
-twice after. `bee_state_nurse` mean must fall by at least 40%; record the
-rows in a new `docs/PERFORMANCE_BASELINE.md` section "HP-2 measurement".
-(2) Each of `bs3_nurse_gate_test.json`, `bs4_honey_gate_test.json`,
-`c6_nurse_feed_test.json` and `h3_restock_delivery_test.json` in
-`test_scenarios/` exits 0 with a pass verdict under
-`python tools/run_scenario.py <file>`. (3) `.\tools\verify.ps1` is green.
-Discard a run whose output says `godot cache: seeded from the primary`.
-
-**Escalate** if any of the four scenarios that passed before the edit fails
-after it, or if a slice has since given `_idle_dispatch` a caller outside
-the four idle arms.
-
-```queue
-**[Claude] HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick**
-- Plan: `plans/now/hot-path-cadence.md` -- "HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick"
-- Files: `scripts/bee.gd`, `test_scenarios/hp2_idle_nurses_perf.json`, `docs/PERFORMANCE_BASELINE.md`, `plans/now/hot-path-cadence.md`
-- Check: `bee_state_nurse` mean in `test_scenarios/hp2_idle_nurses_perf.json` (two runs each side) falls by at least 40% and is recorded in `docs/PERFORMANCE_BASELINE.md`; `bs3_nurse_gate_test.json`, `bs4_honey_gate_test.json`, `c6_nurse_feed_test.json` and `h3_restock_delivery_test.json` each pass under `python tools/run_scenario.py`; `.\tools\verify.ps1` is green
-- Proof: `present: scripts/bee.gd :: ## Called every frame a bee is sitting in one of the three "waiting for`
-- Next after: HP-3 -- the bee label refreshes on the think tick, if it measures worth it
-```
+HP-2 shipped 2026-10-18; its specification is `plans/archive/HP-2_2026-10-18.md`.
 
 ## HP-3 -- the bee label refreshes on the think tick, if it measures worth it
 
