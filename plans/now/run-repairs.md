@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-10 from the 15 Oct 2026 gameplay review (fermented nectar buys no skill), in the Codex lane; RR-11 after RR-10, whose test it extends (SP-11 released `scripts/hive_cell.gd` 15 Oct 2026; RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026, RR-8 17 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-17
+Status: active | Owner: Dave / Claude Code | Next: RR-11 after RR-10 lands, whose test it extends (SP-11 released `scripts/hive_cell.gd` 15 Oct 2026; RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026, RR-8 17 Oct 2026, RR-10 18 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-18
 
 ## Objective
 
