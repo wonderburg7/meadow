@@ -50,7 +50,6 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-30 | Released work is visible: finish shows doc warnings, and a blocked check whose unblockers landed is named | `tools/verify.ps1`, `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py` | medium |
 
 L-16 to L-26 shipped 2 to 13 Oct 2026, each with its record in
 `plans/archive/` named by id and date; WC-1 to WC-5 shipped with
@@ -65,60 +64,7 @@ L-27 shipped 2026-10-17; its specification is `plans/archive/L-27_2026-10-17.md`
 
 L-28 shipped 2026-10-18; its specification is `plans/archive/L-28_2026-10-18.md`.
 
-## L-30 -- released work is visible to the sessions that release it
-
-<!-- LAYER: immediate-task -->
-
-Level: medium. Dave's choice, 16 Oct 2026 (D1 of that day's agent-workflow
-review, option A): surface it, don't automate it. The queue steward's
-`gates` job clears the deferrals and fences (`plans/reference/queue-steward.md`)
-and the check processor moves the checks (`plans/reference/reviews/check-processor.md`);
-this slice gives both something to read.
-
-**Now:** `tools/check_docs.py::check_stale_deferrals` has warned since
-WC-1 (9 Oct) when a `## Not in the queue` line waits for a shipped slice,
-but `finish` runs `tools/verify.ps1 -Quiet`, whose `Invoke-PythonStage`
-prints only `doc checks: OK` on a pass, so no closing session sees it (three
-such warnings, TS-1, T2-13 and RR-11, on 16 Oct). Nothing checks
-`checks/blocked.md`: on 16 Oct ten entries (C-84, C-109 to C-111, C-114 to
-C-118, C-130) waited only on archived slices, eight of them since RR-1
-landed on 13 Oct.
-
-**After:**
-
-- `tools/verify.ps1` `Invoke-PythonStage`: under `-Quiet`, a passing stage
-  also prints each captured line that starts with `WARNING:`, after its
-  `<name>: OK` line. Failing stages unchanged.
-- New `def check_released_blocked_checks(warnings, text=None, root=None)` in
-  `tools/check_docs.py`, called beside `check_stale_deferrals`. For each
-  `### C-<n>` entry in `checks/blocked.md`, take its `Blocked by:` line up to
-  the first ` -- `. Collect the slice ids in it (`check_stale_deferrals`'
-  id pattern). Warn only when there is at least one id, every id has a
-  `plans/archive/<id>_*.md`, and nothing else is left once the ids,
-  backticked spans, parentheses, commas, full stops and the word "and" are
-  removed (so "RR-7 and the fix it specifies" never warns). Text:
-  `checks/blocked.md: C-<n> waits only for shipped slices <ids> -- move it to checks/ready/ (the check processor's first step)`.
-
-**Must not change:** every existing warning and error; `-Quiet`'s single
-line for a passing stage with no warnings; the blocked file's format.
-
-**Tests** in `tests/test_wc1_stale_deferrals.py`: an entry blocked by one
-archived id warns; one also naming an unarchived id does not; one whose lead
-has prose besides the ids does not; an entry with no ids does not.
-
-**Acceptance:** on master as of 16 Oct, `python tools/check_docs.py` names
-exactly the ten checks above (fewer if the check processor has moved some),
-and the next `finish`'s output shows the doc-check warnings; the next check
-pass moves the released checks first.
-
-```queue
-**[Claude] L-30 -- released work is visible to the sessions that release it**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-30 -- released work is visible to the sessions that release it"
-- Files: `tools/verify.ps1`, `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py`
-- Check: `python -m unittest tests.test_wc1_stale_deferrals` passes, including the four blocked-check cases; `python tools/check_docs.py` warns for each blocked check whose unblockers have all shipped; `.\tools\verify.ps1 -Quiet` prints the doc-check WARNING lines after `doc checks: OK`; `.\tools\verify.ps1` is green
-- Proof: `absent: tools/check_docs.py :: def check_released_blocked_checks`
-- Next after: None -- L-30 is the last slice specified; the session_cost.py undercount follow-up (see Status) is still to specify
-```
+L-30 shipped 2026-10-18; its specification is `plans/archive/L-30_2026-10-18.md`.
 
 ## Standing rules
 
