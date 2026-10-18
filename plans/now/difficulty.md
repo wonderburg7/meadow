@@ -84,6 +84,8 @@ nothing else Standard does may change. Challenges stay Standard.
 `.claude/rules/performance.md` (health is per bee, per frame), ED-3
 `plans/reference/ui-rules.md`.
 
+**Code health (`plans/now/code-health.md`, 18 Oct 2026).** Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (ED-1, ED-2; the gate is ED-3, the end of the chain); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
+
 ## ED-1 -- every bee has health
 
 <!-- LAYER: immediate-task -->

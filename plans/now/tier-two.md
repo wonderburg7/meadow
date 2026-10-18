@@ -61,6 +61,8 @@ T2-10 shipped 2026-10-16; its specification is `plans/archive/T2-10_2026-10-16.m
 
 T2-11 shipped 2026-10-17; its specification is `plans/archive/T2-11_2026-10-17.md`.
 
+**Code health (`plans/now/code-health.md`, 18 Oct 2026).** CQ-R3 moves `bee.gd`'s display text (`idle_reason`, `_task_line`) to scripts/bee_readout.gd and waits for T2-14, which removes `idle_reason`'s comb-site side effect; T2-12 and T2-13 share `hud.gd`/`bee.gd` with code-health slices in the same lane, one after the other.
+
 ## T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site
 
 Level: low (one query split out of one function, two files). Found by

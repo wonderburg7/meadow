@@ -93,6 +93,8 @@ Challenge goal shelf's behaviour.
 **Reads.** A slice reads its own section only; SG-2 also reads
 `.claude/rules/saving.md`, SG-3 `plans/reference/ui-rules.md`.
 
+**Code health (`plans/now/code-health.md`, 18 Oct 2026).** Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (SG-2); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
+
 ## Not in the queue, and why
 
 SG-2 is gated until WP-3 lands in Dave's order (FC-2 released the save

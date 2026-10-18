@@ -62,6 +62,8 @@ RR-8 shipped 2026-10-17; its specification is `plans/archive/RR-8_2026-10-17.md`
 
 RR-9 shipped 2026-10-17; its specification is `plans/archive/RR-9_2026-10-17.md`.
 
+**Code health (`plans/now/code-health.md`, 18 Oct 2026).** CQ-L1 (gdlint fixes in `hive.gd` and `skill_tree_panel.gd`) waits for RR-10 to release them. Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (RR-12); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
+
 ## RR-10 -- fermented nectar is neither counted nor spent by skill purchases
 
 Level: low (two guards). Gameplay review 15 Oct 2026, finding F2; Dave's

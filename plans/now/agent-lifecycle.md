@@ -62,6 +62,8 @@ before-figure from that review and one real canary closeout.
 
 L-27 shipped 2026-10-17; its specification is `plans/archive/L-27_2026-10-17.md`.
 
+**Code health (`plans/now/code-health.md`, 18 Oct 2026).** CQ-L1 adds a `gdscript style` stage to `tools/verify.ps1` straight after `godot boot`; it runs after L-30, which also edits `verify.ps1`.
+
 ## L-28 -- archiving a slice leaves another slice's queue block in the plan
 
 <!-- LAYER: immediate-task -->

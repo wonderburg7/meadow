@@ -74,6 +74,8 @@ then, its sweep prices Work Priorities too.
 
 WP-1 shipped 2026-10-14; its specification is `plans/archive/WP-1_2026-10-14.md`.
 
+**Code health (`plans/now/code-health.md`, 18 Oct 2026).** Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (WP-2); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
+
 ## WP-2 -- owned, each bee follows an ordered backup list
 
 <!-- LAYER: immediate-task -->

@@ -49,6 +49,8 @@ HP-1 shipped 2026-10-17; its specification is `plans/archive/HP-1_2026-10-17.md`
 
 HP-2 shipped 2026-10-18; its specification is `plans/archive/HP-2_2026-10-18.md`.
 
+**Code health (`plans/now/code-health.md`, 18 Oct 2026).** CQ-R4 splits `bee.gd::_process` into helpers and profiles it with `test_scenarios/hp2_idle_nurses_perf.json`; it runs after HP-3, so its before-profile includes HP-3's cadence.
+
 ## HP-3 -- the bee label refreshes on the think tick, if it measures worth it
 
 **True now.** `bee.gd::_process` calls `_update_label()` every frame under

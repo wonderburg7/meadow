@@ -32,6 +32,8 @@ merges master first.
 **Reads.** SP-8a reads the SP-8 decisions and its own section below, and
 `.claude/rules/performance.md` and `.claude/rules/saving.md`.
 
+**Code health (`plans/now/code-health.md`, 18 Oct 2026).** Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (SP-8a); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
+
 ## SP-8 -- the meadow floor from stacked blocks (not yet cut)
 
 Dave drew full and half-height grass blocks and soil blocks (10-11 Oct
