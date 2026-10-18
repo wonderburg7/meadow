@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/TS-1` (`claude/TS-1`) | Claude | every typeface is the same width as Standard at the same text scale | Claude | in progress | none | `plans/now/typeface-size.md` TS-1 -- width-matched typeface sizes |
