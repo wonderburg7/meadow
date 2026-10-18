@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/HP-2` (`claude/HP-2`) | Claude | idle nurses, comb workers and honey makers look for work on the think tick | Claude | in progress | none | `plans/now/hot-path-cadence.md` HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick |
