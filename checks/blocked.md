@@ -199,20 +199,6 @@ Owner: `plans/now/tier-two.md`
 
 Blocked by: T2-12 (`plans/now/tier-two.md`), which waits for `scripts/hud.gd`.
 
-### C-137 -- OpenDyslexic text is no wider than Standard at the same text scale
-
-What this checks: on the main menu, open the cog > Appearance. With Text scale at 1, switch Typeface between Standard and OpenDyslexic and compare the settings panel's text; repeat at Text scale 2.
-
-PASS: at each scale, OpenDyslexic's lines take about the same width as Standard's, not visibly more.
-
-If it fails, TS-1 reopens: `UiTheme.typeface_size_factor` in `scripts/ui_theme.gd`.
-
-Runner: sonnet -- a settings change and a width comparison between two still screenshots
-
-Owner: `plans/now/typeface-size.md`
-
-Blocked by: TS-1 (`plans/now/typeface-size.md`).
-
 ### C-130 -- Hive soil blocks show Dave's art and crumble as they are dug
 
 What this checks: Start a game with Cell art on (Settings), open the hive view and zoom in on the soil wall. Mark one soil block for digging and watch it while a bee mines it.

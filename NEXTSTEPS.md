@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] TS-1 -- every typeface is the same width as Standard at the same text scale**
-   - Plan: `plans/now/typeface-size.md` -- "TS-1 -- width-matched typeface sizes"
-   - Files: `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/gallerin_panel.gd`, `scripts/hive_cell.gd`, `tests/ts1_typeface_size_test.gd`, `tests/test_ts1_typeface_size.py`
-   - Check: `python -m unittest tests.test_ts1_typeface_size` passes: at text scale 1 and 2, for every typeface in the Typeface setting, `REFERENCE_TEXT` drawn at `UiTheme.font_px(TYPE_SIZES["Body"])` in that face is within 8 % of its width in Standard; `python -m unittest tests.test_ho15_menu_hex_fit tests.test_rr5_hex_refit` still pass.
-   - Proof: `absent: scripts/ui_theme.gd :: typeface_size_factor`
-   - Next after: TS-2 -- the HUD's own size overrides follow the typeface too
-
-2. **[Claude] HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick**
+1. **[Claude] HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick**
    - Plan: `plans/now/hot-path-cadence.md` -- "HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick"
    - Files: `scripts/bee.gd`, `test_scenarios/hp2_idle_nurses_perf.json`, `docs/PERFORMANCE_BASELINE.md`, `plans/now/hot-path-cadence.md`
    - Check: `bee_state_nurse` mean in `test_scenarios/hp2_idle_nurses_perf.json` (two runs each side) falls by at least 40% and is recorded in `docs/PERFORMANCE_BASELINE.md`; `bs3_nurse_gate_test.json`, `bs4_honey_gate_test.json`, `c6_nurse_feed_test.json` and `h3_restock_delivery_test.json` each pass under `python tools/run_scenario.py`; `.\tools\verify.ps1` is green
    - Proof: `present: scripts/bee.gd :: ## Called every frame a bee is sitting in one of the three "waiting for`
    - Next after: HP-3 -- the bee label refreshes on the think tick, if it measures worth it
 
-3. **[Claude] HP-3 -- the bee label refreshes on the think tick, if it measures worth it**
+2. **[Claude] HP-3 -- the bee label refreshes on the think tick, if it measures worth it**
    - Plan: `plans/now/hot-path-cadence.md` -- "HP-3 -- the bee label refreshes on the think tick, if it measures worth it"
    - Files: `scripts/bee.gd`, `test_scenarios/hp2_idle_nurses_perf.json`, `docs/PERFORMANCE_BASELINE.md`, `plans/now/hot-path-cadence.md`
    - Check: `bee_label_text` is measured in `test_scenarios/hp2_idle_nurses_perf.json` and recorded in `docs/PERFORMANCE_BASELINE.md`; if it is at least half of `bee_label`, `_update_label` runs only on the think tick and `bee_label` mean falls by at least a third; `.\tools\verify.ps1` is green
