@@ -20,3 +20,6 @@ build/
 
 # Each headless scenario run's private user:// (run_scenario.private_user_env).
 .headless_user/
+
+# GDScript Linter addon output (addons/gdscript-linter), regenerated on demand.
+code_quality_report.html

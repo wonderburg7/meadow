@@ -29,7 +29,7 @@ _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/copy_all_errors/plugin.cfg", "res://addons/godot_ai/plugin.cfg")
+enabled=PackedStringArray("res://addons/copy_all_errors/plugin.cfg", "res://addons/gdscript-linter/plugin.cfg", "res://addons/godot_ai/plugin.cfg")
 
 [rendering]
 
