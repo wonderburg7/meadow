@@ -22,7 +22,7 @@ still routing flower season to a plan that had been archived. These own it
 instead:
 
 - `NEXTSTEPS.md` — what is startable right now, in two lanes.
-- `DESIGN_BACKLOG.md` — every design area and the plan that owns it.
+- `DESIGN_BACKLOG.md` — deferred product decisions and areas whose plan is complete.
 - `plans/README.md` — which plan a queue id belongs to.
 
 ## Later, requiring a new design or evidence pass
@@ -30,7 +30,7 @@ instead:
 Nothing below has an owning plan. Each needs a design or evidence pass before
 it can become one.
 
-- winter, sprites, Challenge-aware save/load and the wider ecology systems:
+- Challenge-aware save/load and the wider ecology systems:
   `DESIGN_BACKLOG.md`'s "Deferred product decisions" holds the decision on each.
 
 Colonies have one hive site. A future swarming behaviour may instead establish

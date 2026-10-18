@@ -9,31 +9,7 @@ Built behaviour belongs in code, current plans and `docs/history.md`; the
 
 ## Current design areas
 
-Area to owning plan, and nothing else. **This table does not say what state an
-area is in** -- that is the owning plan's `Status:` line. Eleven rows here
-carried a state column until 11 Sep 2026 and five of them were wrong, two
-contradicting `plans/README.md`'s routing table outright. One authoritative
-home per fact: read the plan.
-
-| Area | Owning plan |
-| --- | --- |
-| Progression, colony adaptations and skills | `plans/design/progression.md` |
-| Catalogues, shared interfaces and update policy | `plans/archive/architecture-review_2026-09-24.md` |
-| Product scope, alpha gates and development sequence | `plans/design/product-scope.md` |
-| UI and accessibility | `plans/archive/ui_2026-09-20.md` |
-| The check/slice loop itself | `plans/reference/check-loop.md` |
-| Derived colony-state facts | `plans/reference/colony-diagnostics.md` |
-| Measured hot-path and restore contracts | `plans/reference/technical-audit.md` |
-| Challenge 1 follow-ups from hands-on passes | `plans/archive/c1-followups_2026-09-28.md` |
-| Comb builder placement and the per-site cap | `plans/archive/comb-builders_2026-09-20.md` |
-| How the flowering year feels at the start of a run | `plans/archive/season-feel_2026-09-30.md` |
-| The headless smoke scenario | `plans/archive/SMOKE_SCENARIO_2026-09-19.md` |
-| Agent lifecycle and closeout | `plans/now/agent-lifecycle.md` |
-| Alpha-route evidence and pacing gates | `plans/now/alpha-route-evidence.md` |
-| Nectar fermentation and stocking | plans/archive/nectar-fermentation_2026-10-10.md |
-| Render cost by colony size (sprites) | plans/archive/render-scale_2026-10-07.md |
-| When winter comes in a run | `plans/archive/winter-onset_2026-10-01.md` |
-
+Area to owning plan lives in one place: `plans/README.md`, "Current routing". This table duplicated it until 16 Oct 2026, by when it was missing thirteen live plans and listed nine archived ones as current (product review).
 ## Areas whose plan is complete
 
 The plan is archived and is never reopened. A new finding in one of these areas
