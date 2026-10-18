@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/HP-3` (`claude/HP-3`) | Claude | the bee label refreshes on the think tick, if it measures worth it | Claude | in progress | none | `plans/now/hot-path-cadence.md` HP-3 -- the bee label refreshes on the think tick, if it measures worth it |
