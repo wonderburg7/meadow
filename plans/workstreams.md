@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/L-28` (`claude/L-28`) | Claude | archiving a slice leaves another slice's queue block in the plan | Claude | in progress | none | `plans/now/agent-lifecycle.md` L-28 -- archiving a slice leaves another slice's queue block in the plan |
+| `.worktrees/RR-10` (`codex/RR-10`) | Codex | fermented nectar is neither counted nor spent by skill purchases | Codex | in progress | none | `plans/now/run-repairs.md` RR-10 -- fermented nectar is neither counted nor spent by skill purchases |
