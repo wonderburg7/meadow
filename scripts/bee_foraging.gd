@@ -180,8 +180,8 @@ static func _start_searching(bee: Node2D) -> void:
 ## SEARCHING's per-frame step. Walks the expanding spiral via the normal
 ## steering (obstacle avoidance and indoor/outdoor handling come free),
 ## re-checking for a flower in perception range from wherever she's
-## actually got to each frame -- a bee flying past one shouldn't have to
-## reach the next waypoint before noticing it. Once the spiral's radius
+## actually got to on each think tick (bee.gd::THINKS_PER_SECOND, 8 a
+## second) -- a bee flying past one shouldn't have to reach the next waypoint before noticing it. Once the spiral's radius
 ## outgrows forage_search_radius, give the search up and fall back to the
 ## old relaxed full-meadow scan once; if that's also empty, go home,
 ## matching seek_flower's pre-Slice-5 genuinely-empty behaviour exactly.
@@ -192,10 +192,11 @@ static func search_for_flower(bee: Node2D, delta: float) -> void:
 		bee.state = autonomous_state(bee, State.TO_HIVE)
 		return
 
-	var best := _perceive_flower(bee)
-	if best != null:
-		_commit_to_flower(bee, best)
-		return
+	if bee.thinking:
+		var best := _perceive_flower(bee)
+		if best != null:
+			_commit_to_flower(bee, best)
+			return
 
 	var turns: float = bee.search_angle / TAU
 	var radius: float = GameConfig.forage_perception_radius * (1.0 + turns * GameConfig.forage_search_spiral_step)
@@ -215,7 +216,7 @@ static func search_for_flower(bee: Node2D, delta: float) -> void:
 		# whole-meadow scan, so it heads home rather than seeing everything.
 		var tipsy: bool = bee.tipsy_time_left > 0.0
 		var last_look: float = GameConfig.forage_search_radius * (GameConfig.tipsy_vision_factor if tipsy else 1.0)
-		best = nearest_flower(bee, false, last_look, not tipsy)
+		var best := nearest_flower(bee, false, last_look, not tipsy)
 		if best != null:
 			_commit_to_flower(bee, best)
 		else:

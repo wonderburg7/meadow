@@ -1457,7 +1457,8 @@ func _process(delta: float) -> void:
 
 		# --- nursery ---
 		State.NURSE_IDLE:
-			_idle_dispatch()
+			if thinking:
+				_idle_dispatch()
 		State.TO_BROOD:
 			BeeNursery.nurse_go_to_brood(self, delta)
 		State.TENDING:
@@ -1479,7 +1480,8 @@ func _process(delta: float) -> void:
 
 		# --- builder ---
 		State.BUILD_IDLE:
-			_idle_dispatch()
+			if thinking:
+				_idle_dispatch()
 		State.TO_BUILD_SITE:
 			BeeBuilding.builder_go_to_site(self, delta)
 		State.BUILDING:
@@ -1516,7 +1518,8 @@ func _process(delta: float) -> void:
 
 		# --- honey maker ---
 		State.HONEY_IDLE:
-			_idle_dispatch()
+			if thinking:
+				_idle_dispatch()
 		State.TO_NECTAR_CELL:
 			BeeHoney.honey_go_to_nectar(self, delta)
 		State.CHEWING:
@@ -1692,9 +1695,9 @@ func saved_position() -> Vector2:
 ## Moved to bee_nursery.gd -- see BEE_SPLIT_PLAN.md.
 # --- idle work dispatch --------------------------------------------
 
-## Called every frame a bee is sitting in one of the three "waiting for
-## work" states (NURSE_IDLE, BUILD_IDLE, MINE_IDLE -- interchangeable
-## now, since this is the only thing any of them do). Tries the bee's
+## Called on the think tick in NURSE_IDLE, BUILD_IDLE and HONEY_IDLE, and on
+## the miner dispatch tick in MINE_IDLE (the four "waiting for work" states,
+## interchangeable now, since this is the only thing any of them do). Tries the bee's
 ## real role first; only if that genuinely has nothing on offer does it
 ## try the secondary role instead. Because the fallback states above all
 ## route failures back to one of these same three idle states, a bee

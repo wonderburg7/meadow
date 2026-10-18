@@ -1049,6 +1049,94 @@ class SliceDoctorTest(unittest.TestCase):
                            capture_output=True, text=True, check=True).stdout.strip(),
         )
 
+    def verify_runs_after_branch_gains(self, change, drop_head=False):
+        """Stop a finish at `branch-committed` (its injection fires before that phase is
+        recorded, so the journal still says `verified`; the `verified` injection fires before it is written), then change the branch and
+        rerun `finish`. Returns how many times verify.ps1 ran in all (L-27:
+        a journal at `verified` vouches only for the commit it was written on,
+        or for Markdown-only changes since)."""
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        mark = self.root.parent / "verify-runs-{}.txt".format(self.root.name)
+        mark.write_text("", encoding="utf-8")
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [string]$Scope, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath; exit 0 }\n"
+            "if ($Scope -eq 'branch') { Add-Content -LiteralPath $env:MEADOW_TEST_VERIFY_MARK -Value 'ran' }\nexit 0\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "use counting verifier"], cwd=self.root, check=True)
+        started = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, started.returncode, started.stderr)
+        worktree = self.root / ".worktrees" / "T-1"
+        (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
+        self.write_refill(worktree)
+
+        def finish(extra_env):
+            return subprocess.run(
+                [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
+                    str(worktree).replace("'", "''"), str(worktree / "tools" / "slice.ps1").replace("'", "''"),
+                )],
+                cwd=self.root, capture_output=True, text=True,
+                env={**os.environ, "MEADOW_TEST_VERIFY_MARK": str(mark), **extra_env},
+            )
+
+        failed = finish({"MEADOW_SLICE_FAIL_AFTER": "branch-committed"})
+        self.assertNotEqual(0, failed.returncode)
+        self.assertEqual(1, len(mark.read_text(encoding="utf-8").split()))
+        common_dir = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"], cwd=self.root,
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        journal_path = (self.root / common_dir).resolve() / "meadow-slice-closeout.json"
+        journal = json.loads(journal_path.read_text(encoding="utf-8"))
+        self.assertEqual("verified", journal["phase"])
+        if drop_head:
+            del journal["head"]
+            journal_path.write_text(json.dumps(journal), encoding="utf-8")
+            # The pass record for this exact commit would still vouch for it
+            # (the fall-through the plan keeps); remove it so the journal is the
+            # only witness, as for a journal from before heads were recorded.
+            record = Path(subprocess.run(
+                ["git", "rev-parse", "--absolute-git-dir"], cwd=worktree,
+                capture_output=True, text=True, check=True,
+            ).stdout.strip()) / "meadow-slice-verified.json"
+            self.assertTrue(record.exists())
+            record.unlink()
+        else:
+            self.assertEqual(
+                subprocess.run(["git", "rev-parse", "HEAD"], cwd=worktree, capture_output=True,
+                               text=True, check=True).stdout.strip(),
+                journal["head"],
+            )
+        change(worktree)
+        if not drop_head:
+            subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
+            subprocess.run(["git", "commit", "-q", "-m", "a fix on the branch"], cwd=worktree, check=True)
+        resumed = finish({})
+        self.assertEqual(0, resumed.returncode, resumed.stdout + resumed.stderr)
+        return len(mark.read_text(encoding="utf-8").split()), resumed.stdout
+
+    def test_finish_reverifies_after_a_code_commit_on_a_resumed_branch(self):
+        runs, _ = self.verify_runs_after_branch_gains(
+            lambda wt: (wt / "scripts" / "other.gd").write_text("var x = 1\n", encoding="utf-8")
+        )
+        self.assertEqual(2, runs)
+
+    def test_finish_skips_verify_after_a_markdown_only_commit_on_a_resumed_branch(self):
+        runs, out = self.verify_runs_after_branch_gains(
+            lambda wt: (wt / "notes.md").write_text("A note.\n", encoding="utf-8")
+        )
+        self.assertEqual(1, runs)
+        self.assertIn("already passed this closeout; skipping", out)
+
+    def test_finish_reverifies_when_the_journal_has_no_head(self):
+        runs, _ = self.verify_runs_after_branch_gains(lambda wt: None, drop_head=True)
+        self.assertEqual(2, runs)
+
     def test_resume_completes_after_started(self):
         self.resume_after_failure_at("started")
 
@@ -1096,7 +1184,7 @@ class SliceDoctorTest(unittest.TestCase):
         """
         self.write_queue("`absent: scripts/sample.gd :: new_function`")
         (self.root / "tools" / "verify.ps1").write_text(
-            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "param([string]$PythonPath, [string]$Scope, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
             "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
             encoding="utf-8",
         )
@@ -1160,7 +1248,7 @@ class SliceDoctorTest(unittest.TestCase):
             encoding="utf-8",
         )
         (self.root / "tools" / "verify.ps1").write_text(
-            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "param([string]$PythonPath, [string]$Scope, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
             "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
             encoding="utf-8",
         )
@@ -1236,7 +1324,7 @@ class SliceDoctorTest(unittest.TestCase):
             encoding="utf-8",
         )
         (self.root / "tools" / "verify.ps1").write_text(
-            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "param([string]$PythonPath, [string]$Scope, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
             "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
             encoding="utf-8",
         )
@@ -1333,7 +1421,7 @@ class SliceDoctorTest(unittest.TestCase):
             encoding="utf-8",
         )
         (self.root / "tools" / "verify.ps1").write_text(
-            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "param([string]$PythonPath, [string]$Scope, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
             "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
             encoding="utf-8",
         )
@@ -1740,7 +1828,7 @@ class ConsoleEncodingTest(unittest.TestCase):
             encoding="utf-8",
         )
         (self.root / "tools" / "verify.ps1").write_text(
-            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
+            "param([string]$PythonPath, [string]$Scope, [switch]$ResolvePythonOnly, [switch]$Quiet)\n"
             "if ($ResolvePythonOnly) { Write-Output $PSCommandPath }\nexit 0\n",
             encoding="utf-8",
         )

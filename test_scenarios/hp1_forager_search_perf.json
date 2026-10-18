@@ -1,0 +1,19 @@
+{
+  "cells": 15,
+  "nectar_foragers": 85,
+  "pollen_foragers": 0,
+  "nurses": 0,
+  "builders": 0,
+  "miners": 24,
+  "time_scale": 1,
+  "random_seed": 20260825,
+  "config_overrides": {"seconds_per_day": 600},
+  "diagnostics": {"profile": "performance", "limits": {"snapshot_lines": 1}},
+  "performance_capture": {
+    "warmup_frames": 120,
+    "measurement_frames": 480,
+    "include_fog": true,
+    "sections": ["frame_time_ms", "bee_state_forager", "bee_search"]
+  },
+  "stop": {"max_days": 2}
+}

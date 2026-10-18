@@ -23,40 +23,12 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] L-27 -- a resumed finish re-verifies a branch that gained commits**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-27 -- a resumed finish re-verifies a branch that gained commits"
-   - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
-   - Check: `python -m unittest tests.test_slice_lifecycle` passes, including the three resume cases (code commit re-verifies, Markdown-only commit skips, a journal without head re-verifies); `.\tools\verify.ps1` is green
-   - Proof: `absent: tools/slice.ps1 :: function Test-JournalVerifiedHead`
-   - Next after: L-28 -- archiving a slice leaves another slice's queue block in the plan
-
-2. **[Claude] L-29 -- session_cost.py counts subagent transcripts and scripted edits**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-29 -- session_cost.py counts subagent transcripts and scripted edits"
-   - Files: `tools/session_cost.py`, `tests/test_session_cost_scope.py`
-   - Check: `python -m unittest tests.test_session_cost_scope` passes, including subagent files and both scripted-edit forms; `python tools/session_cost.py --days 11 --phases` prints a subagent transcript count and a slice-worker share; `.\tools\verify.ps1` is green
-   - Proof: `absent: tools/session_cost.py :: def _subagent_transcripts`
-   - Next after: None -- plan complete once L-27 and L-28 land
-
-3. **[Claude] HP-1 -- a searching forager looks for flowers on her think tick**
-   - Plan: `plans/now/hot-path-cadence.md` -- "HP-1 -- a searching forager looks for flowers on her think tick"
-   - Files: `scripts/bee_foraging.gd`, `test_scenarios/hp1_forager_search_perf.json`, `docs/PERFORMANCE_BASELINE.md`, `plans/now/hot-path-cadence.md`
-   - Check: `bee_search` mean in `test_scenarios/hp1_forager_search_perf.json` (`--fixed-fps 60`, two runs each side) falls by at least half; the three-seed means of `forager_deliveries` and `flower_visits` in `foraging_features_off_seed12345_test.json` (`--seeds 12345,2026,555`) stay within 10% of before; both recorded in `docs/PERFORMANCE_BASELINE.md`; FR-1's stage order unchanged if FR-1 has landed; `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/bee_foraging.gd :: bee.thinking`
-   - Next after: HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick
-
-4. **[Claude] TS-1 -- every typeface is the same width as Standard at the same text scale**
-   - Plan: `plans/now/typeface-size.md` -- "TS-1 -- width-matched typeface sizes"
-   - Files: `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/gallerin_panel.gd`, `scripts/hive_cell.gd`, `tests/ts1_typeface_size_test.gd`, `tests/test_ts1_typeface_size.py`
-   - Check: `python -m unittest tests.test_ts1_typeface_size` passes: at text scale 1 and 2, for every typeface in the Typeface setting, `REFERENCE_TEXT` drawn at `UiTheme.font_px(TYPE_SIZES["Body"])` in that face is within 8 % of its width in Standard; `python -m unittest tests.test_ho15_menu_hex_fit tests.test_rr5_hex_refit` still pass.
-   - Proof: `absent: scripts/ui_theme.gd :: typeface_size_factor`
-   - Next after: TS-2 -- the HUD's own size overrides follow the typeface too
-
-5. **[Claude] HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick**
-   - Plan: `plans/now/hot-path-cadence.md` -- "HP-2 -- idle nurses, comb workers and honey makers look for work on the think tick"
+1. **[Claude] HP-3 -- the bee label refreshes on the think tick, if it measures worth it**
+   - Plan: `plans/now/hot-path-cadence.md` -- "HP-3 -- the bee label refreshes on the think tick, if it measures worth it"
    - Files: `scripts/bee.gd`, `test_scenarios/hp2_idle_nurses_perf.json`, `docs/PERFORMANCE_BASELINE.md`, `plans/now/hot-path-cadence.md`
-   - Check: `bee_state_nurse` mean in `test_scenarios/hp2_idle_nurses_perf.json` (two runs each side) falls by at least 40% and is recorded in `docs/PERFORMANCE_BASELINE.md`; `bs3_nurse_gate_test.json`, `bs4_honey_gate_test.json`, `c6_nurse_feed_test.json` and `h3_restock_delivery_test.json` each pass under `python tools/run_scenario.py`; `.\tools\verify.ps1` is green
-   - Proof: `present: scripts/bee.gd :: ## Called every frame a bee is sitting in one of the three "waiting for`
-   - Next after: HP-3 -- the bee label refreshes on the think tick, if it measures worth it
+   - Check: `bee_label_text` is measured in `test_scenarios/hp2_idle_nurses_perf.json` and recorded in `docs/PERFORMANCE_BASELINE.md`; if it is at least half of `bee_label`, `_update_label` runs only on the think tick and `bee_label` mean falls by at least a third; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/bee.gd :: bee_label_text`
+   - Next after: none -- hot-path-cadence is complete
 
 ### Codex lane
 
@@ -103,6 +75,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **T2-12** (`plans/now/tier-two.md`) -- Dig on its own is offered only once Automation is owned (Dave, 14 Oct 2026); waits for FC-2 (Claude lane) to release `scripts/hud.gd`.
 - **T2-13** (`plans/now/tier-two.md`) -- a bee whose role changes while it carries a body puts the body down; waits for T2-10 to release `scripts/bee.gd`.
 - **RR-11** (`plans/now/run-repairs.md`) -- nectar shows a pre-fermented warning colour before it ferments (Dave, 15 Oct 2026); waits for SP-11 to release `scripts/hive_cell.gd`, then runs after RR-10.
+- **L-28** (`plans/now/agent-lifecycle.md`) -- archiving a slice leaves another slice's queue block in the plan; its block is written and startable, and waits only for a place in the Claude lane, which holds five (17 Oct 2026).
 - **L-30** (`plans/now/agent-lifecycle.md`) -- released work is visible to the sessions that release it; waits for the unmerged branch `claude/terminal-plan-state-field`, which owns `tools/check_docs.py`, to merge (Dave, 16 Oct 2026).
 ## Copy-paste prompts
 

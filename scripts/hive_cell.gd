@@ -27,6 +27,7 @@ extends Polygon2D
 const Shapes = preload("res://scripts/shapes.gd")
 const Roles = preload("res://scripts/roles.gd")
 const Resources = preload("res://scripts/resources.gd")
+const UiTheme = preload("res://scripts/ui_theme.gd")
 const SpriteCatalogue = preload("res://scripts/sprite_catalogue.gd")
 
 const EMPTY_COLOR := Color(0.85, 0.78, 0.55)
@@ -1206,7 +1207,7 @@ func _resource_outline_colour(resource_type: String) -> Color:
 	return Color(0.35, 0.28, 0.12)
 
 func _refresh() -> void:
-	var scaled_label_font_size: int = int(round(9.0 * minf(Session.text_scale, 1.5)))
+	var scaled_label_font_size: int = int(round(9.0 * minf(Session.text_scale, 1.5) * UiTheme.typeface_size_factor(Session.ui_typeface)))
 	if scaled_label_font_size != _label_font_size:
 		_label_font_size = scaled_label_font_size
 		info_label.add_theme_font_size_override("font_size", _label_font_size)

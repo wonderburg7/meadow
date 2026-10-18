@@ -111,10 +111,47 @@ def _repo_context_chars(rows, repo_root):
     return total
 
 
+# L-29: slice workers cannot Edit inside .worktrees/ and change product files
+# through a scratchpad script (Write) or sed -i / cp (Bash). Both name a
+# .worktrees/<id>/<product dir>/ path.
+_WORKTREE_PRODUCT_PATH = re.compile(
+    r"\.worktrees/[^/\s'\"]+/(?:" + "|".join(re.escape(d) for d in PRODUCT_DIRS) + ")"
+)
+
+
+_SCRIPT_SUFFIXES = (".py", ".sh", ".ps1")
+_WRITES_FILE = re.compile(r"write|open\(|sed -i|\bcp\b|Set-Content|shutil", re.IGNORECASE)
+
+
+def _scripted_product_edit(block):
+    """True for a scratchpad edit script or a sed -i / cp command aimed at a
+    product path inside a slice worktree."""
+    inp = block.get("input", {}) or {}
+    name = block.get("name")
+    if name in ("Write", "Edit"):
+        # Judge the file written: only a script (not a note or doc) that names
+        # a worktree product path and performs a write is an edit script.
+        target = str(inp.get("file_path") or "").lower()
+        text = inp.get("content") or inp.get("new_string") or ""
+        if not target.endswith(_SCRIPT_SUFFIXES) or not isinstance(text, str):
+            return False
+        text = text.replace("\\", "/")
+        return bool(_WORKTREE_PRODUCT_PATH.search(text) and _WRITES_FILE.search(text))
+    if name == "Bash":
+        command = inp.get("command") or ""
+        if not isinstance(command, str):
+            return False
+        command = command.replace("\\", "/")
+        return ("sed -i" in command or "cp " in command) and bool(_WORKTREE_PRODUCT_PATH.search(command))
+    return False
+
+
 def _product_edit(block, repo_root):
     """True if an assistant content block is a file edit under a product dir."""
     if not isinstance(block, dict) or block.get("type") != "tool_use":
         return False
+    if _scripted_product_edit(block):
+        return True
     if block.get("name") not in ("Edit", "Write", "NotebookEdit"):
         return False
     path = (block.get("input", {}) or {}).get("file_path") or (
@@ -252,7 +289,25 @@ def run_classify(files):
         print(f"{name:22s}{counts.get(name, 0)}")
 
 
-def run_phases(files):
+def _subagent_transcripts(files):
+    """Each top-level transcript's <stem>/subagents/agent-*.jsonl (L-29)."""
+    found = []
+    for f in files:
+        found.extend(sorted((f.parent / f.stem / "subagents").glob("agent-*.jsonl")))
+    return found
+
+
+def _is_slice_worker(path):
+    """True when the subagent's .meta.json agentType is slice-worker-*."""
+    meta = path.with_name(path.stem + ".meta.json")
+    try:
+        data = json.loads(meta.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+    return str(data.get("agentType", "")).startswith("slice-worker-")
+
+
+def run_phases(files, subagents=None):
     """Print the four-row phase table F13 reports (requests, context, share).
 
     A session's assistant requests, in order, are split around its first and
@@ -261,8 +316,10 @@ def run_phases(files):
     """
     requests = Counter()
     context = Counter()
+    worker_context = 0
+    worker_files = {f for f in (subagents or []) if _is_slice_worker(f)}
 
-    for f in files:
+    for f in list(files) + list(subagents or []):
         try:
             with f.open("r", encoding="utf-8") as fh:
                 rows = [json.loads(line) for line in fh if line.strip()]
@@ -294,6 +351,9 @@ def run_phases(files):
         if not sizes:
             continue
 
+        if f in worker_files:
+            worker_context += sum(sizes)
+
         if not edit_indices:
             requests["no_edit"] += len(sizes)
             context["no_edit"] += sum(sizes)
@@ -314,6 +374,11 @@ def run_phases(files):
     for phase in PHASE_NAMES:
         share = 100 * context[phase] / total_context
         print(f"{PHASE_LABELS[phase]:58s}{requests[phase]:>7d}{context[phase]:>14d}{share:>7.1f}%")
+    if subagents is not None:
+        print(
+            "slice workers (subagents named slice-worker-*): "
+            f"{worker_context} = {100 * worker_context / total_context:.1f}% of all context"
+        )
 
 
 def _transcript_files(days, home=None):
@@ -986,14 +1051,21 @@ def main():
         return 0
 
     files, primary_dirs, worktree_dirs = _transcript_files(args.days)
-    print(f"transcripts  {len(files)} sessions ({primary_dirs} primary, {worktree_dirs} worktree directories)")
+    top_level = files
+    subagents = _subagent_transcripts(top_level)
+    header = f"transcripts  {len(files)} sessions ({primary_dirs} primary, {worktree_dirs} worktree directories)"
+    if args.no_edit_reasons or args.coordinator:
+        print(header)
+    else:
+        print(f"{header} + {len(subagents)} subagent transcripts")
+        files = top_level + subagents
 
     if args.classify:
         run_classify(files)
         return 0
 
     if args.phases:
-        run_phases(files)
+        run_phases(top_level, subagents)
         return 0
 
     if args.no_edit_reasons:

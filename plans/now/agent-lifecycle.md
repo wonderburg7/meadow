@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-27 -- a resumed finish re-verifies a branch that gained commits | Dependency: L-30 waits for `claude/terminal-plan-state-field` to merge | Verified: 2026-10-16
+Status: active | Owner: Dave / Claude | Next: L-28 -- archiving a slice leaves another slice's queue block in the plan | Dependency: L-30 waits for `claude/terminal-plan-state-field` to merge | Verified: 2026-10-17
 
 ## Objective
 
@@ -50,9 +50,7 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-27 | A resumed `finish` re-verifies a branch that gained code commits | `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | medium |
 | L-28 | Archiving a slice leaves another slice's queue block in the plan | `tools/archive_slice.py`, `tests/test_slice_lifecycle.py` | medium |
-| L-29 | `session_cost.py` counts subagent transcripts and scripted edits | `tools/session_cost.py`, `tests/test_session_cost_scope.py` | medium |
 | L-30 | Released work is visible: finish shows doc warnings, and a blocked check whose unblockers landed is named | `tools/verify.ps1`, `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py` | medium |
 
 L-16 to L-26 shipped 2 to 13 Oct 2026, each with its record in
@@ -62,58 +60,7 @@ agent-workflow review measured the mechanisms behind L-27, L-28 and L-29. L-27 a
 test file, so L-28 follows L-27. Each slice's acceptance names a
 before-figure from that review and one real canary closeout.
 
-## L-27 -- a resumed finish re-verifies a branch that gained commits
-
-<!-- LAYER: immediate-task -->
-
-Level: medium. **Now:** `Write-ClosingJournal` (`tools/slice.ps1`) writes
-`{id, branch, lane, phase}`. `Test-BranchVerified` returns true as soon as
-the journal's phase is `verified` or later, before it reads the
-`meadow-slice-verified.json` record that 4499fb6 (12 Oct 2026) tied to
-HEAD. A finish that stops after its branch verify (at the refill gate, at
-primary verification: 7 primary stops from 5 to 16 Oct) keeps that journal,
-so a fix committed on the branch, or master merged into it, lands with
-"already passed this closeout; skipping" (T2-4a, 9 Oct, twice).
-
-**After:**
-
-- `Write-ClosingJournal` also writes `head`: the worktree's
-  `git rev-parse HEAD` at the moment it writes (after finish's own commit for
-  that phase, if any). The `merged` and `queue-reapplying` writes, made in
-  the primary checkout, record it the same way; nothing reads it there.
-- New `function Test-JournalVerifiedHead` (params `$Journal`,
-  `$WorktreeRoot`) returns true only when the journal has a `head` and either
-  it equals the worktree's HEAD, or `git diff --name-only <head> HEAD` lists
-  only `*.md` paths (a queue or plan fix after a refill refusal, which
-  `refill_lane.py` has already run `check_docs` over).
-- `Test-BranchVerified`: a journal phase at `verified` or later counts only
-  when `Test-JournalVerifiedHead` is true; otherwise it falls through to the
-  record check as now. A journal written before this slice (no `head`)
-  therefore costs one extra verify, once.
-
-**Must not change:** `$script:ClosingPhaseOrder`, the journal's path, the
-record's format, and the skipping of every phase after `verified` on resume
-(archive and refill must never run twice). No new stop.
-
-**Tests** in `tests/test_slice_lifecycle.py`, using the fixture's existing
-`Invoke-InjectedLifecycleFailure` phases to stop a finish after `verified`:
-(1) then commit a change to a non-Markdown file on the branch and rerun
-`finish`: verify runs again; (2) the same with only a `.md` change: verify
-is skipped; (3) a journal without `head`: verify runs.
-
-**Acceptance:** the next real finish that is retried after a branch commit
-prints a verify run, not "already passed this closeout; skipping" (before:
-T2-4a skipped twice on 9 Oct). Stop and return `blocked` if the fixture
-cannot stop a finish after `verified` without a new injection point.
-
-```queue
-**[Claude] L-27 -- a resumed finish re-verifies a branch that gained commits**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-27 -- a resumed finish re-verifies a branch that gained commits"
-- Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
-- Check: `python -m unittest tests.test_slice_lifecycle` passes, including the three resume cases (code commit re-verifies, Markdown-only commit skips, a journal without head re-verifies); `.\tools\verify.ps1` is green
-- Proof: `absent: tools/slice.ps1 :: function Test-JournalVerifiedHead`
-- Next after: L-28 -- archiving a slice leaves another slice's queue block in the plan
-```
+L-27 shipped 2026-10-17; its specification is `plans/archive/L-27_2026-10-17.md`.
 
 ## L-28 -- archiving a slice leaves another slice's queue block in the plan
 
@@ -152,56 +99,10 @@ successor's block leaves that block live (before: two lost on 15 Oct).
 - Files: `tools/archive_slice.py`, `tests/test_slice_lifecycle.py`
 - Check: `python -m unittest tests.test_slice_lifecycle` passes, including the case where a section ends with the next slice's queue-gated block; `.\tools\verify.ps1` is green
 - Proof: `absent: tools/archive_slice.py :: def _foreign_queue_blocks`
-- Next after: None -- L-29 is independent
+- Next after: L-29 -- session_cost.py counts subagent transcripts and scripted edits
 ```
 
-## L-29 -- session_cost.py counts subagent transcripts and scripted edits
-
-<!-- LAYER: immediate-task -->
-
-Level: medium. **Now:** `_transcript_files` returns top-level transcripts
-only. From 5 to 16 Oct 2026, 185 subagent transcripts held 1,053M of the
-2,339M context tokens and were outside `--days`, `--classify` and
-`--phases`. Slice workers cannot use Edit in `.worktrees/` and edit through
-Python scripts written to their scratchpad (0 Edit, 255 Write, 2,538 Bash
-calls in 59 dispatches), so `_product_edit` saw 11 implementing requests in
-11,700. `--phases`' 11.0% implementing and 55.1% "no product edit" is an
-artefact, and this plan's completion gate cannot be judged.
-
-**After:**
-
-- New `def _subagent_transcripts(files)`: each top-level file's
-  `<stem>/subagents/agent-*.jsonl`. `--days`, `--classify` and `--phases`
-  read top-level plus subagent files; the header prints
-  `transcripts  N sessions (P primary, W worktree directories) + S subagent transcripts`.
-- `_product_edit` also counts (a) a Write or Edit outside the repository
-  whose `content` names a `.worktrees/<id>/` path followed by one of
-  `PRODUCT_DIRS` (a scratchpad edit script), and (b) a Bash command holding
-  `sed -i` or `cp ` and such a path.
-- After the `--phases` table, one line:
-  `slice workers (subagents named slice-worker-*): <tokens> = <share>% of all context`,
-  the type read from each transcript's `.meta.json` `agentType`.
-
-**Must not change:** `--coordinator`, `--events`, `--stops` and
-`--model-check` output; the four phase rows and their order.
-
-**Tests** in `tests/test_session_cost_scope.py` with fixture transcripts: a
-subagent file is counted; each of (a) and (b) counts as a product edit; a
-scratchpad script naming no worktree path does not.
-
-**Acceptance:** `python tools/session_cost.py --days 11 --phases` prints a
-subagent count above zero and a slice-worker share (before, 16 Oct: 80
-sessions, 1,286M, 11.0% implementing; workers 447M, 19% of 2,339M), and the
-next agent-workflow review judges the completion gate from it.
-
-```queue
-**[Claude] L-29 -- session_cost.py counts subagent transcripts and scripted edits**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-29 -- session_cost.py counts subagent transcripts and scripted edits"
-- Files: `tools/session_cost.py`, `tests/test_session_cost_scope.py`
-- Check: `python -m unittest tests.test_session_cost_scope` passes, including subagent files and both scripted-edit forms; `python tools/session_cost.py --days 11 --phases` prints a subagent transcript count and a slice-worker share; `.\tools\verify.ps1` is green
-- Proof: `absent: tools/session_cost.py :: def _subagent_transcripts`
-- Next after: None -- plan complete once L-27 and L-28 land
-```
+L-29 shipped 2026-10-17; its specification is `plans/archive/L-29_2026-10-17.md`.
 
 ## L-30 -- released work is visible to the sessions that release it
 
