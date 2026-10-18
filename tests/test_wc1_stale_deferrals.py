@@ -52,5 +52,62 @@ class StaleDeferralsTest(unittest.TestCase):
         self.assertEqual(self.run_check("awaits a decision.", ("NF-2_2026-10-08.md",)), [])
 
 
+def blocked_md(blocked_by: str) -> str:
+    return (
+        "### C-84 -- a check waiting on a slice\n\n"
+        "Some action to take.\n\n"
+        "PASS: it passes.\n\n"
+        f"Blocked by: {blocked_by}\n\n"
+        "Owner: none\n"
+    )
+
+
+class ReleasedBlockedChecksTest(unittest.TestCase):
+    def run_check(self, blocked_by: str, archives: tuple[str, ...]) -> list[str]:
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory:
+            root = Path(directory)
+            archive_dir = root / "plans" / "archive"
+            archive_dir.mkdir(parents=True)
+            for archive in archives:
+                (archive_dir / archive).write_text("record\n", encoding="utf-8")
+            warnings: list[str] = []
+            check_docs.check_released_blocked_checks(warnings, blocked_md(blocked_by), root)
+            return warnings
+
+    def test_entry_blocked_by_one_archived_id_warns(self) -> None:
+        warnings = self.run_check(
+            "RR-1 (`plans/now/run-repairs.md`) -- a lone queen cannot build.",
+            ("RR-1_2026-10-13.md",),
+        )
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("C-84 waits only for shipped slices RR-1", warnings[0])
+        self.assertIn("checks/ready/", warnings[0])
+
+    def test_entry_also_naming_an_unarchived_id_does_not_warn(self) -> None:
+        self.assertEqual(
+            self.run_check(
+                "RR-1 (`plans/now/run-repairs.md`) and T2-9 (`plans/now/tier-two.md`) "
+                "-- two things must land.",
+                ("RR-1_2026-10-13.md",),
+            ),
+            [],
+        )
+
+    def test_entry_with_prose_besides_the_ids_does_not_warn(self) -> None:
+        self.assertEqual(
+            self.run_check(
+                "T2-12 (`plans/now/tier-two.md`), which waits for `scripts/hud.gd`.",
+                ("T2-12_2026-10-14.md",),
+            ),
+            [],
+        )
+
+    def test_entry_with_no_ids_does_not_warn(self) -> None:
+        self.assertEqual(
+            self.run_check("an asset/licensing commit, not more UI code.", ()),
+            [],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

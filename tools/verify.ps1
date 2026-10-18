@@ -291,6 +291,7 @@ function Write-StageResult {
     if ($Ok) {
         if ($Quiet) {
             Write-Output "${Name}: OK"
+            $Output | Where-Object { $_ -like "WARNING:*" } | ForEach-Object { Write-Output $_ }
         }
         return
     }
