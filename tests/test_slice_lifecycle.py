@@ -1971,6 +1971,26 @@ class ArchiveSliceTest(unittest.TestCase):
         self.assertNotIn("## X-1", plan)
         self.assertIn("## X-2 — the second slice\n\nBody of the second slice, byte for byte.\n", plan)
 
+    def test_leaves_the_successors_queue_block_in_the_live_plan(self):
+        own = "```queue\n**[Claude] X-1 -- the first slice**\n- Plan: `plans/now/x.md`\n```\n\n"
+        other = "```queue-gated\n**[Claude] X-2 -- the second slice**\n- Plan: `plans/now/x.md`\n```\n\n"
+        plan = self.PLAN.replace("Level: low\n\n", "Level: low\n\n" + own + other, 1)
+        (self.root / "plans" / "now" / "x.md").write_text(plan, encoding="utf-8")
+        for args in (["add", "."], ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "blocks"]):
+            subprocess.run(["git", *args], cwd=self.root, check=True, capture_output=True)
+
+        result = self.run_tool()
+
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("kept in plan: X-2's queue block", result.stdout)
+        archived = (self.root / "plans" / "archive" / "X-1_2026-09-18.md").read_text(encoding="utf-8")
+        self.assertIn(own, archived)
+        self.assertNotIn("X-2 -- the second slice", archived)
+        live = (self.root / "plans" / "now" / "x.md").read_text(encoding="utf-8")
+        pointer = "X-1 shipped 2026-09-18; its specification is `plans/archive/X-1_2026-09-18.md`.\n\n"
+        self.assertIn(pointer + other + "## X-2", live)
+        self.assertNotIn("X-1 -- the first slice", live)
+
     def test_refuses_a_dirty_working_tree(self):
         (self.root / "NEXTSTEPS.md").write_text(self.QUEUE + "\n- **Z** -- edited.\n", encoding="utf-8")
 
