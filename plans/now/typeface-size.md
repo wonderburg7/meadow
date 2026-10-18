@@ -31,54 +31,11 @@ Verified 14 Oct 2026 against master `3e37ea6`.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| TS-1 | width-matched size per typeface, applied to the theme, menu hexes, comb labels and Dr Gallerin | `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/gallerin_panel.gd`, `scripts/hive_cell.gd`, tests | no -- after RR-7's fix (`plans/now/run-repairs.md`), and after SP-11, which shares `hive_cell.gd` (SP-10 landed 15 Oct 2026) | medium |
 | TS-2 | the same for `hud.gd`'s own size overrides | `scripts/hud.gd`, tests | no -- after TS-1, and after FC-2 releases `hud.gd` (GP-4 released it 15 Oct 2026) | low |
 
 TS-1 -> TS-2. TS-1 runs after RR-7's fix (`plans/now/run-repairs.md`), which owns the menu hexagon fit TS-1's `base` feeds, and keeps `tests.test_rr7_silkscreen_fit` green, so its block is gated until that fix lands. A slice reads its own section only.
 
-## TS-1 -- width-matched typeface sizes
-
-Level: medium.
-
-**True afterwards.**
-
-- `ui_theme.gd` gains `const REFERENCE_TEXT := "The quick brown fox jumps
-  over the lazy dog 0123456789"` and `static func
-  typeface_size_factor(typeface: String) -> float`: 1.0 for `"sans"` or a
-  missing font; otherwise the width of `REFERENCE_TEXT` at size 64 in
-  `ThemeDB.fallback_font` divided by its width at size 64 in
-  `_typeface_font(typeface)` (`Font.get_string_size`). Cached in a static
-  Dictionary per typeface: measured once, never per frame.
-- `static func font_px(base: float) -> int` returns
-  `int(round(base * Session.text_scale *
-  typeface_size_factor(Session.ui_typeface)))`, with a floor of 1.
-- `_refresh_theme_resource` uses `font_px` for every size it sets;
-  `main_menu.gd::_fit_hex_label`'s `base`, `gallerin_panel.gd`'s bubble
-  size and `hive_cell.gd`'s cell label use it too (the cell label keeps
-  its 1.5 cap on the scale part: `9.0 * minf(Session.text_scale, 1.5) *
-  typeface_size_factor(...)`).
-- The test pair follows `tests/rr5_hex_refit_test.gd` and
-  `tests/test_rr5_hex_refit.py`.
-
-**Invariants.** Standard ("sans") sizes are exactly what they are today.
-A typeface change still refreshes through `UiTheme.refresh()` and
-re-fits the menu hexes (RR-5). Nothing is measured per frame.
-
-**Escalate** if a pixel typeface (Munro, Silkscreen) comes out blurred at
-its matched size: Dave then chooses between snapping it to its native
-multiple and the exact width.
-
-**Hands-on check on landing** (move from `checks/blocked.md` to ready):
-C-137.
-
-```queue
-**[Claude] TS-1 -- every typeface is the same width as Standard at the same text scale**
-- Plan: `plans/now/typeface-size.md` -- "TS-1 -- width-matched typeface sizes"
-- Files: `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/gallerin_panel.gd`, `scripts/hive_cell.gd`, `tests/ts1_typeface_size_test.gd`, `tests/test_ts1_typeface_size.py`
-- Check: `python -m unittest tests.test_ts1_typeface_size` passes: at text scale 1 and 2, for every typeface in the Typeface setting, `REFERENCE_TEXT` drawn at `UiTheme.font_px(TYPE_SIZES["Body"])` in that face is within 8 % of its width in Standard; `python -m unittest tests.test_ho15_menu_hex_fit tests.test_rr5_hex_refit` still pass.
-- Proof: `absent: scripts/ui_theme.gd :: typeface_size_factor`
-- Next after: TS-2 -- the HUD's own size overrides follow the typeface too
-```
+TS-1 shipped 2026-10-18; its specification is `plans/archive/TS-1_2026-10-18.md`.
 
 ## TS-2 -- the HUD's own size overrides
 
