@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-28 -- archiving a slice leaves another slice's queue block in the plan, then L-30 (its gate cleared: `claude/terminal-plan-state-field` merged); after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none | Verified: 2026-10-17
+Status: active | Owner: Dave / Claude | Next: L-30 (its gate cleared: `claude/terminal-plan-state-field` merged); after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none | Verified: 2026-10-17
 
 ## Objective
 
@@ -50,7 +50,6 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-28 | Archiving a slice leaves another slice's queue block in the plan | `tools/archive_slice.py`, `tests/test_slice_lifecycle.py` | medium |
 | L-30 | Released work is visible: finish shows doc warnings, and a blocked check whose unblockers landed is named | `tools/verify.ps1`, `tools/check_docs.py`, `tests/test_wc1_stale_deferrals.py` | medium |
 
 L-16 to L-26 shipped 2 to 13 Oct 2026, each with its record in
@@ -64,47 +63,7 @@ L-27 shipped 2026-10-17; its specification is `plans/archive/L-27_2026-10-17.md`
 
 **Code health (`plans/now/code-health.md`, 18 Oct 2026).** CQ-L1 adds a `gdscript style` stage to `tools/verify.ps1` straight after `godot boot`; it runs after L-30, which also edits `verify.ps1`.
 
-## L-28 -- archiving a slice leaves another slice's queue block in the plan
-
-<!-- LAYER: immediate-task -->
-
-Level: medium. **Now:** `tools/archive_slice.py::archive` moves everything
-from the slice's heading to the next heading into the archive. A plan that
-writes slice N+1's `queue` (or `queue-gated`) block at the end of slice
-N's section loses it with N: RR-6's archive took RR-7's
-block and SP-10's took SP-11's (15 Oct 2026, the second recurrence;
-`plans/README.md` rule 11 is the written rule).
-
-**After:** new `def _foreign_queue_blocks(section_text, slice_id)` returns
-each fenced `queue` or `queue-gated` block in the cut section whose first
-line's id (check_docs' `QUEUE_ITEM_HEAD`, `**[Lane] <id> --`) is not
-`slice_id`. `archive` writes the section to the archive without those
-blocks and leaves them in the live plan directly below the one-line
-pointer, byte for byte, and prints `kept in plan: <id>'s queue block` for
-each. The slice's own block still goes to the archive.
-
-**Must not change:** the archived text apart from the removed blocks; the
-dirty-tree refusal; the open-slices-table row removal; `tools/check_docs.py`
-(a branch, `claude/terminal-plan-state-field`, owns it; its half of the
-signal, failing a block under the wrong heading, waits for that branch).
-
-**Tests** in `tests/test_slice_lifecycle.py`: a section holding its own
-`queue` block and a following slice's `queue-gated` block archives only its
-own; the live plan keeps the pointer then the other block unchanged.
-
-**Acceptance:** the next closeout of a slice whose section ends with its
-successor's block leaves that block live (before: two lost on 15 Oct).
-
-```queue
-**[Claude] L-28 -- archiving a slice leaves another slice's queue block in the plan**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-28 -- archiving a slice leaves another slice's queue block in the plan"
-- Files: `tools/archive_slice.py`, `tests/test_slice_lifecycle.py`
-- Check: `python -m unittest tests.test_slice_lifecycle` passes, including the case where a section ends with the next slice's queue-gated block; `.\tools\verify.ps1` is green
-- Proof: `absent: tools/archive_slice.py :: def _foreign_queue_blocks`
-- Next after: L-30 -- released work is visible to the sessions that release it
-```
-
-L-29 shipped 2026-10-17; its specification is `plans/archive/L-29_2026-10-17.md`.
+L-28 shipped 2026-10-18; its specification is `plans/archive/L-28_2026-10-18.md`.
 
 ## L-30 -- released work is visible to the sessions that release it
 

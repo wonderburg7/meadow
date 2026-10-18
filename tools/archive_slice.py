@@ -45,7 +45,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from check_docs import current_plans, plan_is_terminal, queue_item_chunks  # noqa: E402
+from check_docs import (QUEUE_ITEM_HEAD, current_plans, plan_is_terminal,  # noqa: E402
+                        queue_item_chunks)
 from heading import headings, section  # noqa: E402
 
 # The heading may hold escaped quotes (`-- "RR-2 -- \"Saves...\" works"`);
@@ -97,6 +98,30 @@ def find_section(lines: list[str], heading: str, slice_id: str) -> tuple[int, in
     return matches[0]
 
 
+QUEUE_FENCE = re.compile(r"^```queue(?:-gated)?\s*$")
+
+
+def _foreign_queue_blocks(section_text: str, slice_id: str) -> list[tuple[int, int, str]]:
+    """(first line, last line, id) of each fenced `queue`/`queue-gated` block in
+    the section whose item is not `slice_id`: the successor's block that a plan
+    writes at the end of this slice's section (RR-6, SP-10; L-28)."""
+    lines = section_text.splitlines()
+    found = []
+    i = 0
+    while i < len(lines):
+        if not QUEUE_FENCE.match(lines[i]):
+            i += 1
+            continue
+        end = i + 1
+        while end < len(lines) and lines[end].strip() != "```":
+            end += 1
+        head = QUEUE_ITEM_HEAD.match(lines[i + 1]) if i + 1 < len(lines) else None
+        if head and head.group(2) != slice_id and end < len(lines):
+            found.append((i, end, head.group(2)))
+        i = end + 1
+    return found
+
+
 def archive(root: Path, slice_id: str, plan_rel: str, heading: str, when: str,
             branch: str) -> tuple[Path, str]:
     plan_path = root / plan_rel
@@ -119,12 +144,25 @@ def archive(root: Path, slice_id: str, plan_rel: str, heading: str, when: str,
         f"Landed {when} on `{branch}`. Live plan: `{plan_rel}`.",
         "",
     ]
-    archive_path.write_text("\n".join(preamble + body) + "\n", encoding="utf-8")
+    foreign = _foreign_queue_blocks("\n".join(body), slice_id)
+    kept: list[list[str]] = []
+    archived_body = list(body)
+    for first, last, _ in reversed(foreign):
+        kept.insert(0, body[first:last + 1])
+        del archived_body[first:last + 1]
+        if (0 < first < len(archived_body) and not archived_body[first].strip()
+                and not archived_body[first - 1].strip()):
+            del archived_body[first]
+    archive_path.write_text("\n".join(preamble + archived_body) + "\n", encoding="utf-8")
 
     pointer = f"{slice_id} shipped {when}; its specification is `{archive_rel}`."
     end = start + len(body)
     trailing_blank = body and body[-1].strip() == ""
-    replacement = [pointer, ""] if trailing_blank else [pointer]
+    replacement = [pointer, ""] if trailing_blank or kept else [pointer]
+    for block in kept:
+        replacement += block + [""]
+    if kept and end >= len(lines) and not trailing_blank:
+        replacement.pop()
     new_lines = lines[:start] + replacement + lines[end:]
 
     # The open-slices table row, if the plan keeps one: mechanical, and the
@@ -133,6 +171,8 @@ def archive(root: Path, slice_id: str, plan_rel: str, heading: str, when: str,
     new_lines = [line for line in new_lines if not row.match(line)]
 
     plan_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+    for _, _, other in foreign:
+        print(f"kept in plan: {other}'s queue block")
     return archive_path, text
 
 
