@@ -20,7 +20,7 @@
     "warmup_frames": 120,
     "measurement_frames": 480,
     "include_fog": false,
-    "sections": ["frame_time_ms", "bees", "bee_state_nurse", "bee_label"]
+    "sections": ["frame_time_ms", "bees", "bee_state_nurse", "bee_label", "bee_label_text"]
   },
   "stop": {
     "max_days": 2
