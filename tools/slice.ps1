@@ -512,6 +512,31 @@ function Get-PendingWorktreeDeletions {
     return @(Get-Content -LiteralPath $queuePath | Where-Object { $_ -and $_.Trim() })
 }
 
+function Get-DirectoryHolderSummary {
+    # Names the processes that probably hold a directory closeout could not
+    # delete (L-28, 18 Oct 2026: a Claude session's cwd left an empty orphan
+    # and nothing said which process). Windows has no cheap read of another
+    # process's working directory, so this matches command lines naming the
+    # directory -- a Claude Code or Codex session scoped to the worktree, a
+    # Godot run with --path, a shell started there. Failure path only; it
+    # never throws, since it must not turn a queued deletion into a stop.
+    param([string]$Path)
+    try {
+        $full = [System.IO.Path]::GetFullPath($Path).TrimEnd('\')
+        $holders = @(Get-CimInstance Win32_Process -ErrorAction Stop | Where-Object {
+                $_.CommandLine -and $_.CommandLine.Replace('/', '\').IndexOf($full, [System.StringComparison]::OrdinalIgnoreCase) -ge 0
+            } | ForEach-Object {
+                $own = if ($_.ProcessId -eq $PID) { " (this command -- cd its shell out of the worktree before finish)" } else { "" }
+                "$($_.Name) PID $($_.ProcessId)$own"
+            })
+        if ($holders.Count -gt 0) { return "held open by $($holders -join ', ')" }
+        return "no process names it on its command line; a shell or editor whose working directory is inside it, OneDrive or the Search Indexer may hold it"
+    }
+    catch {
+        return "could not list processes: $($_.Exception.Message)"
+    }
+}
+
 function Remove-PendingWorktreeDirectories {
     param([string]$Root)
     $queuePath = Get-PendingDeletionsPath -Root $Root
@@ -1553,6 +1578,7 @@ function Invoke-SlicePostMergeCleanup {
 
     $trailer = Get-LaneTrailer -Lane $Target.Lane
 
+    $removeError = ""
     if (Test-Path -LiteralPath $Target.WorktreePath) {
         # No stderr redirect here: PowerShell 5.1 wraps a redirected native
         # stderr line in a terminating ErrorRecord under $ErrorActionPreference
@@ -1565,7 +1591,8 @@ function Invoke-SlicePostMergeCleanup {
             # to delete the directory (an external process briefly holding it
             # open -- OneDrive and the Search Indexer both do this on a
             # freshly emptied folder, same as a running Godot instance can).
-            Remove-Item -LiteralPath $Target.WorktreePath -Recurse -Force -ErrorAction SilentlyContinue
+            try { Remove-Item -LiteralPath $Target.WorktreePath -Recurse -Force -ErrorAction Stop }
+            catch { $removeError = $_.Exception.Message }
         }
         git -C $Root worktree prune
     }
@@ -1575,7 +1602,8 @@ function Invoke-SlicePostMergeCleanup {
         # command to retry, rather than holding the lifecycle lock while we
         # wait.
         Add-PendingWorktreeDeletion -Root $Root -WorktreeRelative $Target.WorktreeRelative
-        Write-Output "$($Target.Id) -- $($Target.WorktreeRelative) could not be deleted; queued in pending deletions for retry at the next slice command"
+        $reason = if ($removeError) { " ($removeError)" } else { "" }
+        Write-Output "$($Target.Id) -- $($Target.WorktreeRelative) could not be deleted$reason; $(Get-DirectoryHolderSummary -Path $Target.WorktreePath); queued in pending deletions for retry at the next slice command"
     }
     Invoke-InjectedLifecycleFailure -Phase "worktree-removed"
 
