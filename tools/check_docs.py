@@ -697,6 +697,56 @@ def check_stale_deferrals(warnings: list[str], text: str | None = None,
                 )
 
 
+def check_released_blocked_checks(warnings: list[str], text: str | None = None,
+                                   root: Path | None = None) -> None:
+    """Warn when every slice a blocked check names has already shipped.
+
+    Only the `Blocked by:` line's lead, up to the first ` -- `, is inspected
+    for slice ids; prose there besides the ids (a dependency not yet named by
+    id, or a clause qualifying one) means the check still waits on something
+    this cannot verify, so it is left alone.
+    """
+    if text is None:
+        blocked_path = ROOT / "checks" / "blocked.md"
+        if not blocked_path.is_file():
+            return
+        text = blocked_path.read_text(encoding="utf-8")
+    root = root or ROOT
+
+    slice_id = re.compile(r"\b[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-\d+[a-z]?\b")
+    archive_dir = root / "plans" / "archive"
+
+    for entry in re.finditer(r"^### (C-\d+)\b.*$", text, re.MULTILINE):
+        check_id = entry.group(1)
+        section_start = entry.end()
+        next_entry = re.search(r"^### C-\d+\b", text[section_start:], re.MULTILINE)
+        section_end = section_start + next_entry.start() if next_entry else len(text)
+        section = text[section_start:section_end]
+
+        blocked_match = re.search(r"^Blocked by:\s*(.*)$", section, re.MULTILINE)
+        if not blocked_match:
+            continue
+        lead = blocked_match.group(1).split(" -- ", 1)[0]
+
+        ids = slice_id.findall(lead)
+        if not ids:
+            continue
+        if not all(list(archive_dir.glob(f"{sid}_*.md")) for sid in ids):
+            continue
+
+        remainder = slice_id.sub("", re.sub(r"`[^`]*`", "", lead))
+        remainder = re.sub(r"[(),.]", "", remainder)
+        remainder = re.sub(r"\band\b", "", remainder)
+        if remainder.strip():
+            continue
+
+        warnings.append(
+            f"checks/blocked.md: {check_id} waits only for shipped slices "
+            f"{', '.join(ids)} -- move it to checks/ready/ (the check "
+            "processor's first step)"
+        )
+
+
 def check_queue_proofs(errors: list[str], text: str | None = None) -> None:
     """Each queue item's Proof: line must still hold against the code it names.
 
@@ -1353,6 +1403,7 @@ def main() -> int:
     check_queue_section_agreement(errors)
     check_not_in_queue_reasons(errors)
     check_stale_deferrals(warnings)
+    check_released_blocked_checks(warnings)
     check_plan_queue_blocks(errors, warnings)
     check_markdown_links(errors)
     check_backticked_paths(errors)
