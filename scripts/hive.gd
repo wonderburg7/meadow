@@ -277,6 +277,8 @@ func take(resource_type: String, amount: float) -> float:
 			break
 		if resource_type == "honey" and not cell.is_ripe_honey():
 			continue   # wet mix isn't food yet
+		if resource_type == "nectar" and cell.is_fermented():
+			continue   # RR-10: sour nectar is not spendable
 		still_needed -= cell.take_resource(resource_type, still_needed)
 	announce()
 	return amount - still_needed

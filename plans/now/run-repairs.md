@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-10 from the 15 Oct 2026 gameplay review (fermented nectar buys no skill), in the Codex lane; RR-11 after RR-10, whose test it extends (SP-11 released `scripts/hive_cell.gd` 15 Oct 2026; RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026, RR-8 17 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-17
+Status: active | Owner: Dave / Claude Code | Next: RR-11 after RR-10 lands, whose test it extends (SP-11 released `scripts/hive_cell.gd` 15 Oct 2026; RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026, RR-8 17 Oct 2026, RR-10 18 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-18
 
 ## Objective
 
@@ -42,7 +42,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| RR-10 | fermented nectar is neither counted nor spent by skill purchases | `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, tests | yes, after RR-9 -- Codex lane | low |
 | RR-11 | nectar shows a pre-fermented colour before it ferments, as a warning | `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | no -- after RR-10 (SP-11 released `scripts/hive_cell.gd` 15 Oct 2026) | medium |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
 
@@ -64,50 +63,7 @@ RR-9 shipped 2026-10-17; its specification is `plans/archive/RR-9_2026-10-17.md`
 
 **Code health (`plans/now/code-health.md`, 18 Oct 2026).** CQ-L1 (gdlint fixes in `hive.gd` and `skill_tree_panel.gd`) waits for RR-10 to release them. Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (RR-12); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
 
-## RR-10 -- fermented nectar is neither counted nor spent by skill purchases
-
-Level: low (two guards). Gameplay review 15 Oct 2026, finding F2; Dave's
-decision D2: "skills skip fermented nectar".
-
-**True now** (verified 15 Oct 2026 against master `9c490df`).
-`skill_tree_panel.gd::_stores` counts every withdrawable nectar cell,
-fermented or not, and `buy_skill` spends through `hive.gd::take`, which
-skips unripe honey but nothing sour. So fermented nectar buys skills,
-though NF decision 2 says it "can only be drunk or hauled out".
-
-**True afterwards.**
-
-- `_stores`: beside the honey and bee-bread guards,
-  `if key == Skills.NECTAR and cell.is_fermented(): continue`. Its doc
-  comment adds "and nectar only while it has not fermented".
-- `hive.gd::take`: beside the unripe-honey guard,
-  `if resource_type == "nectar" and cell.is_fermented(): continue`, with a
-  comment that fermented nectar is not spendable (RR-10). The two guards
-  keep AP-4's promise that `take` cannot fall short of `_stores`.
-
-**Invariants.** Eating (`take_energy`, `find_food_cell`), nurses, honey
-makers, restocking and NF-5's clear orders are unchanged: none calls
-`take`. `hive._stock()` still counts fermented nectar, so goals and the
-winter forecast are unchanged (Dave's decision covers skills only).
-`debug_panel.gd`'s nectar trim also goes through `take` and now leaves
-fermented cells alone, which is acceptable for a debug control.
-
-**Test.** The fixture and test follow `test_bb3_bee_bread_currency.py` and
-its fixture (a purchase refused, then bought); the fermented cell comes
-from a short `nectar_ferment_hours`, as `tests/test_nf2_fermentation.py`'s
-fixture does it.
-
-**Escalate** if a caller of `hive.take("nectar", ...)` other than
-`skill_tree_panel.gd::buy_skill` and `debug_panel.gd` exists by then.
-
-```queue
-**[Codex] RR-10 -- fermented nectar is neither counted nor spent by skill purchases**
-- Plan: `plans/now/run-repairs.md` -- "RR-10 -- fermented nectar is neither counted nor spent by skill purchases"
-- Files: `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, `test_scenarios/rr10_fermented_not_currency.json`, `tests/test_rr10_fermented_not_currency.py`
-- Check: `python -m unittest tests.test_rr10_fermented_not_currency` passes: with one fermented nectar cell and one fresh one, a skill whose nectar price exceeds the fresh stock alone is refused and leaves both cells unchanged, and one priced within the fresh stock is bought, spends only fresh nectar and leaves the fermented cell's amount unchanged; `python -m unittest tests.test_bb3_bee_bread_currency tests.test_nf4_fermentation_sense` still passes.
-- Proof: `absent: scripts/skill_tree_panel.gd :: is_fermented`
-- Next after: RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning
-```
+RR-10 shipped 2026-10-18; its specification is `plans/archive/RR-10_2026-10-18.md`.
 
 ## RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning
 

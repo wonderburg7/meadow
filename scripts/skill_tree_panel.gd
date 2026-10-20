@@ -247,7 +247,8 @@ func _on_buy_pressed() -> void:
 
 ## What the colony could spend right now, keyed the way skills.gd prices
 ## things: every cell's contents that hive.take() would actually hand over
-## -- not sealed or filling towards a seal, and honey and bee bread only once ripe. A
+## -- not sealed or filling towards a seal; honey and bee bread only once ripe; and
+## nectar only while it has not fermented. A
 ## snapshot, taken on open and per purchase; the comb stays the owner.
 func _stores() -> Dictionary:
 	var stores: Dictionary = {}
@@ -262,6 +263,8 @@ func _stores() -> Dictionary:
 			if key == Skills.HONEY and not cell.is_ripe_honey():
 				continue
 			if key == Skills.BEE_BREAD and not cell.is_ripe_bee_bread():
+				continue
+			if key == Skills.NECTAR and cell.is_fermented():
 				continue
 			stores[key] = float(stores.get(key, 0.0)) + cell.amount
 	# PP-2: the ledger, read like a cell; absent at zero, like any store.

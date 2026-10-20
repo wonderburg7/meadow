@@ -63,14 +63,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] RR-10 -- fermented nectar is neither counted nor spent by skill purchases**
-   - Plan: `plans/now/run-repairs.md` -- "RR-10 -- fermented nectar is neither counted nor spent by skill purchases"
-   - Files: `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, `test_scenarios/rr10_fermented_not_currency.json`, `tests/test_rr10_fermented_not_currency.py`
-   - Check: `python -m unittest tests.test_rr10_fermented_not_currency` passes: with one fermented nectar cell and one fresh one, a skill whose nectar price exceeds the fresh stock alone is refused and leaves both cells unchanged, and one priced within the fresh stock is bought, spends only fresh nectar and leaves the fermented cell's amount unchanged; `python -m unittest tests.test_bb3_bee_bread_currency tests.test_nf4_fermentation_sense` still passes.
-   - Proof: `absent: scripts/skill_tree_panel.gd :: is_fermented`
-   - Next after: RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning
-
-2. **[Codex] AR-5 -- the first two gates on the calendar, and a reference queen who lays early**
+1. **[Codex] AR-5 -- the first two gates on the calendar, and a reference queen who lays early**
    - Plan: `plans/now/alpha-route-evidence.md` -- "AR-5 -- the first two gates on the calendar, and a reference queen who lays early"
    - Files: `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `test_scenarios/alpha_arc_test.json`, `plans/now/alpha-route-evidence.md`
    - Check: `python -m unittest tests.test_pacing_gates` passes; `python tools/pacing_gates.py` judges the first worker by day 3.0 and first automation on days 5.0 to 8.0, its first-worker median is at most day 3.0 with at least two of three colonies living through winter, and the table is recorded in this section
