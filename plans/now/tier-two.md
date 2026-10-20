@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-13 (a role change drops a carried body; gameplay review, 15 Oct 2026), open since T2-10 landed 16 Oct 2026 (a miner wakes when Automation is bought, C-135); T2-14 after T2-13 (both edit `scripts/bee.gd`) and once RR-10 (Codex lane) releases `scripts/hive.gd` (T2-11 answered 17 Oct 2026: a comb worker's idle reason starts a site, so without Automation comb grows outward only while one is selected); T2-12 landed 20 Oct 2026 (Dig on its own waits for Automation; C-136 awaits Dave's check); then T2-7b (T2-9 landed 12 Oct 2026: branch-tier progress counts only the lower-tier skills the run offers, C-113) -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker) | Dependency: COL-4, COL-6, T2-4a, T2-4b, T2-6 and T2-7 landed (T2-7 on 11 Oct 2026, as the rule, snapshot field and pacing row); T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`) | Verified: 2026-10-20
+Status: active | Owner: Dave / Claude Code | Next: T2-14, once RR-10 (Codex lane) releases `scripts/hive.gd`; T2-13 landed 20 Oct 2026 (a role change puts a carried body down; gameplay review, 15 Oct 2026) (T2-11 answered 17 Oct 2026: a comb worker's idle reason starts a site, so without Automation comb grows outward only while one is selected); T2-12 landed 20 Oct 2026 (Dig on its own waits for Automation; C-136 awaits Dave's check); then T2-7b (T2-9 landed 12 Oct 2026: branch-tier progress counts only the lower-tier skills the run offers, C-113) -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker) | Dependency: COL-4, COL-6, T2-4a, T2-4b, T2-6 and T2-7 landed (T2-7 on 11 Oct 2026, as the rule, snapshot field and pacing row); T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`) | Verified: 2026-10-20
 
 ## Objective
 
@@ -36,7 +36,6 @@ What the open slices build on:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | T2-14 | a comb worker's idle reason asks whether there is room to build without starting a site (found by T2-11) | `scripts/bee.gd`, `scripts/hive.gd`, tests | no -- after T2-13 (`scripts/bee.gd`) and once RR-10 (Codex lane) releases `scripts/hive.gd` | low |
-| T2-13 | a bee whose role changes while it carries a body puts the body down (gameplay review, 15 Oct 2026) | `scripts/bee.gd`, tests | yes (T2-10 landed 16 Oct 2026) | low |
 | T2-7b | The tier-2 price sweep T2-7 deferred: tier-2 costs set so the arc's first tier-2 purchase lands around day 5 | `scripts/skills.gd`, `plans/design/progression.md`, tests; specified when AR-4 lands | no -- after AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker | medium |
 
 **Dependencies.** T2-10 and T2-13 both edit `scripts/bee.gd`; T2-10
@@ -110,49 +109,7 @@ passes.
 
 T2-12 shipped 2026-10-20; its specification is `plans/archive/T2-12_2026-10-20.md`.
 
-## T2-13 -- a bee whose role changes while it carries a body puts the body down
-
-Level: low (one helper on the role-change choke point). Gameplay review
-15 Oct 2026, finding F3 (Dave's decision D3 put it here, beside T2-4b's
-bodies). Opened when T2-10 landed (16 Oct 2026), which held
-`scripts/bee.gd`.
-
-**True now** (verified 15 Oct 2026 against master `9c490df`). Only
-`bee_building.gd::builder_dump_waste` clears `carrying_corpse` and
-`corpse_is_bee`. `bee.gd::_apply_role` and `_release_everything` never do,
-so a comb worker carrying a body that is given a new role keeps the flags
-for good, and `bee.gd::carrying_text` (which checks `carrying_corpse`
-first) says "Carrying: a dead bee, for disposal outside" over any real load
-she later takes on. The review's probe: a comb worker carrying a body, made
-a Forager with 30 nectar, showed exactly that. The body itself has already
-left `hive.bodies` (`bee_building.gd::_lift_body`), so it is lost.
-
-**True afterwards.** `bee.gd` gains `func _put_down_body() -> void`, called
-in `_apply_role` beside `_return_nurse_food()` and `_return_bee_bread()`.
-If `carrying_corpse` is false it returns. If `corpse_is_bee` and the bee is
-inside the hive (`_is_inside_hive()`) and `hive` is valid, it calls
-`hive.add_body(hive.nearest_walkable_point(position), Session.sim_time)`,
-so another cleaner can pick it up. A dead larva, or a body carried outside
-(the bee is already dumping it), is simply gone: its cell was already
-cleared. Either way both flags end false. A comment cites T2-13.
-
-**Invariants.** `builder_dump_waste` is unchanged. The body cap
-(`GameConfig.max_hive_bodies`) still applies through `add_body`. The
-restored body's `died_at` is the time it is put down (the lifted body's
-own `died_at` is not kept). Save
-format unchanged. No per-tick work.
-
-**Escalate** if `carrying_corpse` is read anywhere outside `bee.gd`,
-`bee_building.gd` and the save files by then.
-
-```queue
-**[Claude] T2-13 -- a bee whose role changes while it carries a body puts the body down**
-- Plan: `plans/now/tier-two.md` -- "T2-13 -- a bee whose role changes while it carries a body puts the body down"
-- Files: `scripts/bee.gd`, `tests/t2_13_carried_body_test.gd`, `tests/test_t2_13_carried_body.py`
-- Check: `python -m unittest tests.test_t2_13_carried_body` passes: a comb worker inside the hive that has lifted a body, made a Forager, has `carrying_corpse` and `corpse_is_bee` false, `hive.bodies` is one longer, and once given 30 nectar its `carrying_text()` names the nectar, not a dead bee; a comb worker carrying a dead larva, made a Forager, has `carrying_corpse` false and `hive.bodies` unchanged; `python -m unittest tests.test_t2_4b_bodies` still passes.
-- Proof: `absent: scripts/bee.gd :: func _put_down_body(`
-- Next after: T2-7b -- the tier-2 price sweep T2-7 deferred
-```
+T2-13 shipped 2026-10-20; its specification is `plans/archive/T2-13_2026-10-20.md`.
 
 ## Not in the queue, and why
 
