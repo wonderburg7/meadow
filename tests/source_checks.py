@@ -3414,6 +3414,70 @@ def check_typed_files(problems):
                 % (rel, number, text))
 
 
+# --- CQ-M1: hand-copied lists nothing else compares ---------------
+## scenario_presets.gd's BASELINE copies four GameConfig defaults by hand,
+## and its note says "Standard" must stay unchanged. A drifted copy changes
+## what Standard means without any failing run.
+def check_baseline_matches_config(problems, presets_src, config_src):
+    """BASELINE's numbers must equal the `var <name>: float = <value>`
+    defaults in game_config.gd."""
+    block = _dict_block(presets_src, "BASELINE")
+    if block is None:
+        problems.append("scenario_presets.gd: const BASELINE not found")
+        return
+    entries = re.findall(r'"(\w+)"\s*:\s*(-?\d+(?:\.\d+)?)', block)
+    if not entries:
+        problems.append("scenario_presets.gd: BASELINE has no numeric entries")
+    for key, value in entries:
+        match = re.search(
+            r"^var %s\s*:\s*float\s*=\s*(-?\d+(?:\.\d+)?)" % key, config_src, re.M)
+        if match is None:
+            problems.append(
+                "game_config.gd: no float default for BASELINE key %s" % key)
+        elif float(match.group(1)) != float(value):
+            problems.append(
+                "scenario_presets.gd: BASELINE %s is %s but game_config.gd "
+                "defaults it to %s" % (key, value, match.group(1)))
+
+
+## Session-owned settings deliberately left out of the player profile, each
+## with its reason. Any other SESSION_KEYS entry must be in PREFERENCE_KEYS,
+## or it will not survive a restart.
+PREFERENCE_KEY_EXCEPTIONS = {
+    "show_crab_spiders": "a named gap in the profile (CQ-M1)",
+}
+
+
+def check_preference_keys_cover_session(problems, profile_src, settings_src):
+    """PREFERENCE_KEYS (player_profile.gd) must hold every SESSION_KEYS
+    entry (settings_catalogue.gd) except the named exceptions."""
+    prefs_text = catalogue_block(profile_src, "PREFERENCE_KEYS")
+    session_text = catalogue_block(settings_src, "SESSION_KEYS")
+    if prefs_text is None:
+        problems.append("player_profile.gd: const PREFERENCE_KEYS not found")
+        return
+    if session_text is None:
+        problems.append("settings_catalogue.gd: const SESSION_KEYS not found")
+        return
+    prefs = set(re.findall(r'"(\w+)"', prefs_text))
+    for key in re.findall(r'"(\w+)"', session_text):
+        if key in prefs or key in PREFERENCE_KEY_EXCEPTIONS:
+            continue
+        problems.append(
+            "player_profile.gd: PREFERENCE_KEYS lacks %s, which SESSION_KEYS "
+            "in settings_catalogue.gd lists" % key)
+
+
+def check_hand_copied_lists(problems):
+    """CQ-M1: both hand-copied lists, checked against the real files."""
+    def read(name):
+        return open(os.path.join(ROOT, name), encoding="utf-8").read()
+    check_baseline_matches_config(
+        problems, read("scenario_presets.gd"), read("game_config.gd"))
+    check_preference_keys_cover_session(
+        problems, read("player_profile.gd"), read("settings_catalogue.gd"))
+
+
 def main():
     files = sorted(glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True))
     if not files:
@@ -3476,6 +3540,7 @@ def main():
     check_test_modules_are_run(problems)
     check_scenario_condition_keys(problems)
     check_asserting_scenarios_are_run(problems)
+    check_hand_copied_lists(problems)
     check_typed_files(problems)
 
     if problems:
