@@ -45,7 +45,7 @@ class CellRimStatic(unittest.TestCase):
         cell = read("scripts/hive_cell.gd")
         body = cell[cell.index("func _set_outline_points_cup"):]
         body = body[:body.index("\n\n")]
-        self.assertIn("for p in EMPTY_RIM:", body)
+        self.assertIn("for p: Vector2 in EMPTY_RIM:", body)
         self.assertIn("_silhouette_point_to_local(p)", body)
 
 

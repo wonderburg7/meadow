@@ -68,7 +68,7 @@ static func fill_frame(levels: Array, fraction: float) -> int:
 	if fraction <= 0.0:
 		return 0
 	var percent: float = fraction * 100.0
-	for i in levels.size():
+	for i: int in levels.size():
 		if percent <= float(levels[i]) + 0.0001:
 			return i + 1
 	return levels.size()
@@ -551,7 +551,7 @@ func set_zone_glow(value: bool, glow_colour: Color = Color.WHITE, tag: String = 
 func _set_outline_points(line: Line2D, size: float) -> void:
 	line.clear_points()
 	var pts := Shapes.hexagon_points(size, squashed)
-	for p in pts:
+	for p: Variant in pts:
 		line.add_point(p)
 	line.add_point(pts[0])   # close the loop
 
@@ -574,15 +574,15 @@ func _set_outline_points_cup(line: Line2D, size: float) -> void:
 	var ring_scale := size / cell_size
 	var local: Array = []
 	var centre := Vector2.ZERO
-	for p in EMPTY_RIM:
+	for p: Vector2 in EMPTY_RIM:
 		var q := _silhouette_point_to_local(p)
 		local.append(q)
 		centre += q
 	centre /= float(local.size())
 	var pts: Array = []
-	for q in local:
+	for q: Variant in local:
 		pts.append(centre + (q - centre) * ring_scale)
-	for p in pts:
+	for p: Variant in pts:
 		line.add_point(p)
 	line.add_point(pts[0])   # close the loop
 
@@ -729,25 +729,25 @@ func bump_display_epoch() -> void:
 ## six are already in use. Asking twice just returns the slot the bee
 ## already holds.
 func claim_slot(bee: Node2D) -> int:
-	for i in range(6):
+	for i: int in range(6):
 		if slot_users[i] == bee:
 			return i
-	for i in range(6):
-		var holder = slot_users[i]
+	for i: int in range(6):
+		var holder: Variant = slot_users[i]
 		if holder == null or not is_instance_valid(holder):
 			slot_users[i] = bee
 			return i
 	return -1
 
 func release_slot(bee: Node2D) -> void:
-	for i in range(6):
+	for i: int in range(6):
 		if slot_users[i] == bee:
 			slot_users[i] = null
 
 ## Whether another bee can reserve one of this cell's walls. Invalid
 ## holders are treated as free here, just as `claim_slot` treats them.
 func has_free_slot() -> bool:
-	for holder in slot_users:
+	for holder: Variant in slot_users:
 		if holder == null or not is_instance_valid(holder):
 			return true
 	return false

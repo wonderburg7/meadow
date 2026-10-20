@@ -45,7 +45,7 @@ func _process(_delta: float) -> bool:
 func _run() -> void:
 	var session: Node = root.get_node("Session")
 	var config: Node = root.get_node("GameConfig")
-	var Flower = load("res://scripts/flower.gd")
+	var Flower: GDScript = load("res://scripts/flower.gd")
 	config.seasons_on = true
 	config.out_of_season_strength = 0.2
 	var spd: float = float(config.seconds_per_day)
@@ -53,15 +53,15 @@ func _run() -> void:
 	_check(flowers.size() > 0, "level %d has no flowers" % LEVEL)
 	if flowers.is_empty():
 		return
-	var flower = flowers[0]
-	var season_season = _main.season
+	var flower: Variant = flowers[0]
+	var season_season: Node2D = _main.season
 
 	season_season._update_regrowth()
 	_check(Flower.regrowth_factor == 1.0, "regrowth factor is %f before any winter" % Flower.regrowth_factor)
 
 	var winter_start: float = config.season_length_days + 1.0
 	session.sim_time = (winter_start - 1.0) * spd
-	for f in flowers:
+	for f: Variant in flowers:
 		f._nectar_amount = f.nectar_capacity
 		f._pollen_amount = f.pollen_capacity
 		f._last_recharge_update = session.sim_time
@@ -71,7 +71,7 @@ func _run() -> void:
 	season_season._resolve_winter(config.winter_length_days)
 
 	_check(_main.get_tree().get_nodes_in_group("flowers").size() == count_before, "the flower count changed")
-	for f in flowers:
+	for f: Variant in flowers:
 		if f._nectar_amount != 0.0 or f._pollen_amount != 0.0 or f._last_recharge_update != session.sim_time:
 			_check(false, "a flower did not die back cleanly (nectar %f, pollen %f)" % [f._nectar_amount, f._pollen_amount])
 			break
@@ -101,6 +101,6 @@ func _report() -> void:
 		print("COL8 PASS")
 		quit(0)
 		return
-	for line in _failures:
+	for line: String in _failures:
 		print("COL8 FAIL: ", line)
 	quit(1)

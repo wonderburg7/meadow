@@ -96,7 +96,7 @@ func record_visit(bee: Node2D, flower: Node2D, resource_type: String) -> void:
 	# Checked untyped first: the last flower may have died of age since,
 	# and a freed instance cannot be assigned to a typed variable. A dead
 	# flower's pollen is no previous flower at all.
-	var last = bee.trip_last_flower
+	var last: Variant = bee.trip_last_flower
 	var previous: Node2D = last if is_instance_valid(last) else null
 	bee.trip_last_flower = flower
 	if previous == null or previous == flower:
@@ -122,7 +122,7 @@ func record_visit(bee: Node2D, flower: Node2D, resource_type: String) -> void:
 ## (world_building.gd::move_bee_into_hive reparents her).
 func groom(bee: Node2D) -> void:
 	# Untyped, for the same reason as record_visit: it may have died.
-	var last = bee.trip_last_flower
+	var last: Variant = bee.trip_last_flower
 	if last == null:
 		return
 	bee.trip_last_flower = null
@@ -249,7 +249,7 @@ func save_data() -> Dictionary:
 
 ## A record that is missing, or not a dictionary, restores zero -- how every
 ## save from before PP-1 loads.
-func restore(data) -> void:
+func restore(data: Variant) -> void:
 	points = 0
 	contribution = 0
 	if typeof(data) != TYPE_DICTIONARY:
@@ -268,7 +268,7 @@ func seed_save_data() -> Dictionary:
 
 ## A record that is missing, or not a dictionary -- every save from before
 ## PP-4 -- restores no seed counts and no gaps waiting.
-func restore_seed(data) -> void:
+func restore_seed(data: Variant) -> void:
 	seed_counts = {}
 	spring_counts = {}
 	spring_of = 0.0
@@ -278,18 +278,18 @@ func restore_seed(data) -> void:
 	seed_counts = _restore_counts(data.get(SEED_COUNTS))
 	spring_counts = _restore_counts(data.get(SPRING_COUNTS))
 	spring_of = maxf(0.0, float(data.get(SPRING_OF, 0.0)))
-	var saved = data.get(GAPS)
+	var saved: Variant = data.get(GAPS)
 	if typeof(saved) == TYPE_ARRAY:
-		for entry in saved:
+		for entry: Variant in saved:
 			if typeof(entry) == TYPE_ARRAY and entry.size() == 3:
 				gaps.append([maxi(EMPTY_GAP, int(entry[0])), float(entry[1]), float(entry[2])])
 
 ## JSON reads every number back as a float; the counts are whole.
-static func _restore_counts(data) -> Dictionary:
+static func _restore_counts(data: Variant) -> Dictionary:
 	var out: Dictionary = {}
 	if typeof(data) != TYPE_DICTIONARY:
 		return out
-	for species in data:
+	for species: Variant in data:
 		var count := int(data[species])
 		if count > 0:
 			out[str(species)] = count

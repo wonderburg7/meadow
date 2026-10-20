@@ -22,7 +22,7 @@ static func _start_mining(bee: Node2D, block: Node2D, mark: bool = false) -> boo
 
 
 static func _next_queued_block(bee: Node2D) -> bool:
-	var block = bee._next_queued_block()
+	var block: Node2D = bee._next_queued_block()
 	if block != null and bee.hive.mine_stand_hex(block) == null:
 		block = null
 	return _start_mining(bee, block)

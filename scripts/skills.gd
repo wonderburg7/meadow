@@ -619,7 +619,7 @@ const SKILLS := [
 # --- lookups ------------------------------------------------------
 
 static func entry(skill_id: String) -> Dictionary:
-	for skill in SKILLS:
+	for skill: Dictionary in SKILLS:
 		if skill.id == skill_id:
 			return skill
 	return {}
@@ -628,7 +628,7 @@ static func has(skill_id: String) -> bool:
 	return not entry(skill_id).is_empty()
 
 static func ids() -> Array:
-	return SKILLS.map(func(s): return s.id)
+	return SKILLS.map(func(s: Dictionary) -> Variant: return s.id)
 
 static func label_for(skill_id: String) -> String:
 	return entry(skill_id).get("name", skill_id)
@@ -657,24 +657,24 @@ static func is_built(skill_id: String) -> bool:
 
 ## Every purchasable node in one sector, in catalogue (tier) order.
 static func for_sector(sector_key: String) -> Array:
-	return SKILLS.filter(func(s): return s.sector == sector_key and not s.baseline)
+	return SKILLS.filter(func(s: Dictionary) -> bool: return s.sector == sector_key and not s.baseline)
 
 static func for_sector_tier(sector_key: String, tier: int) -> Array:
-	return SKILLS.filter(func(s): return s.sector == sector_key and s.tier == tier)
+	return SKILLS.filter(func(s: Dictionary) -> bool: return s.sector == sector_key and s.tier == tier)
 
 ## Section 5.7's always-on capabilities, which the resolver will treat as
 ## owned from the first frame of every run.
 static func baseline_ids() -> Array:
-	return SKILLS.filter(func(s): return s.baseline).map(func(s): return s.id)
+	return SKILLS.filter(func(s: Dictionary) -> Variant: return s.baseline).map(func(s: Dictionary) -> Variant: return s.id)
 
 static func sector_keys() -> Array:
-	return SECTORS.map(func(s): return s.key)
+	return SECTORS.map(func(s: Dictionary) -> Variant: return s.key)
 
 ## A sector's position in shapes.gd's axial direction order, which is
 ## also the direction its wedge points along (section 8.2). -1 if the key
 ## names no sector.
 static func sector_index(sector_key: String) -> int:
-	for i in range(SECTORS.size()):
+	for i: int in range(SECTORS.size()):
 		if SECTORS[i].key == sector_key:
 			return i
 	return -1

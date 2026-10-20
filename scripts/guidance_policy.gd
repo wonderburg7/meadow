@@ -13,21 +13,21 @@ func update_facts(snapshot: Dictionary) -> void:
 	facts = snapshot.duplicate(true)
 
 func eligible_id() -> String:
-	for fact_id in Catalogue.supported_ids():
+	for fact_id: String in Catalogue.supported_ids():
 		if int(facts.get(fact_id, 0)) > 0 and not _shown.has(fact_id):
 			return fact_id
 	return ""
 
 func current_entries() -> Array[Dictionary]:
 	var entries: Array[Dictionary] = []
-	for fact_id in Catalogue.supported_ids():
+	for fact_id: String in Catalogue.supported_ids():
 		if int(facts.get(fact_id, 0)) > 0:
 			entries.append(Catalogue.explanation(fact_id, facts))
 	return entries
 
 func shown_entries() -> Array[Dictionary]:
 	var entries: Array[Dictionary] = []
-	for fact_id in _order:
+	for fact_id: Variant in _order:
 		entries.append(_shown[fact_id].duplicate(true))
 	return entries
 
@@ -42,13 +42,13 @@ func save_data() -> Dictionary:
 func restore(data: Dictionary) -> void:
 	_shown.clear()
 	_order.clear()
-	var saved_shown = data.get("shown", {})
-	var saved_order = data.get("order", [])
+	var saved_shown: Variant = data.get("shown", {})
+	var saved_order: Variant = data.get("order", [])
 	if typeof(saved_shown) != TYPE_DICTIONARY or typeof(saved_order) != TYPE_ARRAY:
 		return
-	for value in saved_order:
+	for value: Variant in saved_order:
 		var fact_id := str(value)
-		var entry = saved_shown.get(fact_id)
+		var entry: Variant = saved_shown.get(fact_id)
 		if fact_id.is_empty() or _shown.has(fact_id) or typeof(entry) != TYPE_DICTIONARY:
 			continue
 		_shown[fact_id] = entry.duplicate(true)

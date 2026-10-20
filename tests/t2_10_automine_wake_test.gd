@@ -28,7 +28,7 @@ func _process(_delta: float) -> bool:
 			print("T2_10 PASS")
 			quit(0)
 		else:
-			for f in _failures:
+			for f: String in _failures:
 				print("T2_10 FAIL ", f)
 			quit(1)
 		return true
@@ -50,14 +50,14 @@ func _boot() -> void:
 
 
 func _run() -> void:
-	var progression = _session.progression
+	var progression: Object = _session.progression
 	if progression == null:
 		_failures.append("the run has no progression")
 		return
 	var roles: GDScript = load("res://scripts/roles.gd")
-	var Bee = _main.Bee
-	var hive = _main.hive
-	for r in [Bee.Role.MINER, Bee.Role.BUILDER]:
+	var Bee: GDScript = _main.Bee
+	var hive: Polygon2D = _main.hive
+	for r: int in [Bee.Role.MINER, Bee.Role.BUILDER]:
 		var skill: String = roles.skill_for(r)
 		if skill != "":
 			progression.grant_temporary(skill)

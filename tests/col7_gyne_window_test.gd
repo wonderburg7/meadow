@@ -90,8 +90,8 @@ func _start_ticks() -> void:
 		"genetic_points_per_gyne is %s, not 10" % _config.genetic_points_per_gyne)
 	_check(_main.season.gyne_lost.is_connected(_main.year_winter._on_gyne_lost),
 		"season.gd's gyne_lost does not reach year_winter.gd's notice")
-	_main.season.gyne_released.connect(func(_total): _released_signals += 1)
-	_main.season.gyne_lost.connect(func(): _lost_signals += 1)
+	_main.season.gyne_released.connect(func(_total: int) -> void: _released_signals += 1)
+	_main.season.gyne_lost.connect(func() -> void: _lost_signals += 1)
 	_jump_to_day(LATE_DAY)
 	_ticked = _spawn_gyne()
 	if _ticked == null:
@@ -127,7 +127,7 @@ func _watch_ticks() -> void:
 
 
 func _send_gynes() -> void:
-	var milestones = _main.colony_milestones
+	var milestones: RefCounted = _main.colony_milestones
 	_session.starting_level = COLONY_RUN_LEVEL
 	_check(milestones.applies(), "the Colony Run's rules do not apply on level %d" % COLONY_RUN_LEVEL)
 	# The win's other conditions hold from here on: a winter has come and
@@ -212,7 +212,7 @@ func _press_send(gyne: Node2D) -> void:
 
 ## The points go into the save record beside the days, survive a JSON
 ## round trip, and a record from before them restores 0.
-func _check_points_saved(milestones) -> void:
+func _check_points_saved(milestones: RefCounted) -> void:
 	var saved: Dictionary = JSON.parse_string(JSON.stringify(milestones.save_data()))
 	_check(int(saved.get("genetic_points", -1)) == 10,
 		"the saved record holds genetic_points %s, not 10" % saved.get("genetic_points"))
@@ -253,7 +253,7 @@ func _find_button(node: Node, text: String) -> Button:
 		return null
 	if node is Button and node.text == text:
 		return node
-	for child in node.get_children():
+	for child: Node in node.get_children():
 		var found: Button = _find_button(child, text)
 		if found != null:
 			return found
@@ -276,6 +276,6 @@ func _report() -> void:
 		print("COL7 PASS")
 		quit(0)
 	else:
-		for line in _failures:
+		for line: String in _failures:
 			print("COL7 FAIL: " + line)
 		quit(1)
