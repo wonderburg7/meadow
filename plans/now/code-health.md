@@ -102,7 +102,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-L1 | gdlint in verify with Dave's thresholds | `gdlintrc`, `tools/gdscript_style.py`, `tools/verify.ps1`, 13 hit sites | after RR-10 | medium |
 | CQ-L2 | every tool that reads GDScript as text survives `gdformat` | `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, tests | after CQ-L1 | medium |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T1 | rules, simulation and gd tests typed; warning on | 25 scripts, 16 tests, `project.godot`, `tests/source_checks.py` | yes | low |
 | CQ-T2 | run, world and save glue typed | 20 scripts | after CQ-T1 | low |
 | CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot` | after CQ-T2 | low |
 | CQ-S0 | golden-save round-trip harness | `tests/save_roundtrip_test.gd`, fixtures | yes | high |
@@ -296,36 +295,7 @@ restyled.
 - Next after: CQ-L2
 ```
 
-## CQ-T1 -- rules, simulation and gd tests typed, with the warning on
-
-**True now.** `project.godot` has no `[debug]` section, and these files hold 206
-untyped declarations:
-
-- Scripts (140): `conditions`, `year_winter`, `skills`, `season`, `availability`,
-  `resources`, `adaptations`, `colony_diagnostics`, `pollination`, `bee_foraging`,
-  `bee_nursery`, `bee_honey`, `colony_milestones`, `guidance_policy`, `foraging_stats`,
-  `bee`, `run_availability`, `progression`, `features`, `bee_building`, `rival_hive`,
-  `hive_cell`, `flower`, `bee_mining`, `bee_egg_laying`.
-- Tests (66): the 16 `tests/*.gd` files in the block.
-
-`hive.gd` is deliberately left to CQ-T2, because RR-10 holds it.
-
-**When done:**
-
-- `[debug] gdscript/warnings/untyped_declaration=1` is set.
-- Every listed file is clean under the typing rules above.
-- `tests/source_checks.py` gains a `TYPED_FILES` ratchet. It is a regex counter in the
-  style of the planning count; each slice adds its files to the set, and the set must
-  stay at zero untyped declarations.
-
-```queue
-**[Claude] CQ-T1 -- rules, simulation and gd tests typed, with the warning on**
-- Plan: `plans/now/code-health.md` -- "CQ-T1 -- rules, simulation and gd tests typed, with the warning on"
-- Files: `project.godot`, `tests/source_checks.py`, `tests/test_source_checks.py`, `scripts/conditions.gd`, `scripts/year_winter.gd`, `scripts/skills.gd`, `scripts/season.gd`, `scripts/availability.gd`, `scripts/resources.gd`, `scripts/adaptations.gd`, `scripts/colony_diagnostics.gd`, `scripts/pollination.gd`, `scripts/bee_foraging.gd`, `scripts/bee_nursery.gd`, `scripts/bee_honey.gd`, `scripts/colony_milestones.gd`, `scripts/guidance_policy.gd`, `scripts/foraging_stats.gd`, `scripts/bee.gd`, `scripts/run_availability.gd`, `scripts/progression.gd`, `scripts/features.gd`, `scripts/bee_building.gd`, `scripts/rival_hive.gd`, `scripts/hive_cell.gd`, `scripts/flower.gd`, `scripts/bee_mining.gd`, `scripts/bee_egg_laying.gd`, `tests/t2_4b_bodies_test.gd`, `tests/t2_11_comb_cadence_test.gd`, `tests/pp5_priority_cells_test.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/sp11_cell_rim_test.gd`, `tests/col7_gyne_window_test.gd`, `tests/rr9_winter_ages_nothing_test.gd`, `tests/t2_10_automine_wake_test.gd`, `tests/si2_exact_rollback_test.gd`, `tests/col8_winter_dieback_test.gd`, `tests/t3_1_weighted_choice_test.gd`, `tests/sp10_soil_depth_test.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/bs14_saved_skill_policy_test.gd`, `tests/rr2_boot_saves_test.gd`, `tests/gp4_problem_strip_test.gd`, `FUNCTION_MAP.md`
-- Check: the `TYPED_FILES` source check reports zero untyped declarations in every listed script and test; `python tools/gdscript_warnings.py` on the listed scripts prints no warning; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` matches; `.\tools\verify.ps1` is green
-- Proof: `absent: project.godot :: untyped_declaration`
-- Next after: CQ-T2
-```
+CQ-T1 shipped 2026-10-21; its specification is `plans/archive/CQ-T1_2026-10-21.md`.
 
 ## CQ-S0 -- golden-save round-trip harness
 
