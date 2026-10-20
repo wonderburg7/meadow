@@ -36,7 +36,6 @@ What the open slices build on:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | T2-14 | a comb worker's idle reason asks whether there is room to build without starting a site (found by T2-11) | `scripts/bee.gd`, `scripts/hive.gd`, tests | no -- after T2-13 (`scripts/bee.gd`) and once RR-10 (Codex lane) releases `scripts/hive.gd` | low |
-| T2-12 | Dig on its own offered only once Automation is owned | `scripts/hud.gd`, tests | landed 20 Oct 2026 | low |
 | T2-13 | a bee whose role changes while it carries a body puts the body down (gameplay review, 15 Oct 2026) | `scripts/bee.gd`, tests | yes (T2-10 landed 16 Oct 2026) | low |
 | T2-7b | The tier-2 price sweep T2-7 deferred: tier-2 costs set so the arc's first tier-2 purchase lands around day 5 | `scripts/skills.gd`, `plans/design/progression.md`, tests; specified when AR-4 lands | no -- after AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker | medium |
 
@@ -109,37 +108,7 @@ passes.
 - Next after: T2-7b -- the tier-2 price sweep T2-7 deferred
 ```
 
-## T2-12 -- Dig on its own is offered only once Automation is owned
-
-Level: low. Dave, 14 Oct 2026: hide the toggle until Automation is owned,
-as Fermenting waits for Bee bread. **Gate** (cleared): FC-2 released
-`scripts/hud.gd` on 17 Oct 2026.
-
-**True now.** `hud.gd`'s mode column skips a mode whose `mode_query`
-fails only for Honey and Comb worker; its comment says the Miner's toggle
-"has shown regardless" since T2-2. `hud.gd::_fill_hatch_menu` filters
-options by stage gate only, so "Miner — Dig on its own" is offered without
-Automation.
-
-**True afterwards.** The mode-column condition also covers
-`Roles.MINER`, with the comment rewritten to say all three wait for
-their skill. `_fill_hatch_menu` also skips an option whose mode fails
-`Availability.mode_query(role_value, mode, null, Session.progression)`,
-which hides an unowned Comb worker Stocking option the same way.
-Levels that start miners with `automine` on (`levels.gd`) are unchanged:
-T2-10's idle reason explains them.
-
-**Hands-on check on landing** (move from `checks/blocked.md` to ready):
-C-136.
-
-```queue
-**[Claude] T2-12 -- Dig on its own is offered only once Automation is owned**
-- Plan: `plans/now/tier-two.md` -- "T2-12 -- Dig on its own is offered only once Automation is owned"
-- Files: `scripts/hud.gd`, `tests/t2_12_automine_offer_test.gd`, `tests/test_t2_12_automine_offer.py`
-- Check: `python -m unittest tests.test_t2_12_automine_offer` passes: without Automation a selected miner's Job panel shows no "Dig on its own" toggle and a cell's raise menu offers no "Miner — Dig on its own"; with Automation owned both are offered.
-- Proof: `present: scripts/hud.gd :: the Miner's "Dig on its own" has shown regardless`
-- Next after: T2-7b -- the tier-2 price sweep T2-7 deferred
-```
+T2-12 shipped 2026-10-20; its specification is `plans/archive/T2-12_2026-10-20.md`.
 
 ## T2-13 -- a bee whose role changes while it carries a body puts the body down
 
