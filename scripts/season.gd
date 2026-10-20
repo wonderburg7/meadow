@@ -151,7 +151,7 @@ func _advance_winter() -> void:
 ## it), and winter_survived fires once with the bees the bill took.
 func _resolve_winter(days: float) -> void:
 	var bees: Array = []
-	for bee in world.get_tree().get_nodes_in_group("bees"):
+	for bee: Node in world.get_tree().get_nodes_in_group("bees"):
 		if is_instance_valid(bee) and not bee.is_dying:
 			bees.append(bee)
 	var held: float = winter_stores()
@@ -165,19 +165,19 @@ func _resolve_winter(days: float) -> void:
 	# inside -- the entrance she would have come in by -- since a meadow
 	# position means nothing in the hive's space.
 	var inside_entrance: Vector2 = world.hive.nearest_walkable_point(world.hive_entrance_inside())
-	for bee in lost:
+	for bee: Variant in lost:
 		if is_instance_valid(bee) and not bee.is_dying and not bee._is_inside_hive():
 			world.hive.add_body(inside_entrance, Session.sim_time)
 		BeeSurvival.die(bee, "starvation")
 	# After the bill, before the clock moves (COL-8): the plants die back, and
 	# their recharge clocks restart at spring so the skipped days credit nothing.
 	var spring_time: float = Session.sim_time + days * GameConfig.seconds_per_day
-	for flower in world.get_tree().get_nodes_in_group("flowers"):
+	for flower: Node in world.get_tree().get_nodes_in_group("flowers"):
 		if is_instance_valid(flower):
 			flower.die_back(spring_time)
 	# Nothing ferments over winter (.claude/rules/simulation.md): preserve
 	# absolute cell stamps while the skipped time carries the run to spring.
-	for cell in world.hive.cells:
+	for cell: Variant in world.hive.cells:
 		if not is_instance_valid(cell):
 			continue
 		if cell.nectar_since >= 0.0:
@@ -260,19 +260,19 @@ func _winter_losses(bees: Array, held: float, days: float) -> Array:
 	var lost: Array = []
 	if held >= winter_bill(bees.size(), days):
 		return lost
-	var drones: Array = bees.filter(func(bee): return bee.is_drone and not bee.is_queen)
-	var workers: Array = bees.filter(func(bee): return not bee.is_drone and not bee.is_gyne and not bee.is_queen)
-	var gynes: Array = bees.filter(func(bee): return bee.is_gyne and not bee.is_queen)
+	var drones: Array = bees.filter(func(bee: Variant) -> bool: return bee.is_drone and not bee.is_queen)
+	var workers: Array = bees.filter(func(bee: Variant) -> bool: return not bee.is_drone and not bee.is_gyne and not bee.is_queen)
+	var gynes: Array = bees.filter(func(bee: Variant) -> bool: return bee.is_gyne and not bee.is_queen)
 	var survivors: int = bees.size()
-	for group in [drones, workers, gynes]:
-		group.sort_custom(func(a, b): return a.age_seconds > b.age_seconds)
-		for bee in group:
+	for group: Array in [drones, workers, gynes]:
+		group.sort_custom(func(a: Variant, b: Variant) -> bool: return a.age_seconds > b.age_seconds)
+		for bee: Variant in group:
 			if held >= winter_bill(survivors, days):
 				return lost
 			lost.append(bee)
 			survivors -= 1
 	if held < winter_bill(1, days):
-		for bee in bees:
+		for bee: Variant in bees:
 			if bee.is_queen:
 				lost.append(bee)
 	return lost
@@ -287,9 +287,9 @@ func _pay_from_stores(energy: float) -> void:
 	if energy <= 0.0:
 		return
 	var owed: float = energy - world.hive.take_energy(energy)
-	for key in Resources.energy_keys_by_priority():
+	for key: String in Resources.energy_keys_by_priority():
 		var factor: float = maxf(0.001, Resources.energy_factor_for(key))
-		for cell in world.hive.cells:
+		for cell: Variant in world.hive.cells:
 			if owed <= 0.0:
 				break
 			if not is_instance_valid(cell) or cell.can_withdraw() or cell.content_type != key:
@@ -369,7 +369,7 @@ func nuptial_mating_chance() -> float:
 ## a gyne (not one who has become the queen) with at least
 ## gyne_release_energy of a full crop in her to found a colony on. hud.gd
 ## shows the reason in her readout and greys out her send button with it.
-func gyne_not_ready_reason(bee) -> String:
+func gyne_not_ready_reason(bee: Variant) -> String:
 	if bee == null or not is_instance_valid(bee) or not bee.is_gyne or bee.is_queen or bee.is_dying:
 		return "Only a gyne can be sent to found a colony."
 	if bee.energy < GameConfig.energy_capacity * GameConfig.gyne_release_energy:
@@ -387,7 +387,7 @@ func genetic_points_today() -> int:
 ## Sends `bee` to found a colony, if she is ready, and returns whether she
 ## left. Runs on the press of her panel's "Send her to found a colony"
 ## button, never on a tick.
-func send_gyne(bee) -> bool:
+func send_gyne(bee: Variant) -> bool:
 	if gyne_not_ready_reason(bee) != "":
 		return false
 	var found_a_mate: bool = mating_curve() > 0.0
@@ -398,7 +398,7 @@ func send_gyne(bee) -> bool:
 		return true
 	# On the record before the signal, so the released notice and the
 	# milestone and victory hooks it drives read the new total.
-	var milestones = world.get("colony_milestones") if world != null and is_instance_valid(world) else null
+	var milestones: Variant = world.get("colony_milestones") if world != null and is_instance_valid(world) else null
 	if milestones != null:
 		milestones.add_genetic_points(points)
 	Session.gynes_released += 1

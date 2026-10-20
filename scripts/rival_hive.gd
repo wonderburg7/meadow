@@ -22,7 +22,6 @@ extends Node2D
 
 const Shapes = preload("res://scripts/shapes.gd")
 const SpriteCatalogue = preload("res://scripts/sprite_catalogue.gd")
-const PixelSprite = preload("res://scripts/pixel_sprite.gd")
 
 ## The ruin's tint: the darker skep goes grey when the colony dies out.
 const RUIN_TINT := Color(0.55, 0.55, 0.55)
@@ -89,7 +88,7 @@ func _ready() -> void:
 	nectar = 120.0
 	pollen = 40.0
 
-	for i in range(SHOWN_FORAGERS):
+	for i: int in range(SHOWN_FORAGERS):
 		foragers.append(_make_forager())
 
 func save_data() -> Dictionary:
@@ -114,7 +113,7 @@ func restore(data: Dictionary) -> void:
 	elif not alive:
 		alive = true
 		skep.modulate = Color.WHITE
-		for i in range(SHOWN_FORAGERS):
+		for i: int in range(SHOWN_FORAGERS):
 			foragers.append(_make_forager())
 		_update_label()
 	else:
@@ -221,7 +220,7 @@ func _local_forage_richness() -> float:
 		return 1.0
 	var total := 0.0
 	var counted := 0
-	for flower in world.get_tree().get_nodes_in_group("flowers"):
+	for flower: Node in world.get_tree().get_nodes_in_group("flowers"):
 		if not is_instance_valid(flower):
 			continue
 		if flower.position.distance_to(position) > GameConfig.rival_forage_range:
@@ -240,7 +239,7 @@ func _collapse() -> void:
 	population = 0.0
 	skep.modulate = RUIN_TINT
 	label.text = "Rival hive — collapsed"
-	for forager in foragers:
+	for forager: Variant in foragers:
 		if is_instance_valid(forager.node):
 			forager.node.queue_free()
 	foragers.clear()
@@ -252,7 +251,7 @@ func _collapse() -> void:
 ## number in the corner.
 func _move_foragers(delta: float) -> void:
 	var showing: int = clampi(int(population * forager_share / 3.0), 1, SHOWN_FORAGERS)
-	for i in range(foragers.size()):
+	for i: int in range(foragers.size()):
 		var forager: Dictionary = foragers[i]
 		if not is_instance_valid(forager.node):
 			continue
@@ -292,8 +291,8 @@ func _pick_flower() -> Node2D:
 	# Sampled rather than exhaustively searched -- with 250 flowers and
 	# eight foragers re-picking constantly, a full scan each time is real
 	# cost for no visible benefit.
-	for attempt in range(12):
-		var flower = flowers[randi() % flowers.size()]
+	for attempt: int in range(12):
+		var flower: Variant = flowers[randi() % flowers.size()]
 		if not is_instance_valid(flower):
 			continue
 		var distance: float = flower.position.distance_to(position)

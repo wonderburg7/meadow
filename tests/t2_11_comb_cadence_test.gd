@@ -68,7 +68,7 @@ var _quiet_found := 0
 
 
 static func _int_arg(prefix: String, fallback: int) -> int:
-	for arg in OS.get_cmdline_user_args():
+	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with(prefix):
 			return maxi(0, int(arg.trim_prefix(prefix)))
 	return fallback
@@ -106,14 +106,14 @@ func _boot() -> void:
 
 
 func _setup() -> void:
-	var progression = _session.progression
+	var progression: Object = _session.progression
 	if progression == null:
 		_failures.append("the run has no progression")
 		_phase = "done"
 		return
 	var roles: GDScript = load("res://scripts/roles.gd")
-	var Bee = _main.Bee
-	for r in [Bee.Role.MINER, Bee.Role.BUILDER]:
+	var Bee: GDScript = _main.Bee
+	for r: int in [Bee.Role.MINER, Bee.Role.BUILDER]:
 		var skill: String = roles.skill_for(r)
 		if skill != "":
 			progression.grant_temporary(skill)
@@ -125,12 +125,12 @@ func _setup() -> void:
 	progression._behaviour_cache.clear()
 	_main.Availability.invalidate()
 
-	for i in 2:
+	for i: int in 2:
 		var builder: Node2D = _main.world_building._spawn_indoor_bee(Bee.Role.BUILDER)
 		builder.architect_mode = "build"
 		builder.state = Bee.State.BUILD_IDLE
 		_workers.append(builder)
-	for i in 2:
+	for i: int in 2:
 		var miner: Node2D = _main.world_building._spawn_indoor_bee(Bee.Role.MINER)
 		miner.automine = true
 		miner.mine_queue.clear()
@@ -139,10 +139,10 @@ func _setup() -> void:
 	var everyone: Array = _workers + _miners
 	if _main.queen != null and is_instance_valid(_main.queen):
 		everyone.append(_main.queen)
-	for b in everyone:
+	for b: Variant in everyone:
 		b.energy_immune = true
 		b.age_seconds = 0.0
-	for b in _workers:
+	for b: Variant in _workers:
 		_track[b.bee_id] = {
 			"idle_since": -1.0, "idle_last": -1.0, "idle_snapshot": {},
 			"last_built": float(_session.sim_time), "quiet_states": {},
@@ -169,8 +169,8 @@ func _step() -> void:
 	var dt: float = 0.0 if _last_now < 0.0 else now - _last_now
 	_last_now = now
 	var elapsed: float = now - _start_time
-	var Bee = _main.Bee
-	for b in _workers:
+	var Bee: GDScript = _main.Bee
+	for b: Variant in _workers:
 		if not is_instance_valid(b) or b.is_dying:
 			continue
 		var t: Dictionary = _track[b.bee_id]
@@ -206,7 +206,7 @@ func _step() -> void:
 		if _select_from_day > 0 and _last_day + 1 == _select_from_day and _last_day < _days:
 			_select(_workers[0])
 	if elapsed >= float(_days) * float(_config.seconds_per_day):
-		for b in _workers:
+		for b: Variant in _workers:
 			if is_instance_valid(b):
 				var t: Dictionary = _track[b.bee_id]
 				if t.idle_since >= 0.0:
@@ -220,7 +220,7 @@ func _step() -> void:
 ## _set_selection): the HUD's selection panel then refreshes on its own
 ## cadence, reading her idle_reason().
 func _select(b: Node2D) -> void:
-	for other in _main.selected_bees:
+	for other: Variant in _main.selected_bees:
 		if is_instance_valid(other):
 			other.set_selected(false)
 	_main.selected_bees.clear()
@@ -264,7 +264,7 @@ func _close_quiet(b: Node2D, t: Dictionary, now: float) -> void:
 
 func _tally(d: Dictionary, fmt: String) -> String:
 	var parts: PackedStringArray = PackedStringArray()
-	for k in d:
+	for k: Variant in d:
 		if float(d[k]) >= 0.5:
 			parts.append(fmt % [k, d[k]])
 	return ", ".join(parts) if not parts.is_empty() else "none"
@@ -274,13 +274,13 @@ func _tally(d: Dictionary, fmt: String) -> String:
 ## Rebuilt by hand from actions.gd's Comb worker rows and their bee_building.gd
 ## finders, so it can drift from them: re-read both if either changes.
 func _snapshot(b: Node2D) -> Dictionary:
-	var hive = _main.hive
+	var hive: Polygon2D = _main.hive
 	var around: Vector2i = b.home_hex if b.has_home_hex else Vector2i.ZERO
 	var site := _site_available(around)
 	var outward_open: bool = b._action_available("comb_build_outward")
 	var finders: PackedStringArray = PackedStringArray()
 	var mode: String = b._action_mode_for_role(b.role)
-	for action in _main.Bee._actions_by_role.get(b.role, []):
+	for action: Variant in _main.Bee._actions_by_role.get(b.role, []):
 		var id: String = action.id
 		if not action.modes.is_empty() and not mode in action.modes:
 			continue
@@ -297,10 +297,10 @@ func _snapshot(b: Node2D) -> Dictionary:
 				found = "?"   # not probed: no restock orders in this run
 			"create_cell_site_at":
 				var marked := false
-				for hex in b.build_queue:
+				for hex: Variant in b.build_queue:
 					if hive.can_build_on(hex):
 						marked = true
-				var unfinished = hive.find_unfinished_cell()
+				var unfinished: Variant = hive.find_unfinished_cell()
 				if marked:
 					found = "marked tile"
 				elif unfinished != null:
@@ -323,10 +323,10 @@ func _snapshot(b: Node2D) -> Dictionary:
 ## hive.create_next_cell_site's spiral walk, without starting the site. A copy
 ## of that loop, so it can drift from it: re-read it if that function changes.
 func _site_available(around: Vector2i) -> bool:
-	var hive = _main.hive
+	var hive: Polygon2D = _main.hive
 	var reach := int(_config.hive_interior_rings + _config.hive_soil_depth)
 	var limit := 1 + 3 * reach * (reach + 1)
-	for index in limit:
+	for index: int in limit:
 		if hive.can_build_on(around + Shapes.hex_spiral_at(index)):
 			return true
 	return false
@@ -334,18 +334,18 @@ func _site_available(around: Vector2i) -> bool:
 
 func _built_count() -> int:
 	var built := 0
-	for c in _main.hive.cells:
+	for c: Variant in _main.hive.cells:
 		if c.is_built:
 			built += 1
 	return built
 
 
 func _day_line(day: int) -> void:
-	var hive = _main.hive
+	var hive: Polygon2D = _main.hive
 	var built := _built_count()
 	var cells: int = hive.cells.size()
 	var idle_parts: PackedStringArray = PackedStringArray()
-	for b in _workers:
+	for b: Variant in _workers:
 		if is_instance_valid(b):
 			idle_parts.append("bee %d idle %.0f s in total" % [b.bee_id, float(_track[b.bee_id].idle_total)])
 	print("T2_11 DAY %d: %d cells built that day (%d in all), %d sites started that day, %d unfinished, %d soil blocks left, a free site %s, a comb worker selected %s | %s" % [
@@ -367,7 +367,7 @@ func _state_name(s: int) -> String:
 
 func _report() -> void:
 	if not _failures.is_empty():
-		for f in _failures:
+		for f: String in _failures:
 			print("T2_11 FAIL ", f)
 		quit(1)
 		return

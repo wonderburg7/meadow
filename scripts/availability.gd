@@ -99,8 +99,8 @@ const UNTABLED_GATE_KEYS := {
 ## BB-1: whether the skills owned offer the cell popup's "Reserve for"
 ## `designation_key`. Only a UI_GATES row naming a "skill" can refuse; with
 ## no `progression` a skill-gated key is refused, as role_query does.
-static func designation_owned(designation_key: String, progression) -> bool:
-	for key in UI_GATES:
+static func designation_owned(designation_key: String, progression: Object) -> bool:
+	for key: Variant in UI_GATES:
 		var row: Dictionary = UI_GATES[key]
 		if not designation_key in row.get("designations", []):
 			continue
@@ -137,9 +137,9 @@ static func mode_gate_key(role_id: int, mode_key: String) -> String:
 ## code existence (the mode belongs to this role in roles.gd), config
 ## gate (none currently defined for any mode), level/Challenge unlock
 ## (`stage_gate`, only while a run is active) and suppression.
-static func mode_query(role_id: int, mode_key: String, stage_gate = null, progression = null) -> Dictionary:
+static func mode_query(role_id: int, mode_key: String, stage_gate: Node = null, progression: Object = null) -> Dictionary:
 	var mode: Dictionary = {}
-	for m in Roles.modes_for(role_id):
+	for m: Variant in Roles.modes_for(role_id):
 		if m.key == mode_key:
 			mode = m
 	if mode.is_empty():
@@ -167,7 +167,7 @@ static func mode_query(role_id: int, mode_key: String, stage_gate = null, progre
 ## past the skill for QUEEN_FREE_ROLES.
 ## The one rule the HUD's Job and Raises rows, orders_zones.gd's role and
 ## hatch commands and action_query all read.
-static func role_query(role_id: int, stage_gate = null, progression = null, bee = null) -> Dictionary:
+static func role_query(role_id: int, stage_gate: Node = null, progression: Object = null, bee: Node2D = null) -> Dictionary:
 	var role: Dictionary = Roles.entry(role_id)
 	if role.id != role_id:
 		return {"available": false, "reason": REASON_UNKNOWN_KEY}
@@ -183,7 +183,7 @@ static func role_query(role_id: int, stage_gate = null, progression = null, bee 
 ## 8 decision, Dave 6 Oct 2026). Workers always need the skill.
 const QUEEN_FREE_ROLES := [Roles.NURSE, Roles.COMB_WORKER]
 
-static func _role_skill_owned(role_id: int, progression, bee = null) -> bool:
+static func _role_skill_owned(role_id: int, progression: Object, bee: Node2D = null) -> bool:
 	if bee != null and bee.is_queen and role_id in QUEEN_FREE_ROLES:
 		return true
 	var skill: String = Roles.skill_for(role_id)
@@ -205,7 +205,7 @@ static func _role_skill_owned(role_id: int, progression, bee = null) -> bool:
 ## feeds its brood. Workers still need the skill (role_query is unchanged).
 ## Callers cache the answer against gate_epoch (bee.gd::_action_available)
 ## rather than asking per action per think tick.
-static func action_query(action_id: String, bee = null, stage_gate = null, progression = null) -> Dictionary:
+static func action_query(action_id: String, bee: Node2D = null, stage_gate: Node = null, progression: Object = null) -> Dictionary:
 	var action: Dictionary = Actions.by_id(action_id)
 	if action.is_empty():
 		return {"available": false, "reason": REASON_UNKNOWN_KEY}
@@ -220,7 +220,7 @@ static func action_query(action_id: String, bee = null, stage_gate = null, progr
 	var skill: String = action.get("skill", "")
 	if skill != "" and (progression == null or not progression.is_owned(skill)):
 		return {"available": false, "reason": REASON_SKILL_NOT_OWNED}
-	for role_id in action.get("roles", []):
+	for role_id: Variant in action.get("roles", []):
 		if not _role_skill_owned(role_id, progression, bee):
 			return {"available": false, "reason": REASON_SKILL_NOT_OWNED}
 	return {"available": true, "reason": OK}

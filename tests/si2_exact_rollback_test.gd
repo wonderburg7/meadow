@@ -50,14 +50,14 @@ func _boot() -> void:
 
 
 func _run() -> void:
-	var hive = _main.hive
+	var hive: Polygon2D = _main.hive
 	var before := _soil_count(hive)
 	_check(before > 0, "the level has no soil blocks")
 	var target: Node2D = null
-	for node in hive.occupied_tiles.values():
+	for node: Variant in hive.occupied_tiles.values():
 		if node == null or not is_instance_valid(node) or not node.is_in_group("soil_blocks"):
 			continue
-		for step in hive.NEIGHBOUR_STEPS:
+		for step: Variant in hive.NEIGHBOUR_STEPS:
 			if hive.tile_is_walkable(node.axial + step):
 				target = node
 				break
@@ -72,14 +72,14 @@ func _run() -> void:
 	_check(_soil_count(hive) == before - 1, "mining did not remove exactly one block")
 	_check(_main.TutorialCheckpoint.restore(_main), "the checkpoint did not restore")
 	_check(_soil_count(hive) == before, "the restore left %d soil blocks, expected %d" % [_soil_count(hive), before])
-	var node = hive.occupied_tiles.get(hex)
+	var node: Variant = hive.occupied_tiles.get(hex)
 	_check(node != null and is_instance_valid(node) and node.is_in_group("soil_blocks"), "the mined hex holds no soil block after the restore")
 	_main.TutorialCheckpoint.clear()
 
 
-func _soil_count(hive) -> int:
+func _soil_count(hive: Polygon2D) -> int:
 	var n := 0
-	for node in hive.occupied_tiles.values():
+	for node: Variant in hive.occupied_tiles.values():
 		if node != null and is_instance_valid(node) and node.is_in_group("soil_blocks"):
 			n += 1
 	return n
@@ -103,6 +103,6 @@ func _report() -> void:
 		print("SI2 PASS")
 		quit(0)
 	else:
-		for line in _failures:
+		for line: String in _failures:
 			print("SI2 FAIL: " + line)
 		quit(1)

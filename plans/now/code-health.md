@@ -102,8 +102,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-L1 | gdlint in verify with Dave's thresholds | `gdlintrc`, `tools/gdscript_style.py`, `tools/verify.ps1`, 13 hit sites | after RR-10 | medium |
 | CQ-L2 | every tool that reads GDScript as text survives `gdformat` | `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, tests | after CQ-L1 | medium |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T1 | rules, simulation and gd tests typed; warning on | 25 scripts, 16 tests, `project.godot`, `tests/source_checks.py` | yes | low |
-| CQ-T2 | run, world and save glue typed | 20 scripts | after CQ-T1 | low |
+| CQ-T2 | run, world and save glue typed | 20 scripts | gated: CQ-R1, CQ-M2 | low |
 | CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot` | after CQ-T2 | low |
 | CQ-S0 | golden-save round-trip harness | `tests/save_roundtrip_test.gd`, fixtures | yes | high |
 | CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a | high |
@@ -296,35 +295,48 @@ restyled.
 - Next after: CQ-L2
 ```
 
-## CQ-T1 -- rules, simulation and gd tests typed, with the warning on
+CQ-T1 shipped 2026-10-21; its specification is `plans/archive/CQ-T1_2026-10-21.md`.
 
-**True now.** `project.godot` has no `[debug]` section, and these files hold 206
-untyped declarations:
+## CQ-T2 -- run, world and save glue typed
 
-- Scripts (140): `conditions`, `year_winter`, `skills`, `season`, `availability`,
-  `resources`, `adaptations`, `colony_diagnostics`, `pollination`, `bee_foraging`,
-  `bee_nursery`, `bee_honey`, `colony_milestones`, `guidance_policy`, `foraging_stats`,
-  `bee`, `run_availability`, `progression`, `features`, `bee_building`, `rival_hive`,
-  `hive_cell`, `flower`, `bee_mining`, `bee_egg_laying`.
-- Tests (66): the 16 `tests/*.gd` files in the block.
-
-`hive.gd` is deliberately left to CQ-T2, because RR-10 holds it.
+**True now** (21 Oct 2026, after CQ-T1). CQ-T1 turned Godot's `untyped_declaration`
+warning on (level 1) and holds its 25 scripts and 16 tests at zero through the
+`TYPED_FILES` ratchet in `tests/source_checks.py`. The run, world and save glue is not
+in it. The ratchet's counter (which also counts untyped for-loop variables) finds 515
+declarations in these 20 scripts: `input_selection` 68, `scenario_actions` 67,
+`world_building` 60, `main` 57, `hive` 47, `orders_zones` 38, `saving` 31,
+`save_game` 29, `diagnostic_log` 21, `challenge_runner` 20, `perf` 14, `save_slots` 12,
+`challenge_stage_setup` 11, `headless/diagnostic_profile` 9, `settings_catalogue` 8,
+`developer_overrides` 6, `headless/diagnostic_probes` 6, `player_profile` 5,
+`save_migrations` 4, `tutorial_checkpoint` 2. `save_game.gd` still opens with
+`static func save(world, path`. Godot's own count for the same files was 219 on
+18 Oct (research record, "Typing count (T slices)").
 
 **When done:**
 
-- `[debug] gdscript/warnings/untyped_declaration=1` is set.
-- Every listed file is clean under the typing rules above.
-- `tests/source_checks.py` gains a `TYPED_FILES` ratchet. It is a regex counter in the
-  style of the planning count; each slice adds its files to the set, and the set must
-  stay at zero untyped declarations.
+- Every declaration in the 20 scripts, plus `scripts/headless/scenario_boot.gd`
+  (CQ-R1 moves the headless boot there), is typed under "Rules for every slice":
+  locals, parameters, returns, lambdas and for-loop variables.
+- Save-dictionary values are `float` or `: Variant`, never `int`; a value read back from
+  a save or from JSON keeps its float kind. `world`/`main` parameters take `Node2D`.
+- Every one of those files is added to `TYPED_FILES`, so the ratchet holds them at
+  zero.
+- `python tools/update_function_map.py` has refreshed the signature lines.
 
-```queue
-**[Claude] CQ-T1 -- rules, simulation and gd tests typed, with the warning on**
-- Plan: `plans/now/code-health.md` -- "CQ-T1 -- rules, simulation and gd tests typed, with the warning on"
-- Files: `project.godot`, `tests/source_checks.py`, `tests/test_source_checks.py`, `scripts/conditions.gd`, `scripts/year_winter.gd`, `scripts/skills.gd`, `scripts/season.gd`, `scripts/availability.gd`, `scripts/resources.gd`, `scripts/adaptations.gd`, `scripts/colony_diagnostics.gd`, `scripts/pollination.gd`, `scripts/bee_foraging.gd`, `scripts/bee_nursery.gd`, `scripts/bee_honey.gd`, `scripts/colony_milestones.gd`, `scripts/guidance_policy.gd`, `scripts/foraging_stats.gd`, `scripts/bee.gd`, `scripts/run_availability.gd`, `scripts/progression.gd`, `scripts/features.gd`, `scripts/bee_building.gd`, `scripts/rival_hive.gd`, `scripts/hive_cell.gd`, `scripts/flower.gd`, `scripts/bee_mining.gd`, `scripts/bee_egg_laying.gd`, `tests/t2_4b_bodies_test.gd`, `tests/t2_11_comb_cadence_test.gd`, `tests/pp5_priority_cells_test.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/sp11_cell_rim_test.gd`, `tests/col7_gyne_window_test.gd`, `tests/rr9_winter_ages_nothing_test.gd`, `tests/t2_10_automine_wake_test.gd`, `tests/si2_exact_rollback_test.gd`, `tests/col8_winter_dieback_test.gd`, `tests/t3_1_weighted_choice_test.gd`, `tests/sp10_soil_depth_test.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/bs14_saved_skill_policy_test.gd`, `tests/rr2_boot_saves_test.gd`, `tests/gp4_problem_strip_test.gd`, `FUNCTION_MAP.md`
-- Check: the `TYPED_FILES` source check reports zero untyped declarations in every listed script and test; `python tools/gdscript_warnings.py` on the listed scripts prints no warning; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` matches; `.\tools\verify.ps1` is green
-- Proof: `absent: project.godot :: untyped_declaration`
-- Next after: CQ-T2
+**Invariants.** No save key, default or FORMAT_VERSION changes. No RNG call moves in
+`world_building.gd`. No `Perf` section name, node name or display string changes.
+
+**Gate.** CQ-R1 moves code out of `main.gd` and edits `scenario_actions.gd` and
+`diagnostic_log.gd`; CQ-M2 adds a row to `settings_catalogue.gd`. Typing those files
+while either is open would type code that is about to move, so this waits for both.
+
+```queue-gated
+**[Claude] CQ-T2 -- run, world and save glue typed**
+- Plan: `plans/now/code-health.md` -- "CQ-T2 -- run, world and save glue typed"
+- Files: `scripts/main.gd`, `scripts/scenario_actions.gd`, `scripts/world_building.gd`, `scripts/input_selection.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/orders_zones.gd`, `scripts/headless/diagnostic_profile.gd`, `scripts/perf.gd`, `scripts/settings_catalogue.gd`, `scripts/challenge_runner.gd`, `scripts/save_slots.gd`, `scripts/hive.gd`, `scripts/diagnostic_log.gd`, `scripts/tutorial_checkpoint.gd`, `scripts/developer_overrides.gd`, `scripts/challenge_stage_setup.gd`, `scripts/save_migrations.gd`, `scripts/player_profile.gd`, `scripts/headless/diagnostic_probes.gd`, `scripts/headless/scenario_boot.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
+- Check: the `TYPED_FILES` source check reports zero untyped declarations in every listed script; `python tools/gdscript_warnings.py` on the listed scripts prints no warning; `tests/test_save_migrations.py`, `tests/test_si1_run_state.py`, `tests/test_si2_exact_rollback.py` and `tests/test_layout_regression.py` pass; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` matches; `.\tools\verify.ps1` is green
+- Proof: `present: scripts/save_game.gd :: static func save(world, path`
+- Next after: CQ-T3
 ```
 
 ## CQ-S0 -- golden-save round-trip harness

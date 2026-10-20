@@ -72,5 +72,5 @@ func record_trip(resource_type: String, species: String, search_flight_seconds: 
 ## busiest patch first, so the panel doesn't need its own sort logic.
 func species_breakdown() -> Array:
 	var rows: Array = _by_species.values()
-	rows.sort_custom(func(a, b): return a.trips > b.trips)
+	rows.sort_custom(func(a: Variant, b: Variant) -> bool: return a.trips > b.trips)
 	return rows

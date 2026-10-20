@@ -79,7 +79,7 @@ func _boot() -> void:
 func _run() -> void:
 	BeeSurvival = load("res://scripts/bee_survival.gd")
 	BeeBuilding = load("res://scripts/bee_building.gd")
-	var hive = _main.hive
+	var hive: Polygon2D = _main.hive
 	hive.clear_bodies()
 	_deaths(hive)
 	_disease(hive)
@@ -87,7 +87,7 @@ func _run() -> void:
 
 
 func _run_after_eviction() -> void:
-	var hive = _main.hive
+	var hive: Polygon2D = _main.hive
 	_check_eviction_dropped()
 	hive.clear_bodies()
 	_cleaning(hive)
@@ -97,7 +97,7 @@ func _run_after_eviction() -> void:
 
 
 # --- where a bee dies ---------------------------------------------
-func _deaths(hive) -> void:
+func _deaths(hive: Polygon2D) -> void:
 	var inside: Node2D = _main.world_building._spawn_indoor_bee(_main.Bee.Role.FORAGER)
 	var fell_at: Vector2 = inside.position
 	BeeSurvival.die(inside, "test")
@@ -116,8 +116,8 @@ func _deaths(hive) -> void:
 
 
 # --- disease ------------------------------------------------------
-func _disease(hive) -> void:
-	var season = _main.season
+func _disease(hive: Polygon2D) -> void:
+	var season: Node2D = _main.season
 	var old_on: bool = _config.disease_on
 	_config.disease_on = true
 	var base: float = _disease_rise(season)
@@ -141,7 +141,7 @@ func _disease(hive) -> void:
 
 ## One second of the disease tick from a fixed mid-scale start, so the
 ## clamp at zero cannot hide a difference.
-func _disease_rise(season) -> float:
+func _disease_rise(season: Node2D) -> float:
 	season.disease = 0.5
 	season._advance_disease(1.0)
 	var out: float = season.disease
@@ -151,7 +151,7 @@ func _disease_rise(season) -> float:
 
 # --- a body that goes while a Comb worker is on it ------------------
 ## Sets the two jobs up; the bodies are freed at the end of this frame.
-func _evict_under_workers(hive) -> void:
+func _evict_under_workers(hive: Polygon2D) -> void:
 	var point: Vector2 = hive.nearest_walkable_point(_main.hive_entrance_inside())
 	_walker = _main.world_building._spawn_indoor_bee(_main.Bee.Role.BUILDER)
 	_walker.architect_mode = "maintain"
@@ -192,8 +192,8 @@ func _check_eviction_dropped() -> void:
 
 
 # --- Clearing carries bodies out ----------------------------------
-func _cleaning(hive) -> void:
-	var progression = _session.progression
+func _cleaning(hive: Polygon2D) -> void:
+	var progression: Object = _session.progression
 	_check(progression != null, "the run has no progression")
 	if progression == null:
 		return
@@ -275,11 +275,11 @@ func _cleaning(hive) -> void:
 
 
 # --- the cap ------------------------------------------------------
-func _cap(hive) -> void:
+func _cap(hive: Polygon2D) -> void:
 	var old_cap: float = _config.max_hive_bodies
 	_config.max_hive_bodies = 3.0
 	var point: Vector2 = hive.nearest_walkable_point(_main.hive_entrance_inside())
-	for i in range(4):
+	for i: int in range(4):
 		hive.add_body(point, float(i + 1))
 	_check(hive.bodies.size() == 3, "the cap of 3 held %d bodies" % hive.bodies.size())
 	if hive.bodies.size() == 3:
@@ -289,7 +289,7 @@ func _cap(hive) -> void:
 
 
 # --- saving -------------------------------------------------------
-func _saving(hive) -> void:
+func _saving(hive: Polygon2D) -> void:
 	var a: Vector2 = hive.nearest_walkable_point(_main.hive_entrance_inside())
 	var b: Vector2 = hive.nearest_walkable_point(_main.hive.comb_centre)
 	hive.add_body(a, 11.0)
@@ -308,7 +308,7 @@ func _saving(hive) -> void:
 		_check(hive.bodies[0].clear_progress == 0.0 and hive.bodies[1].clear_progress == 7.5, "lifting progress did not come back with the bodies")
 
 	_check(_main.TutorialCheckpoint.save(_main), "the checkpoint did not save")
-	for i in range(3):
+	for i: int in range(3):
 		hive.add_body(a, 20.0 + i)
 	_check(_main.TutorialCheckpoint.restore(_main), "the checkpoint did not restore")
 	_check(hive.bodies.size() == 2, "an in-place checkpoint restore left %d bodies, expected the saved 2" % hive.bodies.size())
@@ -325,14 +325,14 @@ func _saving(hive) -> void:
 ## bodies one winter can leave. Each leaves one, under the real cap with
 ## none trimmed, and the one caught in the meadow lies inside the entrance
 ## at spring.
-func _winter(hive) -> void:
+func _winter(hive: Polygon2D) -> void:
 	hive.clear_bodies()
 	_main.world_building._spawn_bee("nectar")
 	var outside: Node2D = _last_bee()
 	_check(outside != null and not outside._is_inside_hive(), "no bee in the meadow before winter")
 	while _living_bees() < LARGEST_COLONY:
 		_main.world_building._spawn_indoor_bee(_main.Bee.Role.FORAGER)
-	for cell in hive.cells:
+	for cell: Variant in hive.cells:
 		if is_instance_valid(cell) and cell.is_built:
 			cell.clear_cell()
 	hive.invalidate_index()
@@ -346,7 +346,7 @@ func _winter(hive) -> void:
 	_check(lost == living, "winter on empty comb took %d of %d bees" % [lost, living])
 	_check(hive.bodies.size() == lost, "winter took %d bees but left %d bodies (the cap is %d)" % [lost, hive.bodies.size(), int(_config.max_hive_bodies)])
 	var at_entrance := 0
-	for body in hive.bodies:
+	for body: Variant in hive.bodies:
 		if body.position.distance_to(entrance) < 0.01:
 			at_entrance += 1
 	_check(at_entrance >= 1, "the bee caught outside was not laid inside the entrance")
@@ -354,7 +354,7 @@ func _winter(hive) -> void:
 
 func _living_bees() -> int:
 	var n := 0
-	for bee in _main.get_tree().get_nodes_in_group("bees"):
+	for bee: Node in _main.get_tree().get_nodes_in_group("bees"):
 		if is_instance_valid(bee) and not bee.is_dying:
 			n += 1
 	return n
@@ -362,14 +362,14 @@ func _living_bees() -> int:
 
 func _count_bodies_in_view() -> int:
 	var n := 0
-	for child in _main.hive_root.get_children():
+	for child: Node in _main.hive_root.get_children():
 		if child.get_script() == preload("res://scripts/hive_body.gd") and not child.is_queued_for_deletion():
 			n += 1
 	return n
 
 
-func _empty_built_cell(hive) -> Node2D:
-	for cell in hive.cells:
+func _empty_built_cell(hive: Polygon2D) -> Node2D:
+	for cell: Variant in hive.cells:
 		if is_instance_valid(cell) and cell.is_built and cell.content_type == "":
 			return cell
 	return null
@@ -377,7 +377,7 @@ func _empty_built_cell(hive) -> Node2D:
 
 func _last_bee() -> Node2D:
 	var best: Node2D = null
-	for bee in _main.get_tree().get_nodes_in_group("bees"):
+	for bee: Node in _main.get_tree().get_nodes_in_group("bees"):
 		if is_instance_valid(bee) and not bee.is_dying and (best == null or bee.bee_id > best.bee_id):
 			best = bee
 	return best
@@ -403,6 +403,6 @@ func _report() -> void:
 		print("T2-4B PASS")
 		quit(0)
 	else:
-		for line in _failures:
+		for line: String in _failures:
 			print("T2-4B FAIL: " + line)
 		quit(1)

@@ -291,7 +291,7 @@ const MILESTONES := [
 # --- lookups ------------------------------------------------------
 
 static func entry(adaptation_id: String) -> Dictionary:
-	for adaptation in ADAPTATIONS:
+	for adaptation: Dictionary in ADAPTATIONS:
 		if adaptation.id == adaptation_id:
 			return adaptation
 	return {}
@@ -300,7 +300,7 @@ static func has(adaptation_id: String) -> bool:
 	return not entry(adaptation_id).is_empty()
 
 static func ids() -> Array:
-	return ADAPTATIONS.map(func(a): return a.id)
+	return ADAPTATIONS.map(func(a: Dictionary) -> Variant: return a.id)
 
 static func label_for(adaptation_id: String) -> String:
 	return entry(adaptation_id).get("name", adaptation_id)
@@ -309,16 +309,16 @@ static func label_for(adaptation_id: String) -> String:
 ## eligibility test. Section 7.1's three-distinct-cards rule is the
 ## resolver's job, not this catalogue's.
 static func offerable_ids() -> Array:
-	return ADAPTATIONS.filter(func(a): return a.offerable).map(func(a): return a.id)
+	return ADAPTATIONS.filter(func(a: Dictionary) -> Variant: return a.offerable).map(func(a: Dictionary) -> Variant: return a.id)
 
 static func for_group(group_key: String) -> Array:
-	return ADAPTATIONS.filter(func(a): return a.group == group_key)
+	return ADAPTATIONS.filter(func(a: Dictionary) -> bool: return a.group == group_key)
 
 static func milestone(milestone_id: String) -> Dictionary:
-	for entry_data in MILESTONES:
+	for entry_data: Dictionary in MILESTONES:
 		if entry_data.id == milestone_id:
 			return entry_data
 	return {}
 
 static func milestone_ids() -> Array:
-	return MILESTONES.map(func(m): return m.id)
+	return MILESTONES.map(func(m: Dictionary) -> Variant: return m.id)

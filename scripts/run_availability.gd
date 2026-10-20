@@ -59,12 +59,12 @@ const REASON_CUT := "reason.cut"
 const REASON_FEATURE_OFF := "reason.feature_off"
 const REASON_FEATURE_ON := "reason.feature_on"
 
-static func sheet_for(run_definition: Dictionary, progression = null) -> Dictionary:
+static func sheet_for(run_definition: Dictionary, progression: Object = null) -> Dictionary:
 	var bans: Array = run_definition.get("skill_bans", [])
 	var grants: Array = run_definition.get("skill_grants", [])
 	var seeded := _seeded_skills(run_definition)
 	var rows := {}
-	for skill_id in Skills.ids():
+	for skill_id: String in Skills.ids():
 		if bans.has(skill_id):
 			rows[skill_id] = {"source": SOURCE_UNAVAILABLE, "reason": REASON_RUN_BAN}
 		elif Skills.is_baseline(skill_id):
@@ -83,7 +83,7 @@ static func sheet_for(run_definition: Dictionary, progression = null) -> Diction
 		else:
 			rows[skill_id] = {"source": SOURCE_TREE, "reason": REASON_TREE}
 	var starting := []
-	for skill_id in rows:
+	for skill_id: Variant in rows:
 		if rows[skill_id].source == SOURCE_START and rows[skill_id].reason != REASON_BASELINE:
 			starting.append(skill_id)
 	return {
@@ -100,9 +100,9 @@ static func sheet_for(run_definition: Dictionary, progression = null) -> Diction
 ## The id of the first Challenge stage whose cumulative `unlocked_keys` name
 ## this skill ("2.5" for Nurses), or "" when no stage does.
 static func introduced_stage(skill_id: String) -> String:
-	for stages in [Stages.STAGES_1, Stages.STAGES_2]:
-		for stage in stages:
-			for entry in stage.get("unlocked_keys", []):
+	for stages: Array in [Stages.STAGES_1, Stages.STAGES_2]:
+		for stage: Dictionary in stages:
+			for entry: Variant in stage.get("unlocked_keys", []):
 				var key: String = str(entry.get("key", "")) if entry is Dictionary else str(entry)
 				if key == skill_id:
 					return str(stage.id)
@@ -113,8 +113,8 @@ static func introduced_stage(skill_id: String) -> String:
 ## order; empty when none does.
 static func free_stages(skill_id: String) -> Array:
 	var found := []
-	for stages in [Stages.STAGES_1, Stages.STAGES_2]:
-		for stage in stages:
+	for stages: Array in [Stages.STAGES_1, Stages.STAGES_2]:
+		for stage: Dictionary in stages:
 			if stage.get("free_skills", []).has(skill_id):
 				found.append(str(stage.id))
 	return found
@@ -129,7 +129,7 @@ static func skill_label(skill_id: String) -> String:
 ## One row per role a skill unlocks, answering as that skill's row does.
 static func _role_rows(skill_rows: Dictionary) -> Dictionary:
 	var roles := {}
-	for role in Roles.ROLES:
+	for role: Dictionary in Roles.ROLES:
 		if role.skill != "" and skill_rows.has(role.skill):
 			var row: Dictionary = skill_rows[role.skill]
 			roles[role.key] = {"skill": role.skill, "source": row.source, "reason": row.reason}
@@ -138,11 +138,11 @@ static func _role_rows(skill_rows: Dictionary) -> Dictionary:
 
 ## One row per feature some skill depends on, on or off in this run as
 ## progression.feature_valid() judges that skill. Empty with no progression.
-static func _feature_rows(progression) -> Dictionary:
+static func _feature_rows(progression: Object) -> Dictionary:
 	var features := {}
 	if progression == null:
 		return features
-	for skill_id in Skills.ids():
+	for skill_id: String in Skills.ids():
 		var feature: String = Skills.entry(skill_id).get("feature", "")
 		if feature == "" or features.has(feature):
 			continue
@@ -163,7 +163,7 @@ static func starting_skills(run_definition: Dictionary) -> Array:
 ## Skill id -> true for every gated role the run definition puts bees in.
 static func _seeded_skills(run_definition: Dictionary) -> Dictionary:
 	var seeded := {}
-	for role in Roles.ROLES:
+	for role: Dictionary in Roles.ROLES:
 		if role.skill == "" or role.start_count_key == "":
 			continue
 		if int(run_definition.get(role.start_count_key, 0)) > 0:

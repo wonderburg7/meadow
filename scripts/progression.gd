@@ -158,10 +158,10 @@ func is_temporary(skill_id: String) -> bool:
 ## caller counting progress sees the same set the gates below do.
 func owned_ids() -> Array:
 	var ids: Array = Skills.baseline_ids()
-	for skill_id in _mastered:
+	for skill_id: Variant in _mastered:
 		if not ids.has(skill_id):
 			ids.append(skill_id)
-	for skill_id in _temporary:
+	for skill_id: Variant in _temporary:
 		if not ids.has(skill_id):
 			ids.append(skill_id)
 	return ids
@@ -173,7 +173,7 @@ func owned_ids() -> Array:
 func set_mastered_ids(ids: Array) -> void:
 	_mastered.clear()
 	_behaviour_cache.clear()
-	for skill_id in ids:
+	for skill_id: Variant in ids:
 		if Skills.has(skill_id):
 			_mastered[skill_id] = true
 
@@ -227,10 +227,10 @@ func discover(skill_id: String) -> void:
 ## inherits an earlier one's.
 func set_skill_policy(grants: Array, bans: Array, delays: Dictionary) -> void:
 	_skill_grants.clear()
-	for skill_id in grants:
+	for skill_id: Variant in grants:
 		_skill_grants[skill_id] = true
 	_skill_bans.clear()
-	for skill_id in bans:
+	for skill_id: Variant in bans:
 		_skill_bans[skill_id] = true
 	_skill_delays = delays.duplicate()
 
@@ -245,7 +245,7 @@ func set_skill_policy(grants: Array, bans: Array, delays: Dictionary) -> void:
 ## know about.
 func begin_run(sheet: Dictionary) -> void:
 	set_skill_policy(sheet.get("grants", []), sheet.get("bans", []), sheet.get("delays", {}))
-	for skill_id in sheet.get("starting", []):
+	for skill_id: Variant in sheet.get("starting", []):
 		grant_temporary(str(skill_id))
 
 
@@ -289,12 +289,12 @@ func prerequisites_met(skill_id: String) -> bool:
 	var entry: Dictionary = Skills.entry(skill_id)
 	if entry.is_empty():
 		return false
-	for required in entry.get("all_of", []):
+	for required: Variant in entry.get("all_of", []):
 		if not is_owned(required):
 			return false
-	for group in entry.get("any_of", []):
+	for group: Variant in entry.get("any_of", []):
 		var satisfied := false
-		for option in group:
+		for option: Variant in group:
 			if is_owned(option):
 				satisfied = true
 				break
@@ -316,7 +316,7 @@ func branch_tier_open(skill_id: String) -> bool:
 	var tier: int = entry.get("tier", 0)
 	if tier <= 1:
 		return true
-	for sibling in Skills.for_sector_tier(entry.get("sector", ""), tier - 1):
+	for sibling: Dictionary in Skills.for_sector_tier(entry.get("sector", ""), tier - 1):
 		if not _offered_in_run(sibling.id):
 			continue
 		if not is_owned(sibling.id):
@@ -339,7 +339,7 @@ func _offered_in_run(skill_id: String) -> bool:
 ## it gives away and a later stage never inherits an earlier one's.
 func waive_cost(skill_ids: Array) -> void:
 	_waived.clear()
-	for skill_id in skill_ids:
+	for skill_id: Variant in skill_ids:
 		_waived[str(skill_id)] = true
 
 
@@ -361,7 +361,7 @@ func can_afford(skill_id: String, stores: Dictionary) -> bool:
 
 ## The one price rule: every resource in `cost` is held in full.
 func _covers(cost: Dictionary, stores: Dictionary) -> bool:
-	for resource in cost:
+	for resource: Variant in cost:
 		if float(stores.get(resource, 0)) < float(cost[resource]):
 			return false
 	return true
@@ -372,9 +372,9 @@ func _covers(cost: Dictionary, stores: Dictionary) -> bool:
 ## `all_of` prerequisites, summed per resource and checked by _covers(). Only
 ## nodes the tree offers (not cut) count. Read once per diagnostic snapshot.
 func first_tier2_path_covered(stores: Dictionary) -> bool:
-	for sector in Skills.sector_keys():
-		for first in Skills.for_sector_tier(sector, 1):
-			for second in Skills.for_sector_tier(sector, 2):
+	for sector: String in Skills.sector_keys():
+		for first: Dictionary in Skills.for_sector_tier(sector, 1):
+			for second: Dictionary in Skills.for_sector_tier(sector, 2):
 				if Skills.is_cut(first.id) or Skills.is_cut(second.id):
 					continue
 				var path := {Skills.HONEY_WORKER: true}
@@ -389,13 +389,13 @@ func _add_with_prerequisites(skill_id: String, path: Dictionary) -> void:
 	if path.has(skill_id) and skill_id != Skills.HONEY_WORKER:
 		return
 	path[skill_id] = true
-	for required in Skills.entry(skill_id).get("all_of", []):
+	for required: Variant in Skills.entry(skill_id).get("all_of", []):
 		if not path.has(required):
 			_add_with_prerequisites(required, path)
 
 
 func _path_offered(path: Dictionary) -> bool:
-	for skill_id in path:
+	for skill_id: Variant in path:
 		if Skills.is_cut(skill_id) or not Skills.has(skill_id):
 			return false
 	return true
@@ -403,9 +403,9 @@ func _path_offered(path: Dictionary) -> bool:
 
 func _path_cost(path: Dictionary) -> Dictionary:
 	var total := {}
-	for skill_id in path:
+	for skill_id: Variant in path:
 		var cost: Dictionary = cost_for(skill_id)
-		for resource in cost:
+		for resource: Variant in cost:
 			total[resource] = float(total.get(resource, 0)) + float(cost[resource])
 	return total
 
@@ -423,8 +423,8 @@ func _path_cost(path: Dictionary) -> Dictionary:
 ## "which skills changed this" rather than only the resolved number.
 func modifiers_for(key: String) -> Array:
 	var modifiers: Array = []
-	for skill_id in owned_ids():
-		for effect in Skills.entry(skill_id).get("effects", []):
+	for skill_id: Variant in owned_ids():
+		for effect: Variant in Skills.entry(skill_id).get("effects", []):
 			if effect.get("key", "") != key:
 				continue
 			var op: String = effect.get("type", "")
@@ -439,10 +439,10 @@ func modifiers_for(key: String) -> Array:
 
 func effective_value(key: String, base: float) -> float:
 	var value := base
-	for modifier in modifiers_for(key):
+	for modifier: Variant in modifiers_for(key):
 		if modifier["op"] == EFFECT_ADD_VALUE:
 			value += modifier["amount"]
-	for modifier in modifiers_for(key):
+	for modifier: Variant in modifiers_for(key):
 		if modifier["op"] == EFFECT_MULTIPLY_VALUE:
 			value *= modifier["amount"]
 	return value
@@ -457,8 +457,8 @@ func is_behaviour_enabled(key: String) -> bool:
 	if _behaviour_cache.has(key):
 		return _behaviour_cache[key]
 	var enabled := false
-	for skill_id in owned_ids():
-		for effect in Skills.entry(skill_id).get("effects", []):
+	for skill_id: Variant in owned_ids():
+		for effect: Variant in Skills.entry(skill_id).get("effects", []):
 			if effect.get("type", "") == EFFECT_ENABLE_BEHAVIOUR and effect.get("key", "") == key:
 				enabled = true
 	_behaviour_cache[key] = enabled
@@ -504,7 +504,7 @@ func purchase(skill_id: String, stores: Dictionary) -> bool:
 	if not can_purchase(skill_id, stores):
 		return false
 	var cost: Dictionary = cost_for(skill_id)
-	for resource in cost:
+	for resource: Variant in cost:
 		stores[resource] = float(stores.get(resource, 0)) - float(cost[resource])
 	grant_temporary(skill_id)
 	return true
@@ -533,7 +533,7 @@ func adaptation_eligible(adaptation_id: String) -> bool:
 
 
 func eligible_adaptation_ids() -> Array:
-	return Adaptations.offerable_ids().filter(func(a): return adaptation_eligible(a))
+	return Adaptations.offerable_ids().filter(func(a: Variant) -> bool: return adaptation_eligible(a))
 
 
 func choose_adaptation(adaptation_id: String) -> bool:

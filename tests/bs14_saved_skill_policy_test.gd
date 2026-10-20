@@ -142,12 +142,12 @@ func _save_and_read(save_game: GDScript) -> Dictionary:
 
 
 func _tagged(data: Dictionary) -> bool:
-	var tag = data.get("developer_changes")
+	var tag: Variant = data.get("developer_changes")
 	return typeof(tag) == TYPE_BOOL and tag
 
 
 func _saved_bans(data: Dictionary) -> Array:
-	var policy = data.get("skill_policy")
+	var policy: Variant = data.get("skill_policy")
 	if typeof(policy) != TYPE_DICTIONARY:
 		return []
 	return policy.get("bans", [])
@@ -173,6 +173,6 @@ func _report() -> void:
 		print("BS14 PASS")
 		quit(0)
 	else:
-		for line in _failures:
+		for line: String in _failures:
 			print("BS14 FAIL: " + line)
 		quit(1)

@@ -1036,3 +1036,30 @@ class BacklogRefillTest(unittest.TestCase):
         self.assertEqual([], errors)
         self.assertTrue(any("the Claude lane holds 1 of 5" in w for w in warnings), warnings)
         self.assertTrue(any("A-9" in w for w in warnings), warnings)
+
+
+class TypedFilesRatchetTest(unittest.TestCase):
+    """CQ-T1: the static typed-file ratchet finds what Godot's
+    untyped_declaration warning finds, on one line or across several."""
+
+    def test_flags_untyped_vars_params_and_returns_only(self):
+        code = [
+            "var a = 1",
+            "var b := 1",
+            "var c: int = 1",
+            "func f(x, y: int) -> void:",
+            "func g(z):",
+            "var h = func(q): return q",
+            "func k(",
+            "\tp: int,",
+            ") -> int:",
+            "for i in range(2):",
+            "for j: int in range(2):",
+        ]
+        found = [number for number, _ in source_checks.untyped_declarations(code)]
+        self.assertEqual([1, 4, 5, 5, 6, 6, 6, 10], found)
+
+    def test_typed_files_are_clean(self):
+        problems = []
+        source_checks.check_typed_files(problems)
+        self.assertEqual([], problems)

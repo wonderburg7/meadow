@@ -17,7 +17,7 @@ const BeeForaging = preload("res://scripts/bee_foraging.gd")
 static func find_bee_bread_target(bee: Node2D) -> bool:
 	if bee.bee_bread_load <= 0.0:
 		return false
-	var cell = bee.hive.find_bee_bread_target()
+	var cell: Variant = bee.hive.find_bee_bread_target()
 	if cell == null:
 		return false
 	bee.target_cell = cell
@@ -35,7 +35,7 @@ static func find_bee_bread_ingredients(bee: Node2D) -> bool:
 	var honey_needed: float = GameConfig.bee_bread_honey_per_load
 	if not bee.hive.can_take("pollen", pollen_needed) or not bee.hive.can_take("honey", honey_needed):
 		return false
-	var cell = bee.hive.find_bee_bread_target()
+	var cell: Variant = bee.hive.find_bee_bread_target()
 	if cell == null:
 		return false
 	bee.hive.take("pollen", pollen_needed)
@@ -48,7 +48,7 @@ static func find_bee_bread_ingredients(bee: Node2D) -> bool:
 static func find_honey_target(bee: Node2D) -> bool:
 	if bee.honey_load <= 0.0:
 		return false
-	var pot = bee.hive.find_honey_target()
+	var pot: Variant = bee.hive.find_honey_target()
 	if pot == null:
 		return false
 	bee.target_cell = pot
@@ -59,7 +59,7 @@ static func find_honey_target(bee: Node2D) -> bool:
 static func find_cell_needing_fanning(bee: Node2D) -> bool:
 	if bee.honey_load > 0.0 or bee.bee_bread_load > 0.0:
 		return false
-	var drying = bee.hive.find_cell_needing_fanning()
+	var drying: Variant = bee.hive.find_cell_needing_fanning()
 	if drying == null:
 		return false
 	bee.fan_target = drying
@@ -73,7 +73,7 @@ static func find_cell_with(bee: Node2D) -> bool:
 	if bee.honey_load > 0.0 or bee.bee_bread_load > 0.0:
 		return false   # BB-1: holding bee bread, it waits for a cell instead
 	# NF-2: never fermented nectar. NF-4: closest to her, or oldest with the sense.
-	var nectar_cell = bee.hive.find_honey_source(bee.global_position)
+	var nectar_cell: Variant = bee.hive.find_honey_source(bee.global_position)
 	if nectar_cell == null or bee.hive.find_honey_target() == null:
 		return false
 	bee.target_cell = nectar_cell

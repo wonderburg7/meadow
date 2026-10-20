@@ -66,7 +66,7 @@ const FEATURES := [
 # --- lookups ------------------------------------------------------
 
 static func entry(feature_id: String) -> Dictionary:
-	for feature in FEATURES:
+	for feature: Dictionary in FEATURES:
 		if feature.id == feature_id:
 			return feature
 	return {}
@@ -75,7 +75,7 @@ static func has(feature_id: String) -> bool:
 	return not entry(feature_id).is_empty()
 
 static func ids() -> Array:
-	return FEATURES.map(func(f): return f.id)
+	return FEATURES.map(func(f: Dictionary) -> Variant: return f.id)
 
 static func label_for(feature_id: String) -> String:
 	return entry(feature_id).get("label", feature_id)

@@ -81,7 +81,7 @@ func _boot() -> void:
 	if not root.has_node("Session") or not root.has_node("GameConfig"):
 		_fail("the Session or GameConfig autoload is not loaded")
 		return
-	for arg in OS.get_cmdline_user_args():
+	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with("--pp5-save="):
 			_save_path = arg.trim_prefix("--pp5-save=")
 	if _save_path == "":
@@ -108,13 +108,13 @@ func _set_up() -> void:
 		_fail("Priority cells is owned at the start of level %d" % LEVEL)
 		return
 	# Only the test nurse moves: the queen lays no eggs and backs nobody up.
-	for bee in _main.get_tree().get_nodes_in_group("bees"):
+	for bee: Node in _main.get_tree().get_nodes_in_group("bees"):
 		bee.process_mode = Node.PROCESS_MODE_DISABLED
 	_nurse = _main.world_building._spawn_indoor_bee(_main.Bee.Role.NURSERY)
 	_nurse.energy_immune = true
 	_nurse.nurse_mode = "feed"
-	var built: Array = _main.hive.cells.filter(func(c): return is_instance_valid(c) and c.is_built and not c.is_closed)
-	built.sort_custom(func(a, b):
+	var built: Array = _main.hive.cells.filter(func(c: Variant) -> bool: return is_instance_valid(c) and c.is_built and not c.is_closed)
+	built.sort_custom(func(a: Variant, b: Variant) -> bool:
 		if a.axial.x != b.axial.x:
 			return a.axial.x < b.axial.x
 		return a.axial.y < b.axial.y
@@ -123,7 +123,7 @@ func _set_up() -> void:
 		_fail("level %d has fewer than two built cells" % LEVEL)
 		return
 	_cells = [built[0], built[1]]
-	for cell in _cells:
+	for cell: Variant in _cells:
 		_main.orders_zones._designate_one(cell, "brood")
 	Engine.time_scale = SPEED
 	_next_case()
@@ -144,11 +144,11 @@ func _next_case() -> void:
 		"%s: priority_cells_owned() is %s" % [spec.name, BeeNursery.priority_cells_owned()])
 
 	# An empty comb, so the nurse cannot restock, and two hungry larvae.
-	for cell in _main.hive.cells:
+	for cell: Variant in _main.hive.cells:
 		if is_instance_valid(cell) and cell.content_type != "":
 			cell.clear_cell()
 	var as_gyne: bool = spec.load == "gyne"
-	for cell in _cells:
+	for cell: Variant in _cells:
 		cell.priority_cell = false
 		cell.start_brood(as_gyne)
 	_main.selected_cells.clear()
@@ -223,9 +223,9 @@ func _load_nurse(kind: String) -> void:
 
 func _watch() -> void:
 	var spec: Dictionary = CASES[_case]
-	for cell in _cells:
+	for cell: Variant in _cells:
 		cell.unfed_seconds = 0.0   # neither starves while she walks
-	var fed: Array = _cells.filter(func(c): return c.brood_fed_seconds > 0.0)
+	var fed: Array = _cells.filter(func(c: Polygon2D) -> bool: return c.brood_fed_seconds > 0.0)
 	if fed.is_empty():
 		if _frame - _phase_frame >= MAX_WATCH_FRAMES:
 			_fail("%s: the nurse fed neither larva in %d frames (state %d)" % [spec.name, MAX_WATCH_FRAMES, _nurse.state])
@@ -256,7 +256,7 @@ func _check_save_and_restore() -> void:
 		_fail("SaveGame.read could not read the save back")
 		return
 	var entries := {}
-	for entry in data.get("cells", []):
+	for entry: Variant in data.get("cells", []):
 		entries[Vector2i(int(entry.q), int(entry.r))] = entry
 	_check(entries.has(marked_hex) and bool(entries[marked_hex].get("priority_cell", false)),
 		"the save does not record the marked cell")
@@ -269,7 +269,7 @@ func _check_save_and_restore() -> void:
 
 	# A save from before PP-5 has no key at all: every cell loads unmarked.
 	var old: Dictionary = data.duplicate(true)
-	for entry in old.get("cells", []):
+	for entry: Variant in old.get("cells", []):
 		entry.erase("priority_cell")
 	_main.saving._restore(old)
 	_check(_cell_at(marked_hex) != null and not _cell_at(marked_hex).priority_cell,
@@ -278,7 +278,7 @@ func _check_save_and_restore() -> void:
 
 
 func _cell_at(hex: Vector2i) -> Node2D:
-	for cell in _main.hive.cells:
+	for cell: Variant in _main.hive.cells:
 		if is_instance_valid(cell) and not cell.is_queued_for_deletion() and cell.axial == hex:
 			return cell
 	return null
@@ -300,6 +300,6 @@ func _report() -> void:
 		print("PP5 PASS")
 		quit(0)
 	else:
-		for line in _failures:
+		for line: String in _failures:
 			print("PP5 FAIL: " + line)
 		quit(1)

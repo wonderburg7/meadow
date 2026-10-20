@@ -147,7 +147,7 @@ func setup(index: int, starting_age: float = -1.0) -> void:
 		var bush := Polygon2D.new()
 		var bush_points := PackedVector2Array()
 		var bush_segments := 10
-		for i in range(bush_segments):
+		for i: int in range(bush_segments):
 			var angle: float = TAU * i / bush_segments
 			var jitter: float = randf_range(0.75, 1.2)
 			bush_points.append(Vector2(cos(angle), sin(angle)) * 34.0 * jitter)
@@ -411,7 +411,7 @@ func sets_seed() -> bool:
 ## rare beside the per-frame path, rather than through a reference every
 ## flower would have to carry.
 func _report_withered() -> void:
-	var world = get_tree().get_first_node_in_group("world")
+	var world: Node = get_tree().get_first_node_in_group("world")
 	if world != null and world.pollination != null:
 		world.pollination.flower_withered(self)
 

@@ -73,7 +73,7 @@ static func nurse_tend(bee: Node2D, _delta: float) -> void:
 		bee.state = State.NURSE_IDLE
 		return
 
-	var other = choose_brood_cell(bee)
+	var other: Node2D = choose_brood_cell(bee)
 	if other != null and other != bee.target_cell and other.needs_feeding():
 		BeeForaging.release_cell_slot(bee)
 		bee.target_cell = other
@@ -109,7 +109,7 @@ static func choose_brood_cell(bee: Node2D) -> Node2D:
 	var marked_gyne_at := -1
 	var any_brood: Node2D = null
 	var at := -1
-	for cell in bee.hive.cells_holding("brood"):
+	for cell: Variant in bee.hive.cells_holding("brood"):
 		at += 1
 		if any_brood == null:
 			any_brood = cell
@@ -185,7 +185,7 @@ static func carb_per_feed(bee: Node2D) -> float:
 ## bee bread is food (hive_cell.gd::is_ripe_bee_bread); a cell still filling
 ## or fermenting is passed over.
 static func ripe_bee_bread_cell(bee: Node2D) -> Node2D:
-	for cell in bee.hive.cells_holding(Resources.BEE_BREAD):
+	for cell: Variant in bee.hive.cells_holding(Resources.BEE_BREAD):
 		if cell.amount > 0.0 and cell.can_withdraw() and cell.is_ripe_bee_bread():
 			return cell
 	return null
@@ -336,7 +336,7 @@ static func _can_make_jelly(bee: Node2D) -> bool:
 
 ## Catalogue finders all take one bee and return whether they started work.
 static func find_brood_cell(bee: Node2D) -> bool:
-	var brood = choose_brood_cell(bee)
+	var brood: Node2D = choose_brood_cell(bee)
 	if brood == null or (bee.role != Role.NURSERY and not brood.needs_feeding()):
 		return false
 	if brood.needs_feeding():
@@ -426,7 +426,7 @@ static func nurse_restock_errand(bee: Node2D, for_gyne: bool, bread: Node2D) -> 
 		start_food_errand(bee, bread, Resources.BEE_BREAD)
 		return true
 	if bee.nurse_pollen < GameConfig.brood_feed_pollen and (for_gyne or not carries_bee_bread_feed(bee)):
-		var pollen_cell = bee.hive.find_cell_with("pollen")
+		var pollen_cell: Variant = bee.hive.find_cell_with("pollen")
 		if pollen_cell != null:
 			start_food_errand(bee, pollen_cell, "pollen")
 			return true
@@ -437,7 +437,7 @@ static func nurse_restock_errand(bee: Node2D, for_gyne: bool, bread: Node2D) -> 
 	var carb_short: bool = bee.nurse_carb < carb_needed or (for_gyne and bee.nurse_carb_type != "honey")
 	if carb_short:
 		var carb_type := "honey"
-		var carb_cell = bee.hive.find_cell_with("honey")
+		var carb_cell: Variant = bee.hive.find_cell_with("honey")
 		if carb_cell == null and not for_gyne:
 			carb_type = "nectar"
 			carb_cell = bee.hive.find_brood_nectar()   # NF-4: fresh only with the sense
@@ -446,7 +446,7 @@ static func nurse_restock_errand(bee: Node2D, for_gyne: bool, bread: Node2D) -> 
 			return true
 
 	if for_gyne and bee.nurse_jelly < GameConfig.brood_feed_jelly:
-		var jelly_cell = bee.hive.find_cell_with("jelly")
+		var jelly_cell: Variant = bee.hive.find_cell_with("jelly")
 		if jelly_cell != null:
 			start_food_errand(bee, jelly_cell, "jelly")
 			return true

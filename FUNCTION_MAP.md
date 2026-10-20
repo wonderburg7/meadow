@@ -553,7 +553,7 @@ behaviour.
 336  # --- choosing a flower --------------------------------------------
 354  static func nearest_flower(bee: Node2D, strict: bool, radius: float, allow_full_scan: bool = true) -> Node2D
 451  static func _weighted_flower_choice(bee: Node2D, nodes: Array, accept: Callable, radius: float) -> Node2D
-489  static func flower_grid(bee: Node2D)
+489  static func flower_grid(bee: Node2D) -> Variant
 504  # --- inspecting, drinking and sheltering --------------------------
 505  static func start_inspecting(bee: Node2D) -> void
 510  static func inspect(bee: Node2D, delta: float) -> void

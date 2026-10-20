@@ -32,12 +32,12 @@ func _process(_delta: float) -> bool:
 func _run() -> void:
 	var session: Node = root.get_node("Session")
 	var config: Node = root.get_node("GameConfig")
-	var cells: Array = _main.hive.cells.filter(func(cell): return cell.content_type == "")
+	var cells: Array = _main.hive.cells.filter(func(cell: Polygon2D) -> bool: return cell.content_type == "")
 	_check(cells.size() >= 2, "level %d has fewer than two empty cells" % LEVEL)
 	if cells.size() < 2:
 		return
-	var nectar = cells[0]
-	var bee_bread = cells[1]
+	var nectar: Variant = cells[0]
+	var bee_bread: Variant = cells[1]
 	var seconds_per_day: float = config.seconds_per_day
 	session.sim_time -= seconds_per_day
 	nectar.add_resource("nectar", nectar.capacity_for("nectar"))
@@ -64,6 +64,6 @@ func _report() -> void:
 		print("RR9 PASS")
 		quit(0)
 		return
-	for line in _failures:
+	for line: String in _failures:
 		print("RR9 FAIL: ", line)
 	quit(1)

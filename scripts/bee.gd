@@ -1666,7 +1666,7 @@ func _end_tipsy_wander() -> void:
 ## when none of the tries lands on one.
 func _tipsy_wander_target() -> Vector2:
 	var reach: float = GameConfig.hive_cell_spacing * TIPSY_WANDER_REACH
-	for _attempt in TIPSY_WANDER_TRIES:
+	for _attempt: int in TIPSY_WANDER_TRIES:
 		var point: Vector2 = position + Vector2.from_angle(randf() * TAU) * randf_range(0.4, 1.0) * reach
 		var hex: Vector2i = Shapes.pixel_to_hex(point - hive.comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 		if hive.tile_is_walkable(hex):
@@ -1751,7 +1751,7 @@ func _return_nurse_food() -> void:
 	if not is_queen and hive != null:
 		var carb_type: String = nurse_carb_type if nurse_carb_type != "" else "nectar"
 		var lost := PackedStringArray()
-		for item in [["pollen", nurse_pollen], [carb_type, nurse_carb], ["jelly", nurse_jelly]]:
+		for item: Array in [["pollen", nurse_pollen], [carb_type, nurse_carb], ["jelly", nurse_jelly]]:
 			var amount: float = item[1]
 			if amount <= 0.0:
 				continue
@@ -1777,11 +1777,11 @@ func _return_nurse_food() -> void:
 ## what found no room. Called only from _return_nurse_food.
 func _return_ripe_bee_bread(amount: float) -> float:
 	var left: float = amount
-	for cell in hive.cells_holding("bee_bread"):
+	for cell: Variant in hive.cells_holding("bee_bread"):
 		if left <= 0.001:
 			break
 		left -= cell.return_ripe_bee_bread(left)
-	for cell in hive.cells:
+	for cell: Variant in hive.cells:
 		if left <= 0.001:
 			break
 		if cell.content_type == "":
@@ -1923,12 +1923,12 @@ func _try_role_work(r: int) -> bool:
 	# mining finders after it had already established this epoch has no work.
 	if r == Role.MINER and _mining_no_work_epoch == hive.mining_work_epoch and _mining_no_work_automine == automine and _mining_no_work_gate_epoch == Availability.gate_epoch:
 		return false
-	var finder = ROLE_ACTION_FINDERS.get(r)
+	var finder: Variant = ROLE_ACTION_FINDERS.get(r)
 	if finder == null:
 		return false
 	# Resolved once, not per row: this runs on every idle bee's think tick.
 	var mode: String = _action_mode_for_role(r)
-	for action in _actions_by_role.get(r, []):
+	for action: Variant in _actions_by_role.get(r, []):
 		var modes: Array = action.modes
 		if not modes.is_empty() and not mode in modes:
 			continue
@@ -1945,12 +1945,12 @@ func _try_role_work(r: int) -> bool:
 
 static func _build_actions_by_role() -> Dictionary:
 	var grouped: Dictionary = {}
-	for action in Actions.ACTIONS:
+	for action: Dictionary in Actions.ACTIONS:
 		# The catalogue rows are const; the copy carries whether the row is
 		# gated, worked out once here rather than per think tick.
 		var row: Dictionary = action.duplicate()
 		row["gated"] = Actions.is_gated(action)
-		for action_role in action.roles:
+		for action_role: Variant in action.roles:
 			if not grouped.has(action_role):
 				grouped[action_role] = []
 			grouped[action_role].append(row)
@@ -1963,7 +1963,7 @@ func _action_available(action_id: String) -> bool:
 		_action_gate_cache.clear()
 		_action_gate_epoch = Availability.gate_epoch
 	if not _action_gate_cache.has(action_id):
-		var stage_gate = world.stage_gate if world != null else null
+		var stage_gate: Node = world.stage_gate if world != null else null
 		_action_gate_cache[action_id] = Availability.action_query(action_id, self, stage_gate, Session.progression).available
 	return _action_gate_cache[action_id]
 
@@ -2161,7 +2161,7 @@ func clear_mine_queue() -> void:
 ## that have been dug out or unmarked since.
 func _next_queued_block() -> Node2D:
 	while not mine_queue.is_empty():
-		var block = mine_queue[0]
+		var block: Variant = mine_queue[0]
 		if is_instance_valid(block) and block.marked_for_mining:
 			return block
 		mine_queue.pop_front()

@@ -791,7 +791,7 @@ def check_action_catalogue(problems):
     bee_src = open(bee_path, encoding="utf-8").read()
     required_dispatch = (
         "static var _actions_by_role: Dictionary = _build_actions_by_role()",
-        "for action in _actions_by_role.get(r, []):",
+        "for action: Variant in _actions_by_role.get(r, []):",
         "finder.call(action.find, self)",
         "if action.gated and not _action_available(action.id):",
     )
@@ -3325,6 +3325,95 @@ def check_asserting_scenarios_are_run(problems):
                             "or list it in SCENARIOS_RUN_BY_NOTHING" % stem)
 
 
+# --- CQ-T1: typed-file ratchet -------------------------------------------
+# Scripts and tests whose untyped declarations are at zero. Godot's
+# untyped_declaration warning (project.godot [debug]) is the rule; this is
+# the static mirror of it, so `verify.ps1` fails before a boot does. Each
+# typing slice adds its files here. The count must stay zero.
+TYPED_FILES = [
+    "scripts/conditions.gd", "scripts/year_winter.gd", "scripts/skills.gd",
+    "scripts/season.gd", "scripts/availability.gd", "scripts/resources.gd",
+    "scripts/adaptations.gd", "scripts/colony_diagnostics.gd",
+    "scripts/pollination.gd", "scripts/bee_foraging.gd", "scripts/bee_nursery.gd",
+    "scripts/bee_honey.gd", "scripts/colony_milestones.gd", "scripts/guidance_policy.gd",
+    "scripts/foraging_stats.gd", "scripts/bee.gd", "scripts/run_availability.gd",
+    "scripts/progression.gd", "scripts/features.gd", "scripts/bee_building.gd",
+    "scripts/rival_hive.gd", "scripts/hive_cell.gd", "scripts/flower.gd",
+    "scripts/bee_mining.gd", "scripts/bee_egg_laying.gd",
+    "tests/t2_4b_bodies_test.gd", "tests/t2_11_comb_cadence_test.gd",
+    "tests/pp5_priority_cells_test.gd", "tests/gp1_goals_dropdown_test.gd",
+    "tests/sp11_cell_rim_test.gd", "tests/col7_gyne_window_test.gd",
+    "tests/rr9_winter_ages_nothing_test.gd", "tests/t2_10_automine_wake_test.gd",
+    "tests/si2_exact_rollback_test.gd", "tests/col8_winter_dieback_test.gd",
+    "tests/t3_1_weighted_choice_test.gd", "tests/sp10_soil_depth_test.gd",
+    "tests/gp2_goal_favourites_test.gd", "tests/bs14_saved_skill_policy_test.gd",
+    "tests/rr2_boot_saves_test.gd", "tests/gp4_problem_strip_test.gd",
+]
+
+UNTYPED_VAR = re.compile(
+    r"^\s*(?:@\w+(?:\([^)]*\))?\s+)?(?:static\s+)?var\s+\w+\s*(?:=(?!=)|$)")
+FUNC_HEAD = re.compile(r"\bfunc\s*(\w*)\s*\(")
+UNTYPED_FOR = re.compile(r"^\s*for\s+\w+\s+in\b")
+
+
+def _split_top_level(text):
+    """Comma-separated parameters, ignoring commas inside brackets."""
+    parts, depth, cur = [], 0, ""
+    for ch in text:
+        if ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth -= 1
+        if ch == "," and depth == 0:
+            parts.append(cur)
+            cur = ""
+        else:
+            cur += ch
+    if cur.strip():
+        parts.append(cur)
+    return [p.strip() for p in parts if p.strip()]
+
+
+def untyped_declarations(code):
+    """(line, text) for each declaration Godot's untyped_declaration flags:
+    a var with no type and no `:=`, a for-loop variable with no type, a
+    parameter with no type, and a function or lambda with no `->`. `code`
+    is the file's lines with strings and
+    comments already blanked (strip_code). A signature may span lines."""
+    found = []
+    for number, line in enumerate(code, 1):
+        if UNTYPED_VAR.match(line):
+            found.append((number, "var " + line.strip()))
+        if UNTYPED_FOR.match(line):
+            found.append((number, "for " + line.strip()))
+    text = "\n".join(code)
+    for match in FUNC_HEAD.finditer(text):
+        start, depth, end = match.end(), 1, match.end()
+        while end < len(text) and depth:
+            if text[end] == "(":
+                depth += 1
+            elif text[end] == ")":
+                depth -= 1
+            end += 1
+        number = text.count("\n", 0, match.start()) + 1
+        for param in _split_top_level(text[start:end - 1]):
+            if not re.match(r"^\w+\s*:", param):
+                found.append((number, "param " + param))
+        if not re.match(r"\s*->", text[end:]):
+            found.append((number, "return of " + (match.group(1) or "lambda")))
+    return sorted(found)
+
+
+def check_typed_files(problems):
+    for rel in TYPED_FILES:
+        source = open(os.path.join(ROOT, "..", rel), encoding="utf-8").read()
+        code = [strip_code(line) for line in source.split("\n")]
+        for number, text in untyped_declarations(code):
+            problems.append(
+                "%s:%d  untyped declaration (untyped_declaration): %s"
+                % (rel, number, text))
+
+
 def main():
     files = sorted(glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True))
     if not files:
@@ -3387,6 +3476,7 @@ def main():
     check_test_modules_are_run(problems)
     check_scenario_condition_keys(problems)
     check_asserting_scenarios_are_run(problems)
+    check_typed_files(problems)
 
     if problems:
         print("FAILED -- %d problem(s):\n" % len(problems))
