@@ -48,7 +48,7 @@ class StaticGateTest(unittest.TestCase):
     def test_keep_full_controls_and_mode_hidden_unowned(self):
         hud = _read("scripts/hud.gd")
         self.assertIn('first.architect_mode == "restock" and Availability.mode_query(Roles.COMB_WORKER, "restock"', hud)
-        self.assertIn("common_role == Roles.COMB_WORKER) and not Availability.mode_query(", hud)
+        self.assertIn("common_role == Roles.COMB_WORKER or common_role == Roles.MINER) and not Availability.mode_query(", hud)
 
     def test_handlers_and_job_refuse(self):
         zones = _read("scripts/orders_zones.gd")
