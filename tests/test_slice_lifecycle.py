@@ -874,6 +874,10 @@ class SliceDoctorTest(unittest.TestCase):
             self.assertEqual(0, finish.returncode, finish.stderr)
             self.assertIn("Slice landed: T-1", finish.stdout)
             self.assertIn("queued in pending deletions", finish.stdout)
+            # The finish shell was started inside the worktree, so it is the
+            # named holder (Get-DirectoryHolderSummary).
+            self.assertIn("held open by", finish.stdout)
+            self.assertIn("(this command", finish.stdout)
             self.assertTrue(worktree.exists())
 
             self.assertEqual(
