@@ -49,4 +49,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/RR-10` (`codex/RR-10`) | Codex | fermented nectar is neither counted nor spent by skill purchases | Codex | in progress | none | `plans/now/run-repairs.md` RR-10 -- fermented nectar is neither counted nor spent by skill purchases |
-| `.worktrees/L-30` (`claude/L-30`) | Claude | released work is visible to the sessions that release it | Claude | in progress | none | `plans/now/agent-lifecycle.md` L-30 -- released work is visible to the sessions that release it |
