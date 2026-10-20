@@ -102,6 +102,14 @@ class ReleasedBlockedChecksTest(unittest.TestCase):
             [],
         )
 
+    def test_id_that_prefixes_another_id_still_warns(self) -> None:
+        warnings = self.run_check(
+            "RR-1, RR-11 (`plans/now/run-repairs.md`) -- both must land.",
+            ("RR-1_2026-10-13.md", "RR-11_2026-10-15.md"),
+        )
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("RR-1, RR-11", warnings[0])
+
     def test_entry_with_no_ids_does_not_warn(self) -> None:
         self.assertEqual(
             self.run_check("an asset/licensing commit, not more UI code.", ()),

@@ -734,9 +734,7 @@ def check_released_blocked_checks(warnings: list[str], text: str | None = None,
         if not all(list(archive_dir.glob(f"{sid}_*.md")) for sid in ids):
             continue
 
-        remainder = re.sub(r"`[^`]*`", "", lead)
-        for sid in ids:
-            remainder = remainder.replace(sid, "")
+        remainder = slice_id.sub("", re.sub(r"`[^`]*`", "", lead))
         remainder = re.sub(r"[(),.]", "", remainder)
         remainder = re.sub(r"\band\b", "", remainder)
         if remainder.strip():
