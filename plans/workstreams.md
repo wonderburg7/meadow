@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/RR-10` (`codex/RR-10`) | Codex | fermented nectar is neither counted nor spent by skill purchases | Codex | in progress | none | `plans/now/run-repairs.md` RR-10 -- fermented nectar is neither counted nor spent by skill purchases |
+| `.worktrees/T2-12` (`claude/T2-12`) | Claude | Dig on its own is offered only once Automation is owned | Claude | in progress | none | `plans/now/tier-two.md` T2-12 -- Dig on its own is offered only once Automation is owned |
