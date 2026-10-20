@@ -102,7 +102,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-L1 | gdlint in verify with Dave's thresholds | `gdlintrc`, `tools/gdscript_style.py`, `tools/verify.ps1`, 13 hit sites | after RR-10 | medium |
 | CQ-L2 | every tool that reads GDScript as text survives `gdformat` | `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, tests | after CQ-L1 | medium |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T2 | run, world and save glue typed | 20 scripts | after CQ-T1 | low |
+| CQ-T2 | run, world and save glue typed | 20 scripts | gated: CQ-R1, CQ-M2 | low |
 | CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot` | after CQ-T2 | low |
 | CQ-S0 | golden-save round-trip harness | `tests/save_roundtrip_test.gd`, fixtures | yes | high |
 | CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a | high |
@@ -296,6 +296,48 @@ restyled.
 ```
 
 CQ-T1 shipped 2026-10-21; its specification is `plans/archive/CQ-T1_2026-10-21.md`.
+
+## CQ-T2 -- run, world and save glue typed
+
+**True now** (21 Oct 2026, after CQ-T1). CQ-T1 turned Godot's `untyped_declaration`
+warning on (level 1) and holds its 25 scripts and 16 tests at zero through the
+`TYPED_FILES` ratchet in `tests/source_checks.py`. The run, world and save glue is not
+in it. The ratchet's counter (which also counts untyped for-loop variables) finds 515
+declarations in these 20 scripts: `input_selection` 68, `scenario_actions` 67,
+`world_building` 60, `main` 57, `hive` 47, `orders_zones` 38, `saving` 31,
+`save_game` 29, `diagnostic_log` 21, `challenge_runner` 20, `perf` 14, `save_slots` 12,
+`challenge_stage_setup` 11, `headless/diagnostic_profile` 9, `settings_catalogue` 8,
+`developer_overrides` 6, `headless/diagnostic_probes` 6, `player_profile` 5,
+`save_migrations` 4, `tutorial_checkpoint` 2. `save_game.gd` still opens with
+`static func save(world, path`. Godot's own count for the same files was 219 on
+18 Oct (research record, "Typing count (T slices)").
+
+**When done:**
+
+- Every declaration in the 20 scripts, plus `scripts/headless/scenario_boot.gd`
+  (CQ-R1 moves the headless boot there), is typed under "Rules for every slice":
+  locals, parameters, returns, lambdas and for-loop variables.
+- Save-dictionary values are `float` or `: Variant`, never `int`; a value read back from
+  a save or from JSON keeps its float kind. `world`/`main` parameters take `Node2D`.
+- Every one of those files is added to `TYPED_FILES`, so the ratchet holds them at
+  zero.
+- `python tools/update_function_map.py` has refreshed the signature lines.
+
+**Invariants.** No save key, default or FORMAT_VERSION changes. No RNG call moves in
+`world_building.gd`. No `Perf` section name, node name or display string changes.
+
+**Gate.** CQ-R1 moves code out of `main.gd` and edits `scenario_actions.gd` and
+`diagnostic_log.gd`; CQ-M2 adds a row to `settings_catalogue.gd`. Typing those files
+while either is open would type code that is about to move, so this waits for both.
+
+```queue-gated
+**[Claude] CQ-T2 -- run, world and save glue typed**
+- Plan: `plans/now/code-health.md` -- "CQ-T2 -- run, world and save glue typed"
+- Files: `scripts/main.gd`, `scripts/scenario_actions.gd`, `scripts/world_building.gd`, `scripts/input_selection.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/orders_zones.gd`, `scripts/headless/diagnostic_profile.gd`, `scripts/perf.gd`, `scripts/settings_catalogue.gd`, `scripts/challenge_runner.gd`, `scripts/save_slots.gd`, `scripts/hive.gd`, `scripts/diagnostic_log.gd`, `scripts/tutorial_checkpoint.gd`, `scripts/developer_overrides.gd`, `scripts/challenge_stage_setup.gd`, `scripts/save_migrations.gd`, `scripts/player_profile.gd`, `scripts/headless/diagnostic_probes.gd`, `scripts/headless/scenario_boot.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
+- Check: the `TYPED_FILES` source check reports zero untyped declarations in every listed script; `python tools/gdscript_warnings.py` on the listed scripts prints no warning; `tests/test_save_migrations.py`, `tests/test_si1_run_state.py`, `tests/test_si2_exact_rollback.py` and `tests/test_layout_regression.py` pass; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` matches; `.\tools\verify.ps1` is green
+- Proof: `present: scripts/save_game.gd :: static func save(world, path`
+- Next after: CQ-T3
+```
 
 ## CQ-S0 -- golden-save round-trip harness
 

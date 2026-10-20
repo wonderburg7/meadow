@@ -94,6 +94,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **RR-11** (`plans/now/run-repairs.md`) -- nectar shows a pre-fermented warning colour before it ferments (Dave, 15 Oct 2026); waits for RR-10 (Codex lane), whose test it extends (SP-11 landed 15 Oct 2026, releasing `scripts/hive_cell.gd`).
 - **T2-14** (`plans/now/tier-two.md`) -- a comb worker's idle reason asks whether there is room to build, without starting a site (found by T2-11, which landed 17 Oct 2026); waits for RR-10 (Codex lane) to release `scripts/hive.gd`, and runs after T2-13 (both edit `scripts/bee.gd`).
 - **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices of the alpha chain (WP-2, SG-2, ED-1, ED-2, RR-12, SP-8a) and ED-3 (Dave, 18 Oct 2026), and for CQ-S0's round-trip harness.
+- **CQ-T2** (`plans/now/code-health.md`) -- the run, world and save glue typed (20 scripts), the second typing slice; waits for CQ-R1 (`scripts/main.gd`, `scripts/scenario_actions.gd`, `scripts/diagnostic_log.gd`) and CQ-M2 (`scripts/settings_catalogue.gd`), Claude-lane slices that edit its files (CQ-T1 landed 21 Oct 2026).
 ## Copy-paste prompts
 
 Claude, implementing: `Implement the next slice.`
