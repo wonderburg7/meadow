@@ -110,7 +110,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
-| CQ-M1 | parity checks for two hand-copied lists | `tests/source_checks.py` | yes | low |
 | CQ-M2 | "starving" 0.15 becomes a GameConfig row | `game_config.gd`, `settings_catalogue.gd`, 3 readers | yes | medium |
 | CQ-M3 | rival starting stores become GameConfig rows; rebalance consts named | `rival_hive.gd`, `game_config.gd`, `settings_catalogue.gd`, `tests/balance_tests.py` | after CQ-M2 | medium |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
@@ -403,25 +402,7 @@ record, "Save restore".
 - Next after: CQ-S2
 ```
 
-## CQ-M1 -- parity checks for two hand-copied lists
-
-**True now.** `scenario_presets.gd` BASELINE hand-copies four GameConfig defaults (0.17,
-0.5, 0.1, 0.15), and nothing checks them. `player_profile.gd` PREFERENCE_KEYS is
-hand-kept against Session's SESSION_KEYS, and `show_crab_spiders` is the one deliberate
-gap.
-
-**When done:** `tests/source_checks.py` asserts that BASELINE equals the
-`game_config.gd` defaults, and that PREFERENCE_KEYS ⊇ SESSION_KEYS minus a named
-exception list (`show_crab_spiders`). Each check has a mutated-input case.
-
-```queue
-**[Claude] CQ-M1 -- parity checks for two hand-copied lists**
-- Plan: `plans/now/code-health.md` -- "CQ-M1 -- parity checks for two hand-copied lists"
-- Files: `tests/source_checks.py`, `tests/test_source_checks.py`
-- Check: both checks pass on today's tree and fail on their mutated inputs in `tests/test_source_checks.py`; `.\tools\verify.ps1` is green
-- Proof: `absent: tests/source_checks.py :: scenario_presets.gd`
-- Next after: CQ-M2
-```
+CQ-M1 shipped 2026-10-21; its specification is `plans/archive/CQ-M1_2026-10-21.md`.
 
 ## CQ-M2 -- the starving threshold becomes a GameConfig row
 
