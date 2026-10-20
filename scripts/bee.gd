@@ -1805,6 +1805,23 @@ func _return_bee_bread() -> void:
 			"no cell had room for %.1f bee bread" % unplaced)
 	bee_bread_load = 0.0
 
+## T2-13. A bee whose role changes while she carries a body puts it down
+## first. Only a cleaner's walk out clears the flags
+## (bee_building.gd::builder_dump_waste), so without this a bee given a new
+## job kept "Carrying: a dead bee" for good, and the body had already left
+## hive.bodies. A bee inside the hive lays a dead bee back on the floor, so
+## another cleaner can take it; a dead larva, or a body she is carrying out
+## (she was already dumping it), is simply gone, its cell having been
+## cleared. The restored body's died_at is the time it is put down. Called
+## only from _apply_role, so nothing here runs per frame.
+func _put_down_body() -> void:
+	if not carrying_corpse:
+		return
+	if corpse_is_bee and _is_inside_hive() and hive != null and is_instance_valid(hive):
+		hive.add_body(hive.nearest_walkable_point(position), Session.sim_time)
+	carrying_corpse = false
+	corpse_is_bee = false
+
 ## Is this bee partway through something worth finishing? Everything
 ## except the "waiting for work" states and standing idle.
 func _is_busy() -> bool:
@@ -2404,6 +2421,7 @@ func _apply_role(new_role: int) -> void:
 	# she takes up the new job, rather than vanishing.
 	_return_nurse_food()
 	_return_bee_bread()
+	_put_down_body()
 	nurse_fetching = ""
 	var now_indoors := BeeStatus.works_indoors(self)
 
