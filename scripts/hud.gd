@@ -2055,6 +2055,10 @@ func _fill_hatch_menu(popup: PopupMenu, role_value: int, options: Array) -> int:
 		var gate_key: String = Availability.mode_gate_key(role_value, mode)
 		if mode != "" and not allowed_mode_keys.is_empty() and not allowed_mode_keys.has(gate_key):
 			continue
+		# T2-12: a mode that names an unowned skill (Dig on its own, Stocking)
+		# is not offered, as the bee's own mode row hides it.
+		if mode != "" and not Availability.mode_query(role_value, mode, null, Session.progression).available:
+			continue
 		popup.add_item(options[i].label, i)
 	return popup.item_count
 
@@ -3182,11 +3186,10 @@ func _build_doing_row(common_role: int, first) -> void:
 		var gate_key: String = Availability.mode_gate_key(common_role, key)
 		if not allowed_mode_keys.is_empty() and not allowed_mode_keys.has(gate_key):
 			continue
-		# BB-1: Fermenting is offered only once Bee bread is owned. Limited to
-		# the Honey role: the Miner's "Dig on its own" has shown regardless
-		# since T2-2 (its work row is what Automation gates).
+		# BB-1: Fermenting is offered only once Bee bread is owned. T2-12: the
+		# Miner's "Dig on its own" waits for Automation the same way.
 		# T3-2: Stocking likewise waits for Restocking.
-		if (common_role == Roles.HONEY or common_role == Roles.COMB_WORKER) and not Availability.mode_query(common_role, key, null, Session.progression).available:
+		if (common_role == Roles.HONEY or common_role == Roles.COMB_WORKER or common_role == Roles.MINER) and not Availability.mode_query(common_role, key, null, Session.progression).available:
 			continue
 		var current: bool = _mode_is_active(common_role, first, key)
 		var command: String = mode_command(common_role, key)
