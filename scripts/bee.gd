@@ -346,34 +346,65 @@ func current_working_role() -> int:
 
 ## WP-2: once the colony owns Work priorities, this bee's ordered list of
 ## backup jobs (role ids), tried in turn when its own role has nothing.
-## secondary_role then mirrors whichever entry it last took up, so
-## working_secondary, current_working_role and the HUD read as before.
-## Unowned it is never read: secondary_role is the one backup, as before.
-## Empty means no list chosen yet -- backup_list() fills it the first time
-## it is needed after purchase: this bee's own backup first, then the
-## colony default (Session.backup_order_default). A bee born after purchase
-## takes the colony default in setup(). Saved per bee; the queen keeps her
-## own rule (she nurses before laying) and never reads it.
+## secondary_role then mirrors whichever entry it last took up (the plan's
+## rule), so working_secondary, current_working_role and the HUD read as
+## before. Unowned it is never read: secondary_role is the one backup.
+## Ownership never lapses within a run (progression.gd has no revoke; a
+## rollback rebuilds the bees from the checkpoint), so the mirror is never
+## read back as a single backup.
+## Only meaningful while backup_order_set: a list was given -- on purchase
+## (seed_backup_order, which Session runs over every bee the frame the skill
+## is owned), at birth into an owned run (setup), by an order, or by a save.
+## A list that was given and is empty means "no backup jobs", and stays so.
+## The queen keeps her own rule (she nurses before laying) and holds none.
 var backup_order: Array = []
+var backup_order_set: bool = false
+
+## How many list entries the last owned walk actually tried, so the idle
+## note never claims a job "has nothing" that was skipped untried.
+var _backup_jobs_tried: int = 0
 
 ## Whether this run owns Work priorities. No resolver (a bare test hive)
 ## means not, so such a bee keeps the single backup.
 static func work_priorities_owned() -> bool:
 	return Session.progression != null and Session.progression.is_owned(WORK_PRIORITIES_SKILL)
 
-## The list _idle_dispatch walks, filling an empty one as the comment on
-## backup_order says. Unowned, or for a drone, it is backup_order as it is.
+## Whether this bee may hold a list at all: neither the queen (her own rule)
+## nor a drone (no backup job).
+func _keeps_backup_order() -> bool:
+	return not is_queen and not is_drone
+
+## On purchase (Session.seed_backup_orders), and for a bee loaded from a
+## save without a list: her own backup first, then the colony default as it
+## is now. A bee that already has a list keeps it.
+func seed_backup_order() -> void:
+	if backup_order_set or not _keeps_backup_order():
+		return
+	var seeded: Array = [secondary_role] if secondary_role != -1 else []
+	seeded.append_array(Session.backup_order_default)
+	set_backup_order(seeded)
+
+## The list _idle_dispatch walks. Owned, a bee somehow still without one is
+## seeded first (seed_backup_order), so the walk never reads an unset list.
 func backup_list() -> Array:
-	if backup_order.is_empty() and not is_drone and work_priorities_owned():
-		var seeded: Array = [secondary_role] if secondary_role != -1 else []
-		seeded.append_array(Session.backup_order_default)
-		backup_order = Session.clean_backup_order(seeded)
+	if not backup_order_set and work_priorities_owned():
+		seed_backup_order()
 	return backup_order
 
 ## Sets the whole list at once (orders_zones.gd applies it to a selection).
-## A drone has no backup job, so it keeps none.
+## An empty list is a choice: no backup jobs. The queen and a drone keep none.
 func set_backup_order(order: Variant) -> void:
-	backup_order = [] if is_drone else Session.clean_backup_order(order)
+	if not _keeps_backup_order():
+		clear_backup_order()
+		return
+	backup_order = Session.clean_backup_order(order)
+	backup_order_set = true
+
+## Back to "no list given" -- a save entry from before WP-2, or a bee that
+## became the queen or a drone.
+func clear_backup_order() -> void:
+	backup_order = []
+	backup_order_set = false
 
 # --- floral constancy and the search pattern ----------------------
 ## Floral constancy (see GameConfig.floral_constancy_on): "" means no
@@ -931,7 +962,7 @@ func become_drone() -> void:
 	is_drone = true
 	pending_role = -1
 	secondary_role = -1
-	backup_order = []
+	clear_backup_order()
 	# BB-2: the outcome is a worker's; a drone ages out as today's worker.
 	if brood_outcome != "":
 		set_brood_outcome("")
@@ -965,6 +996,7 @@ func become_queen() -> void:
 		visual_root.queue_free()
 	_build_visuals()
 	secondary_role = -1
+	clear_backup_order()
 	_apply_role(Role.EGG_LAYER)
 	if secondary_role == -1:
 		secondary_role = Role.NURSERY
@@ -1080,10 +1112,10 @@ func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGE
 		# player can change it like any other bee's backup role.
 		if secondary_role == -1:
 			secondary_role = Role.NURSERY
-	# WP-2: a bee born once the colony owns Work priorities takes the colony
-	# default order. A save restore sets each bee's own list after this.
-	if not is_drone and work_priorities_owned():
-		backup_order = Session.backup_order_default.duplicate()
+	# WP-2: a worker born once the colony owns Work priorities takes the
+	# colony default order. A save restore sets each bee's own list after this.
+	if _keeps_backup_order() and work_priorities_owned():
+		set_backup_order(Session.backup_order_default)
 	# Only reachable here, not _ready(): a milestone fact needs bee_id
 	# and world, neither of which is set until setup() runs. See
 	# BEE_INDIVIDUALITY_PLAN.md section 5.
@@ -1904,10 +1936,12 @@ func _idle_dispatch() -> void:
 ## back to what it was. Runs only from _idle_dispatch, never per frame.
 func _dispatch_backup_list() -> void:
 	var before: int = secondary_role
+	_backup_jobs_tried = 0
 	for entry: Variant in backup_list():
 		var job: int = int(entry)
 		if job == role or not _backup_job_permitted(job):
 			continue
+		_backup_jobs_tried += 1
 		secondary_role = job
 		if _try_role_work(job):
 			working_secondary = true
@@ -2447,8 +2481,12 @@ func set_secondary_role(new_role: int) -> void:
 		return
 	secondary_role = -1 if new_role == role else new_role
 	# WP-2: owned, the single Backup choice puts that job at the head of the
-	# bee's list, so it is still the first backup she tries.
-	if secondary_role != -1 and not is_queen and work_priorities_owned():
+	# bee's list, so it is still the first backup she tries; "Nothing" means
+	# no backup jobs at all, so the list is emptied rather than walked.
+	if _keeps_backup_order() and work_priorities_owned():
+		if secondary_role == -1:
+			set_backup_order([])
+			return
 		var order: Array = backup_list().duplicate()
 		order.erase(secondary_role)
 		order.push_front(secondary_role)
@@ -2835,8 +2873,10 @@ func _idle_backup_note() -> String:
 	# introduced yet and naming one would teach it out of order.
 	if not role_restricted_to.is_empty():
 		return ""
-	if not is_queen and work_priorities_owned() and not backup_order.is_empty():
-		return " (its backup jobs also have nothing right now)"
+	if not is_queen and work_priorities_owned():
+		# Only a job actually tried can be said to have nothing; skipped
+		# ones (not unlocked, or her own role) are not mentioned.
+		return " (its backup jobs also have nothing right now)" if _backup_jobs_tried > 0 else ""
 	if secondary_role != -1 and secondary_role != role:
 		return " (backup role %s also has nothing right now)" % Roles.label_for(secondary_role)
 	return ""

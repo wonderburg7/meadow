@@ -285,10 +285,10 @@ static func _bees_data(world) -> Array:
 			"architect_mode": b.architect_mode,
 			"automine": b.automine,
 			"secondary": b.secondary_role,
-			# WP-2, additive: the bee's ordered backup jobs (empty until the
-			# colony owns Work priorities). An older save has none, and the
-			# bee's backup goes first, then the colony default.
-			"backup_order": b.backup_order.duplicate(),
+			# WP-2, additive: the bee's ordered backup jobs, or null while
+			# she has been given none (before purchase; the queen). An older
+			# save has no key: her backup goes first, then the colony default.
+			"backup_order": b.backup_order.duplicate() if b.backup_order_set else null,
 			"finish_first": b.finish_task_first,
 			"pending_role": b.pending_role,
 			"preferred": b.preferred_species,

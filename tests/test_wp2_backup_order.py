@@ -8,10 +8,13 @@ has no work, then lets her run from her idle state:
 - unowned, she falls back on her one backup as today: with Nurse she stays
   idle (even with a list forced onto her), with Forager she forages;
 - owned, with the list Nurse then Forager set through orders_zones.gd's
-  handler, Nurse has nothing so she takes up foraging; with Nurse alone she
-  stays idle;
-- a bee living at purchase gets her backup first, then the colony default; a
-  bee born after it takes the colony default;
+  handler, Nurse has nothing so she takes up foraging; with Nurse alone, an
+  emptied list, "Nothing" chosen, or only her own role, she stays idle, an
+  emptied list stays empty, and her note mentions backup jobs only when one
+  was tried;
+- at purchase every living worker (never the queen) gets her backup first,
+  then the colony default as it was then; a bee born after it takes the
+  colony default;
 - the lists and the default survive save and restore, and a save without
   them loads the default order and each bee with her backup first.
 
@@ -42,7 +45,9 @@ import godot_compile_check as gcc  # noqa: E402
 TEST_SCRIPT = "res://tests/wp2_backup_order_test.gd"
 TIMEOUT_SECONDS = 300
 CASES = ("unowned, backup Nurse", "unowned, backup Forager",
-         "owned, list Nurse then Forager", "owned, list Nurse only")
+         "owned, list Nurse then Forager", "owned, list Nurse only",
+         "owned, list emptied", "owned, Nothing chosen",
+         "owned, list of her own role only")
 
 
 class BackupOrderTest(unittest.TestCase):
@@ -81,6 +86,9 @@ class BackupOrderTest(unittest.TestCase):
         self.assertIsNotNone(saved, "the run wrote no save")
         self.assertIn("backup_order_default", saved["session"], "the save holds no colony default")
         self.assertTrue(all("backup_order" in b for b in saved["bees"]), "a bee entry has no backup_order")
+        queens = [b for b in saved["bees"] if b.get("queen")]
+        self.assertTrue(queens and all(b["backup_order"] is None for b in queens), "the queen was saved with a list")
+        self.assertTrue(any(b["backup_order"] == [] for b in saved["bees"]), "no emptied list was saved as empty")
 
 
 if __name__ == "__main__":

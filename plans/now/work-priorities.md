@@ -113,8 +113,10 @@ at once; a mixed selection shows its first bee's order and says so. The
 Colony window gains a "New bees fall back on" list editing the colony
 default. Unowned, the row is today's single Backup choice.
 
-**From WP-2.** Read a bee's list with `bee.gd::backup_list()` (it fills an
-empty list, owned, with the bee's backup first and then the default); set a
+**From WP-2.** Read a bee's list with `bee.gd::backup_list()`. Every living
+worker is given one the frame the skill is owned (`Session.seed_backup_orders`),
+and an empty list that was given means "no backup jobs" and stays empty; the
+queen holds none. Set a
 selection's with `orders_zones.gd::_on_backup_order_requested(role_keys)`,
 which `main.gd` still has to connect to the HUD's new signal; the colony
 default is `Session.backup_order_default`, set with
