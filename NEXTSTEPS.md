@@ -51,6 +51,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/hud.gd :: func _selection_activity_text(`
    - Next after: CQ-R8 -- hud builders shortened (designation button table)
 
+5. **[Claude] CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named**
+   - Plan: `plans/now/code-health.md` -- "CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named"
+   - Files: `scripts/rival_hive.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/balance_tests.py`, `tests/si1_run_state_test.gd`, `FUNCTION_MAP.md`
+   - Check: `python tests/balance_tests.py` passes with its rival section unchanged; `python -m unittest tests.test_si1_run_state` passes, including the new fresh-rival and `restore({})` assertions; `tests/test_save_migrations.py`, `tests/test_signal_catalogue.py` and the settings-row source checks pass; `.\tools\verify.ps1` is green
+   - Proof: `present: scripts/rival_hive.gd :: nectar = float(data.get("nectar", 120.0))`
+   - Next after: CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -84,11 +91,11 @@ One line each: the id, its plan, and the single thing it waits for.
 - **FR-2** (`plans/now/forager-recruitment.md`) -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight; waits for FR-1b (Codex backlog) to tune the stage order FR-1 measured, so Auto scouting forages better (FR-1 landed 17 Oct 2026; Dave, 14 Oct 2026).
 - **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-6, which shares `scripts/skills.gd`.
 - **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices of the alpha chain (SG-2, ED-1, ED-2, RR-12, SP-8a; WP-2 landed 21 Oct 2026) and ED-3 (Dave, 18 Oct 2026), and for CQ-S0's round-trip harness.
-- **CQ-M3** (`plans/now/code-health.md`) -- the rival's starting nectar, pollen, forager share and minimum population become GameConfig rows, and its rebalance numbers named consts; waits for RR-11 (Claude lane), which shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` and holds the lane's fifth slot (CQ-M2 landed 21 Oct 2026).
+- **CQ-M8** (`plans/now/code-health.md`) -- the bees' walk to the hive exit becomes one `BeeMovement` helper with named reach distances; waits for CQ-L1 (Claude lane), which holds `scripts/bee_foraging.gd`; its section and block are written by the session that claims CQ-M3.
 - **CQ-R2** (`plans/now/code-health.md`) -- the first crisis moves out of `scripts/main.gd` into a new first_crisis.gd, touching the save files; waits, gated with CQ-S1, for the save slices of the alpha chain (SG-2, ED-1, ED-2, RR-12, SP-8a; WP-2 landed 21 Oct 2026) and ED-3 (Dave, 18 Oct 2026); its plan section is written when that gate clears.
 - **CQ-R8** (`plans/now/code-health.md`) -- hud builders shortened (the designation button table); waits for CQ-R7 (Claude lane), which shares `scripts/hud.gd`; its section and block are written when CQ-R7 lands.
 - **CQ-L2** (`plans/now/code-health.md`) -- every tool that reads GDScript as text survives `gdformat`; waits for CQ-L1 (Claude backlog), which puts gdlint into verify first.
-- **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; waits for CQ-T2, the second typing slice.
+- **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; waits for CQ-R7 (Claude lane), the last queued slice reshaping `scripts/hud.gd`, its largest file (CQ-T2 landed 21 Oct 2026); its section and block are written when CQ-R7 lands.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
 ## Copy-paste prompts
 

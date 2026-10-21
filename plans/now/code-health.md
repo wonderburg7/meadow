@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: CQ-T3 -- UI typed; warning becomes an error | Dependency: CQ-L1 waits for RR-10 (Codex lane) to release `scripts/hive.gd` and `scripts/skill_tree_panel.gd`; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); the rest is in "Dependencies" | Verified: 2026-10-21
+Status: active | Owner: Dave / Claude Code | Next: CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds (queued with CQ-S0, CQ-R7 and CQ-M3; CQ-M8 follows CQ-M3) | Dependency: CQ-M8 waits for CQ-L1, which holds `scripts/bee_foraging.gd`; CQ-T3 waits for CQ-R7, the last queued slice in `scripts/hud.gd`; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); the rest is in "Dependencies" | Verified: 2026-10-21
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -102,23 +102,23 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-L1 | gdlint in verify with Dave's thresholds | `gdlintrc`, `tools/gdscript_style.py`, `tools/verify.ps1`, 13 hit sites | yes (RR-10 and L-30 landed 18 Oct 2026) | medium |
 | CQ-L2 | every tool that reads GDScript as text survives `gdformat` | `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, tests | after CQ-L1 | medium |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot` | after CQ-T2 | low |
+| CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot` | after CQ-R7, the last queued slice in `hud.gd` (CQ-T2 landed 21 Oct 2026) | low |
 | CQ-S0 | golden-save round-trip harness | `tests/save_roundtrip_test.gd`, fixtures | yes | high |
 | CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
-| CQ-M3 | rival starting stores become GameConfig rows; rebalance consts named | `rival_hive.gd`, `game_config.gd`, `settings_catalogue.gd`, `tests/balance_tests.py` | gated: RR-11 (lane full, shared files) | medium |
+| CQ-M3 | rival starting stores become GameConfig rows; rebalance consts named | `rival_hive.gd`, `game_config.gd`, `settings_catalogue.gd`, `tests/balance_tests.py` | yes (RR-11 landed 21 Oct 2026) | medium |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
 | CQ-M5 | CanvasLayer order in scripts/canvas_layers.gd | 10 UI scripts | yes | medium |
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | yes | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
-| CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | yes | low |
+| CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | after CQ-L1, which holds `bee_foraging.gd`; follows CQ-M3 | low |
 | CQ-M9 | colony plot reads `Resources` colours; width const | `colony_panel.gd` | yes | low |
 | CQ-M10 | `WEATHER_ROLLS_PER_DAY` | `main.gd` | yes | low |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
-| CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | after T2-14 (CQ-R0 landed 21 Oct 2026) | medium |
+| CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once WP-3 and CQ-R7 release `hud.gd` (T2-14 and CQ-R0 landed 21 Oct 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes | medium |
@@ -142,7 +142,7 @@ claim while `dry_after`).
   - CQ-L1 → L2 → L3
   - CQ-T1 → T2 → T3
   - CQ-S0 → S1 → S2 → S3 → S4 → S5
-  - CQ-M2 → M3; CQ-M6 → M7
+  - CQ-M2 → M3 → M8 (M8 by queue order: it shares no file with M3); CQ-M6 → M7
   - CQ-R0 → R3, R5 and R7
   - CQ-R1 and CQ-R2 → R13
 - **Shared files** (one after another, any order): `hud.gd` (M5, R3, R6, R7, R8);
@@ -155,8 +155,12 @@ claim while `dry_after`).
   - L-30 (`plans/now/agent-lifecycle.md`) held `tools/verify.ps1`; it landed 18 Oct 2026, clearing CQ-L1.
   - HP-3 (`plans/archive/hot-path-cadence_2026-10-18.md`) changes `bee.gd::_process`: CQ-R4 profiles
     after it.
-  - T2-12, T2-13 and T2-14 (`plans/now/tier-two.md`) hold `hud.gd` and `bee.gd`, and
-    T2-14 fixes `idle_reason`: CQ-R3 waits for T2-14.
+  - T2-14 (`plans/now/tier-two.md`) fixed `idle_reason` before CQ-R3 moves it; it
+    landed 21 Oct 2026, clearing CQ-R3 of everything but the `hud.gd` order.
+  - CQ-T3 types `hud.gd` after the queued slices that reshape it (WP-3 in
+    `plans/now/work-priorities.md`, then CQ-R7), as CQ-T2 waited for CQ-R1's
+    moves; CQ-L1 holds `skill_tree_panel.gd` ahead of it. Its section and block
+    are written when CQ-R7 lands, deciding then whether CQ-R8 goes first.
   - The save moves (CQ-S1 to S5 and CQ-R2) wait for every specified slice that edits
     `save_game.gd`/`saving.gd`: WP-2, SG-2, ED-1, ED-2 (difficulty, ending at ED-3),
     RR-12 and SP-8a. Each of those plans carries the reverse pointer.
@@ -401,17 +405,17 @@ and the rebalance numbers as structural constants ("D2 classification" above).
 now. The rival's save keys and the FORMAT_VERSION do not change. `persist: "none"`
 puts the new rows in no save or profile. No existing display string changes.
 
-**Gate.** It could start today, but the Claude lane already holds five items, and the
-last of them, RR-11 (`plans/now/run-repairs.md`), also edits `game_config.gd` and
-`settings_catalogue.gd`. Whoever lands RR-11 opens this fence.
+**Gate.** It waited for RR-11 (`plans/now/run-repairs.md`), which also edited
+`game_config.gd` and `settings_catalogue.gd`; RR-11 landed 21 Oct 2026. Its successor,
+CQ-M8, gets its block from the session that claims this one.
 
-```queue-gated
+```queue
 **[Claude] CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named**
 - Plan: `plans/now/code-health.md` -- "CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named"
 - Files: `scripts/rival_hive.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/balance_tests.py`, `tests/si1_run_state_test.gd`, `FUNCTION_MAP.md`
 - Check: `python tests/balance_tests.py` passes with its rival section unchanged; `python -m unittest tests.test_si1_run_state` passes, including the new fresh-rival and `restore({})` assertions; `tests/test_save_migrations.py`, `tests/test_signal_catalogue.py` and the settings-row source checks pass; `.\tools\verify.ps1` is green
 - Proof: `present: scripts/rival_hive.gd :: nectar = float(data.get("nectar", 120.0))`
-- Next after: none -- CQ-M3 ends the CQ-M2 chain; the other M slices (CQ-M4 to CQ-M10) are unspecified table rows
+- Next after: CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named
 ```
 
 CQ-R0 shipped 2026-10-21; its specification is `plans/archive/CQ-R0_2026-10-21.md`.
