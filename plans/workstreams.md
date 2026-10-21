@@ -49,4 +49,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/AR-5` (`codex/AR-5`) | Codex | the first two gates on the calendar, and a reference queen who lays early | Codex | in progress | none | `plans/now/alpha-route-evidence.md` AR-5 -- the first two gates on the calendar, and a reference queen who lays early |
-| `.worktrees/RR-11` (`claude/RR-11`) | Claude | nectar shows a pre-fermented colour before it ferments, as a warning | Claude | in progress | none | `plans/now/run-repairs.md` RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning |
