@@ -37,7 +37,7 @@ local/field name already means on the node type it's declared on.
 
 **Section headers, not top-to-bottom reads.** Most long scripts are
 divided by `# --- section name ---` headers — grep for those, check
-`FUNCTION_MAP.md` (every script over 700 lines), or read one function with
+`FUNCTION_MAP.md` (every script over 700 lines; 700 decides what is indexed, never what is split -- a script splits by responsibility), or read one function with
 `python tools/func.py`. Some (`input_selection.gd`, `fog_of_war.gd`,
 `world_building.gd`) have no headers yet, so `func.py` is the way in.
 

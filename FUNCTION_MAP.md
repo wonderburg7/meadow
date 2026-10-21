@@ -432,71 +432,6 @@ The headless verbs, `when` clauses and layout assertions.
 1715 static func _log(do: String, target_desc: String, result: String, reason: String) -> void
 ```
 
-## main.gd (1,660 lines)
-
-Per-frame entry point, everything not yet split out of main.
-
-```
-37   # --- signals ------------------------------------------------------
-51   # --- preloads and boot constants ----------------------------------
-99   # --- delegate systems ---------------------------------------------
-139  # --- world and meadow constants -----------------------------------
-200  # --- state --------------------------------------------------------
-395  # --- _ready and construction --------------------------------------
-405  static func run_definition(level_id: int, developer_edits_allowed: bool, overrides_path: String = DeveloperOverrides.PATH) -> Dictionary
-424  func _ready() -> void
-722  # --- public surface other scripts call directly -------------------
-729  func is_on_screen(node: Node2D) -> bool
-732  func hive_entrance_inside() -> Vector2
-735  func entrance_wait_point(side: int) -> Vector2
-738  func move_bee_into_hive(bee: Node2D) -> void
-741  func move_bee_out_of_hive(bee: Node2D) -> void
-744  func mark_death(bee: Node2D) -> void
-752  func _on_bee_died(bee: Node2D) -> void
-756  func finish_mining(block: Node2D) -> void
-759  func save_run() -> void
-762  func begin_winter_countdown() -> void
-765  # --- per-frame ----------------------------------------------------
-775  func _process(delta: float) -> void
-862  # --- the frame rate readout ----------------------------------------
-881  func _sample_fps() -> void
-904  func _reseed_meadow(delta: float) -> void
-924  func _hatch_ready_brood() -> void
-960  func _sample_day_stores() -> void
-977  func _advance_weather(delta: float) -> void
-1010 func _apply_rain_overlay() -> void
-1021 # --- the first crisis ----------------------------------------------
-1027 static func _blank_first_crisis() -> Dictionary
-1038 static func first_crisis_bounds() -> Dictionary
-1044 static func first_crisis_cutoff() -> float
-1048 func _first_crisis_applies() -> bool
-1055 func _first_crisis_holds_weather() -> bool
-1067 func _first_crisis_readiness() -> Dictionary
-1071 func _advance_first_crisis(delta: float) -> void
-1112 func _warn_first_crisis(starts_at: float, path: String, readiness: Dictionary) -> void
-1144 func _first_crisis_warning_text(readiness: Dictionary, lead: float) -> String
-1158 func _start_first_crisis() -> void
-1175 func _show_first_crisis_note() -> void
-1202 static func _minutes_text(seconds: float) -> String
-1209 func _trace_first_crisis(phase: String, readiness: Dictionary = {}, extra: Dictionary = {}) -> void
-1248 func restore_first_crisis(saved) -> void
-1285 func _check_for_loss() -> void
-1313 func _promote_gyne_to_queen() -> bool
-1334 func _check_colony_energy(delta: float) -> void
-1365 func invalidate_population() -> void
-1376 func _role_counts(bees = null) -> Dictionary
-1393 func _update_population_readout(bees = null) -> void
-1407 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-1413 func _prune_selection() -> void
-1426 func _on_restart_after_loss() -> void
-1432 func _on_level_chosen(level: int) -> void
-1446 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-1465 func _apply_scenario_boot_arg() -> void
-1593 func _parse_scenario_performance_capture(raw: Variant) -> Dictionary
-1633 func _is_whole_number(value: Variant) -> bool
-1647 func _end_scenario_run(outcome: String) -> void
-```
-
 ## settings_catalogue.gd (1,614 lines)
 
 Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
@@ -703,6 +638,69 @@ One cell: contents, brood, honey ripening, how it draws.
 1457 func _priority_mark() -> String
 1470 func _apply_fill_shading() -> void
 1481 func development_percent() -> float
+```
+
+## main.gd (1,472 lines)
+
+Per-frame entry point and run wiring; headless scenario boot lives in headless/scenario_boot.gd.
+
+```
+37   # --- signals ------------------------------------------------------
+51   # --- preloads and boot constants ----------------------------------
+99   # --- delegate systems ---------------------------------------------
+139  # --- world and meadow constants -----------------------------------
+200  # --- state --------------------------------------------------------
+395  # --- _ready and construction --------------------------------------
+405  static func run_definition(level_id: int, developer_edits_allowed: bool, overrides_path: String = DeveloperOverrides.PATH) -> Dictionary
+424  func _ready() -> void
+722  # --- public surface other scripts call directly -------------------
+729  func is_on_screen(node: Node2D) -> bool
+732  func hive_entrance_inside() -> Vector2
+735  func entrance_wait_point(side: int) -> Vector2
+738  func move_bee_into_hive(bee: Node2D) -> void
+741  func move_bee_out_of_hive(bee: Node2D) -> void
+744  func mark_death(bee: Node2D) -> void
+752  func _on_bee_died(bee: Node2D) -> void
+756  func finish_mining(block: Node2D) -> void
+759  func save_run() -> void
+762  func begin_winter_countdown() -> void
+765  # --- per-frame ----------------------------------------------------
+775  func _process(delta: float) -> void
+862  # --- the frame rate readout ----------------------------------------
+881  func _sample_fps() -> void
+904  func _reseed_meadow(delta: float) -> void
+924  func _hatch_ready_brood() -> void
+960  func _sample_day_stores() -> void
+977  func _advance_weather(delta: float) -> void
+1010 func _apply_rain_overlay() -> void
+1021 # --- the first crisis ----------------------------------------------
+1027 static func _blank_first_crisis() -> Dictionary
+1038 static func first_crisis_bounds() -> Dictionary
+1044 static func first_crisis_cutoff() -> float
+1048 func _first_crisis_applies() -> bool
+1055 func _first_crisis_holds_weather() -> bool
+1067 func _first_crisis_readiness() -> Dictionary
+1071 func _advance_first_crisis(delta: float) -> void
+1112 func _warn_first_crisis(starts_at: float, path: String, readiness: Dictionary) -> void
+1144 func _first_crisis_warning_text(readiness: Dictionary, lead: float) -> String
+1158 func _start_first_crisis() -> void
+1175 func _show_first_crisis_note() -> void
+1202 static func _minutes_text(seconds: float) -> String
+1209 func _trace_first_crisis(phase: String, readiness: Dictionary = {}, extra: Dictionary = {}) -> void
+1248 func restore_first_crisis(saved) -> void
+1285 func _check_for_loss() -> void
+1313 func _promote_gyne_to_queen() -> bool
+1334 func _check_colony_energy(delta: float) -> void
+1365 func invalidate_population() -> void
+1376 func _role_counts(bees = null) -> Dictionary
+1393 func _update_population_readout(bees = null) -> void
+1407 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+1413 func _prune_selection() -> void
+1426 func _on_restart_after_loss() -> void
+1432 func _on_level_chosen(level: int) -> void
+1446 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+1460 func _apply_scenario_boot_arg() -> void
+1465 func _end_scenario_run(outcome: String) -> void
 ```
 
 ## diagnostic_log.gd (1,260 lines)
