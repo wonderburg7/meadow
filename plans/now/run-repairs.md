@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-11, its gate cleared (RR-10, whose test it extends, landed 18 Oct 2026; SP-11 released `scripts/hive_cell.gd` 15 Oct 2026; RR-1 to RR-5 landed 13 Oct 2026, RR-6 15 Oct 2026, RR-8 17 Oct 2026, RR-10 18 Oct 2026) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-21
+Status: active | Owner: Dave / Claude Code | Next: RR-12, the last slice, waits for ED-3 (RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-21
 
 ## Objective
 
@@ -42,7 +42,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| RR-11 | nectar shows a pre-fermented colour before it ferments, as a warning | `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | yes (RR-10 landed 18 Oct 2026; SP-11 released `scripts/hive_cell.gd` 15 Oct 2026) | medium |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
 
 RR-9 and RR-10 are Codex-lane slices (Dave, 15 Oct 2026, plan review D3:
@@ -65,66 +64,7 @@ RR-9 shipped 2026-10-17; its specification is `plans/archive/RR-9_2026-10-17.md`
 
 RR-10 shipped 2026-10-18; its specification is `plans/archive/RR-10_2026-10-18.md`.
 
-## RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning
-
-Level: medium (a new cell state the player reads; colour). Dave's decision
-D2, 15 Oct 2026: "there should also be a "pre-fermented" nectar type, which
-has a slight colour shift between the normal and fermented, and can be used
-as normal (and still used for skills) which acts as a warning mode for
-players". **Gate:** RR-10 (Codex lane), whose test it extends; open this fence
-when RR-10 has landed (SP-11, `plans/now/sprites.md`, released
-`scripts/hive_cell.gd` on 15 Oct 2026).
-
-**True now.** A nectar cell is fresh (`NECTAR_COLOR`) until
-`is_fermented()`, then `FERMENTED_NECTAR_COLOR` and the `fermented` art
-sheet, with no warning before the change.
-
-**True afterwards.**
-
-- `game_config.gd`, beside `nectar_ferment_hours`:
-  `var nectar_pre_ferment_fraction: float = 0.75`, commented: nectar older
-  than this fraction of `nectar_ferment_hours` shows as pre-fermented; 0.75
-  of 96 h gives one game-day's warning (Dave, 15 Oct 2026).
-- `settings_catalogue.gd`, the entry after `nectar_ferment_hours`, same
-  shape: `"persist": "none"`, key `nectar_pre_ferment_fraction`, label
-  "Pre-ferment at x", step 0.05, min 0.0, max 1.0, category "Honey", tip
-  "Raw nectar older than this share of its fermenting time shows a warning
-  colour. It is still ordinary nectar until it ferments."
-- `hive_cell.gd`: `const PRE_FERMENTED_NECTAR_COLOR := Color(0.64, 0.83, 0.27)`
-  (the midpoint of fresh and fermented) and
-  `const PRE_FERMENTED_ART_TINT := Color(0.9, 0.92, 0.78)`, beside
-  `FERMENTED_NECTAR_COLOR`. `func is_pre_fermented() -> bool`, after
-  `is_fermented`: false unless nectar, `amount > 0.0` and
-  `nectar_since >= 0.0`; false if `is_fermented()`; otherwise age above
-  `nectar_pre_ferment_fraction * nectar_ferment_hours` hours (the same
-  hour as `is_fermented`). Derived on every call, like `is_fermented`.
-- `_refresh`, the `"nectar"` branch: `elif is_pre_fermented():` after the
-  fermented block sets `color = PRE_FERMENTED_NECTAR_COLOR` and
-  `art_tint = PRE_FERMENTED_ART_TINT`, keeps the `nectar` sheet, and in
-  colour-blind mode prefixes "turning " to the label.
-
-**Invariants.** Every reader of `is_fermented()` is unchanged, so
-pre-fermented nectar makes honey, feeds bees without tipsiness, goes to
-brood and buys skills. Save format unchanged (derived from the saved
-stamp). No new per-frame work.
-
-**Escalate** if `tests/test_sp3_content_colours.py` or the cell-art tests
-fail on the new constants, rather than moving another content's colour.
-
-**Hands-on check on landing** (file in `checks/ready.md`): with "Nectar
-ferments h" at 4 and cell art on and then off, a nectar cell shows a
-slightly olive tint for its last game-hour before it turns fermented, and
-reads "turning" in colour-blind mode. If the tint is too faint or too
-strong, retune `PRE_FERMENTED_ART_TINT` and `PRE_FERMENTED_NECTAR_COLOR`.
-
-```queue
-**[Claude] RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning**
-- Plan: `plans/now/run-repairs.md` -- "RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning"
-- Files: `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/rr11_pre_fermented_test.gd`, `tests/test_rr11_pre_fermented.py`
-- Check: `python -m unittest tests.test_rr11_pre_fermented` passes: a nectar cell aged 0.5, 0.8 and 1.1 times `nectar_ferment_hours` gives `is_pre_fermented()` false, true, false and `is_fermented()` false, false, true; at 0.8 with cell sprites off the cell's flat colour is `PRE_FERMENTED_NECTAR_COLOR`, `hive.find_honey_source` returns it and `hive.take("nectar", 1.0)` takes from it; `python -m unittest tests.test_sp3_content_colours tests.test_nf2_fermentation` still passes.
-- Proof: `absent: scripts/hive_cell.gd :: func is_pre_fermented(`
-- Next after: none -- RR-12, the plan's last slice, waits for ED-3
-```
+RR-11 shipped 2026-10-21; its specification is `plans/archive/RR-11_2026-10-21.md`.
 
 ## RR-12 -- a loaded run keeps its readout history
 

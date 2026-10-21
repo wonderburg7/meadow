@@ -598,6 +598,12 @@ const TUNABLES := [
 	},
 	{
 		"persist": "none",
+		"key": "nectar_pre_ferment_fraction", "label": "Pre-ferment at x", "step": 0.05, "min": 0.0, "max": 1.0,
+		"category": "Honey",
+		"tip": "Raw nectar older than this share of its fermenting time shows a warning colour. It is still ordinary nectar until it ferments.",
+	},
+	{
+		"persist": "none",
 		"key": "tipsy_seconds", "label": "Tipsy for s", "step": 5.0, "min": 1.0,
 		"category": "Honey",
 		"tip": "Seconds a bee stays tipsy after eating fermented nectar. Eating more while tipsy starts the count again rather than adding to it.",

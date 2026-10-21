@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning**
-   - Plan: `plans/now/run-repairs.md` -- "RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning"
-   - Files: `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/rr11_pre_fermented_test.gd`, `tests/test_rr11_pre_fermented.py`
-   - Check: `python -m unittest tests.test_rr11_pre_fermented` passes: a nectar cell aged 0.5, 0.8 and 1.1 times `nectar_ferment_hours` gives `is_pre_fermented()` false, true, false and `is_fermented()` false, false, true; at 0.8 with cell sprites off the cell's flat colour is `PRE_FERMENTED_NECTAR_COLOR`, `hive.find_honey_source` returns it and `hive.take("nectar", 1.0)` takes from it; `python -m unittest tests.test_sp3_content_colours tests.test_nf2_fermentation` still passes.
-   - Proof: `absent: scripts/hive_cell.gd :: func is_pre_fermented(`
-   - Next after: none -- RR-12, the plan's last slice, waits for ED-3
-
-2. **[Claude] T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site**
+1. **[Claude] T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site**
    - Plan: `plans/now/tier-two.md` -- "T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site"
    - Files: `scripts/bee.gd`, `scripts/hive.gd`, `tests/t2_14_idle_reason_pure_test.gd`, `tests/test_t2_14_idle_reason_pure.py`
    - Check: `python -m unittest tests.test_t2_14_idle_reason_pure` passes: a comb worker in Build mode without Automation, in BUILD_IDLE with room to build, gives the Automation idle reason, and `hive.cells.size()` is unchanged after 20 `idle_reason()` calls; `hive.has_room_to_build()` is true exactly when `create_next_cell_site()` then returns a site; in `python -m unittest tests.test_t2_11_comb_cadence`'s no-Automation case the DAY 2 line, with a comb worker selected, says "0 sites started that day".
    - Proof: `present: scripts/bee.gd :: if hive.create_next_cell_site(home_hex if has_home_hex else Vector2i.ZERO) == null:`
    - Next after: T2-7b -- the tier-2 price sweep T2-7 deferred
 
-3. **[Claude] CQ-T2 -- run, world and save glue typed**
+2. **[Claude] CQ-T2 -- run, world and save glue typed**
    - Plan: `plans/now/code-health.md` -- "CQ-T2 -- run, world and save glue typed"
    - Files: `scripts/main.gd`, `scripts/scenario_actions.gd`, `scripts/world_building.gd`, `scripts/input_selection.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/orders_zones.gd`, `scripts/headless/diagnostic_profile.gd`, `scripts/perf.gd`, `scripts/settings_catalogue.gd`, `scripts/challenge_runner.gd`, `scripts/save_slots.gd`, `scripts/hive.gd`, `scripts/diagnostic_log.gd`, `scripts/tutorial_checkpoint.gd`, `scripts/developer_overrides.gd`, `scripts/challenge_stage_setup.gd`, `scripts/save_migrations.gd`, `scripts/player_profile.gd`, `scripts/headless/diagnostic_probes.gd`, `scripts/headless/scenario_boot.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
    - Check: the `TYPED_FILES` source check reports zero untyped declarations in every listed script; `python tools/gdscript_warnings.py` on the listed scripts prints no warning; `tests/test_save_migrations.py`, `tests/test_si1_run_state.py`, `tests/test_si2_exact_rollback.py` and `tests/test_layout_regression.py` pass; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` matches; `.\tools\verify.ps1` is green
    - Proof: `present: scripts/save_game.gd :: static func save(world, path`
    - Next after: CQ-T3
 
-4. **[Claude] WP-3 -- the ordered list in the selection panel and the colony default**
+3. **[Claude] WP-3 -- the ordered list in the selection panel and the colony default**
    - Plan: `plans/now/work-priorities.md` -- "WP-3 -- the ordered list in the selection panel and the colony default"
    - Files: `scripts/hud.gd`, `scripts/colony_panel.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `test_scenarios/wp3_backup_order_ui.json`, `tests/test_wp3_backup_order_ui.py`
    - Check: `python -m unittest tests.test_wp3_backup_order_ui` passes (owned, moving a job up in the selection panel reorders every selected bee's list; the Colony window list changes what a newly emerged bee takes; unowned, the single Backup choice is unchanged); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/hud.gd :: backup_order`
    - Next after: none -- the Work Priorities plan is complete; SG-2 in `plans/now/short-term-goals.md` follows in Dave's order
 
-5. **[Claude] CQ-S0 -- golden-save round-trip harness**
+4. **[Claude] CQ-S0 -- golden-save round-trip harness**
    - Plan: `plans/now/code-health.md` -- "CQ-S0 -- golden-save round-trip harness"
    - Files: `tests/save_roundtrip_test.gd`, `tests/test_save_roundtrip.py`, `tests/fixtures/saves/cq_s0_early.json`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json`, `test_scenarios/cq_s0_early_capture.json`, `test_scenarios/cq_s0_mid_capture.json`, `test_scenarios/cq_s0_winter_capture.json`, `test_scenarios/cq_s0_challenge2_capture.json`, `test_scenarios/cq_s0_orientation_capture.json`, `.claude/rules/saving.md`
    - Check: `python -m unittest tests.test_save_roundtrip` passes, comparing every golden save's load-then-save output to its input by both routes, with any known difference named and escalated; `.\tools\verify.ps1` is green
    - Proof: `absent: .claude/rules/saving.md :: round-trip`
    - Next after: CQ-S1
+
+5. **[Claude] CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds**
+   - Plan: `plans/now/code-health.md` -- "CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds"
+   - Files: `tools/gdscript_style.py`, `tests/test_gdscript_style.py`, `tools/verify.ps1`, `tests/rr7_silkscreen_fit_test.gd`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/README.md`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/addons/copy_all_errors/plugin.cfg`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/addons/copy_all_errors/plugin.gd`, `scripts/fog_of_war.gd`, `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/bee.gd`, `scripts/diagnostic_log.gd`, `scripts/hive_cell.gd`, `scripts/input_selection.gd`, `tests/bs14_saved_skill_policy_test.gd`, `tests/col10_succession_test.gd`, `.claude/rules/gdscript.md`, `FUNCTION_MAP.md`
+   - Check: `python tools/gdscript_style.py` exits 0 with zero gdlint problems over every tracked `.gd` outside `addons/`; `tests/test_gdscript_style.py` covers the missing-gdtoolkit skip; `.\tools\verify.ps1` shows a green `gdscript style` stage
+   - Proof: `absent: tools/verify.ps1 :: gdscript style`
+   - Next after: CQ-L2
 
 ### Codex lane
 
