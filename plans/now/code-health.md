@@ -479,6 +479,32 @@ decomposition of any of them has no proof that the text is unchanged.
 - Next after: CQ-R7
 ```
 
+## CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed
+
+**True now.** `hud.gd::_refresh_selection_text` (one bee: identity, energy, activity,
+trait lines), `_refresh_cell_popup` (content lines, state lines, hatch line, control
+state) and `_refresh_corner` (signature, labels, signal rows) are each long and mix
+building a string with writing it to a node. CQ-R0's golden harness now reads their
+output.
+
+**When done:**
+
+- Each of the three becomes a short function that calls named helpers; the helpers that
+  only build text return a `String` or `Array` and touch no node, e.g.
+  `_selection_activity_text(bee)` and `_cell_content_lines(cell)`.
+- No string, ordering or colour changes: `python -m unittest tests.test_display_text_golden`
+  passes against the unchanged fixture, and it is not regenerated.
+- `FUNCTION_MAP.md` lists the new helpers.
+
+```queue
+**[Claude] CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed**
+- Plan: `plans/now/code-health.md` -- "CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed"
+- Files: `scripts/hud.gd`, `FUNCTION_MAP.md`
+- Check: `python -m unittest tests.test_display_text_golden` passes against the unchanged fixture; `tests/test_layout_regression.py` passes; `.	oolserify.ps1` is green
+- Proof: `absent: scripts/hud.gd :: func _selection_activity_text(`
+- Next after: none -- the other CQ-R hud slices (CQ-R6, CQ-R8) are independent table rows
+```
+
 ## CQ-R1 -- headless scenario boot leaves main.gd
 
 **True now.** `main.gd` lines ~1465-1660 hold the `--scenario` boot:
