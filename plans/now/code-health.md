@@ -118,7 +118,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | yes | low |
 | CQ-M9 | colony plot reads `Resources` colours; width const | `colony_panel.gd` | yes | low |
 | CQ-M10 | `WEATHER_ROLLS_PER_DAY` | `main.gd` | yes | low |
-| CQ-R0 | display-text golden harness | `tests/display_text_golden_test.gd`, fixture | yes | medium |
 | CQ-R1 | headless scenario boot leaves `main.gd` | `main.gd`, `scripts/headless/scenario_boot.gd` | yes | medium |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | after CQ-R0 and T2-14 | medium |
@@ -453,31 +452,7 @@ last of them, RR-11 (`plans/now/run-repairs.md`), also edits `game_config.gd` an
 - Next after: none -- CQ-M3 ends the CQ-M2 chain; the other M slices (CQ-M4 to CQ-M10) are unspecified table rows
 ```
 
-## CQ-R0 -- display-text golden harness
-
-**True now.** Nothing in `tests/`, `test_scenarios/` or `scenario_actions.gd` reads
-these: `bee.gd::_task_line`, `idle_reason`, `role_name_text`, `carrying_text`; the
-hud selection text, cell popup or corner signal rows; or a cell's `info_label`. A
-decomposition of any of them has no proof that the text is unchanged.
-
-**When done:**
-
-- `tests/display_text_golden_test.gd` drives a bee through each role and state, and a
-  cell through each content type and overlay. It writes every string to JSON, and
-  `tests/test_display_text_golden.py` compares that JSON byte for byte with
-  `tests/fixtures/display_text_golden.json`, which is captured on master.
-- `.claude/rules/gdscript.md` says a display-text refactor proves itself with it.
-- The harness only reads text: no state is created only to make a string appear, other
-  than through a bee's or cell's existing setters.
-
-```queue
-**[Claude] CQ-R0 -- display-text golden harness**
-- Plan: `plans/now/code-health.md` -- "CQ-R0 -- display-text golden harness"
-- Files: `tests/display_text_golden_test.gd`, `tests/test_display_text_golden.py`, `tests/fixtures/display_text_golden.json`, `.claude/rules/gdscript.md`
-- Check: `python -m unittest tests.test_display_text_golden` passes against the master capture and fails when one character of a captured string is changed; `.\tools\verify.ps1` is green
-- Proof: `absent: .claude/rules/gdscript.md :: display_text_golden`
-- Next after: CQ-R7
-```
+CQ-R0 shipped 2026-10-21; its specification is `plans/archive/CQ-R0_2026-10-21.md`.
 
 ## CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed
 
