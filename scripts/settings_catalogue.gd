@@ -1203,7 +1203,7 @@ const TUNABLES := [
 	},
 	{
 		"persist": "run",
-		"key": "starving_energy_level", "label": "Starving is", "step": 0.05, "min": 0.05,
+		"key": "starving_energy_level", "label": "Starving is", "step": 0.05, "min": 0.05, "max": 0.5,
 		"category": "Interface",
 		"tip": "What counts as a bee starving, as a fraction of its energy capacity. Lower than the low-energy level.",
 	},

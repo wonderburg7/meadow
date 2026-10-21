@@ -148,7 +148,7 @@ static func signal_rain(_state: Dictionary) -> String:
 
 static func starving(bees: Array, count: int) -> String:
 	var bee := _first_bee(bees, func(candidate):
-		return candidate.energy < GameConfig.energy_capacity * GameConfig.starving_energy_level
+		return candidate.energy < GameConfig.energy_capacity * minf(GameConfig.starving_energy_level, GameConfig.low_energy_warning_level)
 	)
 	if bee != null:
 		return "%s is almost out of energy and would like the nectar department to treat this as urgent." % bee.bee_name
@@ -156,7 +156,7 @@ static func starving(bees: Array, count: int) -> String:
 
 static func hungry(bees: Array, count: int) -> String:
 	var bee := _first_bee(bees, func(candidate):
-		return candidate.energy >= GameConfig.energy_capacity * GameConfig.starving_energy_level \
+		return candidate.energy >= GameConfig.energy_capacity * minf(GameConfig.starving_energy_level, GameConfig.low_energy_warning_level) \
 			and candidate.energy < GameConfig.energy_capacity * GameConfig.low_energy_warning_level
 	)
 	if bee != null:
