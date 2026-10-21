@@ -96,6 +96,9 @@ One line each: the id, its plan, and the single thing it waits for.
 - **CQ-M3** (`plans/now/code-health.md`) -- the rival's starting nectar, pollen, forager share and minimum population become GameConfig rows, and its rebalance numbers named consts; waits for RR-11 (Claude lane), which shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` and holds the lane's fifth slot (CQ-M2 landed 21 Oct 2026).
 - **CQ-R7** (`plans/now/code-health.md`) -- hud selection text, cell popup and corner refreshes decomposed; waits for TS-2 (Claude lane), which shares `scripts/hud.gd` (CQ-R0, whose golden harness it relies on, landed 21 Oct 2026).
 - **CQ-R2** (`plans/now/code-health.md`) -- the first crisis moves out of `scripts/main.gd` into a new first_crisis.gd, touching the save files; waits, gated with CQ-S1, for the save slices of the alpha chain (WP-2, SG-2, ED-1, ED-2, RR-12, SP-8a) and ED-3 (Dave, 18 Oct 2026); its plan section is written when that gate clears.
+- **CQ-L2** (`plans/now/code-health.md`) -- every tool that reads GDScript as text survives `gdformat`; waits for CQ-L1 (Claude backlog), which puts gdlint into verify first.
+- **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; waits for CQ-T2, the second typing slice.
+- **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
 ## Copy-paste prompts
 
 Claude, implementing: `Implement the next slice.`
