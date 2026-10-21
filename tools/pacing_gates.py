@@ -32,6 +32,8 @@ DEFAULT_REPEAT = 3
 DEFAULT_SEEDS = (20260923, 20260924, 20260925)
 BAND_FRACTION = 0.25
 WINTER_BAND_DAYS = 1
+FIRST_WORKER_BY_DAY = 17.0
+FIRST_AUTOMATION_DAYS = (5.0, 8.0)
 SCENARIO = ROOT / "test_scenarios" / "alpha_arc_test.json"
 
 
@@ -104,7 +106,14 @@ def build_rows(analyses: list[dict[str, Any]], day_length_seconds: float) -> lis
         )
         values = [source.get(gate.metric) for source in source_values]
         median_day = statistics.median(values) if complete else None
-        if gate.metric == "winter_survived_day":
+        if gate.metric == "first_worker_day":
+            target = target_day(gate.target_minutes, day_length_seconds)
+            inside = median_day is not None and median_day <= FIRST_WORKER_BY_DAY
+        elif gate.metric == "first_automation_day":
+            target = target_day(gate.target_minutes, day_length_seconds)
+            inside = (median_day is not None
+                      and FIRST_AUTOMATION_DAYS[0] <= median_day <= FIRST_AUTOMATION_DAYS[1])
+        elif gate.metric == "winter_survived_day":
             target = winter_ended_day
             inside = in_days(median_day, target)
         else:

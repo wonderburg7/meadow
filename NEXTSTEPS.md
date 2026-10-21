@@ -63,12 +63,12 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] AR-5 -- the first two gates on the calendar, and a reference queen who lays early**
-   - Plan: `plans/now/alpha-route-evidence.md` -- "AR-5 -- the first two gates on the calendar, and a reference queen who lays early"
-   - Files: `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `test_scenarios/alpha_arc_test.json`, `plans/now/alpha-route-evidence.md`
-   - Check: `python -m unittest tests.test_pacing_gates` passes; `python tools/pacing_gates.py` judges the first worker by day 3.0 and first automation on days 5.0 to 8.0, its first-worker median is at most day 3.0 with at least two of three colonies living through winter, and the table is recorded in this section
-   - Proof: `absent: tools/pacing_gates.py :: FIRST_WORKER_BY_DAY`
-   - Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
+1. **[Codex] FR-1b -- tune the measured foraging-stage order**
+   - Plan: `plans/now/forager-recruitment.md` -- "FR-1b -- tune the measured foraging-stage order"
+   - Files: `tools/forager_tuning.py`, `tests/test_forager_tuning.py`, `test_scenarios/fr1_forager_stages_test.json`, `plans/now/forager-recruitment.md`
+   - Check: `python -m unittest tests.test_forager_tuning` passes; `python tools/forager_tuning.py` records the five-seed stage table and chosen existing values in this section; `tools/verify.ps1` is green
+   - Proof: `present: plans/now/forager-recruitment.md :: Next: FR-1b -- tune the measured foraging-stage order`
+   - Next after: FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
 
 ## Not in the queue, and why
 
