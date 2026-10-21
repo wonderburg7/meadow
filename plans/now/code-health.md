@@ -110,7 +110,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
-| CQ-M2 | "starving" 0.15 becomes a GameConfig row | `game_config.gd`, `settings_catalogue.gd`, 3 readers | yes | medium |
 | CQ-M3 | rival starting stores become GameConfig rows; rebalance consts named | `rival_hive.gd`, `game_config.gd`, `settings_catalogue.gd`, `tests/balance_tests.py` | after CQ-M2 | medium |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
 | CQ-M5 | CanvasLayer order in scripts/canvas_layers.gd | 10 UI scripts | yes | medium |
@@ -404,29 +403,7 @@ record, "Save restore".
 
 CQ-M1 shipped 2026-10-21; its specification is `plans/archive/CQ-M1_2026-10-21.md`.
 
-## CQ-M2 -- the starving threshold becomes a GameConfig row
-
-**True now.** `GameConfig.energy_capacity * 0.15` appears twice in
-`colony_diagnostics.gd`, twice in `problem_messages.gd` and once in `year_winter.gd`.
-Its sibling, `low_energy_warning_level` (0.3), is already a GameConfig field.
-
-**When done:**
-
-- `starving_energy_level := 0.15` exists, with an Interface row
-  (`persist: "run"`, additive per `saving.md`) beside `low_energy_warning_level`.
-- All five sites read it.
-- The stale `game_config.gd` comment saying "per-species values are in flower.gd" is
-  repointed to `flower_species.gd`.
-- D2's rule 2 text is edited.
-
-```queue
-**[Claude] CQ-M2 -- the starving threshold becomes a GameConfig row**
-- Plan: `plans/now/code-health.md` -- "CQ-M2 -- the starving threshold becomes a GameConfig row"
-- Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/colony_diagnostics.gd`, `scripts/problem_messages.gd`, `scripts/year_winter.gd`, `docs/agent-rules.md`, `FUNCTION_MAP.md`
-- Check: `tests/test_colony_diagnostics.py`, `tests/test_signal_catalogue.py` and the settings-row source checks pass; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` matches; `.\tools\verify.ps1` is green
-- Proof: `present: scripts/colony_diagnostics.gd :: GameConfig.energy_capacity * 0.15`
-- Next after: CQ-M3
-```
+CQ-M2 shipped 2026-10-21; its specification is `plans/archive/CQ-M2_2026-10-21.md`.
 
 ## CQ-R0 -- display-text golden harness
 
