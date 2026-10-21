@@ -59,56 +59,7 @@ T2-11 shipped 2026-10-17; its specification is `plans/archive/T2-11_2026-10-17.m
 
 **Code health (`plans/now/code-health.md`, 18 Oct 2026).** CQ-R3 moves `bee.gd`'s display text (`idle_reason`, `_task_line`) to scripts/bee_readout.gd and waits for T2-14, which removes `idle_reason`'s comb-site side effect; T2-12 and T2-13 share `hud.gd`/`bee.gd` with code-health slices in the same lane, one after the other.
 
-## T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site
-
-Level: low (one query split out of one function, two files). Found by
-T2-11 (17 Oct 2026). T2-2 already decided the player-visible outcome:
-building comb outward is Automation's. This slice removes a way round
-that gate; it decides nothing new. **Gate:** it runs after T2-13, which
-also edits `scripts/bee.gd`, and `scripts/hive.gd` is held by RR-10
-(Codex lane); queue this once both are done.
-
-**True now** (verified 17 Oct 2026 against master `ea181c9`).
-`bee.gd::idle_reason`'s BUILD_IDLE branch tests
-`hive.create_next_cell_site(home_hex if has_home_hex else Vector2i.ZERO) == null`.
-`hive.gd::create_next_cell_site` starts a site (`_start_site_at`) at the
-first buildable spiral tile. `hud.gd::_refresh_selection_text` calls
-`idle_reason()` on its refresh cadence while one bee is selected. So
-selecting an idle Build-mode comb worker without Automation starts
-outward sites, which `comb_build` then builds
-(`bee_building.gd::create_cell_site_at` falls back to
-`hive.find_unfinished_cell`). `tests.test_t2_11_comb_cadence`'s
-no-Automation case prints "0 sites started that day" for day 1, with
-nothing selected, and "5 sites started that day" for day 2, with one comb
-worker selected.
-
-**True afterwards.** `hive.gd` gains
-`func has_room_to_build(around: Vector2i = Vector2i.ZERO) -> bool`. The
-spiral walk moves into one private helper that both it and
-`create_next_cell_site` call, so the two cannot drift
-(`.claude/rules/simulation.md`, two loops over the same range).
-`create_next_cell_site` keeps its behaviour and its `_no_room_frame`
-memo. `idle_reason` calls `hive.has_room_to_build(...)`, with the same
-argument, in place of `create_next_cell_site`; its wording does not
-change. A comment cites T2-14.
-
-**Invariants.** Save format unchanged. No per-tick work added:
-`idle_reason` runs only from the HUD and tests. Building with Automation
-is unchanged. `python -m unittest tests.test_t2_10_automine_wake` still
-passes.
-
-```queue
-**[Claude] T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site**
-- Plan: `plans/now/tier-two.md` -- "T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site"
-- Files: `scripts/bee.gd`, `scripts/hive.gd`, `tests/t2_14_idle_reason_pure_test.gd`, `tests/test_t2_14_idle_reason_pure.py`
-- Check: `python -m unittest tests.test_t2_14_idle_reason_pure` passes: a comb worker in Build mode without Automation, in BUILD_IDLE with room to build, gives the Automation idle reason, and `hive.cells.size()` is unchanged after 20 `idle_reason()` calls; `hive.has_room_to_build()` is true exactly when `create_next_cell_site()` then returns a site; in `python -m unittest tests.test_t2_11_comb_cadence`'s no-Automation case the DAY 2 line, with a comb worker selected, says "0 sites started that day".
-- Proof: `present: scripts/bee.gd :: if hive.create_next_cell_site(home_hex if has_home_hex else Vector2i.ZERO) == null:`
-- Next after: T2-7b -- the tier-2 price sweep T2-7 deferred
-```
-
-T2-12 shipped 2026-10-20; its specification is `plans/archive/T2-12_2026-10-20.md`.
-
-T2-13 shipped 2026-10-20; its specification is `plans/archive/T2-13_2026-10-20.md`.
+T2-14 shipped 2026-10-21; its specification is `plans/archive/T2-14_2026-10-21.md`.
 
 ## Not in the queue, and why
 
