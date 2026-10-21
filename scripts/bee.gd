@@ -52,6 +52,8 @@ const BeeHoney = preload("res://scripts/bee_honey.gd")
 const BeeEggLaying = preload("res://scripts/bee_egg_laying.gd")
 const Actions = preload("res://scripts/actions.gd")
 const Availability = preload("res://scripts/availability.gd")
+## WP-2. The skill's id only: progression.gd answers whether it is owned.
+const WORK_PRIORITIES_SKILL := "skill.hive_mind.work_priorities"
 
 # --- the role action catalogue ------------------------------------
 ## The catalogue is grouped once when this script loads. `_try_role_work` runs
@@ -341,6 +343,37 @@ var working_secondary: bool = false
 ## Forager -- has no way to reach a mode it hasn't got a live role for.
 func current_working_role() -> int:
 	return secondary_role if working_secondary else role
+
+## WP-2: once the colony owns Work priorities, this bee's ordered list of
+## backup jobs (role ids), tried in turn when its own role has nothing.
+## secondary_role then mirrors whichever entry it last took up, so
+## working_secondary, current_working_role and the HUD read as before.
+## Unowned it is never read: secondary_role is the one backup, as before.
+## Empty means no list chosen yet -- backup_list() fills it the first time
+## it is needed after purchase: this bee's own backup first, then the
+## colony default (Session.backup_order_default). A bee born after purchase
+## takes the colony default in setup(). Saved per bee; the queen keeps her
+## own rule (she nurses before laying) and never reads it.
+var backup_order: Array = []
+
+## Whether this run owns Work priorities. No resolver (a bare test hive)
+## means not, so such a bee keeps the single backup.
+static func work_priorities_owned() -> bool:
+	return Session.progression != null and Session.progression.is_owned(WORK_PRIORITIES_SKILL)
+
+## The list _idle_dispatch walks, filling an empty one as the comment on
+## backup_order says. Unowned, or for a drone, it is backup_order as it is.
+func backup_list() -> Array:
+	if backup_order.is_empty() and not is_drone and work_priorities_owned():
+		var seeded: Array = [secondary_role] if secondary_role != -1 else []
+		seeded.append_array(Session.backup_order_default)
+		backup_order = Session.clean_backup_order(seeded)
+	return backup_order
+
+## Sets the whole list at once (orders_zones.gd applies it to a selection).
+## A drone has no backup job, so it keeps none.
+func set_backup_order(order: Variant) -> void:
+	backup_order = [] if is_drone else Session.clean_backup_order(order)
 
 # --- floral constancy and the search pattern ----------------------
 ## Floral constancy (see GameConfig.floral_constancy_on): "" means no
@@ -898,6 +931,7 @@ func become_drone() -> void:
 	is_drone = true
 	pending_role = -1
 	secondary_role = -1
+	backup_order = []
 	# BB-2: the outcome is a worker's; a drone ages out as today's worker.
 	if brood_outcome != "":
 		set_brood_outcome("")
@@ -1046,6 +1080,10 @@ func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGE
 		# player can change it like any other bee's backup role.
 		if secondary_role == -1:
 			secondary_role = Role.NURSERY
+	# WP-2: a bee born once the colony owns Work priorities takes the colony
+	# default order. A save restore sets each bee's own list after this.
+	if not is_drone and work_priorities_owned():
+		backup_order = Session.backup_order_default.duplicate()
 	# Only reachable here, not _ready(): a milestone fact needs bee_id
 	# and world, neither of which is set until setup() runs. See
 	# BEE_INDIVIDUALITY_PLAN.md section 5.
@@ -1850,10 +1888,48 @@ func _idle_dispatch() -> void:
 	working_secondary = false
 	if _record_work_search(_try_role_work(role)):
 		return
+	if not is_queen and work_priorities_owned():
+		_dispatch_backup_list()
+		return
 	if secondary_role != -1 and secondary_role != role and (role_restricted_to.is_empty() or secondary_role in role_restricted_to):
 		working_secondary = _record_work_search(_try_role_work(secondary_role))
 	else:
 		work_search_found = false
+
+## WP-2, owned: each job on the bee's list in turn, taking the first with
+## work. A job the run has not unlocked or bought is skipped, as is one a
+## Challenge's role_restricted_to leaves out. secondary_role is set to the
+## job before it is tried -- exactly what the single-backup path has during
+## its own try -- and stays on the one taken; after a fruitless walk it goes
+## back to what it was. Runs only from _idle_dispatch, never per frame.
+func _dispatch_backup_list() -> void:
+	var before: int = secondary_role
+	for entry: Variant in backup_list():
+		var job: int = int(entry)
+		if job == role or not _backup_job_permitted(job):
+			continue
+		secondary_role = job
+		if _try_role_work(job):
+			working_secondary = true
+			work_search_found = true
+			return
+	secondary_role = before
+	work_search_found = false
+
+## Availability.role_query for a backup job, cached per gate epoch beside
+## the action rows (_action_available), since an idle bee asks on every
+## think tick.
+func _backup_job_permitted(job: int) -> bool:
+	if not (role_restricted_to.is_empty() or job in role_restricted_to):
+		return false
+	if _action_gate_epoch != Availability.gate_epoch:
+		_action_gate_cache.clear()
+		_action_gate_epoch = Availability.gate_epoch
+	var key := "backup_job:%d" % job
+	if not _action_gate_cache.has(key):
+		var stage_gate: Node = world.stage_gate if world != null else null
+		_action_gate_cache[key] = Availability.role_query(job, stage_gate, Session.progression, self).available
+	return _action_gate_cache[key]
 
 ## Records a work search at the point it really happened. Diagnostics reads
 ## this result rather than running the mutable catalogue search a second time.
@@ -2370,6 +2446,13 @@ func set_secondary_role(new_role: int) -> void:
 		secondary_role = -1   # a drone has no backup job either
 		return
 	secondary_role = -1 if new_role == role else new_role
+	# WP-2: owned, the single Backup choice puts that job at the head of the
+	# bee's list, so it is still the first backup she tries.
+	if secondary_role != -1 and not is_queen and work_priorities_owned():
+		var order: Array = backup_list().duplicate()
+		order.erase(secondary_role)
+		order.push_front(secondary_role)
+		set_backup_order(order)
 
 ## A drone is Idle and stays Idle (COL-9): recruitment and the Job menu both
 ## come through set_role(), which asks here first.
@@ -2752,6 +2835,8 @@ func _idle_backup_note() -> String:
 	# introduced yet and naming one would teach it out of order.
 	if not role_restricted_to.is_empty():
 		return ""
+	if not is_queen and work_priorities_owned() and not backup_order.is_empty():
+		return " (its backup jobs also have nothing right now)"
 	if secondary_role != -1 and secondary_role != role:
 		return " (backup role %s also has nothing right now)" % Roles.label_for(secondary_role)
 	return ""

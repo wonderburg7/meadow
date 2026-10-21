@@ -227,6 +227,25 @@ func _on_secondary_role_requested(role_name: String) -> void:
 			b.set_secondary_role(target_role)
 	main.hud.update_selection(main.selected_bees)
 
+## WP-2: the whole ordered backup list, as role keys, for every selected
+## bee at once -- the selection panel's list (WP-3) sends it. Only while the
+## colony owns Work priorities. A job the run has not unlocked or bought
+## stays on the list: dispatch skips it until it is. The queen keeps her
+## own rule.
+func _on_backup_order_requested(role_keys: Array) -> void:
+	if not main.Bee.work_priorities_owned():
+		return
+	for b: Variant in main.selected_bees:
+		if not is_instance_valid(b) or b.is_queen:
+			continue
+		var order: Array = []
+		for key: Variant in role_keys:
+			var role_id: int = main.Roles.id_for_key(str(key))
+			if role_id >= 0:
+				order.append(role_id)
+		b.set_backup_order(order)
+	main.hud.update_selection(main.selected_bees)
+
 func _cells_to_act_on(cell: Node2D) -> Array:
 	if not main.selected_cells.is_empty():
 		return main.selected_cells.filter(func(c): return is_instance_valid(c))

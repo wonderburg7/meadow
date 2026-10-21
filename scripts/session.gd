@@ -33,6 +33,7 @@ signal run_reset()
 
 const PlayerProfile = preload("res://scripts/player_profile.gd")
 const Progression = preload("res://scripts/progression.gd")
+const Roles = preload("res://scripts/roles.gd")
 
 func _ready() -> void:
 	PlayerProfile.apply_to_session(PlayerProfile.read())
@@ -306,6 +307,41 @@ func ensure_progression(gate: Node) -> Object:
 	progression = Progression.new(GameConfig, gate)
 	return progression
 
+# --- Work priorities (WP-2) ---------------------------------------
+## The colony's default order of backup jobs, Dave's decision 3 in
+## plans/now/work-priorities.md: Comb work, Nurse, Mine, Honey, Forage.
+## Forage is last because there is always something to forage.
+const DEFAULT_BACKUP_ORDER := [Roles.COMB_WORKER, Roles.NURSE, Roles.MINER, Roles.HONEY, Roles.FORAGER]
+
+## Run state, saved with the run: the order a bee born once the colony owns
+## Work priorities takes, and the order that follows an existing bee's own
+## backup when the skill is bought (bee.gd::backup_list). Reset to
+## DEFAULT_BACKUP_ORDER by reset_run_state(); a save without it loads that.
+var backup_order_default: Array = DEFAULT_BACKUP_ORDER.duplicate()
+
+func set_backup_order_default(order: Variant) -> void:
+	var cleaned: Array = clean_backup_order(order)
+	backup_order_default = cleaned if not cleaned.is_empty() else DEFAULT_BACKUP_ORDER.duplicate()
+
+## An order as a bee or the colony may hold it: role ids (a save's numbers
+## arrive as floats), each a job a worker can fall back on -- never the
+## queen's laying or Idle -- and each once, first place kept. Anything else
+## is dropped, so a hand-edited or damaged save cannot put a bad id in.
+func clean_backup_order(order: Variant) -> Array:
+	var out: Array = []
+	if not (order is Array):
+		return out
+	for value: Variant in order:
+		if not (value is int or value is float):
+			continue
+		var role_id := int(value)
+		if role_id == Roles.QUEEN or role_id == Roles.IDLE or out.has(role_id):
+			continue
+		if Roles.entry(role_id).get("id", -1) != role_id:
+			continue
+		out.append(role_id)
+	return out
+
 # --- live weather state -------------------------------------------
 ## Advanced by main.gd. Not a setting: how likely rain is, is.
 var rain_intensity: float = 0.0
@@ -332,6 +368,7 @@ func reset_run_state() -> void:
 	crab_spider_preferred_species = ""
 	rain_intensity = 0.0
 	control_groups.clear()
+	backup_order_default = DEFAULT_BACKUP_ORDER.duplicate()
 	# A new run never inherits a load's policy (BS-14); a load itself does
 	# not come through here.
 	pending_skill_policy = {}

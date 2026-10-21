@@ -87,6 +87,8 @@ func _restore(data: Dictionary) -> void:
 	Session.winter_ends_day = float(session_state.get("winter_ends_day", 0.0))
 	Session.gynes_released = int(session_state.get("gynes_released", 0))
 	Session.crab_spider_preferred_species = str(session_state.get("crab_spider_species", ""))
+	# WP-2, additive: a save without a default order loads decision 3's.
+	Session.set_backup_order_default(session_state.get("backup_order_default", Session.DEFAULT_BACKUP_ORDER))
 	if is_instance_valid(main.season):
 		main.season.disease = clampf(float(session_state.get("disease", 0.0)), 0.0, 1.0)
 	main.hud.set_winter_button_visible(Session.winter_coming)
@@ -392,6 +394,11 @@ func _restore_bees(bees: Array) -> Array:
 		bee.architect_mode = str(entry.get("architect_mode", "both"))
 		bee.automine = bool(entry.get("automine", false))
 		bee.secondary_role = int(entry.get("secondary", -1))
+		# WP-2, additive: set after setup(), which gives a bee born into an
+		# owned run the colony default. A save without the key loads an empty
+		# list, which bee.gd::backup_list fills, once the colony owns Work
+		# priorities, with this bee's backup first and then the default.
+		bee.set_backup_order(entry.get("backup_order", []))
 		bee.finish_task_first = bool(entry.get("finish_first", false))
 		bee.pending_role = int(entry.get("pending_role", -1))
 		bee.preferred_species = str(entry.get("preferred", ""))
