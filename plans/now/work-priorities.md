@@ -55,7 +55,6 @@ Verified 13 Oct 2026 against master `06bd26c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| WP-2 | Owned, each bee follows an ordered backup list; a saved colony default | `scripts/bee.gd`, `scripts/session.gd`, `scripts/skills.gd`, `scripts/orders_zones.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/wp2_backup_order_test.gd`, `tests/test_wp2_backup_order.py` | yes (FC-2 released the save files 17 Oct 2026; WP-1 landed 14 Oct 2026) | high |
 | WP-3 | The ordered list in the selection panel and the colony default in the Colony window | `scripts/hud.gd`, `scripts/colony_panel.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `test_scenarios/wp3_backup_order_ui.json`, `tests/test_wp3_backup_order_ui.py` | yes (WP-2 landed 21 Oct 2026) | medium |
 
 WP-1, then WP-2, then WP-3: each needs the one before. Dave's order (13 Oct
@@ -76,32 +75,7 @@ WP-1 shipped 2026-10-14; its specification is `plans/archive/WP-1_2026-10-14.md`
 
 **Code health (`plans/now/code-health.md`, 18 Oct 2026).** Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (WP-2); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
 
-## WP-2 -- owned, each bee follows an ordered backup list
-
-<!-- LAYER: immediate-task -->
-
-**Change.** `bee.gd` gains `backup_order`, an array of role ids. Without
-Work Priorities nothing changes: `secondary_role` is the one backup, as
-today. Owned, `_idle_dispatch` tries the bee's own role, then each role in
-`backup_order` in turn (honouring `role_restricted_to`), taking the first
-with work; `secondary_role` mirrors the entry being worked so
-`working_secondary`, `current_working_role` and the HUD keep working. The
-queen is unchanged. `Session` holds the colony default order, starting at
-decision 3's; a bee created after purchase takes it, and on purchase each
-existing bee gets its current backup first, then the default order. Roles
-the run has not unlocked or bought are skipped. `orders_zones.gd` sets a
-whole selection's order at once. `skills.gd`: status `existing`. Saves carry
-each bee's `backup_order` and the default; a save without them gives each
-bee `[secondary_role]` and the default order.
-
-```queue
-**[Claude] WP-2 -- owned, each bee follows an ordered backup list**
-- Plan: `plans/now/work-priorities.md` -- "WP-2 -- owned, each bee follows an ordered backup list"
-- Files: `scripts/bee.gd`, `scripts/session.gd`, `scripts/skills.gd`, `scripts/orders_zones.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/wp2_backup_order_test.gd`, `tests/test_wp2_backup_order.py`
-- Check: `python -m unittest tests.test_wp2_backup_order` passes (unowned, a bee falls back on its one backup as today; owned, an idle bee whose role and first backup have no work takes the next job on its list that does; a bee born after purchase takes the colony default; the lists and the default survive save and restore; an old save loads each bee with its backup first); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/bee.gd :: backup_order`
-- Next after: WP-3 -- the ordered list in the selection panel and the colony default
-```
+WP-2 shipped 2026-10-21; its specification is `plans/archive/WP-2_2026-10-21.md`.
 
 ## WP-3 -- the ordered list in the selection panel and the colony default
 
