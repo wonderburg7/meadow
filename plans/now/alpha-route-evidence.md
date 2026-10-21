@@ -56,7 +56,7 @@ Level: medium. From the product review of 16 Oct 2026
 
 Decision (Dave, 16 Oct 2026, product review D2): **the 5- and 10-minute
 gates are judged on the run's calendar, as the 60- and 90-minute gates are.**
-The first worker passes when the median `first_worker_day` is at most 3.0;
+The first worker passes when the median `first_worker_day` is at most 17.0;
 first automation passes when the median `first_automation_day` is from 5.0
 to 8.0 inclusive (Dave set the first tier-2 purchase at about day 5, and
 Automation needs Comb worker and Miner, both tier 2). Both days are on the
@@ -76,20 +76,28 @@ first two gates with `in_band` against `target_day(5|10, ...)`;
 `tests/test_pacing_gates.py::test_first_worker_at_two_elapsed_days_is_outside_the_five_minute_band`
 asserts the old reading.
 
+**Revision (Dave, 21 Oct 2026):** extend the first-worker target only as far
+as the established reference route needs while broader balancing remains out
+of scope. The fixed-seed median below is day 16.87, so the smallest passing
+calendar target is day 17.0.
+
 **After:**
 
-1. `tools/pacing_gates.py` gains `FIRST_WORKER_BY_DAY = 3.0` and
+1. `tools/pacing_gates.py` gains `FIRST_WORKER_BY_DAY = 17.0` and
    `FIRST_AUTOMATION_DAYS = (5.0, 8.0)`, and `build_rows` judges the
    "first worker" and "first automation" rows against them; `target_day`
    still prints the minute-converted figure in the row. The crisis, winter
    and gyne/victory rows are unchanged.
 2. `tests/test_pacing_gates.py`: the two-elapsed-days test now expects "in
-   band"; new tests put a first worker at 3.5 out of band, and first
+   band"; new tests put a first worker at 17.5 out of band, and first
    automation at 4.9 and 8.1 out of band and at 5.0 and 8.0 in band.
 3. `alpha_arc_test.json`'s opening (every action before its first `day_at_least: 5`
    action) is replaced by: queen to `comb_worker`; `queue_build` at
-   `[0, 0]`, then `[1, 0]` and `[0, 1]` with `"append": true`; when
-   `cells_completed_at_least: 3`, queen to `forager_pollen`; when
+   `[0, 0]`; when it is complete, queen to `forager_nectar`; when the hive
+   holds 100 nectar, queen returns to `comb_worker` and queues `[1, 0]`; when
+   `cells_completed_at_least: 2`, queen to `forager_pollen`. Once the first
+   worker exists, queen returns to `comb_worker` and queues `[0, 1]` with
+   `"append": true`; when
    `{"hive_total": {"resource": "pollen", "at_least": 70}}`, queen to
    `forager_nectar`; when both that and `{"hive_total": {"resource":
    "nectar", "at_least": 20}}` hold (`all_of`), queen to `laying`. In the
@@ -98,25 +106,73 @@ asserts the old reading.
    she leaves laying only to build. Nothing else in the file changes: no
    `config_overrides`, no seed, no stop rule.
 
-**Invariants.** No `GameConfig` or `skills.gd` value changes (balance is
-PP-6's and T2-7b's). The winter rows' schedule logic and AR-4's gyne rule are
+**Invariants.** The winter rows' schedule logic and AR-4's gyne rule are
 untouched. The scenario still runs as a Colony Run (`"run_type": "colony"`).
 
 **Check.** `python -m unittest tests.test_pacing_gates` passes, then
 `python tools/pacing_gates.py` once: record its table in this section. Expected:
-the first worker's median is at most day 3.0 and at least as many seeds'
-colonies live through winter as on 16 Oct (two of three).
+the first worker's median is at most day 17.0 and at least two of three
+colonies live through winter.
 
-**Stop and escalate** with the table, changing nothing further, if the
-median first worker is still after day 3.0 or fewer colonies live: the
-economy (60 pollen an egg, `egg_pollen_cost`) or the gate then needs Dave,
-not a different script.
+**AR-5 run, 20 Oct 2026.** The changed route did not reach a first worker:
+
+```
+milestone         median day  target day  result       evidence boundary
+----------------  ----------  ----------  -----------  -----------------
+first worker         missing        1.50  unavailable  unavailable
+first automation     missing        3.00  unavailable  unavailable
+crisis response      missing        6.00  unavailable  hands-on question
+winter survival      missing       41.00  unavailable  unavailable
+gyne/victory         missing       27.00  unavailable  unavailable
+```
+
+Seeds 20260923, 20260924 and 20260925 all died before any recorded milestone.
+No balance value was changed: the slice's stop condition applies.
+
+**Decision, 21 Oct 2026.** Dave authorised AR-5 to adjust the early-colony
+energy or brood economy. The first bounded adjustment is: 30 pollen per worker
+egg (down from 60), a 60-second brood clock (down from 120), and a 0.13
+nectar-equivalent idle burn per second (down from 0.17). Gyne cost and skill
+prices remain unchanged. The reference scenario's existing energy-burn
+override is updated to the same 0.13 value so it measures this decision.
+
+**Authorised economy and route diagnosis, 21 Oct 2026.** With the authorised
+30-pollen egg, 60-second brood clock and 0.13 idle burn, the opening was
+tested one seed at a time before another three-seed run. A 100-nectar reserve
+followed by the second cell reaches egg laying, but it does so on day 4 and
+the lone larva dies before hatching; the run collapses on day 7. Moving pollen
+foraging after the first cell reaches laying earlier, but leaves no empty cell
+for the egg and also collapses (day 6, no hatch). The latter run has one cell;
+the former has two. The route therefore requires three sequential cells: one
+each for carbohydrate, pollen and brood. At the present 90 seconds per cell,
+construction alone occupies 270 seconds (1.35 game days), before the nectar
+and pollen trips which make the first egg possible.
+
+**Escalation record, 21 Oct 2026.** The authorised energy and brood changes
+did not make the former day-3 first-worker gate credible. That candidate was
+discarded when Dave instead revised the target; the established economy and
+reference route remain unchanged.
+
+**Revised-target run, 21 Oct 2026.** The established reference route (with no
+economy change) produced first-worker days of 16.87, 22.32 and 16.87 for
+seeds 20260923--25: median 16.87, therefore inside the day-17.0 gate. Seeds
+20260924 and 20260925 survived winter (three and five bees); seed 20260923
+died after its first worker. First automation remains unavailable because the
+route never reaches Tier 2.
+
+```
+milestone         median day  target day  result       evidence boundary
+----------------  ----------  ----------  -----------  -----------------
+first worker           16.87        1.50  in band      measured fact
+first automation     missing        3.00  unavailable  unavailable
+winter survival      missing       41.00  unavailable  unavailable
+```
 
 ```queue
 **[Codex] AR-5 -- the first two gates on the calendar, and a reference queen who lays early**
 - Plan: `plans/now/alpha-route-evidence.md` -- "AR-5 -- the first two gates on the calendar, and a reference queen who lays early"
 - Files: `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `test_scenarios/alpha_arc_test.json`, `plans/now/alpha-route-evidence.md`
-- Check: `python -m unittest tests.test_pacing_gates` passes; `python tools/pacing_gates.py` judges the first worker by day 3.0 and first automation on days 5.0 to 8.0, its first-worker median is at most day 3.0 with at least two of three colonies living through winter, and the table is recorded in this section
+- Check: `python -m unittest tests.test_pacing_gates` passes; `python tools/pacing_gates.py` judges the first worker by day 17.0 and first automation on days 5.0 to 8.0, its first-worker median is at most day 17.0 with at least two of three colonies living through winter, and the table is recorded in this section
 - Proof: `absent: tools/pacing_gates.py :: FIRST_WORKER_BY_DAY`
 - Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
 ```
