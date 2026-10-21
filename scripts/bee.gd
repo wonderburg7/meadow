@@ -2661,7 +2661,9 @@ func idle_reason() -> String:
 				return "Nowhere to draw from. Every cell holding %s is either sealed, blocked, or one of the cells being filled." % restock_resource
 			if architect_mode == "maintain":
 				return "Nothing to clear. No dead larvae and no cells waiting to be emptied."
-			if hive.create_next_cell_site(home_hex if has_home_hex else Vector2i.ZERO) == null:
+			# T2-14: ask whether there is room, without starting a site. Starting
+			# one here made every selected idle comb worker grow the comb.
+			if not hive.has_room_to_build(home_hex if has_home_hex else Vector2i.ZERO):
 				return "Nowhere left to build. The open floor is full — put miners on the soil to make more room, or clear a keep-clear tile."
 			if not _action_available("comb_build_outward"):
 				return "Nothing marked to build. Mark cells to build, or get the Automation skill so comb workers build outward on their own."
