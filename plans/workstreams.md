@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/AR-5` (`codex/AR-5`) | Codex | the first two gates on the calendar, and a reference queen who lays early | Codex | in progress | none | `plans/now/alpha-route-evidence.md` AR-5 -- the first two gates on the calendar, and a reference queen who lays early |
+| `.worktrees/T2-14` (`claude/T2-14`) | Claude | a comb worker's idle reason asks whether there is room to build, without starting a site | Claude | in progress | none | `plans/now/tier-two.md` T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site |
