@@ -1,7 +1,7 @@
 # Typeface size -- every typeface the same width at the same text scale
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: TS-2 (the HUD's own size overrides; TS-1 landed 17 Oct 2026, `scripts/hud.gd` released by GP-4) | Dependency: TS-2 after TS-1 | Verified: 2026-10-17
+Status: complete | Owner: Dave / Claude Code | Next: nothing further -- TS-1 landed 17 Oct 2026, TS-2 (the HUD's own size overrides) landed 21 Oct 2026 | Dependency: none | Verified: 2026-10-21
 
 ## Objective
 
