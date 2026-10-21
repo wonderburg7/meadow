@@ -195,9 +195,9 @@ class ColonyMilestonesTest(unittest.TestCase):
 
     def test_main_evaluates_on_day_and_population_change_never_per_frame(self):
         main = (SCRIPTS / "main.gd").read_text(encoding="utf-8")
-        self.assertIn("day_changed.connect(func(_d): colony_milestones.evaluate())", main)
-        self.assertIn("bee_died.connect(func(_bee): colony_milestones.evaluate())", main)
-        self.assertIn("season.gyne_released.connect(func(_total): colony_milestones.evaluate())", main)
+        self.assertRegex(main, r"day_changed\.connect\(func\(_d(?:: Variant)?\) -> void: colony_milestones\.evaluate\(\)\)")
+        self.assertRegex(main, r"bee_died\.connect\(func\(_bee(?:: Variant)?\) -> void: colony_milestones\.evaluate\(\)\)")
+        self.assertRegex(main, r"season\.gyne_released\.connect\(func\(_total(?:: Variant)?\) -> void: colony_milestones\.evaluate\(\)\)")
         hatch = main.split("func _hatch_ready_brood()", 1)[1].split("\nfunc ", 1)[0]
         self.assertIn("colony_milestones.evaluate()", hatch)
         process = main.split("func _process(", 1)[1].split("\nfunc ", 1)[0]
@@ -227,7 +227,7 @@ class ColonyMilestonesTest(unittest.TestCase):
         # Only the gyne signal asks, so an old release can't win on a later day.
         self.assertNotIn("check_victory", self.MILESTONES.split("func evaluate()", 1)[1].split("\nfunc ", 1)[0])
         main = (SCRIPTS / "main.gd").read_text(encoding="utf-8")
-        self.assertIn("season.gyne_released.connect(func(_total): colony_milestones.check_victory())", main)
+        self.assertRegex(main, r"season\.gyne_released\.connect\(func\(_total(?:: Variant)?\) -> void: colony_milestones\.check_victory\(\)\)")
         # Before winter the gate is False; after it, with the queen alive, True.
         conditions = (SCRIPTS / "conditions.gd").read_text(encoding="utf-8")
         self.assertIn("Session.winter_ends_day > 0.0 and not Session.winter_here",
