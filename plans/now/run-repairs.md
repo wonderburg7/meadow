@@ -182,4 +182,4 @@ test shows `day_store_totals` changing a condition's result across a load
 
 ## Not in the queue, and why
 
-- **RR-12** -- a loaded run keeps its readout history; waits for ED-3, the last of the alpha chain, because WP-2 to ED-3 share `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.
+- **RR-12** -- a loaded run keeps its readout history; waits for ED-3, the last of the alpha chain, because WP-3 to ED-3 share `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.
