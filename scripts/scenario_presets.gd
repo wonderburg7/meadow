@@ -6,7 +6,7 @@ extends RefCounted
 ## applied over it.
 ##
 ## Not to be confused with AI_PLAYTEST_PLAN.md's --scenario= boot-arg
-## file (main.gd::_apply_scenario_boot_arg) -- an unrelated, dev-only
+## file (headless/scenario_boot.gd::apply_boot_arg) -- an unrelated, dev-only
 ## mechanism that happens to share the word "scenario". This file is only
 ## ever reached from the main menu's Scenario group.
 ##

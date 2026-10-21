@@ -31,7 +31,7 @@ func _apply_zone_glow() -> void:
 	if not showing:
 		_clear_zone_glow()
 		return
-	for cell in main.hive.cells:
+	for cell: Variant in main.hive.cells:
 		if not is_instance_valid(cell):
 			continue
 		if cell.is_nursery_cell():
@@ -53,13 +53,13 @@ func _cycle_comb_overlay() -> void:
 	main.hud.show_warning("Comb overlay: %s. Press O again to cycle." % main.OVERLAY_NAMES[Session.comb_overlay])
 
 func _apply_comb_overlay() -> void:
-	for cell in main.hive.cells:
+	for cell: Variant in main.hive.cells:
 		if is_instance_valid(cell):
 			cell.set_overlay(Session.comb_overlay)
 
 func _remember_designations(cells: Array) -> void:
 	_designation_undo = []
-	for cell in cells:
+	for cell: Variant in cells:
 		if is_instance_valid(cell):
 			_designation_undo.append({
 				"cell": cell,
@@ -73,9 +73,9 @@ func _undo_last_designation() -> void:
 	if _designation_undo.is_empty():
 		main.hud.show_warning("Nothing to undo.")
 		return
-	var restored = 0
-	for entry in _designation_undo:
-		var cell = entry.cell
+	var restored := 0
+	for entry: Dictionary in _designation_undo:
+		var cell: Variant = entry.cell
 		if not is_instance_valid(cell):
 			continue
 		if _holds_bee_bread(cell) and entry.designated != "" and entry.designated != "bee_bread":
@@ -89,27 +89,27 @@ func _undo_last_designation() -> void:
 	main.hud.show_warning("Undone — %d cells put back." % restored)
 
 func _clear_zone_glow() -> void:
-	for cell in main.hive.cells:
+	for cell: Variant in main.hive.cells:
 		if is_instance_valid(cell):
 			cell.set_zone_glow(false)
 
 func _on_cell_priority_requested(anchor: Node2D, tier: int) -> void:
-	for cell in _cells_to_act_on(anchor):
+	for cell: Variant in _cells_to_act_on(anchor):
 		cell.nursery_priority = clampi(tier, 0, 2)
 		cell.bump_display_epoch()
 		if not cell.is_nursery_cell():
 			_designate_one(cell, "brood")
 
 func _on_cell_close_requested(anchor: Node2D, closed: bool) -> void:
-	for cell in _cells_to_act_on(anchor):
+	for cell: Variant in _cells_to_act_on(anchor):
 		cell.set_closed(closed)
 
 func _on_cell_fill_close_requested(anchor: Node2D) -> void:
-	for cell in _cells_to_act_on(anchor):
+	for cell: Variant in _cells_to_act_on(anchor):
 		cell.set_fill_then_close(true)
 
 func _restock_comb_workers() -> Array:
-	return main.selected_bees.filter(func(b):
+	return main.selected_bees.filter(func(b: Variant) -> bool:
 		return is_instance_valid(b) and b.role == main.Bee.Role.BUILDER
 	)
 
@@ -123,14 +123,14 @@ func _restocking_refused() -> bool:
 func _on_restock_targets_requested(resource: String) -> void:
 	if _restocking_refused():
 		return
-	var cells: Array = main.selected_cells.filter(func(c): return is_instance_valid(c))
+	var cells: Array = main.selected_cells.filter(func(c: Variant) -> bool: return is_instance_valid(c))
 	if cells.is_empty():
 		main.hud.show_warning("Select the comb you want kept full first, then press the resource.")
 		return
-	for b in _restock_comb_workers():
+	for b: Variant in _restock_comb_workers():
 		b.set_restock_targets(cells, resource)
 		b.architect_mode = "restock"
-	for cell in cells:
+	for cell: Variant in cells:
 		_designate_one(cell, resource)
 	main.input_selection._clear_cell_selection()
 	main.hud.update_selection(main.selected_bees)
@@ -138,17 +138,17 @@ func _on_restock_targets_requested(resource: String) -> void:
 func _on_restock_sources_requested(allowed: bool) -> void:
 	if _restocking_refused():
 		return
-	var cells: Array = main.selected_cells.filter(func(c): return is_instance_valid(c))
+	var cells: Array = main.selected_cells.filter(func(c: Variant) -> bool: return is_instance_valid(c))
 	if cells.is_empty():
 		main.hud.show_warning("Select the comb you mean first, then press the button.")
 		return
-	for b in _restock_comb_workers():
+	for b: Variant in _restock_comb_workers():
 		b.set_restock_sources(cells, allowed)
 	main.input_selection._clear_cell_selection()
 	main.hud.update_selection(main.selected_bees)
 
 func _on_restock_clear_requested() -> void:
-	for b in _restock_comb_workers():
+	for b: Variant in _restock_comb_workers():
 		b.clear_restock()
 	main.hud.update_selection(main.selected_bees)
 
@@ -158,7 +158,7 @@ func _on_role_requested(role_name: String) -> void:
 		_assign_role(role_id)
 		return
 
-	for role in main.Roles.ROLES:
+	for role: Dictionary in main.Roles.ROLES:
 		var prefix: String = role.key + "_"
 		if not role_name.begins_with(prefix):
 			continue
@@ -169,11 +169,11 @@ func _on_role_requested(role_name: String) -> void:
 ## Availability.role_query allows it. The stage part is left out here: which
 ## controls a Challenge shows is the HUD's lesson plan, while owning a role's
 ## skill is a rule of the run that holds for every caller.
-func _role_permitted(role_id: int, bee = null) -> bool:
+func _role_permitted(role_id: int, bee: Variant = null) -> bool:
 	return main.Availability.role_query(role_id, null, Session.progression, bee).available
 
 func _assign_role(role_id: int) -> void:
-	for b in main.selected_bees:
+	for b: Variant in main.selected_bees:
 		if is_instance_valid(b) and _role_permitted(role_id, b):
 			b.set_role(role_id)
 	main._update_population_readout()
@@ -186,11 +186,11 @@ func _apply_mode(role_id: int, mode_key: String) -> void:
 	# the HUD lit from the first, so a mixed selection never stays mixed.
 	var ferment_on := true
 	if role_id == main.Roles.HONEY:
-		for b in main.selected_bees:
+		for b: Variant in main.selected_bees:
 			if is_instance_valid(b):
 				ferment_on = not b.fermenting
 				break
-	for b in main.selected_bees:
+	for b: Variant in main.selected_bees:
 		if not is_instance_valid(b):
 			continue
 		match role_id:
@@ -207,7 +207,7 @@ func _apply_mode(role_id: int, mode_key: String) -> void:
 	main.hud.update_selection(main.selected_bees)
 
 func _on_finish_first_requested(value: bool) -> void:
-	for b in main.selected_bees:
+	for b: Variant in main.selected_bees:
 		if is_instance_valid(b):
 			b.finish_task_first = value
 	main.hud.update_selection(main.selected_bees)
@@ -215,26 +215,45 @@ func _on_finish_first_requested(value: bool) -> void:
 ## Only ever offered for a single selected bee -- see hud.gd's
 ## _build_favourite_star.
 func _on_favourite_requested(value: bool) -> void:
-	for b in main.selected_bees:
+	for b: Variant in main.selected_bees:
 		if is_instance_valid(b):
 			b.is_favourite = value
 	main.hud.update_selection(main.selected_bees)
 
 func _on_secondary_role_requested(role_name: String) -> void:
 	var target_role: int = main.Roles.id_for_key(role_name)
-	for b in main.selected_bees:
+	for b: Variant in main.selected_bees:
 		if is_instance_valid(b) and (target_role < 0 or _role_permitted(target_role, b)):
 			b.set_secondary_role(target_role)
 	main.hud.update_selection(main.selected_bees)
 
+## WP-2: the whole ordered backup list, as role keys, for every selected
+## bee at once -- the selection panel's list (WP-3) sends it. Only while the
+## colony owns Work priorities. A job the run has not unlocked or bought
+## stays on the list: dispatch skips it until it is. The queen keeps her
+## own rule.
+func _on_backup_order_requested(role_keys: Array) -> void:
+	if not main.Bee.work_priorities_owned():
+		return
+	for b: Variant in main.selected_bees:
+		if not is_instance_valid(b) or b.is_queen:
+			continue
+		var order: Array = []
+		for key: Variant in role_keys:
+			var role_id: int = main.Roles.id_for_key(str(key))
+			if role_id >= 0:
+				order.append(role_id)
+		b.set_backup_order(order)
+	main.hud.update_selection(main.selected_bees)
+
 func _cells_to_act_on(cell: Node2D) -> Array:
 	if not main.selected_cells.is_empty():
-		return main.selected_cells.filter(func(c): return is_instance_valid(c))
+		return main.selected_cells.filter(func(c: Variant) -> bool: return is_instance_valid(c))
 	return [cell] if is_instance_valid(cell) else []
 
 func _on_cell_designation_requested(anchor: Node2D, type: String) -> void:
 	_remember_designations(_cells_to_act_on(anchor))
-	for cell in _cells_to_act_on(anchor):
+	for cell: Variant in _cells_to_act_on(anchor):
 		_designate_one(cell, type)
 
 ## BB-1: bee bread is not evictable and nothing moves it yet (BB-3 spends it),
@@ -277,7 +296,7 @@ func _designate_one(cell: Node2D, type: String) -> void:
 func _on_cell_hatch_role_requested(anchor: Node2D, role: int, focus: String, use_automine: bool) -> void:
 	if role >= 0 and not _role_permitted(role):
 		return
-	for cell in _cells_to_act_on(anchor):
+	for cell: Variant in _cells_to_act_on(anchor):
 		cell.hatch_role = role
 		cell.hatch_focus = focus
 		cell.hatch_automine = use_automine
@@ -286,12 +305,12 @@ func _on_cell_hatch_role_requested(anchor: Node2D, role: int, focus: String, use
 			_designate_one(cell, "brood")
 
 func _on_cell_hatch_lock_requested(anchor: Node2D, locked: bool) -> void:
-	for cell in _cells_to_act_on(anchor):
+	for cell: Variant in _cells_to_act_on(anchor):
 		cell.hatch_role_locked = locked
 		cell.bump_display_epoch()
 
 func _on_cell_empty_requested(anchor: Node2D, method: String, keep_empty: bool) -> void:
-	for cell in _cells_to_act_on(anchor):
+	for cell: Variant in _cells_to_act_on(anchor):
 		_empty_one(cell, method, keep_empty)
 
 ## NF-5. Marks every fermented cell in the hive for discard, using the same
@@ -299,7 +318,7 @@ func _on_cell_empty_requested(anchor: Node2D, method: String, keep_empty: bool) 
 ## cells that ferment later are not marked. Returns how many it marked.
 func _on_clear_fermented_requested() -> int:
 	var marked := 0
-	for cell in main.hive.cells:
+	for cell: Variant in main.hive.cells:
 		if not is_instance_valid(cell) or not cell.is_fermented():
 			continue
 		cell.evict_mode = "discard"
@@ -327,7 +346,7 @@ func _on_cell_gyne_requested(anchor: Node2D, as_gyne: bool) -> void:
 	if as_gyne and Session.progression != null and not Session.progression.is_owned("skill.brood.gyne_rearing"):
 		_warn_gyne_rearing_required()
 		return
-	for cell in _cells_to_act_on(anchor):
+	for cell: Variant in _cells_to_act_on(anchor):
 		cell.hatch_gyne = as_gyne
 		cell.bump_display_epoch()
 		if as_gyne and cell.designated_type != "brood":
@@ -344,14 +363,14 @@ func _on_cell_feed_first_requested(anchor: Node2D, feed_first: bool) -> void:
 	if feed_first and not BeeNursery.priority_cells_owned():
 		main.hud.show_warning("Buy Priority cells before marking a cell to be fed first.", "priority_cells_required", 2.0)
 		return
-	for cell in _cells_to_act_on(anchor):
+	for cell: Variant in _cells_to_act_on(anchor):
 		cell.priority_cell = feed_first
 		cell.bump_display_epoch()
 		if feed_first and cell.designated_type != "brood":
 			_designate_one(cell, "brood")
 
 func _on_cell_keep_empty_requested(anchor: Node2D, keep_empty: bool) -> void:
-	for cell in _cells_to_act_on(anchor):
+	for cell: Variant in _cells_to_act_on(anchor):
 		_set_keep_empty(cell, keep_empty)
 
 func _set_keep_empty(cell: Node2D, keep_empty: bool) -> void:

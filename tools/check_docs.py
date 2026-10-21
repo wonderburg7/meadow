@@ -294,6 +294,11 @@ def validate_queue_proof(body: str, index: int, root: Path, errors: list[str]) -
         )
 
 
+def proof_error_is_shape(error: str) -> bool:
+    """True when a validate_queue_proof error is a malformed Proof:, not one that stopped holding."""
+    return "proof no longer holds" not in error
+
+
 def check_queue_files(errors: list[str], text: str | None = None) -> None:
     """Every unclaimed item must expose the exact file set used by overlap checks."""
     if text is None:
@@ -847,6 +852,19 @@ def check_plan_queue_blocks(errors: list[str], warnings: list[str],
                 "the item out of the lane"
             )
 
+    # A malformed Proof: means no refill can ever queue the block, and the
+    # refill used to call that "already built" -- how FR-1b's `contains:`
+    # proof left the Codex lane dry at AR-5's finish (21 Oct 2026).
+    for entry in entries:
+        proof_errors = []
+        validate_queue_proof(entry.body, 0, root, proof_errors)
+        if proof_errors and proof_error_is_shape(proof_errors[0]):
+            detail = proof_errors[0].removeprefix("NEXTSTEPS.md item 0: ")
+            errors.append(
+                f"{entry.plan}:{entry.line}: {entry.slice_id}'s queue block: {detail} -- "
+                "no refill can queue it until the line is fixed"
+            )
+
     # A gated block whose proof has stopped holding is work that happened while
     # the gate was shut -- the X3 failure, caught one step earlier.
     for entry in entries:
@@ -854,7 +872,7 @@ def check_plan_queue_blocks(errors: list[str], warnings: list[str],
             continue
         proof_errors: list[str] = []
         validate_queue_proof(entry.body, 0, root, proof_errors)
-        if proof_errors:
+        if proof_errors and not proof_error_is_shape(proof_errors[0]):
             warnings.append(
                 f"{entry.plan}:{entry.line}: {entry.slice_id} is gated, but its Proof: no "
                 "longer holds -- the defect it describes may already be fixed. Re-verify it "

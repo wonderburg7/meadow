@@ -42,7 +42,7 @@ static var _prepared_root: String = ""
 ## The player's run name reduced to lowercase letters, digits and hyphens.
 static func slugify(display_name: String) -> String:
 	var slug := ""
-	for ch in display_name.strip_edges().to_lower():
+	for ch: String in display_name.strip_edges().to_lower():
 		var code: int = ch.unicode_at(0)
 		var keep: bool = (code >= 97 and code <= 122) or (code >= 48 and code <= 57)
 		if keep:
@@ -72,7 +72,7 @@ static func checkpoint(slug: String) -> String:
 ## list_slots() entry, or {} if there is none -- what the Load button reads
 ## until the Saves window (SV-2) lets the player choose.
 static func latest_named() -> Dictionary:
-	for entry in list_slots():
+	for entry: Dictionary in list_slots():
 		if int(entry.get("saved_at", 0)) > 0 and FileAccess.file_exists(slot_path(entry["slug"])):
 			return entry
 	return {}
@@ -86,15 +86,15 @@ static func latest_named() -> Dictionary:
 static func list_slots() -> Array:
 	var slots: Dictionary = _read_index()["slots"]
 	var result: Array = []
-	for slug in slots:
+	for slug: String in slots:
 		var entry: Dictionary = slots[slug].duplicate(true)
 		entry["slug"] = slug
 		var last := int(entry.get("saved_at", 0))
-		for number in entry.get("checkpoints", {}):
+		for number: String in entry.get("checkpoints", {}):
 			last = maxi(last, int(entry["checkpoints"][number].get("saved_at", 0)))
 		entry["last_saved"] = last
 		result.append(entry)
-	result.sort_custom(func(a, b): return int(a["last_saved"]) > int(b["last_saved"]))
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a["last_saved"]) > int(b["last_saved"]))
 	return result
 
 ## Names this launch has already handed out (RR-6). A run that never saves
@@ -108,7 +108,7 @@ static var _issued_run_slugs: Dictionary = {}
 ## run starts, not per frame.
 static func fresh_run_name(base: String) -> String:
 	var taken := _issued_run_slugs.duplicate()
-	for slot in list_slots():
+	for slot: Dictionary in list_slots():
 		taken[slot["slug"]] = true
 	var run_name := base
 	var n := 2
@@ -139,9 +139,9 @@ static func record_checkpoint(slug: String, display_name: String, day: int) -> v
 ## Removes a run's named save, its checkpoints and its index entry.
 static func delete(slug: String) -> void:
 	var paths := [slot_path(slug)]
-	for number in range(1, CHECKPOINTS + 1):
+	for number: int in range(1, CHECKPOINTS + 1):
 		paths.append(checkpoint_path(slug, number))
-	for path in paths:
+	for path: String in paths:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(path)
 	var index := _read_index()
@@ -156,7 +156,7 @@ static func use_scratch_root() -> void:
 	root = SCRATCH_ROOT
 	_prepared_root = ""
 	if DirAccess.dir_exists_absolute(SCRATCH_ROOT):
-		for file_name in DirAccess.get_files_at(SCRATCH_ROOT):
+		for file_name: String in DirAccess.get_files_at(SCRATCH_ROOT):
 			DirAccess.remove_absolute(SCRATCH_ROOT + file_name)
 
 # --- internals -----------------------------------------------------
@@ -191,7 +191,7 @@ static func _load_index_file() -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		return _empty_index()
-	var parsed = JSON.parse_string(file.get_as_text())
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	file.close()
 	if typeof(parsed) != TYPE_DICTIONARY or typeof(parsed.get("slots")) != TYPE_DICTIONARY:
 		push_warning("The save index is unreadable; treating it as no saves.")

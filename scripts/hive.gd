@@ -15,7 +15,6 @@ const Resources = preload("res://scripts/resources.gd")
 const Roles = preload("res://scripts/roles.gd")
 const HiveBody = preload("res://scripts/hive_body.gd")
 const SpriteCatalogue = preload("res://scripts/sprite_catalogue.gd")
-const PixelSprite = preload("res://scripts/pixel_sprite.gd")
 
 var cells: Array = []            # populated by main.gd once the comb is built
 var comb_parent: Node2D = null   # the hive-view root new cells get added to
@@ -119,12 +118,12 @@ func _content_index() -> Dictionary:
 	Perf.begin("hive_index_rebuild")
 
 	var buckets := {}
-	for key in Resources.content_keys():
+	for key: String in Resources.content_keys():
 		buckets[key] = []
 	# Derived buckets: not content kinds, so not in Resources.content_keys().
 	buckets["unbuilt"] = []
 	buckets["ripe_honey"] = []
-	for cell in cells:
+	for cell: Variant in cells:
 		if not is_instance_valid(cell):
 			continue
 		if not cell.is_built:
@@ -181,7 +180,7 @@ func _stock() -> Dictionary:
 	var by_type := {}
 	var sealed := 0.0
 	var honey := 0.0
-	for cell in cells:
+	for cell: Variant in cells:
 		if not is_instance_valid(cell):
 			continue
 		by_type[cell.content_type] = by_type.get(cell.content_type, 0.0) + cell.amount
@@ -227,7 +226,7 @@ func tile_is_interior(hex: Vector2i) -> bool:
 ## The comb cell sitting on a tile, if any. Used to work out whether a
 ## bee is walking over comb and should be slowed down.
 func cell_at_tile(hex: Vector2i) -> Node2D:
-	var node = occupied_tiles.get(hex)
+	var node: Variant = occupied_tiles.get(hex)
 	if node != null and is_instance_valid(node) and node.has_method("is_nursery_cell"):
 		return node
 	return null
@@ -256,12 +255,12 @@ func deposit(resource_type: String, amount: float) -> float:
 		return 0.0
 	var remaining := amount
 	# top up part-filled cells of this type first, then start new ones
-	for cell in cells:
+	for cell: Variant in cells:
 		if remaining <= 0.0:
 			break
 		if cell.content_type == resource_type:
 			remaining -= cell.add_resource(resource_type, remaining)
-	for cell in cells:
+	for cell: Variant in cells:
 		if remaining <= 0.0:
 			break
 		if cell.is_empty():
@@ -272,7 +271,7 @@ func deposit(resource_type: String, amount: float) -> float:
 ## Pulls up to `amount` of a resource back out of the comb.
 func take(resource_type: String, amount: float) -> float:
 	var still_needed := amount
-	for cell in cells:
+	for cell: Variant in cells:
 		if still_needed <= 0.0:
 			break
 		if resource_type == "honey" and not cell.is_ripe_honey():
@@ -292,7 +291,7 @@ func take_energy(energy_wanted: float) -> float:
 		return 0.0
 	var delivered := 0.0
 
-	for key in Resources.energy_keys_by_priority():
+	for key: String in Resources.energy_keys_by_priority():
 		if delivered >= energy_wanted:
 			break
 		var factor: float = max(0.001, Resources.energy_factor_for(key))
@@ -329,7 +328,7 @@ func total_honey() -> float:
 func find_cell_for(resource_type: String, except: Node2D = null) -> Node2D:
 	var best_empty: Node2D = null
 	var almost_full: Node2D = null
-	for cell in cells:
+	for cell: Variant in cells:
 		if cell == except or not is_instance_valid(cell):
 			continue
 		if cell.space_for(resource_type) <= 0.0:
@@ -353,7 +352,7 @@ func find_cell_for(resource_type: String, except: Node2D = null) -> Node2D:
 func find_designated_cell_for(resource_type: String, except: Node2D = null) -> Node2D:
 	var best_empty: Node2D = null
 	var almost_full: Node2D = null
-	for cell in cells:
+	for cell: Variant in cells:
 		if cell == except or not is_instance_valid(cell):
 			continue
 		if cell.designated_type != resource_type:
@@ -391,7 +390,7 @@ func find_designated_cell_for(resource_type: String, except: Node2D = null) -> N
 func find_empty_cell() -> Node2D:
 	var configured: Array = []
 	var unset: Array = []
-	for cell in cells:
+	for cell: Variant in cells:
 		if not is_instance_valid(cell) or not cell.is_nursery_cell():
 			continue
 		if cell.hatch_role >= 0 or cell.hatch_gyne:
@@ -417,7 +416,7 @@ func find_empty_cell() -> Node2D:
 	# for pollen or honey -- the one thing a reservation should prevent.
 	if not GameConfig.queen_lays_in_any_cell:
 		return null
-	for cell in cells:
+	for cell: Variant in cells:
 		if not is_instance_valid(cell):
 			continue
 		if cell.is_empty() and cell.designated_type == "" and not cell.keep_empty and not cell.is_closed:
@@ -443,13 +442,13 @@ func _lay_by_priority(pool: Array) -> Node2D:
 	# Sort the free cells into their tiers first, so a tier with nowhere
 	# to lay is skipped rather than being handed an egg it can't take.
 	var by_tier := [[], [], []]
-	for cell in pool:
+	for cell: Variant in pool:
 		if cell.is_empty():
 			by_tier[clampi(cell.nursery_priority, 0, 2)].append(cell)
 
 	var best := -1
 	var best_credit := -INF
-	for tier in range(3):
+	for tier: int in range(3):
 		if by_tier[tier].is_empty():
 			continue
 		# what this tier's credit *would* be on the next lay
@@ -487,7 +486,7 @@ func record_lay(cell: Node2D) -> void:
 	var weight_sum: float = weights[0] + weights[1] + weights[2]
 	if weight_sum <= 0.0:
 		weight_sum = 1.0
-	for tier in range(3):
+	for tier: int in range(3):
 		_tier_credit[tier] += weights[tier]
 	_tier_credit[clampi(cell.nursery_priority, 0, 2)] -= weight_sum
 	_brood_pointer += 1
@@ -498,7 +497,7 @@ func zone_summary() -> Dictionary:
 	var counts := [0, 0, 0]
 	var free := [0, 0, 0]
 	var by_role := {}
-	for cell in cells:
+	for cell: Variant in cells:
 		if not is_instance_valid(cell) or not cell.is_nursery_cell():
 			continue
 		var tier: int = clampi(cell.nursery_priority, 0, 2)
@@ -526,7 +525,7 @@ func zone_summary() -> Dictionary:
 ## cell tracks, only summing it up.
 func brood_stage_counts() -> Dictionary:
 	var counts := {"egg": 0, "larva": 0, "capped": 0}
-	for cell in cells_holding("brood"):
+	for cell: Variant in cells_holding("brood"):
 		var fraction: float = cell.development_percent() / 100.0
 		if fraction < 1.0 / 3.0:
 			counts["egg"] += 1
@@ -544,7 +543,7 @@ func brood_stage_counts() -> Dictionary:
 ## order, fermented or not (decision 4).
 func find_food_cell(except: Node2D = null) -> Node2D:
 	Perf.begin("hive_find_food")
-	for cell in cells_holding("ripe_honey"):
+	for cell: Variant in cells_holding("ripe_honey"):
 		if cell == except or not is_instance_valid(cell) or not cell.can_withdraw():
 			continue
 		if cell.amount > 0.0:
@@ -552,7 +551,7 @@ func find_food_cell(except: Node2D = null) -> Node2D:
 			return cell
 	var sense: bool = senses_fermentation()
 	var sour: Node2D = null
-	for cell in cells_holding("nectar"):
+	for cell: Variant in cells_holding("nectar"):
 		if cell == except or not is_instance_valid(cell) or not cell.can_withdraw():
 			continue
 		if cell.amount > 0.0:
@@ -586,7 +585,7 @@ func has_room_for_egg() -> bool:
 
 func find_cell_with(resource_type: String) -> Node2D:
 	var bucket: String = "ripe_honey" if resource_type == "honey" else resource_type
-	for cell in cells_holding(bucket):
+	for cell: Variant in cells_holding(bucket):
 		# a sealed cell is out of circulation -- sending a bee to one just
 		# has it walk over, get nothing, and ask again
 		if cell.amount > 0.0 and cell.can_withdraw():
@@ -604,7 +603,7 @@ func find_honey_source(from: Vector2) -> Node2D:
 	var oldest_first: bool = senses_fermentation()
 	var best: Node2D = null
 	var best_score: float = INF
-	for cell in cells_holding("nectar"):
+	for cell: Variant in cells_holding("nectar"):
 		if cell.amount <= 0.0 or not cell.can_withdraw() or cell.is_fermented():
 			continue
 		var score: float
@@ -624,7 +623,7 @@ func find_honey_source(from: Vector2) -> Node2D:
 func find_brood_nectar() -> Node2D:
 	if not senses_fermentation():
 		return find_cell_with("nectar")
-	for cell in cells_holding("nectar"):
+	for cell: Variant in cells_holding("nectar"):
 		if cell.amount > 0.0 and cell.can_withdraw() and not cell.is_fermented():
 			return cell
 	return null
@@ -636,7 +635,7 @@ func find_brood_nectar() -> Node2D:
 func find_brood_cell() -> Node2D:
 	var hungriest: Node2D = null
 	var any_brood: Node2D = null
-	for cell in cells_holding("brood"):
+	for cell: Variant in cells_holding("brood"):
 		if any_brood == null:
 			any_brood = cell
 		if not cell.needs_feeding():
@@ -649,7 +648,7 @@ func find_brood_cell() -> Node2D:
 ## between trips, and it's the last step before the cell counts as a
 ## store the colony can actually eat.
 func find_cell_needing_fanning() -> Node2D:
-	for cell in cells:
+	for cell: Variant in cells:
 		if cell.needs_fanning():
 			return cell
 	return null
@@ -666,7 +665,7 @@ func find_honey_target() -> Node2D:
 ## "practically full" skip would leave every cell just short of sealing; a
 ## sealed cell has no space, so it is never chosen.
 func find_bee_bread_target(except: Node2D = null) -> Node2D:
-	for cell in cells_holding(Resources.BEE_BREAD):
+	for cell: Variant in cells_holding(Resources.BEE_BREAD):
 		if cell != except and is_instance_valid(cell) and cell.space_for(Resources.BEE_BREAD) > 0.0:
 			return cell
 	return find_cell_for(Resources.BEE_BREAD, except)
@@ -677,7 +676,7 @@ func find_bee_bread_target(except: Node2D = null) -> Node2D:
 func can_take(resource_type: String, amount: float) -> bool:
 	var bucket: String = "ripe_honey" if resource_type == "honey" else resource_type
 	var found := 0.0
-	for cell in cells_holding(bucket):
+	for cell: Variant in cells_holding(bucket):
 		if is_instance_valid(cell) and cell.can_withdraw():
 			found += cell.amount
 			if found >= amount:
@@ -685,7 +684,7 @@ func can_take(resource_type: String, amount: float) -> bool:
 	return found >= amount
 
 func find_unfinished_cell() -> Node2D:
-	for cell in cells:
+	for cell: Variant in cells:
 		if not cell.is_built and cell.has_free_slot():
 			return cell
 	return null
@@ -698,7 +697,7 @@ func find_cell_needing_cleaning() -> Node2D:
 	return corpses[0] if not corpses.is_empty() else null
 
 func find_cell_needing_eviction() -> Node2D:
-	for cell in cells:
+	for cell: Variant in cells:
 		if is_instance_valid(cell) and cell.needs_eviction():
 			return cell
 	return null
@@ -706,7 +705,7 @@ func find_cell_needing_eviction() -> Node2D:
 ## A gyne larva waiting on royal jelly, so nurses know whether it's worth
 ## anyone making any.
 func has_gyne_brood() -> bool:
-	for cell in cells_holding("brood"):
+	for cell: Variant in cells_holding("brood"):
 		if cell.brood_is_gyne:
 			return true
 	return false
@@ -749,7 +748,7 @@ func remove_body(body: Node2D) -> void:
 ## The oldest body no Comb worker is already on, or null. Dead larvae come
 ## first: bee_building.gd asks for a body only when no cell needs cleaning.
 func find_body_to_clear() -> Node2D:
-	for body in bodies:
+	for body: Variant in bodies:
 		if is_instance_valid(body) and not body.is_claimed():
 			return body
 	return null
@@ -758,7 +757,7 @@ func find_body_to_clear() -> Node2D:
 ## adding to them (saving.gd), so the old nodes leave the tree now, not at
 ## the end of the frame.
 func clear_bodies() -> void:
-	for body in bodies:
+	for body: Variant in bodies:
 		_free_body(body)
 	bodies.clear()
 
@@ -804,29 +803,45 @@ func _free_body(body: Node2D) -> void:
 ## cell-content searches; this is the same fix for the comb-growing one.
 var _no_room_frame: int = -1
 
+## True when a comb worker standing at `around` would find a free tile to
+## build on, without starting a site. It walks the same spiral as
+## create_next_cell_site (_first_free_spiral_hex), so the two cannot drift.
+## T2-14: the comb worker's idle reason asks this, where it used to call
+## create_next_cell_site and so start outward sites just by selecting a bee.
+func has_room_to_build(around: Vector2i = Vector2i.ZERO) -> bool:
+	if comb_parent == null:
+		return false
+	if _no_room_frame == Engine.get_process_frames():
+		return false
+	return _first_free_spiral_hex(around) != null
+
+
 func create_next_cell_site(around: Vector2i = Vector2i.ZERO) -> Node2D:
 	if comb_parent == null:
 		return null
 	if _no_room_frame == Engine.get_process_frames():
 		return null
 
-	var hex := Vector2i(0, 0)
-	var found := false
-	# generous ceiling: everything out to the far edge of the dug ground
-	var reach := int(GameConfig.hive_interior_rings + GameConfig.hive_soil_depth)
-	var limit := 1 + 3 * reach * (reach + 1)
-	var index := 0
-	while index < limit:
-		hex = around + Shapes.hex_spiral_at(index)
-		if _can_build_on(hex):
-			found = true
-			break
-		index += 1
-	if not found:
+	var hex: Variant = _first_free_spiral_hex(around)
+	if hex == null:
 		_no_room_frame = Engine.get_process_frames()
 		return null
 
-	return _start_site_at(hex)
+	return _start_site_at(hex as Vector2i)
+
+
+## The first tile out along the hex spiral from `around` that _can_build_on
+## accepts, or null when the walk finds none. Shared by has_room_to_build
+## and create_next_cell_site so the two loops cannot drift apart.
+func _first_free_spiral_hex(around: Vector2i) -> Variant:
+	# generous ceiling: everything out to the far edge of the dug ground
+	var reach := int(GameConfig.hive_interior_rings + GameConfig.hive_soil_depth)
+	var limit := 1 + 3 * reach * (reach + 1)
+	for index: int in limit:
+		var hex: Vector2i = around + Shapes.hex_spiral_at(index)
+		if _can_build_on(hex):
+			return hex
+	return null
 
 ## Tiles the player has asked to be left as open floor. Comb workers skip
 ## these when picking a site, so you can keep a corridor through the
@@ -914,8 +929,8 @@ func build_navigation() -> void:
 	# walkable ring in the empty space just outside the rock wall. A bee
 	# routed anywhere near the entrance could path onto that ring and
 	# wander the outer perimeter instead of reaching the actual doorway.
-	for ring in range(0, reach):
-		for hex in Shapes.hex_ring(ring):
+	for ring: int in range(0, reach):
+		for hex: Vector2i in Shapes.hex_ring(ring):
 			if _is_solid(hex):
 				continue
 			_tile_ids[hex] = next_id
@@ -927,8 +942,8 @@ func build_navigation() -> void:
 		Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 1),
 		Vector2i(-1, 0), Vector2i(0, -1), Vector2i(1, -1),
 	]
-	for hex in _tile_ids.keys():
-		for step in neighbours:
+	for hex: Vector2i in _tile_ids.keys():
+		for step: Vector2i in neighbours:
 			var other: Vector2i = hex + step
 			if _tile_ids.has(other):
 				_astar.connect_points(_tile_ids[hex], _tile_ids[other], true)
@@ -937,7 +952,7 @@ func build_navigation() -> void:
 ## Soil can eventually be dug out; bedrock never can. Either way nothing
 ## walks through it, so routing treats them the same.
 func _is_solid(hex: Vector2i) -> bool:
-	var node = occupied_tiles.get(hex)
+	var node: Variant = occupied_tiles.get(hex)
 	if node == null or not is_instance_valid(node):
 		return false
 	return node.is_in_group("soil_blocks") or node.is_in_group("rock_blocks")
@@ -960,7 +975,7 @@ func nearest_walkable_point(point: Vector2) -> Vector2:
 		return point
 	var best_hex: Vector2i = hex
 	var best_dist := INF
-	for h in _tile_ids.keys():
+	for h: Vector2i in _tile_ids.keys():
 		var d: float = Vector2(h.x - hex.x, h.y - hex.y).length_squared()
 		if d < best_dist:
 			best_dist = d
@@ -1024,7 +1039,7 @@ func _smooth_path(from_point: Vector2, raw: PackedVector2Array) -> PackedVector2
 	while i < raw.size() - 1:
 		# look as far ahead as we can still see in a straight line
 		var furthest := i
-		for j in range(i, raw.size()):
+		for j: int in range(i, raw.size()):
 			if _line_is_clear(anchor, raw[j]):
 				furthest = j
 			else:
@@ -1046,7 +1061,7 @@ func _line_is_clear(from_point: Vector2, to_point: Vector2) -> bool:
 	var squashed: bool = Session.use_sprite_hex_grid
 	var span := Shapes.unsquash_point(from_point, squashed).distance_to(Shapes.unsquash_point(to_point, squashed))
 	var steps := int(span / (GameConfig.hive_cell_size * 0.6)) + 1
-	for s in range(steps + 1):
+	for s: int in range(steps + 1):
 		var point: Vector2 = from_point.lerp(to_point, float(s) / float(steps))
 		var hex := Shapes.pixel_to_hex(point - comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 		if not tile_is_walkable(hex):
@@ -1064,11 +1079,11 @@ const NEIGHBOUR_STEPS := [
 ## otherwise no bee could ever stand next to it to dig.
 func refresh_edge_flags() -> void:
 	var topology_changed := false
-	for node in occupied_tiles.values():
+	for node: Variant in occupied_tiles.values():
 		if node == null or not is_instance_valid(node) or not node.is_in_group("soil_blocks"):
 			continue
 		var edge := false
-		for step in NEIGHBOUR_STEPS:
+		for step: Vector2i in NEIGHBOUR_STEPS:
 			if tile_is_walkable(node.axial + step):
 				edge = true
 				break
@@ -1089,7 +1104,7 @@ func find_marked_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D:
 	var true_from: Vector2 = Shapes.unsquash_point(from_point, squashed)
 	var best: Node2D = null
 	var best_distance := INF
-	for node in occupied_tiles.values():
+	for node: Variant in occupied_tiles.values():
 		if not _is_markable_block(node) or not node.marked_for_mining:
 			continue
 		# a block with no open tile beside it can't be reached, so it's no
@@ -1117,7 +1132,7 @@ func find_nearest_edge_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D:
 	var true_from: Vector2 = Shapes.unsquash_point(from_point, squashed)
 	var best: Node2D = null
 	var best_distance := INF
-	for node in occupied_tiles.values():
+	for node: Variant in occupied_tiles.values():
 		if not _is_markable_block(node) or not node.is_edge:
 			continue
 		if mine_stand_hex(node) == null:
@@ -1136,17 +1151,17 @@ func find_nearest_edge_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D:
 			best = node
 	return best
 
-func _is_markable_block(node) -> bool:
+func _is_markable_block(node: Variant) -> bool:
 	return node != null and is_instance_valid(node) and node.is_in_group("soil_blocks")
 
 ## The open tile a miner should stand on to dig `block`. Soil is solid,
 ## so routing a bee at the block's own centre finds no path at all and it
 ## just stands there -- which is what stopped miners ever reaching a
 ## marked block. Returns null when nothing open touches it.
-func mine_stand_hex(block: Node2D):
+func mine_stand_hex(block: Node2D) -> Variant:
 	if not is_instance_valid(block):
 		return null
-	for step in NEIGHBOUR_STEPS:
+	for step: Vector2i in NEIGHBOUR_STEPS:
 		var neighbour: Vector2i = block.axial + step
 		if tile_is_walkable(neighbour):
 			return neighbour
@@ -1171,7 +1186,7 @@ func mine_stand_point(block: Node2D, from_point: Vector2) -> Vector2:
 	var true_from: Vector2 = Shapes.unsquash_point(from_point, squashed)
 	var best := Vector2(INF, INF)
 	var best_distance := INF
-	for step in NEIGHBOUR_STEPS:
+	for step: Vector2i in NEIGHBOUR_STEPS:
 		var neighbour: Vector2i = block.axial + step
 		if not tile_is_walkable(neighbour):
 			continue

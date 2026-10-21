@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] CQ-M2 -- the starving threshold becomes a GameConfig row**
-   - Plan: `plans/now/code-health.md` -- "CQ-M2 -- the starving threshold becomes a GameConfig row"
-   - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/colony_diagnostics.gd`, `scripts/problem_messages.gd`, `scripts/year_winter.gd`, `docs/agent-rules.md`, `FUNCTION_MAP.md`
-   - Check: `tests/test_colony_diagnostics.py`, `tests/test_signal_catalogue.py` and the settings-row source checks pass; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` matches; `.\tools\verify.ps1` is green
-   - Proof: `present: scripts/colony_diagnostics.gd :: GameConfig.energy_capacity * 0.15`
-   - Next after: CQ-M3
+1. **[Claude] WP-3 -- the ordered list in the selection panel and the colony default**
+   - Plan: `plans/now/work-priorities.md` -- "WP-3 -- the ordered list in the selection panel and the colony default"
+   - Files: `scripts/hud.gd`, `scripts/colony_panel.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `test_scenarios/wp3_backup_order_ui.json`, `tests/test_wp3_backup_order_ui.py`
+   - Check: `python -m unittest tests.test_wp3_backup_order_ui` passes (owned, moving a job up in the selection panel reorders every selected bee's list; the Colony window list changes what a newly emerged bee takes; unowned, the single Backup choice is unchanged); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/hud.gd :: backup_order`
+   - Next after: none -- the Work Priorities plan is complete; SG-2 in `plans/now/short-term-goals.md` follows in Dave's order
 
-2. **[Claude] CQ-R0 -- display-text golden harness**
-   - Plan: `plans/now/code-health.md` -- "CQ-R0 -- display-text golden harness"
-   - Files: `tests/display_text_golden_test.gd`, `tests/test_display_text_golden.py`, `tests/fixtures/display_text_golden.json`, `.claude/rules/gdscript.md`
-   - Check: `python -m unittest tests.test_display_text_golden` passes against the master capture and fails when one character of a captured string is changed; `.\tools\verify.ps1` is green
-   - Proof: `absent: .claude/rules/gdscript.md :: display_text_golden`
-   - Next after: CQ-R7
+2. **[Claude] CQ-S0 -- golden-save round-trip harness**
+   - Plan: `plans/now/code-health.md` -- "CQ-S0 -- golden-save round-trip harness"
+   - Files: `tests/save_roundtrip_test.gd`, `tests/test_save_roundtrip.py`, `tests/fixtures/saves/cq_s0_early.json`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json`, `test_scenarios/cq_s0_early_capture.json`, `test_scenarios/cq_s0_mid_capture.json`, `test_scenarios/cq_s0_winter_capture.json`, `test_scenarios/cq_s0_challenge2_capture.json`, `test_scenarios/cq_s0_orientation_capture.json`, `.claude/rules/saving.md`
+   - Check: `python -m unittest tests.test_save_roundtrip` passes, comparing every golden save's load-then-save output to its input by both routes, with any known difference named and escalated; `.\tools\verify.ps1` is green
+   - Proof: `absent: .claude/rules/saving.md :: round-trip`
+   - Next after: CQ-S1
 
-3. **[Claude] CQ-R1 -- headless scenario boot leaves main.gd**
-   - Plan: `plans/now/code-health.md` -- "CQ-R1 -- headless scenario boot leaves main.gd"
-   - Files: `scripts/main.gd`, `scripts/headless/scenario_boot.gd`, `scripts/scenario_actions.gd`, `scripts/diagnostic_log.gd`, `scripts/scenario_presets.gd`, `tools/update_function_map.py`, `FUNCTION_MAP.md`, `.claude/rules/gdscript.md`, `docs/agent-rules.md`
-   - Check: `tests/test_run_scenario_launch.py` passes; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` and `test_scenarios/sv1_named_saves_test.json` match; a performance-capture scenario still writes its capture; `.\tools\verify.ps1` is green
-   - Proof: `present: scripts/main.gd :: func _apply_scenario_boot_arg(`
-   - Next after: CQ-R2
+3. **[Claude] CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds**
+   - Plan: `plans/now/code-health.md` -- "CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds"
+   - Files: `tools/gdscript_style.py`, `tests/test_gdscript_style.py`, `tools/verify.ps1`, `tests/rr7_silkscreen_fit_test.gd`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/README.md`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/addons/copy_all_errors/plugin.cfg`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/addons/copy_all_errors/plugin.gd`, `scripts/fog_of_war.gd`, `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/bee.gd`, `scripts/diagnostic_log.gd`, `scripts/hive_cell.gd`, `scripts/input_selection.gd`, `tests/bs14_saved_skill_policy_test.gd`, `tests/col10_succession_test.gd`, `.claude/rules/gdscript.md`, `FUNCTION_MAP.md`
+   - Check: `python tools/gdscript_style.py` exits 0 with zero gdlint problems over every tracked `.gd` outside `addons/`; `tests/test_gdscript_style.py` covers the missing-gdtoolkit skip; `.\tools\verify.ps1` shows a green `gdscript style` stage
+   - Proof: `absent: tools/verify.ps1 :: gdscript style`
+   - Next after: CQ-L2
 
-4. **[Claude] TS-2 -- the HUD's own size overrides follow the typeface too**
-   - Plan: `plans/now/typeface-size.md` -- "TS-2 -- the HUD's own size overrides"
-   - Files: `scripts/hud.gd`, `tests/ts2_hud_typeface_size_test.gd`, `tests/test_ts2_hud_typeface_size.py`
-   - Check: `python -m unittest tests.test_ts2_hud_typeface_size` passes: with OpenDyslexic at text scale 1, the corner readouts and goal lines carry `UiTheme.font_px` of their base sizes, and switching typeface rebuilds the corner.
-   - Proof: `absent: scripts/hud.gd :: UiTheme.font_px`
-   - Next after: none -- plans/now/typeface-size.md is complete
+4. **[Claude] CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed**
+   - Plan: `plans/now/code-health.md` -- "CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed"
+   - Files: `scripts/hud.gd`, `FUNCTION_MAP.md`
+   - Check: `python -m unittest tests.test_display_text_golden` passes against the unchanged fixture; `tests/test_layout_regression.py` passes; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/hud.gd :: func _selection_activity_text(`
+   - Next after: CQ-R8 -- hud builders shortened (designation button table)
 
-5. **[Claude] WP-2 -- owned, each bee follows an ordered backup list**
-   - Plan: `plans/now/work-priorities.md` -- "WP-2 -- owned, each bee follows an ordered backup list"
-   - Files: `scripts/bee.gd`, `scripts/session.gd`, `scripts/skills.gd`, `scripts/orders_zones.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/wp2_backup_order_test.gd`, `tests/test_wp2_backup_order.py`
-   - Check: `python -m unittest tests.test_wp2_backup_order` passes (unowned, a bee falls back on its one backup as today; owned, an idle bee whose role and first backup have no work takes the next job on its list that does; a bee born after purchase takes the colony default; the lists and the default survive save and restore; an old save loads each bee with its backup first); `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/bee.gd :: backup_order`
-   - Next after: WP-3 -- the ordered list in the selection panel and the colony default
+5. **[Claude] CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named**
+   - Plan: `plans/now/code-health.md` -- "CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named"
+   - Files: `scripts/rival_hive.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/balance_tests.py`, `tests/si1_run_state_test.gd`, `FUNCTION_MAP.md`
+   - Check: `python tests/balance_tests.py` passes with its rival section unchanged; `python -m unittest tests.test_si1_run_state` passes, including the new fresh-rival and `restore({})` assertions; `tests/test_save_migrations.py`, `tests/test_signal_catalogue.py` and the settings-row source checks pass; `.\tools\verify.ps1` is green
+   - Proof: `present: scripts/rival_hive.gd :: nectar = float(data.get("nectar", 120.0))`
+   - Next after: CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named
 
 ### Codex lane
 
@@ -76,12 +76,11 @@ One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
 - **RR-12** (`plans/now/run-repairs.md`) -- a loaded run keeps its readout history (Dave, 16 Oct 2026); waits for ED-3, the last of the alpha chain, which shares `scripts/main.gd` and the save files.
-- **SP-8a** (`plans/now/meadow-terrain.md`) -- the meadow floor drawn in blocks, with everything on it lifted (Dave, 12 Oct 2026); waits for ED-3, the last of the alpha chain (WP-2 to ED-3), which shares `scripts/main.gd` and the save files (Dave, 16 Oct 2026).
+- **SP-8a** (`plans/now/meadow-terrain.md`) -- the meadow floor drawn in blocks, with everything on it lifted (Dave, 12 Oct 2026); waits for ED-3, the last of the alpha chain (WP-3 to ED-3; WP-2 landed 21 Oct 2026), which shares `scripts/main.gd` and the save files (Dave, 16 Oct 2026).
 - **SP-6** (`plans/now/sprites.md`) -- meadow foragers drawn from the sheet (eight directions, flapping wings); waits for Dave's forager sheet on a 16x16 `sheet` grid in an `.aseprite` (the 11 Oct repack, committed 13 Oct as `bees/foragers_meadow_view.png`, is not on it yet), and is queued once that is committed (SP-5 landed 12 Oct 2026).
 - **HM-2** (`plans/now/hive-and-menu-art.md`) -- five top-bar buttons drawn from Dave's menu icons; waits for Dave to queue it (his call, 13 Oct 2026); its gated block is written.
 - **HM-1** (`plans/now/hive-and-menu-art.md`) -- your hive and rival hives drawn from Dave's meadow hive art; waits for Dave to fit the large hive's layer 0 on its 54x41 canvas in Aseprite.
 - **T2-7b** (`plans/now/tier-two.md`) -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4, whose arc buys a Honey worker, and is specified when it lands.
-- **WP-3** (`plans/now/work-priorities.md`) -- the ordered list in the selection panel and the colony default; waits for WP-2.
 - **SG-2** (`plans/now/short-term-goals.md`) -- goals offered, paid and saved in runs; waits for WP-3 (Dave's order; FC-2 landed 17 Oct 2026, freeing the save files; SG-1 landed 14 Oct 2026).
 - **SG-3** (`plans/now/short-term-goals.md`) -- the goals shown in the Goals drop-down; waits for SG-2 (GP-2 landed 13 Oct 2026).
 - **ED-1** (`plans/now/difficulty.md`) -- every bee has health; waits for SG-3 (Dave's order; FC-2 landed 17 Oct 2026, freeing the save files).
@@ -91,8 +90,13 @@ One line each: the id, its plan, and the single thing it waits for.
 - **PP-6** (`plans/now/pollination.md`) -- the sweep prices the gyne route so Gyne rearing is first affordable in the 11 days after the first winter; waits for FR-2, which puts Auto scouting on the route (Dave, 14 Oct 2026), and AR-5 (`plans/now/alpha-route-evidence.md`), whose reference queen lays early (Dave, 16 Oct 2026).
 - **FR-2** (`plans/now/forager-recruitment.md`) -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight; waits for FR-1b (Codex backlog) to tune the stage order FR-1 measured, so Auto scouting forages better (FR-1 landed 17 Oct 2026; Dave, 14 Oct 2026).
 - **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-6, which shares `scripts/skills.gd`.
-- **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices of the alpha chain (WP-2, SG-2, ED-1, ED-2, RR-12, SP-8a) and ED-3 (Dave, 18 Oct 2026), and for CQ-S0's round-trip harness.
-- **CQ-T2** (`plans/now/code-health.md`) -- the run, world and save glue typed (20 scripts), the second typing slice; waits for CQ-R1 (`scripts/main.gd`, `scripts/scenario_actions.gd`, `scripts/diagnostic_log.gd`) and CQ-M2 (`scripts/settings_catalogue.gd`), Claude-lane slices that edit its files (CQ-T1 landed 21 Oct 2026).
+- **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices of the alpha chain (SG-2, ED-1, ED-2, RR-12, SP-8a; WP-2 landed 21 Oct 2026) and ED-3 (Dave, 18 Oct 2026), and for CQ-S0's round-trip harness.
+- **CQ-M8** (`plans/now/code-health.md`) -- the bees' walk to the hive exit becomes one `BeeMovement` helper with named reach distances; waits for CQ-L1 (Claude lane), which holds `scripts/bee_foraging.gd`; its section and block are written by the session that claims CQ-M3.
+- **CQ-R2** (`plans/now/code-health.md`) -- the first crisis moves out of `scripts/main.gd` into a new first_crisis.gd, touching the save files; waits, gated with CQ-S1, for the save slices of the alpha chain (SG-2, ED-1, ED-2, RR-12, SP-8a; WP-2 landed 21 Oct 2026) and ED-3 (Dave, 18 Oct 2026); its plan section is written when that gate clears.
+- **CQ-R8** (`plans/now/code-health.md`) -- hud builders shortened (the designation button table); waits for CQ-R7 (Claude lane), which shares `scripts/hud.gd`; its section and block are written when CQ-R7 lands.
+- **CQ-L2** (`plans/now/code-health.md`) -- every tool that reads GDScript as text survives `gdformat`; waits for CQ-L1 (Claude backlog), which puts gdlint into verify first.
+- **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; waits for CQ-R7 (Claude lane), the last queued slice reshaping `scripts/hud.gd`, its largest file (CQ-T2 landed 21 Oct 2026); its section and block are written when CQ-R7 lands.
+- **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
 ## Copy-paste prompts
 
 Claude, implementing: `Implement the next slice.`

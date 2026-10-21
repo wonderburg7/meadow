@@ -71,7 +71,7 @@ const FORMAT_VERSION := 7
 ## rearrange your screen. Those live in Session, tagged "player".
 static func saved_settings() -> Array:
 	var keys: Array = []
-	for entry in SettingsCatalogue.TUNABLES:
+	for entry: Dictionary in SettingsCatalogue.TUNABLES:
 		if entry.get("persist", "none") == "run":
 			keys.append(entry.key)
 	return keys
@@ -84,7 +84,7 @@ static func has_save(path: String = SAVE_PATH) -> bool:
 ## `path` defaults to the player's own save slot. tutorial_checkpoint.gd
 ## passes its own path so a Challenge's automatic checkpoints never touch
 ## the player's save.
-static func save(world, path: String = SAVE_PATH) -> bool:
+static func save(world: Node2D, path: String = SAVE_PATH) -> bool:
 	var data := {
 		"version": FORMAT_VERSION,
 		"starting_level": Session.starting_level,
@@ -128,6 +128,9 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 			"winter_ends_day": Session.winter_ends_day,
 			"gynes_released": Session.gynes_released,
 			"crab_spider_species": Session.crab_spider_preferred_species,
+			# WP-2, additive: the colony's default backup order. An older
+			# save has none and loads Session.DEFAULT_BACKUP_ORDER.
+			"backup_order_default": Session.backup_order_default.duplicate(),
 		},
 		"cells": _cells_data(world),
 		"soil": _soil_data(world),
@@ -167,9 +170,9 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 
 ## T2-4b: each body's place (hive-view coordinates), time of death and how
 ## far a Comb worker has lifted it ("clear", as a cell saves "clean").
-static func _bodies_data(world) -> Array:
+static func _bodies_data(world: Node2D) -> Array:
 	var out: Array = []
-	for body in world.hive.bodies:
+	for body: Variant in world.hive.bodies:
 		if is_instance_valid(body):
 			out.append({
 				"x": body.position.x, "y": body.position.y,
@@ -179,13 +182,13 @@ static func _bodies_data(world) -> Array:
 
 static func _settings_dict() -> Dictionary:
 	var out := {}
-	for key in saved_settings():
+	for key: String in saved_settings():
 		out[key] = GameConfig.get(key)
 	return out
 
-static func _cells_data(world) -> Array:
+static func _cells_data(world: Node2D) -> Array:
 	var out: Array = []
-	for cell in world.hive.cells:
+	for cell: Variant in world.hive.cells:
 		if not is_instance_valid(cell):
 			continue
 		out.append({
@@ -227,10 +230,10 @@ static func _cells_data(world) -> Array:
 
 ## Only blocks that differ from a fresh layout need recording: which have
 ## been dug out entirely, and which are marked or part-dug.
-static func _soil_data(world) -> Dictionary:
+static func _soil_data(world: Node2D) -> Dictionary:
 	var marked: Array = []
 	var present: Array = []
-	for node in world.hive.occupied_tiles.values():
+	for node: Variant in world.hive.occupied_tiles.values():
 		if node == null or not is_instance_valid(node) or not node.is_in_group("soil_blocks"):
 			continue
 		present.append([node.axial.x, node.axial.y])
@@ -242,9 +245,9 @@ static func _soil_data(world) -> Dictionary:
 			})
 	return {"present": present, "marked": marked}
 
-static func _bees_data(world) -> Array:
+static func _bees_data(world: Node2D) -> Array:
 	var out: Array = []
-	for b in world.get_tree().get_nodes_in_group("bees"):
+	for b: Variant in world.get_tree().get_nodes_in_group("bees"):
 		if not is_instance_valid(b):
 			continue
 		var at: Vector2 = b.saved_position()   # NF-3: the task's spot, mid-wander
@@ -282,6 +285,10 @@ static func _bees_data(world) -> Array:
 			"architect_mode": b.architect_mode,
 			"automine": b.automine,
 			"secondary": b.secondary_role,
+			# WP-2, additive: the bee's ordered backup jobs, or null while
+			# she has been given none (before purchase; the queen). An older
+			# save has no key: her backup goes first, then the colony default.
+			"backup_order": b.backup_order.duplicate() if b.backup_order_set else null,
 			"finish_first": b.finish_task_first,
 			"pending_role": b.pending_role,
 			"preferred": b.preferred_species,
@@ -353,7 +360,7 @@ static func _bees_data(world) -> Array:
 ## Hexes as flat pairs, which is all JSON can carry.
 static func _hex_list(hexes: Array) -> Array:
 	var out: Array = []
-	for hex in hexes:
+	for hex: Variant in hexes:
 		out.append([hex.x, hex.y])
 	return out
 
@@ -361,7 +368,7 @@ static func _hex_list(hexes: Array) -> Array:
 ## rather than hex coordinates -- see bee.known_patches (Slice 6).
 static func _point_list(points: Array) -> Array:
 	var out: Array = []
-	for p in points:
+	for p: Variant in points:
 		out.append([p.x, p.y])
 	return out
 
@@ -369,14 +376,14 @@ static func _point_list(points: Array) -> Array:
 ## rebuilt from scratch on load.
 static func _cell_refs(cells: Array) -> Array:
 	var out: Array = []
-	for cell in cells:
+	for cell: Variant in cells:
 		if is_instance_valid(cell):
 			out.append([cell.axial.x, cell.axial.y])
 	return out
 
-static func _flowers_data(world) -> Array:
+static func _flowers_data(world: Node2D) -> Array:
 	var out: Array = []
-	for f in world.get_tree().get_nodes_in_group("flowers"):
+	for f: Variant in world.get_tree().get_nodes_in_group("flowers"):
 		if not is_instance_valid(f):
 			continue
 		out.append({
@@ -413,7 +420,7 @@ static func read(path: String = SAVE_PATH) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		return {}
-	var parsed = JSON.parse_string(file.get_as_text())
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	file.close()
 	if typeof(parsed) != TYPE_DICTIONARY:
 		push_error("The save file is not readable.")
@@ -438,9 +445,9 @@ static func read(path: String = SAVE_PATH) -> Dictionary:
 ## (progression.md section 11), so nothing is written for them.
 static func _skills_data() -> Dictionary:
 	var bought: Array = []
-	var progression = Session.progression
+	var progression: Variant = Session.progression
 	if progression != null:
-		for skill_id in progression.owned_ids():
+		for skill_id: String in progression.owned_ids():
 			if progression.is_temporary(skill_id):
 				bought.append(skill_id)
 	return {"temporary": bought}
@@ -449,11 +456,11 @@ static func _skills_data() -> Dictionary:
 ## exactly what the save says it bought, no more. end_run() drops whatever
 ## this run held before the replay, which is what a Challenge rollback
 ## wants too. Availability's cached action answers are asked again after.
-static func restore_skills(data: Dictionary, progression) -> void:
+static func restore_skills(data: Dictionary, progression: Variant) -> void:
 	if progression == null:
 		return
 	progression.end_run()
-	for skill_id in data.get("skills", {}).get("temporary", []):
+	for skill_id: Variant in data.get("skills", {}).get("temporary", []):
 		progression.grant_temporary(str(skill_id))
 	Availability.invalidate()
 
@@ -463,7 +470,7 @@ static func restore_skills(data: Dictionary, progression) -> void:
 ## like CR-1's starting_level: a save without it -- or with something other
 ## than a dictionary there -- reads as nothing met.
 static func milestone_days(data: Dictionary) -> Dictionary:
-	var days = data.get("colony_milestones")
+	var days: Variant = data.get("colony_milestones")
 	if typeof(days) != TYPE_DICTIONARY:
 		return {}
 	return days
@@ -472,7 +479,7 @@ static func milestone_days(data: Dictionary) -> Dictionary:
 ## world comes out the same shape it was saved in.
 static func apply_settings(data: Dictionary) -> void:
 	var settings: Dictionary = data.get("settings", {})
-	for key in settings.keys():
+	for key: String in settings.keys():
 		if GameConfig.get(key) != null or typeof(settings[key]) == TYPE_BOOL:
 			GameConfig.set(key, settings[key])
 
@@ -492,7 +499,7 @@ static func apply_settings(data: Dictionary) -> void:
 const CHALLENGE_LEVELS := [1, 2]
 
 static func apply_starting_level(data: Dictionary) -> void:
-	var saved = data.get("starting_level")
+	var saved: Variant = data.get("starting_level")
 	if typeof(saved) != TYPE_INT and typeof(saved) != TYPE_FLOAT:
 		return
 	if int(saved) in CHALLENGE_LEVELS:
@@ -511,13 +518,13 @@ static func apply_starting_level(data: Dictionary) -> void:
 ## a different level.
 static func apply_skill_policy(data: Dictionary) -> void:
 	Session.pending_skill_policy = {}
-	var policy = data.get("skill_policy")
-	var saved_level = data.get("starting_level")
+	var policy: Variant = data.get("skill_policy")
+	var saved_level: Variant = data.get("starting_level")
 	if typeof(policy) != TYPE_DICTIONARY:
 		return
 	if typeof(saved_level) != TYPE_INT and typeof(saved_level) != TYPE_FLOAT:
 		return
-	var changes = data.get("developer_changes")
+	var changes: Variant = data.get("developer_changes")
 	Session.pending_skill_policy = {
 		"level": int(saved_level),
 		"grants": _skill_ids(policy.get("grants")),
@@ -526,11 +533,11 @@ static func apply_skill_policy(data: Dictionary) -> void:
 	}
 
 ## Skill id strings out of whatever a save's list held.
-static func _skill_ids(value) -> Array:
+static func _skill_ids(value: Variant) -> Array:
 	var ids: Array = []
 	if typeof(value) != TYPE_ARRAY:
 		return ids
-	for item in value:
+	for item: Variant in value:
 		if typeof(item) == TYPE_STRING and not ids.has(item):
 			ids.append(item)
 	return ids

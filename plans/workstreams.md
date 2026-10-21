@@ -49,4 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/AR-5` (`codex/AR-5`) | Codex | the first two gates on the calendar, and a reference queen who lays early | Codex | in progress | none | `plans/now/alpha-route-evidence.md` AR-5 -- the first two gates on the calendar, and a reference queen who lays early |
-| `.worktrees/CQ-M2` (`claude/CQ-M2`) | Claude | the starving threshold becomes a GameConfig row | Claude | in progress | none | `plans/now/code-health.md` CQ-M2 -- the starving threshold becomes a GameConfig row |
+| `.worktrees/WP-3` (`claude/WP-3`) | Claude | the ordered list in the selection panel and the colony default | Claude | in progress | none | `plans/now/work-priorities.md` WP-3 -- the ordered list in the selection panel and the colony default |

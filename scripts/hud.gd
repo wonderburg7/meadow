@@ -975,7 +975,7 @@ func _build_goal_shelf() -> void:
 	completed_goal_label.custom_minimum_size = Vector2(320, 0)
 	# RichTextLabel has no Label-based theme_type_variation to draw on, so
 	# this scales directly rather than joining the Small/Body/Heading set.
-	completed_goal_label.add_theme_font_size_override("normal_font_size", int(round(12 * Session.text_scale)))
+	completed_goal_label.add_theme_font_size_override("normal_font_size", UiTheme.font_px(12))
 	completed_goal_label.add_theme_color_override("default_color", Color(UiTheme.color("warning"), 0.55))
 	completed_goal_label.visible = false
 	goal_shelf.add_child(completed_goal_label)
@@ -1152,7 +1152,7 @@ func _rebuild_favourites(entries: Array) -> void:
 		line.scroll_active = false
 		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		line.custom_minimum_size = Vector2(320, 0)
-		line.add_theme_font_size_override("normal_font_size", int(round(14 * Session.text_scale)))
+		line.add_theme_font_size_override("normal_font_size", UiTheme.font_px(14))
 		var done: bool = bool(entry.get("done", false))
 		line.add_theme_color_override("default_color", Color(UiTheme.color("warning"), 0.55 if done else 1.0))
 		var text: String = str(entry.text).replace("[", "[lb]")
@@ -2819,7 +2819,7 @@ func _refresh_corner() -> void:
 	# Text scale is part of what the corner looks like: its labels carry
 	# font-size overrides, which UiTheme.refresh() cannot reach, so without
 	# it a text-size change never rebuilt them (19 Sep 2026).
-	var signature := "scale=%s\n" % Session.text_scale
+	var signature := "scale=%s typeface=%s\n" % [Session.text_scale, Session.ui_typeface]
 	for key in CORNER_ORDER:
 		if Session.pinned_stats.has(key):
 			signature += "%s=%s\n" % [key, corner_texts.get(key, "")]
@@ -2855,7 +2855,7 @@ func _refresh_corner() -> void:
 		# Each readout keeps its own headline/detail weighting (see
 		# CORNER_SIZES) rather than collapsing onto the four shared
 		# variations, so it scales directly instead.
-		label.add_theme_font_size_override("font_size", int(round(CORNER_SIZES.get(key, 12) * Session.text_scale)))
+		label.add_theme_font_size_override("font_size", UiTheme.font_px(CORNER_SIZES.get(key, 12)))
 		corner_column.add_child(label)
 	Perf.end("corner_rebuild_labels")
 

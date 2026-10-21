@@ -529,7 +529,7 @@ func _nearby_obstacle_identity(bee: Node2D) -> String:
 		return ""
 	var nearest: Node2D = null
 	var nearest_gap := INF
-	for obstacle in bee.world.obstacles:
+	for obstacle: Variant in bee.world.obstacles:
 		if not is_instance_valid(obstacle) or not obstacle.solid:
 			continue
 		var gap: float = bee.position.distance_to(obstacle.position) - obstacle.radius
@@ -662,7 +662,7 @@ func log_command_issue(selected_count: int, commandable_count: int, branch: Stri
 	if _file == null:
 		return
 	var targets: Array = []
-	for target in targets_before:
+	for target: Variant in targets_before:
 		var bee: Node2D = target.bee
 		var state_before: int = int(target.state)
 		var state_after := "invalid"
@@ -737,7 +737,7 @@ func event_count(type: String, subtype: String = "") -> int:
 		"crab_spider_event":
 			if subtype == "":
 				var total := 0
-				for count in _crab_spider_events.values():
+				for count: Variant in _crab_spider_events.values():
 					total += int(count)
 				return total
 			return int(_crab_spider_events.get(subtype, 0))
@@ -764,7 +764,7 @@ func tick(delta: float, world: Node2D) -> void:
 		return
 	_hour_accum += delta
 	# snapshot_interval_override lets a --scenario= run pick a fixed
-	# sim-second cadence instead -- see main.gd::_apply_scenario_boot_arg
+	# sim-second cadence instead -- see headless/scenario_boot.gd::apply_boot_arg
 	# and its "snapshot_seconds" field, same pattern as "time_scale".
 	# Ordinary play is untouched: an hour is exactly what the day-length
 	# setting says it is. A compressed test day (seconds_per_day pushed
@@ -803,7 +803,7 @@ func _sample_nectar_age_on_day_change(world: Node2D) -> void:
 	var ages: Array = []
 	var stock_total := 0.0
 	var stock_old := 0.0
-	for cell in world.hive.cells:
+	for cell: Variant in world.hive.cells:
 		if not is_instance_valid(cell) or cell.content_type != "nectar" or cell.amount <= 0.0:
 			continue
 		var age_hours: float = cell.nectar_age() / hour
@@ -829,8 +829,8 @@ func _nectar_age_summary() -> Dictionary:
 	var out := {"unit": "in-game hours", "samples": _nectar_age_days.size(),
 		"p50": 0.0, "p95": 0.0, "max": 0.0, "share_older_than_a_day": 0.0,
 		"daily": _nectar_age_days}
-	for d in _nectar_age_days:
-		for key in ["p50", "p95", "max", "share_older_than_a_day"]:
+	for d: Variant in _nectar_age_days:
+		for key: String in ["p50", "p95", "max", "share_older_than_a_day"]:
 			out[key] = max(float(out[key]), float(d[key]))
 	return out
 
@@ -925,7 +925,7 @@ func _snapshot_interval() -> float:
 	if bool(_diagnostics.get("legacy_standard", true)):
 		return snapshot_interval_override if snapshot_interval_override > 0.0 else GameConfig.seconds_per_day / 24.0
 	var snapshots: Dictionary = _diagnostics.snapshots
-	var requested = snapshots.get("every_sim_seconds", -1.0)
+	var requested: Variant = snapshots.get("every_sim_seconds", -1.0)
 	# Godot treats equality between a number and a String as a script error,
 	# even when the comparison would naturally be false.  The profile contract
 	# permits the "day" sentinel alongside a positive numeric interval.
@@ -946,7 +946,7 @@ func _selected_snapshot(world: Node2D) -> Dictionary:
 ## so this never drifts from what game_config.gd actually declares.
 func _config_snapshot() -> Dictionary:
 	var settings := {}
-	for prop in GameConfig.get_property_list():
+	for prop: Dictionary in GameConfig.get_property_list():
 		if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE:
 			settings[prop.name] = GameConfig.get(prop.name)
 	return settings
@@ -966,13 +966,13 @@ func _snapshot(world: Node2D) -> Dictionary:
 	var bees: Array = world.get_tree().get_nodes_in_group("bees")
 
 	var by_role: Dictionary = {}
-	for role_key in BeeEnums.Role.keys():
+	for role_key: String in BeeEnums.Role.keys():
 		by_role[role_key.to_lower()] = 0
 	by_role["gyne"] = 0
 	var by_state: Dictionary = {}
-	for state_key in BeeEnums.State.keys():
+	for state_key: String in BeeEnums.State.keys():
 		by_state[state_key] = 0
-	for b in bees:
+	for b: Variant in bees:
 		if not is_instance_valid(b):
 			continue
 		var role_bucket: String = "gyne" if b.is_gyne else BeeEnums.Role.keys()[b.role].to_lower()
@@ -994,7 +994,7 @@ func _snapshot(world: Node2D) -> Dictionary:
 	var rate_with_preference_n := 0
 	var rate_without_preference_sum := 0.0
 	var rate_without_preference_n := 0
-	for b in bees:
+	for b: Variant in bees:
 		if not is_instance_valid(b):
 			continue
 		if b.is_scouting:
@@ -1011,7 +1011,7 @@ func _snapshot(world: Node2D) -> Dictionary:
 
 	var active_spiders := 0
 	if GameConfig.predators_on:
-		for f in world.get_tree().get_nodes_in_group("flowers"):
+		for f: Variant in world.get_tree().get_nodes_in_group("flowers"):
 			if is_instance_valid(f) and f.has_crab_spider:
 				active_spiders += 1
 	var flower_season_counts := _flower_season_counts(world)
@@ -1022,16 +1022,16 @@ func _snapshot(world: Node2D) -> Dictionary:
 	# key so JSON-object consumers do not need a special case for an empty
 	# property name.
 	by_contents["empty"] = hive.cells_holding("").size()
-	for content_type in ["nectar", "pollen", "honey", "jelly", "bee_bread", "brood", "corpse"]:
+	for content_type: String in ["nectar", "pollen", "honey", "jelly", "bee_bread", "brood", "corpse"]:
 		by_contents[content_type] = hive.cells_holding(content_type).size()
 	var sealed := 0
-	for cell in hive.cells:
+	for cell: Variant in hive.cells:
 		if is_instance_valid(cell) and cell.is_built and cell.is_closed:
 			sealed += 1
 	# BB-1: bee bread cells that have filled and sealed, and those ripe.
 	var bee_bread_sealed := 0
 	var bee_bread_ripe := 0
-	for cell in hive.cells_holding("bee_bread"):
+	for cell: Variant in hive.cells_holding("bee_bread"):
 		if cell.is_ripe_bee_bread():
 			bee_bread_ripe += 1
 		elif cell.is_bee_bread_sealed():
@@ -1043,7 +1043,7 @@ func _snapshot(world: Node2D) -> Dictionary:
 	# is the cumulative counterpart: how much has already come out.
 	var exposed_blocks := 0
 	var marked_blocks := 0
-	for block in world.get_tree().get_nodes_in_group("soil_blocks"):
+	for block: Variant in world.get_tree().get_nodes_in_group("soil_blocks"):
 		if not is_instance_valid(block):
 			continue
 		if block.is_edge:
@@ -1146,7 +1146,7 @@ func _flower_season_counts(world: Node2D) -> Dictionary:
 	var in_season := 0
 	var out_of_season := 0
 	var by_species: Dictionary = {}
-	for flower in world.get_tree().get_nodes_in_group("flowers"):
+	for flower: Variant in world.get_tree().get_nodes_in_group("flowers"):
 		if not is_instance_valid(flower):
 			continue
 		by_species[flower.species_name] = int(by_species.get(flower.species_name, 0)) + 1
@@ -1180,7 +1180,7 @@ func _performance_snapshot(world: Node2D) -> Dictionary:
 		perf["worst_frame_ms"] = Perf.last_worst_ms
 		perf["p95_worst_frame_ms"] = Perf.percentile_ms(0.95)
 		var sections: Dictionary = {}
-		for key in Perf.top_sections(PERFORMANCE_SNAPSHOT_SECTIONS):
+		for key: String in Perf.top_sections(PERFORMANCE_SNAPSHOT_SECTIONS):
 			sections[key] = Perf.averages[key]
 		perf["top_sections_ms"] = sections
 	return perf
@@ -1244,7 +1244,7 @@ func _capture_entry(entry: Dictionary) -> bool:
 	if type in ["config", "summary"]:
 		return true
 	if type == "snapshot":
-		var snapshot_limit = _diagnostics.limits.get("snapshot_lines", null)
+		var snapshot_limit: Variant = _diagnostics.limits.get("snapshot_lines", null)
 		if snapshot_limit != null and _diagnostic_snapshot_lines >= int(snapshot_limit):
 			return false
 		_diagnostic_snapshot_lines += 1
@@ -1253,7 +1253,7 @@ func _capture_entry(entry: Dictionary) -> bool:
 		return true
 	if not type in _diagnostics.events:
 		return false
-	var event_limit = _diagnostics.limits.get("event_lines_per_type", null)
+	var event_limit: Variant = _diagnostics.limits.get("event_lines_per_type", null)
 	if event_limit != null and int(_diagnostic_event_lines.get(type, 0)) >= int(event_limit):
 		return false
 	_diagnostic_event_lines[type] = int(_diagnostic_event_lines.get(type, 0)) + 1

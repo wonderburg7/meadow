@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds | Dependency: CQ-L1 waits for RR-10 (Codex lane) to release `scripts/hive.gd` and `scripts/skill_tree_panel.gd`; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); the rest is in "Dependencies" | Verified: 2026-10-18
+Status: active | Owner: Dave / Claude Code | Next: CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds (queued with CQ-S0, CQ-R7 and CQ-M3; CQ-M8 follows CQ-M3) | Dependency: CQ-M8 waits for CQ-L1, which holds `scripts/bee_foraging.gd`; CQ-T3 waits for CQ-R7, the last queued slice in `scripts/hud.gd`; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); the rest is in "Dependencies" | Verified: 2026-10-21
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -102,37 +102,33 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-L1 | gdlint in verify with Dave's thresholds | `gdlintrc`, `tools/gdscript_style.py`, `tools/verify.ps1`, 13 hit sites | yes (RR-10 and L-30 landed 18 Oct 2026) | medium |
 | CQ-L2 | every tool that reads GDScript as text survives `gdformat` | `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, tests | after CQ-L1 | medium |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T2 | run, world and save glue typed | 20 scripts | gated: CQ-R1, CQ-M2 | low |
-| CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot` | after CQ-T2 | low |
+| CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot` | after CQ-R7, the last queued slice in `hud.gd` (CQ-T2 landed 21 Oct 2026) | low |
 | CQ-S0 | golden-save round-trip harness | `tests/save_roundtrip_test.gd`, fixtures | yes | high |
 | CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
-| CQ-M2 | "starving" 0.15 becomes a GameConfig row | `game_config.gd`, `settings_catalogue.gd`, 3 readers | yes | medium |
-| CQ-M3 | rival starting stores become GameConfig rows; rebalance consts named | `rival_hive.gd`, `game_config.gd`, `settings_catalogue.gd`, `tests/balance_tests.py` | after CQ-M2 | medium |
+| CQ-M3 | rival starting stores become GameConfig rows; rebalance consts named | `rival_hive.gd`, `game_config.gd`, `settings_catalogue.gd`, `tests/balance_tests.py` | yes (RR-11 landed 21 Oct 2026) | medium |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
 | CQ-M5 | CanvasLayer order in scripts/canvas_layers.gd | 10 UI scripts | yes | medium |
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | yes | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
-| CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | yes | low |
+| CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | after CQ-L1, which holds `bee_foraging.gd`; follows CQ-M3 | low |
 | CQ-M9 | colony plot reads `Resources` colours; width const | `colony_panel.gd` | yes | low |
 | CQ-M10 | `WEATHER_ROLLS_PER_DAY` | `main.gd` | yes | low |
-| CQ-R0 | display-text golden harness | `tests/display_text_golden_test.gd`, fixture | yes | medium |
-| CQ-R1 | headless scenario boot leaves `main.gd` | `main.gd`, `scripts/headless/scenario_boot.gd` | yes | medium |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
-| CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | after CQ-R0 and T2-14 | medium |
+| CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once WP-3 and CQ-R7 release `hud.gd` (T2-14 and CQ-R0 landed 21 Oct 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
-| CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | after CQ-R0 | high |
+| CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes | medium |
-| CQ-R7 | hud selection text, cell popup and corner refreshes decomposed | `hud.gd` | after CQ-R0 | medium |
+| CQ-R7 | hud selection text, cell popup and corner refreshes decomposed | `hud.gd` | yes (TS-2 landed 21 Oct 2026) | medium |
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd` | yes | medium |
 | CQ-R9 | `diagnostic_log.gd` snapshot shortened; probe duplicates kept once | `diagnostic_log.gd`, `scripts/headless/diagnostic_probes.gd` | yes | medium |
 | CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd` | yes | medium |
 | CQ-R11 | `world_building.gd::_seed_flower` decomposed, RNG order kept | `world_building.gd` | yes | medium |
 | CQ-R12 | `challenge_runner.gd` start, C2 failure, stage entry shortened | `challenge_runner.gd`, `challenge_feedback.gd` | yes | medium |
-| CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R1, CQ-R2 | medium |
+| CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
 | CQ-R14 | mid-size builders: `main_menu._ready`, `challenge_complete._ready`, `flower.setup`, `bee._build_visuals` | those four | yes | low |
 
 Only the first slice of each chain carries a full section and block. A row without one
@@ -146,7 +142,7 @@ claim while `dry_after`).
   - CQ-L1 → L2 → L3
   - CQ-T1 → T2 → T3
   - CQ-S0 → S1 → S2 → S3 → S4 → S5
-  - CQ-M2 → M3; CQ-M6 → M7
+  - CQ-M2 → M3 → M8 (M8 by queue order: it shares no file with M3); CQ-M6 → M7
   - CQ-R0 → R3, R5 and R7
   - CQ-R1 and CQ-R2 → R13
 - **Shared files** (one after another, any order): `hud.gd` (M5, R3, R6, R7, R8);
@@ -159,8 +155,12 @@ claim while `dry_after`).
   - L-30 (`plans/now/agent-lifecycle.md`) held `tools/verify.ps1`; it landed 18 Oct 2026, clearing CQ-L1.
   - HP-3 (`plans/archive/hot-path-cadence_2026-10-18.md`) changes `bee.gd::_process`: CQ-R4 profiles
     after it.
-  - T2-12, T2-13 and T2-14 (`plans/now/tier-two.md`) hold `hud.gd` and `bee.gd`, and
-    T2-14 fixes `idle_reason`: CQ-R3 waits for T2-14.
+  - T2-14 (`plans/now/tier-two.md`) fixed `idle_reason` before CQ-R3 moves it; it
+    landed 21 Oct 2026, clearing CQ-R3 of everything but the `hud.gd` order.
+  - CQ-T3 types `hud.gd` after the queued slices that reshape it (WP-3 in
+    `plans/now/work-priorities.md`, then CQ-R7), as CQ-T2 waited for CQ-R1's
+    moves; CQ-L1 holds `skill_tree_panel.gd` ahead of it. Its section and block
+    are written when CQ-R7 lands, deciding then whether CQ-R8 goes first.
   - The save moves (CQ-S1 to S5 and CQ-R2) wait for every specified slice that edits
     `save_game.gd`/`saving.gd`: WP-2, SG-2, ED-1, ED-2 (difficulty, ending at ED-3),
     RR-12 and SP-8a. Each of those plans carries the reverse pointer.
@@ -285,10 +285,13 @@ folder.
 **Invariants.** Each early-return rewrite keeps the same branches. Nothing else is
 restyled.
 
+The block's `Files:` line cannot list a path without a suffix, so it omits the new
+`gdlintrc` and the copy's `.gitignore` and `LICENSE`; this slice owns them too.
+
 ```queue
 **[Claude] CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds**
 - Plan: `plans/now/code-health.md` -- "CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds"
-- Files: `gdlintrc`, `tools/gdscript_style.py`, `tests/test_gdscript_style.py`, `tools/verify.ps1`, `tests/rr7_silkscreen_fit_test.gd`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/`, `scripts/fog_of_war.gd`, `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/bee.gd`, `scripts/diagnostic_log.gd`, `scripts/hive_cell.gd`, `scripts/input_selection.gd`, `tests/bs14_saved_skill_policy_test.gd`, `tests/col10_succession_test.gd`, `.claude/rules/gdscript.md`, `FUNCTION_MAP.md`
+- Files: `tools/gdscript_style.py`, `tests/test_gdscript_style.py`, `tools/verify.ps1`, `tests/rr7_silkscreen_fit_test.gd`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/README.md`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/addons/copy_all_errors/plugin.cfg`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/addons/copy_all_errors/plugin.gd`, `scripts/fog_of_war.gd`, `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/bee.gd`, `scripts/diagnostic_log.gd`, `scripts/hive_cell.gd`, `scripts/input_selection.gd`, `tests/bs14_saved_skill_policy_test.gd`, `tests/col10_succession_test.gd`, `.claude/rules/gdscript.md`, `FUNCTION_MAP.md`
 - Check: `python tools/gdscript_style.py` exits 0 with zero gdlint problems over every tracked `.gd` outside `addons/`; `tests/test_gdscript_style.py` covers the missing-gdtoolkit skip; `.\tools\verify.ps1` shows a green `gdscript style` stage
 - Proof: `absent: tools/verify.ps1 :: gdscript style`
 - Next after: CQ-L2
@@ -296,47 +299,7 @@ restyled.
 
 CQ-T1 shipped 2026-10-21; its specification is `plans/archive/CQ-T1_2026-10-21.md`.
 
-## CQ-T2 -- run, world and save glue typed
-
-**True now** (21 Oct 2026, after CQ-T1). CQ-T1 turned Godot's `untyped_declaration`
-warning on (level 1) and holds its 25 scripts and 16 tests at zero through the
-`TYPED_FILES` ratchet in `tests/source_checks.py`. The run, world and save glue is not
-in it. The ratchet's counter (which also counts untyped for-loop variables) finds 515
-declarations in these 20 scripts: `input_selection` 68, `scenario_actions` 67,
-`world_building` 60, `main` 57, `hive` 47, `orders_zones` 38, `saving` 31,
-`save_game` 29, `diagnostic_log` 21, `challenge_runner` 20, `perf` 14, `save_slots` 12,
-`challenge_stage_setup` 11, `headless/diagnostic_profile` 9, `settings_catalogue` 8,
-`developer_overrides` 6, `headless/diagnostic_probes` 6, `player_profile` 5,
-`save_migrations` 4, `tutorial_checkpoint` 2. `save_game.gd` still opens with
-`static func save(world, path`. Godot's own count for the same files was 219 on
-18 Oct (research record, "Typing count (T slices)").
-
-**When done:**
-
-- Every declaration in the 20 scripts, plus `scripts/headless/scenario_boot.gd`
-  (CQ-R1 moves the headless boot there), is typed under "Rules for every slice":
-  locals, parameters, returns, lambdas and for-loop variables.
-- Save-dictionary values are `float` or `: Variant`, never `int`; a value read back from
-  a save or from JSON keeps its float kind. `world`/`main` parameters take `Node2D`.
-- Every one of those files is added to `TYPED_FILES`, so the ratchet holds them at
-  zero.
-- `python tools/update_function_map.py` has refreshed the signature lines.
-
-**Invariants.** No save key, default or FORMAT_VERSION changes. No RNG call moves in
-`world_building.gd`. No `Perf` section name, node name or display string changes.
-
-**Gate.** CQ-R1 moves code out of `main.gd` and edits `scenario_actions.gd` and
-`diagnostic_log.gd`; CQ-M2 adds a row to `settings_catalogue.gd`. Typing those files
-while either is open would type code that is about to move, so this waits for both.
-
-```queue-gated
-**[Claude] CQ-T2 -- run, world and save glue typed**
-- Plan: `plans/now/code-health.md` -- "CQ-T2 -- run, world and save glue typed"
-- Files: `scripts/main.gd`, `scripts/scenario_actions.gd`, `scripts/world_building.gd`, `scripts/input_selection.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/orders_zones.gd`, `scripts/headless/diagnostic_profile.gd`, `scripts/perf.gd`, `scripts/settings_catalogue.gd`, `scripts/challenge_runner.gd`, `scripts/save_slots.gd`, `scripts/hive.gd`, `scripts/diagnostic_log.gd`, `scripts/tutorial_checkpoint.gd`, `scripts/developer_overrides.gd`, `scripts/challenge_stage_setup.gd`, `scripts/save_migrations.gd`, `scripts/player_profile.gd`, `scripts/headless/diagnostic_probes.gd`, `scripts/headless/scenario_boot.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
-- Check: the `TYPED_FILES` source check reports zero untyped declarations in every listed script; `python tools/gdscript_warnings.py` on the listed scripts prints no warning; `tests/test_save_migrations.py`, `tests/test_si1_run_state.py`, `tests/test_si2_exact_rollback.py` and `tests/test_layout_regression.py` pass; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` matches; `.\tools\verify.ps1` is green
-- Proof: `present: scripts/save_game.gd :: static func save(world, path`
-- Next after: CQ-T3
-```
+CQ-T2 shipped 2026-10-21; its specification is `plans/archive/CQ-T2_2026-10-21.md`.
 
 ## CQ-S0 -- golden-save round-trip harness
 
@@ -351,7 +314,8 @@ fields after settling.
   the load path and in-place `saving._restore`, then compares canonical JSON (sorted
   keys; soil `present`, `keep_clear` and fog compared as sets).
 - The goldens are captured on master with `save_run` from new `test_scenarios/cq_s0_*`
-  captures:
+  captures, into tests/fixtures/saves/ as cq_s0_early, cq_s0_mid, cq_s0_winter,
+  cq_s0_challenge2 and cq_s0_orientation (each `.json`):
   - an early Colony Run;
   - a mid run with brood, bodies, restock and mine queues, bee bread and drones;
   - winter;
@@ -369,7 +333,7 @@ gameplay change.
 ```queue
 **[Claude] CQ-S0 -- golden-save round-trip harness**
 - Plan: `plans/now/code-health.md` -- "CQ-S0 -- golden-save round-trip harness"
-- Files: `tests/save_roundtrip_test.gd`, `tests/test_save_roundtrip.py`, `tests/fixtures/saves/`, `test_scenarios/cq_s0_early_capture.json`, `test_scenarios/cq_s0_mid_capture.json`, `test_scenarios/cq_s0_winter_capture.json`, `test_scenarios/cq_s0_challenge2_capture.json`, `test_scenarios/cq_s0_orientation_capture.json`, `.claude/rules/saving.md`
+- Files: `tests/save_roundtrip_test.gd`, `tests/test_save_roundtrip.py`, `tests/fixtures/saves/cq_s0_early.json`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json`, `test_scenarios/cq_s0_early_capture.json`, `test_scenarios/cq_s0_mid_capture.json`, `test_scenarios/cq_s0_winter_capture.json`, `test_scenarios/cq_s0_challenge2_capture.json`, `test_scenarios/cq_s0_orientation_capture.json`, `.claude/rules/saving.md`
 - Check: `python -m unittest tests.test_save_roundtrip` passes, comparing every golden save's load-then-save output to its input by both routes, with any known difference named and escalated; `.\tools\verify.ps1` is green
 - Proof: `absent: .claude/rules/saving.md :: round-trip`
 - Next after: CQ-S1
@@ -404,77 +368,82 @@ record, "Save restore".
 
 CQ-M1 shipped 2026-10-21; its specification is `plans/archive/CQ-M1_2026-10-21.md`.
 
-## CQ-M2 -- the starving threshold becomes a GameConfig row
+CQ-M2 shipped 2026-10-21; its specification is `plans/archive/CQ-M2_2026-10-21.md`.
 
-**True now.** `GameConfig.energy_capacity * 0.15` appears twice in
-`colony_diagnostics.gd`, twice in `problem_messages.gd` and once in `year_winter.gd`.
-Its sibling, `low_energy_warning_level` (0.3), is already a GameConfig field.
+## CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named
 
-**When done:**
-
-- `starving_energy_level := 0.15` exists, with an Interface row
-  (`persist: "run"`, additive per `saving.md`) beside `low_energy_warning_level`.
-- All five sites read it.
-- The stale `game_config.gd` comment saying "per-species values are in flower.gd" is
-  repointed to `flower_species.gd`.
-- D2's rule 2 text is edited.
-
-```queue
-**[Claude] CQ-M2 -- the starving threshold becomes a GameConfig row**
-- Plan: `plans/now/code-health.md` -- "CQ-M2 -- the starving threshold becomes a GameConfig row"
-- Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/colony_diagnostics.gd`, `scripts/problem_messages.gd`, `scripts/year_winter.gd`, `docs/agent-rules.md`, `FUNCTION_MAP.md`
-- Check: `tests/test_colony_diagnostics.py`, `tests/test_signal_catalogue.py` and the settings-row source checks pass; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` matches; `.\tools\verify.ps1` is green
-- Proof: `present: scripts/colony_diagnostics.gd :: GameConfig.energy_capacity * 0.15`
-- Next after: CQ-M3
-```
-
-## CQ-R0 -- display-text golden harness
-
-**True now.** Nothing in `tests/`, `test_scenarios/` or `scenario_actions.gd` reads
-these: `bee.gd::_task_line`, `idle_reason`, `role_name_text`, `carrying_text`; the
-hud selection text, cell popup or corner signal rows; or a cell's `info_label`. A
-decomposition of any of them has no proof that the text is unchanged.
+**True now** (21 Oct 2026, after CQ-M2). `rival_hive.gd` starts the rival with
+`nectar = 120.0` and `pollen = 40.0` in `_ready`, and `restore` repeats both as its
+`data.get` defaults. `forager_share` starts at 0.7 in its `var` line and again as
+`restore`'s default. Both `_ready` and `restore` floor the population with
+`max(4.0, GameConfig.rival_starting_bees)`. `_rebalance` uses three bare numbers:
+`rival_brood_gate_days * 0.75`, a step of `0.05` and `days_of_food > 90.0`.
+`tests/balance_tests.py::test_rival` keeps its own copies of all of them
+(`120.0, 40.0, 0.0, 0.7`, `* 0.75`, `0.05`, `90.0`). It already reads
+`MIN_FORAGER_SHARE`/`MAX_FORAGER_SHARE` out of `rival_hive.gd` by regex. D2 classes
+the starting stores as balance values (rule 2: a GameConfig field with a settings row)
+and the rebalance numbers as structural constants ("D2 classification" above).
 
 **When done:**
 
-- `tests/display_text_golden_test.gd` drives a bee through each role and state, and a
-  cell through each content type and overlay. It writes every string to JSON, and
-  `tests/test_display_text_golden.py` compares that JSON byte for byte with
-  `tests/fixtures/display_text_golden.json`, which is captured on master.
-- `.claude/rules/gdscript.md` says a display-text refactor proves itself with it.
-- The harness only reads text: no state is created only to make a string appear, other
-  than through a bee's or cell's existing setters.
+- GameConfig has `rival_starting_nectar := 120.0`, `rival_starting_pollen := 40.0`,
+  `rival_starting_forager_share := 0.7` and `rival_starting_min_population := 4.0`.
+  Each has a row under "The rival colony" next to `rival_starting_bees`, with the same
+  shape: `persist: "none"` and a tip ending "Takes effect on Restart Run."
+- `_ready`, the `forager_share` initialiser and `restore`'s defaults read those
+  fields. No literal 120, 40, 0.7 or 4 is left in those lines.
+- `_rebalance`'s three numbers are named consts beside `MIN_FORAGER_SHARE`/
+  `MAX_FORAGER_SHARE` (for example `REBALANCE_STEP`, `SHORT_OF_FOOD_FACTOR`,
+  `COMFORTABLE_DAYS`), with the same values.
+- `tests/balance_tests.py::test_rival` reads the four fields through `cfg()` and the
+  three consts by regex from `rival_hive.gd`, the way it already reads
+  MIN/MAX_FORAGER_SHARE. It keeps no copy of its own.
+- `tests/si1_run_state_test.gd` asserts that a fresh rival and `restore({})` both give
+  nectar 120, pollen 40 and forager share 0.7.
+
+**Invariants.** Every default value stays the same, so a run plays exactly as it does
+now. The rival's save keys and the FORMAT_VERSION do not change. `persist: "none"`
+puts the new rows in no save or profile. No existing display string changes.
+
+**Gate.** It waited for RR-11 (`plans/now/run-repairs.md`), which also edited
+`game_config.gd` and `settings_catalogue.gd`; RR-11 landed 21 Oct 2026. Its successor,
+CQ-M8, gets its block from the session that claims this one.
 
 ```queue
-**[Claude] CQ-R0 -- display-text golden harness**
-- Plan: `plans/now/code-health.md` -- "CQ-R0 -- display-text golden harness"
-- Files: `tests/display_text_golden_test.gd`, `tests/test_display_text_golden.py`, `tests/fixtures/display_text_golden.json`, `.claude/rules/gdscript.md`
-- Check: `python -m unittest tests.test_display_text_golden` passes against the master capture and fails when one character of a captured string is changed; `.\tools\verify.ps1` is green
-- Proof: `absent: .claude/rules/gdscript.md :: display_text_golden`
-- Next after: CQ-R7
+**[Claude] CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named**
+- Plan: `plans/now/code-health.md` -- "CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named"
+- Files: `scripts/rival_hive.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/balance_tests.py`, `tests/si1_run_state_test.gd`, `FUNCTION_MAP.md`
+- Check: `python tests/balance_tests.py` passes with its rival section unchanged; `python -m unittest tests.test_si1_run_state` passes, including the new fresh-rival and `restore({})` assertions; `tests/test_save_migrations.py`, `tests/test_signal_catalogue.py` and the settings-row source checks pass; `.\tools\verify.ps1` is green
+- Proof: `present: scripts/rival_hive.gd :: nectar = float(data.get("nectar", 120.0))`
+- Next after: CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named
 ```
 
-## CQ-R1 -- headless scenario boot leaves main.gd
+CQ-R0 shipped 2026-10-21; its specification is `plans/archive/CQ-R0_2026-10-21.md`.
 
-**True now.** `main.gd` lines ~1465-1660 hold the `--scenario` boot:
-`_apply_scenario_boot_arg`, `_parse_scenario_performance_capture`, `_is_whole_number`
-and `_end_scenario_run`. FUNCTION_MAP calls `main.gd` "everything not yet split out of
-main". `scenario_actions.gd`, `diagnostic_log.gd` and `scenario_presets.gd` call into
-it.
+## CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed
+
+**True now.** `hud.gd::_refresh_selection_text` (one bee: identity, energy, activity,
+trait lines), `_refresh_cell_popup` (content lines, state lines, hatch line, control
+state) and `_refresh_corner` (signature, labels, signal rows) are each long and mix
+building a string with writing it to a node. CQ-R0's golden harness now reads their
+output.
 
 **When done:**
 
-- The bodies move to a static `scripts/headless/scenario_boot.gd` that takes `main`.
-  The `scenario_*` fields stay on `main`, because other scripts read them.
-- Callers either keep calling `main`'s public names through one-line forwarders, or
-  move to the new file. Whichever is chosen applies to all of them.
-- D1's rule texts are edited.
+- Each of the three becomes a short function that calls named helpers; the helpers that
+  only build text return a `String` or `Array` and touch no node, e.g.
+  `_selection_activity_text(bee)` and `_cell_content_lines(cell)`.
+- No string, ordering or colour changes: `python -m unittest tests.test_display_text_golden`
+  passes against the unchanged fixture, and it is not regenerated.
+- `FUNCTION_MAP.md` lists the new helpers.
 
 ```queue
-**[Claude] CQ-R1 -- headless scenario boot leaves main.gd**
-- Plan: `plans/now/code-health.md` -- "CQ-R1 -- headless scenario boot leaves main.gd"
-- Files: `scripts/main.gd`, `scripts/headless/scenario_boot.gd`, `scripts/scenario_actions.gd`, `scripts/diagnostic_log.gd`, `scripts/scenario_presets.gd`, `tools/update_function_map.py`, `FUNCTION_MAP.md`, `.claude/rules/gdscript.md`, `docs/agent-rules.md`
-- Check: `tests/test_run_scenario_launch.py` passes; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` and `test_scenarios/sv1_named_saves_test.json` match; a performance-capture scenario still writes its capture; `.\tools\verify.ps1` is green
-- Proof: `present: scripts/main.gd :: func _apply_scenario_boot_arg(`
-- Next after: CQ-R2
+**[Claude] CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed**
+- Plan: `plans/now/code-health.md` -- "CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed"
+- Files: `scripts/hud.gd`, `FUNCTION_MAP.md`
+- Check: `python -m unittest tests.test_display_text_golden` passes against the unchanged fixture; `tests/test_layout_regression.py` passes; `.\tools\verify.ps1` is green
+- Proof: `absent: scripts/hud.gd :: func _selection_activity_text(`
+- Next after: CQ-R8 -- hud builders shortened (designation button table)
 ```
+
+CQ-R1 shipped 2026-10-21; its specification is `plans/archive/CQ-R1_2026-10-21.md`.

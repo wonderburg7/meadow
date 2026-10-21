@@ -427,7 +427,7 @@ func _check_c2_failure() -> void:
 		main.gallerin_panel.show_now(Feedback.gallerin_prompt("challenge_2_recovery", "_%d" % _stage_index))
 
 func _c2_index(stage_id: String) -> int:
-	for i in range(Stages.STAGES_2.size()):
+	for i: int in range(Stages.STAGES_2.size()):
 		if Stages.STAGES_2[i].id == stage_id:
 			return i
 	return 0
@@ -439,7 +439,7 @@ func _c2_index(stage_id: String) -> int:
 ## "event" therefore remain documentation hooks for their eventual consumers.
 func _stage_unlock_keys(entries: Array) -> Array:
 	var keys: Array = []
-	for entry in entries:
+	for entry: Variant in entries:
 		if entry is String:
 			keys.append(entry)
 		elif entry is Dictionary:
@@ -460,7 +460,7 @@ func _stage_unlock_keys(entries: Array) -> Array:
 ## every other permitted backup role must exactly match the stage's Job gate.
 func _queen_allowed_role_ids(entries: Array) -> Array:
 	var role_ids: Array = [Roles.QUEEN, Roles.NURSE]
-	for key_value in _stage_unlock_keys(entries):
+	for key_value: Variant in _stage_unlock_keys(entries):
 		var role_id: int = Roles.id_for_key(str(key_value))
 		if role_id >= 0 and role_id not in role_ids:
 			role_ids.append(role_id)
@@ -538,7 +538,7 @@ func _enter_stage() -> void:
 # --- counting cells -----------------------------------------------
 func _built_cell_count() -> int:
 	var count := 0
-	for cell in main.hive.cells:
+	for cell: Variant in main.hive.cells:
 		if is_instance_valid(cell) and cell.is_built:
 			count += 1
 	return count
@@ -720,7 +720,7 @@ func _leave_stage() -> Dictionary:
 ## state; unknown actions remain visible in Godot's debugger instead of being
 ## silently ignored when a stage record is mistyped.
 func _run_stage_effects(effects: Array) -> void:
-	for effect_value in effects:
+	for effect_value: Variant in effects:
 		var effect: String = str(effect_value)
 		match effect:
 			"camera_follow_queen":
@@ -862,8 +862,8 @@ func on_queen_build_site_chosen(hex: Vector2i) -> void:
 ## finished" case falls out for free.
 func _apply_stage_gate_to_ui() -> void:
 	main.hud.apply_gates(main.stage_gate)
-	var role_keys: Array = Roles.ROLES.map(func(r): return r.key)
-	main.hud.set_allowed_role_keys(role_keys.filter(func(k): return main.stage_gate.is_unlocked(k)))
+	var role_keys: Array = Roles.ROLES.map(func(r: Dictionary) -> String: return r.key)
+	main.hud.set_allowed_role_keys(role_keys.filter(func(k: String) -> bool: return main.stage_gate.is_unlocked(k)))
 
 	# Every role's mode keys, not just Forager's. Availability.mode_query
 	# owns the bare-vs-namespaced gate key formula (Nurse and Comb worker
@@ -872,8 +872,8 @@ func _apply_stage_gate_to_ui() -> void:
 	# _build_doing_row reads the same formula via Availability.mode_gate_key,
 	# so the two can no longer drift apart by hand.
 	var mode_keys: Array = []
-	for role in Roles.ROLES:
-		for mode in role.modes:
+	for role: Dictionary in Roles.ROLES:
+		for mode: Dictionary in role.modes:
 			if Availability.mode_query(role.id, mode.key, main.stage_gate, Session.progression).available:
 				mode_keys.append(Availability.mode_gate_key(role.id, mode.key))
 	main.hud.set_allowed_mode_keys(mode_keys)
@@ -923,12 +923,12 @@ func _setup_opening_tunnel() -> void:
 	# Add inner-to-outer so all blocks exist before edge flags/navigation
 	# are rebuilt, then retain the opposite order for the queen to follow.
 	var inner_to_outer: Array = []
-	for offset in range(blocked_count):
+	for offset: int in range(blocked_count):
 		var hex := Vector2i(0, -(first_block_ring + offset))
 		main.world_building._add_soil_block(
 			hex, main.world_building._hive_centre_local(), GameConfig.hive_cell_spacing
 		)
-		var block = main.hive.occupied_tiles.get(hex)
+		var block: Variant = main.hive.occupied_tiles.get(hex)
 		if block != null and is_instance_valid(block):
 			block.mine_time_override = seconds_per_block
 			block.set_marked(true)
@@ -963,7 +963,7 @@ func _drive_opening_mine() -> void:
 func _opening_tunnel_cleared() -> bool:
 	if not _opening_started:
 		return false
-	for block in _opening_blocks:
+	for block: Variant in _opening_blocks:
 		if is_instance_valid(block):
 			return false
 	return true
@@ -1049,7 +1049,7 @@ func _drive_c1_pollen_cell_nectar_prompt(delta: float) -> void:
 	if _c1_pollen_cell_nectar_elapsed < 1.0:
 		return
 	_c1_pollen_cell_nectar_elapsed = 0.0
-	for cell in main.hive.cells:
+	for cell: Variant in main.hive.cells:
 		if is_instance_valid(cell) and cell.designated_type == "pollen" and cell.content_type == "nectar":
 			main.gallerin_panel.clear_queue()
 			main.gallerin_panel.show_now(Feedback.gallerin_prompt("challenge_1_pollen_cell_nectar"))
@@ -1147,13 +1147,13 @@ func _goal_check_hive_points_visited() -> bool:
 	return _ordered_visit_complete(main.queen)
 
 func _goal_check_nectar_target() -> bool:
-	for cell in main.hive.cells:
+	for cell: Variant in main.hive.cells:
 		if is_instance_valid(cell) and cell.content_type == "nectar" and cell.amount >= Stages.NECTAR_TARGET:
 			return true
 	return false
 
 func _goal_check_pollen_target() -> bool:
-	for cell in main.hive.cells:
+	for cell: Variant in main.hive.cells:
 		if is_instance_valid(cell) and cell.content_type == "pollen" and cell.amount >= Stages.POLLEN_TARGET:
 			return true
 	return false
@@ -1195,7 +1195,7 @@ func _goal_check_nectar_stabilized() -> bool:
 
 func _goal_check_persistent_designation_used() -> bool:
 	var locked := 0
-	for cell in main.hive.cells:
+	for cell: Variant in main.hive.cells:
 		if is_instance_valid(cell) and cell.hatch_role_locked:
 			locked += 1
 	var nurses: int = main._role_counts().get(Roles.count_key(Roles.NURSE), 0)
@@ -1234,11 +1234,11 @@ func _goal_progress(goal: String) -> Dictionary:
 func _custom_goal_progress(method: String) -> Dictionary:
 	match method:
 		"_goal_check_nectar_target":
-			for cell in main.hive.cells:
+			for cell: Variant in main.hive.cells:
 				if is_instance_valid(cell) and cell.content_type == "nectar":
 					return {"current": cell.amount, "target": Stages.NECTAR_TARGET}
 		"_goal_check_pollen_target":
-			for cell in main.hive.cells:
+			for cell: Variant in main.hive.cells:
 				if is_instance_valid(cell) and cell.content_type == "pollen":
 					return {"current": cell.amount, "target": Stages.POLLEN_TARGET}
 	return {}

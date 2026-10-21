@@ -110,6 +110,11 @@ const NECTAR_COLOR := Color(0.73333, 0.97255, 0.14118)
 ## honey at a glance. Colour-blind mode adds a "sour" tag (see _refresh).
 const FERMENTED_NECTAR_COLOR := Color(0.55, 0.68, 0.39)
 
+## RR-11. Nectar nearing its fermenting time shows the midpoint of fresh and
+## fermented as a warning. It is still ordinary nectar until it ferments.
+const PRE_FERMENTED_NECTAR_COLOR := Color(0.64, 0.83, 0.27)
+const PRE_FERMENTED_ART_TINT := Color(0.9, 0.92, 0.78)
+
 ## SP-3. Pollen is the sprite orange (255, 123, 0), exactly. Honey is a
 ## darker amber so every cell content stays 0.10 apart in OKLab
 ## (tests/test_sp3_content_colours.py).
@@ -939,6 +944,18 @@ func is_fermented() -> bool:
 	var hour: float = maxf(0.001, GameConfig.seconds_per_day / 24.0)
 	return Session.sim_time - nectar_since > GameConfig.nectar_ferment_hours * hour
 
+## RR-11. Past GameConfig.nectar_pre_ferment_fraction of the fermenting time
+## but not yet fermented: the warning stage. Derived on every call, like
+## is_fermented(), and read by nothing but the cell's colour.
+func is_pre_fermented() -> bool:
+	if content_type != "nectar" or amount <= 0.0 or nectar_since < 0.0:
+		return false
+	if is_fermented():
+		return false
+	var hour: float = maxf(0.001, GameConfig.seconds_per_day / 24.0)
+	var warn_after: float = GameConfig.nectar_pre_ferment_fraction * GameConfig.nectar_ferment_hours * hour
+	return Session.sim_time - nectar_since > warn_after
+
 ## BB-1. For the restore path, which writes a cell's fields directly: sizes
 ## a bee bread cell from today's setting, and seals one already that full.
 func restore_bee_bread_seal() -> void:
@@ -1284,6 +1301,11 @@ func _refresh() -> void:
 				art_sheet = "fermented"
 				if Session.colour_blind_mode:
 					info_label.text = "sour " + info_label.text
+			elif is_pre_fermented():
+				color = PRE_FERMENTED_NECTAR_COLOR
+				art_tint = PRE_FERMENTED_ART_TINT
+				if Session.colour_blind_mode:
+					info_label.text = "turning " + info_label.text
 		"pollen":
 			color = POLLEN_COLOR
 			art_sheet = "pollen"

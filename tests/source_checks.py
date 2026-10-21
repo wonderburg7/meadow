@@ -832,7 +832,7 @@ def check_resource_content_catalogue(problems):
     resources_src = open(resources_path, encoding="utf-8").read()
     hive_src = open(hive_path, encoding="utf-8").read()
 
-    if not re.search(r"for\s+\w+\s+in\s+Resources\.content_keys\(\)\s*:", hive_src):
+    if not re.search(r"for\s+\w+(?:\s*:\s*\w+)?\s+in\s+Resources\.content_keys\(\)\s*:", hive_src):
         problems.append(
             "hive.gd: _content_index() no longer builds its buckets from "
             "Resources.content_keys() -- confirm by hand it still covers "
@@ -980,7 +980,7 @@ def check_hive_stock_epoch_cache(problems):
             problems.append("hive.gd: _stock() does not check stock_epoch, so it can never invalidate")
         if "Perf.begin" not in stock_body or "Perf.end" not in stock_body:
             problems.append("hive.gd: _stock() is missing the Perf.begin/Perf.end pair _content_index() has")
-        if "for cell in cells" not in stock_body:
+        if not re.search(r"for\s+cell(?:\s*:\s*\w+)?\s+in\s+cells\b", stock_body):
             problems.append("hive.gd: _stock() does not scan 'cells' -- expected one pass building all three sums")
 
     for func_name in ("total", "total_sealed", "total_honey"):
@@ -1311,7 +1311,7 @@ ORIGINAL_SAVED_SETTINGS = frozenset({
     "hive_rock_rings", "hive_entrance_width", "hive_cell_size",
     "hive_cell_spacing", "cell_slow_factor", "bee_lifespan_days",
     "energy_capacity", "energy_burn_rate",
-    "low_energy_warning_fraction", "low_energy_warning_level",
+    "low_energy_warning_fraction", "low_energy_warning_level", "starving_energy_level",
     "low_energy_gap",
     "winter_countdown_days", "winter_length_days",
     "winter_burn_factor", "winter_lifespan_factor",
@@ -3348,6 +3348,15 @@ TYPED_FILES = [
     "tests/t3_1_weighted_choice_test.gd", "tests/sp10_soil_depth_test.gd",
     "tests/gp2_goal_favourites_test.gd", "tests/bs14_saved_skill_policy_test.gd",
     "tests/rr2_boot_saves_test.gd", "tests/gp4_problem_strip_test.gd",
+    "scripts/main.gd", "scripts/scenario_actions.gd", "scripts/world_building.gd",
+    "scripts/input_selection.gd", "scripts/save_game.gd", "scripts/saving.gd",
+    "scripts/orders_zones.gd", "scripts/headless/diagnostic_profile.gd",
+    "scripts/perf.gd", "scripts/settings_catalogue.gd", "scripts/challenge_runner.gd",
+    "scripts/save_slots.gd", "scripts/hive.gd", "scripts/diagnostic_log.gd",
+    "scripts/tutorial_checkpoint.gd", "scripts/developer_overrides.gd",
+    "scripts/challenge_stage_setup.gd", "scripts/save_migrations.gd",
+    "scripts/player_profile.gd", "scripts/headless/diagnostic_probes.gd",
+    "scripts/headless/scenario_boot.gd",
 ]
 
 UNTYPED_VAR = re.compile(

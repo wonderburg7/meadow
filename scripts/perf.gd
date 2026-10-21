@@ -106,14 +106,14 @@ func mark(label: String) -> void:
 ## by the HUD breakdown line.
 func top_sections(n: int) -> Array:
 	var keys: Array = averages.keys()
-	keys.sort_custom(func(a, b): return averages[a] > averages[b])
+	keys.sort_custom(func(a: String, b: String) -> bool: return averages[a] > averages[b])
 	return keys.slice(0, n)
 
 ## The `n` sections with the highest share of the last worst frame,
 ## worst first. Same shape as `top_sections`, different dictionary.
 func worst_sections(n: int) -> Array:
 	var keys: Array = last_worst_breakdown.keys()
-	keys.sort_custom(func(a, b): return last_worst_breakdown[a] > last_worst_breakdown[b])
+	keys.sort_custom(func(a: String, b: String) -> bool: return last_worst_breakdown[a] > last_worst_breakdown[b])
 	return keys.slice(0, n)
 
 ## The p-th percentile (0-1) of the plotted window-worst samples
@@ -140,7 +140,7 @@ func start_capture(warmup_frames: int, measurement_frames: int, sections: Array)
 	_capture_section_samples.clear()
 	_capture_draw_calls.clear()
 	_capture_objects.clear()
-	for section in _capture_sections:
+	for section: String in _capture_sections:
 		_capture_section_samples[section] = []
 	_capture_complete = false
 
@@ -153,7 +153,7 @@ func capture_complete() -> bool:
 ## frame time: bee_state_miner is nested inside bee_state, for example.
 func capture_summary() -> Dictionary:
 	var sections := {}
-	for section in _capture_sections:
+	for section: String in _capture_sections:
 		sections[section] = _capture_metric(_capture_section_samples.get(section, []))
 	return {
 		"warmup_frames": _capture_warmup_frames,
@@ -174,7 +174,7 @@ func _capture_metric(samples: Array) -> Dictionary:
 	if samples.is_empty():
 		return {"mean": 0.0, "p95": 0.0}
 	var total := 0.0
-	for sample in samples:
+	for sample: Variant in samples:
 		total += float(sample)
 	var sorted := samples.duplicate()
 	sorted.sort()
@@ -194,7 +194,7 @@ func _capture_frame(frame_ms: float) -> void:
 	_capture_frame_times.append(frame_ms)
 	_capture_draw_calls.append(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
 	_capture_objects.append(Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME))
-	for section in _capture_sections:
+	for section: String in _capture_sections:
 		_capture_section_samples[section].append(float(_totals.get(section, 0)) / 1000.0)
 	_capture_frames_remaining -= 1
 	if _capture_frames_remaining == 0:
@@ -228,17 +228,17 @@ func _process(_delta: float) -> void:
 		# negligible so top_sections() stops surfacing a dead section
 		# ahead of ones still actually running.
 		var stale: Array = []
-		for section in averages:
+		for section: String in averages:
 			if not _totals.has(section):
 				var decayed: float = lerpf(float(averages[section]), 0.0, 0.1)
 				if decayed < 0.01:
 					stale.append(section)
 				else:
 					averages[section] = decayed
-		for section in stale:
+		for section: String in stale:
 			averages.erase(section)
 
-		for section in _totals:
+		for section: String in _totals:
 			var ms: float = _totals[section] / 1000.0
 			if averages.has(section):
 				averages[section] = lerpf(float(averages[section]), ms, 0.1)
@@ -254,7 +254,7 @@ func _process(_delta: float) -> void:
 			history_version += 1
 			last_worst_ms = _window_worst_ms
 			last_worst_breakdown.clear()
-			for section in _window_worst_totals:
+			for section: String in _window_worst_totals:
 				last_worst_breakdown[section] = _window_worst_totals[section] / 1000.0
 			_window_worst_ms = 0.0
 			_window_worst_totals.clear()

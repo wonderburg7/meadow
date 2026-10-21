@@ -65,7 +65,7 @@ class WorkPrioritiesNodeTest(unittest.TestCase):
                 seen[key] = value.strip()
         self.assertEqual(seen.get("ROW"), "hive_mind|3|(-6, -1)|[\"skill.hive_mind.backup_roles\"]", output[-2000:])
         self.assertEqual(seen.get("NAME"), "Work priorities")
-        self.assertEqual(seen.get("BUILT"), "false")
+        self.assertEqual(seen.get("BUILT"), "true")
         self.assertEqual(seen.get("CUT"), "false")
         self.assertEqual(seen.get("OLD"), "0")
         self.assertEqual(seen.get("OLDCUT"), "false")

@@ -30,14 +30,14 @@ static func has_checkpoint() -> bool:
 
 ## `world` is main.gd's own node (the same thing saving.gd's methods call
 ## `main`), so this can reach `world.SaveGame` the same way saving.gd does.
-static func save(world) -> bool:
+static func save(world: Node2D) -> bool:
 	return world.SaveGame.save(world, CHECKPOINT_PATH)
 
 ## Deserialises straight back over the live game state -- the same
 ## mechanism an ordinary load already uses (`Saving._restore`), just
 ## silent and automatic rather than player-initiated. Does nothing and
 ## returns false if no checkpoint has been saved yet.
-static func restore(world) -> bool:
+static func restore(world: Node2D) -> bool:
 	if not has_checkpoint():
 		return false
 	var data: Dictionary = world.SaveGame.read(CHECKPOINT_PATH)

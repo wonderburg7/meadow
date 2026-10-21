@@ -556,13 +556,15 @@ const SKILLS := [
 		"status": "new", "baseline": false, "open": false,
 	},
 	{
+		# WP-2: owned, an idle bee walks its ordered list of backup jobs
+		# (bee.gd::backup_order, _dispatch_backup_list).
 		"id": WORK_PRIORITIES, "name": "Work priorities",
 		"description": "Give a bee an ordered list of jobs to fall back on, not just one",
 		"sector": "hive_mind", "tier": 3, "axial": Vector2i(-6, -1),
 		"max_rank": 1, "cost": {BEE_BREAD: 10, HONEY: 35, NECTAR: 120},
 		"requires_previous_tier": true, "all_of": [BACKUP_ROLES], "any_of": [],
 		"feature": "", "introduced_by": "", "effects": [], "icon": "",
-		"status": "new", "baseline": false, "open": false,
+		"status": "existing", "baseline": false, "open": false,
 	},
 	{
 		# Open: what it does is Dave's to define (section 5.9 item 2).

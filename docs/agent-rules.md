@@ -15,7 +15,7 @@ here. A rule both agents need lives here, nowhere else.
    block is the diagnosis; don't read the script. When a test fails, run
    that one test and read only its function.
 2. **Architecturally right:** role data lives in `scripts/roles.gd`;
-   `GameConfig` owns balance values; `Session` owns run/UI state;
+   a script splits by responsibility, never by size; `GameConfig` owns balance values (a balance value is a GameConfig field with a settings row; a structural constant is a named const in its owning file); `Session` owns run/UI state;
    presentation never gates simulation; balance changes are simulated first.
 3. **Processing-efficient:** profile a per-frame/per-bee path before changing
    it; count calls and population before adding an index or cache.

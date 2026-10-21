@@ -52,7 +52,7 @@ const PREFERENCE_KEYS := [
 static func _isolated(path: String) -> bool:
 	if path != PROFILE_PATH:
 		return false
-	for arg in OS.get_cmdline_user_args():
+	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with("--scenario="):
 			return true
 	return false
@@ -71,7 +71,7 @@ static func read(path: String = PROFILE_PATH) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		return {}
-	var parsed = JSON.parse_string(file.get_as_text())
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	file.close()
 	if typeof(parsed) != TYPE_DICTIONARY:
 		push_warning("The player profile file is not readable; starting with defaults.")
@@ -85,7 +85,7 @@ static func read(path: String = PROFILE_PATH) -> Dictionary:
 ## "missing key means default" shape save_game.gd's apply_settings() uses.
 static func apply_to_session(data: Dictionary) -> void:
 	var prefs: Dictionary = data.get("preferences", {})
-	for key in PREFERENCE_KEYS:
+	for key: String in PREFERENCE_KEYS:
 		if prefs.has(key):
 			Session.set(key, prefs[key])
 
@@ -96,7 +96,7 @@ static func apply_to_session(data: Dictionary) -> void:
 ## gained a copy of the level on every completion.
 static func completed_challenges(data: Dictionary) -> Array:
 	var levels: Array = []
-	for value in data.get("completed_challenges", []):
+	for value: Variant in data.get("completed_challenges", []):
 		var level := int(value)
 		if not levels.has(level):
 			levels.append(level)
@@ -119,7 +119,7 @@ static func save_preferences() -> void:
 	var data := read()
 	data["version"] = FORMAT_VERSION
 	var prefs := {}
-	for key in PREFERENCE_KEYS:
+	for key: String in PREFERENCE_KEYS:
 		prefs[key] = Session.get(key)
 	data["preferences"] = prefs
 	_write(data)

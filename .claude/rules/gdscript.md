@@ -37,6 +37,8 @@ local/field name already means on the node type it's declared on.
 
 **Section headers, not top-to-bottom reads.** Most long scripts are
 divided by `# --- section name ---` headers — grep for those, check
-`FUNCTION_MAP.md` (every script over 700 lines), or read one function with
+`FUNCTION_MAP.md` (every script over 700 lines; 700 decides what is indexed, never what is split -- a script splits by responsibility), or read one function with
 `python tools/func.py`. Some (`input_selection.gd`, `fog_of_war.gd`,
 `world_building.gd`) have no headers yet, so `func.py` is the way in.
+
+**A display-text refactor proves itself with the golden harness.** Splitting or rewording how `bee.gd` builds `task_description`, `idle_reason`, `role_name_text` or `carrying_text`, the hud's selection and cell-popup text, its corner signal rows, or a cell's `info_label` runs `python -m unittest tests.test_display_text_golden` before and after: it compares every such string, byte for byte, with `tests/fixtures/display_text_golden.json`. A change of wording on purpose regenerates the fixture with `python -m tests.test_display_text_golden --update` and the diff is reviewed.

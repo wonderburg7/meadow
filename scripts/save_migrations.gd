@@ -94,7 +94,7 @@ static func _migrate_2_to_3(data: Dictionary) -> Dictionary:
 ## assignments. Older saves did not retain that distinction, so preserve every
 ## existing reservation as explicit rather than unexpectedly releasing it.
 static func _migrate_3_to_4(data: Dictionary) -> Dictionary:
-	for cell in data.get("cells", []):
+	for cell: Dictionary in data.get("cells", []):
 		cell["designation_explicit"] = str(cell.get("designated", "")) != ""
 	return data
 
@@ -107,7 +107,7 @@ static func _migrate_3_to_4(data: Dictionary) -> Dictionary:
 ## exactly as it did when these fields were shared, not-saved defaults.
 static func _migrate_4_to_5(data: Dictionary) -> Dictionary:
 	var settings: Dictionary = data.get("settings", {})
-	for key in MIGRATED_SETTINGS_V5:
+	for key: String in MIGRATED_SETTINGS_V5:
 		if not settings.has(key):
 			settings[key] = GameConfig.get(key)
 	data["settings"] = settings
@@ -117,7 +117,7 @@ static func _migrate_4_to_5(data: Dictionary) -> Dictionary:
 ## was written before skills could be bought, so it owns none -- make that
 ## explicit rather than leaving it to a missing-key default at restore.
 static func _migrate_5_to_6(data: Dictionary) -> Dictionary:
-	var skills = data.get("skills", {})
+	var skills: Variant = data.get("skills", {})
 	if typeof(skills) != TYPE_DICTIONARY:
 		skills = {}
 	if typeof(skills.get("temporary")) != TYPE_ARRAY:
@@ -130,7 +130,7 @@ static func _migrate_5_to_6(data: Dictionary) -> Dictionary:
 ## the window and lead every run had before it was saved.
 static func _migrate_6_to_7(data: Dictionary) -> Dictionary:
 	var settings: Dictionary = data.get("settings", {})
-	for key in MIGRATED_SETTINGS_V7:
+	for key: String in MIGRATED_SETTINGS_V7:
 		if not settings.has(key):
 			settings[key] = GameConfig.get(key)
 	data["settings"] = settings
