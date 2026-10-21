@@ -124,7 +124,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | after CQ-R0 | high |
 | CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes | medium |
-| CQ-R7 | hud selection text, cell popup and corner refreshes decomposed | `hud.gd` | after CQ-R0 | medium |
+| CQ-R7 | hud selection text, cell popup and corner refreshes decomposed | `hud.gd` | after TS-2 (`hud.gd`) | medium |
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd` | yes | medium |
 | CQ-R9 | `diagnostic_log.gd` snapshot shortened; probe duplicates kept once | `diagnostic_log.gd`, `scripts/headless/diagnostic_probes.gd` | yes | medium |
 | CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd` | yes | medium |
@@ -471,7 +471,7 @@ output.
   passes against the unchanged fixture, and it is not regenerated.
 - `FUNCTION_MAP.md` lists the new helpers.
 
-```queue
+```queue-gated
 **[Claude] CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed**
 - Plan: `plans/now/code-health.md` -- "CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed"
 - Files: `scripts/hud.gd`, `FUNCTION_MAP.md`
