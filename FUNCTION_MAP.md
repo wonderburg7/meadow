@@ -497,26 +497,26 @@ Per-frame entry point, everything not yet split out of main.
 1647 func _end_scenario_run(outcome: String) -> void
 ```
 
-## settings_catalogue.gd (1,608 lines)
+## settings_catalogue.gd (1,614 lines)
 
 Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
 
 ```
 22   # --- preloads and collection order --------------------------------
 48   # --- the tunables table -------------------------------------------
-1483 # --- settings owned by Session ------------------------------------
-1497 # --- reading and writing a setting --------------------------------
-1498 static func setting_get(key: String)
-1501 static func setting_set(key: String, value) -> void
-1508 # --- resetting ----------------------------------------------------
-1525 static func reset_config_to_defaults() -> void
-1537 static func reset_config_keys(keys: Array) -> void
-1543 # --- applying a setting with its cascades -------------------------
-1552 static func apply_setting(key: String, value) -> void
-1563 # --- the cascade helpers ------------------------------------------
-1568 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1586 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1600 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+1489 # --- settings owned by Session ------------------------------------
+1503 # --- reading and writing a setting --------------------------------
+1504 static func setting_get(key: String)
+1507 static func setting_set(key: String, value) -> void
+1514 # --- resetting ----------------------------------------------------
+1531 static func reset_config_to_defaults() -> void
+1543 static func reset_config_keys(keys: Array) -> void
+1549 # --- applying a setting with its cascades -------------------------
+1558 static func apply_setting(key: String, value) -> void
+1569 # --- the cascade helpers ------------------------------------------
+1574 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1592 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1606 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
 ## bee_foraging.gd (1,529 lines)
@@ -1047,13 +1047,13 @@ The comb as a whole: cells, navigation, finding a cell.
 1202 func announce() -> void
 ```
 
-## game_config.gd (1,005 lines)
+## game_config.gd (1,007 lines)
 
 The balance fields.
 
 ```
 8    # --- world ---
-30   # --- flowers (per-species values are in flower.gd; these scale them) ---
+30   # --- flowers (per-species values are in flower_species.gd; these scale them) ---
 416  # --- foraging ---
 425  # --- hive ---
 452  # --- the nursery zone ---
@@ -1065,17 +1065,17 @@ The balance fields.
 591  # --- bee bread nursing and a worker's outcome (BB-2) ---
 610  # --- weather ---
 642  # --- warnings ---
-651  # --- honey ---
-695  # --- comb building ---
-715  # --- hive geometry ---
-744  # --- bee life ---
-749  # --- bee individuality ---
-828  # --- the rival colony ---
-877  # --- seasons ---
-909  # --- disease ---
-948  # --- gynes leaving ---
-960  # --- nuptial flights ---
-968  # --- winter ---
+653  # --- honey ---
+697  # --- comb building ---
+717  # --- hive geometry ---
+746  # --- bee life ---
+751  # --- bee individuality ---
+830  # --- the rival colony ---
+879  # --- seasons ---
+911  # --- disease ---
+950  # --- gynes leaving ---
+962  # --- nuptial flights ---
+970  # --- winter ---
 ```
 
 ## main_menu.gd (735 lines)

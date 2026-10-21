@@ -27,7 +27,7 @@ var seconds_per_day: float = 200.0      # real seconds in one in-game day
 ## can set it; saving.gd reads it as an int.
 var checkpoint_every_days: float = 5.0
 
-# --- flowers (per-species values are in flower.gd; these scale them) ---
+# --- flowers (per-species values are in flower_species.gd; these scale them) ---
 var nectar_recharge_rate: float = 0.5   # per second
 var pollen_recharge_rate: float = 0.1   # per second
 
@@ -646,6 +646,8 @@ var first_crisis_check_seconds: float = 1.0
 ## seconds even if things stay bad.
 var low_energy_warning_fraction: float = 0.5
 var low_energy_warning_level: float = 0.3
+## A bee below this fraction of its energy capacity counts as starving.
+var starving_energy_level: float = 0.15
 var low_energy_gap: float = 180.0
 
 # --- honey ---

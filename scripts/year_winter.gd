@@ -119,7 +119,7 @@ func _on_gyne_lost() -> void:
 func _on_signal_clicked(action: String) -> void:
 	match action:
 		"starving":
-			_select_bees_where(func(b: Node2D) -> bool: return b.energy < GameConfig.energy_capacity * 0.15)
+			_select_bees_where(func(b: Node2D) -> bool: return b.energy < GameConfig.energy_capacity * GameConfig.starving_energy_level)
 		"hungry":
 			_select_bees_where(func(b: Node2D) -> bool: return b.energy < GameConfig.energy_capacity * GameConfig.low_energy_warning_level)
 		"hungry_brood":

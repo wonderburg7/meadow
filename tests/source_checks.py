@@ -1311,7 +1311,7 @@ ORIGINAL_SAVED_SETTINGS = frozenset({
     "hive_rock_rings", "hive_entrance_width", "hive_cell_size",
     "hive_cell_spacing", "cell_slow_factor", "bee_lifespan_days",
     "energy_capacity", "energy_burn_rate",
-    "low_energy_warning_fraction", "low_energy_warning_level",
+    "low_energy_warning_fraction", "low_energy_warning_level", "starving_energy_level",
     "low_energy_gap",
     "winter_countdown_days", "winter_length_days",
     "winter_burn_factor", "winter_lifespan_factor",
