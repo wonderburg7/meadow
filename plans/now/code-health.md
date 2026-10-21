@@ -500,7 +500,7 @@ output.
 **[Claude] CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed**
 - Plan: `plans/now/code-health.md` -- "CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed"
 - Files: `scripts/hud.gd`, `FUNCTION_MAP.md`
-- Check: `python -m unittest tests.test_display_text_golden` passes against the unchanged fixture; `tests/test_layout_regression.py` passes; `.	oolserify.ps1` is green
+- Check: `python -m unittest tests.test_display_text_golden` passes against the unchanged fixture; `tests/test_layout_regression.py` passes; `.\tools\verify.ps1` is green
 - Proof: `absent: scripts/hud.gd :: func _selection_activity_text(`
 - Next after: none -- the other CQ-R hud slices (CQ-R6, CQ-R8) are independent table rows
 ```
