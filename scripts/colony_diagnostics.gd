@@ -14,7 +14,7 @@ static func compute(main: Node2D, bees: Array, counts: Dictionary) -> Dictionary
 	var travelling_for_work: int = 0
 	var no_available_work: int = 0
 	for b: Variant in bees:
-		if b.energy < GameConfig.energy_capacity * 0.15:
+		if b.energy < GameConfig.energy_capacity * minf(GameConfig.starving_energy_level, GameConfig.low_energy_warning_level):
 			starving += 1
 		elif b.energy < GameConfig.energy_capacity * GameConfig.low_energy_warning_level:
 			hungry += 1
@@ -121,7 +121,7 @@ static func crisis_readiness(main: Node2D, bees: Array, skill_owned: bool, rain_
 			continue
 		if not b._is_inside_hive():
 			foragers_outside += 1
-		if b.energy < GameConfig.energy_capacity * 0.15:
+		if b.energy < GameConfig.energy_capacity * minf(GameConfig.starving_energy_level, GameConfig.low_energy_warning_level):
 			unable_foragers += 1
 		elif season_stopped:
 			season_held_foragers += 1

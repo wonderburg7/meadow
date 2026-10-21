@@ -1203,6 +1203,12 @@ const TUNABLES := [
 	},
 	{
 		"persist": "run",
+		"key": "starving_energy_level", "label": "Starving is", "step": 0.05, "min": 0.05, "max": 0.5,
+		"category": "Interface",
+		"tip": "What counts as a bee starving, as a fraction of its energy capacity. Lower than the low-energy level.",
+	},
+	{
+		"persist": "run",
 		"key": "low_energy_gap", "label": "Warn every s", "step": 30.0, "min": 10.0,
 		"category": "Interface",
 		"tip": "Shortest gap between low-energy warnings, so a colony that stays hungry is told once and then left alone to be dealt with.",

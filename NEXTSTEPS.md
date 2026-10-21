@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] CQ-M2 -- the starving threshold becomes a GameConfig row**
-   - Plan: `plans/now/code-health.md` -- "CQ-M2 -- the starving threshold becomes a GameConfig row"
-   - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/colony_diagnostics.gd`, `scripts/problem_messages.gd`, `scripts/year_winter.gd`, `docs/agent-rules.md`, `FUNCTION_MAP.md`
-   - Check: `tests/test_colony_diagnostics.py`, `tests/test_signal_catalogue.py` and the settings-row source checks pass; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` matches; `.\tools\verify.ps1` is green
-   - Proof: `present: scripts/colony_diagnostics.gd :: GameConfig.energy_capacity * 0.15`
-   - Next after: CQ-M3
-
-2. **[Claude] CQ-R0 -- display-text golden harness**
+1. **[Claude] CQ-R0 -- display-text golden harness**
    - Plan: `plans/now/code-health.md` -- "CQ-R0 -- display-text golden harness"
    - Files: `tests/display_text_golden_test.gd`, `tests/test_display_text_golden.py`, `tests/fixtures/display_text_golden.json`, `.claude/rules/gdscript.md`
    - Check: `python -m unittest tests.test_display_text_golden` passes against the master capture and fails when one character of a captured string is changed; `.\tools\verify.ps1` is green
    - Proof: `absent: .claude/rules/gdscript.md :: display_text_golden`
    - Next after: CQ-R7
 
-3. **[Claude] CQ-R1 -- headless scenario boot leaves main.gd**
+2. **[Claude] CQ-R1 -- headless scenario boot leaves main.gd**
    - Plan: `plans/now/code-health.md` -- "CQ-R1 -- headless scenario boot leaves main.gd"
    - Files: `scripts/main.gd`, `scripts/headless/scenario_boot.gd`, `scripts/scenario_actions.gd`, `scripts/diagnostic_log.gd`, `scripts/scenario_presets.gd`, `tools/update_function_map.py`, `FUNCTION_MAP.md`, `.claude/rules/gdscript.md`, `docs/agent-rules.md`
    - Check: `tests/test_run_scenario_launch.py` passes; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` and `test_scenarios/sv1_named_saves_test.json` match; a performance-capture scenario still writes its capture; `.\tools\verify.ps1` is green
    - Proof: `present: scripts/main.gd :: func _apply_scenario_boot_arg(`
    - Next after: CQ-R2
 
-4. **[Claude] TS-2 -- the HUD's own size overrides follow the typeface too**
+3. **[Claude] TS-2 -- the HUD's own size overrides follow the typeface too**
    - Plan: `plans/now/typeface-size.md` -- "TS-2 -- the HUD's own size overrides"
    - Files: `scripts/hud.gd`, `tests/ts2_hud_typeface_size_test.gd`, `tests/test_ts2_hud_typeface_size.py`
    - Check: `python -m unittest tests.test_ts2_hud_typeface_size` passes: with OpenDyslexic at text scale 1, the corner readouts and goal lines carry `UiTheme.font_px` of their base sizes, and switching typeface rebuilds the corner.
    - Proof: `absent: scripts/hud.gd :: UiTheme.font_px`
    - Next after: none -- plans/now/typeface-size.md is complete
 
-5. **[Claude] WP-2 -- owned, each bee follows an ordered backup list**
+4. **[Claude] WP-2 -- owned, each bee follows an ordered backup list**
    - Plan: `plans/now/work-priorities.md` -- "WP-2 -- owned, each bee follows an ordered backup list"
    - Files: `scripts/bee.gd`, `scripts/session.gd`, `scripts/skills.gd`, `scripts/orders_zones.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/wp2_backup_order_test.gd`, `tests/test_wp2_backup_order.py`
    - Check: `python -m unittest tests.test_wp2_backup_order` passes (unowned, a bee falls back on its one backup as today; owned, an idle bee whose role and first backup have no work takes the next job on its list that does; a bee born after purchase takes the colony default; the lists and the default survive save and restore; an old save loads each bee with its backup first); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/bee.gd :: backup_order`
    - Next after: WP-3 -- the ordered list in the selection panel and the colony default
+
+5. **[Claude] RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning**
+   - Plan: `plans/now/run-repairs.md` -- "RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning"
+   - Files: `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/rr11_pre_fermented_test.gd`, `tests/test_rr11_pre_fermented.py`
+   - Check: `python -m unittest tests.test_rr11_pre_fermented` passes: a nectar cell aged 0.5, 0.8 and 1.1 times `nectar_ferment_hours` gives `is_pre_fermented()` false, true, false and `is_fermented()` false, false, true; at 0.8 with cell sprites off the cell's flat colour is `PRE_FERMENTED_NECTAR_COLOR`, `hive.find_honey_source` returns it and `hive.take("nectar", 1.0)` takes from it; `python -m unittest tests.test_sp3_content_colours tests.test_nf2_fermentation` still passes.
+   - Proof: `absent: scripts/hive_cell.gd :: func is_pre_fermented(`
+   - Next after: none -- RR-12, the plan's last slice, waits for ED-3
 
 ### Codex lane
 
@@ -93,6 +93,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-6, which shares `scripts/skills.gd`.
 - **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices of the alpha chain (WP-2, SG-2, ED-1, ED-2, RR-12, SP-8a) and ED-3 (Dave, 18 Oct 2026), and for CQ-S0's round-trip harness.
 - **CQ-T2** (`plans/now/code-health.md`) -- the run, world and save glue typed (20 scripts), the second typing slice; waits for CQ-R1 (`scripts/main.gd`, `scripts/scenario_actions.gd`, `scripts/diagnostic_log.gd`) and CQ-M2 (`scripts/settings_catalogue.gd`), Claude-lane slices that edit its files (CQ-T1 landed 21 Oct 2026).
+- **CQ-M3** (`plans/now/code-health.md`) -- the rival's starting nectar, pollen, forager share and minimum population become GameConfig rows, and its rebalance numbers named consts; waits for RR-11 (Claude lane), which shares `scripts/game_config.gd` and `scripts/settings_catalogue.gd` and holds the lane's fifth slot (CQ-M2 landed 21 Oct 2026).
 ## Copy-paste prompts
 
 Claude, implementing: `Implement the next slice.`
