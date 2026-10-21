@@ -249,7 +249,7 @@ var obstacles: Array = []
 ## and steering asks about them every frame rather than eight times a
 ## second, so the query cost more than the scan it replaced. See
 ## bee.gd's _obstacles_towards.
-var flower_grid = SpatialGrid.new(200.0)
+var flower_grid := SpatialGrid.new(200.0)
 ## Mirrors GameConfig.scenery_on, so the toggle is only acted on when it
 ## actually changes rather than every frame.
 var scenery_shown: bool = true
@@ -589,8 +589,8 @@ func _ready() -> void:
 	hud.main = self
 	hud.role_requested.connect(orders_zones._on_role_requested)
 	hud.view_toggle_requested.connect(camera_view._toggle_view)
-	hud.colony_panel_requested.connect(func(): year_winter._toggle_panel(colony_panel))
-	hud.foraging_panel_requested.connect(func(): year_winter._toggle_panel(foraging_panel))
+	hud.colony_panel_requested.connect(func() -> void: year_winter._toggle_panel(colony_panel))
+	hud.foraging_panel_requested.connect(func() -> void: year_winter._toggle_panel(foraging_panel))
 	hud.speed_requested.connect(camera_view._on_speed_requested)
 	hud.cell_designation_requested.connect(orders_zones._on_cell_designation_requested)
 	hud.cell_hatch_role_requested.connect(orders_zones._on_cell_hatch_role_requested)
@@ -611,7 +611,7 @@ func _ready() -> void:
 	hud.cell_close_requested.connect(orders_zones._on_cell_close_requested)
 	hud.cell_fill_close_requested.connect(orders_zones._on_cell_fill_close_requested)
 	hud.nursery_window_requested.connect(year_winter._on_nursery_window_requested)
-	hud.winter_window_requested.connect(func(): year_winter._toggle_panel(winter_panel))
+	hud.winter_window_requested.connect(func() -> void: year_winter._toggle_panel(winter_panel))
 	hud.signal_clicked.connect(year_winter._on_signal_clicked)
 	hud.secondary_role_requested.connect(orders_zones._on_secondary_role_requested)
 	hud.finish_first_requested.connect(orders_zones._on_finish_first_requested)
@@ -633,11 +633,11 @@ func _ready() -> void:
 
 	# debug_panel itself is built earlier, alongside the menu (UI-L/UI-M) --
 	# only this wiring, which needs hud to already exist, waits until here.
-	hud.queen_lay_any_cell_toggled.connect(func(value: bool): debug_panel.set_toggle("queen_lays_in_any_cell", value))
+	hud.queen_lay_any_cell_toggled.connect(func(value: bool) -> void: debug_panel.set_toggle("queen_lays_in_any_cell", value))
 
 	colony_panel = ColonyPanel.new()
 	colony_panel.role_selection_requested.connect(input_selection._on_role_selection_requested)
-	colony_panel.pinned_changed.connect(func(): hud.pinned_stats_changed())
+	colony_panel.pinned_changed.connect(func() -> void: hud.pinned_stats_changed())
 	colony_panel.favourite_selected.connect(camera_view._focus_on_bee)
 	# Same "needing attention" click-to-select handler as the corner
 	# problem strip -- one place decides what a signal's action does.
@@ -651,7 +651,7 @@ func _ready() -> void:
 	# closing the window has to take the glow off the comb with it,
 	# otherwise the hive stays lit up with no panel to explain why
 	nursery_panel.closed.connect(orders_zones._clear_zone_glow)
-	nursery_panel.pinned_changed.connect(func(): hud.pinned_stats_changed())
+	nursery_panel.pinned_changed.connect(func() -> void: hud.pinned_stats_changed())
 	nursery_panel.signal_clicked.connect(year_winter._on_signal_clicked)
 	add_child(nursery_panel)
 
@@ -669,29 +669,29 @@ func _ready() -> void:
 	season.winter_started.connect(year_winter._on_winter_started)
 	season.winter_survived.connect(year_winter._on_winter_survived)
 	season.gyne_released.connect(year_winter._on_gyne_released)
-	season.gyne_released.connect(func(_total): colony_milestones.evaluate())
-	season.gyne_released.connect(func(_total): colony_milestones.check_victory())
+	season.gyne_released.connect(func(_total: Variant) -> void: colony_milestones.evaluate())
+	season.gyne_released.connect(func(_total: Variant) -> void: colony_milestones.check_victory())
 	add_child(season)
 
 	game_over = GameOver.new()
 	game_over.restart_requested.connect(_on_restart_after_loss)
-	game_over.menu_requested.connect(func(): game_over.visible = false; menu.open())
+	game_over.menu_requested.connect(func() -> void: game_over.visible = false; menu.open())
 	add_child(game_over)
 
 	challenge_complete = ChallengeComplete.new()
-	challenge_complete.continue_requested.connect(func(): challenge_complete.visible = false; get_tree().paused = false)
-	challenge_complete.continue_to_next_requested.connect(func(): _on_level_chosen(2))
-	challenge_complete.menu_requested.connect(func(): challenge_complete.visible = false; menu.open())
-	challenge_complete.restart_requested.connect(func(): _on_level_chosen(1))
+	challenge_complete.continue_requested.connect(func() -> void: challenge_complete.visible = false; get_tree().paused = false)
+	challenge_complete.continue_to_next_requested.connect(func() -> void: _on_level_chosen(2))
+	challenge_complete.menu_requested.connect(func() -> void: challenge_complete.visible = false; menu.open())
+	challenge_complete.restart_requested.connect(func() -> void: _on_level_chosen(1))
 	add_child(challenge_complete)
 
-	hive.storage_changed.connect(func(n, p, h, j): hud.update_storage(n, p, h, j, hive.total_sealed()))
+	hive.storage_changed.connect(func(n: Variant, p: Variant, h: Variant, j: Variant) -> void: hud.update_storage(n, p, h, j, hive.total_sealed()))
 	bee_died.connect(_on_bee_died)
-	bee_died.connect(func(_bee): colony_milestones.evaluate())
-	day_changed.connect(func(d): hud.update_day(d, year_winter._season_text()))
+	bee_died.connect(func(_bee: Variant) -> void: colony_milestones.evaluate())
+	day_changed.connect(func(d: Variant) -> void: hud.update_day(d, year_winter._season_text()))
 	# Before the checkpoint, so a day's checkpoint carries that day's milestones.
-	day_changed.connect(func(_d): colony_milestones.evaluate())
-	day_changed.connect(func(_d): saving.checkpoint())
+	day_changed.connect(func(_d: Variant) -> void: colony_milestones.evaluate())
+	day_changed.connect(func(_d: Variant) -> void: saving.checkpoint())
 	hud.update_day(day, year_winter._season_text())
 	hud.update_storage(0, 0, 0, 0)
 	hud.update_rates(0.0, 0.0, 0.0)
@@ -848,7 +848,7 @@ func _process(delta: float) -> void:
 				_end_scenario_run("stop_condition_met")
 				return
 			if scenario_stop_when_actions_resolved and not scenario_actions.is_empty():
-				var unresolved: Array = scenario_actions.filter(func(a): return not a.get("_resolved", false))
+				var unresolved: Array = scenario_actions.filter(func(a: Dictionary) -> bool: return not a.get("_resolved", false))
 				if unresolved.is_empty():
 					_end_scenario_run("actions_resolved")
 					return
@@ -923,7 +923,7 @@ func _reseed_meadow(delta: float) -> void:
 ## there comes out the same way without you touching it again.
 func _hatch_ready_brood() -> void:
 	Perf.begin("hatch")
-	for cell in hive.cells_holding("brood").duplicate():
+	for cell: Variant in hive.cells_holding("brood").duplicate():
 		if not cell.brood_ready():
 			continue
 		# A cell with no role named raises an ordinary nectar forager --
@@ -1233,7 +1233,7 @@ func _trace_first_crisis(phase: String, readiness: Dictionary = {}, extra: Dicti
 	# text when it is there (gallerin_panel.gd's guidance ledger).
 	if is_instance_valid(gallerin_panel):
 		var why_now: Array = []
-		for entry in gallerin_panel.guidance_policy.current_entries():
+		for entry: Variant in gallerin_panel.guidance_policy.current_entries():
 			why_now.append(str(entry.id))
 			if str(entry.id) == "first_crisis_rain":
 				detail["why_text"] = str(entry.text)
@@ -1245,13 +1245,13 @@ func _trace_first_crisis(phase: String, readiness: Dictionary = {}, extra: Dicti
 ## from before FC-2 has none; it is still pending if the warning could yet
 ## give its full lead, and spent otherwise, so an old run is never rained on
 ## without warning.
-func restore_first_crisis(saved) -> void:
+func restore_first_crisis(saved: Variant) -> void:
 	var restored := _blank_first_crisis()
 	if typeof(saved) == TYPE_DICTIONARY and FIRST_CRISIS_STATES.has(str(saved.get("state", ""))):
 		restored.state = str(saved.state)
 		restored.path = str(saved.get("path", ""))
 		restored.checkpointed = bool(saved.get("checkpointed", false))
-		for key in ["warned_at", "starts_at", "started_at", "ended_at", "duration"]:
+		for key: String in ["warned_at", "starts_at", "started_at", "ended_at", "duration"]:
 			restored[key] = float(saved.get(key, restored[key]))
 		if typeof(saved.get("readiness")) == TYPE_DICTIONARY:
 			restored.readiness = saved.readiness.duplicate(true)
@@ -1312,7 +1312,7 @@ func _check_for_loss() -> void:
 ## says so once. Returns false when there is no gyne to promote.
 func _promote_gyne_to_queen() -> bool:
 	var heir: Node2D = null
-	for bee in get_tree().get_nodes_in_group("bees"):
+	for bee: Variant in get_tree().get_nodes_in_group("bees"):
 		if not is_instance_valid(bee) or not bee.is_gyne or bee.is_dying:
 			continue
 		if heir == null or bee.age_seconds > heir.age_seconds:
@@ -1342,7 +1342,7 @@ func _check_colony_energy(delta: float) -> void:
 		return   # too small a colony for a proportion to mean anything
 
 	var hungry := 0
-	for b in bees:
+	for b: Variant in bees:
 		if b.energy < GameConfig.energy_capacity * GameConfig.low_energy_warning_level:
 			hungry += 1
 	var share: float = float(hungry) / float(bees.size())
@@ -1373,12 +1373,12 @@ var _role_counts_built_epoch: int = -1
 ## against `_population_epoch`: challenge_runner.gd asks this several
 ## times over the course of one stage-check, so a repeat ask gets the
 ## same scan rather than repeating the group walk.
-func _role_counts(bees = null) -> Dictionary:
+func _role_counts(bees: Variant = null) -> Dictionary:
 	if _role_counts_built_epoch == _population_epoch:
 		return _role_counts_cache
 	var counts := {}
 	var list: Array = bees if bees != null else get_tree().get_nodes_in_group("bees")
-	for b in list:
+	for b: Variant in list:
 		if not is_instance_valid(b):
 			continue
 		var key: String = Roles.count_key(b.role, b.resource_type)
@@ -1390,7 +1390,7 @@ func _role_counts(bees = null) -> Dictionary:
 ## `bees` lets a caller pass an explicit list instead of a live group query
 ## -- saving.gd's restore path uses this, since a mid-frame group query
 ## would still catch the just-retired old bees alongside their replacements.
-func _update_population_readout(bees = null) -> void:
+func _update_population_readout(bees: Variant = null) -> void:
 	invalidate_population()
 	var counts: Dictionary = _role_counts(bees)
 	var nectar_foragers: int = int(counts.get(Roles.count_key(Roles.FORAGER, "nectar"), 0))
@@ -1414,11 +1414,11 @@ func _prune_selection() -> void:
 	# cells and blocks can be freed under us -- a mined block, a cell
 	# rebuilt on load -- so drop the dead references before anything acts
 	# on them
-	selected_cells = selected_cells.filter(func(c): return is_instance_valid(c))
-	selected_blocks = selected_blocks.filter(func(b): return is_instance_valid(b))
+	selected_cells = selected_cells.filter(func(c: Variant) -> bool: return is_instance_valid(c))
+	selected_blocks = selected_blocks.filter(func(b: Variant) -> bool: return is_instance_valid(b))
 
 	var before := selected_bees.size()
-	selected_bees = selected_bees.filter(func(b): return is_instance_valid(b))
+	selected_bees = selected_bees.filter(func(b: Variant) -> bool: return is_instance_valid(b))
 	if selected_bees.size() != before:
 		hud.update_selection(selected_bees)
 		_update_population_readout()

@@ -22,15 +22,15 @@ static func parse(raw: Variant) -> Dictionary:
 	result["events"] = _default_events(profile)
 	result["snapshots"] = _default_snapshots(profile)
 	if raw.has("events"):
-		var events = _valid_strings(raw.events, EVENT_TYPES, "diagnostics.events")
+		var events: Dictionary = _valid_strings(raw.events, EVENT_TYPES, "diagnostics.events")
 		if not events.ok: return events
 		result["events"] = events.value
 	if raw.has("snapshots"):
-		var snapshots = _parse_snapshots(raw.snapshots, profile)
+		var snapshots: Dictionary = _parse_snapshots(raw.snapshots, profile)
 		if not snapshots.ok: return snapshots
 		result["snapshots"] = snapshots.value
 	if raw.has("limits"):
-		var limits = _parse_limits(raw.limits)
+		var limits: Dictionary = _parse_limits(raw.limits)
 		if not limits.ok: return limits
 		result["limits"] = limits.value
 	return result
@@ -48,24 +48,24 @@ static func _default_snapshots(profile: String) -> Dictionary:
 
 static func _parse_snapshots(raw: Variant, profile: String) -> Dictionary:
 	if not (raw is Dictionary): return _error("diagnostics.snapshots must be an object")
-	var fields = _valid_strings(raw.get("fields", []), DiagnosticProbesScript.SNAPSHOT_FIELDS, "diagnostics.snapshots.fields")
+	var fields: Dictionary = _valid_strings(raw.get("fields", []), DiagnosticProbesScript.SNAPSHOT_FIELDS, "diagnostics.snapshots.fields")
 	if not fields.ok: return fields
-	var interval = raw.get("every_sim_seconds", null)
+	var interval: Variant = raw.get("every_sim_seconds", null)
 	if interval is String:
 		if not (interval == "day" and profile in ["balance", "performance"]):
 			return _error("diagnostics.snapshots.every_sim_seconds must be a positive number")
 	elif not (interval is float or interval is int) or float(interval) <= 0.0:
 		return _error("diagnostics.snapshots.every_sim_seconds must be a positive number")
-	var changed = raw.get("only_when_changed", false)
+	var changed: Variant = raw.get("only_when_changed", false)
 	if not (changed is bool): return _error("diagnostics.snapshots.only_when_changed must be boolean")
 	return {"ok": true, "value": {"every_sim_seconds": interval, "fields": fields.value, "only_when_changed": changed}}
 
 static func _parse_limits(raw: Variant) -> Dictionary:
 	if not (raw is Dictionary): return _error("diagnostics.limits must be an object")
 	var result := {}
-	for key in ["event_lines_per_type", "snapshot_lines"]:
+	for key: String in ["event_lines_per_type", "snapshot_lines"]:
 		if not raw.has(key): continue
-		var value = raw[key]
+		var value: Variant = raw[key]
 		if not (value is int or value is float) or value <= 0 or floor(float(value)) != float(value):
 			return _error("diagnostics.limits.%s must be a positive integer" % key)
 		result[key] = int(value)
@@ -74,7 +74,7 @@ static func _parse_limits(raw: Variant) -> Dictionary:
 static func _valid_strings(raw: Variant, allowed: Array, name: String) -> Dictionary:
 	if not (raw is Array): return _error("%s must be an array" % name)
 	var values: Array = []
-	for item in raw:
+	for item: Variant in raw:
 		if not (item is String) or not item in allowed: return _error("unknown %s: %s" % [name, str(item)])
 		if not item in values: values.append(item)
 	return {"ok": true, "value": values}

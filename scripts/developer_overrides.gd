@@ -49,7 +49,7 @@ static func read_all(path: String = PATH) -> Dictionary:
 ## One level's overrides as {"grants": [...], "bans": [...]}, both lists of
 ## skill id strings, empty when the level has none.
 static func for_level(level_id: int, path: String = PATH) -> Dictionary:
-	var entry = read_all(path).get(str(level_id), {})
+	var entry: Variant = read_all(path).get(str(level_id), {})
 	if typeof(entry) != TYPE_DICTIONARY:
 		entry = {}
 	return {"grants": _ids(entry.get("grants", [])), "bans": _ids(entry.get("bans", []))}
@@ -69,11 +69,11 @@ static func apply(level_id: int, definition: Dictionary, path: String = PATH) ->
 		return result
 	var seeded := _seeded_skills(definition)
 	var bans: Array = _ids(definition.get("skill_bans", []))
-	for skill_id in edits.bans:
+	for skill_id: String in edits.bans:
 		if not bans.has(skill_id) and not seeded.has(skill_id):
 			bans.append(skill_id)
 	var grants: Array = []
-	for skill_id in _ids(definition.get("skill_grants", [])) + edits.grants:
+	for skill_id: String in _ids(definition.get("skill_grants", [])) + edits.grants:
 		if not bans.has(skill_id) and not grants.has(skill_id):
 			grants.append(skill_id)
 	result["skill_grants"] = grants
@@ -133,18 +133,18 @@ static func _seeded_skills(definition: Dictionary) -> Array:
 	counts_only["skill_bans"] = []
 	var rows: Dictionary = RunAvailability.sheet_for(counts_only).get("skills", {})
 	var seeded: Array = []
-	for skill_id in rows:
+	for skill_id: String in rows:
 		if rows[skill_id].get("reason", "") == RunAvailability.REASON_SEEDED_ROLE:
 			seeded.append(skill_id)
 	return seeded
 
 
 ## Skill id strings out of whatever JSON or a level definition held.
-static func _ids(value) -> Array:
+static func _ids(value: Variant) -> Array:
 	var ids: Array = []
 	if typeof(value) != TYPE_ARRAY:
 		return ids
-	for item in value:
+	for item: Variant in value:
 		if typeof(item) == TYPE_STRING and not ids.has(item):
 			ids.append(item)
 	return ids
