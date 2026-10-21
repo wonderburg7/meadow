@@ -33,9 +33,24 @@ signal run_reset()
 
 const PlayerProfile = preload("res://scripts/player_profile.gd")
 const Progression = preload("res://scripts/progression.gd")
+const Roles = preload("res://scripts/roles.gd")
+const Availability = preload("res://scripts/availability.gd")
 
 func _ready() -> void:
 	PlayerProfile.apply_to_session(PlayerProfile.read())
+	# WP-2: the purchase check below must run even while the game is paused,
+	# where the skill tree is usually open.
+	process_mode = Node.PROCESS_MODE_ALWAYS
+
+## WP-2: notices Work priorities becoming owned, the frame it happens, by
+## asking only when Availability's gate epoch moves -- a purchase, a grant
+## and a load all advance it -- and never again once this run has seeded.
+func _process(_delta: float) -> void:
+	if _backup_orders_seeded or progression == null or Availability.gate_epoch == _seed_epoch_seen:
+		return
+	_seed_epoch_seen = Availability.gate_epoch
+	if progression.is_owned(WORK_PRIORITIES_SKILL):
+		seed_backup_orders()
 
 ## Writes every interface-preference field to the player profile file, so
 ## it survives a full game restart, not just a Restart Run. Called
@@ -306,6 +321,61 @@ func ensure_progression(gate: Node) -> Object:
 	progression = Progression.new(GameConfig, gate)
 	return progression
 
+# --- Work priorities (WP-2) ---------------------------------------
+## The colony's default order of backup jobs, Dave's decision 3 in
+## plans/now/work-priorities.md: Comb work, Nurse, Mine, Honey, Forage.
+## Forage is last because there is always something to forage.
+const DEFAULT_BACKUP_ORDER := [Roles.COMB_WORKER, Roles.NURSE, Roles.MINER, Roles.HONEY, Roles.FORAGER]
+
+## Run state, saved with the run: the order a bee born once the colony owns
+## Work priorities takes, and the order that follows an existing bee's own
+## backup when the skill is bought (bee.gd::backup_list). Reset to
+## DEFAULT_BACKUP_ORDER by reset_run_state(); a save without it loads that.
+var backup_order_default: Array = DEFAULT_BACKUP_ORDER.duplicate()
+
+const WORK_PRIORITIES_SKILL := "skill.hive_mind.work_priorities"
+## True once this run has given every living worker her list. Not saved:
+## saving.gd clears it on a load, and seeding again only touches bees that
+## have no list yet (an old save's), which is the old-save rule.
+var _backup_orders_seeded: bool = false
+var _seed_epoch_seen: int = -1
+
+## On purchase (decision 4): every living worker without a list gets her
+## current backup first, then the colony default, all from the same default.
+func seed_backup_orders() -> void:
+	_backup_orders_seeded = true
+	for bee: Node in get_tree().get_nodes_in_group("bees"):
+		if is_instance_valid(bee) and not bee.is_queued_for_deletion() and bee.has_method("seed_backup_order"):
+			bee.seed_backup_order()
+
+## A load or a new run looks again (saving.gd, reset_run_state).
+func forget_backup_order_seeding() -> void:
+	_backup_orders_seeded = false
+	_seed_epoch_seen = -1
+
+func set_backup_order_default(order: Variant) -> void:
+	var cleaned: Array = clean_backup_order(order)
+	backup_order_default = cleaned if not cleaned.is_empty() else DEFAULT_BACKUP_ORDER.duplicate()
+
+## An order as a bee or the colony may hold it: role ids (a save's numbers
+## arrive as floats), each a job a worker can fall back on -- never the
+## queen's laying or Idle -- and each once, first place kept. Anything else
+## is dropped, so a hand-edited or damaged save cannot put a bad id in.
+func clean_backup_order(order: Variant) -> Array:
+	var out: Array = []
+	if not (order is Array):
+		return out
+	for value: Variant in order:
+		if not (value is int or value is float):
+			continue
+		var role_id := int(value)
+		if role_id == Roles.QUEEN or role_id == Roles.IDLE or out.has(role_id):
+			continue
+		if Roles.entry(role_id).get("id", -1) != role_id:
+			continue
+		out.append(role_id)
+	return out
+
 # --- live weather state -------------------------------------------
 ## Advanced by main.gd. Not a setting: how likely rain is, is.
 var rain_intensity: float = 0.0
@@ -332,6 +402,8 @@ func reset_run_state() -> void:
 	crab_spider_preferred_species = ""
 	rain_intensity = 0.0
 	control_groups.clear()
+	backup_order_default = DEFAULT_BACKUP_ORDER.duplicate()
+	forget_backup_order_seeding()
 	# A new run never inherits a load's policy (BS-14); a load itself does
 	# not come through here.
 	pending_skill_policy = {}

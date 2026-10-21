@@ -128,6 +128,9 @@ static func save(world, path: String = SAVE_PATH) -> bool:
 			"winter_ends_day": Session.winter_ends_day,
 			"gynes_released": Session.gynes_released,
 			"crab_spider_species": Session.crab_spider_preferred_species,
+			# WP-2, additive: the colony's default backup order. An older
+			# save has none and loads Session.DEFAULT_BACKUP_ORDER.
+			"backup_order_default": Session.backup_order_default.duplicate(),
 		},
 		"cells": _cells_data(world),
 		"soil": _soil_data(world),
@@ -282,6 +285,10 @@ static func _bees_data(world) -> Array:
 			"architect_mode": b.architect_mode,
 			"automine": b.automine,
 			"secondary": b.secondary_role,
+			# WP-2, additive: the bee's ordered backup jobs, or null while
+			# she has been given none (before purchase; the queen). An older
+			# save has no key: her backup goes first, then the colony default.
+			"backup_order": b.backup_order.duplicate() if b.backup_order_set else null,
 			"finish_first": b.finish_task_first,
 			"pending_role": b.pending_role,
 			"preferred": b.preferred_species,
