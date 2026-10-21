@@ -804,29 +804,45 @@ func _free_body(body: Node2D) -> void:
 ## cell-content searches; this is the same fix for the comb-growing one.
 var _no_room_frame: int = -1
 
+## True when a comb worker standing at `around` would find a free tile to
+## build on, without starting a site. It walks the same spiral as
+## create_next_cell_site (_first_free_spiral_hex), so the two cannot drift.
+## T2-14: the comb worker's idle reason asks this, where it used to call
+## create_next_cell_site and so start outward sites just by selecting a bee.
+func has_room_to_build(around: Vector2i = Vector2i.ZERO) -> bool:
+	if comb_parent == null:
+		return false
+	if _no_room_frame == Engine.get_process_frames():
+		return false
+	return _first_free_spiral_hex(around) != null
+
+
 func create_next_cell_site(around: Vector2i = Vector2i.ZERO) -> Node2D:
 	if comb_parent == null:
 		return null
 	if _no_room_frame == Engine.get_process_frames():
 		return null
 
-	var hex := Vector2i(0, 0)
-	var found := false
-	# generous ceiling: everything out to the far edge of the dug ground
-	var reach := int(GameConfig.hive_interior_rings + GameConfig.hive_soil_depth)
-	var limit := 1 + 3 * reach * (reach + 1)
-	var index := 0
-	while index < limit:
-		hex = around + Shapes.hex_spiral_at(index)
-		if _can_build_on(hex):
-			found = true
-			break
-		index += 1
-	if not found:
+	var hex: Variant = _first_free_spiral_hex(around)
+	if hex == null:
 		_no_room_frame = Engine.get_process_frames()
 		return null
 
-	return _start_site_at(hex)
+	return _start_site_at(hex as Vector2i)
+
+
+## The first tile out along the hex spiral from `around` that _can_build_on
+## accepts, or null when the walk finds none. Shared by has_room_to_build
+## and create_next_cell_site so the two loops cannot drift apart.
+func _first_free_spiral_hex(around: Vector2i) -> Variant:
+	# generous ceiling: everything out to the far edge of the dug ground
+	var reach := int(GameConfig.hive_interior_rings + GameConfig.hive_soil_depth)
+	var limit := 1 + 3 * reach * (reach + 1)
+	for index in limit:
+		var hex: Vector2i = around + Shapes.hex_spiral_at(index)
+		if _can_build_on(hex):
+			return hex
+	return null
 
 ## Tiles the player has asked to be left as open floor. Comb workers skip
 ## these when picking a site, so you can keep a corridor through the
