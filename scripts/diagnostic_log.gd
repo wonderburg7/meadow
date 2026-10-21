@@ -764,7 +764,7 @@ func tick(delta: float, world: Node2D) -> void:
 		return
 	_hour_accum += delta
 	# snapshot_interval_override lets a --scenario= run pick a fixed
-	# sim-second cadence instead -- see main.gd::_apply_scenario_boot_arg
+	# sim-second cadence instead -- see headless/scenario_boot.gd::apply_boot_arg
 	# and its "snapshot_seconds" field, same pattern as "time_scale".
 	# Ordinary play is untouched: an hour is exactly what the day-length
 	# setting says it is. A compressed test day (seconds_per_day pushed

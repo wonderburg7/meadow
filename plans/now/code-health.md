@@ -118,7 +118,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | yes | low |
 | CQ-M9 | colony plot reads `Resources` colours; width const | `colony_panel.gd` | yes | low |
 | CQ-M10 | `WEATHER_ROLLS_PER_DAY` | `main.gd` | yes | low |
-| CQ-R1 | headless scenario boot leaves `main.gd` | `main.gd`, `scripts/headless/scenario_boot.gd` | yes | medium |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | after CQ-R0 and T2-14 | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
@@ -480,27 +479,4 @@ output.
 - Next after: none -- the other CQ-R hud slices (CQ-R6, CQ-R8) are independent table rows
 ```
 
-## CQ-R1 -- headless scenario boot leaves main.gd
-
-**True now.** `main.gd` lines ~1465-1660 hold the `--scenario` boot:
-`_apply_scenario_boot_arg`, `_parse_scenario_performance_capture`, `_is_whole_number`
-and `_end_scenario_run`. FUNCTION_MAP calls `main.gd` "everything not yet split out of
-main". `scenario_actions.gd`, `diagnostic_log.gd` and `scenario_presets.gd` call into
-it.
-
-**When done:**
-
-- The bodies move to a static `scripts/headless/scenario_boot.gd` that takes `main`.
-  The `scenario_*` fields stay on `main`, because other scripts read them.
-- Callers either keep calling `main`'s public names through one-line forwarders, or
-  move to the new file. Whichever is chosen applies to all of them.
-- D1's rule texts are edited.
-
-```queue
-**[Claude] CQ-R1 -- headless scenario boot leaves main.gd**
-- Plan: `plans/now/code-health.md` -- "CQ-R1 -- headless scenario boot leaves main.gd"
-- Files: `scripts/main.gd`, `scripts/headless/scenario_boot.gd`, `scripts/scenario_actions.gd`, `scripts/diagnostic_log.gd`, `scripts/scenario_presets.gd`, `tools/update_function_map.py`, `FUNCTION_MAP.md`, `.claude/rules/gdscript.md`, `docs/agent-rules.md`
-- Check: `tests/test_run_scenario_launch.py` passes; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` and `test_scenarios/sv1_named_saves_test.json` match; a performance-capture scenario still writes its capture; `.\tools\verify.ps1` is green
-- Proof: `present: scripts/main.gd :: func _apply_scenario_boot_arg(`
-- Next after: CQ-R2
-```
+CQ-R1 shipped 2026-10-21; its specification is `plans/archive/CQ-R1_2026-10-21.md`.

@@ -9,7 +9,7 @@ extends RefCounted
 ## click-driven UI already calls (see each verb's comment for which),
 ## never a reimplementation, so a headless action follows the same rules
 ## a human action does. Never reachable outside a --scenario= boot -- see
-## main.gd::_apply_scenario_boot_arg and its scenario_actions field.
+## headless/scenario_boot.gd::apply_boot_arg and its scenario_actions field.
 ##
 ## Usage: const ScenarioActions = preload("res://scripts/scenario_actions.gd")
 ##        ScenarioActions.run_pending(main, main.scenario_actions)
@@ -59,7 +59,7 @@ const LOCAL_WHEN_KEYS := [
 # --- run_pending --------------------------------------------------
 
 ## Called once per _process() tick while main.scenario_active. An "assert"
-## that fails ends the run (main._end_scenario_run) and stops evaluating
+## that fails ends the run (main._end_scenario_run -> ScenarioBoot.end_run) and stops evaluating
 ## the rest of this tick's actions -- everything already resolved stays
 ## resolved, and log_unresolved (below) records whatever never got there.
 static func run_pending(main: Node2D, actions: Array) -> void:
@@ -142,7 +142,7 @@ static func sample_comb_build_sites(main: Node2D) -> void:
 
 # --- log_unresolved -----------------------------------------------
 
-## Called from main.gd::_end_scenario_run, before DiagnosticLog closes the
+## Called from main.gd::_end_scenario_run (ScenarioBoot.end_run), before DiagnosticLog closes the
 ## session file. An action whose "when" never became true is exactly as
 ## diagnostically interesting as one that fired and was rejected: a run
 ## must fail loudly if an action cannot be carried out

@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 OUTPUT = ROOT / "FUNCTION_MAP.md"
 
-# A scripts/*.gd file longer than this gets indexed below -- the number the
+# 700 lines decides what is indexed, never what is split. A scripts/*.gd file longer than this gets indexed below -- the number the
 # map's own header already claims.
 LINE_THRESHOLD = 700
 
@@ -38,7 +38,7 @@ DESCRIPTIONS = {
     "settings_catalogue.gd": "Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.",
     "hive_cell.gd": "One cell: contents, brood, honey ripening, how it draws.",
     "hive.gd": "The comb as a whole: cells, navigation, finding a cell.",
-    "main.gd": "Per-frame entry point, everything not yet split out of main.",
+    "main.gd": "Per-frame entry point and run wiring; headless scenario boot lives in headless/scenario_boot.gd.",
     "bee_foraging.gd": "The forager's search, scouting, recruitment and species-preference\n"
                         "behaviour.",
     "challenge_runner.gd": "The stage machine, goal checks and stage effects.",
