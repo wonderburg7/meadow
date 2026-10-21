@@ -177,7 +177,6 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | SG-2, SG-3 -- short-term goals offered, paid and saved in runs, then shown in the Goals drop-down | `plans/now/short-term-goals.md` |
 | SP-6, SP-11 -- comb and bee art: the cup-rim rings, the meadow forager sheet | `plans/now/sprites.md` |
 | T2-10 to T2-13, T2-7b -- tier two: Automation wakes miners, comb cadence, bodies on a role change, the deferred price sweep | `plans/now/tier-two.md` |
-| TS-1, TS-2 -- every typeface the same width at the same text scale | `plans/now/typeface-size.md` |
 | WP-2, WP-3 -- Work Priorities: each bee's backup an ordered list, a colony default | `plans/now/work-priorities.md` |
 | L-27 to L-30 -- the slice lifecycle: re-verify a resumed finish, keep the next queue block, measure subagents, show released work | `plans/now/agent-lifecycle.md` |
 | CQ-L1 to CQ-R14 -- code health: gdlint in verify, static typing, entities owning their save fields, named data and magic numbers, splits by responsibility | `plans/now/code-health.md` (research: `docs/code-health-research-2026-10-18.md`) |
