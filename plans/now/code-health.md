@@ -99,7 +99,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 
 | Slice | Outcome | Files it owns (block has the full list) | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CQ-L1 | gdlint in verify with Dave's thresholds | `gdlintrc`, `tools/gdscript_style.py`, `tools/verify.ps1`, 13 hit sites | after RR-10 | medium |
+| CQ-L1 | gdlint in verify with Dave's thresholds | `gdlintrc`, `tools/gdscript_style.py`, `tools/verify.ps1`, 13 hit sites | yes (RR-10 and L-30 landed 18 Oct 2026) | medium |
 | CQ-L2 | every tool that reads GDScript as text survives `gdformat` | `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, tests | after CQ-L1 | medium |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
 | CQ-T2 | run, world and save glue typed | 20 scripts | gated: CQ-R1, CQ-M2 | low |
@@ -154,9 +154,9 @@ claim while `dry_after`).
   `tests/source_checks.py` (T1, M1, L2). CQ-S4 comes after CQ-R3 and CQ-R4 have
   settled `bee.gd`.
 - **Other plans:**
-  - RR-10 (`plans/now/run-repairs.md`, Codex lane) holds `hive.gd` and
-    `skill_tree_panel.gd`: CQ-L1 waits for it.
-  - L-30 (`plans/now/agent-lifecycle.md`) holds `tools/verify.ps1`: CQ-L1 runs after it.
+  - RR-10 (`plans/now/run-repairs.md`, Codex lane) held `hive.gd` and
+    `skill_tree_panel.gd`; it landed 18 Oct 2026, clearing CQ-L1.
+  - L-30 (`plans/now/agent-lifecycle.md`) held `tools/verify.ps1`; it landed 18 Oct 2026, clearing CQ-L1.
   - HP-3 (`plans/archive/hot-path-cadence_2026-10-18.md`) changes `bee.gd::_process`: CQ-R4 profiles
     after it.
   - T2-12, T2-13 and T2-14 (`plans/now/tier-two.md`) hold `hud.gd` and `bee.gd`, and
