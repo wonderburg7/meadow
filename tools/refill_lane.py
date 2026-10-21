@@ -288,7 +288,12 @@ def rejection(entry: backlog.Entry, text: str, root: Path,
     proof_errors: list[str] = []
     check_docs.validate_queue_proof(entry.body, 0, root, proof_errors)
     if proof_errors:
-        return "its proof no longer holds -- it may already be built"
+        # A malformed Proof: is a planning fault, not built work; FR-1b's
+        # `contains:` hid behind the "already built" wording and left the
+        # Codex lane dry at AR-5's finish (21 Oct 2026).
+        if not check_docs.proof_error_is_shape(proof_errors[0]):
+            return "its proof no longer holds -- it may already be built"
+        return f"its block's {proof_errors[0].removeprefix('NEXTSTEPS.md item 0: ')}"
     other = [lane for lane in check_docs.LANES if lane != entry.lane]
     shared = check_docs._item_files(entry.body) & lane_files(text, other[0])
     if shared:

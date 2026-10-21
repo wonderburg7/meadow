@@ -89,6 +89,34 @@ class DryLaneReportTest(unittest.TestCase):
                 deferred_queue, "Codex", "X-1", root, entries)
             self.assertTrue(deferred["successor_deferred"])
 
+    def test_malformed_block_proof_is_named_not_called_built(self):
+        # FR-1b's `contains:` proof was refused as "may already be built" and
+        # passed check_docs, so AR-5's finish found the Codex lane dry.
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]) as directory:
+            root = Path(directory)
+            (root / "plans").mkdir()
+            (root / "target.py").write_text("marker\n", encoding="utf-8")
+            plan = root / "plans" / "M-1.md"
+            plan.write_text(
+                "## M-1 -- example\n\n```queue\n"
+                "**[Codex] M-1 -- example**\n"
+                "- Plan: `plans/M-1.md` -- example\n"
+                "- Files: `target.py`\n- Check: example\n"
+                "- Proof: `contains: target.py :: marker`\n"
+                "- Next after: none -- complete\n```\n",
+                encoding="utf-8",
+            )
+            entries, problems = backlog.collect([plan], root)
+            self.assertEqual([], problems)
+            queue = "## Next up\n\n### Claude lane\n\n### Codex lane\n\n"
+            reason = refill_lane.rejection(entries[0], queue, root)
+            self.assertIn("must start with 'present:' or 'absent:'", reason)
+            self.assertNotIn("already be built", reason)
+            errors, warnings = [], []
+            check_docs.check_plan_queue_blocks(errors, warnings, queue, root, entries)
+            self.assertTrue(any("M-1's queue block" in error and "contains:" in error
+                                for error in errors), errors)
+
 
 if __name__ == "__main__":
     unittest.main()

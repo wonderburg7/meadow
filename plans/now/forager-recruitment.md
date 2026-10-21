@@ -122,7 +122,7 @@ both conditions, stop for Dave with the failed sweep evidence and choices.
 - Plan: `plans/now/forager-recruitment.md` -- "FR-1b -- tune the measured foraging-stage order"
 - Files: `tools/forager_tuning.py`, `tests/test_forager_tuning.py`, `test_scenarios/fr1_forager_stages_test.json`, `plans/now/forager-recruitment.md`
 - Check: `python -m unittest tests.test_forager_tuning` passes; `python tools/forager_tuning.py` records the five-seed stage table and chosen existing values in this section; `tools/verify.ps1` is green
-- Proof: `contains: plans/now/forager-recruitment.md :: Auto-recruitment is at least 30% above Auto scouting`
+- Proof: `present: plans/now/forager-recruitment.md :: Next: FR-1b -- tune the measured foraging-stage order`
 - Next after: FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
 ```
 
