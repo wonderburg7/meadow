@@ -43,9 +43,9 @@ func _run() -> void:
 	var ahead := Node2D.new()
 	ahead.position = Vector2(110, 0)
 	var nodes: Array = [behind, ahead]
-	var accept := func(_f): return true
+	var accept := func(_f: Variant) -> bool: return true
 	var ahead_picks := 0
-	for i in 400:
+	for i: int in 400:
 		if BeeForaging._weighted_flower_choice(bee, nodes, accept, 500.0) == ahead:
 			ahead_picks += 1
 	_expect(failures, ahead_picks > 0, "weighted choice sometimes takes the farther flower ahead")
@@ -57,7 +57,7 @@ func _run() -> void:
 		print("T3_1 PASS")
 		quit(0)
 	else:
-		for failure in failures:
+		for failure: String in failures:
 			print("T3_1 FAIL ", failure)
 		quit(1)
 

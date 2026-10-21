@@ -48,7 +48,7 @@ func _boot() -> void:
 
 
 func _run() -> void:
-	var cell = _make_cell(true)
+	var cell: Polygon2D = _make_cell(true)
 	_check(cell.EMPTY_RIM.size() == 6, "EMPTY_RIM has %d points, not six" % cell.EMPTY_RIM.size())
 	var rings := {
 		"selection_ring": cell.cell_size + 2.0,
@@ -57,34 +57,34 @@ func _run() -> void:
 		"zone_glow": cell.cell_size + 4.0,
 		"outline": cell.cell_size,
 	}
-	for ring_name in rings:
+	for ring_name: Variant in rings:
 		_check_cup_ring(cell, ring_name, cell.get(ring_name), rings[ring_name])
 	cell.queue_free()
 
-	var flat = _make_cell(false)
-	for ring_name in rings:
+	var flat: Polygon2D = _make_cell(false)
+	for ring_name: Variant in rings:
 		var line: Line2D = flat.get(ring_name)
 		_check(line != null and line.points.size() == 7,
 			"Cell art off: %s is not the hexagon" % ring_name)
 		if line != null and line.points.size() == 7:
 			var hex: PackedVector2Array = flat.Shapes.hexagon_points(rings[ring_name], flat.squashed)
-			for i in 6:
+			for i: int in 6:
 				if not line.points[i].is_equal_approx(hex[i]):
 					_fail("Cell art off: %s point %d is not the hexagon corner" % [ring_name, i])
 	flat.queue_free()
 	_session.use_cell_sprites = true
 
 
-func _make_cell(cell_art: bool):
+func _make_cell(cell_art: bool) -> Polygon2D:
 	_session.use_cell_sprites = cell_art
-	var cell = _main.HiveCell.new()
+	var cell: Polygon2D = _main.HiveCell.new()
 	cell.axial = Vector2i(40, 40)
 	cell.main = _main
 	_main.hive_root.add_child(cell)
 	return cell
 
 
-func _check_cup_ring(cell, ring_name: String, line: Line2D, size: float) -> void:
+func _check_cup_ring(cell: Polygon2D, ring_name: String, line: Line2D, size: float) -> void:
 	if line == null:
 		_fail("%s is missing" % ring_name)
 		return
@@ -94,13 +94,13 @@ func _check_cup_ring(cell, ring_name: String, line: Line2D, size: float) -> void
 		return
 	var local: Array = []
 	var centre := Vector2.ZERO
-	for p in cell.EMPTY_RIM:
+	for p: Vector2 in cell.EMPTY_RIM:
 		var q: Vector2 = cell._silhouette_point_to_local(p)
 		local.append(q)
 		centre += q
 	centre /= 6.0
 	var k: float = size / cell.cell_size
-	for i in 6:
+	for i: int in 6:
 		var want: Vector2 = centre + (local[i] - centre) * k
 		if not pts[i].is_equal_approx(want):
 			_fail("%s point %d is %s, not %s" % [ring_name, i, pts[i], want])
@@ -122,6 +122,6 @@ func _report() -> void:
 		print("SP11 PASS")
 		quit(0)
 	else:
-		for line in _failures:
+		for line: String in _failures:
 			print("SP11 FAIL: " + line)
 		quit(1)

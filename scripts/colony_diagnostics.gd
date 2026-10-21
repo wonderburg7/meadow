@@ -8,12 +8,12 @@ extends RefCounted
 const Roles = preload("res://scripts/roles.gd")
 
 static func compute(main: Node2D, bees: Array, counts: Dictionary) -> Dictionary:
-	var starving = 0
-	var hungry = 0
-	var waiting_for_work = 0
-	var travelling_for_work = 0
-	var no_available_work = 0
-	for b in bees:
+	var starving: int = 0
+	var hungry: int = 0
+	var waiting_for_work: int = 0
+	var travelling_for_work: int = 0
+	var no_available_work: int = 0
+	for b: Variant in bees:
 		if b.energy < GameConfig.energy_capacity * 0.15:
 			starving += 1
 		elif b.energy < GameConfig.energy_capacity * GameConfig.low_energy_warning_level:
@@ -34,14 +34,14 @@ static func compute(main: Node2D, bees: Array, counts: Dictionary) -> Dictionary
 	# every cell fresh -- the hive only re-scans its cells when a
 	# build/hatch/designation/load actually changed one, not once a second
 	# regardless.
-	var hungry_brood = 0
+	var hungry_brood: int = 0
 	var brood_cells: Array = main.hive.cells_holding("brood")
-	for cell in brood_cells:
+	for cell: Variant in brood_cells:
 		if cell.brood_fed_seconds <= 0.0:
 			hungry_brood += 1
 	var blocked_cells: int = main.hive.cells_holding("corpse").size()
-	var free_cells = 0
-	for cell in main.hive.cells_holding(""):
+	var free_cells: int = 0
+	for cell: Variant in main.hive.cells_holding(""):
 		if not cell.keep_empty:
 			free_cells += 1
 
@@ -62,7 +62,7 @@ static func compute(main: Node2D, bees: Array, counts: Dictionary) -> Dictionary
 	var rain_grounded_foragers := 0
 	var rain_unable_foragers := 0
 	var food_cover_minutes := 0
-	var crisis = main.get("first_crisis")
+	var crisis: Variant = main.get("first_crisis")
 	if typeof(crisis) == TYPE_DICTIONARY and str(crisis.get("state", "")) == "active":
 		var readiness: Dictionary = crisis_readiness(main, bees, false, GameConfig.rain_max_seconds)
 		crisis_rain = 1
@@ -115,7 +115,7 @@ static func crisis_readiness(main: Node2D, bees: Array, skill_owned: bool, rain_
 	var foragers_outside := 0
 	var bee_energy := 0.0
 	var season_stopped: bool = main.season != null and is_instance_valid(main.season) and main.season.foraging_stopped()
-	for b in bees:
+	for b: Variant in bees:
 		bee_energy += b.energy
 		if b.is_queen or b.is_drone or b.is_gyne or b.role != Roles.FORAGER:
 			continue

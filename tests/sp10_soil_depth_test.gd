@@ -55,7 +55,7 @@ func _boot() -> void:
 
 func _run() -> void:
 	var blocks: Array = []
-	for child in _main.hive_root.get_children():
+	for child: Node in _main.hive_root.get_children():
 		if is_instance_of(child, _main.SoilBlock) or is_instance_of(child, _main.RockBlock):
 			blocks.append(child)
 	_check(blocks.size() > 0, "a fresh hive has no soil or rock blocks")
@@ -64,28 +64,28 @@ func _run() -> void:
 	if blocks.size() > 0:
 		_add_cell_beside(blocks[0])
 	var cells: Array = []
-	for child in _main.hive_root.get_children():
+	for child: Node in _main.hive_root.get_children():
 		if is_instance_of(child, _main.HiveCell):
 			cells.append(child)
 	_check(cells.size() > 0, "a fresh hive has no comb cells")
 
-	for block in blocks:
+	for block: Variant in blocks:
 		var want: int = Shapes.hex_draw_depth(block.axial)
 		if block.z_index != want:
 			_fail("block at %s has z_index %d, not hex_draw_depth %d" % [block.axial, block.z_index, want])
 
 	# Screen order: whatever sits lower on screen must draw over whatever
 	# sits higher, for every pair of blocks.
-	for a in blocks:
-		for b in blocks:
+	for a: Variant in blocks:
+		for b: Variant in blocks:
 			if b.position.y > a.position.y and not b.z_index > a.z_index:
 				_fail("block at %s is lower on screen than %s but z_index %d is not above %d"
 					% [b.axial, a.axial, b.z_index, a.z_index])
 
 	# A comb cell and a block on neighbouring hexes order the same way.
 	var neighbours := 0
-	for cell in cells:
-		for block in blocks:
+	for cell: Variant in cells:
+		for block: Variant in blocks:
 			if Shapes.hex_distance(cell.axial, block.axial) != 1:
 				continue
 			neighbours += 1
@@ -106,15 +106,15 @@ const NEIGHBOUR_STEPS: Array[Vector2i] = [
 ## A comb cell on a free hex beside the block, placed the way world_building
 ## places one: the block's position plus the hex step on the same grid. Its
 ## _ready sets the z_index under test, exactly as for a comb cell.
-func _add_cell_beside(block) -> void:
+func _add_cell_beside(block: Variant) -> void:
 	# Autoloads are reached through the tree, as in _boot.
 	var spacing: float = root.get_node("GameConfig").hive_cell_spacing
 	var squashed: bool = _session.use_sprite_hex_grid
-	for step in NEIGHBOUR_STEPS:
+	for step: Variant in NEIGHBOUR_STEPS:
 		var hex: Vector2i = block.axial + step
 		if _hex_has_block_or_cell(hex):
 			continue
-		var cell = _main.HiveCell.new()
+		var cell: Polygon2D = _main.HiveCell.new()
 		cell.axial = hex
 		cell.main = _main
 		cell.position = block.position + Shapes.hex_to_pixel(step.x, step.y, spacing, squashed)
@@ -124,7 +124,7 @@ func _add_cell_beside(block) -> void:
 
 
 func _hex_has_block_or_cell(hex: Vector2i) -> bool:
-	for child in _main.hive_root.get_children():
+	for child: Node in _main.hive_root.get_children():
 		if child.get("axial") == hex:
 			return true
 	return false
@@ -144,6 +144,6 @@ func _report() -> void:
 		print("SP10 PASS")
 		quit(0)
 	else:
-		for line in _failures:
+		for line: String in _failures:
 			print("SP10 FAIL: " + line)
 		quit(1)

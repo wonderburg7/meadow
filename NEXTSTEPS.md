@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] T2-12 -- Dig on its own is offered only once Automation is owned**
-   - Plan: `plans/now/tier-two.md` -- "T2-12 -- Dig on its own is offered only once Automation is owned"
-   - Files: `scripts/hud.gd`, `tests/t2_12_automine_offer_test.gd`, `tests/test_t2_12_automine_offer.py`
-   - Check: `python -m unittest tests.test_t2_12_automine_offer` passes: without Automation a selected miner's Job panel shows no "Dig on its own" toggle and a cell's raise menu offers no "Miner — Dig on its own"; with Automation owned both are offered.
-   - Proof: `present: scripts/hud.gd :: the Miner's "Dig on its own" has shown regardless`
-   - Next after: T2-7b -- the tier-2 price sweep T2-7 deferred
-
-2. **[Claude] T2-13 -- a bee whose role changes while it carries a body puts the body down**
-   - Plan: `plans/now/tier-two.md` -- "T2-13 -- a bee whose role changes while it carries a body puts the body down"
-   - Files: `scripts/bee.gd`, `tests/t2_13_carried_body_test.gd`, `tests/test_t2_13_carried_body.py`
-   - Check: `python -m unittest tests.test_t2_13_carried_body` passes: a comb worker inside the hive that has lifted a body, made a Forager, has `carrying_corpse` and `corpse_is_bee` false, `hive.bodies` is one longer, and once given 30 nectar its `carrying_text()` names the nectar, not a dead bee; a comb worker carrying a dead larva, made a Forager, has `carrying_corpse` false and `hive.bodies` unchanged; `python -m unittest tests.test_t2_4b_bodies` still passes.
-   - Proof: `absent: scripts/bee.gd :: func _put_down_body(`
-   - Next after: T2-7b -- the tier-2 price sweep T2-7 deferred
-
-3. **[Claude] CQ-T1 -- rules, simulation and gd tests typed, with the warning on**
-   - Plan: `plans/now/code-health.md` -- "CQ-T1 -- rules, simulation and gd tests typed, with the warning on"
-   - Files: `project.godot`, `tests/source_checks.py`, `tests/test_source_checks.py`, `scripts/conditions.gd`, `scripts/year_winter.gd`, `scripts/skills.gd`, `scripts/season.gd`, `scripts/availability.gd`, `scripts/resources.gd`, `scripts/adaptations.gd`, `scripts/colony_diagnostics.gd`, `scripts/pollination.gd`, `scripts/bee_foraging.gd`, `scripts/bee_nursery.gd`, `scripts/bee_honey.gd`, `scripts/colony_milestones.gd`, `scripts/guidance_policy.gd`, `scripts/foraging_stats.gd`, `scripts/bee.gd`, `scripts/run_availability.gd`, `scripts/progression.gd`, `scripts/features.gd`, `scripts/bee_building.gd`, `scripts/rival_hive.gd`, `scripts/hive_cell.gd`, `scripts/flower.gd`, `scripts/bee_mining.gd`, `scripts/bee_egg_laying.gd`, `tests/t2_4b_bodies_test.gd`, `tests/t2_11_comb_cadence_test.gd`, `tests/pp5_priority_cells_test.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/sp11_cell_rim_test.gd`, `tests/col7_gyne_window_test.gd`, `tests/rr9_winter_ages_nothing_test.gd`, `tests/t2_10_automine_wake_test.gd`, `tests/si2_exact_rollback_test.gd`, `tests/col8_winter_dieback_test.gd`, `tests/t3_1_weighted_choice_test.gd`, `tests/sp10_soil_depth_test.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/bs14_saved_skill_policy_test.gd`, `tests/rr2_boot_saves_test.gd`, `tests/gp4_problem_strip_test.gd`, `FUNCTION_MAP.md`
-   - Check: the `TYPED_FILES` source check reports zero untyped declarations in every listed script and test; `python tools/gdscript_warnings.py` on the listed scripts prints no warning; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` matches; `.\tools\verify.ps1` is green
-   - Proof: `absent: project.godot :: untyped_declaration`
-   - Next after: CQ-T2
-
-4. **[Claude] CQ-M1 -- parity checks for two hand-copied lists**
-   - Plan: `plans/now/code-health.md` -- "CQ-M1 -- parity checks for two hand-copied lists"
-   - Files: `tests/source_checks.py`, `tests/test_source_checks.py`
-   - Check: both checks pass on today's tree and fail on their mutated inputs in `tests/test_source_checks.py`; `.\tools\verify.ps1` is green
-   - Proof: `absent: tests/source_checks.py :: scenario_presets.gd`
-   - Next after: CQ-M2
-
-5. **[Claude] CQ-M2 -- the starving threshold becomes a GameConfig row**
+1. **[Claude] CQ-M2 -- the starving threshold becomes a GameConfig row**
    - Plan: `plans/now/code-health.md` -- "CQ-M2 -- the starving threshold becomes a GameConfig row"
    - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/colony_diagnostics.gd`, `scripts/problem_messages.gd`, `scripts/year_winter.gd`, `docs/agent-rules.md`, `FUNCTION_MAP.md`
    - Check: `tests/test_colony_diagnostics.py`, `tests/test_signal_catalogue.py` and the settings-row source checks pass; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` matches; `.\tools\verify.ps1` is green
    - Proof: `present: scripts/colony_diagnostics.gd :: GameConfig.energy_capacity * 0.15`
    - Next after: CQ-M3
+
+2. **[Claude] CQ-R0 -- display-text golden harness**
+   - Plan: `plans/now/code-health.md` -- "CQ-R0 -- display-text golden harness"
+   - Files: `tests/display_text_golden_test.gd`, `tests/test_display_text_golden.py`, `tests/fixtures/display_text_golden.json`, `.claude/rules/gdscript.md`
+   - Check: `python -m unittest tests.test_display_text_golden` passes against the master capture and fails when one character of a captured string is changed; `.\tools\verify.ps1` is green
+   - Proof: `absent: .claude/rules/gdscript.md :: display_text_golden`
+   - Next after: CQ-R7
+
+3. **[Claude] CQ-R1 -- headless scenario boot leaves main.gd**
+   - Plan: `plans/now/code-health.md` -- "CQ-R1 -- headless scenario boot leaves main.gd"
+   - Files: `scripts/main.gd`, `scripts/headless/scenario_boot.gd`, `scripts/scenario_actions.gd`, `scripts/diagnostic_log.gd`, `scripts/scenario_presets.gd`, `tools/update_function_map.py`, `FUNCTION_MAP.md`, `.claude/rules/gdscript.md`, `docs/agent-rules.md`
+   - Check: `tests/test_run_scenario_launch.py` passes; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` and `test_scenarios/sv1_named_saves_test.json` match; a performance-capture scenario still writes its capture; `.\tools\verify.ps1` is green
+   - Proof: `present: scripts/main.gd :: func _apply_scenario_boot_arg(`
+   - Next after: CQ-R2
+
+4. **[Claude] TS-2 -- the HUD's own size overrides follow the typeface too**
+   - Plan: `plans/now/typeface-size.md` -- "TS-2 -- the HUD's own size overrides"
+   - Files: `scripts/hud.gd`, `tests/ts2_hud_typeface_size_test.gd`, `tests/test_ts2_hud_typeface_size.py`
+   - Check: `python -m unittest tests.test_ts2_hud_typeface_size` passes: with OpenDyslexic at text scale 1, the corner readouts and goal lines carry `UiTheme.font_px` of their base sizes, and switching typeface rebuilds the corner.
+   - Proof: `absent: scripts/hud.gd :: UiTheme.font_px`
+   - Next after: none -- plans/now/typeface-size.md is complete
+
+5. **[Claude] WP-2 -- owned, each bee follows an ordered backup list**
+   - Plan: `plans/now/work-priorities.md` -- "WP-2 -- owned, each bee follows an ordered backup list"
+   - Files: `scripts/bee.gd`, `scripts/session.gd`, `scripts/skills.gd`, `scripts/orders_zones.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/wp2_backup_order_test.gd`, `tests/test_wp2_backup_order.py`
+   - Check: `python -m unittest tests.test_wp2_backup_order` passes (unowned, a bee falls back on its one backup as today; owned, an idle bee whose role and first backup have no work takes the next job on its list that does; a bee born after purchase takes the colony default; the lists and the default survive save and restore; an old save loads each bee with its backup first); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/bee.gd :: backup_order`
+   - Next after: WP-3 -- the ordered list in the selection panel and the colony default
 
 ### Codex lane
 
@@ -91,9 +91,8 @@ One line each: the id, its plan, and the single thing it waits for.
 - **PP-6** (`plans/now/pollination.md`) -- the sweep prices the gyne route so Gyne rearing is first affordable in the 11 days after the first winter; waits for FR-2, which puts Auto scouting on the route (Dave, 14 Oct 2026), and AR-5 (`plans/now/alpha-route-evidence.md`), whose reference queen lays early (Dave, 16 Oct 2026).
 - **FR-2** (`plans/now/forager-recruitment.md`) -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight; waits for FR-1b (Codex backlog) to tune the stage order FR-1 measured, so Auto scouting forages better (FR-1 landed 17 Oct 2026; Dave, 14 Oct 2026).
 - **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-6, which shares `scripts/skills.gd`.
-- **RR-11** (`plans/now/run-repairs.md`) -- nectar shows a pre-fermented warning colour before it ferments (Dave, 15 Oct 2026); waits for RR-10 (Codex lane), whose test it extends (SP-11 landed 15 Oct 2026, releasing `scripts/hive_cell.gd`).
-- **T2-14** (`plans/now/tier-two.md`) -- a comb worker's idle reason asks whether there is room to build, without starting a site (found by T2-11, which landed 17 Oct 2026); waits for RR-10 (Codex lane) to release `scripts/hive.gd`, and runs after T2-13 (both edit `scripts/bee.gd`).
 - **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices of the alpha chain (WP-2, SG-2, ED-1, ED-2, RR-12, SP-8a) and ED-3 (Dave, 18 Oct 2026), and for CQ-S0's round-trip harness.
+- **CQ-T2** (`plans/now/code-health.md`) -- the run, world and save glue typed (20 scripts), the second typing slice; waits for CQ-R1 (`scripts/main.gd`, `scripts/scenario_actions.gd`, `scripts/diagnostic_log.gd`) and CQ-M2 (`scripts/settings_catalogue.gd`), Claude-lane slices that edit its files (CQ-T1 landed 21 Oct 2026).
 ## Copy-paste prompts
 
 Claude, implementing: `Implement the next slice.`

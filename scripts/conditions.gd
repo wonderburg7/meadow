@@ -12,22 +12,22 @@ const Roles = preload("res://scripts/roles.gd")
 const Resources = preload("res://scripts/resources.gd")
 
 
-static func met(main, spec: Dictionary) -> bool:
-	for key in spec:
+static func met(main: Node2D, spec: Dictionary) -> bool:
+	for key: Variant in spec:
 		if not _met_key(main, str(key), spec[key]):
 			return false
 	return true
 
 
-static func progress(main, spec: Dictionary) -> Dictionary:
-	for key in spec:
+static func progress(main: Node2D, spec: Dictionary) -> Dictionary:
+	for key: Variant in spec:
 		var result := _progress_key(main, str(key), spec[key])
 		if not result.is_empty():
 			return result
 	return {}
 
 
-static func _met_key(main, key: String, value) -> bool:
+static func _met_key(main: Node2D, key: String, value: Variant) -> bool:
 	match key:
 		"day_at_least":
 			return main.day >= int(value)
@@ -73,12 +73,12 @@ static func _met_key(main, key: String, value) -> bool:
 		"gynes_released_at_least":
 			return Session.gynes_released >= int(value)
 		"all_of":
-			for child in value:
+			for child: Variant in value:
 				if not met(main, child):
 					return false
 			return true
 		"any_of":
-			for child in value:
+			for child: Variant in value:
 				if met(main, child):
 					return true
 			return false
@@ -93,7 +93,7 @@ static func _met_key(main, key: String, value) -> bool:
 			return false
 
 
-static func _progress_key(main, key: String, value) -> Dictionary:
+static func _progress_key(main: Node2D, key: String, value: Variant) -> Dictionary:
 	match key:
 		"day_at_least":
 			return {"current": main.day, "target": int(value)}
@@ -136,14 +136,14 @@ static func _progress_key(main, key: String, value) -> Dictionary:
 		"gynes_released_at_least":
 			return {"current": Session.gynes_released, "target": int(value)}
 		"all_of", "any_of":
-			for child in value:
+			for child: Variant in value:
 				var result := progress(main, child)
 				if not result.is_empty():
 					return result
 	return {}
 
 
-static func _role_count(main, spec: Dictionary) -> int:
+static func _role_count(main: Node2D, spec: Dictionary) -> int:
 	var role_id := Roles.id_for_key(str(spec.get("role", "")))
 	if role_id < 0:
 		return 0
@@ -151,22 +151,22 @@ static func _role_count(main, spec: Dictionary) -> int:
 	if role_id != Roles.FORAGER or spec.has("focus"):
 		return int(counts.get(Roles.count_key(role_id, str(spec.get("focus", ""))), 0))
 	var total := 0
-	for focus in Roles.modes_for(role_id):
+	for focus: Variant in Roles.modes_for(role_id):
 		total += int(counts.get(Roles.count_key(role_id, str(focus.key)), 0))
 	return total
 
 
-static func _cached_cells(main) -> Array:
+static func _cached_cells(main: Node2D) -> Array:
 	var cells: Array = []
-	for content in Resources.content_keys():
+	for content: String in Resources.content_keys():
 		cells.append_array(main.hive.cells_holding(content))
 	return cells
 
 
-static func _cell_count(main, spec: Dictionary) -> int:
+static func _cell_count(main: Node2D, spec: Dictionary) -> int:
 	var cells: Array = main.hive.cells_holding(str(spec.get("content", ""))) if spec.has("content") else _cached_cells(main)
 	var count := 0
-	for cell in cells:
+	for cell: Variant in cells:
 		if spec.has("designated") and cell.designated_type != str(spec["designated"]):
 			continue
 		if spec.has("explicit") and cell.designation_is_explicit != bool(spec["explicit"]):
@@ -175,7 +175,7 @@ static func _cell_count(main, spec: Dictionary) -> int:
 	return count
 
 
-static func _built_cell_count(main) -> int:
+static func _built_cell_count(main: Node2D) -> int:
 	return _cached_cells(main).size()
 
 
@@ -186,7 +186,7 @@ static func _skill_owned(skill_id: String) -> bool:
 	return Session.progression != null and Session.progression.is_owned(skill_id)
 
 
-static func _disease(main) -> float:
+static func _disease(main: Node2D) -> float:
 	if main.season == null or not is_instance_valid(main.season):
 		return 0.0
 	return main.season.disease
@@ -201,7 +201,7 @@ static func _disease(main) -> float:
 ## something arrived, so a store that sat at zero is not a stable income.
 ## An empty result means the window is not full yet -- a new run, or the
 ## first days after a load, since the samples are not saved.
-static func _net_income(main, spec: Dictionary) -> Dictionary:
+static func _net_income(main: Node2D, spec: Dictionary) -> Dictionary:
 	var samples: Array = main.day_store_totals
 	var days: int = maxi(1, int(spec.get("days", 1)))
 	if samples.size() <= days:
@@ -217,9 +217,9 @@ static func _net_income(main, spec: Dictionary) -> Dictionary:
 
 ## CR-2: every adult other than the queen, gynes included, from main's cached
 ## role counts (which count every bee, the queen among them).
-static func _non_queen_adults(main) -> int:
+static func _non_queen_adults(main: Node2D) -> int:
 	var total := 0
-	for count in main._role_counts().values():
+	for count: Variant in main._role_counts().values():
 		total += int(count)
 	if main.queen != null and is_instance_valid(main.queen):
 		total -= 1
@@ -235,11 +235,11 @@ static func _non_queen_adults(main) -> int:
 ## earlier verdict says nothing about the colony winter finds, and a met
 ## milestone is never re-checked. The bee count is the whole population, queen
 ## included, as main's panel refresh passes it.
-static func _winter_ready(main) -> bool:
+static func _winter_ready(main: Node2D) -> bool:
 	if not Session.winter_coming or Session.winter_here:
 		return false
 	var bees := 0
-	for count in main._role_counts().values():
+	for count: Variant in main._role_counts().values():
 		bees += int(count)
 	var forecast: Dictionary = main.year_winter._winter_forecast(bees)
 	if float(forecast.get("days_left", INF)) > 1.0:
@@ -255,5 +255,5 @@ static func _winter_over() -> bool:
 
 ## CR-2: `{"brood_stage": {"stage": "egg", "at_least": 1}}`, brood cells in one
 ## stage of hive.gd's own egg/larva/capped split.
-static func _brood_stage(main, spec: Dictionary) -> int:
+static func _brood_stage(main: Node2D, spec: Dictionary) -> int:
 	return int(main.hive.brood_stage_counts().get(str(spec.get("stage", "")), 0))

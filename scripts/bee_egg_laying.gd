@@ -24,7 +24,7 @@ static func has_room_for_egg(bee: Node2D) -> bool:
 ## raise a gyne, that's the next egg. An unmated queen lays only drones,
 ## at a worker egg's cost, whatever the cell asks for (COL-9).
 static func pollen_needed_for_next_egg(bee: Node2D) -> float:
-	var next = bee.hive.find_empty_cell()
+	var next: Variant = bee.hive.find_empty_cell()
 	if bee.is_mated and next != null and is_instance_valid(next) and next.hatch_gyne:
 		return GameConfig.gyne_egg_pollen_cost
 	return GameConfig.egg_pollen_cost

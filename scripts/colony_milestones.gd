@@ -114,7 +114,7 @@ func applies() -> bool:
 func evaluate() -> void:
 	if main == null or not applies():
 		return
-	for milestone in MILESTONES:
+	for milestone: Dictionary in MILESTONES:
 		var id: String = milestone.id
 		if met_days.has(id):
 			continue
@@ -152,24 +152,24 @@ func save_data() -> Dictionary:
 ## empty dictionary -- a save from before CR-2 -- means nothing met.
 func restore(data: Dictionary) -> void:
 	met_days.clear()
-	for milestone in MILESTONES:
+	for milestone: Dictionary in MILESTONES:
 		var id: String = milestone.id
-		var day = data.get(id)
+		var day: Variant = data.get(id)
 		if typeof(day) == TYPE_INT or typeof(day) == TYPE_FLOAT:
 			met_days[id] = int(day)
-	var won = data.get(VICTORY)
+	var won: Variant = data.get(VICTORY)
 	if typeof(won) == TYPE_INT or typeof(won) == TYPE_FLOAT:
 		met_days[VICTORY] = int(won)
 	# COL-7: a record from before the points restores 0.
 	genetic_points = 0
-	var points = data.get(GENETIC_POINTS)
+	var points: Variant = data.get(GENETIC_POINTS)
 	if typeof(points) == TYPE_INT or typeof(points) == TYPE_FLOAT:
 		genetic_points = maxi(0, int(points))
 	# GP-2: keep only ids this file knows; a record without the key has none.
 	favourites.clear()
-	var starred = data.get(FAVOURITES)
+	var starred: Variant = data.get(FAVOURITES)
 	if typeof(starred) == TYPE_ARRAY:
-		for id in starred:
+		for id: Variant in starred:
 			if _is_goal_id(str(id)) and not favourites.has(str(id)):
 				favourites.append(str(id))
 
@@ -178,7 +178,7 @@ func restore(data: Dictionary) -> void:
 func _is_goal_id(id: String) -> bool:
 	if id == LONG_TERM:
 		return true
-	for milestone in MILESTONES:
+	for milestone: Dictionary in MILESTONES:
 		if milestone.id == id:
 			return true
 	return false
@@ -207,7 +207,7 @@ func _favourite_met_day(id: String) -> int:
 ## met; once the day has changed it is removed and unstarred. Derived from the
 ## saved days, so a load mid-day keeps it and a load after it drops it.
 func _drop_stale_favourites() -> void:
-	for id in favourites.duplicate():
+	for id: Variant in favourites.duplicate():
 		var met: int = _favourite_met_day(str(id))
 		if met >= 0 and main.day > met:
 			favourites.erase(id)
@@ -246,7 +246,7 @@ func show_next() -> void:
 	var done_day := -1
 	var next_id := ""
 	var done_id := ""
-	for milestone in MILESTONES:
+	for milestone: Dictionary in MILESTONES:
 		var id: String = milestone.id
 		if met_days.has(id):
 			if int(met_days[id]) >= done_day:
@@ -269,7 +269,7 @@ func show_next() -> void:
 		entries.append({"id": done_id, "text": done_goal, "done": true, "starred": favourites.has(done_id)})
 	# A starred milestone that is met but no longer the newest met one has no
 	# line of its own in the drop-down; it still shows while collapsed.
-	for milestone in MILESTONES:
+	for milestone: Dictionary in MILESTONES:
 		var id: String = milestone.id
 		if favourites.has(id) and met_days.has(id) and id != done_id:
 			entries.append({"id": id, "text": milestone.goal, "done": true, "starred": true, "extra": true})

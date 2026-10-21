@@ -73,8 +73,8 @@ func _boot() -> void:
 
 
 func _check_content() -> void:
-	var hud = _main.hud
-	var ms = _main.colony_milestones
+	var hud: CanvasLayer = _main.hud
+	var ms: RefCounted = _main.colony_milestones
 	_check(ms.applies(), "the Colony Run's rules do not apply on level %d" % COLONY_RUN_LEVEL)
 	ms.show_next()
 	_check(hud.goals_header.visible, "no Goals header in a Colony Run")
@@ -84,7 +84,7 @@ func _check_content() -> void:
 	_check(hud.current_goal_label.visible and hud.current_goal_label.text == "Raise your first worker",
 		"the next milestone is '%s'" % hud.current_goal_label.text)
 	var ids: Array = []
-	for entry in hud.colony_goal_entries:
+	for entry: Variant in hud.colony_goal_entries:
 		ids.append(str(entry.id))
 	_check(ids == ["long_term", "first_worker"], "entries carry ids %s" % [ids])
 
@@ -121,7 +121,7 @@ func _check_content() -> void:
 	ms.evaluate()
 
 
-func _expect_line(ms, expected: String, phase: String) -> void:
+func _expect_line(ms: RefCounted, expected: String, phase: String) -> void:
 	var line: String = ms.long_term_line()
 	_check(line == expected, "%s: the line is '%s', not '%s'" % [phase, line, expected])
 
@@ -140,7 +140,7 @@ func _check_inside(label: String) -> void:
 
 
 func _check_collapsed() -> void:
-	var hud = _main.hud
+	var hud: CanvasLayer = _main.hud
 	_check(_session.goals_collapsed, "the header press did not collapse the drop-down")
 	_check(hud.goals_header.visible, "collapsed, the header is gone")
 	_check(not hud.long_term_goal_label.visible and not hud.current_goal_label.visible
@@ -148,8 +148,8 @@ func _check_collapsed() -> void:
 
 
 func _check_profile_and_challenge() -> void:
-	var hud = _main.hud
-	var profile = load("res://scripts/player_profile.gd")
+	var hud: CanvasLayer = _main.hud
+	var profile: GDScript = load("res://scripts/player_profile.gd")
 	_check(profile.PREFERENCE_KEYS.has("goals_collapsed"), "goals_collapsed is not a profile preference")
 	_session.goals_collapsed = false
 	profile.apply_to_session({"preferences": {"goals_collapsed": true}})
@@ -184,6 +184,6 @@ func _report() -> void:
 		print("GP1 PASS")
 		quit(0)
 		return
-	for failure in _failures:
+	for failure: String in _failures:
 		print("GP1 FAIL: " + failure)
 	quit(1)

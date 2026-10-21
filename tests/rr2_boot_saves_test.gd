@@ -57,9 +57,9 @@ func _check_saves() -> void:
 		# Delete must still ask, through the panel's own dialog, with no hud.
 		var deleted := [false]
 		_main.saves_panel._confirm("Delete this run", "Delete it?", "Delete it", "Keep it",
-			func(): deleted[0] = true, false)
+			func() -> void: deleted[0] = true, false)
 		var dialog: ConfirmationDialog = null
-		for child in _main.saves_panel.get_children():
+		for child: Node in _main.saves_panel.get_children():
 			if child is ConfirmationDialog:
 				dialog = child
 		_check(dialog != null and dialog.visible, "Delete showed no confirmation dialog at boot")
@@ -72,7 +72,7 @@ func _check_saves() -> void:
 		print("RR2 PASS")
 		quit(0)
 	else:
-		for line in _failures:
+		for line: String in _failures:
 			print("RR2 FAIL: ", line)
 		quit(1)
 

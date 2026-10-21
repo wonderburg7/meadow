@@ -1036,3 +1036,100 @@ class BacklogRefillTest(unittest.TestCase):
         self.assertEqual([], errors)
         self.assertTrue(any("the Claude lane holds 1 of 5" in w for w in warnings), warnings)
         self.assertTrue(any("A-9" in w for w in warnings), warnings)
+
+
+class TypedFilesRatchetTest(unittest.TestCase):
+    """CQ-T1: the static typed-file ratchet finds what Godot's
+    untyped_declaration warning finds, on one line or across several."""
+
+    def test_flags_untyped_vars_params_and_returns_only(self):
+        code = [
+            "var a = 1",
+            "var b := 1",
+            "var c: int = 1",
+            "func f(x, y: int) -> void:",
+            "func g(z):",
+            "var h = func(q): return q",
+            "func k(",
+            "\tp: int,",
+            ") -> int:",
+            "for i in range(2):",
+            "for j: int in range(2):",
+        ]
+        found = [number for number, _ in source_checks.untyped_declarations(code)]
+        self.assertEqual([1, 4, 5, 5, 6, 6, 6, 10], found)
+
+    def test_typed_files_are_clean(self):
+        problems = []
+        source_checks.check_typed_files(problems)
+        self.assertEqual([], problems)
+
+
+class HandCopiedListParityTest(unittest.TestCase):
+    """CQ-M1: BASELINE and PREFERENCE_KEYS were hand-copied and nothing
+    compared them. Each check passes on today's files and fails on a mutated
+    copy of its input."""
+
+    PRESETS = (
+        "const BASELINE := {\n"
+        '    "energy_burn_rate": 0.17,\n'
+        '    "nectar_recharge_rate": 0.5,\n'
+        '    "pollen_recharge_rate": 0.1,\n'
+        '    "winter_burn_factor": 0.15,\n'
+        "}\n"
+    )
+    CONFIG = (
+        "var energy_burn_rate: float = 0.17\n"
+        "var nectar_recharge_rate: float = 0.5\n"
+        "var pollen_recharge_rate: float = 0.1\n"
+        "var winter_burn_factor: float = 0.15\n"
+    )
+    PROFILE = 'const PREFERENCE_KEYS := [\n    "text_scale", "reduced_motion",\n]\n'
+    SETTINGS = (
+        'const SESSION_KEYS := [\n    "text_scale", "reduced_motion", '
+        '"show_crab_spiders",\n]\n'
+    )
+
+    def test_baseline_matches_game_config_defaults(self):
+        problems = []
+        source_checks.check_baseline_matches_config(problems, self.PRESETS, self.CONFIG)
+        self.assertEqual([], problems)
+
+    def test_drifted_baseline_value_is_reported(self):
+        problems = []
+        drifted = self.PRESETS.replace(
+            '"pollen_recharge_rate": 0.1', '"pollen_recharge_rate": 0.2')
+        source_checks.check_baseline_matches_config(problems, drifted, self.CONFIG)
+        self.assertTrue(any("pollen_recharge_rate" in p for p in problems), problems)
+
+    def test_baseline_key_without_a_config_default_is_reported(self):
+        problems = []
+        config = self.CONFIG.replace("var winter_burn_factor: float = 0.15\n", "")
+        source_checks.check_baseline_matches_config(problems, self.PRESETS, config)
+        self.assertTrue(any("winter_burn_factor" in p for p in problems), problems)
+
+    def test_preference_keys_cover_session_keys_except_named_exception(self):
+        problems = []
+        source_checks.check_preference_keys_cover_session(
+            problems, self.PROFILE, self.SETTINGS)
+        self.assertEqual([], problems)
+
+    def test_missing_preference_key_is_reported(self):
+        problems = []
+        profile = self.PROFILE.replace('"reduced_motion",', "")
+        source_checks.check_preference_keys_cover_session(
+            problems, profile, self.SETTINGS)
+        self.assertTrue(any("reduced_motion" in p for p in problems), problems)
+
+    def test_new_session_key_is_reported_not_silently_exempt(self):
+        problems = []
+        settings = self.SETTINGS.replace('"show_crab_spiders",', '"show_crab_spiders", "brand_new",')
+        source_checks.check_preference_keys_cover_session(
+            problems, self.PROFILE, settings)
+        self.assertTrue(any("brand_new" in p for p in problems), problems)
+        self.assertFalse(any("show_crab_spiders" in p for p in problems), problems)
+
+    def test_both_hand_copied_lists_pass_on_today_tree(self):
+        problems = []
+        source_checks.check_hand_copied_lists(problems)
+        self.assertEqual([], problems)

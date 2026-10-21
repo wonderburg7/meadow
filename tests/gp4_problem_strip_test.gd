@@ -54,7 +54,7 @@ func _line(text: String, severity: int, id: String) -> Array:
 ## The strip's rows: HBoxContainers holding the text button and the x.
 func _rows() -> Array:
 	var rows: Array = []
-	for child in _main.hud.corner_column.get_children():
+	for child: Node in _main.hud.corner_column.get_children():
 		if child is HBoxContainer and not child.is_queued_for_deletion():
 			rows.append(child)
 	return rows
@@ -62,7 +62,7 @@ func _rows() -> Array:
 
 func _more_labels() -> Array:
 	var found: Array = []
-	for child in _main.hud.corner_column.get_children():
+	for child: Node in _main.hud.corner_column.get_children():
 		if child is Label and not child.is_queued_for_deletion() and str(child.text).contains("more"):
 			found.append(child)
 	return found
@@ -70,13 +70,13 @@ func _more_labels() -> Array:
 
 func _texts() -> Array:
 	var texts: Array = []
-	for row in _rows():
+	for row: Variant in _rows():
 		texts.append(str(row.get_child(0).text))
 	return texts
 
 
 func _run() -> void:
-	var hud = _main.hud
+	var hud: CanvasLayer = _main.hud
 	_check(_main.colony_milestones.applies(), "the Colony Run's rules do not apply")
 	_check(hud.SIGNAL_LINE_CAP == 4, "the cap is %d" % hud.SIGNAL_LINE_CAP)
 
@@ -94,7 +94,7 @@ func _run() -> void:
 
 	# Cap and "+N more".
 	var many: Array = []
-	for i in range(6):
+	for i: int in range(6):
 		many.append(_line("Problem %d" % i, 2, "p%d" % i))
 	hud.update_signals(many)
 	_check(_rows().size() == 4, "%d lines show, not 4" % _rows().size())
@@ -143,6 +143,6 @@ func _report() -> void:
 		print("GP4 PASS")
 		quit(0)
 		return
-	for failure in _failures:
+	for failure: String in _failures:
 		print("GP4 FAIL: " + failure)
 	quit(1)

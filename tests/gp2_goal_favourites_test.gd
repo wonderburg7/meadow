@@ -48,15 +48,15 @@ func _boot() -> void:
 
 
 func _star_for(label: Control) -> Button:
-	for star in _main.hud.goal_stars:
+	for star: Variant in _main.hud.goal_stars:
 		if star.get_parent() == label:
 			return star
 	return null
 
 
 func _run() -> void:
-	var hud = _main.hud
-	var ms = _main.colony_milestones
+	var hud: CanvasLayer = _main.hud
+	var ms: RefCounted = _main.colony_milestones
 	_check(ms.applies(), "the Colony Run's rules do not apply")
 	ms.favourites.clear()
 	ms.show_next()
@@ -101,7 +101,7 @@ func _run() -> void:
 	ms.show_next()
 	_check(ms.favourites.has("first_worker"), "a favourite met today was dropped at once")
 	var struck := false
-	for line in hud.favourites_box.get_children():
+	for line: Node in hud.favourites_box.get_children():
 		if line.text.contains("[s]") and line.text.contains("Raise your first worker"):
 			struck = true
 	_check(struck, "a met favourite is not struck through while collapsed")
@@ -113,7 +113,7 @@ func _run() -> void:
 	_check(hud.favourites_box.get_child_count() == 1, "after the day change, %d lines show" % hud.favourites_box.get_child_count())
 
 	# Every milestone met: the 'all met' line is not a goal, so it has no star.
-	for milestone in ms.MILESTONES:
+	for milestone: Variant in ms.MILESTONES:
 		ms.met_days[milestone.id] = _main.day
 	ms.show_next()
 	_check(not _star_for(hud.current_goal_label).visible, "the all-met line shows a star")
@@ -147,6 +147,6 @@ func _report() -> void:
 		print("GP2 PASS")
 		quit(0)
 		return
-	for failure in _failures:
+	for failure: String in _failures:
 		print("GP2 FAIL: " + failure)
 	quit(1)

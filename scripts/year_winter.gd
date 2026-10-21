@@ -60,7 +60,7 @@ func begin_winter_countdown() -> void:
 func _refresh_winter(bees_count: int) -> void:
 	if not Session.winter_coming:
 		return
-	var forecast = _winter_forecast(bees_count)
+	var forecast: Dictionary = _winter_forecast(bees_count)
 	main.winter_panel.refresh(forecast)
 	main.hud.corner_texts["winter"] = main.winter_panel.corner_text
 	main.hud.refresh_corner()
@@ -101,7 +101,7 @@ func _on_winter_survived(losses: int) -> void:
 ## the run's total.
 func _on_gyne_released(total: int) -> void:
 	var text: String = "A gyne has left to found a colony of her own. That is %d away this run — the only thing a season is really measured in." % total
-	var milestones = main.colony_milestones
+	var milestones: Variant = main.colony_milestones
 	if milestones != null and milestones.applies():
 		text += " She earned %d genetic points, %d this run." % [
 			main.season.genetic_points_today(), milestones.genetic_points,
@@ -119,20 +119,20 @@ func _on_gyne_lost() -> void:
 func _on_signal_clicked(action: String) -> void:
 	match action:
 		"starving":
-			_select_bees_where(func(b): return b.energy < GameConfig.energy_capacity * 0.15)
+			_select_bees_where(func(b: Node2D) -> bool: return b.energy < GameConfig.energy_capacity * 0.15)
 		"hungry":
-			_select_bees_where(func(b): return b.energy < GameConfig.energy_capacity * GameConfig.low_energy_warning_level)
+			_select_bees_where(func(b: Node2D) -> bool: return b.energy < GameConfig.energy_capacity * GameConfig.low_energy_warning_level)
 		"hungry_brood":
-			_focus_cells(func(c): return c.content_type == "brood" and c.brood_fed_seconds <= 0.0)
+			_focus_cells(func(c: Polygon2D) -> bool: return c.content_type == "brood" and c.brood_fed_seconds <= 0.0)
 		"dead_cells":
-			_focus_cells(func(c): return c.needs_cleaning())
+			_focus_cells(func(c: Polygon2D) -> bool: return c.needs_cleaning())
 
 func _select_bees_where(test: Callable) -> void:
-	for b in main.selected_bees:
+	for b: Variant in main.selected_bees:
 		if is_instance_valid(b):
 			b.set_selected(false)
 	main.selected_bees.clear()
-	for b in get_tree().get_nodes_in_group("bees"):
+	for b: Node in get_tree().get_nodes_in_group("bees"):
 		if is_instance_valid(b) and test.call(b):
 			b.set_selected(true)
 			main.selected_bees.append(b)
@@ -142,7 +142,7 @@ func _select_bees_where(test: Callable) -> void:
 
 func _focus_cells(test: Callable) -> void:
 	var found: Array = []
-	for cell in main.hive.cells:
+	for cell: Variant in main.hive.cells:
 		if is_instance_valid(cell) and test.call(cell):
 			found.append(cell)
 	if found.is_empty():
@@ -154,7 +154,7 @@ func _focus_cells(test: Callable) -> void:
 	main.camera_view._active_camera().position = found[0].global_position
 
 func _nursery_stat_pinned() -> bool:
-	for key in Session.pinned_stats:
+	for key: Variant in Session.pinned_stats:
 		if str(key).begins_with("nursery_"):
 			return true
 	return false
@@ -177,8 +177,8 @@ func _sample_history(delta: float) -> void:
 
 func _emergence_counts() -> Dictionary:
 	_trim_emergence_log()
-	var counts = {}
-	for entry in main.emergence_log:
+	var counts: Dictionary = {}
+	for entry: Variant in main.emergence_log:
 		counts[entry.key] = int(counts.get(entry.key, 0)) + 1
 	return counts
 
@@ -241,8 +241,8 @@ func _refresh_signals(delta: float) -> void:
 	Perf.end("signals")
 
 func _refresh_panels(bees: Array, facts: Dictionary, counts: Dictionary) -> void:
-	var energy_share = 0.0
-	for b in bees:
+	var energy_share: float = 0.0
+	for b: Variant in bees:
 		energy_share += clampf(b.energy / max(0.001, GameConfig.energy_capacity), 0.0, 1.0)
 
 	# brood_count and gyne_count need the brood cells themselves (for
@@ -250,15 +250,15 @@ func _refresh_panels(bees: Array, facts: Dictionary, counts: Dictionary) -> void
 	# free_cells come from facts instead of a second walk.
 	var brood_cells: Array = main.hive.cells_holding("brood")
 	var brood_count: int = brood_cells.size()
-	var gyne_count = 0
-	for cell in brood_cells:
+	var gyne_count: int = 0
+	for cell: Variant in brood_cells:
 		if cell.brood_is_gyne:
 			gyne_count += 1
 	var hungry_brood: int = facts.hungry_brood
 	var free_cells: int = facts.free_cells
 
 	var mean_energy: float = energy_share / max(1, bees.size())
-	var comb_text = "Comb — %d cells, %d free · brood %d (%d gynes), %d hungry" % [
+	var comb_text: String = "Comb — %d cells, %d free · brood %d (%d gynes), %d hungry" % [
 		main.hive.cells.size(), free_cells, brood_count, gyne_count, hungry_brood,
 	]
 	if main.season != null:
@@ -280,7 +280,7 @@ func _refresh_panels(bees: Array, facts: Dictionary, counts: Dictionary) -> void
 			main.hive.zone_summary(), counts, _emergence_counts(), GameConfig.emergence_window_seconds,
 			main.hive.brood_stage_counts(), main.hud.shown_signals
 		)
-		for key in main.nursery_panel.corner_texts.keys():
+		for key: Variant in main.nursery_panel.corner_texts.keys():
 			main.hud.corner_texts[key] = main.nursery_panel.corner_texts[key]
 		main.hud.refresh_corner()
 	main.orders_zones._apply_zone_glow()
@@ -306,7 +306,7 @@ func _refresh_recruit_gap(bees: Array) -> void:
 		"nectar": {"scored": 0, "above": 0, "below": 0},
 		"pollen": {"scored": 0, "above": 0, "below": 0},
 	}
-	for b in bees:
+	for b: Variant in bees:
 		if not is_instance_valid(b) or b.role != main.Bee.Role.FORAGER or b.is_scouting:
 			continue
 		if b.trips_scored < GameConfig.recruit_grace_trips:
@@ -321,7 +321,7 @@ func _refresh_recruit_gap(bees: Array) -> void:
 			bucket.below += 1
 
 	var parts: Array = []
-	for key in ["nectar", "pollen"]:
+	for key: String in ["nectar", "pollen"]:
 		var c: Dictionary = counts[key]
 		if c.scored == 0:
 			parts.append("%s: none scored yet" % key.capitalize())
@@ -342,7 +342,7 @@ func _toggle_panel(panel: GamePanel) -> void:
 	panel.open()
 
 func _close_other_left_windows(opening: GamePanel) -> void:
-	for window in main.get_tree().get_nodes_in_group("left_window"):
+	for window: Node in main.get_tree().get_nodes_in_group("left_window"):
 		if window != opening and window.is_open():
 			window.close()
 

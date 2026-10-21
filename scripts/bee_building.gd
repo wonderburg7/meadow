@@ -20,7 +20,7 @@ const BeeForaging = preload("res://scripts/bee_foraging.gd")
 ## dead larvae first and, with none waiting, carries out the oldest body no
 ## other Comb worker is on (T2-4b). Both walk out the same waste exit.
 static func find_cell_needing_cleaning(bee: Node2D) -> bool:
-	var dead = bee.hive.find_cell_needing_cleaning()
+	var dead: Variant = bee.hive.find_cell_needing_cleaning()
 	if dead != null:
 		bee.target_body = null
 		bee.target_cell = dead
@@ -38,7 +38,7 @@ static func find_cell_needing_cleaning(bee: Node2D) -> bool:
 static func find_cell_needing_eviction(bee: Node2D) -> bool:
 	if bee.current_load > 0.0:
 		return false   # still holding a load (GC-2): never lift over it
-	var source = bee.hive.find_cell_needing_eviction()
+	var source: Variant = bee.hive.find_cell_needing_eviction()
 	if source == null:
 		return false
 	bee.target_cell = source
@@ -235,7 +235,7 @@ static func find_restock_job(bee: Node2D) -> bool:
 
 	var neediest: Node2D = null
 	var least: float = INF
-	for cell in bee.restock_targets:
+	for cell: Variant in bee.restock_targets:
 		if not is_instance_valid(cell) or cell.space_for(bee.restock_resource) <= 0.0:
 			continue
 		# NF-4: with the sense, fresh nectar is never poured into a sour
@@ -252,7 +252,7 @@ static func find_restock_job(bee: Node2D) -> bool:
 	var source: Node2D = null
 	var most := 0.0
 	var bucket: String = "ripe_honey" if bee.restock_resource == "honey" else bee.restock_resource
-	for cell in bee.hive.cells_holding(bucket):
+	for cell: Variant in bee.hive.cells_holding(bucket):
 		if not may_draw_from(bee, cell) or cell.amount <= 0.0:
 			continue
 		# fullest first: emptying one cell completely beats leaving a

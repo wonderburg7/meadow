@@ -99,11 +99,10 @@ Recorded once here; a slice may restate one in a sentence and point back.
 
 | Slice | Outcome | Files it owns (block has the full list) | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CQ-L1 | gdlint in verify with Dave's thresholds | `gdlintrc`, `tools/gdscript_style.py`, `tools/verify.ps1`, 13 hit sites | after RR-10 | medium |
+| CQ-L1 | gdlint in verify with Dave's thresholds | `gdlintrc`, `tools/gdscript_style.py`, `tools/verify.ps1`, 13 hit sites | yes (RR-10 and L-30 landed 18 Oct 2026) | medium |
 | CQ-L2 | every tool that reads GDScript as text survives `gdformat` | `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, tests | after CQ-L1 | medium |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T1 | rules, simulation and gd tests typed; warning on | 25 scripts, 16 tests, `project.godot`, `tests/source_checks.py` | yes | low |
-| CQ-T2 | run, world and save glue typed | 20 scripts | after CQ-T1 | low |
+| CQ-T2 | run, world and save glue typed | 20 scripts | gated: CQ-R1, CQ-M2 | low |
 | CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot` | after CQ-T2 | low |
 | CQ-S0 | golden-save round-trip harness | `tests/save_roundtrip_test.gd`, fixtures | yes | high |
 | CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a | high |
@@ -111,7 +110,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
-| CQ-M1 | parity checks for two hand-copied lists | `tests/source_checks.py` | yes | low |
 | CQ-M2 | "starving" 0.15 becomes a GameConfig row | `game_config.gd`, `settings_catalogue.gd`, 3 readers | yes | medium |
 | CQ-M3 | rival starting stores become GameConfig rows; rebalance consts named | `rival_hive.gd`, `game_config.gd`, `settings_catalogue.gd`, `tests/balance_tests.py` | after CQ-M2 | medium |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
@@ -156,9 +154,9 @@ claim while `dry_after`).
   `tests/source_checks.py` (T1, M1, L2). CQ-S4 comes after CQ-R3 and CQ-R4 have
   settled `bee.gd`.
 - **Other plans:**
-  - RR-10 (`plans/now/run-repairs.md`, Codex lane) holds `hive.gd` and
-    `skill_tree_panel.gd`: CQ-L1 waits for it.
-  - L-30 (`plans/now/agent-lifecycle.md`) holds `tools/verify.ps1`: CQ-L1 runs after it.
+  - RR-10 (`plans/now/run-repairs.md`, Codex lane) held `hive.gd` and
+    `skill_tree_panel.gd`; it landed 18 Oct 2026, clearing CQ-L1.
+  - L-30 (`plans/now/agent-lifecycle.md`) held `tools/verify.ps1`; it landed 18 Oct 2026, clearing CQ-L1.
   - HP-3 (`plans/archive/hot-path-cadence_2026-10-18.md`) changes `bee.gd::_process`: CQ-R4 profiles
     after it.
   - T2-12, T2-13 and T2-14 (`plans/now/tier-two.md`) hold `hud.gd` and `bee.gd`, and
@@ -296,35 +294,48 @@ restyled.
 - Next after: CQ-L2
 ```
 
-## CQ-T1 -- rules, simulation and gd tests typed, with the warning on
+CQ-T1 shipped 2026-10-21; its specification is `plans/archive/CQ-T1_2026-10-21.md`.
 
-**True now.** `project.godot` has no `[debug]` section, and these files hold 206
-untyped declarations:
+## CQ-T2 -- run, world and save glue typed
 
-- Scripts (140): `conditions`, `year_winter`, `skills`, `season`, `availability`,
-  `resources`, `adaptations`, `colony_diagnostics`, `pollination`, `bee_foraging`,
-  `bee_nursery`, `bee_honey`, `colony_milestones`, `guidance_policy`, `foraging_stats`,
-  `bee`, `run_availability`, `progression`, `features`, `bee_building`, `rival_hive`,
-  `hive_cell`, `flower`, `bee_mining`, `bee_egg_laying`.
-- Tests (66): the 16 `tests/*.gd` files in the block.
-
-`hive.gd` is deliberately left to CQ-T2, because RR-10 holds it.
+**True now** (21 Oct 2026, after CQ-T1). CQ-T1 turned Godot's `untyped_declaration`
+warning on (level 1) and holds its 25 scripts and 16 tests at zero through the
+`TYPED_FILES` ratchet in `tests/source_checks.py`. The run, world and save glue is not
+in it. The ratchet's counter (which also counts untyped for-loop variables) finds 515
+declarations in these 20 scripts: `input_selection` 68, `scenario_actions` 67,
+`world_building` 60, `main` 57, `hive` 47, `orders_zones` 38, `saving` 31,
+`save_game` 29, `diagnostic_log` 21, `challenge_runner` 20, `perf` 14, `save_slots` 12,
+`challenge_stage_setup` 11, `headless/diagnostic_profile` 9, `settings_catalogue` 8,
+`developer_overrides` 6, `headless/diagnostic_probes` 6, `player_profile` 5,
+`save_migrations` 4, `tutorial_checkpoint` 2. `save_game.gd` still opens with
+`static func save(world, path`. Godot's own count for the same files was 219 on
+18 Oct (research record, "Typing count (T slices)").
 
 **When done:**
 
-- `[debug] gdscript/warnings/untyped_declaration=1` is set.
-- Every listed file is clean under the typing rules above.
-- `tests/source_checks.py` gains a `TYPED_FILES` ratchet. It is a regex counter in the
-  style of the planning count; each slice adds its files to the set, and the set must
-  stay at zero untyped declarations.
+- Every declaration in the 20 scripts, plus `scripts/headless/scenario_boot.gd`
+  (CQ-R1 moves the headless boot there), is typed under "Rules for every slice":
+  locals, parameters, returns, lambdas and for-loop variables.
+- Save-dictionary values are `float` or `: Variant`, never `int`; a value read back from
+  a save or from JSON keeps its float kind. `world`/`main` parameters take `Node2D`.
+- Every one of those files is added to `TYPED_FILES`, so the ratchet holds them at
+  zero.
+- `python tools/update_function_map.py` has refreshed the signature lines.
 
-```queue
-**[Claude] CQ-T1 -- rules, simulation and gd tests typed, with the warning on**
-- Plan: `plans/now/code-health.md` -- "CQ-T1 -- rules, simulation and gd tests typed, with the warning on"
-- Files: `project.godot`, `tests/source_checks.py`, `tests/test_source_checks.py`, `scripts/conditions.gd`, `scripts/year_winter.gd`, `scripts/skills.gd`, `scripts/season.gd`, `scripts/availability.gd`, `scripts/resources.gd`, `scripts/adaptations.gd`, `scripts/colony_diagnostics.gd`, `scripts/pollination.gd`, `scripts/bee_foraging.gd`, `scripts/bee_nursery.gd`, `scripts/bee_honey.gd`, `scripts/colony_milestones.gd`, `scripts/guidance_policy.gd`, `scripts/foraging_stats.gd`, `scripts/bee.gd`, `scripts/run_availability.gd`, `scripts/progression.gd`, `scripts/features.gd`, `scripts/bee_building.gd`, `scripts/rival_hive.gd`, `scripts/hive_cell.gd`, `scripts/flower.gd`, `scripts/bee_mining.gd`, `scripts/bee_egg_laying.gd`, `tests/t2_4b_bodies_test.gd`, `tests/t2_11_comb_cadence_test.gd`, `tests/pp5_priority_cells_test.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/sp11_cell_rim_test.gd`, `tests/col7_gyne_window_test.gd`, `tests/rr9_winter_ages_nothing_test.gd`, `tests/t2_10_automine_wake_test.gd`, `tests/si2_exact_rollback_test.gd`, `tests/col8_winter_dieback_test.gd`, `tests/t3_1_weighted_choice_test.gd`, `tests/sp10_soil_depth_test.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/bs14_saved_skill_policy_test.gd`, `tests/rr2_boot_saves_test.gd`, `tests/gp4_problem_strip_test.gd`, `FUNCTION_MAP.md`
-- Check: the `TYPED_FILES` source check reports zero untyped declarations in every listed script and test; `python tools/gdscript_warnings.py` on the listed scripts prints no warning; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` matches; `.\tools\verify.ps1` is green
-- Proof: `absent: project.godot :: untyped_declaration`
-- Next after: CQ-T2
+**Invariants.** No save key, default or FORMAT_VERSION changes. No RNG call moves in
+`world_building.gd`. No `Perf` section name, node name or display string changes.
+
+**Gate.** CQ-R1 moves code out of `main.gd` and edits `scenario_actions.gd` and
+`diagnostic_log.gd`; CQ-M2 adds a row to `settings_catalogue.gd`. Typing those files
+while either is open would type code that is about to move, so this waits for both.
+
+```queue-gated
+**[Claude] CQ-T2 -- run, world and save glue typed**
+- Plan: `plans/now/code-health.md` -- "CQ-T2 -- run, world and save glue typed"
+- Files: `scripts/main.gd`, `scripts/scenario_actions.gd`, `scripts/world_building.gd`, `scripts/input_selection.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/orders_zones.gd`, `scripts/headless/diagnostic_profile.gd`, `scripts/perf.gd`, `scripts/settings_catalogue.gd`, `scripts/challenge_runner.gd`, `scripts/save_slots.gd`, `scripts/hive.gd`, `scripts/diagnostic_log.gd`, `scripts/tutorial_checkpoint.gd`, `scripts/developer_overrides.gd`, `scripts/challenge_stage_setup.gd`, `scripts/save_migrations.gd`, `scripts/player_profile.gd`, `scripts/headless/diagnostic_probes.gd`, `scripts/headless/scenario_boot.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
+- Check: the `TYPED_FILES` source check reports zero untyped declarations in every listed script; `python tools/gdscript_warnings.py` on the listed scripts prints no warning; `tests/test_save_migrations.py`, `tests/test_si1_run_state.py`, `tests/test_si2_exact_rollback.py` and `tests/test_layout_regression.py` pass; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` matches; `.\tools\verify.ps1` is green
+- Proof: `present: scripts/save_game.gd :: static func save(world, path`
+- Next after: CQ-T3
 ```
 
 ## CQ-S0 -- golden-save round-trip harness
@@ -391,25 +402,7 @@ record, "Save restore".
 - Next after: CQ-S2
 ```
 
-## CQ-M1 -- parity checks for two hand-copied lists
-
-**True now.** `scenario_presets.gd` BASELINE hand-copies four GameConfig defaults (0.17,
-0.5, 0.1, 0.15), and nothing checks them. `player_profile.gd` PREFERENCE_KEYS is
-hand-kept against Session's SESSION_KEYS, and `show_crab_spiders` is the one deliberate
-gap.
-
-**When done:** `tests/source_checks.py` asserts that BASELINE equals the
-`game_config.gd` defaults, and that PREFERENCE_KEYS ⊇ SESSION_KEYS minus a named
-exception list (`show_crab_spiders`). Each check has a mutated-input case.
-
-```queue
-**[Claude] CQ-M1 -- parity checks for two hand-copied lists**
-- Plan: `plans/now/code-health.md` -- "CQ-M1 -- parity checks for two hand-copied lists"
-- Files: `tests/source_checks.py`, `tests/test_source_checks.py`
-- Check: both checks pass on today's tree and fail on their mutated inputs in `tests/test_source_checks.py`; `.\tools\verify.ps1` is green
-- Proof: `absent: tests/source_checks.py :: scenario_presets.gd`
-- Next after: CQ-M2
-```
+CQ-M1 shipped 2026-10-21; its specification is `plans/archive/CQ-M1_2026-10-21.md`.
 
 ## CQ-M2 -- the starving threshold becomes a GameConfig row
 

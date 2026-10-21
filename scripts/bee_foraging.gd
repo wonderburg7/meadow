@@ -285,7 +285,7 @@ static func _commit_to_flower(bee: Node2D, flower: Node2D) -> void:
 ## buffer with near-duplicates of the same spot. Oldest entry evicted
 ## once the buffer is full.
 static func _remember_patch(bee: Node2D, position: Vector2) -> void:
-	for known in bee.known_patches:
+	for known: Variant in bee.known_patches:
 		if known.distance_to(position) < GameConfig.known_patch_min_spacing:
 			return
 	bee.known_patches.append(position)
@@ -299,11 +299,11 @@ static func _remember_patch(bee: Node2D, position: Vector2) -> void:
 ## first).
 static func _pick_known_patch(bee: Node2D) -> Vector2:
 	var total := 0.0
-	for i in bee.known_patches.size():
+	for i: int in bee.known_patches.size():
 		total += float(i + 1)
 	var roll := randf() * total
 	var acc := 0.0
-	for i in bee.known_patches.size():
+	for i: int in bee.known_patches.size():
 		acc += float(i + 1)
 		if roll <= acc:
 			return bee.known_patches[i]
@@ -352,7 +352,7 @@ static func _spiral_point(bee: Node2D, anchor: Vector2, angle: float) -> Vector2
 ## decision; with the grid it looks at the handful in the buckets
 ## nearest the bee and widens only if it finds nothing.
 static func nearest_flower(bee: Node2D, strict: bool, radius: float, allow_full_scan: bool = true) -> Node2D:
-	var accept := func(f) -> bool:
+	var accept := func(f: Variant) -> bool:
 		if f.occupied_by != null:
 			return false
 		if f.get_available(bee.resource_type) < GameConfig.min_worthwhile_amount:
@@ -404,7 +404,7 @@ static func nearest_flower(bee: Node2D, strict: bool, radius: float, allow_full_
 				return false
 		return true
 
-	var grid = flower_grid(bee)
+	var grid: Variant = flower_grid(bee)
 	if grid != null:
 		var found: Node2D
 		if probabilistic_choice_on():
@@ -423,16 +423,16 @@ static func nearest_flower(bee: Node2D, strict: bool, radius: float, allow_full_
 
 	# Nothing close enough, or no grid yet. Fall back to the honest scan.
 	var candidates: Array = []
-	for f in bee.get_tree().get_nodes_in_group("flowers"):
+	for f: Node in bee.get_tree().get_nodes_in_group("flowers"):
 		if is_instance_valid(f) and accept.call(f):
 			candidates.append(f)
 
 	if probabilistic_choice_on():
-		return _weighted_flower_choice(bee, candidates, func(_f): return true, INF)
+		return _weighted_flower_choice(bee, candidates, func(_f: Variant) -> bool: return true, INF)
 
 	var best: Node2D = null
 	var best_dist := INF
-	for f in candidates:
+	for f: Variant in candidates:
 		var d := bee.position.distance_to(f.position)
 		if d < best_dist:
 			best_dist = d
@@ -454,7 +454,7 @@ static func _weighted_flower_choice(bee: Node2D, nodes: Array, accept: Callable,
 	var candidates: Array = []
 	var weights: Array = []
 	var total := 0.0
-	for f in nodes:
+	for f: Variant in nodes:
 		if not is_instance_valid(f) or not accept.call(f):
 			continue
 		var d: float = bee.position.distance_to(f.position)
@@ -479,14 +479,14 @@ static func _weighted_flower_choice(bee: Node2D, nodes: Array, accept: Callable,
 		return null
 	var roll := randf() * total
 	var acc := 0.0
-	for i in candidates.size():
+	for i: int in candidates.size():
 		acc += weights[i]
 		if roll <= acc:
 			return candidates[i]
 	return candidates[-1]
 
 
-static func flower_grid(bee: Node2D):
+static func flower_grid(bee: Node2D) -> Variant:
 	if bee.world != null and is_instance_valid(bee.world):
 		return bee.world.flower_grid
 	return null
@@ -624,7 +624,7 @@ static func handling_experience_on() -> bool:
 static func record_species_visit(bee: Node2D, species: String) -> void:
 	bee.species_experience[species] = float(bee.species_experience.get(species, 0.0)) + 1.0
 	var fade: float = GameConfig.handling_experience_visits_to_floor / maxf(GameConfig.handling_experience_forget_visits, 1.0)
-	for other in bee.species_experience.keys():
+	for other: Variant in bee.species_experience.keys():
 		if other == species:
 			continue
 		var left: float = float(bee.species_experience[other]) - fade
@@ -1281,7 +1281,7 @@ static func wait_at_entrance(bee: Node2D, delta: float) -> void:
 	while i < bee.hive.entrance_mentors.size():
 		# Keep this untyped until the validity check: assigning a freed
 		# Object to Node2D itself raises before is_instance_valid can prune it.
-		var mentor = bee.hive.entrance_mentors[i]
+		var mentor: Variant = bee.hive.entrance_mentors[i]
 		if not is_instance_valid(mentor):
 			bee.hive.entrance_mentors.remove_at(i)
 			continue

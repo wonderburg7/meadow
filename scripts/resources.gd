@@ -164,7 +164,7 @@ static var _by_key: Dictionary = {}
 
 static func entry(key: String) -> Dictionary:
 	if _by_key.is_empty():
-		for resource in RESOURCES:
+		for resource: Dictionary in RESOURCES:
 			_by_key[resource.key] = resource
 	return _by_key.get(key, {})
 
@@ -183,14 +183,14 @@ static func is_energy(key: String) -> bool:
 ## The energy kinds (honey, nectar) in the order take_energy() should
 ## draw them, cheapest colony cost first -- honey before nectar.
 static func energy_keys_by_priority() -> Array:
-	var energy_resources: Array = RESOURCES.filter(func(r): return r.is_energy)
-	energy_resources.sort_custom(func(a, b): return a.energy_priority < b.energy_priority)
-	return energy_resources.map(func(r): return r.key)
+	var energy_resources: Array = RESOURCES.filter(func(r: Dictionary) -> Variant: return r.is_energy)
+	energy_resources.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a.energy_priority < b.energy_priority)
+	return energy_resources.map(func(r: Dictionary) -> Variant: return r.key)
 
 ## Resolves an entry's `energy_factor`, which is either a literal float
 ## (nectar's fixed 1.0) or a GameConfig field name (honey's live tunable).
 static func energy_factor_for(key: String) -> float:
-	var factor = entry(key).get("energy_factor", 0.0)
+	var factor: Variant = entry(key).get("energy_factor", 0.0)
 	if factor is String:
 		return GameConfig.get(factor) if factor != "" else 0.0
 	return factor
@@ -205,4 +205,4 @@ static func keys() -> Array:
 ## Every cell-content kind: the two forager-selectable resources plus
 ## honey, jelly, bee bread, brood, corpse and the empty kind.
 static func content_keys() -> Array:
-	return RESOURCES.map(func(r): return r.key)
+	return RESOURCES.map(func(r: Dictionary) -> Variant: return r.key)
