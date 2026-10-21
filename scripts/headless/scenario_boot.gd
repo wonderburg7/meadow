@@ -31,7 +31,7 @@ static func apply_boot_arg(main: Node2D) -> void:
 	# scenario JSON makes concurrent runs unambiguous and cannot grant a
 	# scenario fixture arbitrary file-write authority.
 	var session_output_path: String = ""
-	for arg in OS.get_cmdline_user_args():
+	for arg: String in OS.get_cmdline_user_args():
 		if arg.begins_with("--scenario="):
 			scenario_path = arg.substr("--scenario=".length())
 		elif arg.begins_with("--run-id="):
@@ -47,19 +47,19 @@ static func apply_boot_arg(main: Node2D) -> void:
 		push_error("--scenario=%s: file not found" % scenario_path)
 		return
 	var text: String = FileAccess.get_file_as_string(scenario_path)
-	var parsed = JSON.parse_string(text)
+	var parsed: Variant = JSON.parse_string(text)
 	if not (parsed is Dictionary):
 		push_error("--scenario=%s: not a JSON object" % scenario_path)
 		return
 
 	var level: Dictionary = parsed.duplicate(true)
-	var performance_capture = level.get("performance_capture", null)
+	var performance_capture: Variant = level.get("performance_capture", null)
 	level.erase("performance_capture")
 	main.scenario_performance_capture = _parse_performance_capture(performance_capture)
 	if performance_capture != null and main.scenario_performance_capture.is_empty():
 		main.get_tree().quit(2)
 		return
-	var scenario_diagnostics = level.get("diagnostics", null)
+	var scenario_diagnostics: Variant = level.get("diagnostics", null)
 	level.erase("diagnostics")
 	var stop: Dictionary = level.get("stop", {})
 	level.erase("stop")
@@ -111,7 +111,7 @@ static func apply_boot_arg(main: Node2D) -> void:
 	# A UI-only scenario (layout/text assertions) has no colony to describe;
 	# cells and forager counts remain direct boot fields, while indoor roles
 	# read their optional start_count_key from roles.gd.
-	for count_key in ["cells", "nectar_foragers", "pollen_foragers"]:
+	for count_key: String in ["cells", "nectar_foragers", "pollen_foragers"]:
 		level[count_key] = level.get(count_key, 0)
 
 	Levels.scenario_override = level
@@ -150,16 +150,16 @@ static func _parse_performance_capture(raw: Variant) -> Dictionary:
 		push_error("scenario performance_capture must be an object")
 		return {}
 	var allowed := ["warmup_frames", "measurement_frames", "sections", "include_fog"]
-	for key in raw:
+	for key: Variant in raw:
 		if not key in allowed:
 			push_error("scenario performance_capture has unknown key: %s" % key)
 			return {}
-	for required in ["warmup_frames", "measurement_frames", "sections"]:
+	for required: String in ["warmup_frames", "measurement_frames", "sections"]:
 		if not raw.has(required):
 			push_error("scenario performance_capture missing %s" % required)
 			return {}
-	var warmup = raw.warmup_frames
-	var measurement = raw.measurement_frames
+	var warmup: Variant = raw.warmup_frames
+	var measurement: Variant = raw.measurement_frames
 	if not _is_whole_number(warmup) or warmup < 0:
 		push_error("scenario performance_capture.warmup_frames must be a non-negative integer")
 		return {}
@@ -170,12 +170,12 @@ static func _parse_performance_capture(raw: Variant) -> Dictionary:
 		push_error("scenario performance_capture.sections must be a non-empty array")
 		return {}
 	var sections: Array = []
-	for section in raw.sections:
+	for section: Variant in raw.sections:
 		if not (section is String) or section.is_empty() or section in sections:
 			push_error("scenario performance_capture.sections must contain unique non-empty strings")
 			return {}
 		sections.append(section)
-	var include_fog = raw.get("include_fog", false)
+	var include_fog: Variant = raw.get("include_fog", false)
 	if not (include_fog is bool):
 		push_error("scenario performance_capture.include_fog must be boolean")
 		return {}

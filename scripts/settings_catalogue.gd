@@ -1507,10 +1507,10 @@ const SESSION_KEYS := [
 ]
 
 # --- reading and writing a setting --------------------------------
-static func setting_get(key: String):
+static func setting_get(key: String) -> Variant:
 	return Session.get(key) if key in SESSION_KEYS else GameConfig.get(key)
 
-static func setting_set(key: String, value) -> void:
+static func setting_set(key: String, value: Variant) -> void:
 	if key in SESSION_KEYS:
 		Session.set(key, value)
 		Session.save_preferences()
@@ -1535,8 +1535,8 @@ static func setting_set(key: String, value) -> void:
 ## construction. No SESSION_KEYS special case is needed either: a Session
 ## preference is not a GameConfig property, so this loop cannot reach one.
 static func reset_config_to_defaults() -> void:
-	var defaults = GameConfig.get_script().new()
-	for prop in GameConfig.get_property_list():
+	var defaults: Object = GameConfig.get_script().new()
+	for prop: Dictionary in GameConfig.get_property_list():
 		if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE:
 			GameConfig.set(prop.name, defaults.get(prop.name))
 	defaults.free()
@@ -1547,8 +1547,8 @@ static func reset_config_to_defaults() -> void:
 ## can't drift apart -- used where a run change owns a known subset of
 ## GameConfig rather than the whole thing.
 static func reset_config_keys(keys: Array) -> void:
-	var defaults = GameConfig.get_script().new()
-	for key in keys:
+	var defaults: Object = GameConfig.get_script().new()
+	for key: String in keys:
 		GameConfig.set(key, defaults.get(key))
 	defaults.free()
 
@@ -1561,7 +1561,7 @@ static func reset_config_keys(keys: Array) -> void:
 ## checkboxes afterwards) and the headless `set_config` scenario verb
 ## (`scenario_actions.gd::_do_set_config`), so there is one cascade
 ## implementation, not two that can drift (CHATGPT_INSIGHTS_PLAN.md B1).
-static func apply_setting(key: String, value) -> void:
+static func apply_setting(key: String, value: Variant) -> void:
 	setting_set(key, value)
 	if value:
 		_cascade_mutual_exclusion_static(key)
@@ -1597,7 +1597,7 @@ static func _cascade_prerequisites_on_static(key: String) -> Array[String]:
 ## Auto-recruitment. Returns the keys it actually changed.
 static func _cascade_dependents_off_static(key: String) -> Array[String]:
 	var changed: Array[String] = []
-	for child in Prerequisites.direct_dependents(key):
+	for child: String in Prerequisites.direct_dependents(key):
 		if setting_get(child):
 			setting_set(child, false)
 			changed.append(child)

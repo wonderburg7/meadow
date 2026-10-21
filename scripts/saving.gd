@@ -120,7 +120,7 @@ func _restore(data: Dictionary) -> void:
 	# granted again on top -- an old level 4-6 or Challenge 1 save keeps its
 	# nurses working without a save-version bump.
 	if Session.progression != null:
-		for skill_id in main.RunAvailability.starting_skills(main.Levels.get_level(Session.starting_level)):
+		for skill_id: Variant in main.RunAvailability.starting_skills(main.Levels.get_level(Session.starting_level)):
 			Session.progression.grant_temporary(str(skill_id))
 		main.Availability.invalidate()
 
@@ -135,20 +135,20 @@ func _restore(data: Dictionary) -> void:
 	main.hud.show_warning("Run loaded — day %d." % main.day)
 
 func _restore_soil(soil: Dictionary) -> void:
-	var still_there = {}
-	for pair in soil.get("present", []):
+	var still_there: Dictionary = {}
+	for pair: Variant in soil.get("present", []):
 		still_there[Vector2i(int(pair[0]), int(pair[1]))] = true
 
 	var to_remove: Array = []
-	for node in main.hive.occupied_tiles.values():
+	for node: Variant in main.hive.occupied_tiles.values():
 		if node == null or not is_instance_valid(node) or not node.is_in_group("soil_blocks"):
 			continue
 		if not still_there.has(node.axial):
 			to_remove.append(node)
 
-	var centre_local = main.world_building._hive_centre_local()
+	var centre_local: Vector2 = main.world_building._hive_centre_local()
 	var spacing: float = GameConfig.hive_cell_spacing
-	for block in to_remove:
+	for block: Variant in to_remove:
 		var hex: Vector2i = block.axial
 		main.hive.occupied_tiles.erase(hex)
 		block.queue_free()
@@ -157,43 +157,43 @@ func _restore_soil(soil: Dictionary) -> void:
 	# An in-place restore must also put back soil dug since the checkpoint.
 	# _add_soil_block refuses an occupied tile, so a fresh load adds nothing.
 	var added := false
-	for hex in still_there.keys():
+	for hex: Vector2i in still_there.keys():
 		if main.hive.tile_is_free(hex):
 			main.world_building._add_soil_block(hex, centre_local, spacing)
 			added = true
 	if added:
 		main.fog_of_war.notify_hive_open_space_changed()
 
-	for entry in soil.get("marked", []):
-		var hex = Vector2i(int(entry.q), int(entry.r))
-		var node = main.hive.occupied_tiles.get(hex)
+	for entry: Dictionary in soil.get("marked", []):
+		var hex := Vector2i(int(entry.q), int(entry.r))
+		var node: Variant = main.hive.occupied_tiles.get(hex)
 		if node != null and is_instance_valid(node) and node.is_in_group("soil_blocks"):
 			node.mine_progress = float(entry.progress)
 			node.set_marked(bool(entry.marked))
 
 func _restore_cells(cells: Array) -> void:
-	for cell in main.hive.cells:
+	for cell: Variant in main.hive.cells:
 		if is_instance_valid(cell):
 			main.hive.occupied_tiles.erase(cell.axial)
 			cell.queue_free()
 	main.hive.cells = []
 
-	var centre_local = main.world_building._hive_centre_local()
+	var centre_local: Vector2 = main.world_building._hive_centre_local()
 	var spacing: float = GameConfig.hive_cell_spacing
-	for entry in cells:
-		var hex = Vector2i(int(entry.q), int(entry.r))
+	for entry: Dictionary in cells:
+		var hex := Vector2i(int(entry.q), int(entry.r))
 		# A save's cell always wins the tile it says it's on, even if the
 		# freshly built hive put soil or bedrock there instead -- which can
 		# happen if the dig pattern has changed since the save was made
 		# (see the hex-orientation/entrance change, 14 Aug 2026). Without
 		# this, the old block's node keeps existing and drawing, just
 		# untracked, which is a silent doubled-up tile rather than a crash.
-		var occupant = main.hive.occupied_tiles.get(hex)
+		var occupant: Variant = main.hive.occupied_tiles.get(hex)
 		if occupant != null and is_instance_valid(occupant):
 			occupant.queue_free()
 		main.hive.occupied_tiles.erase(hex)
 
-		var cell = main.HiveCell.new()
+		var cell: Variant = main.HiveCell.new()
 		cell.axial = hex
 		cell.main = main
 		cell.position = centre_local + main.Shapes.hex_to_pixel(hex.x, hex.y, spacing, Session.use_sprite_hex_grid)
@@ -257,7 +257,7 @@ func _restore_cells(cells: Array) -> void:
 
 func _restore_hive_state(state: Dictionary) -> void:
 	main.hive.keep_clear_tiles.clear()
-	for pair in state.get("keep_clear", []):
+	for pair: Variant in state.get("keep_clear", []):
 		main.hive.keep_clear_tiles[Vector2i(int(pair[0]), int(pair[1]))] = true
 	var credit: Array = state.get("tier_credit", [])
 	if credit.size() == 3:
@@ -267,9 +267,9 @@ func _restore_hive_state(state: Dictionary) -> void:
 	# in-place checkpoint restore leaves exactly the saved count. An older
 	# save has no "bodies" and loads with none.
 	main.hive.clear_bodies()
-	for entry in state.get("bodies", []):
+	for entry: Variant in state.get("bodies", []):
 		if entry is Dictionary:
-			var body = main.hive.add_body(
+			var body: Variant = main.hive.add_body(
 				Vector2(float(entry.get("x", 0.0)), float(entry.get("y", 0.0))),
 				float(entry.get("died_at", 0.0)))
 			if body != null:
@@ -277,16 +277,16 @@ func _restore_hive_state(state: Dictionary) -> void:
 
 func _cells_at(refs: Array) -> Array:
 	var out: Array = []
-	for pair in refs:
-		var node = main.hive.occupied_tiles.get(Vector2i(int(pair[0]), int(pair[1])))
+	for pair: Variant in refs:
+		var node: Variant = main.hive.occupied_tiles.get(Vector2i(int(pair[0]), int(pair[1])))
 		if node != null and is_instance_valid(node) and node.is_in_group("hive_cells"):
 			out.append(node)
 	return out
 
 func _blocks_at(refs: Array) -> Array:
 	var out: Array = []
-	for pair in refs:
-		var node = main.hive.occupied_tiles.get(Vector2i(int(pair[0]), int(pair[1])))
+	for pair: Variant in refs:
+		var node: Variant = main.hive.occupied_tiles.get(Vector2i(int(pair[0]), int(pair[1])))
 		if node != null and is_instance_valid(node) and node.is_in_group("soil_blocks"):
 			out.append(node)
 	return out
@@ -308,13 +308,13 @@ func _retire_node(node: Node, group_name: String) -> void:
 ## straight to `flower_grid.rebuild()` instead of re-querying the
 ## "flowers" group afterwards.
 func _restore_flowers(flowers: Array) -> Array:
-	for f in get_tree().get_nodes_in_group("flowers"):
+	for f: Variant in get_tree().get_nodes_in_group("flowers"):
 		if is_instance_valid(f):
 			_retire_node(f, "flowers")
 
 	var created: Array = []
-	for entry in flowers:
-		var flower = main.Flower.new()
+	for entry: Dictionary in flowers:
+		var flower: Variant = main.Flower.new()
 		flower.position = Vector2(float(entry.x), float(entry.y))
 		main.meadow_root.add_child(flower)
 		flower.setup(int(entry.species))
@@ -334,15 +334,15 @@ func _restore_flowers(flowers: Array) -> Array:
 ## Returns the bees it just created, same reasoning as `_restore_flowers`
 ## above -- `_restore()` hands this straight to the population readout.
 func _restore_bees(bees: Array) -> Array:
-	for b in get_tree().get_nodes_in_group("bees"):
+	for b: Variant in get_tree().get_nodes_in_group("bees"):
 		if is_instance_valid(b):
 			_retire_node(b, "bees")
 	main.queen = null
 	main.selected_bees.clear()
 
 	var created: Array = []
-	for entry in bees:
-		var bee = main.Bee.new()
+	for entry: Dictionary in bees:
+		var bee: Variant = main.Bee.new()
 		bee.is_queen = bool(entry.get("queen", false))
 		bee.is_gyne = bool(entry.get("gyne", false))
 		# COL-9, additive: a save from before them loads every queen mated
@@ -425,7 +425,7 @@ func _restore_bees(bees: Array) -> Array:
 		# reference doesn't coerce to that type at runtime and throws, so
 		# build the typed array locally and assign it once instead.
 		var patches: Array[Vector2] = []
-		for pair in entry.get("known_patches", []):
+		for pair: Variant in entry.get("known_patches", []):
 			if pair.size() == 2:
 				patches.append(Vector2(float(pair[0]), float(pair[1])))
 		bee.known_patches = patches
@@ -443,7 +443,7 @@ func _restore_bees(bees: Array) -> Array:
 		bee.trips_scored = int(entry.get("trips_scored", 0))
 
 		bee.build_queue = []
-		for pair in entry.get("build_queue", []):
+		for pair: Variant in entry.get("build_queue", []):
 			bee.build_queue.append(Vector2i(int(pair[0]), int(pair[1])))
 		bee.has_manual_build_target = not bee.build_queue.is_empty()
 		if bee.has_manual_build_target:

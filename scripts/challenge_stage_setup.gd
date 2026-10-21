@@ -41,7 +41,7 @@ static func apply(runner: Node, main: Node2D, setup: Dictionary) -> void:
 	if setup.has("new_worker"):
 		_set_new_worker(runner, main, bool(setup.new_worker))
 	if setup.has("runner"):
-		for counter in setup.runner:
+		for counter: String in setup.runner:
 			runner.set("_" + str(counter), setup.runner[counter])
 	if setup.has("selection"):
 		_set_selection(runner, main, str(setup.selection))
@@ -71,7 +71,7 @@ static func _release_queen(main: Node2D) -> void:
 
 static func _apply_tunnel(runner: Node, main: Node2D, open: bool) -> void:
 	# Any survivors go first; _setup_opening_tunnel adds a fresh set.
-	for block in main.get_tree().get_nodes_in_group("soil_blocks"):
+	for block: Variant in main.get_tree().get_nodes_in_group("soil_blocks"):
 		if is_instance_valid(block) and not block.is_queued_for_deletion() and block in runner._opening_blocks:
 			main.world_building.finish_mining(block)
 	runner._opening_blocks.clear()
@@ -111,12 +111,12 @@ static func _place_queen(main: Node2D, place: String) -> void:
 # --- comb ------------------------------------------------------------
 
 static func _built_cells(main: Node2D) -> Array:
-	return main.hive.cells.filter(func(c): return is_instance_valid(c) and c.is_built)
+	return main.hive.cells.filter(func(c: Variant) -> bool: return is_instance_valid(c) and c.is_built)
 
 static func _set_built_cells(main: Node2D, count: int) -> void:
 	var built: Array = _built_cells(main)
 	# Half-built sites count for nothing: remove them, then trim or grow.
-	for cell in main.hive.cells.duplicate():
+	for cell: Variant in main.hive.cells.duplicate():
 		if is_instance_valid(cell) and not cell.is_built:
 			_remove_cell(main, cell)
 	while built.size() > count:
@@ -134,7 +134,7 @@ static func _set_built_cells(main: Node2D, count: int) -> void:
 ## Releases every bee's hold on the cell before it goes, so nothing keeps
 ## walking to a freed node.
 static func _remove_cell(main: Node2D, cell: Node2D) -> void:
-	for bee in main.get_tree().get_nodes_in_group("bees"):
+	for bee: Variant in main.get_tree().get_nodes_in_group("bees"):
 		if not is_instance_valid(bee):
 			continue
 		cell.release_slot(bee)
@@ -151,7 +151,7 @@ static func _remove_cell(main: Node2D, cell: Node2D) -> void:
 
 static func _set_cell_stores(main: Node2D, stores: Array) -> void:
 	var built: Array = _built_cells(main)
-	for i in range(built.size()):
+	for i: int in range(built.size()):
 		var cell: Node2D = built[i]
 		cell.clear_cell()
 		if i < stores.size():
@@ -164,7 +164,7 @@ static func _set_cell_stores(main: Node2D, stores: Array) -> void:
 
 static func _set_pollen_cell(main: Node2D, index: int) -> void:
 	var built: Array = _built_cells(main)
-	for i in range(built.size()):
+	for i: int in range(built.size()):
 		if i == index:
 			built[i].set_designation("pollen", true)
 		else:
@@ -172,14 +172,14 @@ static func _set_pollen_cell(main: Node2D, index: int) -> void:
 
 static func _set_brood_cells(main: Node2D, count: int) -> void:
 	var brooded: Array = []
-	for cell in _built_cells(main):
+	for cell: Node2D in _built_cells(main):
 		if cell.content_type == "brood":
 			brooded.append(cell)
 	while brooded.size() > count:
 		brooded.pop_back().clear_cell()
 	while brooded.size() < count:
 		var free_cell: Node2D = null
-		for cell in _built_cells(main):
+		for cell: Node2D in _built_cells(main):
 			if cell.content_type == "" and cell.amount <= 0.0:
 				free_cell = cell
 				break
@@ -239,7 +239,7 @@ static func _set_new_worker(runner: Node, main: Node2D, wanted: bool) -> void:
 	main.invalidate_population()
 
 static func _set_selection(runner: Node, main: Node2D, who: String) -> void:
-	for bee in main.selected_bees:
+	for bee: Variant in main.selected_bees:
 		if is_instance_valid(bee):
 			bee.set_selected(false)
 	main.selected_bees.clear()

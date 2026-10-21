@@ -65,7 +65,7 @@ const LOCAL_WHEN_KEYS := [
 static func run_pending(main: Node2D, actions: Array) -> void:
 	sample_comb_build_sites(main)
 	_sample_queen_watch(main)
-	for action in actions:
+	for action: Variant in actions:
 		if action.get("_resolved", false):
 			continue
 		if action.get("do", "") == "settle":
@@ -109,27 +109,27 @@ static func sample_comb_build_sites(main: Node2D) -> void:
 	if stats.is_empty() or main.hive == null:
 		return
 	stats["samples"] = int(stats["samples"]) + 1
-	for cell in main.hive.cells:
+	for cell: Variant in main.hive.cells:
 		if not is_instance_valid(cell) or cell.is_built:
 			continue
 		var building: int = 0
 		var without_slot: int = 0
 		var holders: int = 0
 		var distinct: int = 0
-		for holder in cell.slot_users:
+		for holder: Variant in cell.slot_users:
 			if holder != null and is_instance_valid(holder):
 				holders += 1
 				distinct += 1
 		var stand_points: Array = []
-		for bee in cell.builders:
+		for bee: Variant in cell.builders:
 			if not is_instance_valid(bee) or bee.state != bee.State.BUILDING or bee.target_cell != cell:
 				continue
 			building += 1
 			if not cell.slot_users.has(bee):
 				without_slot += 1
 			stand_points.append(bee.position)
-		for i in range(stand_points.size()):
-			for j in range(i + 1, stand_points.size()):
+		for i: int in range(stand_points.size()):
+			for j: int in range(i + 1, stand_points.size()):
 				var gap: float = stand_points[i].distance_to(stand_points[j])
 				var best: float = float(stats["min_builder_spacing_px"])
 				if best < 0.0 or gap < best:
@@ -148,7 +148,7 @@ static func sample_comb_build_sites(main: Node2D) -> void:
 ## must fail loudly if an action cannot be carried out
 ## (docs/headless-run-contract.md).
 static func log_unresolved(actions: Array) -> void:
-	for action in actions:
+	for action: Variant in actions:
 		if action.get("_resolved", false):
 			continue
 		_log(action.get("do", ""), str(action), "never_fired", "run ended before its 'when' was met")
@@ -374,7 +374,7 @@ static func _legacy_when_spec(main: Node2D, when: Dictionary) -> Dictionary:
 		var role_key: String = str(population.get("role", ""))
 		if role_key == "":
 			var total := 0
-			for count in main._role_counts().values():
+			for count: Variant in main._role_counts().values():
 				total += int(count)
 			if total < int(population.get("count", 0)):
 				return {}
@@ -406,7 +406,7 @@ static func _legacy_when_spec(main: Node2D, when: Dictionary) -> Dictionary:
 		if when.has("disease_at_most"):
 			disease_spec["at_most"] = when["disease_at_most"]
 		spec[LEGACY_WHEN_KEY_MAP["disease_at_least"]] = disease_spec
-	for key in when:
+	for key: String in when:
 		if not LEGACY_WHEN_KEY_MAP.has(key) and not LOCAL_WHEN_KEYS.has(key):
 			spec[key] = when[key]
 	return spec
@@ -420,25 +420,25 @@ static func _resolve_bees(main: Node2D, target: Dictionary) -> Array:
 	if target.has("queen"):
 		return [main.queen] if is_instance_valid(main.queen) else []
 	var bees: Array = main.get_tree().get_nodes_in_group("bees").filter(
-		func(b): return is_instance_valid(b)
+		func(b: Variant) -> bool: return is_instance_valid(b)
 	)
-	bees.sort_custom(func(a, b): return a.bee_id < b.bee_id)
+	bees.sort_custom(func(a: Variant, b: Variant) -> bool: return a.bee_id < b.bee_id)
 
 	if target.has("any_of"):
 		var picked: Array = []
-		for part in target["any_of"]:
-			for b in _resolve_bees(main, part):
+		for part: Variant in target["any_of"]:
+			for b: Variant in _resolve_bees(main, part):
 				if not picked.has(b):
 					picked.append(b)
 		return picked
 
 	if target.has("bee_ids"):
 		var ids: Array = target["bee_ids"]
-		return bees.filter(func(b): return ids.has(b.bee_id))
+		return bees.filter(func(b: Variant) -> bool: return ids.has(b.bee_id))
 
 	if target.has("current_role"):
 		var role_id: int = main.Roles.id_for_key(target["current_role"])
-		var matches: Array = bees.filter(func(b): return b.role == role_id)
+		var matches: Array = bees.filter(func(b: Variant) -> bool: return b.role == role_id)
 		var count: int = int(target.get("count", matches.size()))
 		return matches.slice(0, count)
 
@@ -469,7 +469,7 @@ static func _resolve_soil_block(main: Node2D, hex: Array) -> Node2D:
 	if hex.size() != 2:
 		return null
 	var target := Vector2i(int(hex[0]), int(hex[1]))
-	for b in main.get_tree().get_nodes_in_group("soil_blocks"):
+	for b: Variant in main.get_tree().get_nodes_in_group("soil_blocks"):
 		if is_instance_valid(b) and b.axial == target:
 			return b
 	return null
@@ -503,7 +503,7 @@ static func _do_assign_role(main: Node2D, action: Dictionary) -> void:
 	var base_key: String = role
 	var mode_key: String = ""
 	if role_id == -1:
-		for r in main.Roles.ROLES:
+		for r: Dictionary in main.Roles.ROLES:
 			var prefix: String = r.key + "_"
 			if role.begins_with(prefix):
 				role_id = r.id
@@ -515,7 +515,7 @@ static func _do_assign_role(main: Node2D, action: Dictionary) -> void:
 		return
 	if mode_key != "":
 		var mode_known := false
-		for mode in main.Roles.modes_for(role_id):
+		for mode: Variant in main.Roles.modes_for(role_id):
 			if mode.key == mode_key:
 				mode_known = true
 				break
@@ -533,7 +533,7 @@ static func _do_assign_role(main: Node2D, action: Dictionary) -> void:
 	# BS-3: {"expect_refused": true} proves a role the run has not unlocked
 	# cannot be assigned -- accepted only when no bee ended up on it.
 	if action.get("expect_refused", false):
-		var moved: Array = bees.filter(func(b): return is_instance_valid(b) and b.role == role_id)
+		var moved: Array = bees.filter(func(b: Variant) -> bool: return is_instance_valid(b) and b.role == role_id)
 		if moved.is_empty():
 			_log("assign_role", "%d bees -> %s" % [bees.size(), role], "accepted", "refused as expected")
 		else:
@@ -541,7 +541,7 @@ static func _do_assign_role(main: Node2D, action: Dictionary) -> void:
 				"%d bee(s) took role %s, which should have been refused" % [moved.size(), role])
 		return
 
-	var bad: Array = bees.filter(func(b):
+	var bad: Array = bees.filter(func(b: Variant) -> bool:
 		if not is_instance_valid(b) or b.role != role_id:
 			return true
 		return mode_key != "" and not main.hud._mode_is_active(role_id, b, mode_key)
@@ -591,12 +591,12 @@ static func _do_queue_build(main: Node2D, action: Dictionary) -> void:
 		return
 	var hex := Vector2i(int(hex_arr[0]), int(hex_arr[1]))
 	var append: bool = action.get("append", false)
-	for b in bees:
+	for b: Variant in bees:
 		if append:
 			b.queue_build_target(hex)
 		else:
 			b.set_manual_build_target(hex)
-	var bad: Array = bees.filter(func(b):
+	var bad: Array = bees.filter(func(b: Variant) -> bool:
 		return not is_instance_valid(b) or not b.build_queue.has(hex)
 	)
 	if not bad.is_empty():
@@ -617,12 +617,12 @@ static func _do_queue_mine(main: Node2D, action: Dictionary) -> void:
 		_log("queue_mine", str(action), "rejected", "no matching bees or no soil block at that hex")
 		return
 	var append: bool = action.get("append", false)
-	for b in bees:
+	for b: Variant in bees:
 		if append:
 			b.queue_mine_target(block)
 		else:
 			b.set_mine_target(block)
-	var bad: Array = bees.filter(func(b):
+	var bad: Array = bees.filter(func(b: Variant) -> bool:
 		return not is_instance_valid(b) or not b.mine_queue.has(block)
 	)
 	if not bad.is_empty():
@@ -748,12 +748,12 @@ static func _do_set_restock_order(main: Node2D, action: Dictionary) -> void:
 	main.orders_zones._on_restock_sources_requested(true)
 	main.selected_bees = previous_bees
 	main.selected_cells = previous_cells
-	for cell in previous_cells:
+	for cell: Variant in previous_cells:
 		if is_instance_valid(cell):
 			cell.set_selected(true)
 	main.hud.update_selection(previous_bees)
 
-	var bad: Array = bees.filter(func(b):
+	var bad: Array = bees.filter(func(b: Variant) -> bool:
 		return (
 			not is_instance_valid(b)
 			or b.architect_mode != "restock"
@@ -782,16 +782,16 @@ static func _do_select_bees(main: Node2D, action: Dictionary) -> void:
 	main.input_selection._clear_world_object_selection()
 	main.input_selection._clear_cell_selection()
 	main.input_selection._clear_block_selection()
-	for b in main.selected_bees:
+	for b: Variant in main.selected_bees:
 		if is_instance_valid(b):
 			b.set_selected(false)
 	main.selected_bees.clear()
-	for b in bees:
+	for b: Variant in bees:
 		if not main.selected_bees.has(b):
 			b.set_selected(true)
 			main.selected_bees.append(b)
 	main.hud.update_selection(main.selected_bees)
-	var bad: Array = bees.filter(func(b): return not is_instance_valid(b) or not main.selected_bees.has(b))
+	var bad: Array = bees.filter(func(b: Variant) -> bool: return not is_instance_valid(b) or not main.selected_bees.has(b))
 	if not bad.is_empty():
 		_log("select_bees", "%d bees" % bees.size(), "rejected",
 			"%d bee(s) did not end up selected" % bad.size())
@@ -810,12 +810,12 @@ static func _do_select_soil(main: Node2D, action: Dictionary) -> void:
 	var blocks: Array = []
 	if hexes.is_empty():
 		var all_blocks: Array = main.get_tree().get_nodes_in_group("soil_blocks").filter(
-			func(b): return is_instance_valid(b)
+			func(b: Variant) -> bool: return is_instance_valid(b)
 		)
 		if not all_blocks.is_empty():
 			blocks.append(all_blocks[0])
 	else:
-		for hex in hexes:
+		for hex: Variant in hexes:
 			var block: Node2D = _resolve_soil_block(main, hex)
 			if block != null:
 				blocks.append(block)
@@ -834,9 +834,9 @@ static func _do_select_soil(main: Node2D, action: Dictionary) -> void:
 static func _do_select_cell(main: Node2D, action: Dictionary) -> void:
 	var built_index: int = int(action.get("built_index", 0))
 	var built_cells: Array = main.get_tree().get_nodes_in_group("hive_cells").filter(
-		func(c): return is_instance_valid(c) and c.is_built
+		func(c: Variant) -> bool: return is_instance_valid(c) and c.is_built
 	)
-	built_cells.sort_custom(func(a, b):
+	built_cells.sort_custom(func(a: Variant, b: Variant) -> bool:
 		if a.axial.x != b.axial.x:
 			return a.axial.x < b.axial.x
 		return a.axial.y < b.axial.y
@@ -853,7 +853,7 @@ static func _do_select_cell(main: Node2D, action: Dictionary) -> void:
 static func _force_layout(node: Node) -> void:
 	if node is Container:
 		node.notification(Container.NOTIFICATION_SORT_CHILDREN)
-	for child in node.get_children():
+	for child: Node in node.get_children():
 		_force_layout(child)
 
 
@@ -1050,7 +1050,7 @@ static func _do_set_bee_load(main: Node2D, action: Dictionary) -> void:
 		_log("set_bee_load", str(action), "rejected", "no matching bees")
 		return
 	var amount: float = float(action.get("amount", 0.0))
-	for bee in bees:
+	for bee: Variant in bees:
 		bee.current_load = amount
 		bee.current_load_type = str(action.get("resource", "")) if amount > 0.0 else ""
 		bee._update_label()
@@ -1107,7 +1107,7 @@ static func _do_clear_fermented(main: Node2D) -> void:
 ## Read with the queen_watch_hits_at_most condition.
 static func _do_watch_queen_states(main: Node2D, action: Dictionary) -> void:
 	var ids: Array = []
-	for name in action.get("states", []):
+	for name: String in action.get("states", []):
 		var id: int = main.queen.State.get(str(name), -1) if is_instance_valid(main.queen) else -1
 		if id == -1:
 			_log("watch_queen_states", str(action), "rejected", "unknown state %s" % name)
@@ -1171,7 +1171,7 @@ static func _do_restore_slot(main: Node2D, action: Dictionary) -> void:
 	var path := SaveSlots.slot_path(slug)
 	if str(action.get("checkpoint", "")) == "latest":
 		var next_number := 1
-		for slot in SaveSlots.list_slots():
+		for slot: Dictionary in SaveSlots.list_slots():
 			if slot["slug"] == slug:
 				next_number = int(slot.get("next_checkpoint", 1))
 		path = SaveSlots.checkpoint_path(slug, posmod(next_number - 2, SaveSlots.CHECKPOINTS) + 1)
@@ -1252,7 +1252,7 @@ static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> D
 static func _check_save_slot(main: Node2D, condition: Dictionary) -> Dictionary:
 	var slug := SaveSlots.slugify(str(condition["save_slot"]))
 	var entry: Dictionary = {}
-	for slot in SaveSlots.list_slots():
+	for slot: Dictionary in SaveSlots.list_slots():
 		if slot["slug"] == slug:
 			entry = slot
 	if entry.is_empty():
@@ -1261,7 +1261,7 @@ static func _check_save_slot(main: Node2D, condition: Dictionary) -> Dictionary:
 	if condition.has("named") and named != bool(condition["named"]):
 		return {"ok": false, "reason": "named save present: %s" % named}
 	var files: int = 0
-	for number in range(1, SaveSlots.CHECKPOINTS + 1):
+	for number: int in range(1, SaveSlots.CHECKPOINTS + 1):
 		if FileAccess.file_exists(SaveSlots.checkpoint_path(slug, number)):
 			files += 1
 	if condition.has("checkpoint_files") and files != int(condition["checkpoint_files"]):
@@ -1279,7 +1279,7 @@ static func _check_save_slot(main: Node2D, condition: Dictionary) -> Dictionary:
 ## the "ordinary play is unchanged" invariant.
 static func _check_all_actions_available(main: Node2D) -> Dictionary:
 	var refused: Array = []
-	for action in Actions.ACTIONS:
+	for action: Variant in Actions.ACTIONS:
 		var answer: Dictionary = Availability.action_query(action.id, null, main.stage_gate, Session.progression)
 		if not answer.available:
 			refused.append("%s (%s)" % [action.id, answer.reason])
@@ -1291,7 +1291,7 @@ static func _check_all_actions_available(main: Node2D) -> Dictionary:
 ## the queen is, what she is doing and what she carries.
 static func _queen_summary(main: Node2D, condition: Dictionary) -> String:
 	var involves_queen := false
-	for key in condition:
+	for key: String in condition:
 		if str(key).begins_with("queen_") or str(key) == "camera_following_queen":
 			involves_queen = true
 	if not involves_queen or not is_instance_valid(main.queen):
@@ -1427,7 +1427,7 @@ static func _resolve_named_panel(main: Node2D, name: String) -> Control:
 ## The registry: every GamePanel joins the "game_panel" group under its
 ## window_key, so a window name resolves without a hand-kept match.
 static func _game_panel(main: Node2D, key: String) -> GamePanel:
-	for node in main.get_tree().get_nodes_in_group("game_panel"):
+	for node: Variant in main.get_tree().get_nodes_in_group("game_panel"):
 		if node.window_key == key:
 			return node
 	return null
@@ -1559,7 +1559,7 @@ static func _check_menu_items(main: Node2D, condition: Dictionary) -> Dictionary
 		return {"ok": false, "reason": "menu '%s' not found" % path}
 	var popup: PopupMenu = (node as MenuButton).get_popup()
 	var offered: Array = []
-	for i in range(popup.item_count):
+	for i: int in range(popup.item_count):
 		offered.append(popup.get_item_text(i))
 	var expected: Array = condition["menu_items"]
 	if offered != expected:
@@ -1592,7 +1592,7 @@ static func _check_even_columns(main: Node2D, condition: Dictionary) -> Dictiona
 		return {"ok": false, "reason": "container '%s' not found" % path}
 	var container: Control = node as Control
 	var visible_children: Array = container.get_children().filter(
-		func(c): return c is Control and c.is_visible_in_tree()
+		func(c: Variant) -> bool: return c is Control and c.is_visible_in_tree()
 	)
 	var n: int = int(condition.get("children", 0))
 	if visible_children.size() < n:
@@ -1600,20 +1600,20 @@ static func _check_even_columns(main: Node2D, condition: Dictionary) -> Dictiona
 	var selected: Array = visible_children.slice(0, n)
 	var tolerance: float = float(condition.get("tolerance", 0))
 
-	var widths: Array = selected.map(func(c): return (c as Control).get_global_rect().size.x)
+	var widths: Array = selected.map(func(c: Variant) -> float: return (c as Control).get_global_rect().size.x)
 	var reference_width: float = widths[0]
-	for w in widths:
+	for w: float in widths:
 		if absf(w - reference_width) > tolerance:
 			return {"ok": false, "reason": "container '%s' columns have uneven widths %s (tolerance %.1fpx)" % [path, widths, tolerance]}
 
 	if n >= 2:
 		var gaps: Array = []
-		for i in range(n - 1):
+		for i: int in range(n - 1):
 			var left_rect: Rect2 = (selected[i] as Control).get_global_rect()
 			var right_rect: Rect2 = (selected[i + 1] as Control).get_global_rect()
 			gaps.append(right_rect.position.x - (left_rect.position.x + left_rect.size.x))
 		var reference_gap: float = gaps[0]
-		for g in gaps:
+		for g: Variant in gaps:
 			if absf(g - reference_gap) > tolerance:
 				return {"ok": false, "reason": "container '%s' columns have uneven gaps %s (tolerance %.1fpx)" % [path, gaps, tolerance]}
 
@@ -1654,13 +1654,13 @@ static func _check_no_empty_labels(main: Node2D, condition: Dictionary) -> Dicti
 	return {"ok": true, "reason": ""}
 
 static func _collect_empty_labels(node: Node, out: Array) -> void:
-	for child in node.get_children():
+	for child: Node in node.get_children():
 		if child is Label and (child as Control).is_visible_in_tree() and (child as Label).text.strip_edges() == "":
 			out.append(String(child.get_path()))
 		_collect_empty_labels(child, out)
 
 static func _collect_collapsed_controls(node: Node, out: Array) -> void:
-	for child in node.get_children():
+	for child: Node in node.get_children():
 		if (child is Button or child is MenuButton) and (child as Control).is_visible_in_tree():
 			var rect: Rect2 = (child as Control).get_global_rect()
 			if rect.size.x < 8.0 or rect.size.y < 8.0:

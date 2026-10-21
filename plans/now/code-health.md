@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds | Dependency: CQ-L1 waits for RR-10 (Codex lane) to release `scripts/hive.gd` and `scripts/skill_tree_panel.gd`; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); the rest is in "Dependencies" | Verified: 2026-10-18
+Status: active | Owner: Dave / Claude Code | Next: CQ-T3 -- UI typed; warning becomes an error | Dependency: CQ-L1 waits for RR-10 (Codex lane) to release `scripts/hive.gd` and `scripts/skill_tree_panel.gd`; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); the rest is in "Dependencies" | Verified: 2026-10-21
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 

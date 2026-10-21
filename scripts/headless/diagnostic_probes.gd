@@ -6,7 +6,7 @@ const SNAPSHOT_FIELDS := ["population.total", "resources.food_stores", "resource
 
 static func selected_snapshot(world: Node2D, fields: Array, counters: Dictionary) -> Dictionary:
 	var snapshot := {"type": "snapshot", "game_time": Session.sim_time, "day": world.day}
-	for field_variant in fields:
+	for field_variant: Variant in fields:
 		var field: String = str(field_variant)
 		match field:
 			"population.total": _merge_field(snapshot, "population", "total", _live_bee_count(world))
@@ -26,7 +26,7 @@ static func selected_snapshot(world: Node2D, fields: Array, counters: Dictionary
 			"performance.top_sections_ms":
 				var sections: Dictionary = {}
 				if Session.perf_enabled:
-					for key in Perf.top_sections(8): sections[key] = Perf.averages[key]
+					for key: String in Perf.top_sections(8): sections[key] = Perf.averages[key]
 				_merge_field(snapshot, "performance", "top_sections_ms", sections)
 			"colony.milestone_days":
 				var milestone_days: Dictionary = {}
@@ -37,20 +37,20 @@ static func selected_snapshot(world: Node2D, fields: Array, counters: Dictionary
 
 ## Adds one field into the snapshot's group dictionary, creating the group on
 ## first use, so two fields from the same group don't overwrite each other.
-static func _merge_field(snapshot: Dictionary, group: String, key: String, value) -> void:
+static func _merge_field(snapshot: Dictionary, group: String, key: String, value: Variant) -> void:
 	if not snapshot.has(group):
 		snapshot[group] = {}
 	snapshot[group][key] = value
 
 static func _live_bee_count(world: Node2D) -> int:
 	var count := 0
-	for bee in world.get_tree().get_nodes_in_group("bees"):
+	for bee: Variant in world.get_tree().get_nodes_in_group("bees"):
 		if is_instance_valid(bee): count += 1
 	return count
 
 static func _flowers_by_species(world: Node2D) -> Dictionary:
 	var counts: Dictionary = {}
-	for f in world.get_tree().get_nodes_in_group("flowers"):
+	for f: Variant in world.get_tree().get_nodes_in_group("flowers"):
 		if is_instance_valid(f):
 			counts[f.species_name] = int(counts.get(f.species_name, 0)) + 1
 	return counts
@@ -59,7 +59,7 @@ static func _flowers_by_species(world: Node2D) -> Dictionary:
 static func _flower_season_counts(world: Node2D) -> Dictionary:
 	var in_season := 0
 	var out_of_season := 0
-	for flower in world.get_tree().get_nodes_in_group("flowers"):
+	for flower: Variant in world.get_tree().get_nodes_in_group("flowers"):
 		if not is_instance_valid(flower):
 			continue
 		if flower.in_season():
