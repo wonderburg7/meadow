@@ -23,35 +23,28 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] CQ-R1 -- headless scenario boot leaves main.gd**
-   - Plan: `plans/now/code-health.md` -- "CQ-R1 -- headless scenario boot leaves main.gd"
-   - Files: `scripts/main.gd`, `scripts/headless/scenario_boot.gd`, `scripts/scenario_actions.gd`, `scripts/diagnostic_log.gd`, `scripts/scenario_presets.gd`, `tools/update_function_map.py`, `FUNCTION_MAP.md`, `.claude/rules/gdscript.md`, `docs/agent-rules.md`
-   - Check: `tests/test_run_scenario_launch.py` passes; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` and `test_scenarios/sv1_named_saves_test.json` match; a performance-capture scenario still writes its capture; `.\tools\verify.ps1` is green
-   - Proof: `present: scripts/main.gd :: func _apply_scenario_boot_arg(`
-   - Next after: CQ-R2
-
-2. **[Claude] TS-2 -- the HUD's own size overrides follow the typeface too**
+1. **[Claude] TS-2 -- the HUD's own size overrides follow the typeface too**
    - Plan: `plans/now/typeface-size.md` -- "TS-2 -- the HUD's own size overrides"
    - Files: `scripts/hud.gd`, `tests/ts2_hud_typeface_size_test.gd`, `tests/test_ts2_hud_typeface_size.py`
    - Check: `python -m unittest tests.test_ts2_hud_typeface_size` passes: with OpenDyslexic at text scale 1, the corner readouts and goal lines carry `UiTheme.font_px` of their base sizes, and switching typeface rebuilds the corner.
    - Proof: `absent: scripts/hud.gd :: UiTheme.font_px`
    - Next after: none -- plans/now/typeface-size.md is complete
 
-3. **[Claude] WP-2 -- owned, each bee follows an ordered backup list**
+2. **[Claude] WP-2 -- owned, each bee follows an ordered backup list**
    - Plan: `plans/now/work-priorities.md` -- "WP-2 -- owned, each bee follows an ordered backup list"
    - Files: `scripts/bee.gd`, `scripts/session.gd`, `scripts/skills.gd`, `scripts/orders_zones.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/wp2_backup_order_test.gd`, `tests/test_wp2_backup_order.py`
    - Check: `python -m unittest tests.test_wp2_backup_order` passes (unowned, a bee falls back on its one backup as today; owned, an idle bee whose role and first backup have no work takes the next job on its list that does; a bee born after purchase takes the colony default; the lists and the default survive save and restore; an old save loads each bee with its backup first); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/bee.gd :: backup_order`
    - Next after: WP-3 -- the ordered list in the selection panel and the colony default
 
-4. **[Claude] RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning**
+3. **[Claude] RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning**
    - Plan: `plans/now/run-repairs.md` -- "RR-11 -- nectar shows a pre-fermented colour before it ferments, as a warning"
    - Files: `scripts/hive_cell.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/rr11_pre_fermented_test.gd`, `tests/test_rr11_pre_fermented.py`
    - Check: `python -m unittest tests.test_rr11_pre_fermented` passes: a nectar cell aged 0.5, 0.8 and 1.1 times `nectar_ferment_hours` gives `is_pre_fermented()` false, true, false and `is_fermented()` false, false, true; at 0.8 with cell sprites off the cell's flat colour is `PRE_FERMENTED_NECTAR_COLOR`, `hive.find_honey_source` returns it and `hive.take("nectar", 1.0)` takes from it; `python -m unittest tests.test_sp3_content_colours tests.test_nf2_fermentation` still passes.
    - Proof: `absent: scripts/hive_cell.gd :: func is_pre_fermented(`
    - Next after: none -- RR-12, the plan's last slice, waits for ED-3
 
-5. **[Claude] T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site**
+4. **[Claude] T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site**
    - Plan: `plans/now/tier-two.md` -- "T2-14 -- a comb worker's idle reason asks whether there is room to build, without starting a site"
    - Files: `scripts/bee.gd`, `scripts/hive.gd`, `tests/t2_14_idle_reason_pure_test.gd`, `tests/test_t2_14_idle_reason_pure.py`
    - Check: `python -m unittest tests.test_t2_14_idle_reason_pure` passes: a comb worker in Build mode without Automation, in BUILD_IDLE with room to build, gives the Automation idle reason, and `hive.cells.size()` is unchanged after 20 `idle_reason()` calls; `hive.has_room_to_build()` is true exactly when `create_next_cell_site()` then returns a site; in `python -m unittest tests.test_t2_11_comb_cadence`'s no-Automation case the DAY 2 line, with a comb worker selected, says "0 sites started that day".
