@@ -105,8 +105,9 @@ a second `finish` in the same worktree during that verify is refused.
 `implementing`, `ready-to-finish`, `verifying (<stage>, <elapsed>, last output <n>s ago)`,
 `verify orphaned (PID gone, no result)`, `closing at <phase>` or `lane dry`, and `next` is the
 single command to run. A verifying run is waited for, never killed by hand; an orphaned one
-is cleared with `tools/slice.ps1 stop-verify`, which stops only the PIDs
-`tools/verify.ps1` listed in `meadow-verify-status.json` (git common dir). `start` on a lane
+is cleared with `tools/slice.ps1 stop-verify -Lane <lane>`, which acts only on that lane's
+worktree record (`meadow-verify-status-<hash>.json`, git common dir), only once its verify PID
+is gone, and stops only that run's processes. `start` on a lane
 whose own worktree is open and ahead prints this line and exits 0.
 `tools/slice.ps1 status` shows the slice's state as "finish verifying the
 branch" then, `running` (the command holding the lifecycle lock, with its

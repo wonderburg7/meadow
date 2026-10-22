@@ -308,7 +308,7 @@ function Write-StageResult {
     }
 }
 
-# L-31: meadow-verify-status.json in the git common dir says what this run is
+# L-31: meadow-verify-status-<hash of worktree path>.json in the git common dir says what this run is
 # doing, so a fresh session can tell a slow verify from a dead one
 # (`tools/slice.ps1 status`) and `slice.ps1 stop-verify` stops only the PIDs
 # listed here. Written per stage and every 30 s from the job-polling loop,
@@ -351,8 +351,14 @@ function Write-VerifyStatus {
         if (-not $script:VerifyStatusPath) {
             $commonDir = (& git -C $PSScriptRoot rev-parse --path-format=absolute --git-common-dir 2>$null | Out-String).Trim()
             if (-not $commonDir) { return }
-            $script:VerifyStatusPath = Join-Path $commonDir "meadow-verify-status.json"
             $script:VerifyStatus.root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..")).TrimEnd('\', '/')
+            # One record per worktree, named by a hash of its path (the same
+            # rule as Get-VerifyStatusPath in slice.ps1), so overlapping runs
+            # in different worktrees never overwrite each other.
+            $key = $script:VerifyStatus.root.Replace('\', '/').TrimEnd('/').ToLowerInvariant()
+            $sha = [System.Security.Cryptography.SHA1]::Create()
+            $hash = ([System.BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($key))) -replace '-', '').ToLowerInvariant().Substring(0, 12)
+            $script:VerifyStatusPath = Join-Path $commonDir "meadow-verify-status-$hash.json"
         }
         $state = $script:VerifyStatus
         if ($Stage) { $state.stage = $Stage }

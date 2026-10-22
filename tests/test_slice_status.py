@@ -6,6 +6,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from workflow_test_support import *  # noqa: E402,F401,F403
 import datetime  # noqa: E402
+import hashlib  # noqa: E402
 import test_slice_lifecycle as lifecycle  # noqa: E402
 
 DEAD_PID = 999999
@@ -34,15 +35,27 @@ class SliceStatusTest(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         return json.loads(result.stdout)
 
-    def write_verify_status(self, pid: int, worktree: Path, finished: bool = False) -> None:
-        now = datetime.datetime.now().astimezone().isoformat()
-        (self.root / ".git" / "meadow-verify-status.json").write_text(
+    def record_path(self, worktree: Path) -> Path:
+        key = str(worktree).replace(chr(92), "/").rstrip("/").lower()
+        digest = hashlib.sha1(key.encode("utf-8")).hexdigest()[:12]
+        return self.root / ".git" / f"meadow-verify-status-{digest}.json"
+
+    def write_verify_status(self, pid: int, worktree: Path, finished: bool = False,
+                            age: int = 0, pids=()) -> Path:
+        """A record whose run began `age` seconds ago and was last written 30 s later than that."""
+        now = datetime.datetime.now().astimezone()
+        started = now - datetime.timedelta(seconds=age)
+        updated = started + datetime.timedelta(seconds=min(age, 30)) if age else now
+        path = self.record_path(worktree)
+        path.write_text(
             json.dumps({
                 "scope": "branch", "root": str(worktree), "pid": pid, "stage": "unit tests",
-                "pids": [], "started": now, "last_output": now, "updated": now, "finished": finished,
+                "pids": list(pids), "started": started.isoformat(), "last_output": updated.isoformat(),
+                "updated": updated.isoformat(), "finished": finished,
             }),
             encoding="utf-8",
         )
+        return path
 
     def commit_in(self, worktree: Path) -> None:
         (worktree / "scripts" / "sample.gd").write_text("func existing():\n\tpass\nfunc new_function():\n\tpass\n", encoding="utf-8")
@@ -91,19 +104,51 @@ class SliceStatusTest(unittest.TestCase):
         self.assertIn("T-1 is already open", again.stdout)
         self.assertIn("ready-to-finish", again.stdout)
 
-    def test_stop_verify_stops_only_listed_pids(self):
+    def test_records_are_per_worktree_and_do_not_clobber(self):
+        worktree = self.claim()
+        other = self.root / ".worktrees" / "OTHER"
+        other_path = self.write_verify_status(os.getpid(), other)
+        mine = self.write_verify_status(DEAD_PID, worktree, finished=True)
+        self.assertNotEqual(other_path, mine)
+        self.assertFalse(json.loads(other_path.read_text(encoding="utf-8"))["finished"])
+        # The other worktree's live run is not this lane's state.
+        self.assertEqual("implementing", self.status()["status"])
+
+    def test_stop_verify_refuses_a_live_run(self):
         worktree = self.claim()
         child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"])
         try:
-            self.write_verify_status(DEAD_PID, worktree)
-            path = self.root / ".git" / "meadow-verify-status.json"
-            record = json.loads(path.read_text(encoding="utf-8"))
-            record["pids"] = [child.pid]
-            path.write_text(json.dumps(record), encoding="utf-8")
-            result = self.slice("stop-verify")
+            path = self.write_verify_status(os.getpid(), worktree, pids=[child.pid])
+            result = self.slice("stop-verify", "-Lane", "Codex")
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn("still running", result.stdout + result.stderr)
+            self.assertIsNone(child.poll())
+            self.assertFalse(json.loads(path.read_text(encoding="utf-8"))["finished"])
+        finally:
+            child.kill()
+
+    def test_stop_verify_ignores_another_worktrees_record(self):
+        self.claim()
+        child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"])
+        try:
+            self.write_verify_status(DEAD_PID, self.root / ".worktrees" / "OTHER", pids=[child.pid])
+            result = self.slice("stop-verify", "-Lane", "Codex")
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn("nothing stopped", result.stdout)
+            self.assertIsNone(child.poll())
+        finally:
+            child.kill()
+
+    def test_stop_verify_stops_an_orphans_listed_child_started_after_the_last_write(self):
+        worktree = self.claim()
+        # Run began 120 s ago and was last written 30 s after that, so this
+        # child (started now) post-dates `updated` yet belongs to the run.
+        child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"])
+        try:
+            path = self.write_verify_status(DEAD_PID, worktree, age=120, pids=[child.pid])
+            result = self.slice("stop-verify", "-Lane", "Codex")
             self.assertEqual(0, result.returncode, result.stderr)
             child.wait(timeout=20)
-            self.assertIsNotNone(child.returncode)
             self.assertTrue(json.loads(path.read_text(encoding="utf-8"))["finished"])
         finally:
             if child.poll() is None:

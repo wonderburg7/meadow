@@ -1844,10 +1844,21 @@ function Invoke-SliceOwner {
 
 # --- status line (L-31) ---
 
+function Get-VerifyStatusPath {
+    # One record per worktree, named by a hash of its path (the rule
+    # tools/verify.ps1 uses), so lanes never share or clobber a record.
+    param([string]$Root, [string]$WorktreePath)
+    $full = [System.IO.Path]::GetFullPath($WorktreePath).TrimEnd('\', '/')
+    $key = $full.Replace('\', '/').TrimEnd('/').ToLowerInvariant()
+    $sha = [System.Security.Cryptography.SHA1]::Create()
+    $hash = ([System.BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($key))) -replace '-', '').ToLowerInvariant().Substring(0, 12)
+    return Get-LifecycleFilePath -Root $Root -Name "meadow-verify-status-$hash.json"
+}
+
 function Get-VerifyStatus {
     # The record tools/verify.ps1 keeps while it runs, or $null.
-    param([string]$Root)
-    $path = Get-LifecycleFilePath -Root $Root -Name "meadow-verify-status.json"
+    param([string]$Root, [string]$WorktreePath)
+    $path = Get-VerifyStatusPath -Root $Root -WorktreePath $WorktreePath
     if (-not (Test-Path -LiteralPath $path)) { return $null }
     try { return (Get-Content -Raw -LiteralPath $path | ConvertFrom-Json) } catch { return $null }
 }
@@ -1856,8 +1867,8 @@ function Test-VerifyPidAlive {
     param([object]$Status)
     $process = Get-Process -Id ([int]$Status.pid) -ErrorAction SilentlyContinue
     if (-not $process) { return $false }
-    # A PID reused after the record was last written is not the verify.
-    try { if ($process.StartTime -gt ([datetime]$Status.updated).AddSeconds(5)) { return $false } } catch { }
+    # A PID reused after the run began is not the verify.
+    try { if ($process.StartTime -gt ([datetime]$Status.started).AddSeconds(5)) { return $false } } catch { }
     return $true
 }
 
@@ -1867,10 +1878,10 @@ function Get-SliceStateLine {
     param([string]$Root, [string]$Lane, [string]$Branch, [string]$WorktreeRelative)
     $worktreePath = Join-Path $Root $WorktreeRelative
     $finishCmd = "cd $WorktreeRelative; tools/slice.ps1 finish"
-    $verify = Get-VerifyStatus -Root $Root
+    $verify = Get-VerifyStatus -Root $Root -WorktreePath $worktreePath
     $sameTree = $false
     if ($verify -and -not $verify.finished) {
-        $sameTree = (-not $verify.root) -or ([string]$verify.root).TrimEnd('\', '/') -eq ([string]$worktreePath).TrimEnd('\', '/') -or ([string]$verify.root).Replace('\', '/').TrimEnd('/') -eq ([string]$worktreePath).Replace('\', '/').TrimEnd('/')
+        $sameTree = $true
     }
     if ($sameTree) {
         if (Test-VerifyPidAlive -Status $verify) {
@@ -1883,7 +1894,7 @@ function Get-SliceStateLine {
         }
         return [PSCustomObject]@{
             state = "verify orphaned (PID gone, no result)"
-            next  = "tools/slice.ps1 stop-verify, then $finishCmd"
+            next  = "tools/slice.ps1 stop-verify -Lane $Lane, then $finishCmd"
         }
     }
     $journal = Get-ClosingJournal -Root $Root -Branch $Branch
@@ -1916,25 +1927,49 @@ function Get-LaneIdleLine {
 }
 
 function Invoke-SliceStopVerify {
-    # Stops only the PIDs tools/verify.ps1 listed in its status file.
-    param([string]$Root)
-    $verify = Get-VerifyStatus -Root $Root
+    # Stops the run recorded for this lane's worktree, and only when that run
+    # is orphaned (its verify PID is gone). A live run is refused: wait for it.
+    param([string]$Root, [string]$Lane)
+    $target = Get-SliceTarget -Root $Root -Lane $Lane
+    $verify = Get-VerifyStatus -Root $Root -WorktreePath $target.WorktreePath
     if (-not $verify -or $verify.finished) {
-        Write-Output "stop-verify: no verify is recorded as running; nothing stopped"
+        Write-Output "stop-verify: no verify is recorded as running in $($target.WorktreeRelative); nothing stopped"
         return
     }
+    if (Test-VerifyPidAlive -Status $verify) {
+        throw "stop-verify refused: the verify in $($target.WorktreeRelative) is still running (PID $($verify.pid)); wait for it (PowerShell: Wait-Process -Id $($verify.pid))"
+    }
+    $startedAt = ([datetime]$verify.started).AddSeconds(-5)
+    $ids = New-Object System.Collections.Generic.List[int]
+    foreach ($listed in @($verify.pids)) { if ($listed) { $ids.Add([int]$listed) } }
+    # Children that began after the last write are found through the dead
+    # verify's PID: an orphan keeps its ParentProcessId.
+    try {
+        $all = @(Get-CimInstance Win32_Process -Property ProcessId, ParentProcessId -ErrorAction Stop)
+        $level = @([int]$verify.pid)
+        while ($level.Count -gt 0) {
+            $next = @()
+            foreach ($parent in $level) {
+                foreach ($child in @($all | Where-Object { [int]$_.ParentProcessId -eq $parent })) {
+                    if (-not $ids.Contains([int]$child.ProcessId)) { $ids.Add([int]$child.ProcessId); $next += [int]$child.ProcessId }
+                }
+            }
+            $level = $next
+        }
+    }
+    catch { }
     $stopped = @()
-    $ids = @(@($verify.pids) + @([int]$verify.pid)) | Where-Object { $_ } | ForEach-Object { [int]$_ } | Select-Object -Unique
-    foreach ($id in $ids) {
+    foreach ($id in ($ids | Select-Object -Unique)) {
         $process = Get-Process -Id $id -ErrorAction SilentlyContinue
         if (-not $process) { continue }
-        try { if ($process.StartTime -gt ([datetime]$verify.updated).AddSeconds(5)) { continue } } catch { }
+        # A process older than the run is a reused PID, not part of it.
+        try { if ($process.StartTime -lt $startedAt) { continue } } catch { }
         try { Stop-Process -Id $id -Force -ErrorAction Stop; $stopped += $id } catch { }
     }
-    $path = Get-LifecycleFilePath -Root $Root -Name "meadow-verify-status.json"
+    $path = Get-VerifyStatusPath -Root $Root -WorktreePath $target.WorktreePath
     $verify.finished = $true
     ($verify | ConvertTo-Json -Compress) | Set-Content -LiteralPath $path -NoNewline
-    Write-Output "stop-verify: stopped PID(s) $(if ($stopped) { $stopped -join ', ' } else { 'none (already gone)' }) listed by the verify status file"
+    Write-Output "stop-verify: stopped PID(s) $(if ($stopped) { $stopped -join ', ' } else { 'none (already gone)' }) of the orphaned verify in $($target.WorktreeRelative)"
 }
 
 function Invoke-SliceStatus {
@@ -2800,7 +2835,7 @@ switch ($Command) {
     "resume" { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Invoke-WithLifecycleLock -Root $root { Invoke-SliceResume -Lane $Lane -PythonPath $PythonPath } }
     "abort"  { $root = Get-PrimaryRoot; Invoke-WithLifecycleLock -Root $root { Invoke-SliceAbort -Lane $Lane } }
     "owner"  { Invoke-SliceOwner -Wanted $Path }
-    "stop-verify" { Invoke-SliceStopVerify -Root (Get-PrimaryRoot) }
+    "stop-verify" { Invoke-SliceStopVerify -Root (Get-PrimaryRoot) -Lane $Lane }
 }
 }
 catch {
