@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/CQ-R7` (`claude/CQ-R7`) | Claude | hud selection text, cell popup and corner refreshes decomposed | Claude | in progress | none | `plans/now/code-health.md` CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed |
