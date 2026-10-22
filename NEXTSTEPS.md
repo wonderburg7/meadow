@@ -63,16 +63,16 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] FR-1b -- tune the measured foraging-stage order**
-   - Plan: `plans/now/forager-recruitment.md` -- "FR-1b -- tune the measured foraging-stage order"
-   - Files: `tools/forager_tuning.py`, `tests/test_forager_tuning.py`, `test_scenarios/fr1_forager_stages_test.json`, `plans/now/forager-recruitment.md`
-   - Check: `python -m unittest tests.test_forager_tuning` passes; `python tools/forager_tuning.py` records the five-seed stage table and chosen existing values in this section; `tools/verify.ps1` is green
-   - Proof: `present: plans/now/forager-recruitment.md :: Next: FR-1b -- tune the measured foraging-stage order`
-   - Next after: FR-1c -- diagnose and repair foraging-stage behaviour
+1. **[Codex] FR-1c -- diagnose foraging-stage behaviour**
+   - Plan: `plans/now/forager-recruitment.md` -- "FR-1c -- diagnose foraging-stage behaviour"
+   - Files: `tools/forager_diagnosis.py`, `tests/test_forager_diagnosis.py`, `plans/now/forager-recruitment.md`
+   - Check: focused diagnosis tests pass; five-seed default and controlled reports are recorded in the slice; `tools/prefinish.py` and `tools/verify.ps1` are green
+   - Proof: `present: plans/now/forager-recruitment.md :: Next: FR-1c -- diagnose foraging-stage behaviour`
+   - Next after: FR-1d -- repair the diagnosed foraging behaviour
 
 ## Not in the queue, and why
 
-- **FR-1c** (`plans/now/forager-recruitment.md`) -- behaviour diagnosis/fix authorised by Dave, 22 Oct 2026; stage order and 30% are provisional targets. Waits for CQ-L1 to land or release `scripts/bee_foraging.gd`; the plan's block is `queue-gated` until the file overlap clears.
+- **FR-1d** (`plans/now/forager-recruitment.md`) -- behaviour repair authorised by Dave, 22 Oct 2026; stage order and 30% are provisional targets. Waits for FR-1c's causal diagnosis and CQ-L1 to land or release `scripts/bee_foraging.gd`; its block is `queue-gated` until both clear.
 
 One line each: the id, its plan, and the single thing it waits for.
 
@@ -90,7 +90,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **ED-3** (`plans/now/difficulty.md`) -- choosing Easy at run start; waits for ED-2.
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces.
 - **PP-6** (`plans/now/pollination.md`) -- the sweep prices the gyne route so Gyne rearing is first affordable in the 11 days after the first winter; waits for FR-2, which puts Auto scouting on the route (Dave, 14 Oct 2026), and AR-5 (`plans/now/alpha-route-evidence.md`), whose reference queen lays early (Dave, 16 Oct 2026).
-- **FR-2** (`plans/now/forager-recruitment.md`) -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight; waits for FR-1b (Codex backlog) to tune the stage order FR-1 measured, so Auto scouting forages better (FR-1 landed 17 Oct 2026; Dave, 14 Oct 2026).
+- **FR-2** (`plans/now/forager-recruitment.md`) -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight; waits for FR-1d's behaviour repair after FR-1c's diagnosis. Stage order and 30% are provisional targets (Dave, 22 Oct 2026).
 - **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-6, which shares `scripts/skills.gd`.
 - **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices of the alpha chain (SG-2, ED-1, ED-2, RR-12, SP-8a; WP-2 landed 21 Oct 2026) and ED-3 (Dave, 18 Oct 2026), and for CQ-S0's round-trip harness.
 - **CQ-M8** (`plans/now/code-health.md`) -- the bees' walk to the hive exit becomes one `BeeMovement` helper with named reach distances; waits for CQ-L1 (Claude lane), which holds `scripts/bee_foraging.gd`; its section and block are written by the session that claims CQ-M3.

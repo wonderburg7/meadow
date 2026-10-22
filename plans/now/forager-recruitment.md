@@ -1,7 +1,7 @@
 # Forager recruitment -- Orientation flight, then Auto scouting, then Auto-recruitment
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: FR-1c -- diagnose and repair foraging-stage behaviour | Dependency: FR-1 → FR-1b → FR-1c → FR-2 → PP-6 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-22
+Status: active | Owner: Dave / Claude Code | Next: FR-1c -- diagnose foraging-stage behaviour | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-22
 
 ## Objective
 
@@ -47,17 +47,19 @@ Verified 14 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FR-1c | Diagnose and repair foraging-stage behaviour using the measured evidence | `scripts/bee_foraging.gd`, `tools/forager_stages.py`, focused tests/scenarios | no -- CQ-L1 owns `scripts/bee_foraging.gd` in the Claude lane | high |
-| FR-2 | Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/skill_tree_panel.gd`, `scripts/levels.gd`, `tests/source_checks.py`, tests | no -- after FR-1c diagnoses/fixes behaviour; numeric targets are provisional | high |
+| FR-1c | Diagnose foraging-stage behaviour in the existing headless harness | `tools/forager_diagnosis.py`, `tests/test_forager_diagnosis.py`, this plan | yes -- no runtime-source ownership | high |
+| FR-1d | Repair the concrete defects FR-1c establishes | `scripts/bee_foraging.gd`, focused tests/scenarios, this plan | no -- after FR-1c and CQ-L1 releases `scripts/bee_foraging.gd` | high |
+| FR-2 | Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/skill_tree_panel.gd`, `scripts/levels.gd`, `tests/source_checks.py`, tests | no -- after FR-1d; numeric targets are provisional | high |
 | FR-3 | owning Auto-recruitment switches it on, passing species with Adaptive constancy | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/levels.gd`, tests | no -- after PP-6 | high |
 
 **Dependencies.** FR-1 changes no game file. FR-2 waits for FR-1's table;
 if a stage is not better than the one before, a tuning slice (FR-1b) is
 specified from FR-1's numbers before FR-2, and if tuning cannot fix the
-order the work stops for Dave (decision 3). Dave authorised the FR-1c behaviour
+order the work stops for Dave (decision 3). Dave authorised behaviour
 diagnosis/fix on 22 Oct 2026, retaining stage order and 30% as loose targets
 because upcoming rebalancing may change the figures substantially. FR-1c
-precedes FR-2 and waits for CQ-L1 to release `bee_foraging.gd`.
+diagnoses through the harness while CQ-L1 owns `bee_foraging.gd`; FR-1d
+applies the evidenced repair once that ownership clears. Both precede FR-2.
 Auto scouting sits on the gyne
 route (decision 1), so PP-6 (`plans/now/pollination.md`) prices the route
 only after FR-2 lands, and AR-4 (`plans/now/alpha-route-evidence.md`)
@@ -117,23 +119,26 @@ FR-1 shipped 2026-10-17; its specification is `plans/archive/FR-1_2026-10-17.md`
 
 FR-1b shipped 2026-10-22; its specification is `plans/archive/FR-1b_2026-10-22.md`.
 
-## FR-1c -- diagnose and repair foraging-stage behaviour
+## FR-1c -- diagnose foraging-stage behaviour
 
 <!-- LAYER: immediate-task -->
 Level: high
 
 Dave authorised this slice on 22 Oct 2026. Keep stage order and recruitment's
 30% uplift as provisional direction: rebalancing may change them substantially.
-Diagnose concrete behaviour defects and apply the smallest evidenced repair;
-do not chase an exact ratio or weaken Orientation flight to manufacture one.
-No save fields, skill-tree wiring, new balance fields or unrelated performance work.
+Diagnose concrete behaviour defects through the existing harness and logs;
+do not chase an exact ratio. Runtime repair is FR-1d because CQ-L1 currently
+owns `bee_foraging.gd`. This split advances the independent causal work while
+preserving both lanes' ownership. No runtime, save, skill-tree or balance edits.
 
 **Starting evidence (FR-1b's default radius 450, five seeds):** queue recruitment
 made 0, 4, 2, 0, 0 matches, while the species-passing row made 1, 0, 1, 1, 0.
 Scouting settled 4, 10, 11, 5, 7 foragers; recruitment settled 3, 9, 10, 3, 7;
 species passing settled 1, 3, 6, 2, 3. These counts establish sparse matching
 and slower settlement, not their cause. Existing `report.json` summaries and
-session logs are under `build/fr1b-tuning` in the measurement worktree.
+session logs and a manifest of all 20 baseline cases are preserved under
+`build/forager-evidence/fr1b-baseline` in the primary checkout, outside the
+disposable worktree. The full sweep figures are preserved there as well.
 
 **Diagnosis and scope:** use the five pinned seeds and unchanged FR-1 colony.
 Isolate the cost of searching several patches, entrance waits when no mentor
@@ -141,34 +146,57 @@ is available, the patch actually scored versus the point later inherited,
 and species restrictions during scouting. The fourth FR-1 row enables
 `floral_constancy_on`, changing species sampling as well as mentor passing;
 its whole delivery loss cannot be attributed to passing alone. Confirm causes
-with focused deterministic scenarios/tests before changing runtime behaviour.
-Measure call rate and population before editing a per-bee path; preserve
-explicit player preferences, both recruitment modes and the existing toggles.
-An architectural, save or gameplay question beyond a proven repair still goes to Dave.
+with controlled existing-value overlays and focused deterministic tests.
+Record call/event rate and population relevant to the repair. Distinguish
+proven causes, correlations and hypotheses that need a runtime probe in FR-1d.
 
-**Acceptance:** a causal regression check fails before each repair and passes
-afterwards; the same five-seed four-row table is recorded with per-seed values,
-matching/settlement counts and remaining limitations. Compare against the
-default baseline, not the closest failed tuning candidate. State any genuine
-improvement/regression and the reason for retaining it; missing the provisional
-order/30% target alone is not failure. Run focused tests, `tools/prefinish.py`
-and verification. Runtime behaviour changes take high-risk review/integration.
+**Acceptance:** a reproducible diagnosis report records the default five-seed
+stage table plus controlled wait-cost and species-restriction comparisons,
+per-seed delivery/matching/settlement counts and limitations. Test overlay
+fairness, extraction and paired comparisons. State the smallest evidenced
+repair to carry into FR-1d and any remaining causal probe; missing provisional
+order/30% targets alone is not failure. Run focused tests, `tools/prefinish.py`
+and verification. Keep original evidence archived and game source unchanged.
+
+```queue
+**[Codex] FR-1c -- diagnose foraging-stage behaviour**
+- Plan: `plans/now/forager-recruitment.md` -- "FR-1c -- diagnose foraging-stage behaviour"
+- Files: `tools/forager_diagnosis.py`, `tests/test_forager_diagnosis.py`, `plans/now/forager-recruitment.md`
+- Check: focused diagnosis tests pass; five-seed default and controlled reports are recorded in the slice; `tools/prefinish.py` and `tools/verify.ps1` are green
+- Proof: `present: plans/now/forager-recruitment.md :: Next: FR-1c -- diagnose foraging-stage behaviour`
+- Next after: FR-1d -- repair the diagnosed foraging behaviour
+```
+
+## FR-1d -- repair the diagnosed foraging behaviour
+
+<!-- LAYER: design -->
+Level: high
+
+Dave authorised behaviour diagnosis/fix on 22 Oct 2026; FR-1c separates the
+independent measurement from runtime ownership. Apply the smallest repair
+whose cause FR-1c establishes, retaining the targets as provisional direction.
+No weakening Orientation flight, save fields, skill wiring, new balance fields
+or unrelated performance work. Profile the affected per-bee path first;
+preserve explicit player preferences, both recruitment modes and developer
+toggles. Require causal before/after regression checks, the same five-seed
+stage table and focused/full verification. Runtime changes require high-risk
+review/integration. Refine this section from FR-1c's results before claiming.
 
 ```queue-gated
-**[Codex] FR-1c -- diagnose and repair foraging-stage behaviour**
-- Plan: `plans/now/forager-recruitment.md` -- "FR-1c -- diagnose and repair foraging-stage behaviour"
-- Files: `scripts/bee_foraging.gd`, `tools/forager_stages.py`, `tests/test_forager_stages.py`, `tests/test_forager_behaviour.py`, `tests/fr1c_forager_behaviour_test.gd`, `test_scenarios/fr1c_forager_behaviour_test.json`, `plans/now/forager-recruitment.md`
-- Check: causal regression tests and the five-seed stage report pass; `tools/prefinish.py` and `tools/verify.ps1` are green; target misses are reported as provisional guidance
-- Proof: `present: plans/now/forager-recruitment.md :: Next: FR-1c -- diagnose and repair foraging-stage behaviour`
+**[Codex] FR-1d -- repair the diagnosed foraging behaviour**
+- Plan: `plans/now/forager-recruitment.md` -- "FR-1d -- repair the diagnosed foraging behaviour"
+- Files: `scripts/bee_foraging.gd`, `tests/test_forager_behaviour.py`, `tests/fr1d_forager_behaviour_test.gd`, `test_scenarios/fr1d_forager_behaviour_test.json`, `plans/now/forager-recruitment.md`
+- Check: causal regression checks and the five-seed comparison pass; `tools/prefinish.py` and `tools/verify.ps1` are green; provisional target misses are documented
+- Proof: `present: plans/now/forager-recruitment.md :: Next: FR-1d -- repair the diagnosed foraging behaviour`
 - Next after: FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
 ```
 
 ## Not in the queue, and why
 
-- **FR-1c:** CQ-L1 in the Claude lane owns `scripts/bee_foraging.gd`. After
+- **FR-1d:** waits for FR-1c's causal evidence; CQ-L1 in the Claude lane also owns `scripts/bee_foraging.gd`. After
   CQ-L1 lands or releases that ownership with evidence, recheck both lanes,
   change its `queue-gated` fence to `queue`, and let normal refill admit it.
-- **FR-2:** waits for FR-1c's behavioural diagnosis/fix; its numeric targets are provisional.
+- **FR-2:** waits for FR-1d's behaviour fix; its numeric targets are provisional.
 
 ## FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
 
