@@ -23,6 +23,7 @@ const UiPanelLayout = preload("res://scripts/ui_panel_layout.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 const Stages = preload("res://scripts/challenge_stages.gd")
 const BeeNursery = preload("res://scripts/bee_nursery.gd")
+const ColonyPanel = preload("res://scripts/colony_panel.gd")
 
 # --- signals ------------------------------------------------------
 signal role_requested(role_name: String)
@@ -93,6 +94,8 @@ signal keep_clear_clear_requested()
 ## "none" clears it. Only offered for bees whose primary role actually
 ## checks a secondary -- see the note on _rebuild_role_controls.
 signal secondary_role_requested(role_key: String)
+## WP-3: the whole ordered backup list as role keys, for every selected bee.
+signal backup_order_requested(role_keys: Array)
 ## Whether reassigning the selected bees waits for their current job.
 signal finish_first_requested(value: bool)
 ## The star in the single-bee panel -- only offered for one bee at a
@@ -3371,6 +3374,8 @@ func _build_restock_row(first) -> void:
 ## did -- the same convention _apply_cell_popup_gating states. Challenge 1
 ## used to show the queen both checkboxes from her first frame, before it
 ## had taught her either idea (Dave, 10 Sep 2026).
+var _backup_focus: String = ""
+
 func _build_fallback_row(common_role: int, first) -> void:
 	# _secondary_items always leads with "Nothing", so a second entry is
 	# what says a real alternative role exists to be reassigned to. Where
@@ -3385,12 +3390,15 @@ func _build_fallback_row(common_role: int, first) -> void:
 	var queen_selected: bool = first != null and first.is_queen and common_role == Bee.Role.EGG_LAYER
 	var laying_taught: bool = allowed_role_keys.is_empty() or allowed_role_keys.has("laying")
 	var show_plain_comb: bool = queen_selected and laying_taught
+	var show_order: bool = Bee.work_priorities_owned() and first != null and not first.is_queen and not first.is_drone
 	# Nothing to put in it, so no empty labelled row is left behind.
-	if not show_idle_menu and not reassignment_offered and not show_plain_comb:
+	if not show_idle_menu and not reassignment_offered and not show_plain_comb and not show_order:
 		return
 
 	var row := _labelled_row("If idle")
-	if show_idle_menu:
+	if show_order:
+		_build_backup_order(row)
+	elif show_idle_menu:
 		var current: int = first.secondary_role if first != null else -1
 		row.add_child(_make_role_menu(
 			"When idle: %s" % (Roles.label_for(current) if current != -1 else "nothing"),
@@ -3418,6 +3426,47 @@ func _build_fallback_row(common_role: int, first) -> void:
 		any_cell_box.button_pressed = GameConfig.queen_lays_in_any_cell
 		any_cell_box.toggled.connect(func(pressed: bool): queen_lay_any_cell_toggled.emit(pressed))
 		row.add_child(_with_info(any_cell_box, "On (the default): once every nursery cell is occupied she lays into any spare undesignated cell, so laying never stalls for want of somewhere to put an egg. Off: she lays only in cells reserved for eggs and waits when they are full. Turn it off for exact control, and be ready to reserve more cells for eggs or she stops laying."))
+
+## WP-3: owned, the single Backup choice becomes the first bee's ordered
+## list, with a line saying so when the selection does not agree; changes go
+## to every selected bee (orders_zones.gd::_on_backup_order_requested).
+func _build_backup_order(row: HFlowContainer) -> void:
+	var first: Variant = shown_bees[0] if not shown_bees.is_empty() and is_instance_valid(shown_bees[0]) else null
+	if first == null:
+		return
+	var order: Array = first.backup_list()
+	var mixed := false
+	for b: Variant in shown_bees:
+		if is_instance_valid(b) and not b.is_queen and not b.is_drone and b.backup_list() != order:
+			mixed = true
+			break
+	var column := VBoxContainer.new()
+	column.name = "backup_order_column"
+	column.add_theme_constant_override("separation", 2)
+	var title := Label.new()
+	title.text = "Falls back on, in order:"
+	title.theme_type_variation = "Small"
+	title.tooltip_text = "What each selected bee tries, first to last, when its own job has no work. It drops the backup job and returns to its own the instant real work turns up."
+	column.add_child(title)
+	if mixed:
+		var note := Label.new()
+		note.text = "Mixed selection: showing the first bee's order. A change here sets it for all of them."
+		note.theme_type_variation = "Tiny"
+		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		note.custom_minimum_size = Vector2(220, 0)
+		column.add_child(note)
+	var addable: Array = []
+	for role: Dictionary in Roles.ROLES:
+		if role.id != Roles.QUEEN and role.id != Roles.IDLE and _role_offered(role.id):
+			addable.append(role.id)
+	var focus := _backup_focus
+	_backup_focus = ""
+	column.add_child(ColonyPanel.build_backup_editor(order, addable, _on_backup_editor_changed, focus))
+	row.add_child(column)
+
+func _on_backup_editor_changed(keys: Array, focus: String) -> void:
+	_backup_focus = focus
+	backup_order_requested.emit(keys)
 
 ## The "when idle" menu, built from the role table so a new role turns
 ## up here without anyone remembering to add it.

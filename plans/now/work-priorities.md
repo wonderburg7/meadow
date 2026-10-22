@@ -1,7 +1,7 @@
 # Work Priorities -- Hive Mind tier 3: one colony-wide order of fallback jobs
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: WP-3 -- the ordered list in the selection panel and the colony default (WP-2 behaviour and saves landed 21 Oct 2026) | Dependency: none for WP-3 (WP-2 landed 21 Oct 2026) | Verified: 2026-10-21
+Status: complete | Owner: Dave / Claude Code | Next: nothing further -- WP-1 to WP-3 landed (22 Oct 2026); SG-2 in plans/now/short-term-goals.md follows in Dave's order | Dependency: none | Verified: 2026-10-22
 
 ## Objective
 

@@ -1,0 +1,18 @@
+{
+  "cells": 15, "nectar_foragers": 3, "pollen_foragers": 2,
+  "nurses": 3, "builders": 1, "miners": 1,
+  "random_seed": 404,
+  "actions": [
+    {"do": "viewport_size", "w": 1280, "h": 720},
+    {"do": "grant_skill", "skill": "skill.hive_mind.work_priorities"},
+    {"do": "settle", "ticks": 5},
+    {"do": "select_bees", "target": {"current_role": "nurse", "count": 2}},
+    {"do": "open_window", "window": "command_tray_more"},
+    {"do": "open_window", "window": "colony"},
+    {"do": "settle", "ticks": 10},
+    {"do": "assert", "condition": {"panel": "command_tray", "matches_content": true, "tolerance": 5.0}},
+    {"do": "assert", "condition": {"root": "command_tray"}},
+    {"do": "assert", "condition": {"panel": "colony", "inside_viewport": true}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 2}
+}
