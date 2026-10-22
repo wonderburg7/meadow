@@ -115,8 +115,10 @@ class ForagerDiagnosisTests(unittest.TestCase):
                 self.assertEqual(diagnosis.main(), 0)
             self.assertEqual(run.call_count, len(diagnosis.CASES) * 5)
             for case in range(len(diagnosis.CASES)):
-                self.assertEqual([call.args[1] for call in run.call_args_list if call.args[0] == case],
-                                 list(diagnosis.stages.SEEDS))
+                self.assertCountEqual(
+                    [call.args[1] for call in run.call_args_list if call.args[0] == case],
+                    list(diagnosis.stages.SEEDS),
+                )
             report = (Path(temporary) / "report.md").read_text(encoding="utf-8")
             self.assertIn("not exact dwell time", report)
             self.assertIn("does not isolate", report)

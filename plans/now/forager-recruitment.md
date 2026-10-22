@@ -47,7 +47,7 @@ Verified 14 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FR-1d | Repair the concrete defects FR-1c establishes | `scripts/bee_foraging.gd`, focused tests/scenarios, this plan | no -- after FR-1c and CQ-L1 releases `scripts/bee_foraging.gd` | high |
+| FR-1d | Repair the concrete defects FR-1c establishes | `scripts/bee_foraging.gd`, focused tests/scenarios, this plan | yes -- CQ-L1 released `scripts/bee_foraging.gd`; FR-1c closes out before refill admits it | high |
 | FR-2 | Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/skill_tree_panel.gd`, `scripts/levels.gd`, `tests/source_checks.py`, tests | no -- after FR-1d; numeric targets are provisional | high |
 | FR-3 | owning Auto-recruitment switches it on, passing species with Adaptive constancy | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/levels.gd`, tests | no -- after PP-6 | high |
 
@@ -147,17 +147,11 @@ stage table and focused/full verification. Runtime changes require high-risk
 review/integration. Refine this section from FR-1c's results before claiming.
 
 **Closeout dependency, 22 Oct 2026:** FR-1c's seven focused tests, prefinish
-and `finish`'s branch verification passed. `finish` archived its evidence but
-stopped at refill: deleting FR-1c would leave no Codex item, while FR-1d is
-correctly gated by CQ-L1's `bee_foraging.gd` ownership. Merging current master
-was clean and the refill dry run still refused. No other existing Codex block
-is admissible; the available lifecycle backlog is Claude-owned and cannot be
-reassigned here. FR-1c is verified on its work branch, not integrated yet.
-Claude must resolve its own lane's source ownership; Codex can then recheck
-the lanes, open FR-1d's fence, clear its deferral, and retry FR-1c `finish`.
-Do not weaken the queue guard or mark an unmerged runtime repair complete.
+and `finish`'s branch verification passed. CQ-L1 has now landed and released
+`bee_foraging.gd`; FR-1c can close out and refill the Codex lane with FR-1d.
+The runtime repair remains unmerged until FR-1d completes its high-risk review.
 
-```queue-gated
+```queue
 **[Codex] FR-1d -- repair the diagnosed foraging behaviour**
 - Plan: `plans/now/forager-recruitment.md` -- "FR-1d -- repair the diagnosed foraging behaviour"
 - Files: `scripts/bee_foraging.gd`, `tests/test_forager_behaviour.py`, `tests/fr1d_forager_behaviour_test.gd`, `test_scenarios/fr1d_forager_behaviour_test.json`, `plans/now/forager-recruitment.md`
@@ -168,9 +162,6 @@ Do not weaken the queue guard or mark an unmerged runtime repair complete.
 
 ## Not in the queue, and why
 
-- **FR-1d:** FR-1c's causal evidence is ready on its branch; CQ-L1 in the Claude lane owns `scripts/bee_foraging.gd`. After
-  CQ-L1 lands or releases that ownership with evidence, recheck both lanes,
-  change its `queue-gated` fence to `queue`, and let normal refill admit it.
 - **FR-2:** waits for FR-1d's behaviour fix; its numeric targets are provisional.
 
 ## FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight

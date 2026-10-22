@@ -72,8 +72,6 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 ## Not in the queue, and why
 
-- **FR-1d** (`plans/now/forager-recruitment.md`) -- behaviour repair authorised by Dave, 22 Oct 2026; stage order and 30% are provisional targets. Waits for FR-1c's causal diagnosis only; CQ-L1 landed on 22 Oct 2026 and `scripts/bee_foraging.gd` has no Claude-lane owner.
-
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
