@@ -99,7 +99,8 @@ Challenge goal shelf's behaviour.
 
 SG-3 waits for SG-2 (WP-3 landed 22 Oct 2026, clearing SG-2's gate).
 CQ-S0b (`plans/now/code-health.md`) also edits `scripts/saving.gd`'s bee
-restore; whichever is queued first runs first.
+restore, and DR-1 (`plans/now/drones.md`) both save files; whichever is
+queued first runs first.
 
 SG-1 shipped 2026-10-14; its specification is `plans/archive/SG-1_2026-10-14.md`.
 

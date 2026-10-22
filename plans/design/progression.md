@@ -152,7 +152,7 @@ The tier spine (section 4.2). Every other branch's tier progression depends on t
 | `skill.brood.royal_jelly` | 3 | Existing | Bee bread | Unlocks Jelly mode, jelly production and storage. Costs Pollinator Points as every tier-4 skill does; specific tier-4 recipes (Gyne Rearing) additionally name royal jelly directly. **No longer the universal tier-4 gate** — Pollinator Points is (`product-scope.md` §10). |
 | `skill.brood.priority_cells` | 3 | New | Nurses | Mark brood cells that nurses feed before others. |
 | `skill.brood.gyne_rearing` | 4 | Existing | Royal jelly | Unlocks gyne brood designation, feeding requirements and development. |
-| `skill.brood.drones` | 4 | New | Royal jelly | Unlocks drone designation and drone bees. **Nothing drone-related exists in the codebase** — this is a full feature slice, not a wiring job. |
+| `skill.brood.drones` | — | Superseded | — | **Superseded (Dave, 22 Oct 2026): no skill.** A mated queen lays drones in cells the player marks, from the start of a run; drones themselves exist since COL-9. See `plans/now/drones.md`. |
 
 ### 5.3 Colony
 
@@ -508,7 +508,7 @@ Blocked on new simulation work, in dependency order:
 12. **Bee bread** (section 5.9 item 3; recipe/capacity/ration still open, chain shape answered by `product-scope.md` §9). A new resource and production chain. **Nothing at tier 3 can be built or balanced before this lands.**
 13. **Tier 3 content** — Weighted flower choice, Priority cells, Restocking, Auto-defence, Adjustment panel, Work Priorities (which replaced Extended backup roles, `plans/archive/work-priorities_2026-10-22.md`), Pollinator Points (`product-scope.md` §10); plus Medicine once defined.
 14. **Drought** as a weather feature, then Weather sensing's drought half and the Adjustment panel's drought actions.
-15. **Tier 4 content** — Pollinator Points wired to the ladder as the universal gate, then Gyne rearing (also naming royal jelly directly), Drones, Nectar robbing, Auto-recruitment; plus Chemical cascade once defined.
+15. **Tier 4 content** — Pollinator Points wired to the ladder as the universal gate, then Gyne rearing (also naming royal jelly directly), Nectar robbing (Drones need no skill: `plans/now/drones.md`, 22 Oct 2026), Auto-recruitment; plus Chemical cascade once defined.
 16. **Colony Adaptations** (section 7). Last, and dependent on nothing above.
 
 Guard bee, Combat, Associative learning, Nectar robbing, Drones and Drought each get their own design, balance and playtest slice — none of them rides in on the architecture refactor.

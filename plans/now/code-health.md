@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: CQ-L2 -- every tool that reads GDScript as text survives gdformat (CQ-L1 landed 22 Oct 2026; queued with CQ-R7 and CQ-M3; CQ-M8 follows CQ-M3; CQ-S0's round-trip harness landed 22 Oct 2026; CQ-S0b, its one known difference (a switched forager gains an orientation start point on reload), is in the Claude backlog by Dave's decision) | Dependency: CQ-M8 follows CQ-M3 (CQ-L1 landed 22 Oct 2026); CQ-T3 waits for CQ-R7, the last queued slice in `scripts/hud.gd`; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); the rest is in "Dependencies" | Verified: 2026-10-22
+Status: active | Owner: Dave / Claude Code | Next: CQ-L2 -- every tool that reads GDScript as text survives gdformat (CQ-L1 landed 22 Oct 2026; queued with CQ-R7 and CQ-M3; CQ-M8 follows CQ-M3; CQ-S0's round-trip harness landed 22 Oct 2026; CQ-S0b, its one known difference (a switched forager gains an orientation start point on reload), is in the Claude backlog by Dave's decision) | Dependency: CQ-M8 follows CQ-M3 (CQ-L1 landed 22 Oct 2026); CQ-T3 waits for CQ-R7, the last queued slice in `scripts/hud.gd`; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026) and DR-1 (`plans/now/drones.md`); the rest is in "Dependencies" | Verified: 2026-10-22
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -103,7 +103,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
 | CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot` | after CQ-R7, the last queued slice in `hud.gd` (CQ-T2 landed 21 Oct 2026) | low |
 | CQ-S0b | a restored forager takes no fresh orientation flight | `bee.gd`, `saving.gd`, `tests/save_roundtrip_test.gd` | yes | medium |
-| CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a | high |
+| CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a, DR-1 | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
@@ -162,7 +162,7 @@ claim while `dry_after`).
     are written when CQ-R7 lands, deciding then whether CQ-R8 goes first.
   - The save moves (CQ-S1 to S5 and CQ-R2) wait for every specified slice that edits
     `save_game.gd`/`saving.gd`: WP-2, SG-2, ED-1, ED-2 (difficulty, ending at ED-3),
-    RR-12 and SP-8a. Each of those plans carries the reverse pointer.
+    RR-12, SP-8a and DR-1 (`plans/now/drones.md`). Each of those plans carries the reverse pointer.
   - CQ-L3 needs both lanes empty, per `plans/workstreams.md`.
 
 ## Rules for every slice
@@ -330,7 +330,7 @@ replays after a load may shift, because the load no longer draws a random
 point: say so in the commit, never re-tune to hide it.
 
 **Shared files.** `scripts/saving.gd` with SG-2 (`plans/now/short-term-goals.md`)
-and `scripts/bee.gd` with SP-6 (`plans/now/sprites.md`), all Claude lane:
+and DR-1 (`plans/now/drones.md`), `scripts/bee.gd` with SP-6 (`plans/now/sprites.md`), all Claude lane:
 whichever is queued first runs first. CQ-S4 later moves `_restore_bees` into
 `bee.gd` and keeps the restored mark.
 
