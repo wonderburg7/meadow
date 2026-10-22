@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-6 waits for Dave's forager sheet on a 16x16 `sheet` grid; the meadow floor in blocks (SP-8, SP-8a) moved to `plans/now/meadow-terrain.md` on 15 Oct 2026, and the hive and menu art is `plans/now/hive-and-menu-art.md` | Dependency: none for SP-11; SP-6 waits for Dave's art | Verified: 2026-10-15
+Status: active | Owner: Dave / Claude Code | Next: SP-6 -- meadow foragers drawn from the sheet, in the Claude backlog (Dave's sheet landed and CQ-L1 released `scripts/bee.gd`, 22 Oct 2026); the meadow floor in blocks (SP-8, SP-8a) moved to `plans/now/meadow-terrain.md` on 15 Oct 2026, and the hive and menu art is `plans/now/hive-and-menu-art.md` | Dependency: none left | Verified: 2026-10-22
 
 ## Objective
 
@@ -65,14 +65,15 @@ from the art in front-over-back order. What the open slices build on:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, tests | no -- waits for CQ-L1 to release `scripts/bee.gd` | high (per-bee hot path) |
+| SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, tests | yes (CQ-L1 landed 22 Oct 2026) | high (per-bee hot path) |
 
 **Dependencies.** RR-11 (`plans/now/run-repairs.md`) waits for SP-11 to
-release `scripts/hive_cell.gd`. SP-6 waits only for CQ-L1
-(`plans/now/code-health.md`), which holds `scripts/bee.gd`; it no longer
+release `scripts/hive_cell.gd`. SP-6's last gate, CQ-L1
+(`plans/now/code-health.md`), landed 22 Oct 2026; it no longer
 follows SP-8a (`plans/now/meadow-terrain.md`), though both edit
 `scripts/bee.gd`, so whichever is queued first runs first (Dave,
-22 Oct 2026).
+22 Oct 2026). CQ-S0b (`plans/now/code-health.md`) also edits
+`scripts/bee.gd`'s `setup()`; the same order applies.
 
 SP-1, SP-2, SP-4, SP-5, SP-7 (ad-hoc, on Dave's request), SP-9 and SP-10
 shipped 9-15 Oct 2026; each has its record in `plans/archive/`, named by id
@@ -82,7 +83,7 @@ SP-11 shipped 2026-10-15; its specification is `plans/archive/SP-11_2026-10-15.m
 
 ## SP-6 -- meadow foragers drawn from the sheet
 
-**Gate:** CQ-L1 releasing `scripts/bee.gd`. The sheet gate cleared on
+**Gate:** none left: CQ-L1 landed 22 Oct 2026, releasing `scripts/bee.gd`. The sheet gate cleared on
 22 Oct 2026: Dave's sheet is committed on a 16x16 grid and exported, with
 its sprite-table row and catalogue entry (`FORAGERS_MEADOW_VIEW_*`).
 
@@ -104,7 +105,7 @@ its sprite-table row and catalogue entry (`FORAGERS_MEADOW_VIEW_*`).
 - Hands-on (Dave): foragers in the meadow face the way they fly in all
   eight directions and flap without flicker at every zoom.
 
-```queue-gated
+```queue
 **[Claude] SP-6 -- meadow foragers drawn from the sheet**
 - Plan: `plans/now/sprites.md` -- "SP-6 -- meadow foragers drawn from the sheet"
 - Files: `scripts/bee.gd`, `tests/sp6_forager_sprite_test.gd`, `tests/test_sp6_forager_sprite.py`, `FUNCTION_MAP.md`

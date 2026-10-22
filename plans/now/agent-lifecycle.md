@@ -63,8 +63,8 @@ Codex listed twelve recurring blockers). Its finding: almost none of the
 190 stops in 21 days were correctness escapes, so no extra review agents
 are added; the cost is in verify ambiguity, queue bookkeeping and
 prose-only rules. They run in id order, one file set at a time: every one
-but L-34 edits `tools/slice.ps1`. L-31 and L-35 follow CQ-L1
-(`plans/now/code-health.md`), which also edits `tools/verify.ps1`. L-34
+but L-34 edits `tools/slice.ps1`. L-31 and L-35 followed CQ-L1
+(`plans/now/code-health.md`), which also edits `tools/verify.ps1`; it landed 22 Oct 2026. L-34
 waits for L-31, whose `stop-verify` it names. Judging a borderline item
 with a cheap model was considered and rejected: lanes hold five items,
 far below the break-even the source setup measured.
@@ -78,7 +78,7 @@ before-figure from that review and one real canary closeout.
 
 L-27 shipped 2026-10-17; its specification is `plans/archive/L-27_2026-10-17.md`.
 
-**Code health (`plans/now/code-health.md`, 18 Oct 2026).** CQ-L1 adds a `gdscript style` stage to `tools/verify.ps1` straight after `godot boot`; it runs after L-30, which also edits `verify.ps1`.
+**Code health (`plans/now/code-health.md`, 18 Oct 2026).** CQ-L1 added a `gdscript style` stage to `tools/verify.ps1` straight after `godot boot`, after L-30, which also edits `verify.ps1`; it landed 22 Oct 2026.
 
 L-28 shipped 2026-10-18; its specification is `plans/archive/L-28_2026-10-18.md`.
 
