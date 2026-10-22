@@ -63,16 +63,14 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] FR-1c -- diagnose foraging-stage behaviour**
-   - Plan: `plans/now/forager-recruitment.md` -- "FR-1c -- diagnose foraging-stage behaviour"
-   - Files: `tools/forager_diagnosis.py`, `tests/test_forager_diagnosis.py`, `plans/now/forager-recruitment.md`
-   - Check: focused diagnosis tests pass; five-seed default and controlled reports are recorded in the slice; `tools/prefinish.py` and `tools/verify.ps1` are green
-   - Proof: `present: plans/now/forager-recruitment.md :: Next: FR-1c -- diagnose foraging-stage behaviour`
-   - Next after: FR-1d -- repair the diagnosed foraging behaviour
+1. **[Codex] FR-1d -- repair the diagnosed foraging behaviour**
+   - Plan: `plans/now/forager-recruitment.md` -- "FR-1d -- repair the diagnosed foraging behaviour"
+   - Files: `scripts/bee_foraging.gd`, `tests/test_forager_behaviour.py`, `tests/fr1d_forager_behaviour_test.gd`, `test_scenarios/fr1d_forager_behaviour_test.json`, `plans/now/forager-recruitment.md`
+   - Check: causal regression checks and the five-seed comparison pass; `tools/prefinish.py` and `tools/verify.ps1` are green; provisional target misses are documented
+   - Proof: `present: plans/now/forager-recruitment.md :: Next: FR-1d -- repair the diagnosed foraging behaviour`
+   - Next after: FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
 
 ## Not in the queue, and why
-
-- **FR-1d** (`plans/now/forager-recruitment.md`) -- behaviour repair authorised by Dave, 22 Oct 2026; stage order and 30% are provisional targets. Waits for FR-1c's causal diagnosis only; CQ-L1 landed on 22 Oct 2026 and `scripts/bee_foraging.gd` has no Claude-lane owner.
 
 One line each: the id, its plan, and the single thing it waits for.
 
