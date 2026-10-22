@@ -1,7 +1,7 @@
 # Forager recruitment -- Orientation flight, then Auto scouting, then Auto-recruitment
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: FR-1c -- diagnose foraging-stage behaviour | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-22
+Status: active | Owner: Dave / Claude Code | Next: FR-1d -- repair the diagnosed foraging behaviour | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-22
 
 ## Objective
 
@@ -158,6 +158,39 @@ repair to carry into FR-1d and any remaining causal probe; missing provisional
 order/30% targets alone is not failure. Run focused tests, `tools/prefinish.py`
 and verification. Keep original evidence archived and game source unchanged.
 
+**Result, 22 Oct 2026:** implemented on `codex/FR-1c`, baseline
+`349cb34fb18d92805fba3d7f8d1d0d805f09b6ed`. The source fingerprint matched
+FR-1b, so its 20 preserved baseline cases were reused; 20 new controlled runs
+were measured. Raw scenarios, verdicts, reports and logs survive under
+`build/forager-evidence/fr1c-diagnosis` in the primary checkout. Reproduce with
+`python tools/forager_diagnosis.py`; it regenerates cases when a matching
+baseline manifest is unavailable, rather than reusing incompatible inputs.
+
+**Conclusions:** with mentors disabled in both controls, reducing wait from
+15s to 1s increases food on all five seeds (paired +3.0% to +30.5%, median
++13.8%): waiting can impose a cost with no information benefit. In normal
+recruitment the global reduction instead loses 16.7% on seed 555 and reduces
+its matches from four to zero. Keep the global default; investigate avoiding
+unproductive early-scout waits while preserving useful mentor opportunities.
+
+Species restrictions reduce food on all seeds with recruitment disabled
+(paired median -45.1%). Under those same restrictions, enabling recruitment
+has paired median +3.1%, with mixed per-seed results. The old fourth row is
+a combined constancy/recruitment measurement, not a clean species-passing
+comparison. Do not remove deliberate player preferences or constancy to force
+a target. FR-3 must measure its actual ownership-gated passing independently.
+
+The baseline has 11 initial foragers and 11–13 at sampled peaks, with roughly
+3–10 nonempty delivery events per simulated minute across controls. These
+are population/event measurements, not an exact profile of `_score_trip` or
+entrance calls; FR-1d still profiles its affected path before editing it.
+Patch-selection correctness remains unproven because standard logs do not
+record each bout's sampled flowers against its eventual inherited point.
+
+Seven focused diagnosis tests pass, including control fairness, seed identity,
+complete-window checks and cache replay. Final prefinish/verification results
+and any ownership blocker are recorded at closeout.
+
 ```queue
 **[Codex] FR-1c -- diagnose foraging-stage behaviour**
 - Plan: `plans/now/forager-recruitment.md` -- "FR-1c -- diagnose foraging-stage behaviour"
@@ -167,14 +200,70 @@ and verification. Keep original evidence archived and game source unchanged.
 - Next after: FR-1d -- repair the diagnosed foraging behaviour
 ```
 
+<!-- FR-1c diagnosis evidence -->
+### FR-1c controlled diagnosis
+
+Simulation fingerprint: `3ddc0ab91e72468d79fb4a1ecc5155a6b72acb72f061e49e562e620b5f2aa08d`. Seeds: 7, 555, 2026, 12345, 90210.
+Same FR-1 colony, default radius 450, days 1–20, fixed FPS 30; food / (20 × 11 starting foragers).
+Only the stated toggles/wait/mentor-eligibility overrides differ. No gameplay setting is selected.
+
+| Case | Median food | Food per seed | Matches per seed | Settled per seed |
+| --- | --- | --- | --- | --- |
+| Orientation flight | 6.0133 | 4.8253, 6.0133, 8.3810, 4.8707, 6.3986 | 0, 0, 0, 0, 0 | 0, 0, 0, 0, 0 |
+| Auto scouting | 5.8454 | 4.4272, 7.4413, 9.2718, 5.1354, 5.8454 | 0, 0, 0, 0, 0 | 4, 10, 11, 5, 7 |
+| Auto scouting + Auto-recruitment | 4.7757 | 3.2282, 6.4012, 7.8084, 3.0379, 4.7757 | 0, 4, 2, 0, 0 | 3, 9, 10, 3, 7 |
+| Auto scouting + Auto-recruitment + species passing | 3.3102 | 3.0415, 2.5565, 5.0416, 3.3543, 3.3102 | 1, 0, 1, 1, 0 | 1, 3, 6, 2, 3 |
+| Recruitment, 1-second wait | 5.3307 | 3.4196, 5.3307, 8.1507, 5.2945, 5.5633 | 0, 0, 1, 1, 0 | 3, 6, 10, 6, 7 |
+| No mentors, 15-second wait | 4.8362 | 3.0560, 6.4852, 8.1242, 4.4231, 4.8362 | 0, 0, 0, 0, 0 | 3, 9, 11, 5, 7 |
+| No mentors, 1-second wait | 6.3133 | 3.6356, 7.2724, 8.3696, 5.0330, 6.3133 | 0, 0, 0, 0, 0 | 3, 8, 9, 6, 7 |
+| Scouting with species restrictions, no recruitment | 3.2074 | 2.9822, 3.0277, 3.6699, 3.2543, 3.2074 | 0, 0, 0, 0, 0 | 5, 3, 4, 2, 3 |
+
+Paired food changes (each seed compared with itself):
+
+| Controlled comparison | Per-seed change | Median paired change |
+| --- | --- | --- |
+| Wait 1s vs 15s, recruitment enabled | +5.9%, -16.7%, +4.4%, +74.3%, +16.5% | +5.9% |
+| Wait 1s vs 15s, mentors disabled in both | +19.0%, +12.1%, +3.0%, +13.8%, +30.5% | +13.8% |
+| Species restrictions on vs off, recruitment disabled in both | -32.6%, -59.3%, -60.4%, -36.6%, -45.1% | -45.1% |
+| Recruitment on vs off, species restrictions enabled in both | +2.0%, -15.6%, +37.4%, +3.1%, +3.2% | +3.1% |
+
+Queue/population samples (means are sampled occupancy, not exact dwell time):
+
+| Case | Peak foragers per seed | Mean seekers per seed | Mean mentors per seed | Delivery events/min per seed |
+| --- | --- | --- | --- | --- |
+| Orientation flight | 13, 12, 13, 12, 12 | 0.00, 0.00, 0.00, 0.00, 0.00 | 0.00, 0.00, 0.00, 0.00, 0.00 | 6.15, 6.93, 8.98, 5.52, 7.25 |
+| Auto scouting | 12, 12, 13, 12, 13 | 0.00, 0.00, 0.00, 0.00, 0.00 | 0.00, 0.00, 0.00, 0.00, 0.00 | 5.67, 8.35, 9.93, 6.15, 6.93 |
+| Auto scouting + Auto-recruitment | 12, 12, 12, 12, 12 | 0.56, 1.06, 0.89, 0.56, 0.83 | 0.39, 0.50, 0.67, 0.11, 0.39 | 4.10, 6.62, 8.19, 3.78, 5.52 |
+| Auto scouting + Auto-recruitment + species passing | 12, 12, 12, 11, 12 | 0.61, 0.67, 0.89, 0.72, 0.56 | 0.06, 0.11, 0.50, 0.11, 0.06 | 3.47, 2.99, 5.20, 3.62, 3.47 |
+| Recruitment, 1-second wait | 13, 13, 13, 12, 12 | 0.06, 0.00, 0.11, 0.00, 0.00 | 0.06, 0.00, 0.00, 0.06, 0.11 | 4.89, 6.46, 8.82, 6.30, 6.46 |
+| No mentors, 15-second wait | 12, 12, 12, 12, 12 | 0.50, 1.11, 1.00, 0.78, 0.72 | 0.00, 0.00, 0.00, 0.00, 0.00 | 4.41, 7.25, 8.35, 5.04, 5.67 |
+| No mentors, 1-second wait | 13, 12, 13, 12, 12 | 0.06, 0.00, 0.11, 0.00, 0.00 | 0.00, 0.00, 0.00, 0.00, 0.00 | 5.04, 7.88, 8.98, 6.15, 7.09 |
+| Scouting with species restrictions, no recruitment | 12, 12, 12, 12, 12 | 0.00, 0.00, 0.00, 0.00, 0.00 | 0.00, 0.00, 0.00, 0.00, 0.00 | 3.78, 4.10, 3.94, 3.62, 3.47 |
+
+Limits: snapshot occupancy is coarse; delivered trips are a lower bound on scoring calls.
+Existing logs do not capture every scored bout's sampled flowers/start point, so patch-selection
+correctness still needs a focused runtime probe. The fourth original row combines species
+restriction with recruitment; it does not isolate the effect of mentor species passing.
+Shortening waits also changes later trips and random draws. These are paired finite-window
+mechanism tests, not a recommendation to set the global wait to one second.
+<!-- /FR-1c diagnosis evidence -->
+
 ## FR-1d -- repair the diagnosed foraging behaviour
 
 <!-- LAYER: design -->
 Level: high
 
 Dave authorised behaviour diagnosis/fix on 22 Oct 2026; FR-1c separates the
-independent measurement from runtime ownership. Apply the smallest repair
-whose cause FR-1c establishes, retaining the targets as provisional direction.
+independent measurement from runtime ownership. Its controlled evidence is
+above (or in its archive after closeout). Start with unproductive early-scout
+entrance waits: prove and repair the case where a scout waits despite no
+eligible mentor being able to match, while preserving established-seeker and
+useful mentor waits. Prototype a narrowly scoped guard, not a global wait
+reduction. Include mixed resources, stale mentors, existing matching mentors,
+grace/settlement boundaries and both recruitment modes in the regression checks.
+Keep species/preference semantics unchanged: FR-1c proved the old table's
+confounding, not a defect in explicit constancy. Do not repair speculative
+patch-selection issues without a causal probe. Retain targets as loose guidance.
 No weakening Orientation flight, save fields, skill wiring, new balance fields
 or unrelated performance work. Profile the affected per-bee path first;
 preserve explicit player preferences, both recruitment modes and developer
@@ -193,7 +282,7 @@ review/integration. Refine this section from FR-1c's results before claiming.
 
 ## Not in the queue, and why
 
-- **FR-1d:** waits for FR-1c's causal evidence; CQ-L1 in the Claude lane also owns `scripts/bee_foraging.gd`. After
+- **FR-1d:** FR-1c's causal evidence is ready on its branch; CQ-L1 in the Claude lane owns `scripts/bee_foraging.gd`. After
   CQ-L1 lands or releases that ownership with evidence, recheck both lanes,
   change its `queue-gated` fence to `queue`, and let normal refill admit it.
 - **FR-2:** waits for FR-1d's behaviour fix; its numeric targets are provisional.
