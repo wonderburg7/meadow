@@ -136,12 +136,26 @@ grace/settlement boundaries and both recruitment modes in the regression checks.
 Keep species/preference semantics unchanged: FR-1c proved the old table's
 confounding, not a defect in explicit constancy. Do not repair speculative
 patch-selection issues without a causal probe. Retain targets as loose guidance.
+Take a fresh same-source baseline before/after the repair: FR-1c's frozen
+measurements used `349cb34fb18d92805fba3d7f8d1d0d805f09b6ed`, before later
+integrated work. Do not interpret intervening changes as the repair's effect.
 No weakening Orientation flight, save fields, skill wiring, new balance fields
 or unrelated performance work. Profile the affected per-bee path first;
 preserve explicit player preferences, both recruitment modes and developer
 toggles. Require causal before/after regression checks, the same five-seed
 stage table and focused/full verification. Runtime changes require high-risk
 review/integration. Refine this section from FR-1c's results before claiming.
+
+**Closeout dependency, 22 Oct 2026:** FR-1c's seven focused tests, prefinish
+and `finish`'s branch verification passed. `finish` archived its evidence but
+stopped at refill: deleting FR-1c would leave no Codex item, while FR-1d is
+correctly gated by CQ-L1's `bee_foraging.gd` ownership. Merging current master
+was clean and the refill dry run still refused. No other existing Codex block
+is admissible; the available lifecycle backlog is Claude-owned and cannot be
+reassigned here. FR-1c is verified on its work branch, not integrated yet.
+Claude must resolve its own lane's source ownership; Codex can then recheck
+the lanes, open FR-1d's fence, clear its deferral, and retry FR-1c `finish`.
+Do not weaken the queue guard or mark an unmerged runtime repair complete.
 
 ```queue-gated
 **[Codex] FR-1d -- repair the diagnosed foraging behaviour**
