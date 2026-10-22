@@ -1718,7 +1718,7 @@ class SliceDoctorTest(unittest.TestCase):
         self.assertEqual("T-1", json.loads(started.stdout)["id"])
         self.assertIn("could not fetch origin; continuing offline", started.stdout + started.stderr)
 
-    def start_against_open_worktree(self, prepare) -> str:
+    def start_against_open_worktree(self, prepare, refuses: bool = True) -> str:
         """Claim T-1, let `prepare` shape its worktree, then claim again and
         return the refusal with all whitespace removed -- PowerShell may wrap
         Write-Error's text anywhere, even mid-word."""
@@ -1734,8 +1734,11 @@ class SliceDoctorTest(unittest.TestCase):
             [self.powershell, "-NoProfile", "-File", slice_script, "start", "-Lane", "Codex"],
             cwd=self.root, capture_output=True, text=True,
         )
-        self.assertNotEqual(0, again.returncode)
-        return "".join(again.stderr.split())
+        if refuses:
+            self.assertNotEqual(0, again.returncode)
+        else:
+            self.assertEqual(0, again.returncode, again.stdout + again.stderr)
+        return "".join((again.stderr + again.stdout).split())
 
     @staticmethod
     def squeeze(text: str) -> str:
@@ -1749,11 +1752,12 @@ class SliceDoctorTest(unittest.TestCase):
             subprocess.run(["git", "add", "-A"], cwd=worktree, check=True)
             subprocess.run(["git", "commit", "-q", "-m", "work"], cwd=worktree, capture_output=True, check=True)
 
-        refusal = self.start_against_open_worktree(commit_work)
-        self.assertIn(self.squeeze("Codex lane already has an open worktree"), refusal)
-        self.assertIn(self.squeeze("codex/T-1 is 1 commit(s) ahead of master and its worktree is clean"), refusal)
-        self.assertIn(self.squeeze("so finish it (`tools/slice.ps1 finish` from inside `.worktrees/T-1`)"), refusal)
-        self.assertNotIn(self.squeeze("abandon it"), refusal)
+        # L-31: its own lane's open, ahead worktree is a resumed session, so
+        # start prints the status line and exits 0 instead of refusing.
+        report = self.start_against_open_worktree(commit_work, refuses=False)
+        self.assertIn(self.squeeze("T-1 is already open (.worktrees/T-1): ready-to-finish"), report)
+        self.assertIn(self.squeeze("tools/slice.ps1 finish"), report)
+        self.assertNotIn(self.squeeze("already has an open worktree"), report)
 
     def test_open_worktree_with_uncommitted_changes_says_abandon_or_finish_the_work(self):
         def leave_changes(worktree: Path) -> None:
