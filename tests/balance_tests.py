@@ -122,14 +122,19 @@ def test_rival():
         "rival_nectar_per_bee", "rival_pollen_per_bee",
         "rival_pollen_per_bee_raised", "rival_hatch_rate", "rival_starve_rate",
         "rival_crowding_scale", "rival_brood_gate_days", "rival_store_per_bee",
-        "rival_brood_per_nurse")}
+        "rival_brood_per_nurse", "rival_starting_nectar", "rival_starting_pollen",
+        "rival_starting_forager_share")}
     rival_src = source("rival_hive.gd")
     min_share = float(re.search(r"MIN_FORAGER_SHARE := ([\d.]+)", rival_src).group(1))
     max_share = float(re.search(r"MAX_FORAGER_SHARE := ([\d.]+)", rival_src).group(1))
+    step = float(re.search(r"REBALANCE_STEP := ([\d.]+)", rival_src).group(1))
+    short_factor = float(re.search(r"SHORT_OF_FOOD_FACTOR := ([\d.]+)", rival_src).group(1))
+    comfortable = float(re.search(r"COMFORTABLE_DAYS := ([\d.]+)", rival_src).group(1))
 
     def run(richness, days=200):
         pop = p["rival_starting_bees"]
-        nectar, pollen, brood, share = 120.0, 40.0, 0.0, 0.7
+        nectar, pollen, brood, share = (p["rival_starting_nectar"], p["rival_starting_pollen"],
+                                        0.0, p["rival_starting_forager_share"])
         for _ in range(int(days * cfg("seconds_per_day"))):
             nectar -= pop * p["rival_eat_per_bee"]
             if nectar < 0:
@@ -154,10 +159,10 @@ def test_rival():
             pop = min(pop, p["rival_max_bees"])
             if pop < 1.0:
                 return 0.0
-            if days_food < p["rival_brood_gate_days"] * 0.75:
-                share = min(max_share, share + 0.05)
-            elif days_food > 90.0:
-                share = max(min_share, share - 0.05)
+            if days_food < p["rival_brood_gate_days"] * short_factor:
+                share = min(max_share, share + step)
+            elif days_food > comfortable:
+                share = max(min_share, share - step)
         return pop
 
     sizes = {}

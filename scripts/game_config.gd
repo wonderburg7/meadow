@@ -841,6 +841,10 @@ var death_marker_days: float = 5.0
 ## just two colonies working one meadow.
 var rival_hive_on: bool = false
 var rival_starting_bees: float = 12.0
+var rival_starting_min_population: float = 4.0
+var rival_starting_nectar: float = 120.0
+var rival_starting_pollen: float = 40.0
+var rival_starting_forager_share: float = 0.7
 var rival_max_bees: float = 90.0
 ## How far from the player's hive the rival is placed. Far enough that
 ## the two aren't fighting over the same flowers on day one, close enough

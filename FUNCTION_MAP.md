@@ -453,26 +453,26 @@ The headless verbs, `when` clauses and layout assertions.
 1715 static func _log(do: String, target_desc: String, result: String, reason: String) -> void
 ```
 
-## settings_catalogue.gd (1,620 lines)
+## settings_catalogue.gd (1,644 lines)
 
 Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
 
 ```
 22   # --- preloads and collection order --------------------------------
 48   # --- the tunables table -------------------------------------------
-1495 # --- settings owned by Session ------------------------------------
-1509 # --- reading and writing a setting --------------------------------
-1510 static func setting_get(key: String) -> Variant
-1513 static func setting_set(key: String, value: Variant) -> void
-1520 # --- resetting ----------------------------------------------------
-1537 static func reset_config_to_defaults() -> void
-1549 static func reset_config_keys(keys: Array) -> void
-1555 # --- applying a setting with its cascades -------------------------
-1564 static func apply_setting(key: String, value: Variant) -> void
-1575 # --- the cascade helpers ------------------------------------------
-1580 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1598 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1612 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+1519 # --- settings owned by Session ------------------------------------
+1533 # --- reading and writing a setting --------------------------------
+1534 static func setting_get(key: String) -> Variant
+1537 static func setting_set(key: String, value: Variant) -> void
+1544 # --- resetting ----------------------------------------------------
+1561 static func reset_config_to_defaults() -> void
+1573 static func reset_config_keys(keys: Array) -> void
+1579 # --- applying a setting with its cascades -------------------------
+1588 static func apply_setting(key: String, value: Variant) -> void
+1599 # --- the cascade helpers ------------------------------------------
+1604 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1622 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1636 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
 ## bee_foraging.gd (1,529 lines)
@@ -1069,7 +1069,7 @@ restart.
 1191 func _restart() -> void
 ```
 
-## game_config.gd (1,011 lines)
+## game_config.gd (1,015 lines)
 
 The balance fields.
 
@@ -1093,11 +1093,11 @@ The balance fields.
 750  # --- bee life ---
 755  # --- bee individuality ---
 834  # --- the rival colony ---
-883  # --- seasons ---
-915  # --- disease ---
-954  # --- gynes leaving ---
-966  # --- nuptial flights ---
-974  # --- winter ---
+887  # --- seasons ---
+919  # --- disease ---
+958  # --- gynes leaving ---
+970  # --- nuptial flights ---
+978  # --- winter ---
 ```
 
 ## main_menu.gd (735 lines)

@@ -108,7 +108,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
-| CQ-M3 | rival starting stores become GameConfig rows; rebalance consts named | `rival_hive.gd`, `game_config.gd`, `settings_catalogue.gd`, `tests/balance_tests.py` | yes (RR-11 landed 21 Oct 2026) | medium |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
 | CQ-M5 | CanvasLayer order in scripts/canvas_layers.gd | 10 UI scripts | yes | medium |
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | yes | low |
@@ -373,52 +372,36 @@ CQ-M1 shipped 2026-10-21; its specification is `plans/archive/CQ-M1_2026-10-21.m
 
 CQ-M2 shipped 2026-10-21; its specification is `plans/archive/CQ-M2_2026-10-21.md`.
 
-## CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named
+CQ-M3 shipped 2026-10-22; its specification is `plans/archive/CQ-M3_2026-10-22.md`.
 
-**True now** (21 Oct 2026, after CQ-M2). `rival_hive.gd` starts the rival with
-`nectar = 120.0` and `pollen = 40.0` in `_ready`, and `restore` repeats both as its
-`data.get` defaults. `forager_share` starts at 0.7 in its `var` line and again as
-`restore`'s default. Both `_ready` and `restore` floor the population with
-`max(4.0, GameConfig.rival_starting_bees)`. `_rebalance` uses three bare numbers:
-`rival_brood_gate_days * 0.75`, a step of `0.05` and `days_of_food > 90.0`.
-`tests/balance_tests.py::test_rival` keeps its own copies of all of them
-(`120.0, 40.0, 0.0, 0.7`, `* 0.75`, `0.05`, `90.0`). It already reads
-`MIN_FORAGER_SHARE`/`MAX_FORAGER_SHARE` out of `rival_hive.gd` by regex. D2 classes
-the starting stores as balance values (rule 2: a GameConfig field with a settings row)
-and the rebalance numbers as structural constants ("D2 classification" above).
+## CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named
+
+**True now** (22 Oct 2026, after CQ-M3). Three modules walk a bee to the hive door with
+the same three lines: `bee.world.hive_entrance_inside()` (or `bee.position` with no
+world), `BeeMovement.move_towards`, then a `distance_to(exit_point) < 8.0` test.
+They are `bee_foraging.gd::go_to_exit`, `bee_mining.gd::miner_go_to_exit` and
+`bee_building.gd::builder_go_to_waste_exit`. Each module also tests arrival with bare
+reach numbers (`bee_building.gd` 2.0, 8.0, 10.0; `bee_foraging.gd` 6.0;
+`bee_mining.gd` 8.0).
 
 **When done:**
 
-- GameConfig has `rival_starting_nectar := 120.0`, `rival_starting_pollen := 40.0`,
-  `rival_starting_forager_share := 0.7` and `rival_starting_min_population := 4.0`.
-  Each has a row under "The rival colony" next to `rival_starting_bees`, with the same
-  shape: `persist: "none"` and a tip ending "Takes effect on Restart Run."
-- `_ready`, the `forager_share` initialiser and `restore`'s defaults read those
-  fields. No literal 120, 40, 0.7 or 4 is left in those lines.
-- `_rebalance`'s three numbers are named consts beside `MIN_FORAGER_SHARE`/
-  `MAX_FORAGER_SHARE` (for example `REBALANCE_STEP`, `SHORT_OF_FOOD_FACTOR`,
-  `COMFORTABLE_DAYS`), with the same values.
-- `tests/balance_tests.py::test_rival` reads the four fields through `cfg()` and the
-  three consts by regex from `rival_hive.gd`, the way it already reads
-  MIN/MAX_FORAGER_SHARE. It keeps no copy of its own.
-- `tests/si1_run_state_test.gd` asserts that a fresh rival and `restore({})` both give
-  nectar 120, pollen 40 and forager share 0.7.
+- `BeeMovement.walk_to_hive_exit(bee, delta) -> bool` does the three lines and returns
+  true once the bee is within `EXIT_REACH` (8.0, a named const in `bee_movement.gd`).
+  The three callers use it; what each does on arrival stays where it is.
+- Each module's remaining reach literal becomes a named const at the top of that
+  module (for example `STAND_REACH`, `CELL_REACH`), same value, same behaviour.
 
-**Invariants.** Every default value stays the same, so a run plays exactly as it does
-now. The rival's save keys and the FORMAT_VERSION do not change. `persist: "none"`
-puts the new rows in no save or profile. No existing display string changes.
-
-**Gate.** It waited for RR-11 (`plans/now/run-repairs.md`), which also edited
-`game_config.gd` and `settings_catalogue.gd`; RR-11 landed 21 Oct 2026. Its successor,
-CQ-M8, gets its block from the session that claims this one.
+**Invariants.** Every value stays the same. No save key, setting or display string
+changes.
 
 ```queue
-**[Claude] CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named**
-- Plan: `plans/now/code-health.md` -- "CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named"
-- Files: `scripts/rival_hive.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/balance_tests.py`, `tests/si1_run_state_test.gd`, `FUNCTION_MAP.md`
-- Check: `python tests/balance_tests.py` passes with its rival section unchanged; `python -m unittest tests.test_si1_run_state` passes, including the new fresh-rival and `restore({})` assertions; `tests/test_save_migrations.py`, `tests/test_signal_catalogue.py` and the settings-row source checks pass; `.\tools\verify.ps1` is green
-- Proof: `present: scripts/rival_hive.gd :: nectar = float(data.get("nectar", 120.0))`
-- Next after: CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named
+**[Claude] CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named**
+- Plan: `plans/now/code-health.md` -- "CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named"
+- Files: `scripts/bee_movement.gd`, `scripts/bee_foraging.gd`, `scripts/bee_mining.gd`, `scripts/bee_building.gd`, `FUNCTION_MAP.md`
+- Check: `python tests/source_checks.py` passes; `python tools/prefinish.py` is green; `.\tools\verify.ps1` is green
+- Proof: `present: scripts/bee_mining.gd :: static func miner_go_to_exit`
+- Next after: CQ-M4 -- Challenge level ids named in `levels.gd`
 ```
 
 CQ-R0 shipped 2026-10-21; its specification is `plans/archive/CQ-R0_2026-10-21.md`.
