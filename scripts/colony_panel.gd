@@ -17,6 +17,8 @@ extends GamePanel
 
 const UI = preload("res://scripts/ui.gd")
 const Roles = preload("res://scripts/roles.gd")
+const Bee = preload("res://scripts/bee.gd")
+const Availability = preload("res://scripts/availability.gd")
 
 ## Emitted when a role tally is clicked. `focus` narrows foragers to one
 ## resource; "" means the whole role.
@@ -83,6 +85,11 @@ var favourites_empty_label: Label
 var needing_attention_column: VBoxContainer
 var needing_attention_ok_label: Label
 
+## WP-3: the colony default order, "New bees fall back on".
+var default_order_column: VBoxContainer
+var _default_order_shown: Array = [-1]
+var _default_order_focus: String = ""
+
 func _ready() -> void:
 	setup_layer("colony", "colony_panel")
 	build_left_window(330)
@@ -122,6 +129,7 @@ func _ready() -> void:
 	for key in Roles.count_keys():
 		jobs.add_child(_make_role_row(key))
 
+	default_order_column = _section(column, "New bees fall back on", false)
 	var readouts := _section(column, "Readouts", false)
 	for entry in STAT_ROWS:
 		readouts.add_child(_make_stat_row(entry))
@@ -390,9 +398,51 @@ func refresh(counts: Dictionary, texts: Dictionary, samples: Array, signals: Arr
 
 	_rebuild_favourites()
 	_rebuild_needing_attention(signals)
+	_rebuild_default_order()
 
 	history = samples
 	plot.queue_redraw()
+
+## WP-3: only while the colony owns Work priorities; before that the section
+## says what it will do. Rebuilt only when the default changes, so a list
+## being tabbed through is not torn down every second.
+func _rebuild_default_order() -> void:
+	var owned: bool = Bee.work_priorities_owned()
+	var wanted: Array = Session.backup_order_default.duplicate() if owned else [-2]
+	if wanted == _default_order_shown and default_order_column.get_child_count() > 0:
+		return
+	_default_order_shown = wanted
+	for child in default_order_column.get_children():
+		default_order_column.remove_child(child)
+		child.queue_free()
+	var hint := Label.new()
+	hint.theme_type_variation = "Small"
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.custom_minimum_size = Vector2(300, 0)
+	UiTheme.bind_color(hint, "font_color", "text_secondary")
+	if not owned:
+		hint.text = "Buy Work priorities to choose what new bees fall back on when they have no work."
+		default_order_column.add_child(hint)
+		return
+	hint.text = "What a newly emerged bee tries, in order, when its own job has no work. Bees already alive keep their own lists."
+	default_order_column.add_child(hint)
+	var addable: Array = []
+	for role: Dictionary in Roles.ROLES:
+		if role.id != Roles.QUEEN and role.id != Roles.IDLE and Availability.role_query(role.id, null, Session.progression, null).available:
+			addable.append(role.id)
+	default_order_column.add_child(build_backup_editor(Session.backup_order_default, addable, _on_default_order_changed, _default_order_focus))
+	_default_order_focus = ""
+	call_deferred("_apply_left_window_rect")
+
+func _on_default_order_changed(keys: Array, focus: String) -> void:
+	var ids: Array = []
+	for key: Variant in keys:
+		ids.append(Roles.id_for_key(str(key)))
+	_default_order_focus = focus
+	# An emptied default is no choice at all (Session falls back to the
+	# standard order), so removing the last job restores that order.
+	Session.set_backup_order_default(ids)
+	_rebuild_default_order()
 
 ## Rebuilt from scratch each refresh, same reason as the favourites list
 ## -- which problems exist, and how many, changes at any time.
@@ -442,3 +492,98 @@ func _make_favourite_row(bee: Node2D) -> Control:
 	button.tooltip_text = bee.bee_fact
 	button.pressed.connect(func(): favourite_selected.emit(bee))
 	return button
+
+## WP-3: the ordered backup-job list, built the same way for the selection
+## panel (one list for the selected bees) and the Colony window (the default
+## for new bees). `order` is role ids, first tried first; `addable` the role
+## ids that could still be added; `on_change` is called with the new order as
+## role keys and the name of the control to put keyboard focus back on, since
+## the caller rebuilds the list. Every control is a plain Button, so Tab
+## reaches it and Enter or Space presses it.
+static func build_backup_editor(order: Array, addable: Array, on_change: Callable, focus_name: String = "") -> VBoxContainer:
+	var box := VBoxContainer.new()
+	box.name = "backup_order_list"
+	box.add_theme_constant_override("separation", 2)
+	if order.is_empty():
+		var none := Label.new()
+		none.text = "No backup jobs: an idle bee stands by."
+		none.theme_type_variation = "Small"
+		box.add_child(none)
+	for i in range(order.size()):
+		var role_id: int = order[i]
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 4)
+		box.add_child(row)
+		var label := Label.new()
+		label.text = "%d. %s" % [i + 1, Roles.label_for(role_id)]
+		label.theme_type_variation = "Small"
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(label)
+		var up := _editor_button("backup_up_%d" % i, "\u25b2", "Try %s earlier." % Roles.label_for(role_id), i == 0)
+		up.pressed.connect(func() -> void: on_change.call(_keys_after_move(order, i, -1), "backup_up_%d" % (i - 1)))
+		row.add_child(up)
+		var down := _editor_button("backup_down_%d" % i, "\u25bc", "Try %s later." % Roles.label_for(role_id), i == order.size() - 1)
+		down.pressed.connect(func() -> void: on_change.call(_keys_after_move(order, i, 1), "backup_down_%d" % (i + 1)))
+		row.add_child(down)
+		var remove := _editor_button("backup_remove_%d" % i, "\u00d7", "Take %s off the list." % Roles.label_for(role_id), false)
+		remove.pressed.connect(func() -> void:
+			var rest: Array = order.duplicate()
+			rest.remove_at(i)
+			on_change.call(_keys_of(rest), "backup_remove_%d" % mini(i, rest.size() - 1)))
+		row.add_child(remove)
+	var open_ids: Array = addable.filter(func(id: Variant) -> bool: return not order.has(id))
+	if not open_ids.is_empty():
+		var add := MenuButton.new()
+		add.name = "backup_add"
+		_style_menu_button(add)
+		add.text = "Add a job"
+		add.theme_type_variation = "Small"
+		var popup := add.get_popup()
+		for k in range(open_ids.size()):
+			popup.add_item(Roles.label_for(open_ids[k]), k)
+		popup.id_pressed.connect(func(k: int) -> void:
+			var longer: Array = order.duplicate()
+			longer.append(open_ids[k])
+			on_change.call(_keys_of(longer), "backup_add"))
+		box.add_child(add)
+	if focus_name != "":
+		_focus_later(box, focus_name)
+	return box
+
+static func _editor_button(button_name: String, glyph: String, tip: String, off: bool) -> Button:
+	var button := Button.new()
+	button.name = button_name
+	button.text = glyph
+	button.tooltip_text = tip
+	button.disabled = off
+	button.theme_type_variation = "Small"
+	for state: String in ["normal", "hover", "pressed", "focus", "disabled"]:
+		button.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
+	return button
+
+static func _style_menu_button(menu: MenuButton) -> void:
+	menu.flat = false
+	for state: String in ["normal", "hover", "pressed", "focus", "disabled"]:
+		menu.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
+
+static func _keys_of(ids: Array) -> Array:
+	return ids.map(func(id: Variant) -> String: return Roles.key_for(int(id)))
+
+static func _keys_after_move(order: Array, index: int, delta: int) -> Array:
+	var moved: Array = order.duplicate()
+	var target: int = clampi(index + delta, 0, moved.size() - 1)
+	var item: Variant = moved[index]
+	moved.remove_at(index)
+	moved.insert(target, item)
+	return _keys_of(moved)
+
+## Puts focus on the named control once the list is in the tree. A control
+## that is now disabled (a job moved to the top) hands it to its opposite.
+static func _focus_later(box: Control, focus_name: String) -> void:
+	box.ready.connect(func() -> void:
+		var target: Node = box.find_child(focus_name, true, false)
+		if target is Button and target.disabled:
+			var swapped: String = focus_name.replace("_up_", "_down_") if "_up_" in focus_name else focus_name.replace("_down_", "_up_")
+			target = box.find_child(swapped, true, false)
+		if target is Control and not (target is Button and target.disabled):
+			target.grab_focus.call_deferred(), CONNECT_ONE_SHOT)

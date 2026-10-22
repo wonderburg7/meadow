@@ -614,6 +614,7 @@ func _ready() -> void:
 	hud.winter_window_requested.connect(func() -> void: year_winter._toggle_panel(winter_panel))
 	hud.signal_clicked.connect(year_winter._on_signal_clicked)
 	hud.secondary_role_requested.connect(orders_zones._on_secondary_role_requested)
+	hud.backup_order_requested.connect(orders_zones._on_backup_order_requested)
 	hud.finish_first_requested.connect(orders_zones._on_finish_first_requested)
 	hud.favourite_requested.connect(orders_zones._on_favourite_requested)
 	hud.follow_bee_toggled.connect(camera_view._on_follow_bee_toggled)

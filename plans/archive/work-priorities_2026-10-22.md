@@ -1,7 +1,7 @@
 # Work Priorities -- Hive Mind tier 3: one colony-wide order of fallback jobs
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: WP-3 -- the ordered list in the selection panel and the colony default (WP-2 behaviour and saves landed 21 Oct 2026) | Dependency: none for WP-3 (WP-2 landed 21 Oct 2026) | Verified: 2026-10-21
+Status: complete | Owner: Dave / Claude Code | Next: nothing further -- WP-1 to WP-3 landed (22 Oct 2026); SG-2 in plans/now/short-term-goals.md follows in Dave's order | Dependency: none | Verified: 2026-10-22
 
 ## Objective
 
@@ -55,7 +55,6 @@ Verified 13 Oct 2026 against master `06bd26c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| WP-3 | The ordered list in the selection panel and the colony default in the Colony window | `scripts/hud.gd`, `scripts/colony_panel.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `test_scenarios/wp3_backup_order_ui.json`, `tests/test_wp3_backup_order_ui.py` | yes (WP-2 landed 21 Oct 2026) | medium |
 
 WP-1, then WP-2, then WP-3: each needs the one before. Dave's order (13 Oct
 2026) is tier 3 first (`plans/archive/tier-three_2026-10-14.md` and this plan), then
@@ -77,34 +76,7 @@ WP-1 shipped 2026-10-14; its specification is `plans/archive/WP-1_2026-10-14.md`
 
 WP-2 shipped 2026-10-21; its specification is `plans/archive/WP-2_2026-10-21.md`.
 
-## WP-3 -- the ordered list in the selection panel and the colony default
-
-<!-- LAYER: immediate-task -->
-
-**Change.** Owned, the selection panel's Backup row becomes an ordered list
-with up and down buttons, keyboard-reachable, applied to every selected bee
-at once; a mixed selection shows its first bee's order and says so. The
-Colony window gains a "New bees fall back on" list editing the colony
-default. Unowned, the row is today's single Backup choice.
-
-**From WP-2.** Read a bee's list with `bee.gd::backup_list()`. Every living
-worker is given one the frame the skill is owned (`Session.seed_backup_orders`),
-and an empty list that was given means "no backup jobs" and stays empty; the
-queen holds none. Set a
-selection's with `orders_zones.gd::_on_backup_order_requested(role_keys)`,
-which `main.gd` still has to connect to the HUD's new signal; the colony
-default is `Session.backup_order_default`, set with
-`Session.set_backup_order_default(order)`. `bee.gd::work_priorities_owned()`
-says which row to show.
-
-```queue
-**[Claude] WP-3 -- the ordered list in the selection panel and the colony default**
-- Plan: `plans/now/work-priorities.md` -- "WP-3 -- the ordered list in the selection panel and the colony default"
-- Files: `scripts/hud.gd`, `scripts/colony_panel.gd`, `scripts/orders_zones.gd`, `scripts/main.gd`, `test_scenarios/wp3_backup_order_ui.json`, `tests/test_wp3_backup_order_ui.py`
-- Check: `python -m unittest tests.test_wp3_backup_order_ui` passes (owned, moving a job up in the selection panel reorders every selected bee's list; the Colony window list changes what a newly emerged bee takes; unowned, the single Backup choice is unchanged); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/hud.gd :: backup_order`
-- Next after: none -- the Work Priorities plan is complete; SG-2 in `plans/now/short-term-goals.md` follows in Dave's order
-```
+WP-3 shipped 2026-10-22; its specification is `plans/archive/WP-3_2026-10-22.md`.
 
 ## Open questions
 

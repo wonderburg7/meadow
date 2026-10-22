@@ -1,7 +1,7 @@
 # Meadow — Skill Tree, Colony Adaptations and Progression Plan
 
 <!-- CONTEXT: plan | LAYER: design | LOAD: only after progression is selected -->
-Status: active -- Phase A finished with step 4, landed 7 Sep 2026 | Owner: Dave / Claude Code | Next: step 8's last slices are in `plans/now/tier-two.md` (T2-11 to T2-13, then the T2-7b price sweep); step 13's Work Priorities is `plans/now/work-priorities.md` (tier three's gating is built, `plans/archive/tier-three_2026-10-14.md`); step 15's gyne route is `plans/now/pollination.md` (PP-6 prices it); steps 7 and 12 are built (`plans/archive/brood-spine_2026-10-05.md`, `plans/archive/bee-bread_2026-10-11.md`) | Dependency: none blocking -- the skill-gating question is settled in section 11, step 6 (Dave, 17 Sep 2026). Two skill definitions still open (section 5.9) | Verified: 2026-10-16
+Status: active -- Phase A finished with step 4, landed 7 Sep 2026 | Owner: Dave / Claude Code | Next: step 8's last slices are in `plans/now/tier-two.md` (T2-11 to T2-13, then the T2-7b price sweep); step 13's Work Priorities is `plans/archive/work-priorities_2026-10-22.md` (tier three's gating is built, `plans/archive/tier-three_2026-10-14.md`); step 15's gyne route is `plans/now/pollination.md` (PP-6 prices it); steps 7 and 12 are built (`plans/archive/brood-spine_2026-10-05.md`, `plans/archive/bee-bread_2026-10-11.md`) | Dependency: none blocking -- the skill-gating question is settled in section 11, step 6 (Dave, 17 Sep 2026). Two skill definitions still open (section 5.9) | Verified: 2026-10-16
 
 Canonical detailed plan for the in-run skill tree, campaign meta progression, and Colony Adaptations. Rewritten 1 Sep 2026 against Dave's revised skill catalogue — six sectors, four resource-gated tiers, a hexagonal wedge grid and a HUD Skills button. It supersedes the 26 Aug catalogue outright: the sectors, tier meaning, costs and node list below are the design, and the earlier ones are not.
 
@@ -202,7 +202,7 @@ Colony-level automation and standing policy. New sector.
 | `skill.hive_mind.cleaning` | 2 | Existing foundation | — | Unlocks cleaning of debris and corpses as a directed colony activity. |
 | `skill.hive_mind.shiver_cluster` | 2 | New (not yet in `skills.gd`) | — | Bees surround the queen and shiver to keep her warm through winter. Without it, winter's bill is multiplied. See "Shiver Cluster" below. |
 | `skill.hive_mind.adjustment_panel` | 3 | New | Backup roles | A panel for setting the colony's standing responses — combat behaviour, rain actions, drought actions. Depends on the corresponding behaviours existing: combat (Defence T2), rain recall (Ecology T2), drought (not yet a feature). |
-| `skill.hive_mind.work_priorities` | 3 | New | Backup roles | Work Priorities: each bee's single backup becomes an ordered list. Replaces Extended backup roles in this slot (Dave, 13 Oct 2026; rules in `plans/now/work-priorities.md`). |
+| `skill.hive_mind.work_priorities` | 3 | New | Backup roles | Work Priorities: each bee's single backup becomes an ordered list. Replaces Extended backup roles in this slot (Dave, 13 Oct 2026; rules in `plans/archive/work-priorities_2026-10-22.md`). |
 | `skill.hive_mind.chemical_cascade` | 4 | **Open** | — | See section 5.9. |
 
 **Shiver Cluster (Dave, 6 Oct 2026, plan-ahead session).** Colony Run decision 9 (`plans/archive/colony-run_2026-10-08.md`) created the skill and left its tree, cost and numbers here. Decided:
@@ -506,7 +506,7 @@ Section 9.2's catalogue-integrity group shipped with step 1 (`tests/source_check
 Blocked on new simulation work, in dependency order:
 
 12. **Bee bread** (section 5.9 item 3; recipe/capacity/ration still open, chain shape answered by `product-scope.md` §9). A new resource and production chain. **Nothing at tier 3 can be built or balanced before this lands.**
-13. **Tier 3 content** — Weighted flower choice, Priority cells, Restocking, Auto-defence, Adjustment panel, Work Priorities (which replaced Extended backup roles, `plans/now/work-priorities.md`), Pollinator Points (`product-scope.md` §10); plus Medicine once defined.
+13. **Tier 3 content** — Weighted flower choice, Priority cells, Restocking, Auto-defence, Adjustment panel, Work Priorities (which replaced Extended backup roles, `plans/archive/work-priorities_2026-10-22.md`), Pollinator Points (`product-scope.md` §10); plus Medicine once defined.
 14. **Drought** as a weather feature, then Weather sensing's drought half and the Adjustment panel's drought actions.
 15. **Tier 4 content** — Pollinator Points wired to the ladder as the universal gate, then Gyne rearing (also naming royal jelly directly), Drones, Nectar robbing, Auto-recruitment; plus Chemical cascade once defined.
 16. **Colony Adaptations** (section 7). Last, and dependent on nothing above.

@@ -1,7 +1,7 @@
 # Meadow — product scope and development sequence
 
 <!-- CONTEXT: plan | LAYER: design -->
-Status: selected design, not scheduled | Owner: Dave | Next: the closed alpha's remaining route is sliced in live plans -- the crisis (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`), Work Priorities, short-term goals and Easy (`plans/now/work-priorities.md`, `short-term-goals.md`, `difficulty.md`, in Dave's order), the gyne route (PP-6, `plans/now/pollination.md`) and the five-gate evidence (AR-4, `plans/now/alpha-route-evidence.md`); the Colony Run definition is built (`plans/archive/colony-run_2026-10-08.md`); the event director's selection logic still needs its own pass; the goal model's data, the job catalogue/dispatcher and the stable catalogues are `plans/archive/architecture-review_2026-09-24.md`'s C, G and B chains (Dave, 11 Sep 2026) | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-10-16
+Status: selected design, not scheduled | Owner: Dave | Next: the closed alpha's remaining route is sliced in live plans -- the crisis (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`), Work Priorities, short-term goals and Easy (`plans/archive/work-priorities_2026-10-22.md`, `short-term-goals.md`, `difficulty.md`, in Dave's order), the gyne route (PP-6, `plans/now/pollination.md`) and the five-gate evidence (AR-4, `plans/now/alpha-route-evidence.md`); the Colony Run definition is built (`plans/archive/colony-run_2026-10-08.md`); the event director's selection logic still needs its own pass; the goal model's data, the job catalogue/dispatcher and the stable catalogues are `plans/archive/architecture-review_2026-09-24.md`'s C, G and B chains (Dave, 11 Sep 2026) | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-10-16
 
 This is Meadow's high-level product map. It defines what the game is trying to
 prove, what is essential for the first feedback build, which foundations later
@@ -337,7 +337,7 @@ responses without declaring one correct colony organisation.
 - **Work Priorities — Hive Mind Tier 3:** each bee's single backup becomes
   an ordered list of backups. Superseded 13 Oct 2026 (Dave): the earlier
   "roles become priority presets" and colony-wide ordering are replaced; the
-  rules live in `plans/now/work-priorities.md`.
+  rules live in `plans/archive/work-priorities_2026-10-22.md`.
 - **Extended Backup Roles:** cut from alpha; Work Priorities provides the
   intended scalable control surface.
 
@@ -824,7 +824,7 @@ legal decisions for the release stream, not alpha blockers.
 ## 16. Open design questions that do not block this scope
 
 - Work Priorities' many-bee UI (its dispatch rule is settled in
-  `plans/now/work-priorities.md`, 13 Oct 2026);
+  `plans/archive/work-priorities_2026-10-22.md`, 13 Oct 2026);
 - Bee Bread recipe quantities, rationing and fermentation feedback;
 - exact skill discovery milestones and costs in the 90-minute route;
 - what genetic points buy -- gynes earn them (COL-7) and the notice names

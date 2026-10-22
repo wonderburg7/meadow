@@ -158,7 +158,7 @@ claim while `dry_after`).
   - T2-14 (`plans/now/tier-two.md`) fixed `idle_reason` before CQ-R3 moves it; it
     landed 21 Oct 2026, clearing CQ-R3 of everything but the `hud.gd` order.
   - CQ-T3 types `hud.gd` after the queued slices that reshape it (WP-3 in
-    `plans/now/work-priorities.md`, then CQ-R7), as CQ-T2 waited for CQ-R1's
+    `plans/archive/work-priorities_2026-10-22.md`, then CQ-R7), as CQ-T2 waited for CQ-R1's
     moves; CQ-L1 holds `skill_tree_panel.gd` ahead of it. Its section and block
     are written when CQ-R7 lands, deciding then whether CQ-R8 goes first.
   - The save moves (CQ-S1 to S5 and CQ-R2) wait for every specified slice that edits
