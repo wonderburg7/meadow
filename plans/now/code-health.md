@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: CQ-L2 -- every tool that reads GDScript as text survives gdformat (CQ-L1 landed 22 Oct 2026; queued with CQ-R7 and CQ-M3; CQ-M8 follows CQ-M3; CQ-S0's round-trip harness landed 22 Oct 2026; CQ-S0b, its one known difference (a switched forager gains an orientation start point on reload), is in the Claude backlog by Dave's decision) | Dependency: CQ-M8 follows CQ-M3 (CQ-L1 landed 22 Oct 2026); CQ-T3 waits for CQ-R7, the last queued slice in `scripts/hud.gd`; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026) and DR-1 (`plans/now/drones.md`); the rest is in "Dependencies" | Verified: 2026-10-22
+Status: active | Owner: Dave / Claude Code | Next: CQ-L2 -- every tool that reads GDScript as text survives gdformat (CQ-L1, CQ-R7 and CQ-M3 landed 22 Oct 2026; CQ-M8, which followed CQ-M3, is in the Claude backlog; CQ-S0's round-trip harness landed 22 Oct 2026; CQ-S0b, its one known difference (a switched forager gains an orientation start point on reload), is in the Claude backlog by Dave's decision) | Dependency: CQ-T3 and CQ-R8 wait only for their sections to be written (CQ-R7, the last queued slice in `scripts/hud.gd`, landed 22 Oct 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026) and DR-1 (`plans/now/drones.md`); the rest is in "Dependencies" | Verified: 2026-10-22
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -101,7 +101,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | --- | --- | --- | --- | --- |
 | CQ-L2 | every tool that reads GDScript as text survives `gdformat` | `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, tests | yes (CQ-L1 landed 22 Oct 2026) | medium |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot` | after CQ-R7, the last queued slice in `hud.gd` (CQ-T2 landed 21 Oct 2026) | low |
+| CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot` | once its section is written (CQ-R7, the last queued slice in `hud.gd`, landed 22 Oct 2026; CQ-T2 21 Oct 2026) | low |
 | CQ-S0b | a restored forager takes no fresh orientation flight | `bee.gd`, `saving.gd`, `tests/save_roundtrip_test.gd` | yes | medium |
 | CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a, DR-1 | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
@@ -112,11 +112,11 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-M5 | CanvasLayer order in scripts/canvas_layers.gd | 10 UI scripts | yes | medium |
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | yes | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
-| CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | follows CQ-M3 (CQ-L1 landed 22 Oct 2026) | low |
+| CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | yes -- block written (CQ-M3 and CQ-L1 landed 22 Oct 2026) | low |
 | CQ-M9 | colony plot reads `Resources` colours; width const | `colony_panel.gd` | yes | low |
 | CQ-M10 | `WEATHER_ROLLS_PER_DAY` | `main.gd` | yes | low |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
-| CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once CQ-R7 releases `hud.gd` (WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
+| CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once its section is written (CQ-R7 released `hud.gd` and WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes | medium |
@@ -156,8 +156,8 @@ claim while `dry_after`).
     landed 21 Oct 2026, clearing CQ-R3 of everything but the `hud.gd` order.
   - CQ-T3 types `hud.gd` after the queued slices that reshape it (WP-3, landed
     22 Oct 2026, then CQ-R7), as CQ-T2 waited for CQ-R1's moves; CQ-L1, which held
-    `skill_tree_panel.gd` ahead of it, landed 22 Oct 2026. Its section and block
-    are written when CQ-R7 lands, deciding then whether CQ-R8 goes first.
+    `skill_tree_panel.gd` ahead of it, landed 22 Oct 2026. CQ-R7 landed 22 Oct
+    2026, so its section and block are next to write, deciding then whether CQ-R8 goes first.
   - The save moves (CQ-S1 to S5 and CQ-R2) wait for every specified slice that edits
     `save_game.gd`/`saving.gd`: WP-2, SG-2, ED-1, ED-2 (difficulty, ending at ED-3),
     RR-12, SP-8a and DR-1 (`plans/now/drones.md`). Each of those plans carries the reverse pointer.

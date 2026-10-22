@@ -63,7 +63,7 @@ are added; the cost is in verify ambiguity, queue bookkeeping and
 prose-only rules. They run in id order, one file set at a time: every one
 but L-34 edits `tools/slice.ps1`. L-31 and L-35 followed CQ-L1
 (`plans/now/code-health.md`), which also edits `tools/verify.ps1`; it landed 22 Oct 2026. L-34
-waits for L-31, whose `stop-verify` it names. Judging a borderline item
+waited for L-31, whose `stop-verify` it names; L-31 landed 22 Oct 2026. Judging a borderline item
 with a cheap model was considered and rejected: lanes hold five items,
 far below the break-even the source setup measured.
 
@@ -170,7 +170,7 @@ start, and makes no model calls.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] L-34 -- a PreToolUse guard refuses the five closeout-breaking commands**
 - Plan: `plans/now/agent-lifecycle.md` -- "L-34 -- a PreToolUse guard refuses the five closeout-breaking commands"
 - Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`, `.claude/settings.json`, `.codex/hooks.json`

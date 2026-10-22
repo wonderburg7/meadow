@@ -1,7 +1,7 @@
 # Drones -- a mated queen lays drones in cells the player marks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: DR-1 -- a mated queen lays drones in cells marked for them, saved (Claude backlog); then DR-2 -- the cell popup's drone box, gated on CQ-R7 | Dependency: DR-2 waits for CQ-R7 (`plans/now/code-health.md`), which holds `scripts/hud.gd`; DR-1 shares the save files with SG-2, ED-1, ED-2 and CQ-S0b, one at a time in queue order; CQ-S1 to CQ-S5 and CQ-R2 wait for DR-1 | Verified: 2026-10-22
+Status: active | Owner: Dave / Claude Code | Next: DR-1 -- a mated queen lays drones in cells marked for them, saved (Claude backlog); then DR-2 -- the cell popup's drone box, gated on DR-1 | Dependency: DR-2 waits for DR-1 (CQ-R7, `plans/now/code-health.md`, released `scripts/hud.gd` 22 Oct 2026); DR-1 shares the save files with SG-2, ED-1, ED-2 and CQ-S0b, one at a time in queue order; CQ-S1 to CQ-S5 and CQ-R2 wait for DR-1 | Verified: 2026-10-22
 
 ## Objective
 
@@ -57,15 +57,15 @@ Verified 22 Oct 2026 against master `7398865`.
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | DR-1 | a mated queen lays drones in cells marked for them; saved; goldens re-captured | see its `Files:` line | yes | high (save field, simulation, golden re-capture) |
-| DR-2 | the cell popup's drone box | `scripts/hud.gd`, `scripts/main.gd`, `scripts/nursery_panel.gd`, `scripts/orders_zones.gd` | no -- after DR-1, and after CQ-R7 releases `scripts/hud.gd` | medium |
+| DR-2 | the cell popup's drone box | `scripts/hud.gd`, `scripts/main.gd`, `scripts/nursery_panel.gd`, `scripts/orders_zones.gd` | no -- after DR-1 (CQ-R7 released `scripts/hud.gd` 22 Oct 2026) | medium |
 
 **Dependencies.** DR-1 edits `scripts/save_game.gd` and `scripts/saving.gd`.
 SG-2 (`plans/now/short-term-goals.md`), ED-1 and ED-2 (`plans/now/difficulty.md`)
 and CQ-S0b (`plans/now/code-health.md`) edit them too. All are Claude lane, so
 they run one at a time in queue order, and each re-captures the CQ-S0 goldens
 it changes. The save moves CQ-S1 to CQ-S5 and CQ-R2 (`plans/now/code-health.md`)
-wait for DR-1, as for the alpha chain's save slices. DR-2 waits for CQ-R7, the
-queued Claude slice that reshapes the cell popup in `scripts/hud.gd`.
+wait for DR-1, as for the alpha chain's save slices. DR-2 waited also for CQ-R7, the
+Claude slice that reshaped the cell popup in `scripts/hud.gd`; it landed 22 Oct 2026.
 
 ## DR-1 -- a mated queen lays drones in cells marked for them, saved
 
@@ -157,9 +157,9 @@ passes `tests/test_layout_regression.py`. The box follows
 
 ## Not in the queue, and why
 
-- **DR-2:** waits for DR-1 and for CQ-R7 (`plans/now/code-health.md`, Claude
-  lane), which reshapes the cell popup in `scripts/hud.gd`. Open its fence when
-  both have landed.
+- **DR-2:** waits for DR-1. CQ-R7 (`plans/now/code-health.md`), which reshaped
+  the cell popup in `scripts/hud.gd`, landed 22 Oct 2026. Open its fence when
+  DR-1 has landed.
 
 ## Read on demand
 
