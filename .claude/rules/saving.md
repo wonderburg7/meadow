@@ -38,6 +38,20 @@ in-place `_restore` (Challenge 2's rollback, the `restore_slot` scenario
 action) must leave the world as the checkpoint recorded it, soil included,
 not merely remove what the checkpoint lacks.
 
+**A save survives its own round-trip** (CQ-S0, 22 Oct 2026). `python -m
+unittest tests.test_save_roundtrip` runs `tests/save_roundtrip_test.gd`: it
+replays each golden in `tests/fixtures/saves/` by the load route and by
+`saving._restore` (the function the Challenge rollback and `restore_slot`
+call) over a freshly built, paused world of the same run, re-saves it in the
+same frame and compares the two as canonical JSON, then loads and re-saves
+`save_v1.json`, `save_v2.json` and a v6 save. It does not cover restoring over
+a world that has been running. Refactoring the save code leaves the goldens untouched; only a
+deliberate format change recaptures them, from `test_scenarios/cq_s0_*_capture.json`
+(the test's docstring says how). A difference a route makes today is named in
+the test's `KNOWN_DIFFERENCES` and escalated to Dave, never silently accepted:
+one stands now -- with orientation flight on, a bee switched into Forager and
+saved before her first trip gains a start point on reload.
+
 **`queue_free()` is deferred, not immediate.** Godot doesn't remove a
 freed node from the tree or its groups until end of frame, so a
 `get_nodes_in_group(...)` call taken mid-restore can catch old and new

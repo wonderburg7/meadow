@@ -1,0 +1,11 @@
+{
+  "challenge": 2,
+  "random_seed": 5404,
+  "actions": [
+    {"do": "advance_challenge_stage", "stage_id": "2.7"},
+    {"do": "settle", "ticks": 5},
+    {"do": "wait", "seconds": 30},
+    {"do": "save_run", "name": "CQ-S0 challenge2"}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 3}
+}
