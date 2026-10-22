@@ -103,7 +103,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-L2 | every tool that reads GDScript as text survives `gdformat` | `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, tests | after CQ-L1 | medium |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
 | CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot` | after CQ-R7, the last queued slice in `hud.gd` (CQ-T2 landed 21 Oct 2026) | low |
-| CQ-S0 | golden-save round-trip harness | `tests/save_roundtrip_test.gd`, fixtures | yes | high |
 | CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
@@ -301,43 +300,7 @@ CQ-T1 shipped 2026-10-21; its specification is `plans/archive/CQ-T1_2026-10-21.m
 
 CQ-T2 shipped 2026-10-21; its specification is `plans/archive/CQ-T2_2026-10-21.md`.
 
-## CQ-S0 -- golden-save round-trip harness
-
-**True now.** No test compares a whole save. `tests/test_save_migrations.py` runs the
-migration ladder in Python on two empty-world fixtures. The GDScript save tests spot-check
-fields after settling.
-
-**When done:**
-
-- `tests/save_roundtrip_test.gd` loads each golden save and re-saves it in the same
-  frame, with the tree paused as in `si1_run_state_test.gd`. It does this by two routes,
-  the load path and in-place `saving._restore`, then compares canonical JSON (sorted
-  keys; soil `present`, `keep_clear` and fog compared as sets).
-- The goldens are captured on master with `save_run` from new `test_scenarios/cq_s0_*`
-  captures, into tests/fixtures/saves/ as cq_s0_early, cq_s0_mid, cq_s0_winter,
-  cq_s0_challenge2 and cq_s0_orientation (each `.json`):
-  - an early Colony Run;
-  - a mid run with brood, bodies, restock and mine queues, bee bread and drones;
-  - winter;
-  - a Challenge 2 checkpoint (in place only);
-  - a fresh forager with `orientation_flight_on`.
-- `tests/fixtures/save_v1.json`, `save_v2.json` and a v6 save are loaded, re-saved and
-  recorded.
-- `.claude/rules/saving.md` names the harness.
-
-**If a route is not idempotent today** (the suspected case: a forager gains
-`start_x`/`start_y` on reload with orientation flight on), record it as a named known
-difference in the test and escalate to Dave. Do not fix it here: that would be a
-gameplay change.
-
-```queue
-**[Claude] CQ-S0 -- golden-save round-trip harness**
-- Plan: `plans/now/code-health.md` -- "CQ-S0 -- golden-save round-trip harness"
-- Files: `tests/save_roundtrip_test.gd`, `tests/test_save_roundtrip.py`, `tests/fixtures/saves/cq_s0_early.json`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json`, `test_scenarios/cq_s0_early_capture.json`, `test_scenarios/cq_s0_mid_capture.json`, `test_scenarios/cq_s0_winter_capture.json`, `test_scenarios/cq_s0_challenge2_capture.json`, `test_scenarios/cq_s0_orientation_capture.json`, `.claude/rules/saving.md`
-- Check: `python -m unittest tests.test_save_roundtrip` passes, comparing every golden save's load-then-save output to its input by both routes, with any known difference named and escalated; `.\tools\verify.ps1` is green
-- Proof: `absent: .claude/rules/saving.md :: round-trip`
-- Next after: CQ-S1
-```
+CQ-S0 shipped 2026-10-22; its specification is `plans/archive/CQ-S0_2026-10-22.md`.
 
 ## CQ-S1 -- Flower owns its save fields
 

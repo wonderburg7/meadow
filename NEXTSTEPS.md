@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] CQ-S0 -- golden-save round-trip harness**
-   - Plan: `plans/now/code-health.md` -- "CQ-S0 -- golden-save round-trip harness"
-   - Files: `tests/save_roundtrip_test.gd`, `tests/test_save_roundtrip.py`, `tests/fixtures/saves/cq_s0_early.json`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json`, `test_scenarios/cq_s0_early_capture.json`, `test_scenarios/cq_s0_mid_capture.json`, `test_scenarios/cq_s0_winter_capture.json`, `test_scenarios/cq_s0_challenge2_capture.json`, `test_scenarios/cq_s0_orientation_capture.json`, `.claude/rules/saving.md`
-   - Check: `python -m unittest tests.test_save_roundtrip` passes, comparing every golden save's load-then-save output to its input by both routes, with any known difference named and escalated; `.\tools\verify.ps1` is green
-   - Proof: `absent: .claude/rules/saving.md :: round-trip`
-   - Next after: CQ-S1
-
-2. **[Claude] CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds**
+1. **[Claude] CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds**
    - Plan: `plans/now/code-health.md` -- "CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds"
    - Files: `tools/gdscript_style.py`, `tests/test_gdscript_style.py`, `tools/verify.ps1`, `tests/rr7_silkscreen_fit_test.gd`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/README.md`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/addons/copy_all_errors/plugin.cfg`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/addons/copy_all_errors/plugin.gd`, `scripts/fog_of_war.gd`, `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/bee.gd`, `scripts/diagnostic_log.gd`, `scripts/hive_cell.gd`, `scripts/input_selection.gd`, `tests/bs14_saved_skill_policy_test.gd`, `tests/col10_succession_test.gd`, `.claude/rules/gdscript.md`, `FUNCTION_MAP.md`
    - Check: `python tools/gdscript_style.py` exits 0 with zero gdlint problems over every tracked `.gd` outside `addons/`; `tests/test_gdscript_style.py` covers the missing-gdtoolkit skip; `.\tools\verify.ps1` shows a green `gdscript style` stage
    - Proof: `absent: tools/verify.ps1 :: gdscript style`
    - Next after: CQ-L2
 
-3. **[Claude] CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed**
+2. **[Claude] CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed**
    - Plan: `plans/now/code-health.md` -- "CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed"
    - Files: `scripts/hud.gd`, `FUNCTION_MAP.md`
    - Check: `python -m unittest tests.test_display_text_golden` passes against the unchanged fixture; `tests/test_layout_regression.py` passes; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/hud.gd :: func _selection_activity_text(`
    - Next after: CQ-R8 -- hud builders shortened (designation button table)
 
-4. **[Claude] CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named**
+3. **[Claude] CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named**
    - Plan: `plans/now/code-health.md` -- "CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named"
    - Files: `scripts/rival_hive.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/balance_tests.py`, `tests/si1_run_state_test.gd`, `FUNCTION_MAP.md`
    - Check: `python tests/balance_tests.py` passes with its rival section unchanged; `python -m unittest tests.test_si1_run_state` passes, including the new fresh-rival and `restore({})` assertions; `tests/test_save_migrations.py`, `tests/test_signal_catalogue.py` and the settings-row source checks pass; `.\tools\verify.ps1` is green
    - Proof: `present: scripts/rival_hive.gd :: nectar = float(data.get("nectar", 120.0))`
    - Next after: CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named
 
-5. **[Claude] L-31 -- one status line names the slice's state and its single next action**
+4. **[Claude] L-31 -- one status line names the slice's state and its single next action**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-31 -- one status line names the slice's state and its single next action"
    - Files: `tools/verify.ps1`, `tools/slice.ps1`, `tests/test_slice_status.py`, `plans/reference/closeout.md`
    - Check: `python -m unittest tests.test_slice_status` passes (status reports verifying with a live PID, orphaned once that PID is gone, closing at a journal phase, and lane dry); `start` on its own lane's open, ahead worktree prints that status and exits 0; `.\tools\verify.ps1` is green
    - Proof: `absent: tools/verify.ps1 :: meadow-verify-status.json`
    - Next after: L-32
+
+5. **[Claude] L-32 -- a verified slice merges even when it leaves its lane dry**
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-32 -- a verified slice merges even when it leaves its lane dry"
+   - Files: `tools/slice.ps1`, `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_two_lane_closeout.py`, `.claude/rules/documentation.md`
+   - Check: a `tests/test_two_lane_closeout.py` fixture closes a lane's last item while its successor is gated; `finish` merges, prints `lane dry`, and the next `start` refuses; `check_docs` warns rather than fails on the dry lane; `.\tools\verify.ps1` is green
+   - Proof: `present: tools/refill_lane.py :: one that drops below the three-item floor, or that loses a lane entirely`
+   - Next after: L-33
 
 ### Codex lane
 
