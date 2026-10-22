@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/CQ-M3` (`claude/CQ-M3`) | Claude | rival starting stores become GameConfig rows; rebalance consts named | Claude | in progress | none | `plans/now/code-health.md` CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named |
