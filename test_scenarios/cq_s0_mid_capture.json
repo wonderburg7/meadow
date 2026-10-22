@@ -1,0 +1,26 @@
+{
+  "cells": 20, "nectar_foragers": 4, "pollen_foragers": 2,
+  "nurses": 2, "builders": 2, "miners": 2, "honey_makers": 2,
+  "weather": false, "disease": false, "rival_hive": false, "winter": false,
+  "skill_grants": ["skill.brood.honey_worker", "skill.brood.bee_bread", "skill.colony.restocking"],
+  "random_seed": 5202,
+  "actions": [
+    {"do": "designate_cell", "hex": [0, 0], "content": "bee_bread"},
+    {"do": "set_cell_contents", "cell": {"built_index": 2}, "resource": "pollen", "amount": 200},
+    {"do": "set_cell_contents", "cell": {"built_index": 3}, "resource": "pollen", "amount": 200},
+    {"do": "set_cell_contents", "cell": {"built_index": 4}, "resource": "honey", "amount": 200},
+    {"do": "set_cell_contents", "cell": {"built_index": 5}, "resource": "honey", "amount": 200},
+    {"do": "assign_role", "target": {"current_role": "honey"}, "role": "honey_ferment"},
+    {"do": "wait", "seconds": 700},
+    {"do": "set_config", "key": "bee_lifespan_days", "value": 10.0},
+    {"do": "wait", "seconds": 15},
+    {"do": "assign_role", "target": {"current_role": "forager", "count": 1}, "role": "miner"},
+    {"do": "set_restock_order", "target": {"current_role": "comb_worker", "count": 1}, "target_hex": [1, 0], "source_hex": [1, -1], "resource": "nectar"},
+    {"do": "queue_mine", "target": {"current_role": "miner"}, "hex": [3, 3]},
+    {"do": "queue_mine", "target": {"current_role": "miner"}, "hex": [3, 4], "append": true},
+    {"do": "queue_mine", "target": {"current_role": "miner"}, "hex": [4, 3], "append": true},
+    {"do": "settle", "ticks": 2},
+    {"do": "save_run", "name": "CQ-S0 mid"}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 8}
+}
