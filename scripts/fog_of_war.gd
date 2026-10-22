@@ -109,6 +109,7 @@ extends Node
 ## edge between them needs touching.
 
 const Shapes = preload("res://scripts/shapes.gd")
+const FOG_MASK_SHADER = preload("res://shaders/fog_mask.gdshader")
 const HIVE_QUEEN_REVEAL_RADIUS_MULTIPLIER := 2.0
 const HIVE_OPEN_SPACE_REVEAL_BLOCKS := 1.8
 
@@ -216,7 +217,7 @@ func _build_layer() -> void:
 	_layer.z_index = 90   # above bees (5) and the rain wash (50), below the selection layer (100)
 	_layer.draw.connect(_draw_fog)
 	_mask_material = ShaderMaterial.new()
-	_mask_material.shader = preload("res://shaders/fog_mask.gdshader")
+	_mask_material.shader = FOG_MASK_SHADER
 	_layer.material = _mask_material
 	main.meadow_root.add_child(_layer)
 
@@ -244,7 +245,7 @@ func _build_hive_layer() -> void:
 	_hive_layer.z_index = 90
 	_hive_layer.draw.connect(_draw_hive_fog)
 	_hive_mask_material = ShaderMaterial.new()
-	_hive_mask_material.shader = preload("res://shaders/fog_mask.gdshader")
+	_hive_mask_material.shader = FOG_MASK_SHADER
 	_hive_layer.material = _hive_mask_material
 	_hive_layer.visible = false
 	main.hive_root.add_child(_hive_layer)

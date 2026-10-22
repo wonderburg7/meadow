@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds (queued with CQ-R7 and CQ-M3; CQ-M8 follows CQ-M3; CQ-S0's round-trip harness landed 22 Oct 2026, with one known difference escalated: a switched forager gains an orientation start point on reload) | Dependency: CQ-M8 waits for CQ-L1, which holds `scripts/bee_foraging.gd`; CQ-T3 waits for CQ-R7, the last queued slice in `scripts/hud.gd`; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); the rest is in "Dependencies" | Verified: 2026-10-22
+Status: active | Owner: Dave / Claude Code | Next: CQ-L2 -- every tool that reads GDScript as text survives gdformat (CQ-L1 landed 22 Oct 2026; queued with CQ-R7 and CQ-M3; CQ-M8 follows CQ-M3; CQ-S0's round-trip harness landed 22 Oct 2026, with one known difference escalated: a switched forager gains an orientation start point on reload) | Dependency: CQ-M8 waits for CQ-L1, which holds `scripts/bee_foraging.gd`; CQ-T3 waits for CQ-R7, the last queued slice in `scripts/hud.gd`; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); the rest is in "Dependencies" | Verified: 2026-10-22
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -301,6 +301,39 @@ CQ-T1 shipped 2026-10-21; its specification is `plans/archive/CQ-T1_2026-10-21.m
 CQ-T2 shipped 2026-10-21; its specification is `plans/archive/CQ-T2_2026-10-21.md`.
 
 CQ-S0 shipped 2026-10-22; its specification is `plans/archive/CQ-S0_2026-10-22.md`.
+
+## CQ-L2 -- every tool that reads GDScript as text survives gdformat
+
+**True now.** CQ-L1 landed gdlint in `verify.ps1`. `gdformat` (gdtoolkit 4.5.0) is
+not run anywhere, and nothing proves that the tools which read `.gd` files as text
+(`tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`,
+`tools/sprites.py`) give the same answers on formatted code. `gdformat` rewrites
+indentation, blank lines, line wrapping and trailing commas; a parser written
+against the hand-formatted style can miss a call that CQ-L3's one-off reformat
+wraps over two lines.
+
+**When done:**
+
+1. `tests/test_gdformat_survival.py` copies the tracked `.gd` files (outside
+   `addons/`) into a temporary folder, runs `python -m gdtoolkit.formatter` over the
+   copy, and runs each of the four tools' parsing functions on both the original and
+   the copy. Every result is identical. It skips with one line where gdtoolkit is
+   missing.
+2. Each parser that differs is fixed in its own tool, to read the formatted form as
+   well as the current one. A tool that reads a line at a time learns to join a
+   wrapped call first.
+3. Nothing is reformatted in the repository: CQ-L3 does that.
+
+**Invariants.** A tool's output on today's unformatted source does not change.
+
+```queue
+**[Claude] CQ-L2 -- every tool that reads GDScript as text survives gdformat**
+- Plan: `plans/now/code-health.md` -- "CQ-L2 -- every tool that reads GDScript as text survives gdformat"
+- Files: `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, `tests/test_gdformat_survival.py`
+- Check: `python -m unittest tests.test_gdformat_survival` passes: each of the four tools gives the same result on a gdformat-ed copy of every tracked `.gd` as on the original; `python tests/source_checks.py` still passes
+- Proof: `absent: tests/source_checks.py :: gdformat`
+- Next after: CQ-L3
+```
 
 ## CQ-S1 -- Flower owns its save fields
 

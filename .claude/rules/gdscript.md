@@ -15,6 +15,8 @@ calling a change done:
 
 Pass `-PythonPath` when Python is not on `PATH`.
 
+`verify.ps1` also runs gdlint (`tools/gdscript_style.py`, thresholds in the root `gdlintrc`). A hit is fixed, or carries `# gdlint: ignore=<rule>` on the line gdlint reports with its reason in a comment beside it; never lower a threshold to pass.
+
 Neither is a real GDScript parser (see "Verification" in `CLAUDE.md`). If `mcp__godot__*` tools are available this session, boot
 the project with them before saying something is ready to test.
 

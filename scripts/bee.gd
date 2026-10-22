@@ -2638,6 +2638,7 @@ func challenge_vocabulary_limited() -> bool:
 ##
 ## Each role knows what it was looking for, so each can say what it
 ## didn't find. Returns "" when the bee is genuinely busy.
+# CQ-R3 shortens this function; until then the early returns stay.
 func idle_reason() -> String:
 	if hive == null:
 		return ""
@@ -2692,7 +2693,7 @@ func idle_reason() -> String:
 			return ""
 		State.IDLING:
 			return "Set to idle. It will stay put until you give it a job."
-	return ""
+	return ""  # gdlint: ignore=max-returns
 
 ## The selection panel's "Now:" line: what this bee is doing, with a
 ## note while it is tipsy (NF-3, wording in bee_status.gd).
@@ -2705,6 +2706,7 @@ func task_description() -> String:
 ## A plain-language description of what this bee is doing right now,
 ## shown in the selection panel. Deliberately concrete ("returning
 ## pollen to the hive") rather than naming internal states.
+# CQ-R3 shortens this function; until then the early returns stay.
 func _task_line() -> String:
 	if challenge_vocabulary_limited() and not (state in CHALLENGE_TAUGHT_STATES):
 		return "busy in the hive"
@@ -2864,7 +2866,7 @@ func _task_line() -> String:
 			return "laying an egg into a cell"
 		State.TIPSY_WANDER:
 			return BeeStatus.tipsy_wander_text(self)
-	return "idle"
+	return "idle"  # gdlint: ignore=max-returns
 
 ## Only ever reached from task_description() while sitting in an idle
 ## state, which means _idle_dispatch already tried the secondary role

@@ -1,4 +1,4 @@
-﻿extends SceneTree
+extends SceneTree
 ## RR-7 investigation: why Silkscreen at text scale 2 still splits a menu
 ## hexagon's word (C-99, 15 Oct 2026: "CHALLENG" / "E 1").
 ##

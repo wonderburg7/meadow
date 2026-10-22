@@ -1,0 +1,10 @@
+class-variable-name: (_?[a-z][a-z0-9]*(_[a-z0-9]+)*|([A-Z][a-z0-9]*)+)
+constant-name: (_?[A-Z][A-Z0-9]*(_[A-Z0-9]+)*|([A-Z][a-z0-9]*)+)
+disable:
+- class-definitions-order
+- max-file-lines
+- max-line-length
+function-arguments-number: 7
+function-variable-name: ([a-z][a-z0-9]*(_[a-z0-9]+)*|([A-Z][a-z0-9]*)+)
+max-public-methods: 80
+max-returns: 12

@@ -336,7 +336,7 @@ func find_cell_for(resource_type: String, except: Node2D = null) -> Node2D:
 		if cell.content_type == resource_type:
 			if cell.amount < cell.capacity * GameConfig.cell_full_threshold:
 				return cell   # genuine room -- use it immediately, as before
-			elif almost_full == null:
+			if almost_full == null:
 				almost_full = cell   # fallback only, if nothing better turns up
 			continue
 		if best_empty == null:
@@ -362,7 +362,7 @@ func find_designated_cell_for(resource_type: String, except: Node2D = null) -> N
 		if cell.content_type == resource_type:
 			if cell.amount < cell.capacity * GameConfig.cell_full_threshold:
 				return cell
-			elif almost_full == null:
+			if almost_full == null:
 				almost_full = cell
 			continue
 		if best_empty == null:

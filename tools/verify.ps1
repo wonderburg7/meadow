@@ -392,6 +392,13 @@ if ($runBranchScope -and -not $Docs) {
         exit $lastStageExit
     }
 
+    # gdlint over every tracked .gd outside addons/, thresholds in gdlintrc (CQ-L1,
+    # 22 Oct 2026). Skips with one line where gdtoolkit is not installed.
+    Invoke-PythonStage -Name "gdscript style" -ScriptPath (Join-Path $repoRoot "tools/gdscript_style.py") -FailureNote "gdlint found problems: fix each, or add # gdlint: ignore=<rule> with its reason"
+    if ($lastStageExit -ne 0) {
+        exit $lastStageExit
+    }
+
     $jobs = @(
         (Start-Job -Name "source checks" -ArgumentList $python, $repoRoot -ScriptBlock {
             param($interpreter, $root)
