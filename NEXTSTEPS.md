@@ -99,6 +99,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **CQ-L2** (`plans/now/code-health.md`) -- every tool that reads GDScript as text survives `gdformat`; waits for CQ-L1 (Claude backlog), which puts gdlint into verify first.
 - **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; waits for CQ-R7 (Claude lane), the last queued slice reshaping `scripts/hud.gd`, its largest file (CQ-T2 landed 21 Oct 2026); its section and block are written when CQ-R7 lands.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
+- **L-34** (`plans/now/agent-lifecycle.md`) -- a PreToolUse guard refuses the five closeout-breaking commands; waits for L-31, whose `slice.ps1 stop-verify` its refusals name.
 ## Copy-paste prompts
 
 Claude, implementing: `Implement the next slice.`
