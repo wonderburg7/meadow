@@ -16,13 +16,21 @@ history log, no per-item prose (the `Plan:` section holds that), one line per
 holding up to five ready slices tagged `[Claude]`/`[Codex]` to match, each
 with `Plan:`, `Files:`, `Check:`, `Proof:` and `Next after:` lines. No file
 may appear in both lanes, so the two branches never disrupt each other; a
-session edits only its own lane's subsection. The whole queue never drops
-below three (Dave, D-2, 8 Sep 2026). A `Next after:` line must name the slice
+session edits only its own lane's subsection. The floor of three (Dave,
+D-2, 8 Sep 2026) governs admission only (Dave, 22 Oct 2026, L-32): a
+verified slice always merges. When closing it empties its lane, takes the
+queue under three or leaves only a gated successor, `finish` merges anyway
+and prints `lane dry: <lane> -- refill before the next start`;
+`tools/check_docs.py` warns on that state, `start` refuses an empty lane, and
+the refill happens before the next claim, not inside `finish`. A
+`Next after:` line must name the slice
 that follows -- the only accepted alternative is `none -- <plan> is complete`
 -- which is what makes a lane refill itself by lookup.
-A lane item is not claimed while `advice.dry_after` is true: specify its
-successor first, so planning happens before the build, not inside `finish`
-(Dave, 5 Oct 2026).
+Admission still plans ahead: a lane item is not claimed while
+`advice.dry_after` is true -- specify its successor first, so planning
+happens before the build (Dave, 5 Oct 2026). The merge-anyway rule above is
+the backstop for a lane that runs dry regardless (a successor that is
+gated, say), not leave to claim into a dry lane.
 
 **The lookup is the backlog.** An open slice section in a live plan may carry
 one fenced `queue` block holding the exact item that slice would be queued as:
@@ -58,9 +66,9 @@ check, a live repro, another slice or a decision from Dave goes under
 its successor admissible -- G2's named G3, which waits on F2s -- so at
 closeout the successor goes into the lane if it is startable and under
 `## Not in the queue, and why` if it is not, with its id as the bullet's
-bolded lead. `tools/slice.ps1 finish`'s refill gate accepts either, and
-nothing else; do not weaken a `Next after:` line to `none` to get past it
-(17 Sep 2026). When
+bolded lead. `tools/slice.ps1 finish`'s refill gate accepts either, or a
+`queue-gated` block for it in a live plan (L-32), and nothing else; do not
+weaken a `Next after:` line to `none` to get past it (17 Sep 2026). When
 Dave reports a hands-on pass, anything it unblocks moves into a lane.
 `tools/check_docs.py` enforces all of this. Closeout order (archive, refill,
 `finish`) is in `plans/reference/closeout.md`.

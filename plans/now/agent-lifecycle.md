@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-32 -- a verified slice merges even when it leaves its lane dry (L-31 shipped 22 Oct 2026; L-32 to L-36 specified 22 Oct 2026, run in id order); separately, after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none | Verified: 2026-10-21
+Status: active | Owner: Dave / Claude | Next: L-33 -- one admission check shared by check_docs, start and closeout (L-32 shipped 22 Oct 2026; L-33 to L-36 specified 22 Oct 2026, run in id order); separately, after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none | Verified: 2026-10-22
 
 ## Objective
 
@@ -50,7 +50,6 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-32 | a verified slice merges even when it leaves its lane dry | `tools/slice.ps1`, `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_two_lane_closeout.py`, `.claude/rules/documentation.md` | high |
 | L-33 | one admission check shared by `check_docs`, `start` and closeout | `tools/admission.py`, `tests/test_admission.py`, `tools/check_docs.py`, `tools/slice.ps1`, `plans/reference/queue-steward.md` | medium |
 | L-34 | a PreToolUse guard refuses the five closeout-breaking commands | `tools/guard_hook.py`, `tests/test_guard_hook.py`, `.claude/settings.json`, `.codex/hooks.json` | low |
 | L-35 | known baseline failures and stop causes are named, not rediagnosed | `tools/verify.ps1`, `tools/slice.ps1`, `tools/stop_causes.py`, `tests/test_stop_causes.py`, `tests/baseline_failures.json`, `tools/check_docs.py` | medium |
@@ -85,41 +84,7 @@ L-30 shipped 2026-10-18; its specification is `plans/archive/L-30_2026-10-18.md`
 
 L-31 shipped 2026-10-22; its specification is `plans/archive/L-31_2026-10-22.md`.
 
-## L-32 -- a verified slice merges even when it leaves its lane dry
-
-**Decision.** Dave, 22 Oct 2026, superseding D-2's use at closeout: the
-queue floor governs admission only. A verified slice always integrates.
-Refilling happens before the next claim, not inside `finish`.
-
-**Now.** `refill_lane.py` refuses a deletion that would take the queue
-under three or empty a lane. `check_docs.py` (`QUEUE_SIZE_MIN`) fails the
-same state, and `finish`'s refill gate stops on either after the branch has
-verified. This happened to WC-4, L-25, GD-2b, COL-8 and AR-5 (twice, on
-21 Oct). Each cost a queue-steward dispatch or one of Dave's turns.
-
-**Target.**
-1. `finish` deletes the item and runs the top-up as now.
-2. If the lane is then empty, or the queue is under the floor, or the
-   successor is gated, `finish` still merges and prints
-   `lane dry: <lane> -- refill before the next start`. `check_docs` warns
-   on the same state rather than failing. `start` already refuses an
-   empty lane, and `/run-queue` already sends the steward to refill it.
-3. The successor rule is unchanged: `Next after:` still names a slice or
-   says the plan is complete.
-4. `.claude/rules/documentation.md` and the `QUEUE_SIZE_MIN` comment record
-   this decision in place of D-2's closeout clause. The 5 Oct
-   "specify the successor before claiming" rule stays.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] L-32 -- a verified slice merges even when it leaves its lane dry**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-32 -- a verified slice merges even when it leaves its lane dry"
-- Files: `tools/slice.ps1`, `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_two_lane_closeout.py`, `.claude/rules/documentation.md`
-- Check: a `tests/test_two_lane_closeout.py` fixture closes a lane's last item while its successor is gated; `finish` merges, prints `lane dry`, and the next `start` refuses; `check_docs` warns rather than fails on the dry lane; `.\tools\verify.ps1` is green
-- Proof: `present: tools/refill_lane.py :: one that drops below the three-item floor, or that loses a lane entirely`
-- Next after: L-33
-```
+L-32 shipped 2026-10-22; its specification is `plans/archive/L-32_2026-10-22.md`.
 
 ## L-33 -- one admission check shared by check_docs, start and closeout
 

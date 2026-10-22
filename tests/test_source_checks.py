@@ -558,24 +558,27 @@ class RefillLaneTest(unittest.TestCase):
         check_docs.check_queue_proofs(errors, text=text)
         self.assertEqual([], errors)
 
-    def test_refuses_to_drop_the_queue_below_the_floor(self):
+    def test_dropping_the_queue_below_the_floor_is_written_and_reported_dry(self):
+        """L-32 (Dave, 22 Oct 2026): the floor governs admission only, so
+        the deletion is written and the run says the lane is dry."""
         self.assertEqual(0, self.run_tool("A-3").returncode)
         self.assertEqual(0, self.run_tool("A-2").returncode)
-        before = (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8")
 
         result = self.run_tool("B-2")
 
-        self.assertNotEqual(0, result.returncode)
-        self.assertIn("at least 3", result.stderr)
-        self.assertEqual(before, (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8"))
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("lane dry", result.stdout)
+        self.assertIn("under the floor of 3", result.stdout)
+        self.assertNotIn("B-2", (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8"))
 
-    def test_refuses_to_empty_a_lane(self):
+    def test_emptying_a_lane_is_written_and_reported_dry(self):
         self.assertEqual(0, self.run_tool("B-2").returncode)
 
         result = self.run_tool("B-1")
 
-        self.assertNotEqual(0, result.returncode)
-        self.assertIn("no [Codex] item", result.stderr)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("lane dry: Codex -- no [Codex] item", result.stdout)
+        self.assertNotIn("[Codex]", (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8"))
 
     def test_unknown_id_is_an_error(self):
         result = self.run_tool("Z-9")

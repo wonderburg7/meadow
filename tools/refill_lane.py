@@ -24,7 +24,12 @@ already queued or deferred.
 
 Before writing, every mode runs tools/check_docs.py's queue checks over the
 result and refuses to write a queue that would fail verification -- for example
-one that drops below the three-item floor, or that loses a lane entirely.
+one whose lanes would share a file, or whose item has lost its `Proof:`. A
+queue under the three-item floor, or a lane left with no item, is written
+(L-32, Dave, 22 Oct 2026: the floor governs admission only, and a verified
+slice merges even when it leaves its lane dry); the run then prints each
+`lane dry` warning check_docs gives, so the refill happens before the next
+`start` rather than inside `finish`.
 
 `## Not in the queue, and why` is left alone with one exception: a bullet
 whose only reason is that this lane is full ("startable, but the Claude lane
@@ -246,6 +251,15 @@ def lane_files(text: str, lane: str) -> set[str]:
     return paths
 
 
+def dry_lane_warnings(candidate: str, root: Path) -> list[str]:
+    """check_docs's `lane dry` warnings for `candidate` (L-32): a queue under
+    the floor, or a lane with no item. Written anyway; said out loud."""
+    check_docs.ROOT = root
+    warnings: list[str] = []
+    check_docs.check_next_steps([], warnings, text=candidate)
+    return [warning for warning in warnings if "lane dry" in warning]
+
+
 def queue_errors(candidate: str, root: Path) -> list[str]:
     """What tools/check_docs.py's queue checks would say about `candidate`."""
     check_docs.ROOT = root
@@ -453,7 +467,7 @@ def dry_after_report(text: str, lane: str, slice_id: str, root: Path,
     lane's and the queue's size afterwards, the ids the top-up would add and
     the gated ids still waiting. `dry_after` is true when closing would empty
     the lane or take the whole queue under the floor and the top-up adds
-    nothing: the case `finish`'s refill gate refuses."""
+    nothing: the case `finish` merges and reports as `lane dry` (L-32)."""
     after = delete_item(text, slice_id)
     before_ids = {i for _, i in queued_ids(after)}
     refilled = top_up(after, lane, root, [], entries, [], closed={slice_id})
@@ -702,6 +716,8 @@ def refill(args: argparse.Namespace, root: Path) -> int:
         queue_path.write_text(candidate, encoding="utf-8")
     for line in log:
         print(line)
+    for warning in dry_lane_warnings(candidate, root):
+        print(f"warning: {warning}")
     if args.dry_run:
         print("dry run: NEXTSTEPS.md was not written")
     elif candidate == original:

@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] L-32 -- a verified slice merges even when it leaves its lane dry**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-32 -- a verified slice merges even when it leaves its lane dry"
-   - Files: `tools/slice.ps1`, `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_two_lane_closeout.py`, `.claude/rules/documentation.md`
-   - Check: a `tests/test_two_lane_closeout.py` fixture closes a lane's last item while its successor is gated; `finish` merges, prints `lane dry`, and the next `start` refuses; `check_docs` warns rather than fails on the dry lane; `.\tools\verify.ps1` is green
-   - Proof: `present: tools/refill_lane.py :: one that drops below the three-item floor, or that loses a lane entirely`
-   - Next after: L-33
-
-2. **[Claude] L-33 -- one admission check shared by check_docs, start and closeout**
+1. **[Claude] L-33 -- one admission check shared by check_docs, start and closeout**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-33 -- one admission check shared by check_docs, start and closeout"
    - Files: `tools/admission.py`, `tests/test_admission.py`, `tools/check_docs.py`, `tools/slice.ps1`, `plans/reference/queue-steward.md`
    - Check: `python -m unittest tests.test_admission` passes on fixtures with a landed dependency, a file in the other lane, an open decision and an archived plan reference, each reported with its reason; `--clear-landed` removes the landed id from a fixture queue; `.\tools\verify.ps1` is green
    - Proof: `absent: tools/slice.ps1 :: admission.py`
    - Next after: L-34
 
-3. **[Claude] L-35 -- known baseline failures and stop causes are named, not rediagnosed**
+2. **[Claude] L-35 -- known baseline failures and stop causes are named, not rediagnosed**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-35 -- known baseline failures and stop causes are named, not rediagnosed"
    - Files: `tools/verify.ps1`, `tools/slice.ps1`, `tools/stop_causes.py`, `tests/test_stop_causes.py`, `tests/baseline_failures.json`, `tools/check_docs.py`
    - Check: `python -m unittest tests.test_stop_causes` passes, classifying sample logs for each category (including `Receive-Job: Access is denied`, a refused push and an import-cache boot failure); a listed baseline failure leaves its stage green with a `baseline` note, and an expired entry fails `check_docs`; `.\tools\verify.ps1` is green
    - Proof: `absent: tools/verify.ps1 :: baseline_failures`
    - Next after: L-36
 
-4. **[Claude] L-36 -- clean checkouts pass the doc checks; stray worktrees are reported**
+3. **[Claude] L-36 -- clean checkouts pass the doc checks; stray worktrees are reported**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-36 -- clean checkouts pass the doc checks; stray worktrees are reported"
    - Files: `tools/check_docs.py`, `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
    - Check: in a fresh worktree without `.claude/settings.local.json`, `python tools/check_docs.py` passes; `tests/test_slice_lifecycle.py` covers `doctor` listing an unregistered `.worktrees/*` folder and sweeping a pending deletion; `.\tools\verify.ps1` is green
    - Proof: `absent: tools/check_docs.py :: check-ignore`
    - Next after: none -- the L-31 to L-36 set is complete
 
-5. **[Claude] CQ-L2 -- every tool that reads GDScript as text survives gdformat**
+4. **[Claude] CQ-L2 -- every tool that reads GDScript as text survives gdformat**
    - Plan: `plans/now/code-health.md` -- "CQ-L2 -- every tool that reads GDScript as text survives gdformat"
    - Files: `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, `tests/test_gdformat_survival.py`
    - Check: `python -m unittest tests.test_gdformat_survival` passes: each of the four tools gives the same result on a gdformat-ed copy of every tracked `.gd` as on the original; `python tests/source_checks.py` still passes
    - Proof: `absent: tests/source_checks.py :: gdformat`
    - Next after: CQ-L3
+
+5. **[Claude] CQ-S0b -- a restored forager takes no fresh orientation flight**
+   - Plan: `plans/now/code-health.md` -- "CQ-S0b -- a restored forager takes no fresh orientation flight"
+   - Files: `scripts/bee.gd`, `scripts/saving.gd`, `tests/save_roundtrip_test.gd`, `FUNCTION_MAP.md`
+   - Check: `python -m unittest tests.test_save_roundtrip` passes with `KNOWN_DIFFERENCES` empty: both `orientation` routes print `CQS0 OK`, none KNOWN or STALE, and the new in-place case finds the Move-to-point forager heading for her saved start point; `tests/test_save_migrations.py` passes; `.\tools\verify.ps1` is green
+   - Proof: `present: tests/save_roundtrip_test.gd :: const ORIENTATION_GAINS_START`
+   - Next after: CQ-S1 -- Flower owns its save fields (gated on the alpha chain's save slices)
 
 ### Codex lane
 
