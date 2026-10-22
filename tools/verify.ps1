@@ -308,6 +308,65 @@ function Write-StageResult {
     }
 }
 
+# L-31: meadow-verify-status.json in the git common dir says what this run is
+# doing, so a fresh session can tell a slow verify from a dead one
+# (`tools/slice.ps1 status`) and `slice.ps1 stop-verify` stops only the PIDs
+# listed here. Written per stage and every 30 s from the job-polling loop,
+# marked finished on exit; never per frame, never read by verify itself. A
+# failure to write it is swallowed: it is a record, not a gate.
+$script:VerifyStatus = [ordered]@{
+    scope = $Scope; root = ""; pid = $PID; stage = "starting"; pids = @()
+    started = (Get-Date).ToString("o"); last_output = (Get-Date).ToString("o")
+    updated = ""; finished = $false
+}
+$script:VerifyStatusPath = ""
+
+function Get-VerifyDescendantPids {
+    # Every process below this one (job hosts, Python, Godot), best effort.
+    try {
+        $all = @(Get-CimInstance Win32_Process -Property ProcessId, ParentProcessId -ErrorAction Stop)
+    }
+    catch { return @() }
+    $found = New-Object System.Collections.Generic.List[int]
+    $level = @([int]$PID)
+    while ($level.Count -gt 0) {
+        $next = @()
+        foreach ($parent in $level) {
+            foreach ($child in @($all | Where-Object { [int]$_.ParentProcessId -eq $parent })) {
+                $childId = [int]$child.ProcessId
+                if (-not $found.Contains($childId) -and $childId -ne [int]$PID) {
+                    $found.Add($childId)
+                    $next += $childId
+                }
+            }
+        }
+        $level = $next
+    }
+    return $found.ToArray()
+}
+
+function Write-VerifyStatus {
+    param([string]$Stage, [switch]$Output, [switch]$Finished)
+    try {
+        if (-not $script:VerifyStatusPath) {
+            $commonDir = (& git -C $PSScriptRoot rev-parse --path-format=absolute --git-common-dir 2>$null | Out-String).Trim()
+            if (-not $commonDir) { return }
+            $script:VerifyStatusPath = Join-Path $commonDir "meadow-verify-status.json"
+            $script:VerifyStatus.root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..")).TrimEnd('\', '/')
+        }
+        $state = $script:VerifyStatus
+        if ($Stage) { $state.stage = $Stage }
+        $now = Get-Date
+        if ($Output -or $Stage) { $state.last_output = $now.ToString("o") }
+        $state.updated = $now.ToString("o")
+        $state.finished = [bool]$Finished
+        $state.pids = @(Get-VerifyDescendantPids)
+        $json = $state | ConvertTo-Json -Compress
+        Set-Content -LiteralPath $script:VerifyStatusPath -Value $json -NoNewline
+    }
+    catch { }
+}
+
 # Runs one Python check and reports it. Under -Quiet the output is captured so
 # a passing stage collapses to a single line; otherwise it streams as before.
 # Sets $script:lastStageExit to the stage's exit code.
@@ -321,6 +380,7 @@ function Invoke-PythonStage {
         [switch]$RegenerateNote
     )
 
+    Write-VerifyStatus -Stage $Name
     $captured = @()
     $stageTimer = [System.Diagnostics.Stopwatch]::StartNew()
     if ($Quiet) {
@@ -336,6 +396,7 @@ function Invoke-PythonStage {
     }
 
     $stageTimer.Stop()
+    Write-VerifyStatus -Stage $Name -Output
     # An exit code can name a different cause than the stage's usual one.
     if ($ExitNotes.ContainsKey([int]$exit)) {
         $FailureNote = $ExitNotes[[int]$exit]
@@ -375,6 +436,7 @@ $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $runBranchScope = $Scope -in @("branch", "all")
 $runPrimaryScope = $Scope -in @("primary", "all")
 
+try {
 if ($runBranchScope -and -not $Docs) {
     # The Python suites cannot see a GDScript parse error. One headless boot
     # can: on 12 Sep 2026 a call to a Rect2 method that does not exist in
@@ -449,7 +511,15 @@ if ($runBranchScope -and -not $Docs) {
         }
     }
 
-    Wait-Job -Job $jobs | Out-Null
+    Write-VerifyStatus -Stage "parallel suites ($(@($jobs | ForEach-Object { $_.Name }) -join ', '))"
+    $outputSeen = -1
+    while (@($jobs | Where-Object { $_.State -in @("Running", "NotStarted") }).Count -gt 0) {
+        Wait-Job -Job $jobs -Timeout 30 | Out-Null
+        $seen = 0
+        foreach ($job in $jobs) { foreach ($child in @($job.ChildJobs)) { $seen += $child.Output.Count + $child.Error.Count } }
+        if ($seen -ne $outputSeen) { Write-VerifyStatus -Output } else { Write-VerifyStatus }
+        $outputSeen = $seen
+    }
     $failed = $false
     foreach ($job in $jobs) {
         # A job records its own start and end, so the parallel stages -- the
@@ -537,3 +607,7 @@ if ($runPrimaryScope) {
 }
 
 exit 0
+}
+finally {
+    Write-VerifyStatus -Finished
+}

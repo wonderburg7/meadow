@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0, Mandatory = $true)]
-    [ValidateSet("start", "finish", "doctor", "status", "resume", "abort", "owner")]
+    [ValidateSet("start", "finish", "doctor", "status", "resume", "abort", "owner", "stop-verify")]
     [string]$Command,
 
     [ValidateSet("Claude", "Codex")]
@@ -1409,6 +1409,22 @@ function Invoke-SliceStart {
     Sync-PrimaryMaster -Root (Get-PrimaryRoot) -Reason "start"
     Set-SliceStep ""
 
+    # L-31: this lane's own worktree is open with the branch ahead -- a
+    # resumed session, not a new claim. Print its status line and stop clean.
+    if ($Lane) {
+        $openRoot = Get-PrimaryRoot
+        $openRow = Get-LedgerLaneRows -Root $openRoot | Where-Object { $_.Lane -eq $Lane } | Select-Object -First 1
+        if ($openRow) {
+            $openTarget = Get-SliceTarget -Root $openRoot -Lane $Lane
+            $openAhead = git -C $openRoot rev-list --count "master..refs/heads/$($openTarget.Branch)" 2>$null
+            if ($LASTEXITCODE -eq 0 -and "$openAhead".Trim() -match '^\d+$' -and [int]"$openAhead".Trim() -gt 0 -and (Test-Path -LiteralPath $openTarget.WorktreePath)) {
+                $openLine = Get-SliceStateLine -Root $openRoot -Lane $Lane -Branch $openTarget.Branch -WorktreeRelative $openTarget.WorktreeRelative
+                Write-Output "$($openTarget.Id) is already open ($($openTarget.WorktreeRelative)): $($openLine.state). Next: $($openLine.next)"
+                exit 0
+            }
+        }
+    }
+
     try {
         $preflight = Get-SlicePreflight -Lane $Lane
     }
@@ -1826,6 +1842,101 @@ function Invoke-SliceOwner {
     if ($owners) { exit 1 }
 }
 
+# --- status line (L-31) ---
+
+function Get-VerifyStatus {
+    # The record tools/verify.ps1 keeps while it runs, or $null.
+    param([string]$Root)
+    $path = Get-LifecycleFilePath -Root $Root -Name "meadow-verify-status.json"
+    if (-not (Test-Path -LiteralPath $path)) { return $null }
+    try { return (Get-Content -Raw -LiteralPath $path | ConvertFrom-Json) } catch { return $null }
+}
+
+function Test-VerifyPidAlive {
+    param([object]$Status)
+    $process = Get-Process -Id ([int]$Status.pid) -ErrorAction SilentlyContinue
+    if (-not $process) { return $false }
+    # A PID reused after the record was last written is not the verify.
+    try { if ($process.StartTime -gt ([datetime]$Status.updated).AddSeconds(5)) { return $false } } catch { }
+    return $true
+}
+
+function Get-SliceStateLine {
+    # One state and the one next command for a slice. Reads Git, the verify
+    # status file and the closing journal; never runs anything.
+    param([string]$Root, [string]$Lane, [string]$Branch, [string]$WorktreeRelative)
+    $worktreePath = Join-Path $Root $WorktreeRelative
+    $finishCmd = "cd $WorktreeRelative; tools/slice.ps1 finish"
+    $verify = Get-VerifyStatus -Root $Root
+    $sameTree = $false
+    if ($verify -and -not $verify.finished) {
+        $sameTree = (-not $verify.root) -or ([string]$verify.root).TrimEnd('\', '/') -eq ([string]$worktreePath).TrimEnd('\', '/') -or ([string]$verify.root).Replace('\', '/').TrimEnd('/') -eq ([string]$worktreePath).Replace('\', '/').TrimEnd('/')
+    }
+    if ($sameTree) {
+        if (Test-VerifyPidAlive -Status $verify) {
+            $elapsed = [int]((Get-Date) - [datetime]$verify.started).TotalSeconds
+            $quiet = [int]((Get-Date) - [datetime]$verify.last_output).TotalSeconds
+            return [PSCustomObject]@{
+                state = "verifying ($($verify.stage), ${elapsed}s, last output ${quiet}s ago)"
+                next  = "wait for it (PowerShell: Wait-Process -Id $($verify.pid)); its Python and Godot children are its tests, not orphans"
+            }
+        }
+        return [PSCustomObject]@{
+            state = "verify orphaned (PID gone, no result)"
+            next  = "tools/slice.ps1 stop-verify, then $finishCmd"
+        }
+    }
+    $journal = Get-ClosingJournal -Root $Root -Branch $Branch
+    if ($journal) {
+        return [PSCustomObject]@{ state = "closing at $($journal.phase)"; next = "$finishCmd (resumes from there)" }
+    }
+    $ahead = 0
+    $count = git -C $Root rev-list --count "master..refs/heads/$Branch" 2>$null
+    if ($LASTEXITCODE -eq 0 -and "$count".Trim() -match '^\d+$') { $ahead = [int]"$count".Trim() }
+    $dirty = $true
+    if (Test-Path -LiteralPath $worktreePath) {
+        $porcelain = Invoke-GitText -C $worktreePath status --porcelain
+        $dirty = ($porcelain.ExitCode -ne 0) -or (@(Split-GitText $porcelain.Text | Where-Object { $_.Trim() }).Count -gt 0)
+    }
+    if ($ahead -gt 0 -and -not $dirty) {
+        return [PSCustomObject]@{ state = "ready-to-finish"; next = "python tools/prefinish.py, then $finishCmd" }
+    }
+    return [PSCustomObject]@{ state = "implementing"; next = "commit the work in $WorktreeRelative, then python tools/prefinish.py and $finishCmd" }
+}
+
+function Get-LaneIdleLine {
+    # No open worktree for the lane: dry when it has no unclaimed item.
+    param([string]$Root, [string]$Lane)
+    $unclaimed = $null
+    try { $unclaimed = Get-NextUpItems -Root $Root | Where-Object { $_.Lane -eq $Lane } | Select-Object -First 1 } catch { $unclaimed = $null }
+    if ($unclaimed) {
+        return [PSCustomObject]@{ state = "idle"; next = "tools/slice.ps1 start -Lane $Lane" }
+    }
+    return [PSCustomObject]@{ state = "lane dry"; next = "refill the $Lane lane's queue (plans/reference/closeout.md); nothing to start" }
+}
+
+function Invoke-SliceStopVerify {
+    # Stops only the PIDs tools/verify.ps1 listed in its status file.
+    param([string]$Root)
+    $verify = Get-VerifyStatus -Root $Root
+    if (-not $verify -or $verify.finished) {
+        Write-Output "stop-verify: no verify is recorded as running; nothing stopped"
+        return
+    }
+    $stopped = @()
+    $ids = @(@($verify.pids) + @([int]$verify.pid)) | Where-Object { $_ } | ForEach-Object { [int]$_ } | Select-Object -Unique
+    foreach ($id in $ids) {
+        $process = Get-Process -Id $id -ErrorAction SilentlyContinue
+        if (-not $process) { continue }
+        try { if ($process.StartTime -gt ([datetime]$verify.updated).AddSeconds(5)) { continue } } catch { }
+        try { Stop-Process -Id $id -Force -ErrorAction Stop; $stopped += $id } catch { }
+    }
+    $path = Get-LifecycleFilePath -Root $Root -Name "meadow-verify-status.json"
+    $verify.finished = $true
+    ($verify | ConvertTo-Json -Compress) | Set-Content -LiteralPath $path -NoNewline
+    Write-Output "stop-verify: stopped PID(s) $(if ($stopped) { $stopped -join ', ' } else { 'none (already gone)' }) listed by the verify status file"
+}
+
 function Invoke-SliceStatus {
     param([string]$Lane)
     $root = Get-PrimaryRoot
@@ -1848,9 +1959,14 @@ function Invoke-SliceStatus {
         $verifier = $null
         if ($phase -eq "working") { $verifier = Get-LifecycleHolder -LockPath (Get-BranchVerifyFilePath -WorktreeRoot (Join-Path $root $worktreeRelative) -Name "meadow-slice-verify.lock") }
         if ($verifier) { $phase = "finish verifying the branch (outside the lifecycle lock): wait for PID $($verifier.pid) (PowerShell: Wait-Process -Id $($verifier.pid)); its Godot and Python children are that run's tests, not orphans" }
-        [PSCustomObject]@{ id=$id; lane=$row.Lane; branch=$branch; worktree=$worktreeRelative; state=$phase; verifying=$verifier }
+        $line = $null
+        if ($phase -eq "working" -or $phase -like "finish verifying*") { $line = Get-SliceStateLine -Root $root -Lane $row.Lane -Branch $branch -WorktreeRelative $worktreeRelative }
+        [PSCustomObject]@{ id=$id; lane=$row.Lane; branch=$branch; worktree=$worktreeRelative; state=$phase; verifying=$verifier; status=$(if ($line) { $line.state } else { $phase }); next=$(if ($line) { $line.next } else { "" }) }
     }
-    if (-not $states) { $states = @([PSCustomObject]@{ state="idle" }) }
+    if (-not $states) {
+        $idle = if ($Lane) { Get-LaneIdleLine -Root $root -Lane $Lane } else { [PSCustomObject]@{ state = "idle"; next = "" } }
+        $states = @([PSCustomObject]@{ state="idle"; status=$idle.state; next=$idle.next })
+    }
     # `running` is the lifecycle command holding the lock now; `last_run` is
     # how the most recent one ended. Together they answer "did my finish
     # land?" for a caller whose shell returned before finish did.
@@ -2684,6 +2800,7 @@ switch ($Command) {
     "resume" { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Invoke-WithLifecycleLock -Root $root { Invoke-SliceResume -Lane $Lane -PythonPath $PythonPath } }
     "abort"  { $root = Get-PrimaryRoot; Invoke-WithLifecycleLock -Root $root { Invoke-SliceAbort -Lane $Lane } }
     "owner"  { Invoke-SliceOwner -Wanted $Path }
+    "stop-verify" { Invoke-SliceStopVerify -Root (Get-PrimaryRoot) }
 }
 }
 catch {
