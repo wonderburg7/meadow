@@ -47,11 +47,14 @@ from the art in front-over-back order. What the open slices build on:
 
 - Every ring on a cell goes through `hive_cell.gd::_apply_outline_points`;
   with Cell art on it walks `EMPTY_RIM`, the cup's top face (SP-11).
-- The forager sheet (13 Oct 2026) is `bees/foragers_meadow_view.png`,
-  48x104, 8 rows x 4 wing frames, row order as in Decisions item 4. Its
-  columns sit on a 12-px pitch; its rows do not (they start at
-  y 1/14/28/41/52/65/78/91). The exporter takes a grid only from an
-  `.aseprite` layer named `sheet`, so it stays `unexported`.
+- The forager sheet (22 Oct 2026) is `bees/foragers_meadow_view.png`,
+  96x128: 8 rows x 6 wing frames on a 16x16 grid, row order as in
+  Decisions item 4. The exporter cuts it as a plain `.png` grid into
+  `foragers_meadow_view_sheet.png`, and `sprite_catalogue.gd` names its
+  frames `<row>.<n>` (`left.0` ... `up.5`). Frames bob up and down within
+  their cells, and the `up` row's sting reaches the cell's bottom edge, so
+  the exporter now refuses only art that runs across a grid line, not art
+  that touches one.
 - Meadow bees are still stacks of `Polygon2D` circles under `visual_root`
   (`bee.gd`, "the visual nodes").
 - SP-4 found the nectar cell art's liquid is dark green (72, 121, 8), not the
@@ -62,11 +65,14 @@ from the art in front-over-back order. What the open slices build on:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, the sprite table and catalogue, tests | no -- waits for the sheet on a 16x16 `sheet` grid | high (per-bee hot path) |
+| SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, tests | no -- waits for CQ-L1 to release `scripts/bee.gd` | high (per-bee hot path) |
 
 **Dependencies.** RR-11 (`plans/now/run-repairs.md`) waits for SP-11 to
-release `scripts/hive_cell.gd`. SP-6 follows SP-8a
-(`plans/now/meadow-terrain.md`) in the lane, since both edit `scripts/bee.gd`.
+release `scripts/hive_cell.gd`. SP-6 waits only for CQ-L1
+(`plans/now/code-health.md`), which holds `scripts/bee.gd`; it no longer
+follows SP-8a (`plans/now/meadow-terrain.md`), though both edit
+`scripts/bee.gd`, so whichever is queued first runs first (Dave,
+22 Oct 2026).
 
 SP-1, SP-2, SP-4, SP-5, SP-7 (ad-hoc, on Dave's request), SP-9 and SP-10
 shipped 9-15 Oct 2026; each has its record in `plans/archive/`, named by id
@@ -76,25 +82,36 @@ SP-11 shipped 2026-10-15; its specification is `plans/archive/SP-11_2026-10-15.m
 
 ## SP-6 -- meadow foragers drawn from the sheet
 
-**Gate:** Dave's sheet on a 16x16 grid, in an `.aseprite` with one layer
-named `sheet`. `bees/foragers_meadow_view.png` (13 Oct 2026) has the
-frames on a 12-px column pitch with irregular rows, as a plain `.png`,
-which the exporter can only take as `single`. The slice renames its
-sprite-table row's file to the `.aseprite` and sets `grid 16x16 rows=...`.
+**Gate:** CQ-L1 releasing `scripts/bee.gd`. The sheet gate cleared on
+22 Oct 2026: Dave's sheet is committed on a 16x16 grid and exported, with
+its sprite-table row and catalogue entry (`FORAGERS_MEADOW_VIEW_*`).
 
 **True afterwards.**
 
 - An outdoor worker draws as one sprite.
 - Row: direction from `heading`, eight ways. Octant
   `k = round(angle / 45) mod 8` gives E, SE, S, SW, W, NW, N, NE, mapped
-  to rows by name from the sprite table.
-- Wing frame: a shared 4-frame clock offset by `wander_phase`.
+  to rows by name from the catalogue's frame names (`right`, `down_right`,
+  `down`, `down_left`, `left`, `up_left`, `up`, `up_right`).
+- Wing frame: a shared 6-frame clock offset by `wander_phase`. The frames
+  bob the body as well as the wings, so the clock reads as flight.
 - Body and outline circles are hidden outdoors. The load dot stays at
   about 2 art px. Selection, alarm and attack rings are unchanged.
 - Indoors, drones, gynes and queens keep circles until their art exists.
 - Runtime: the frame is computed in the existing display update and
   assigned only when it changes. Profile before and after (rule 3); one
   sprite replaces three or four polygons per bee.
+- Hands-on (Dave): foragers in the meadow face the way they fly in all
+  eight directions and flap without flicker at every zoom.
+
+```queue-gated
+**[Claude] SP-6 -- meadow foragers drawn from the sheet**
+- Plan: `plans/now/sprites.md` -- "SP-6 -- meadow foragers drawn from the sheet"
+- Files: `scripts/bee.gd`, `tests/sp6_forager_sprite_test.gd`, `tests/test_sp6_forager_sprite.py`, `FUNCTION_MAP.md`
+- Check: `python -m unittest tests.test_sp6_forager_sprite` passes: an outdoor worker heading into each of the eight octants shows that direction's row, its frame advances with the wing clock, and its body circles are hidden outdoors and shown indoors; a before/after profile of the display update is recorded in the plan; `.	oolserify.ps1` is green
+- Proof: `absent: scripts/bee.gd :: FORAGERS_MEADOW_VIEW`
+- Next after: None -- plan complete
+```
 
 ## Read on demand
 
