@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/L-32` (`claude/L-32`) | Claude | a verified slice merges even when it leaves its lane dry | Claude | in progress | none | `plans/now/agent-lifecycle.md` L-32 -- a verified slice merges even when it leaves its lane dry |
