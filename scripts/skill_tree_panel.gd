@@ -374,7 +374,6 @@ func _label(text: String, variation: String) -> Label:
 class SkillGrid:
 	extends Control
 
-	const Shapes = preload("res://scripts/shapes.gd")
 	const UiTheme = preload("res://scripts/ui_theme.gd")
 
 	const MAX_ZOOM := 1.5

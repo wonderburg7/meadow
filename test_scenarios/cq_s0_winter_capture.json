@@ -1,0 +1,19 @@
+{
+  "cells": 8, "nectar_foragers": 6, "pollen_foragers": 2,
+  "nurses": 2, "builders": 1, "miners": 0, "honey_makers": 0,
+  "weather": false, "winter": true,
+  "random_seed": 5303,
+  "config_overrides": {
+    "seconds_per_day": 20.0,
+    "season_length_days": 3.0,
+    "winter_countdown_days": 1.0,
+    "winter_length_days": 10.0,
+    "disease_on": false
+  },
+  "actions": [
+    {"do": "set_cell_contents", "cell": {"built_index": 0}, "resource": "nectar", "amount": 60.0},
+    {"do": "wait", "seconds": 110},
+    {"do": "save_run", "name": "CQ-S0 winter"}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 20}
+}

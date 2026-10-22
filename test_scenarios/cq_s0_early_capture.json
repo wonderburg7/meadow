@@ -1,0 +1,16 @@
+{
+  "run_type": "colony",
+  "cells": 0, "nectar_foragers": 0, "pollen_foragers": 0,
+  "nurses": 0, "builders": 0, "miners": 0, "honey_makers": 0,
+  "winter": true,
+  "weather": true,
+  "skill_grants": [], "skill_bans": [], "skill_delays": {},
+  "seed_set": true,
+  "queen_laying_backup": "nurse",
+  "random_seed": 5101,
+  "actions": [
+    {"do": "wait", "seconds": 300},
+    {"do": "save_run", "name": "CQ-S0 early"}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 4}
+}

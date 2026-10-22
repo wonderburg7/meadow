@@ -177,3 +177,14 @@ const SOIL_BLOCK_HALF_VFRAMES := 1
 const SOIL_BLOCK_HALF_FRAMES: Array[String] = ["frame"]
 const SOIL_BLOCK_HALF_ANCHOR := Vector2(16.0, 16.0)
 const SOIL_BLOCK_HALF_VIEW := "meadow"
+
+# foragers_meadow_view: meadow forager, one row per direction, six wing frames each (Dave, 22 Oct 2026)
+const FORAGERS_MEADOW_VIEW_SHEET := preload("res://assets/sprites/bees/foragers_meadow_view_sheet.png")
+const FORAGERS_MEADOW_VIEW_FRAME_SIZE := Vector2i(16, 16)
+const FORAGERS_MEADOW_VIEW_CELL_GUTTER := 1
+const FORAGERS_MEADOW_VIEW_CELL_SIZE := Vector2i(18, 18)
+const FORAGERS_MEADOW_VIEW_HFRAMES := 6
+const FORAGERS_MEADOW_VIEW_VFRAMES := 8
+const FORAGERS_MEADOW_VIEW_FRAMES: Array[String] = ["left.0", "left.1", "left.2", "left.3", "left.4", "left.5", "right.0", "right.1", "right.2", "right.3", "right.4", "right.5", "down_left.0", "down_left.1", "down_left.2", "down_left.3", "down_left.4", "down_left.5", "down_right.0", "down_right.1", "down_right.2", "down_right.3", "down_right.4", "down_right.5", "up_right.0", "up_right.1", "up_right.2", "up_right.3", "up_right.4", "up_right.5", "up_left.0", "up_left.1", "up_left.2", "up_left.3", "up_left.4", "up_left.5", "down.0", "down.1", "down.2", "down.3", "down.4", "down.5", "up.0", "up.1", "up.2", "up.3", "up.4", "up.5"]
+const FORAGERS_MEADOW_VIEW_ANCHOR := Vector2(8.0, 8.0)
+const FORAGERS_MEADOW_VIEW_VIEW := "meadow"

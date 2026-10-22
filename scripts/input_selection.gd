@@ -76,6 +76,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif main.dragging:
 			main.drag_current = main.get_global_mouse_position()
 
+# CQ-R10 shortens this function; until then the early returns stay.
 func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 	if not main.dragging:
 		return
@@ -161,7 +162,7 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 					boxed_markers.append(m)
 			if not boxed_markers.is_empty():
 				_select_world_object("death", boxed_markers[0])
-				return
+				return  # gdlint: ignore=max-returns
 
 	_clear_world_object_selection()
 

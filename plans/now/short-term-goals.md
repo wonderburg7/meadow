@@ -1,7 +1,7 @@
 # Short-term goals -- optional outcomes the colony's state suggests
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: SG-2 -- goals offered, met and paid in Colony Runs and Scenarios, and saved (Claude lane, gated), then SG-3 | Dependency: SG-2 waits for WP-3 (`plans/archive/work-priorities_2026-10-22.md`) in Dave's order (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`, released the save files 17 Oct 2026); SG-3 waits for SG-2 (GP-2 landed 13 Oct 2026) | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude Code | Next: SG-2 -- goals offered, met and paid in Colony Runs and Scenarios, and saved (Claude backlog), then SG-3 | Dependency: SG-2's gate cleared when WP-3 (`plans/archive/work-priorities_2026-10-22.md`) landed 22 Oct 2026, in Dave's order (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`, released the save files 17 Oct 2026); SG-3 waits for SG-2 (GP-2 landed 13 Oct 2026) | Verified: 2026-10-22
 
 ## Objective
 
@@ -80,7 +80,7 @@ Verified 13 Oct 2026 against master `06bd26c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SG-2 | Goals offered, completed and paid in Colony Runs and Scenarios, and saved | `scripts/short_term_goals.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/conditions.gd`, `scripts/hive.gd`, `scripts/bee_honey.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/sg2_short_term_goals.json`, `tests/test_sg2_short_term_goals.py` | no -- after WP-3 (SG-1 landed 14 Oct 2026; FC-2 released the save files 17 Oct 2026) | high |
+| SG-2 | Goals offered, completed and paid in Colony Runs and Scenarios, and saved | `scripts/short_term_goals.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/conditions.gd`, `scripts/hive.gd`, `scripts/bee_honey.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/sg2_short_term_goals.json`, `tests/test_sg2_short_term_goals.py` | yes (WP-3 landed 22 Oct 2026; SG-1 landed 14 Oct 2026; FC-2 released the save files 17 Oct 2026) | high |
 | SG-3 | The goals in the Goals drop-down, with progress, reward, star and Dismiss | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/guidance_catalogue.gd`, `test_scenarios/sg3_goal_shelf.json`, `tests/test_sg3_goal_shelf.py` | no -- after SG-2 | medium |
 
 SG-1 supplies the standalone catalogue and rules. SG-2 and SG-3 are Claude lane, after Work
@@ -97,8 +97,10 @@ Challenge goal shelf's behaviour.
 
 ## Not in the queue, and why
 
-SG-2 is gated until WP-3 lands in Dave's order (FC-2 released the save
-files 17 Oct 2026). SG-3 waits for SG-2.
+SG-3 waits for SG-2 (WP-3 landed 22 Oct 2026, clearing SG-2's gate).
+CQ-S0b (`plans/now/code-health.md`) also edits `scripts/saving.gd`'s bee
+restore, and DR-1 (`plans/now/drones.md`) both save files; whichever is
+queued first runs first.
 
 SG-1 shipped 2026-10-14; its specification is `plans/archive/SG-1_2026-10-14.md`.
 
@@ -170,7 +172,7 @@ authority in `conditions.gd`; read it there, never recompute it.
   `short_term_goals.gd` is unchanged by this. `winter_coming` is
   `Session.winter_coming`.
 
-```queue-gated
+```queue
 **[Claude] SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved**
 - Plan: `plans/now/short-term-goals.md` -- "SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved"
 - Files: `scripts/short_term_goals.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/conditions.gd`, `scripts/hive.gd`, `scripts/bee_honey.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/sg2_short_term_goals.json`, `tests/test_sg2_short_term_goals.py`

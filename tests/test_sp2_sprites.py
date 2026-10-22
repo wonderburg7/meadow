@@ -150,16 +150,28 @@ class ExporterTests(RepoFixture):
         self.write_table(self.ROW)
         self.assertEqual(self.run_tool(), 0, self.out)
 
-    def test_grid_art_must_leave_the_cell_edge_clear(self):
-        sheet = [CLEAR] * 64  # 8x8 canvas, two 4x4 frames side by side
+    def test_grid_art_may_touch_a_cell_edge_but_not_cross_it(self):
+        sheet = [CLEAR] * 64  # 8x8 canvas, 2x2 frames of 4x4
         for x in range(4, 8):
             for y in range(4):
-                sheet[y * 8 + x] = RED
+                sheet[y * 8 + x] = RED  # fills frame a.1 to every edge
         layer = ("sheet", 0, 0, 8, 8, sheet)
         (self.sprites / "comb" / "thing.aseprite").write_bytes(ase_bytes(8, 8, [layer]))
         self.write_table("| thing | comb/thing.aseprite | x | meadow | grid 4x4 rows=a,b | 4 | - | - | - |")
+        self.assertEqual(self.run_tool(), 0, self.out)
+        sheet[4 * 8 + 5] = RED  # one pixel on into frame b.1, under a.1's art
+        (self.sprites / "comb" / "thing.aseprite").write_bytes(ase_bytes(8, 8, [layer[:5] + (sheet,)]))
         self.assertEqual(self.run_tool(), 1)
-        self.assertTrue(any("edge of its grid cell" in line for line in self.out), self.out)
+        self.assertTrue(any("runs across a grid line at pixel 5,4" in line for line in self.out), self.out)
+
+    def test_a_plain_png_can_be_a_grid(self):
+        img = sprites.Image.blank(8, 4)
+        img.pixels[(1 * 8 + 5) * 4:(1 * 8 + 5) * 4 + 4] = bytes(RED)
+        (self.sprites / "bees").mkdir(exist_ok=True)
+        (self.sprites / "bees" / "thing.png").write_bytes(sprites.encode_png(img))
+        self.write_table("| thing | bees/thing.png | x | meadow | grid 4x4 rows=a | 2 | - | - | - |")
+        self.assertEqual(self.run_tool(), 0, self.out)
+        self.assertTrue((self.sprites / "bees" / "thing_sheet.png").exists())
 
     def test_unexported_rows_build_nothing(self):
         (self.sprites / "comb" / "thing.aseprite").write_bytes(b"not parsed")

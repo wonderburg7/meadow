@@ -24,6 +24,8 @@ const OVERRIDES_PATH := "user://bs14_test_overrides.json"
 const SAVE_PATH := "user://bs14_test_save.json"
 
 var _main: Node = null
+# Loaded once at run time: a preload cannot see the autoloads at parse time.
+var _overrides: GDScript = null
 var _frame := 0
 var _phase := "boot"
 var _failures: PackedStringArray = PackedStringArray()
@@ -63,7 +65,8 @@ func _boot() -> void:
 func _run() -> void:
 	var session: Node = root.get_node("Session")
 	var main_script: GDScript = _main.get_script()
-	var overrides: GDScript = load("res://scripts/developer_overrides.gd")
+	_overrides = load("res://scripts/developer_overrides.gd")
+	var overrides: GDScript = _overrides
 	var save_game: GDScript = _main.SaveGame
 	overrides.reset(OVERRIDES_PATH)
 
@@ -154,7 +157,7 @@ func _saved_bans(data: Dictionary) -> Array:
 
 
 func _cleanup() -> void:
-	load("res://scripts/developer_overrides.gd").reset(OVERRIDES_PATH)
+	_overrides.reset(OVERRIDES_PATH)
 	if FileAccess.file_exists(SAVE_PATH):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
 

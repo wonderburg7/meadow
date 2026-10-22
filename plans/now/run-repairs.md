@@ -60,7 +60,7 @@ RR-8 shipped 2026-10-17; its specification is `plans/archive/RR-8_2026-10-17.md`
 
 RR-9 shipped 2026-10-17; its specification is `plans/archive/RR-9_2026-10-17.md`.
 
-**Code health (`plans/now/code-health.md`, 18 Oct 2026).** CQ-L1 (gdlint fixes in `hive.gd` and `skill_tree_panel.gd`) waits for RR-10 to release them. Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (RR-12); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
+**Code health (`plans/now/code-health.md`, 18 Oct 2026).** CQ-L1 (gdlint fixes in `hive.gd` and `skill_tree_panel.gd`) landed 22 Oct 2026. Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (RR-12); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
 
 RR-10 shipped 2026-10-18; its specification is `plans/archive/RR-10_2026-10-18.md`.
 
@@ -122,4 +122,4 @@ test shows `day_store_totals` changing a condition's result across a load
 
 ## Not in the queue, and why
 
-- **RR-12** -- a loaded run keeps its readout history; waits for ED-3, the last of the alpha chain, because WP-3 to ED-3 share `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.
+- **RR-12** -- a loaded run keeps its readout history; waits for ED-3, the last of the alpha chain, because SG-2 to ED-3 share `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.

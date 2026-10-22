@@ -1,0 +1,14 @@
+{
+  "cells": 6, "nectar_foragers": 3, "pollen_foragers": 1,
+  "nurses": 2, "builders": 0, "miners": 0, "honey_makers": 0,
+  "weather": false, "winter": false,
+  "random_seed": 5505,
+  "config_overrides": {"orientation_flight_on": true},
+  "actions": [
+    {"do": "wait", "seconds": 5},
+    {"do": "assign_role", "target": {"current_role": "nurse", "count": 1}, "role": "forager"},
+    {"do": "settle", "ticks": 2},
+    {"do": "save_run", "name": "CQ-S0 orientation"}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 2}
+}

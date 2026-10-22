@@ -24,8 +24,9 @@ Columns:
   caps, or stages such as a crumbling soil block), `single` (one image: the
   visible layers flattened, hidden ones left out), `tile` (a repeating tile,
   exported without a gutter),
-  `grid WxH rows=a,b,...` (a layer named `sheet` cut into WxH frames, one
-  named row each) or `unexported` (kept in the table, not built).
+  `grid WxH rows=a,b,...` (a layer named `sheet`, or a plain `.png`, cut
+  into WxH frames, one named row each; art may touch a frame's edge but not
+  run across it) or `unexported` (kept in the table, not built).
 - **Frames**: how many frames the file must give.
 - **Levels**: for `layers`, the upper bound in percent of each state layer
   above the base, rising, as `10/25/...`; `-` otherwise.
@@ -62,7 +63,7 @@ higher. How the terrain stacks them is `plans/now/meadow-terrain.md`, SP-8.
 | grass_block_half | meadow/grass_block_half.aseprite | half-height block with the grass top | meadow | single | 1 | - | 16,16 | - |
 | soil_block | meadow/soil_block.aseprite | full-height soil block under the top layer, breaking down: frames 1, 2, 4, 5 (5 whole) | meadow | frames | 4 | - | 16,9 | - |
 | soil_block_half | meadow/soil_block_half.aseprite | half-height soil block under the top layer | meadow | single | 1 | - | 16,16 | - |
-| foragers_meadow_view | bees/foragers_meadow_view.png | meadow forager, 8 directions x 4 wing frames; columns on a 12-px pitch, rows not yet on a grid (SP-6 waits for it on a 16x16 `sheet` layer) | meadow | unexported | 32 | - | - | - |
+| foragers_meadow_view | bees/foragers_meadow_view.png | meadow forager, one row per direction, six wing frames each (Dave, 22 Oct 2026) | meadow | grid 16x16 rows=left,right,down_left,down_right,up_right,up_left,down,up | 48 | - | - | - |
 | hive_meadow_view_large | meadow/hive_meadow_view_large.aseprite | your hive in the meadow, to replace hive_skep (HM-1; layer 0 has art outside the 54x41 canvas) | meadow | unexported | 1 | - | - | - |
 | hive_meadow_view_small | meadow/hive_meadow_view_small.aseprite | a rival colony's hive in the meadow, to replace the rival skep (HM-1) | meadow | unexported | 1 | - | - | - |
 | menu_icon_forager_window | menu/menu_icon_forager_window.aseprite | top-bar icon: the Foraging window (HM-2) | menu | unexported | 1 | - | - | - |

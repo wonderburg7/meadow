@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds (queued with CQ-S0, CQ-R7 and CQ-M3; CQ-M8 follows CQ-M3) | Dependency: CQ-M8 waits for CQ-L1, which holds `scripts/bee_foraging.gd`; CQ-T3 waits for CQ-R7, the last queued slice in `scripts/hud.gd`; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); the rest is in "Dependencies" | Verified: 2026-10-21
+Status: active | Owner: Dave / Claude Code | Next: CQ-L2 -- every tool that reads GDScript as text survives gdformat (CQ-L1 landed 22 Oct 2026; queued with CQ-R7 and CQ-M3; CQ-M8 follows CQ-M3; CQ-S0's round-trip harness landed 22 Oct 2026; CQ-S0b, its one known difference (a switched forager gains an orientation start point on reload), is in the Claude backlog by Dave's decision) | Dependency: CQ-M8 follows CQ-M3 (CQ-L1 landed 22 Oct 2026); CQ-T3 waits for CQ-R7, the last queued slice in `scripts/hud.gd`; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026) and DR-1 (`plans/now/drones.md`); the rest is in "Dependencies" | Verified: 2026-10-22
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -99,12 +99,11 @@ Recorded once here; a slice may restate one in a sentence and point back.
 
 | Slice | Outcome | Files it owns (block has the full list) | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CQ-L1 | gdlint in verify with Dave's thresholds | `gdlintrc`, `tools/gdscript_style.py`, `tools/verify.ps1`, 13 hit sites | yes (RR-10 and L-30 landed 18 Oct 2026) | medium |
-| CQ-L2 | every tool that reads GDScript as text survives `gdformat` | `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, tests | after CQ-L1 | medium |
+| CQ-L2 | every tool that reads GDScript as text survives `gdformat` | `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, tests | yes (CQ-L1 landed 22 Oct 2026) | medium |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
 | CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot` | after CQ-R7, the last queued slice in `hud.gd` (CQ-T2 landed 21 Oct 2026) | low |
-| CQ-S0 | golden-save round-trip harness | `tests/save_roundtrip_test.gd`, fixtures | yes | high |
-| CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a | high |
+| CQ-S0b | a restored forager takes no fresh orientation flight | `bee.gd`, `saving.gd`, `tests/save_roundtrip_test.gd` | yes | medium |
+| CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a, DR-1 | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
@@ -114,11 +113,11 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-M5 | CanvasLayer order in scripts/canvas_layers.gd | 10 UI scripts | yes | medium |
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | yes | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
-| CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | after CQ-L1, which holds `bee_foraging.gd`; follows CQ-M3 | low |
+| CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | follows CQ-M3 (CQ-L1 landed 22 Oct 2026) | low |
 | CQ-M9 | colony plot reads `Resources` colours; width const | `colony_panel.gd` | yes | low |
 | CQ-M10 | `WEATHER_ROLLS_PER_DAY` | `main.gd` | yes | low |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
-| CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once WP-3 and CQ-R7 release `hud.gd` (T2-14 and CQ-R0 landed 21 Oct 2026) | medium |
+| CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once CQ-R7 releases `hud.gd` (WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes | medium |
@@ -141,7 +140,7 @@ claim while `dry_after`).
 - **Chains** (each needs the one before):
   - CQ-L1 → L2 → L3
   - CQ-T1 → T2 → T3
-  - CQ-S0 → S1 → S2 → S3 → S4 → S5
+  - CQ-S0 → S1 → S2 → S3 → S4 → S5; CQ-S0b (from CQ-S0's harness) any time before CQ-S4
   - CQ-M2 → M3 → M8 (M8 by queue order: it shares no file with M3); CQ-M6 → M7
   - CQ-R0 → R3, R5 and R7
   - CQ-R1 and CQ-R2 → R13
@@ -157,13 +156,13 @@ claim while `dry_after`).
     after it.
   - T2-14 (`plans/now/tier-two.md`) fixed `idle_reason` before CQ-R3 moves it; it
     landed 21 Oct 2026, clearing CQ-R3 of everything but the `hud.gd` order.
-  - CQ-T3 types `hud.gd` after the queued slices that reshape it (WP-3 in
-    `plans/archive/work-priorities_2026-10-22.md`, then CQ-R7), as CQ-T2 waited for CQ-R1's
-    moves; CQ-L1 holds `skill_tree_panel.gd` ahead of it. Its section and block
+  - CQ-T3 types `hud.gd` after the queued slices that reshape it (WP-3, landed
+    22 Oct 2026, then CQ-R7), as CQ-T2 waited for CQ-R1's moves; CQ-L1, which held
+    `skill_tree_panel.gd` ahead of it, landed 22 Oct 2026. Its section and block
     are written when CQ-R7 lands, deciding then whether CQ-R8 goes first.
   - The save moves (CQ-S1 to S5 and CQ-R2) wait for every specified slice that edits
     `save_game.gd`/`saving.gd`: WP-2, SG-2, ED-1, ED-2 (difficulty, ending at ED-3),
-    RR-12 and SP-8a. Each of those plans carries the reverse pointer.
+    RR-12, SP-8a and DR-1 (`plans/now/drones.md`). Each of those plans carries the reverse pointer.
   - CQ-L3 needs both lanes empty, per `plans/workstreams.md`.
 
 ## Rules for every slice
@@ -250,93 +249,98 @@ balance. "Leave" is a deliberate decision.
 | `main.gd` FLOWER_FIELD_*, `bee.gd` NUPTIAL_*, `bee_foraging` SCOUT_BOUTS | already named | C/D | leave; only a simulated balance pass promotes them (rule 2) |
 | stage timings, skill costs, species values | per entity | D | leave in their catalogues |
 
-## CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds
+CQ-L1 shipped 2026-10-22; its specification is `plans/archive/CQ-L1_2026-10-22.md`.
 
-**True now.** gdtoolkit is installed but nothing runs it. There is no `gdlintrc`, and
-`tests/rr7_silkscreen_fit_test.gd` starts with a BOM (`EF BB BF`), which gdtoolkit
-rejects. `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/` duplicates
-the installed `addons/copy_all_errors` byte for byte, and Godot imports it as a second
-folder.
+## CQ-L2 -- every tool that reads GDScript as text survives gdformat
+
+**True now.** CQ-L1 landed gdlint in `verify.ps1`. `gdformat` (gdtoolkit 4.5.0) is
+not run anywhere, and nothing proves that the tools which read `.gd` files as text
+(`tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`,
+`tools/sprites.py`) give the same answers on formatted code. `gdformat` rewrites
+indentation, blank lines, line wrapping and trailing commas; a parser written
+against the hand-formatted style can miss a call that CQ-L3's one-off reformat
+wraps over two lines.
 
 **When done:**
 
-1. A root `gdlintrc` holds exactly this:
-   - `disable:` `class-definitions-order`, `max-file-lines`, `max-line-length`
-   - `constant-name: (_?[A-Z][A-Z0-9]*(_[A-Z0-9]+)*|([A-Z][a-z0-9]*)+)`
-   - `class-variable-name: (_?[a-z][a-z0-9]*(_[a-z0-9]+)*|([A-Z][a-z0-9]*)+)`
-   - `function-variable-name: ([a-z][a-z0-9]*(_[a-z0-9]+)*|([A-Z][a-z0-9]*)+)`
-   - `function-arguments-number: 7`, `max-public-methods: 80`, `max-returns: 12`
-2. `tools/gdscript_style.py` runs `python -m gdtoolkit.linter` on
-   `git ls-files '*.gd'`, excluding `addons/`. It skips with one clear line when
-   gdtoolkit is missing, and pins `gdtoolkit==4.5.0` in its docstring.
-3. `tools/verify.ps1` runs it as a fail-fast stage named `gdscript style`, straight
-   after `godot boot`.
-4. The BOM is stripped and the stray folder is `git rm`-ed.
-5. The 13 hits are fixed:
-   - duplicated-load: `fog_of_war.gd:247`, `skill_tree_panel.gd:374`, two tests;
-   - no-elif-return: `hive.gd` ×2, `bee_foraging.gd`;
-   - no-else-return: `flower.gd`;
-   - max-returns: `bee.gd::idle_reason`, `bee.gd::_task_line`,
-     `diagnostic_log.gd::event_count`, `hive_cell.gd::_overlay_colour`,
-     `input_selection.gd::_finish_drag`. Each carries
-     `# gdlint: ignore=max-returns` naming the R slice that will shorten it.
-6. The rule-text edit for D4 is made.
+1. `tests/test_gdformat_survival.py` copies the tracked `.gd` files (outside
+   `addons/`) into a temporary folder, runs `python -m gdtoolkit.formatter` over the
+   copy, and runs each of the four tools' parsing functions on both the original and
+   the copy. Every result is identical. It skips with one line where gdtoolkit is
+   missing.
+2. Each parser that differs is fixed in its own tool, to read the formatted form as
+   well as the current one. A tool that reads a line at a time learns to join a
+   wrapped call first.
+3. Nothing is reformatted in the repository: CQ-L3 does that.
 
-**Invariants.** Each early-return rewrite keeps the same branches. Nothing else is
-restyled.
-
-The block's `Files:` line cannot list a path without a suffix, so it omits the new
-`gdlintrc` and the copy's `.gitignore` and `LICENSE`; this slice owns them too.
+**Invariants.** A tool's output on today's unformatted source does not change.
 
 ```queue
-**[Claude] CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds**
-- Plan: `plans/now/code-health.md` -- "CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds"
-- Files: `tools/gdscript_style.py`, `tests/test_gdscript_style.py`, `tools/verify.ps1`, `tests/rr7_silkscreen_fit_test.gd`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/README.md`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/addons/copy_all_errors/plugin.cfg`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/addons/copy_all_errors/plugin.gd`, `scripts/fog_of_war.gd`, `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/bee.gd`, `scripts/diagnostic_log.gd`, `scripts/hive_cell.gd`, `scripts/input_selection.gd`, `tests/bs14_saved_skill_policy_test.gd`, `tests/col10_succession_test.gd`, `.claude/rules/gdscript.md`, `FUNCTION_MAP.md`
-- Check: `python tools/gdscript_style.py` exits 0 with zero gdlint problems over every tracked `.gd` outside `addons/`; `tests/test_gdscript_style.py` covers the missing-gdtoolkit skip; `.\tools\verify.ps1` shows a green `gdscript style` stage
-- Proof: `absent: tools/verify.ps1 :: gdscript style`
-- Next after: CQ-L2
+**[Claude] CQ-L2 -- every tool that reads GDScript as text survives gdformat**
+- Plan: `plans/now/code-health.md` -- "CQ-L2 -- every tool that reads GDScript as text survives gdformat"
+- Files: `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, `tests/test_gdformat_survival.py`
+- Check: `python -m unittest tests.test_gdformat_survival` passes: each of the four tools gives the same result on a gdformat-ed copy of every tracked `.gd` as on the original; `python tests/source_checks.py` still passes
+- Proof: `absent: tests/source_checks.py :: gdformat`
+- Next after: CQ-L3
 ```
 
-CQ-T1 shipped 2026-10-21; its specification is `plans/archive/CQ-T1_2026-10-21.md`.
+## CQ-S0b -- a restored forager takes no fresh orientation flight
 
-CQ-T2 shipped 2026-10-21; its specification is `plans/archive/CQ-T2_2026-10-21.md`.
+Level: medium. Dave chose to queue this on 22 Oct 2026, when CQ-S0's
+harness found it; it changes what a loaded run does, by his decision.
 
-## CQ-S0 -- golden-save round-trip harness
-
-**True now.** No test compares a whole save. `tests/test_save_migrations.py` runs the
-migration ladder in Python on two empty-world fixtures. The GDScript save tests spot-check
-fields after settling.
+**True now** (verified 22 Oct 2026 against `ddf96a3`). `saving.gd::_restore_bees`
+builds every bee through `bee.gd::setup`, which, for a Forager with
+orientation flight on (and scouting off), calls
+`BeeForaging.take_orientation_flight`: a random point near the hive becomes
+her start point, she is sent there in Move-to-point, and a diagnostic event
+is logged. The restore then overwrites the start point and anchor only when
+the save has them. So a bee switched into Forager and saved before her first
+trip (she has no start point) comes back with a fresh one, and her re-save
+gains `start_x`/`start_y`/`search_anchor_x`/`search_anchor_y`.
+`tests/save_roundtrip_test.gd` records this as `ORIENTATION_GAINS_START` in
+`KNOWN_DIFFERENCES` for both routes of the `orientation` golden. The load
+also draws a random point it then discards, and a forager saved mid-flight
+keeps her saved start point but flies to the fresh one: `move_target` is not
+saved, and today only the fresh flight sets it.
 
 **When done:**
 
-- `tests/save_roundtrip_test.gd` loads each golden save and re-saves it in the same
-  frame, with the tree paused as in `si1_run_state_test.gd`. It does this by two routes,
-  the load path and in-place `saving._restore`, then compares canonical JSON (sorted
-  keys; soil `present`, `keep_clear` and fog compared as sets).
-- The goldens are captured on master with `save_run` from new `test_scenarios/cq_s0_*`
-  captures, into tests/fixtures/saves/ as cq_s0_early, cq_s0_mid, cq_s0_winter,
-  cq_s0_challenge2 and cq_s0_orientation (each `.json`):
-  - an early Colony Run;
-  - a mid run with brood, bodies, restock and mine queues, bee bread and drones;
-  - winter;
-  - a Challenge 2 checkpoint (in place only);
-  - a fresh forager with `orientation_flight_on`.
-- `tests/fixtures/save_v1.json`, `save_v2.json` and a v6 save are loaded, re-saved and
-  recorded.
-- `.claude/rules/saving.md` names the harness.
+1. `saving.gd` marks each bee as restored before `setup()` (as it sets
+   `is_queen`/`is_drone` before she enters the tree), and `setup()` takes no
+   orientation flight for a restored bee: she keeps no start point until her
+   first trip, as saved. A bee made in play is unchanged.
+2. A restored forager whose saved state is Move-to-point and who has a saved
+   start point heads for that point (`move_target` is her start point), not
+   for `Vector2.ZERO`.
+3. `ORIENTATION_GAINS_START` and both `KNOWN_DIFFERENCES` entries are removed,
+   with the comment above them. `KNOWN_DIFFERENCES` and its STALE check stay,
+   empty, for the next known difference.
+4. `tests/save_roundtrip_test.gd` gains one in-place case that restores a copy
+   of the `orientation` golden with one start-pointed forager set to
+   Move-to-point and asserts point 2.
 
-**If a route is not idempotent today** (the suspected case: a forager gains
-`start_x`/`start_y` on reload with orientation flight on), record it as a named known
-difference in the test and escalate to Dave. Do not fix it here: that would be a
-gameplay change.
+**Invariants.** No save field is added, removed or renamed, and no golden is
+re-captured. Scouting at restore (`GameConfig.scouting_on`, which
+`start_scouting` handles and no save records) is unchanged: no golden runs
+with scouting on, and it is not this slice. A player-commanded
+Move-to-point bee still loses her target on load (`move_target` is unsaved);
+that is a separate defect for its own slice, not this one. A seeded test that
+replays after a load may shift, because the load no longer draws a random
+point: say so in the commit, never re-tune to hide it.
+
+**Shared files.** `scripts/saving.gd` with SG-2 (`plans/now/short-term-goals.md`)
+and DR-1 (`plans/now/drones.md`), `scripts/bee.gd` with SP-6 (`plans/now/sprites.md`), all Claude lane:
+whichever is queued first runs first. CQ-S4 later moves `_restore_bees` into
+`bee.gd` and keeps the restored mark.
 
 ```queue
-**[Claude] CQ-S0 -- golden-save round-trip harness**
-- Plan: `plans/now/code-health.md` -- "CQ-S0 -- golden-save round-trip harness"
-- Files: `tests/save_roundtrip_test.gd`, `tests/test_save_roundtrip.py`, `tests/fixtures/saves/cq_s0_early.json`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json`, `test_scenarios/cq_s0_early_capture.json`, `test_scenarios/cq_s0_mid_capture.json`, `test_scenarios/cq_s0_winter_capture.json`, `test_scenarios/cq_s0_challenge2_capture.json`, `test_scenarios/cq_s0_orientation_capture.json`, `.claude/rules/saving.md`
-- Check: `python -m unittest tests.test_save_roundtrip` passes, comparing every golden save's load-then-save output to its input by both routes, with any known difference named and escalated; `.\tools\verify.ps1` is green
-- Proof: `absent: .claude/rules/saving.md :: round-trip`
-- Next after: CQ-S1
+**[Claude] CQ-S0b -- a restored forager takes no fresh orientation flight**
+- Plan: `plans/now/code-health.md` -- "CQ-S0b -- a restored forager takes no fresh orientation flight"
+- Files: `scripts/bee.gd`, `scripts/saving.gd`, `tests/save_roundtrip_test.gd`, `FUNCTION_MAP.md`
+- Check: `python -m unittest tests.test_save_roundtrip` passes with `KNOWN_DIFFERENCES` empty: both `orientation` routes print `CQS0 OK`, none KNOWN or STALE, and the new in-place case finds the Move-to-point forager heading for her saved start point; `tests/test_save_migrations.py` passes; `.\tools\verify.ps1` is green
+- Proof: `present: tests/save_roundtrip_test.gd :: const ORIENTATION_GAINS_START`
+- Next after: CQ-S1 -- Flower owns its save fields (gated on the alpha chain's save slices)
 ```
 
 ## CQ-S1 -- Flower owns its save fields

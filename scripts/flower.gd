@@ -378,10 +378,9 @@ func collect(resource_type: String, amount: float) -> float:
 		var taken_n: float = min(amount, nectar_amount)
 		nectar_amount -= taken_n
 		return taken_n
-	else:
-		var taken_p: float = min(amount, pollen_amount)
-		pollen_amount -= taken_p
-		return taken_p
+	var taken_p: float = min(amount, pollen_amount)
+	pollen_amount -= taken_p
+	return taken_p
 
 func release(bee: Node2D) -> void:
 	if occupied_by == bee:
