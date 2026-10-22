@@ -2127,10 +2127,12 @@ function Test-SuccessorGated {
     # one deferred under '## Not in the queue, and why'. The refill gate
     # accepts it, and finish merges and reports the lane dry rather than
     # stopping a verified slice. Reads the live plan layers
-    # tools/check_docs.py's current_plans reads.
-    param([string]$Root, [string]$Id)
-    if (-not $Id) { return $false }
-    $fence = [regex]::new('(?m)^```queue-gated[ \t]*\r?\n\*\*\[\w+\]\s+' + [regex]::Escape($Id) + '\s+--')
+    # tools/check_docs.py's current_plans reads. Only a block tagged for
+    # $Lane counts: a successor gated in the other lane would never refill
+    # this one.
+    param([string]$Root, [string]$Id, [string]$Lane)
+    if (-not $Id -or -not $Lane) { return $false }
+    $fence = [regex]::new('(?m)^```queue-gated[ \t]*\r?\n\*\*\[' + [regex]::Escape($Lane) + '\]\s+' + [regex]::Escape($Id) + '\s+--')
     foreach ($layer in @("now", "active", "design", "reference")) {
         $dir = Join-Path $Root "plans\$layer"
         if (-not (Test-Path -LiteralPath $dir -PathType Container)) { continue }
@@ -2652,7 +2654,7 @@ function Invoke-SliceFinish {
                 # A gated successor passes too (L-32): finish merges and
                 # reports the lane dry, and the refill happens before the
                 # next start.
-                if (-not (Test-SuccessorDeferred -Text $branchQueueText -Id $successorId) -and -not (Test-SuccessorGated -Root $worktreeRoot -Id $successorId)) {
+                if (-not (Test-SuccessorDeferred -Text $branchQueueText -Id $successorId) -and -not (Test-SuccessorGated -Root $worktreeRoot -Id $successorId -Lane $lane)) {
                     Stop-Slice -Cause "$id -- Next after: names '$successorId', which is neither in the [$lane] lane, nor under '## Not in the queue, and why', nor fenced ``````queue-gated in a live plan$(Get-BranchBehindNote -Root $worktreeRoot)" -Fix "on this branch, either add '$successorId' to ### $lane lane with full Plan/Files/Check/Proof/Next after lines (its plan section is the source; python tools/heading.py <plan> '$successorId' prints it), or -- if it is not startable yet -- give it a one-line bullet under '## Not in the queue, and why' whose bolded lead is its id and whose line says what it waits for; then run python tools/check_docs.py, commit, and retry"
                 }
             }
@@ -2793,6 +2795,9 @@ function Invoke-SliceFinish {
     $mergedItems = Get-NextUpItemsFromText -Text $mergedNextSteps
 
     $laneLead = $mergedItems | Where-Object { $_.Lane -eq $lane } | Sort-Object ItemNumber | Select-Object -First 1
+    # L-32: is the successor still fenced ```queue-gated in this lane? One
+    # lookup, shared by "Next slice" and the dry report below.
+    $successorGated = [bool]($successorId -and -not ($mergedItems | Where-Object { $_.Id -eq $successorId }) -and (Test-SuccessorGated -Root $root -Id $successorId -Lane $lane))
 
     $nextSliceLine = "see 'Next after:' on the item above, or the owning plan in plans/now/"
     if ($item -and -not $successorId) {
@@ -2818,9 +2823,9 @@ function Invoke-SliceFinish {
             if ($deferralReason) { $deferralNote += ": $deferralReason" }
             $nextSliceLine = if ($laneLead) { "$($laneLead.Id) -- $($laneLead.Title)  ($deferralNote)" } else { "none -- the $lane lane is empty ($deferralNote)" }
         }
-        elseif (Test-SuccessorGated -Root $root -Id $successorId) {
-            # L-32: the refill gate accepts a gated successor too; the lane
-            # is reported dry below, so this is a plan waiting, not a fault.
+        elseif ($successorGated) {
+            # L-32: the refill gate accepts a gated successor too; the dry
+            # report below says so, so this is a plan waiting, not a fault.
             $gatedNote = "$successorId is fenced queue-gated in its plan"
             $nextSliceLine = if ($laneLead) { "$($laneLead.Id) -- $($laneLead.Title)  ($gatedNote)" } else { "none -- the $lane lane is empty ($gatedNote)" }
         }
@@ -2831,12 +2836,19 @@ function Invoke-SliceFinish {
     $queueLine = if ($laneLead) { "$lane lane now leads with $($laneLead.Id) -- $($laneLead.Title)" } else { "$lane lane is empty -- refill it from an owning plan" }
 
     # L-32 (Dave, 22 Oct 2026): the queue floor governs admission only, so a
-    # verified slice merges even when it leaves its lane dry -- empty, the
-    # whole queue under check_docs.py's floor, or its successor still fenced
-    # ```queue-gated. Say so after the merge. `start` refuses an empty lane,
-    # and the refill happens before the next claim, not inside `finish`.
-    $successorGated = [bool]($successorId -and -not ($mergedItems | Where-Object { $_.Id -eq $successorId }) -and (Test-SuccessorGated -Root $root -Id $successorId))
-    $laneDry = (-not $laneLead) -or (@($mergedItems).Count -lt (Get-QueueSizeMin -Root $root)) -or $successorGated
+    # verified slice merges even when it leaves its lane empty, the whole
+    # queue under check_docs.py's floor, or its successor still fenced
+    # ```queue-gated. Each gets its own line after the merge, and only a lane
+    # with no item at all is called dry -- the one `start` refuses. The
+    # refill happens before the next claim, not inside `finish`.
+    $dryLines = @()
+    foreach ($eachLane in @($lane, $otherLane)) {
+        if (-not ($mergedItems | Where-Object { $_.Lane -eq $eachLane })) { $dryLines += "lane dry: $eachLane -- refill before the next start" }
+    }
+    $queueFloor = Get-QueueSizeMin -Root $root
+    $queueCount = @($mergedItems).Count
+    if ($queueCount -lt $queueFloor) { $dryLines += "queue short: $queueCount of the $queueFloor-item floor -- refill before the next start" }
+    if ($successorGated -and $laneLead) { $dryLines += "successor gated: $successorId waits in its plan; the $lane lane continues with $($laneLead.Id)" }
     $adviceLine = "none -- the $lane lane is empty"
     $connectorLine = "none needed"
     if ($laneLead) {
@@ -2859,7 +2871,7 @@ function Invoke-SliceFinish {
         ms     = [int]$script:SliceStopwatch.ElapsedMilliseconds
     }
 
-    if ($laneDry) { Write-Output "lane dry: $lane -- refill before the next start" }
+    $dryLines | ForEach-Object { Write-Output $_ }
     Write-Output ""
     Write-Output "Slice landed: $id -- $title"
     Write-Output "Branch:       $branch  |  verify.ps1: green"

@@ -26,9 +26,11 @@ the refill happens before the next claim, not inside `finish`. A
 `Next after:` line must name the slice
 that follows -- the only accepted alternative is `none -- <plan> is complete`
 -- which is what makes a lane refill itself by lookup.
-A lane item is not claimed while `advice.dry_after` is true: specify its
-successor first, so planning happens before the build, not inside `finish`
-(Dave, 5 Oct 2026).
+Admission still plans ahead: a lane item is not claimed while
+`advice.dry_after` is true -- specify its successor first, so planning
+happens before the build (Dave, 5 Oct 2026). The merge-anyway rule above is
+the backstop for a lane that runs dry regardless (a successor that is
+gated, say), not leave to claim into a dry lane.
 
 **The lookup is the backlog.** An open slice section in a live plan may carry
 one fenced `queue` block holding the exact item that slice would be queued as:
