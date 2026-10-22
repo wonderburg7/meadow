@@ -2284,6 +2284,98 @@ func show_cell_popup(cell: Node2D, count: int = 1) -> void:
 	call_deferred("_resize_command_tray")
 	bottom_row_changed.emit()
 
+func _cell_content_lines(cell, count: int) -> Array:
+	var content_lines := []
+	if count > 1:
+		content_lines.append("Bulk selection")
+	if not cell.is_built:
+		content_lines.append("Unfinished — %d%% built" % int(cell.build_fraction() * 100.0))
+	else:
+		match cell.content_type:
+			"nectar":
+				content_lines.append("Nectar: %d / %d" % [int(round(cell.amount)), int(cell.capacity)])
+			"pollen":
+				content_lines.append("Pollen: %d / %d" % [int(round(cell.amount)), int(cell.capacity)])
+			"jelly":
+				content_lines.append("Royal jelly: %d / %d" % [int(round(cell.amount)), int(cell.capacity)])
+			"bee_bread":
+				if cell.is_ripe_bee_bread():
+					content_lines.append("Bee bread: %d — ripe" % int(round(cell.amount)))
+				elif cell.is_bee_bread_sealed():
+					content_lines.append("Bee bread: %d — sealed, %d%% ripened" % [
+						int(round(cell.amount)), int(cell.bee_bread_ripen_fraction() * 100.0),
+					])
+					content_lines.append("Not usable until it ripens")
+				else:
+					content_lines.append("Bee bread: %d / %d — seals when full" % [int(round(cell.amount)), int(cell.capacity)])
+			"honey":
+				if cell.is_ripe_honey():
+					content_lines.append("Honey: %d / %d" % [int(round(cell.amount)), int(cell.capacity)])
+				else:
+					content_lines.append("Honey mix: %d / %d — %d%% fanned dry" % [
+						int(round(cell.amount)),
+						int(cell.capacity),
+						int(cell.ripen_fraction() * 100.0),
+					])
+					content_lines.append("Not edible until fully dried")
+			"brood":
+				content_lines.append("%s — %d%%" % [
+					"Developing gyne" if cell.brood_is_gyne else "Developing bee",
+					int(cell.development_percent()),
+				])
+				if cell.brood_is_gyne:
+					content_lines.append("Needs royal jelly, pollen and honey")
+				if cell.brood_fed_seconds > 0.0:
+					content_lines.append("Fed on %s — %ds of development left" % [
+						"honey" if cell.fed_on_honey else "nectar",
+						int(cell.brood_fed_seconds),
+					])
+				else:
+					content_lines.append("Hungry — development stopped; dies in %ds" % int(cell.seconds_until_death()))
+			"corpse":
+				content_lines.append("A dead larva blocks this cell")
+				content_lines.append("Being cleared: %d%%" % int(cell.clean_fraction() * 100.0))
+			_:
+				content_lines.append("Empty")
+	return content_lines
+
+func _cell_state_lines(cell) -> Array:
+	var state_lines := []
+	var reserved := "any resource"
+	if cell.keep_empty:
+		reserved = "nothing — kept empty"
+	elif cell.designated_type == "brood":
+		reserved = "raising eggs"
+	elif cell.designated_type != "":
+		reserved = cell.designated_type
+	state_lines.append("Takes: %s" % reserved)
+	if cell.is_nursery_cell():
+		state_lines.append("Nursery — %s priority" % ["low", "medium", "high"][clampi(cell.nursery_priority, 0, 2)])
+	if cell.priority_cell and BeeNursery.priority_cells_owned():
+		state_lines.append("Fed first — nurses come here before unmarked brood")
+	if cell.is_closed:
+		state_lines.append("Sealed — nothing goes in or comes out")
+	elif cell.fill_then_close:
+		state_lines.append("Filling to the top, then sealing")
+	if cell.evict_requested:
+		state_lines.append("Waiting for a comb worker to empty it")
+	return state_lines
+
+func _cell_hatch_text(cell) -> String:
+	var hatch_name := "colony default"
+	for entry in hatch_options():
+		if entry.role == cell.hatch_role:
+			hatch_name = entry.label
+			if entry.role == 0:
+				hatch_name += " (%s)" % cell.hatch_focus
+			elif entry.role == 5 and cell.hatch_automine:
+				hatch_name += " (automine)"
+			break
+	return "Raises: %s%s" % [
+		hatch_name,
+		" — every bee" if cell.hatch_role_locked else "",
+	]
+
 func _refresh_cell_popup() -> void:
 	if active_cell == null or not is_instance_valid(active_cell):
 		_cell_popup_last_cell = active_cell
@@ -2293,94 +2385,11 @@ func _refresh_cell_popup() -> void:
 	identity_label.text = "%d cells selected\nShowing the first cell; every action applies to all" % selected_cell_count \
 		if selected_cell_count > 1 else "Cell selected"
 
-	var content_lines := []
-	if selected_cell_count > 1:
-		content_lines.append("Bulk selection")
-	if not active_cell.is_built:
-		content_lines.append("Unfinished — %d%% built" % int(active_cell.build_fraction() * 100.0))
-	else:
-		match active_cell.content_type:
-			"nectar":
-				content_lines.append("Nectar: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
-			"pollen":
-				content_lines.append("Pollen: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
-			"jelly":
-				content_lines.append("Royal jelly: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
-			"bee_bread":
-				if active_cell.is_ripe_bee_bread():
-					content_lines.append("Bee bread: %d — ripe" % int(round(active_cell.amount)))
-				elif active_cell.is_bee_bread_sealed():
-					content_lines.append("Bee bread: %d — sealed, %d%% ripened" % [
-						int(round(active_cell.amount)), int(active_cell.bee_bread_ripen_fraction() * 100.0),
-					])
-					content_lines.append("Not usable until it ripens")
-				else:
-					content_lines.append("Bee bread: %d / %d — seals when full" % [int(round(active_cell.amount)), int(active_cell.capacity)])
-			"honey":
-				if active_cell.is_ripe_honey():
-					content_lines.append("Honey: %d / %d" % [int(round(active_cell.amount)), int(active_cell.capacity)])
-				else:
-					content_lines.append("Honey mix: %d / %d — %d%% fanned dry" % [
-						int(round(active_cell.amount)),
-						int(active_cell.capacity),
-						int(active_cell.ripen_fraction() * 100.0),
-					])
-					content_lines.append("Not edible until fully dried")
-			"brood":
-				content_lines.append("%s — %d%%" % [
-					"Developing gyne" if active_cell.brood_is_gyne else "Developing bee",
-					int(active_cell.development_percent()),
-				])
-				if active_cell.brood_is_gyne:
-					content_lines.append("Needs royal jelly, pollen and honey")
-				if active_cell.brood_fed_seconds > 0.0:
-					content_lines.append("Fed on %s — %ds of development left" % [
-						"honey" if active_cell.fed_on_honey else "nectar",
-						int(active_cell.brood_fed_seconds),
-					])
-				else:
-					content_lines.append("Hungry — development stopped; dies in %ds" % int(active_cell.seconds_until_death()))
-			"corpse":
-				content_lines.append("A dead larva blocks this cell")
-				content_lines.append("Being cleared: %d%%" % int(active_cell.clean_fraction() * 100.0))
-			_:
-				content_lines.append("Empty")
-	energy_label.text = "\n".join(content_lines)
+	energy_label.text = "\n".join(_cell_content_lines(active_cell, selected_cell_count))
 
-	var state_lines := []
-	var reserved := "any resource"
-	if active_cell.keep_empty:
-		reserved = "nothing — kept empty"
-	elif active_cell.designated_type == "brood":
-		reserved = "raising eggs"
-	elif active_cell.designated_type != "":
-		reserved = active_cell.designated_type
-	state_lines.append("Takes: %s" % reserved)
-	if active_cell.is_nursery_cell():
-		state_lines.append("Nursery — %s priority" % ["low", "medium", "high"][clampi(active_cell.nursery_priority, 0, 2)])
-	if active_cell.priority_cell and BeeNursery.priority_cells_owned():
-		state_lines.append("Fed first — nurses come here before unmarked brood")
-	if active_cell.is_closed:
-		state_lines.append("Sealed — nothing goes in or comes out")
-	elif active_cell.fill_then_close:
-		state_lines.append("Filling to the top, then sealing")
-	if active_cell.evict_requested:
-		state_lines.append("Waiting for a comb worker to empty it")
-	activity_label.text = "\n".join(state_lines)
+	activity_label.text = "\n".join(_cell_state_lines(active_cell))
 
-	var hatch_name := "colony default"
-	for entry in hatch_options():
-		if entry.role == active_cell.hatch_role:
-			hatch_name = entry.label
-			if entry.role == 0:
-				hatch_name += " (%s)" % active_cell.hatch_focus
-			elif entry.role == 5 and active_cell.hatch_automine:
-				hatch_name += " (automine)"
-			break
-	trait_label.text = "Raises: %s%s" % [
-		hatch_name,
-		" — every bee" if active_cell.hatch_role_locked else "",
-	]
+	trait_label.text = _cell_hatch_text(active_cell)
 
 	# Only worth offering while there is actually something to carry --
 	# matches command_empty_cell's own guard in bee.gd.
@@ -2814,6 +2823,79 @@ func _remove_signal(id: String) -> void:
 		removed_signal_ids.append(id)
 	_refresh_corner()
 
+func _corner_signature(strip: Array) -> String:
+	var signature := "scale=%s typeface=%s\n" % [Session.text_scale, Session.ui_typeface]
+	for key in CORNER_ORDER:
+		if Session.pinned_stats.has(key):
+			signature += "%s=%s\n" % [key, corner_texts.get(key, "")]
+	for entry in strip:
+		signature += "s%d|%s|%s\n" % [entry[1], entry[0], entry[2]]
+	return signature
+
+func _rebuild_corner_labels() -> void:
+	for key in CORNER_ORDER:
+		if not Session.pinned_stats.has(key):
+			continue
+		var text: String = str(corner_texts.get(key, ""))
+		if text == "":
+			continue
+		var label := Label.new()
+		label.text = text
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Each readout keeps its own headline/detail weighting (see
+		# CORNER_SIZES) rather than collapsing onto the four shared
+		# variations, so it scales directly instead.
+		label.add_theme_font_size_override("font_size", UiTheme.font_px(CORNER_SIZES.get(key, 12)))
+		corner_column.add_child(label)
+
+## One clickable problem line plus its dismiss button, added to the corner.
+func _add_signal_row(entry: Array) -> void:
+	var row := HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	row.add_theme_constant_override("separation", 2)
+	var line := Button.new()
+	_style_button(line)
+	line.text = "• %s" % entry[0]
+	line.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	line.flat = true
+	line.focus_mode = Control.FOCUS_NONE
+	line.theme_type_variation = "Body"
+	line.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	line.add_theme_color_override("font_color", _signal_color(int(entry[1])))
+	line.add_theme_color_override("font_hover_color", UiTheme.color("text_primary"))
+	line.add_theme_color_override("font_pressed_color", UiTheme.color("text_primary"))
+	var action: String = str(entry[2])
+	if action != "":
+		line.tooltip_text = "Click to select what this is about."
+		line.pressed.connect(func(): signal_clicked.emit(action))
+	row.add_child(line)
+	var remove := Button.new()
+	_style_button(remove)
+	remove.text = "×"
+	remove.flat = true
+	remove.focus_mode = Control.FOCUS_NONE
+	remove.theme_type_variation = "Body"
+	remove.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	remove.tooltip_text = "Remove this warning until the problem clears and comes back."
+	remove.add_theme_color_override("font_color", _signal_color(int(entry[1])))
+	var id: String = str(entry[4])
+	remove.pressed.connect(func(): _remove_signal(id))
+	row.add_child(remove)
+	corner_column.add_child(row)
+	_fit_corner_line(line)
+
+func _rebuild_corner_signals(strip: Array) -> void:
+	for entry in strip.slice(0, SIGNAL_LINE_CAP):
+		_add_signal_row(entry)
+	if strip.size() > SIGNAL_LINE_CAP:
+		var more := Label.new()
+		more.text = "• +%d more -- open the Colony window" % (strip.size() - SIGNAL_LINE_CAP)
+		more.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		more.theme_type_variation = "Body"
+		more.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
+		corner_column.add_child(more)
+
 ## Rebuilds the corner from the starred readouts. Only actually does the
 ## work when the result would look different, so this can be called from
 ## every setter without thrashing labels every frame.
@@ -2822,14 +2904,9 @@ func _refresh_corner() -> void:
 	# Text scale is part of what the corner looks like: its labels carry
 	# font-size overrides, which UiTheme.refresh() cannot reach, so without
 	# it a text-size change never rebuilt them (19 Sep 2026).
-	var signature := "scale=%s typeface=%s\n" % [Session.text_scale, Session.ui_typeface]
-	for key in CORNER_ORDER:
-		if Session.pinned_stats.has(key):
-			signature += "%s=%s\n" % [key, corner_texts.get(key, "")]
 	var strip := strip_lines()
 	var show_signals: bool = not strip.is_empty()
-	for entry in strip:
-		signature += "s%d|%s|%s\n" % [entry[1], entry[0], entry[2]]
+	var signature := _corner_signature(strip)
 	if signature == corner_signature:
 		Perf.end("corner_refresh")
 		return
@@ -2846,20 +2923,7 @@ func _refresh_corner() -> void:
 	Perf.end("corner_rebuild_free")
 
 	Perf.begin("corner_rebuild_labels")
-	for key in CORNER_ORDER:
-		if not Session.pinned_stats.has(key):
-			continue
-		var text: String = str(corner_texts.get(key, ""))
-		if text == "":
-			continue
-		var label := Label.new()
-		label.text = text
-		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		# Each readout keeps its own headline/detail weighting (see
-		# CORNER_SIZES) rather than collapsing onto the four shared
-		# variations, so it scales directly instead.
-		label.add_theme_font_size_override("font_size", UiTheme.font_px(CORNER_SIZES.get(key, 12)))
-		corner_column.add_child(label)
+	_rebuild_corner_labels()
 	Perf.end("corner_rebuild_labels")
 
 	# Sits under whichever readouts are starred, same as the plan asked
@@ -2880,48 +2944,7 @@ func _refresh_corner() -> void:
 	# what it is about. Being told there are hungry larvae and then having
 	# to go and find them yourself is most of the work of acting on it.
 	Perf.begin("corner_rebuild_signals")
-	for entry in strip.slice(0, SIGNAL_LINE_CAP):
-		var row := HBoxContainer.new()
-		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-		row.add_theme_constant_override("separation", 2)
-		var line := Button.new()
-		_style_button(line)
-		line.text = "• %s" % entry[0]
-		line.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		line.flat = true
-		line.focus_mode = Control.FOCUS_NONE
-		line.theme_type_variation = "Body"
-		line.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-		line.add_theme_color_override("font_color", _signal_color(int(entry[1])))
-		line.add_theme_color_override("font_hover_color", UiTheme.color("text_primary"))
-		line.add_theme_color_override("font_pressed_color", UiTheme.color("text_primary"))
-		var action: String = str(entry[2])
-		if action != "":
-			line.tooltip_text = "Click to select what this is about."
-			line.pressed.connect(func(): signal_clicked.emit(action))
-		row.add_child(line)
-		var remove := Button.new()
-		_style_button(remove)
-		remove.text = "×"
-		remove.flat = true
-		remove.focus_mode = Control.FOCUS_NONE
-		remove.theme_type_variation = "Body"
-		remove.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-		remove.tooltip_text = "Remove this warning until the problem clears and comes back."
-		remove.add_theme_color_override("font_color", _signal_color(int(entry[1])))
-		var id: String = str(entry[4])
-		remove.pressed.connect(func(): _remove_signal(id))
-		row.add_child(remove)
-		corner_column.add_child(row)
-		_fit_corner_line(line)
-	if strip.size() > SIGNAL_LINE_CAP:
-		var more := Label.new()
-		more.text = "• +%d more -- open the Colony window" % (strip.size() - SIGNAL_LINE_CAP)
-		more.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		more.theme_type_variation = "Body"
-		more.add_theme_color_override("font_color", UiTheme.color("text_secondary"))
-		corner_column.add_child(more)
+	_rebuild_corner_signals(strip)
 	Perf.end("corner_rebuild_signals")
 	corner_column.move_child(pause_label, corner_column.get_child_count() - 1)
 	Perf.end("corner_refresh")
@@ -3602,6 +3625,70 @@ func _make_role_menu(label: String, tip: String, items: Array, node_name: String
 	popup.id_pressed.connect(func(id: int): items[id].action.call())
 	return menu
 
+## Identity block: name (starred if a favourite), role, age. Name first --
+## this is what turns "Bee 214" into someone the player can recognise. See
+## BEE_INDIVIDUALITY_PLAN.md.
+func _selection_identity_text(b) -> String:
+	var identity := "%s%s — %s" % [
+		"Queen " if b.is_queen else "Bee ",
+		"" if b.is_queen else str(b.bee_id),
+		b.role_name_text(),
+	]
+	if b.bee_name != "":
+		identity = "%s%s\n%s" % ["★ " if b.is_favourite else "", b.bee_name, identity]
+	if b.is_queen:
+		identity += "\nAge: %.1f days   (does not die of old age)" % b.age_days()
+	else:
+		identity += "\nAge: %.1f days   Left: %.1f days" % [b.age_days(), b.days_remaining()]
+	return identity
+
+func _selection_energy_text(b) -> String:
+	return "Energy %d%%\n%s" % [
+		int(100.0 * b.energy / max(0.001, GameConfig.energy_capacity)),
+		b.carrying_text(),
+	]
+
+## Activity block. `instruction_runner` is the Challenge runner when the
+## queen is waiting for an instruction, else null; `stuck` is the bee's
+## idle_reason() (empty while the runner is waiting).
+func _selection_activity_text(b, instruction_runner, stuck: String) -> String:
+	var activity: String
+	if instruction_runner != null:
+		var instruction: String = instruction_runner.current_stage_instruction()
+		activity = "Now: waiting for instruction"
+		if instruction != "":
+			activity += " -- %s" % instruction
+	else:
+		activity = "Now: %s" % b.task_description()
+		if stuck != "":
+			activity += "\n%s" % stuck
+	if GameConfig.floral_constancy_on and b.role == Bee.Role.FORAGER and b.preferred_species != "":
+		activity += "\nPreferred flower: %s" % b.preferred_species
+	# the queen's pollen store is the thing that gates egg-laying,
+	# so it's worth showing as a running total
+	if b.is_queen:
+		activity += "\nPollen eaten: %d / %d needed for an egg" % [
+			int(b.pollen_eaten), int(GameConfig.egg_pollen_cost),
+		]
+	if b.is_gyne and not b.is_queen and not b.is_dying:
+		var not_ready: String = _gyne_not_ready_reason(b)
+		if not_ready != "":
+			activity += "\n%s" % not_ready
+	return activity
+
+## "trait" is a reserved GDScript word (used for the language's own
+## trait/mixin feature), so the local can't be called that even though it
+## holds a bee's rolled trait line.
+func _selection_trait_text(b) -> String:
+	var trait_line: String = b.trait_text()
+	# BB-2: what she was raised on, and what it gave her.
+	var outcome_line: String = b.brood_outcome_text()
+	if outcome_line != "":
+		trait_line += ("\n" if trait_line != "" else "") + outcome_line
+	if b.bee_fact != "":
+		trait_line += ("\n" if trait_line != "" else "") + "\"%s\"" % b.bee_fact
+	return trait_line
+
 ## Re-read every frame so the activity field tracks what the bee is
 ## doing. Fields are grouped per UI_PLAN.md section 5's ranking --
 ## identity/job, energy/load, activity, trait/quote -- each its own
@@ -3625,79 +3712,29 @@ func _refresh_selection_text() -> void:
 		_set_favourite_star(b)
 		_set_summary_cog_kind("bee")
 
-		var identity := "%s%s — %s" % [
-			"Queen " if b.is_queen else "Bee ",
-			"" if b.is_queen else str(b.bee_id),
-			b.role_name_text(),
-		]
-		# Name first -- this is what turns "Bee 214" into someone the
-		# player can recognise. See BEE_INDIVIDUALITY_PLAN.md.
-		if b.bee_name != "":
-			identity = "%s%s\n%s" % ["★ " if b.is_favourite else "", b.bee_name, identity]
-		if b.is_queen:
-			identity += "\nAge: %.1f days   (does not die of old age)" % b.age_days()
-		else:
-			identity += "\nAge: %.1f days   Left: %.1f days" % [b.age_days(), b.days_remaining()]
-		identity_label.text = identity
-
-		energy_label.text = "Energy %d%%\n%s" % [
-			int(100.0 * b.energy / max(0.001, GameConfig.energy_capacity)),
-			b.carrying_text(),
-		]
+		identity_label.text = _selection_identity_text(b)
+		energy_label.text = _selection_energy_text(b)
 
 		var challenge_runner = main.challenge_runner if main != null else null
-		var waiting_for_instruction = (
+		var waiting_for_instruction: bool = (
 			challenge_runner != null and challenge_runner.active
 			and b.is_queen
 			and (b.state == Bee.State.IDLING or b.state == Bee.State.NURSE_IDLE or b.player_driven)
 		)
-		var activity: String
-		var stuck: String = ""
-		if waiting_for_instruction:
-			var instruction: String = challenge_runner.current_stage_instruction()
-			activity = "Now: waiting for instruction"
-			if instruction != "":
-				activity += " -- %s" % instruction
-			activity_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_nectar")))
+		# If it isn't doing anything, say why. A bee standing still looks
+		# identical whatever the reason, and "nothing is happening and I
+		# can't tell why" is the worst state to leave a player in.
+		var stuck: String = "" if waiting_for_instruction else b.idle_reason()
+		if stuck != "":
+			UiTheme.bind_color(activity_label, "font_color", "warning")
 		else:
-			activity = "Now: %s" % b.task_description()
-			# If it isn't doing anything, say why. A bee standing still looks
-			# identical whatever the reason, and "nothing is happening and I
-			# can't tell why" is the worst state to leave a player in.
-			stuck = b.idle_reason()
-			if stuck != "":
-				activity += "\n%s" % stuck
-				UiTheme.bind_color(activity_label, "font_color", "warning")
-			else:
-				activity_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_nectar")))
-		if GameConfig.floral_constancy_on and b.role == Bee.Role.FORAGER and b.preferred_species != "":
-			activity += "\nPreferred flower: %s" % b.preferred_species
-		# the queen's pollen store is the thing that gates egg-laying,
-		# so it's worth showing as a running total
-		if b.is_queen:
-			activity += "\nPollen eaten: %d / %d needed for an egg" % [
-				int(b.pollen_eaten), int(GameConfig.egg_pollen_cost),
-			]
+			activity_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_nectar")))
 		# COL-7: a gyne who can't be sent yet says why, and her send button
 		# follows.
 		if b.is_gyne and not b.is_queen and not b.is_dying:
-			var not_ready: String = _gyne_not_ready_reason(b)
-			if not_ready != "":
-				activity += "\n%s" % not_ready
 			_refresh_gyne_send_button(b)
-		activity_label.text = activity
-
-		# "trait" is a reserved GDScript word (used for the language's own
-		# trait/mixin feature), so this can't be called that even though
-		# it holds a bee's rolled trait line.
-		var trait_line: String = b.trait_text()
-		# BB-2: what she was raised on, and what it gave her.
-		var outcome_line: String = b.brood_outcome_text()
-		if outcome_line != "":
-			trait_line += ("\n" if trait_line != "" else "") + outcome_line
-		if b.bee_fact != "":
-			trait_line += ("\n" if trait_line != "" else "") + "\"%s\"" % b.bee_fact
-		trait_label.text = trait_line
+		activity_label.text = _selection_activity_text(b, challenge_runner if waiting_for_instruction else null, stuck)
+		trait_label.text = _selection_trait_text(b)
 	else:
 		identity_label.text = "%d bees selected" % shown_bees.size()
 		energy_label.text = ""

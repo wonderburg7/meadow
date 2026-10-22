@@ -121,7 +121,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes | medium |
-| CQ-R7 | hud selection text, cell popup and corner refreshes decomposed | `hud.gd` | yes (TS-2 landed 21 Oct 2026) | medium |
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd` | yes | medium |
 | CQ-R9 | `diagnostic_log.gd` snapshot shortened; probe duplicates kept once | `diagnostic_log.gd`, `scripts/headless/diagnostic_probes.gd` | yes | medium |
 | CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd` | yes | medium |
@@ -424,30 +423,4 @@ CQ-M8, gets its block from the session that claims this one.
 
 CQ-R0 shipped 2026-10-21; its specification is `plans/archive/CQ-R0_2026-10-21.md`.
 
-## CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed
-
-**True now.** `hud.gd::_refresh_selection_text` (one bee: identity, energy, activity,
-trait lines), `_refresh_cell_popup` (content lines, state lines, hatch line, control
-state) and `_refresh_corner` (signature, labels, signal rows) are each long and mix
-building a string with writing it to a node. CQ-R0's golden harness now reads their
-output.
-
-**When done:**
-
-- Each of the three becomes a short function that calls named helpers; the helpers that
-  only build text return a `String` or `Array` and touch no node, e.g.
-  `_selection_activity_text(bee)` and `_cell_content_lines(cell)`.
-- No string, ordering or colour changes: `python -m unittest tests.test_display_text_golden`
-  passes against the unchanged fixture, and it is not regenerated.
-- `FUNCTION_MAP.md` lists the new helpers.
-
-```queue
-**[Claude] CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed**
-- Plan: `plans/now/code-health.md` -- "CQ-R7 -- hud selection text, cell popup and corner refreshes decomposed"
-- Files: `scripts/hud.gd`, `FUNCTION_MAP.md`
-- Check: `python -m unittest tests.test_display_text_golden` passes against the unchanged fixture; `tests/test_layout_regression.py` passes; `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/hud.gd :: func _selection_activity_text(`
-- Next after: CQ-R8 -- hud builders shortened (designation button table)
-```
-
-CQ-R1 shipped 2026-10-21; its specification is `plans/archive/CQ-R1_2026-10-21.md`.
+CQ-R7 shipped 2026-10-22; its specification is `plans/archive/CQ-R7_2026-10-22.md`.
