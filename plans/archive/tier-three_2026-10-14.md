@@ -10,7 +10,7 @@ its nodes, Weighted flower choice (Foraging) and Restocking (Colony), cover
 behaviour the game already has, which nothing gates. As tier 2 did for the
 five behaviours that existed (`plans/now/tier-two.md`), they become
 purchases. Priority cells and Pollinator points belong to
-`plans/now/pollination.md`; Work Priorities to `plans/now/work-priorities.md`.
+`plans/now/pollination.md`; Work Priorities to `plans/archive/work-priorities_2026-10-22.md`.
 
 ## Current state
 
@@ -45,7 +45,7 @@ Verified 13 Oct 2026 against master `06bd26c`:
 
 T3-1 and T3-2 share no file and may land in either order; Dave's order
 (13 Oct 2026) is tier 3 first -- this plan and Work Priorities
-(`plans/now/work-priorities.md`) -- then short-term goals, then Easy. PP-6 (`plans/now/pollination.md`) prices tier-3 recipes, so landing
+(`plans/archive/work-priorities_2026-10-22.md`) -- then short-term goals, then Easy. PP-6 (`plans/now/pollination.md`) prices tier-3 recipes, so landing
 these first lets its sweep price them. Neither changes a skill's price.
 
 **Reads.** A slice reads its own section only; T3-1 also reads

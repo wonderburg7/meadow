@@ -75,7 +75,7 @@ Verified 12 Oct 2026 against master `06bd26c`:
 
 ED-1, then ED-2, then ED-3: each needs the one before. Dave's order (13 Oct
 2026) puts this plan last: tier 3 (`plans/archive/tier-three_2026-10-14.md`,
-`plans/now/work-priorities.md`), then `plans/now/short-term-goals.md`, then
+`plans/archive/work-priorities_2026-10-22.md`), then `plans/now/short-term-goals.md`, then
 Easy. ED-1 changes Standard in one way only, exhaustion (decision 5);
 nothing else Standard does may change. Challenges stay Standard.
 
