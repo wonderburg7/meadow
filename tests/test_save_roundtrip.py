@@ -16,8 +16,11 @@ and Fermenting honey workers; winter -- the first spring after winter's bill
 (winter is paid in one go, COL-6, so no save is ever made inside one);
 challenge2 -- Challenge 2 at stage 2.7; orientation -- orientation flight on,
 with a bee switched into Forager just before the save. The mid golden has no
-drones: nothing a scenario can do makes the queen unmated (escalated to Dave
-with CQ-S0); tests/col9_drones_test.gd round-trips the drone fields instead.
+drones yet: today only an unmated queen lays them, and a scenario cannot make
+one. They wait for a follow-up gameplay slice that lets a mated queen lay drone
+eggs (Dave, 22 Oct 2026: real queens choose to lay drone eggs); cq_s0_mid is
+recaptured with drones once it lands. Until then tests/col9_drones_test.gd
+round-trips the drone fields.
 
 The goldens are captured on master by the matching
 test_scenarios/cq_s0_<name>_capture.json, each ending in a save_run:

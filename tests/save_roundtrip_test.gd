@@ -64,6 +64,10 @@ const GOLDENS := [
 ## Forager, so with orientation flight on she takes a flight to a new random
 ## point, and the re-save gains start_x/start_y and the search anchor that
 ## follows them. Both routes, since both go through _restore_bees.
+## Kept as a known difference (Dave, 22 Oct 2026). The intended fix, for a
+## later slice: saving.gd tells setup() not to start an orientation flight for
+## a restored bee, so she keeps no start point until her first trip, as saved.
+## Once it lands this entry fails as STALE, and the fix slice removes it.
 const ORIENTATION_GAINS_START := [
 	"bees[*].search_anchor_x", "bees[*].search_anchor_y",
 	"bees[*].start_x", "bees[*].start_y",
