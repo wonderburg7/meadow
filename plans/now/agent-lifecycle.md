@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-31 -- one status line names the slice's state and its single next action (L-31 to L-36 specified 22 Oct 2026, run in id order); separately, after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none | Verified: 2026-10-21
+Status: active | Owner: Dave / Claude | Next: L-32 -- a verified slice merges even when it leaves its lane dry (L-31 shipped 22 Oct 2026; L-32 to L-36 specified 22 Oct 2026, run in id order); separately, after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none | Verified: 2026-10-21
 
 ## Objective
 
@@ -50,7 +50,6 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-31 | one status line names the slice's state and its single next action | `tools/verify.ps1`, `tools/slice.ps1`, `tests/test_slice_status.py`, `plans/reference/closeout.md` | medium |
 | L-32 | a verified slice merges even when it leaves its lane dry | `tools/slice.ps1`, `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_two_lane_closeout.py`, `.claude/rules/documentation.md` | high |
 | L-33 | one admission check shared by `check_docs`, `start` and closeout | `tools/admission.py`, `tests/test_admission.py`, `tools/check_docs.py`, `tools/slice.ps1`, `plans/reference/queue-steward.md` | medium |
 | L-34 | a PreToolUse guard refuses the five closeout-breaking commands | `tools/guard_hook.py`, `tests/test_guard_hook.py`, `.claude/settings.json`, `.codex/hooks.json` | low |
@@ -84,45 +83,7 @@ L-28 shipped 2026-10-18; its specification is `plans/archive/L-28_2026-10-18.md`
 
 L-30 shipped 2026-10-18; its specification is `plans/archive/L-30_2026-10-18.md`.
 
-## L-31 -- one status line names the slice's state and its single next action
-
-**Now.** A fresh session cannot tell a slow verify (unit tests have a 482 s
-median, lifecycle 327 s) from a hung or orphaned one. WC-4 and PP-3 were
-each reopened by several "implement the next slice" sessions. In 21 days,
-about 25 preflight refusals said the previous worktree was still open. In
-PP-3, cleaning up processes believed to be orphaned interrupted a live
-unit suite.
-
-**Target.**
-1. `tools/verify.ps1` writes `meadow-verify-status.json` in the git common
-   dir. It holds the scope, the stage, the PIDs it started, the start time
-   and the time of the last output line. The file is refreshed at each
-   stage and every 30 s from the job-polling loop, and marked finished on
-   exit.
-2. `tools/slice.ps1 status` reads it with the closing journal and prints
-   one state and one next command. The states are `implementing`,
-   `ready-to-finish`, `verifying (<stage>, <elapsed>, last output <n>s ago)`,
-   `verify orphaned (PID gone, no result)`, `closing at <phase>` (run
-   `finish` to resume) and `lane dry`.
-3. A new `slice.ps1 stop-verify` stops only the PIDs listed in that file.
-4. When `start` finds its own lane's worktree open with the branch ahead,
-   it prints the status line and exits 0 instead of a stop block.
-5. `plans/reference/closeout.md` names `status` as the first command when
-   resuming.
-
-**Runtime policy.** The status file is written only while a verify runs
-(per stage, plus a 30 s heartbeat). Nothing per frame.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] L-31 -- one status line names the slice's state and its single next action**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-31 -- one status line names the slice's state and its single next action"
-- Files: `tools/verify.ps1`, `tools/slice.ps1`, `tests/test_slice_status.py`, `plans/reference/closeout.md`
-- Check: `python -m unittest tests.test_slice_status` passes (status reports verifying with a live PID, orphaned once that PID is gone, closing at a journal phase, and lane dry); `start` on its own lane's open, ahead worktree prints that status and exits 0; `.\tools\verify.ps1` is green
-- Proof: `absent: tools/verify.ps1 :: meadow-verify-status.json`
-- Next after: L-32
-```
+L-31 shipped 2026-10-22; its specification is `plans/archive/L-31_2026-10-22.md`.
 
 ## L-32 -- a verified slice merges even when it leaves its lane dry
 

@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] L-31 -- one status line names the slice's state and its single next action**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-31 -- one status line names the slice's state and its single next action"
-   - Files: `tools/verify.ps1`, `tools/slice.ps1`, `tests/test_slice_status.py`, `plans/reference/closeout.md`
-   - Check: `python -m unittest tests.test_slice_status` passes (status reports verifying with a live PID, orphaned once that PID is gone, closing at a journal phase, and lane dry); `start` on its own lane's open, ahead worktree prints that status and exits 0; `.\tools\verify.ps1` is green
-   - Proof: `absent: tools/verify.ps1 :: meadow-verify-status.json`
-   - Next after: L-32
-
-2. **[Claude] L-32 -- a verified slice merges even when it leaves its lane dry**
+1. **[Claude] L-32 -- a verified slice merges even when it leaves its lane dry**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-32 -- a verified slice merges even when it leaves its lane dry"
    - Files: `tools/slice.ps1`, `tools/refill_lane.py`, `tools/check_docs.py`, `tests/test_two_lane_closeout.py`, `.claude/rules/documentation.md`
    - Check: a `tests/test_two_lane_closeout.py` fixture closes a lane's last item while its successor is gated; `finish` merges, prints `lane dry`, and the next `start` refuses; `check_docs` warns rather than fails on the dry lane; `.\tools\verify.ps1` is green
    - Proof: `present: tools/refill_lane.py :: one that drops below the three-item floor, or that loses a lane entirely`
    - Next after: L-33
 
-3. **[Claude] L-33 -- one admission check shared by check_docs, start and closeout**
+2. **[Claude] L-33 -- one admission check shared by check_docs, start and closeout**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-33 -- one admission check shared by check_docs, start and closeout"
    - Files: `tools/admission.py`, `tests/test_admission.py`, `tools/check_docs.py`, `tools/slice.ps1`, `plans/reference/queue-steward.md`
    - Check: `python -m unittest tests.test_admission` passes on fixtures with a landed dependency, a file in the other lane, an open decision and an archived plan reference, each reported with its reason; `--clear-landed` removes the landed id from a fixture queue; `.\tools\verify.ps1` is green
    - Proof: `absent: tools/slice.ps1 :: admission.py`
    - Next after: L-34
 
-4. **[Claude] L-35 -- known baseline failures and stop causes are named, not rediagnosed**
+3. **[Claude] L-35 -- known baseline failures and stop causes are named, not rediagnosed**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-35 -- known baseline failures and stop causes are named, not rediagnosed"
    - Files: `tools/verify.ps1`, `tools/slice.ps1`, `tools/stop_causes.py`, `tests/test_stop_causes.py`, `tests/baseline_failures.json`, `tools/check_docs.py`
    - Check: `python -m unittest tests.test_stop_causes` passes, classifying sample logs for each category (including `Receive-Job: Access is denied`, a refused push and an import-cache boot failure); a listed baseline failure leaves its stage green with a `baseline` note, and an expired entry fails `check_docs`; `.\tools\verify.ps1` is green
    - Proof: `absent: tools/verify.ps1 :: baseline_failures`
    - Next after: L-36
 
-5. **[Claude] L-36 -- clean checkouts pass the doc checks; stray worktrees are reported**
+4. **[Claude] L-36 -- clean checkouts pass the doc checks; stray worktrees are reported**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-36 -- clean checkouts pass the doc checks; stray worktrees are reported"
    - Files: `tools/check_docs.py`, `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
    - Check: in a fresh worktree without `.claude/settings.local.json`, `python tools/check_docs.py` passes; `tests/test_slice_lifecycle.py` covers `doctor` listing an unregistered `.worktrees/*` folder and sweeping a pending deletion; `.\tools\verify.ps1` is green
    - Proof: `absent: tools/check_docs.py :: check-ignore`
    - Next after: none -- the L-31 to L-36 set is complete
+
+5. **[Claude] CQ-L2 -- every tool that reads GDScript as text survives gdformat**
+   - Plan: `plans/now/code-health.md` -- "CQ-L2 -- every tool that reads GDScript as text survives gdformat"
+   - Files: `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, `tests/test_gdformat_survival.py`
+   - Check: `python -m unittest tests.test_gdformat_survival` passes: each of the four tools gives the same result on a gdformat-ed copy of every tracked `.gd` as on the original; `python tests/source_checks.py` still passes
+   - Proof: `absent: tests/source_checks.py :: gdformat`
+   - Next after: CQ-L3
 
 ### Codex lane
 
