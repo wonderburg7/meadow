@@ -490,6 +490,7 @@ func set_overlay(mode: String) -> void:
 ## The colour this cell should take under the current overlay, and the
 ## short tag that goes with it. Returns an empty tag when the overlay is
 ## off or doesn't apply to this cell.
+# CQ-R5 shortens this function; until then the early returns stay.
 func _overlay_colour() -> Array:
 	match overlay:
 		"contents":
@@ -528,7 +529,7 @@ func _overlay_colour() -> Array:
 				"bee_bread": return [BEE_BREAD_COLOR, "b"]
 				"brood": return [Color(0.6, 1.0, 0.7), "e"]
 			return [Color(0.26, 0.26, 0.28), ""]
-	return []
+	return []  # gdlint: ignore=max-returns
 
 func set_selected(value: bool) -> void:
 	selected = value

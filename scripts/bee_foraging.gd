@@ -1162,7 +1162,7 @@ static func go_to_exit(bee: Node2D, delta: float) -> void:
 				bee.entrance_wait_target = _entrance_wait_spot(bee, -1)
 				bee.state = State.AT_ENTRANCE_SEEKING
 				return
-			elif past_grace and bee.avg_collection_rate > upper and not CrabSpider.recruitment_suppressed(bee):
+			if past_grace and bee.avg_collection_rate > upper and not CrabSpider.recruitment_suppressed(bee):
 				bee.hive.add_entrance_mentor(bee)
 				bee.timer = GameConfig.recruit_wait_seconds
 				bee.entrance_wait_target = _entrance_wait_spot(bee, 1)

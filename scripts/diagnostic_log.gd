@@ -705,6 +705,7 @@ func log_selection_panels_hidden(source: String, shown_count: int, selected_coun
 ## reaching into this file's private counters. subtype only matters for
 ## crab_spider_event ("kill"/"escape"/"alarm_flee"); the flat counters
 ## ignore it.
+# CQ-R9 shortens this function; until then the early returns stay.
 func event_count(type: String, subtype: String = "") -> int:
 	match type:
 		"brood_feed":
@@ -748,7 +749,7 @@ func event_count(type: String, subtype: String = "") -> int:
 		"forager_settled":
 			return _foragers_settled
 		_:
-			return 0
+			return 0  # gdlint: ignore=max-returns
 
 
 # --- the per-frame tick and session end ---------------------------

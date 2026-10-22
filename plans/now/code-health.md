@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds (queued with CQ-R7 and CQ-M3; CQ-M8 follows CQ-M3; CQ-S0's round-trip harness landed 22 Oct 2026, with one known difference escalated: a switched forager gains an orientation start point on reload) | Dependency: CQ-M8 waits for CQ-L1, which holds `scripts/bee_foraging.gd`; CQ-T3 waits for CQ-R7, the last queued slice in `scripts/hud.gd`; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); the rest is in "Dependencies" | Verified: 2026-10-22
+Status: active | Owner: Dave / Claude Code | Next: CQ-L2 -- every tool that reads GDScript as text survives gdformat (CQ-L1 landed 22 Oct 2026; queued with CQ-R7 and CQ-M3; CQ-M8 follows CQ-M3; CQ-S0's round-trip harness landed 22 Oct 2026, with one known difference escalated: a switched forager gains an orientation start point on reload) | Dependency: CQ-M8 waits for CQ-L1, which holds `scripts/bee_foraging.gd`; CQ-T3 waits for CQ-R7, the last queued slice in `scripts/hud.gd`; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); the rest is in "Dependencies" | Verified: 2026-10-22
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -99,7 +99,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 
 | Slice | Outcome | Files it owns (block has the full list) | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CQ-L1 | gdlint in verify with Dave's thresholds | `gdlintrc`, `tools/gdscript_style.py`, `tools/verify.ps1`, 13 hit sites | yes (RR-10 and L-30 landed 18 Oct 2026) | medium |
 | CQ-L2 | every tool that reads GDScript as text survives `gdformat` | `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, tests | after CQ-L1 | medium |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
 | CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot` | after CQ-R7, the last queued slice in `hud.gd` (CQ-T2 landed 21 Oct 2026) | low |
@@ -249,58 +248,40 @@ balance. "Leave" is a deliberate decision.
 | `main.gd` FLOWER_FIELD_*, `bee.gd` NUPTIAL_*, `bee_foraging` SCOUT_BOUTS | already named | C/D | leave; only a simulated balance pass promotes them (rule 2) |
 | stage timings, skill costs, species values | per entity | D | leave in their catalogues |
 
-## CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds
+CQ-L1 shipped 2026-10-22; its specification is `plans/archive/CQ-L1_2026-10-22.md`.
 
-**True now.** gdtoolkit is installed but nothing runs it. There is no `gdlintrc`, and
-`tests/rr7_silkscreen_fit_test.gd` starts with a BOM (`EF BB BF`), which gdtoolkit
-rejects. `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/` duplicates
-the installed `addons/copy_all_errors` byte for byte, and Godot imports it as a second
-folder.
+## CQ-L2 -- every tool that reads GDScript as text survives gdformat
+
+**True now.** CQ-L1 landed gdlint in `verify.ps1`. `gdformat` (gdtoolkit 4.5.0) is
+not run anywhere, and nothing proves that the tools which read `.gd` files as text
+(`tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`,
+`tools/sprites.py`) give the same answers on formatted code. `gdformat` rewrites
+indentation, blank lines, line wrapping and trailing commas; a parser written
+against the hand-formatted style can miss a call that CQ-L3's one-off reformat
+wraps over two lines.
 
 **When done:**
 
-1. A root `gdlintrc` holds exactly this:
-   - `disable:` `class-definitions-order`, `max-file-lines`, `max-line-length`
-   - `constant-name: (_?[A-Z][A-Z0-9]*(_[A-Z0-9]+)*|([A-Z][a-z0-9]*)+)`
-   - `class-variable-name: (_?[a-z][a-z0-9]*(_[a-z0-9]+)*|([A-Z][a-z0-9]*)+)`
-   - `function-variable-name: ([a-z][a-z0-9]*(_[a-z0-9]+)*|([A-Z][a-z0-9]*)+)`
-   - `function-arguments-number: 7`, `max-public-methods: 80`, `max-returns: 12`
-2. `tools/gdscript_style.py` runs `python -m gdtoolkit.linter` on
-   `git ls-files '*.gd'`, excluding `addons/`. It skips with one clear line when
-   gdtoolkit is missing, and pins `gdtoolkit==4.5.0` in its docstring.
-3. `tools/verify.ps1` runs it as a fail-fast stage named `gdscript style`, straight
-   after `godot boot`.
-4. The BOM is stripped and the stray folder is `git rm`-ed.
-5. The 13 hits are fixed:
-   - duplicated-load: `fog_of_war.gd:247`, `skill_tree_panel.gd:374`, two tests;
-   - no-elif-return: `hive.gd` ×2, `bee_foraging.gd`;
-   - no-else-return: `flower.gd`;
-   - max-returns: `bee.gd::idle_reason`, `bee.gd::_task_line`,
-     `diagnostic_log.gd::event_count`, `hive_cell.gd::_overlay_colour`,
-     `input_selection.gd::_finish_drag`. Each carries
-     `# gdlint: ignore=max-returns` naming the R slice that will shorten it.
-6. The rule-text edit for D4 is made.
+1. `tests/test_gdformat_survival.py` copies the tracked `.gd` files (outside
+   `addons/`) into a temporary folder, runs `python -m gdtoolkit.formatter` over the
+   copy, and runs each of the four tools' parsing functions on both the original and
+   the copy. Every result is identical. It skips with one line where gdtoolkit is
+   missing.
+2. Each parser that differs is fixed in its own tool, to read the formatted form as
+   well as the current one. A tool that reads a line at a time learns to join a
+   wrapped call first.
+3. Nothing is reformatted in the repository: CQ-L3 does that.
 
-**Invariants.** Each early-return rewrite keeps the same branches. Nothing else is
-restyled.
-
-The block's `Files:` line cannot list a path without a suffix, so it omits the new
-`gdlintrc` and the copy's `.gitignore` and `LICENSE`; this slice owns them too.
+**Invariants.** A tool's output on today's unformatted source does not change.
 
 ```queue
-**[Claude] CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds**
-- Plan: `plans/now/code-health.md` -- "CQ-L1 -- gdlint runs in verify.ps1 with Dave's thresholds"
-- Files: `tools/gdscript_style.py`, `tests/test_gdscript_style.py`, `tools/verify.ps1`, `tests/rr7_silkscreen_fit_test.gd`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/README.md`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/addons/copy_all_errors/plugin.cfg`, `godot-copy-all-errors-5ab5055222311666b16982270e1fac051cdd17aa/addons/copy_all_errors/plugin.gd`, `scripts/fog_of_war.gd`, `scripts/skill_tree_panel.gd`, `scripts/hive.gd`, `scripts/bee_foraging.gd`, `scripts/flower.gd`, `scripts/bee.gd`, `scripts/diagnostic_log.gd`, `scripts/hive_cell.gd`, `scripts/input_selection.gd`, `tests/bs14_saved_skill_policy_test.gd`, `tests/col10_succession_test.gd`, `.claude/rules/gdscript.md`, `FUNCTION_MAP.md`
-- Check: `python tools/gdscript_style.py` exits 0 with zero gdlint problems over every tracked `.gd` outside `addons/`; `tests/test_gdscript_style.py` covers the missing-gdtoolkit skip; `.\tools\verify.ps1` shows a green `gdscript style` stage
-- Proof: `absent: tools/verify.ps1 :: gdscript style`
-- Next after: CQ-L2
+**[Claude] CQ-L2 -- every tool that reads GDScript as text survives gdformat**
+- Plan: `plans/now/code-health.md` -- "CQ-L2 -- every tool that reads GDScript as text survives gdformat"
+- Files: `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, `tests/test_gdformat_survival.py`
+- Check: `python -m unittest tests.test_gdformat_survival` passes: each of the four tools gives the same result on a gdformat-ed copy of every tracked `.gd` as on the original; `python tests/source_checks.py` still passes
+- Proof: `absent: tests/source_checks.py :: gdformat`
+- Next after: CQ-L3
 ```
-
-CQ-T1 shipped 2026-10-21; its specification is `plans/archive/CQ-T1_2026-10-21.md`.
-
-CQ-T2 shipped 2026-10-21; its specification is `plans/archive/CQ-T2_2026-10-21.md`.
-
-CQ-S0 shipped 2026-10-22; its specification is `plans/archive/CQ-S0_2026-10-22.md`.
 
 ## CQ-S1 -- Flower owns its save fields
 

@@ -86,7 +86,7 @@ func _kill_queen_with_gynes() -> void:
 	_heir.secondary_role = _main.Bee.Role.FORAGER
 	# The oldest flies off this frame: still a valid node until it ends.
 	leaving.leave_to_found_colony()
-	load("res://scripts/bee_survival.gd").die(_old_queen, "debug")
+	_kill_queen()
 	_phase = "first_death"
 	_phase_frame = _frame
 
@@ -166,9 +166,14 @@ func _watch_settled() -> void:
 	# No gyne left: her death ends the run as before.
 	_younger.is_gyne = false
 	_old_queen = _main.queen
-	load("res://scripts/bee_survival.gd").die(_old_queen, "debug")
+	_kill_queen()
 	_phase = "second_death"
 	_phase_frame = _frame
+
+
+# Loaded here, not preloaded: a preload cannot see the autoloads at parse time.
+func _kill_queen() -> void:
+	load("res://scripts/bee_survival.gd").die(_old_queen, "debug")
 
 
 func _watch_loss() -> void:
