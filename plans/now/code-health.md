@@ -410,7 +410,7 @@ puts the new rows in no save or profile. No existing display string changes.
 
 **Gate.** It waited for RR-11 (`plans/now/run-repairs.md`), which also edited
 `game_config.gd` and `settings_catalogue.gd`; RR-11 landed 21 Oct 2026. Its successor,
-CQ-M8, gets its block from the session that claims this one.
+CQ-M8, has its section and block below.
 
 ```queue
 **[Claude] CQ-M3 -- rival starting stores become GameConfig rows; rebalance consts named**
@@ -419,6 +419,36 @@ CQ-M8, gets its block from the session that claims this one.
 - Check: `python tests/balance_tests.py` passes with its rival section unchanged; `python -m unittest tests.test_si1_run_state` passes, including the new fresh-rival and `restore({})` assertions; `tests/test_save_migrations.py`, `tests/test_signal_catalogue.py` and the settings-row source checks pass; `.\tools\verify.ps1` is green
 - Proof: `present: scripts/rival_hive.gd :: nectar = float(data.get("nectar", 120.0))`
 - Next after: CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named
+```
+
+## CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named
+
+**True now** (22 Oct 2026, after CQ-M3). Three modules walk a bee to the hive door with
+the same three lines: `bee.world.hive_entrance_inside()` (or `bee.position` with no
+world), `BeeMovement.move_towards`, then a `distance_to(exit_point) < 8.0` test.
+They are `bee_foraging.gd::go_to_exit`, `bee_mining.gd::miner_go_to_exit` and
+`bee_building.gd::builder_go_to_waste_exit`. Each module also tests arrival with bare
+reach numbers (`bee_building.gd` 2.0, 8.0, 10.0; `bee_foraging.gd` 6.0;
+`bee_mining.gd` 8.0).
+
+**When done:**
+
+- `BeeMovement.walk_to_hive_exit(bee, delta) -> bool` does the three lines and returns
+  true once the bee is within `EXIT_REACH` (8.0, a named const in `bee_movement.gd`).
+  The three callers use it; what each does on arrival stays where it is.
+- Each module's remaining reach literal becomes a named const at the top of that
+  module (for example `STAND_REACH`, `CELL_REACH`), same value, same behaviour.
+
+**Invariants.** Every value stays the same. No save key, setting or display string
+changes.
+
+```queue
+**[Claude] CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named**
+- Plan: `plans/now/code-health.md` -- "CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named"
+- Files: `scripts/bee_movement.gd`, `scripts/bee_foraging.gd`, `scripts/bee_mining.gd`, `scripts/bee_building.gd`, `FUNCTION_MAP.md`
+- Check: `python tests/source_checks.py` passes; `python tools/prefinish.py` is green; `.\tools\verify.ps1` is green
+- Proof: `present: scripts/bee_mining.gd :: static func miner_go_to_exit`
+- Next after: CQ-M4 -- Challenge level ids named in `levels.gd`
 ```
 
 CQ-R0 shipped 2026-10-21; its specification is `plans/archive/CQ-R0_2026-10-21.md`.

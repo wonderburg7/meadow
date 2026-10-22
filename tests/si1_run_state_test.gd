@@ -136,6 +136,12 @@ func _test_legacy() -> void:
 	_check(_main.rival.alive, "legacy load collapsed a fresh rival")
 	_check(is_equal_approx(_main.rival.population, max(4.0, root.get_node("GameConfig").rival_starting_bees)), "legacy load changed starting rival population")
 	_check(is_equal_approx(_main.rival.nectar, 120.0), "legacy load changed starting rival nectar")
+	_check(is_equal_approx(_main.rival.pollen, 40.0), "fresh rival pollen is not 40")
+	_check(is_equal_approx(_main.rival.forager_share, 0.7), "fresh rival forager share is not 0.7")
+	_main.rival.restore({})
+	_check(is_equal_approx(_main.rival.nectar, 120.0), "restore({}) nectar is not 120")
+	_check(is_equal_approx(_main.rival.pollen, 40.0), "restore({}) pollen is not 40")
+	_check(is_equal_approx(_main.rival.forager_share, 0.7), "restore({}) forager share is not 0.7")
 
 func _check_saved_active_state(where: String) -> void:
 	var session: Node = root.get_node("Session")

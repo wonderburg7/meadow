@@ -954,6 +954,30 @@ const TUNABLES := [
 	},
 	{
 		"persist": "none",
+		"key": "rival_starting_min_population", "label": "Rival minimum start bees", "step": 1.0, "min": 1.0,
+		"category": "The rival colony",
+		"tip": "The fewest bees the rival colony will start with, whatever the start-bees setting says. Takes effect on Restart Run.",
+	},
+	{
+		"persist": "none",
+		"key": "rival_starting_nectar", "label": "Rival start nectar", "step": 10.0, "min": 0.0,
+		"category": "The rival colony",
+		"tip": "How much nectar the rival colony's stores hold when a run begins. Takes effect on Restart Run.",
+	},
+	{
+		"persist": "none",
+		"key": "rival_starting_pollen", "label": "Rival start pollen", "step": 5.0, "min": 0.0,
+		"category": "The rival colony",
+		"tip": "How much pollen the rival colony's stores hold when a run begins. Takes effect on Restart Run.",
+	},
+	{
+		"persist": "none",
+		"key": "rival_starting_forager_share", "label": "Rival start forager share", "step": 0.05, "min": 0.0, "max": 1.0,
+		"category": "The rival colony",
+		"tip": "The share of the rival's bees that forage when a run begins; the rest raise brood. It rebalances itself from there. Takes effect on Restart Run.",
+	},
+	{
+		"persist": "none",
 		"key": "rival_max_bees", "label": "Rival max bees", "step": 5.0, "min": 1.0,
 		"category": "The rival colony",
 		"tip": "The most bees the rival can ever reach. This is the main dial for how much competition it eventually represents.",

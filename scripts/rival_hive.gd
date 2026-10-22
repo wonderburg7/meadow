@@ -35,6 +35,12 @@ const FORAGER_SPEED := 95.0
 ## something is short -- see `_rebalance`.
 const MIN_FORAGER_SHARE := 0.45
 const MAX_FORAGER_SHARE := 0.85
+## `_rebalance` moves the share by this much a tick; the colony counts as
+## short of food below this fraction of the brood gate's days, and as
+## comfortable above `COMFORTABLE_DAYS` days of food.
+const REBALANCE_STEP := 0.05
+const SHORT_OF_FOOD_FACTOR := 0.75
+const COMFORTABLE_DAYS := 90.0
 
 var hive_position: Vector2 = Vector2.ZERO
 var world: Node2D = null
@@ -44,7 +50,7 @@ var population: float = 0.0
 var nectar: float = 0.0
 var pollen: float = 0.0
 var brood: float = 0.0
-var forager_share: float = 0.7
+var forager_share: float = GameConfig.rival_starting_forager_share
 var alive: bool = true
 
 ## Sim seconds since the last tick. The whole colony updates once a
@@ -84,9 +90,9 @@ func _ready() -> void:
 	label.add_theme_color_override("font_color", Color(1.0, 0.75, 0.75))
 	add_child(label)
 
-	population = max(4.0, GameConfig.rival_starting_bees)
-	nectar = 120.0
-	pollen = 40.0
+	population = max(GameConfig.rival_starting_min_population, GameConfig.rival_starting_bees)
+	nectar = GameConfig.rival_starting_nectar
+	pollen = GameConfig.rival_starting_pollen
 
 	for i: int in range(SHOWN_FORAGERS):
 		foragers.append(_make_forager())
@@ -102,11 +108,11 @@ func save_data() -> Dictionary:
 	}
 
 func restore(data: Dictionary) -> void:
-	population = float(data.get("population", max(4.0, GameConfig.rival_starting_bees)))
-	nectar = float(data.get("nectar", 120.0))
-	pollen = float(data.get("pollen", 40.0))
+	population = float(data.get("population", max(GameConfig.rival_starting_min_population, GameConfig.rival_starting_bees)))
+	nectar = float(data.get("nectar", GameConfig.rival_starting_nectar))
+	pollen = float(data.get("pollen", GameConfig.rival_starting_pollen))
 	brood = float(data.get("brood", 0.0))
-	forager_share = float(data.get("forager_share", 0.7))
+	forager_share = float(data.get("forager_share", GameConfig.rival_starting_forager_share))
 	if not bool(data.get("alive", true)):
 		if alive:
 			_collapse()
@@ -207,10 +213,10 @@ func _advance_colony(elapsed: float) -> void:
 ## forages; comfortable, more bees go on brood and the colony grows.
 func _rebalance() -> void:
 	var days_of_food: float = nectar / max(0.01, population * GameConfig.rival_eat_per_bee)
-	if days_of_food < GameConfig.rival_brood_gate_days * 0.75:
-		forager_share = min(MAX_FORAGER_SHARE, forager_share + 0.05)
-	elif days_of_food > 90.0:
-		forager_share = max(MIN_FORAGER_SHARE, forager_share - 0.05)
+	if days_of_food < GameConfig.rival_brood_gate_days * SHORT_OF_FOOD_FACTOR:
+		forager_share = min(MAX_FORAGER_SHARE, forager_share + REBALANCE_STEP)
+	elif days_of_food > COMFORTABLE_DAYS:
+		forager_share = max(MIN_FORAGER_SHARE, forager_share - REBALANCE_STEP)
 
 ## How much forage is left within range. Sampled from the real flowers,
 ## so the player stripping a patch genuinely costs the rival income --
