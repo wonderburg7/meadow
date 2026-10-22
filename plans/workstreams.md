@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/FR-1c` (`codex/FR-1c`) | Codex | diagnose foraging-stage behaviour | Codex | in progress | none | `plans/now/forager-recruitment.md` FR-1c -- diagnose foraging-stage behaviour |
+| `.worktrees/CQ-S0` (`claude/CQ-S0`) | Claude | golden-save round-trip harness | Claude | in progress | none | `plans/now/code-health.md` CQ-S0 -- golden-save round-trip harness |
