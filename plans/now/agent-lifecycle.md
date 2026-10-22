@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-32 -- a verified slice merges even when it leaves its lane dry (L-31 shipped 22 Oct 2026; L-32 to L-36 specified 22 Oct 2026, run in id order); separately, after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none | Verified: 2026-10-21
+Status: active | Owner: Dave / Claude | Next: L-33 -- one admission check shared by check_docs, start and closeout (L-32 shipped 22 Oct 2026; L-33 to L-36 specified 22 Oct 2026, run in id order); separately, after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none | Verified: 2026-10-22
 
 ## Objective
 

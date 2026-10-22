@@ -693,6 +693,98 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         self.assertEqual(0, resumed.returncode, resumed.stdout + resumed.stderr)
         self.assert_a1_closed_out()
 
+    # --- L-32: a verified slice merges even when it leaves its lane dry ---
+
+    GATED_PLAN = (
+        "# Gated fixture plan\n\n### A-2 -- claude gated\n\nWaits on a hands-on check.\nLevel: low\n\n"
+        "```queue-gated\n"
+        "**[Claude] A-2 -- claude gated**\n"
+        "- Plan: `plans/now/gated.md` -- \"A-2 -- claude gated\"\n"
+        "- Files: `scripts/gated.gd`\n"
+        "- Check: deterministic, claude gated\n"
+        "- Proof: `absent: scripts/gated.gd :: new_function`\n"
+        "- Next after: none -- the claude gated plan is complete.\n"
+        "```\n"
+    )
+
+    def use_a_lane_with_one_item_and_a_gated_successor(self):
+        """The real closeout tools over a queue whose Claude lane holds only
+        A-1, whose `Next after:` names A-2 -- specified, but fenced
+        ```queue-gated in a live plan and not deferred in NEXTSTEPS.md. One
+        Codex item, so closing A-1 also takes the queue under the floor."""
+        self.use_real_closeout_tools()
+        (self.root / "plans" / "now").mkdir()
+        (self.root / "plans" / "now" / "gated.md").write_text(self.GATED_PLAN, encoding="utf-8")
+        (self.root / "scripts" / "gated.gd").write_text("func existing():\n\tpass\n", encoding="utf-8")
+        a1 = self.real_item(1, "Claude", "A-1", "claude fixture", "sample.gd").replace(
+            "Next after: none -- the claude fixture plan is complete.",
+            "Next after: A-2 -- claude gated")
+        (self.root / "NEXTSTEPS.md").write_text(
+            "# Next steps\n\n## Next up\n\n### Claude lane\n\n" + a1 + "\n"
+            + "### Codex lane\n\n"
+            + self.real_item(1, "Codex", "B-1", "codex fixture", "other.gd") + "\n"
+            + "## Not in the queue, and why\n\n- Nothing is held back in this fixture.\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", "-A"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "one-item lane, gated successor"], cwd=self.root,
+                       capture_output=True, text=True, check=True)
+        subprocess.run(["git", "push", "origin", "master"], cwd=self.root, capture_output=True, text=True, check=True)
+
+    def test_closing_a_lanes_last_item_with_a_gated_successor_merges_and_reports_dry(self):
+        """WC-4, L-25, GD-2b, COL-8 and AR-5 each verified and then stopped at
+        the refill gate because closing them left the lane short. Dave, 22 Oct
+        2026: the floor governs admission only. finish merges, says the lane
+        is dry, the next start refuses the empty lane, and check_docs warns
+        rather than fails on the queue the merge left."""
+        self.use_a_lane_with_one_item_and_a_gated_successor()
+        worktree = self.claim_and_code_a1()
+
+        finished = self.run_finish(worktree)
+        output = finished.stdout + finished.stderr
+        self.assertEqual(0, finished.returncode, output)
+        self.assertIn("lane dry: Claude -- refill before the next start", finished.stdout)
+        self.assertIn("Merged:       yes, to master now", finished.stdout)
+        self.assertIn("Next slice:   none -- the Claude lane is empty (A-2 is fenced queue-gated in its plan)",
+                      finished.stdout)
+        self.assertFalse(self.branch_exists("claude/A-1"))
+        self.assertIn("func new_function():", (self.root / "scripts" / "sample.gd").read_text(encoding="utf-8"))
+        queue = (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8")
+        self.assertNotIn("A-1", queue)
+        self.assertNotIn("[Claude]", queue)
+        self.assertIn("1. **[Codex] B-1", queue)
+
+        refused = self.run_slice("start", "-Lane", "Claude")
+        self.assertNotEqual(0, refused.returncode, refused.stdout + refused.stderr)
+        self.assertIn("no unclaimed [Claude] item", refused.stdout + refused.stderr)
+
+        saved_root = check_docs.ROOT
+        try:
+            check_docs.ROOT = self.root
+            errors, warnings = [], []
+            check_docs.check_next_steps(errors, warnings, text=queue)
+        finally:
+            check_docs.ROOT = saved_root
+        self.assertEqual([], errors)
+        self.assertTrue(any("lane dry: Claude" in warning for warning in warnings), warnings)
+        self.assertTrue(any("under the floor of 3" in warning for warning in warnings), warnings)
+
+    def test_a_successor_neither_queued_deferred_nor_gated_still_stops_the_gate(self):
+        """The successor rule is unchanged (L-32 Target 3): a `Next after:`
+        naming a slice with no lane item, no deferral and no gated block is
+        still a refill the session owes, and the gate holds the merge."""
+        self.use_a_lane_with_one_item_and_a_gated_successor()
+        (self.root / "plans" / "now" / "gated.md").unlink()
+        subprocess.run(["git", "add", "-A"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "drop the gated block"], cwd=self.root,
+                       capture_output=True, text=True, check=True)
+        worktree = self.claim_and_code_a1()
+
+        held = self.run_finish(worktree)
+        self.assertNotEqual(0, held.returncode)
+        self.assertIn("neither in the [Claude] lane", held.stdout + held.stderr)
+        self.assertTrue(self.branch_exists("claude/A-1"))
+
     # --- L-19: queue writes and a sibling's queue edit during a finish ---
 
     # The backlog is read from plans/now/ (check_docs.current_plans).

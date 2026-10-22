@@ -151,6 +151,16 @@ def check_context_layout(errors: list[str]) -> None:
 # item to name the slice that follows it or to state that its plan is
 # finished. Together those two rules are what makes the queue refill itself:
 # promoting an item's named successor is a lookup, not an investigation.
+#
+# Dave, 22 Oct 2026 (L-32), in place of D-2's use at closeout: the floor
+# governs admission only. A verified slice always merges. When closing it
+# empties its lane, takes the queue under the floor or leaves only a gated
+# successor, `finish` merges anyway and prints `lane dry: <lane> -- refill
+# before the next start`; `start` refuses the empty lane, and the refill
+# happens before the next claim. So check_next_steps *warns* on a queue under
+# the floor or a lane with no item, rather than failing: as an error it
+# stopped WC-4, L-25, GD-2b, COL-8 and AR-5 at the refill gate after their
+# branches had verified. The successor rule below is unchanged.
 QUEUE_SIZE_MIN = 3
 # Each lane holds up to five items under its own "### <Lane> lane" heading
 # (Dave, 17 Sep 2026: two lanes, five next steps each). The floor above still
@@ -315,8 +325,10 @@ def check_queue_files(errors: list[str], text: str | None = None) -> None:
 
 
 def check_next_steps(errors: list[str], warnings: list[str], text: str | None = None) -> None:
-    """The queue holds at least QUEUE_SIZE_MIN ready slices, at most
-    LANE_SIZE_MAX per lane, in two lanes that share no file.
+    """At most LANE_SIZE_MAX ready slices per lane, in two lanes that share
+    no file. A queue under QUEUE_SIZE_MIN, or a lane with no item, is a dry
+    lane: a warning since L-32, never an error, because a verified slice
+    merges even when it leaves its lane dry.
 
     `text` lets tools/refill_lane.py check a candidate queue before writing
     it; the other queue checks take it for the same reason."""
@@ -329,8 +341,9 @@ def check_next_steps(errors: list[str], warnings: list[str], text: str | None = 
     section = NEXT_UP_SECTION.search(text).group(1)
 
     if len(items) < QUEUE_SIZE_MIN:
-        errors.append(
-            f"NEXTSTEPS.md: expected at least {QUEUE_SIZE_MIN} next-step items, found {len(items)}"
+        warnings.append(
+            f"NEXTSTEPS.md: lane dry -- the queue holds {len(items)} item(s), under the floor "
+            f"of {QUEUE_SIZE_MIN}; refill before the next start"
         )
 
     lane_order: list[tuple[str, str]] = []
@@ -374,7 +387,7 @@ def check_next_steps(errors: list[str], warnings: list[str], text: str | None = 
                 f"NEXTSTEPS.md: the {lane} lane holds {lane_size} items; at most {LANE_SIZE_MAX}"
             )
         if lane not in lanes_present:
-            errors.append(f"NEXTSTEPS.md: no [{lane}] item -- both lanes must have work to run in parallel")
+            warnings.append(f"NEXTSTEPS.md: lane dry: {lane} -- no [{lane}] item; refill before the next start")
 
     # Only ready work belongs here; anything waiting on Dave lives under "Not in the queue".
     lowered = section.lower()
@@ -471,8 +484,9 @@ def check_queue_lookahead(warnings: list[str], text: str | None = None,
     Reuses the function behind `refill_lane.py --top-up --dry-run --json`
     (L-18's `dry_after_report`): when deleting the lane's first item would
     empty the lane or take the queue under QUEUE_SIZE_MIN and the top-up adds
-    nothing, `finish` would stop at the refill gate. Say so while the slice
-    can still be specified before it is built. A warning, never an error."""
+    nothing, `finish` would merge it and leave the lane dry (L-32). Say so
+    while the next slice can still be specified before it is built. A
+    warning, never an error."""
     try:
         import refill_lane  # imported here: refill_lane imports this module
     except ModuleNotFoundError:
