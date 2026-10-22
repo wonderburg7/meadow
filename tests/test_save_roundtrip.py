@@ -58,6 +58,17 @@ ROLE_FORAGER = 0     # roles.gd FORAGER
 TIMEOUT_SECONDS = 300
 
 
+def _partial_output(exc: subprocess.TimeoutExpired) -> str:
+    """What a timed-out run printed. On a timeout subprocess may hand the
+    streams back as bytes even in text mode, or not at all."""
+    parts = []
+    for stream in (exc.stdout, exc.stderr):
+        if isinstance(stream, bytes):
+            stream = stream.decode("utf-8", errors="replace")
+        parts.append(stream or "")
+    return "\n".join(parts)
+
+
 def _golden(name: str) -> dict:
     return json.loads((SAVES / ("cq_s0_%s.json" % name)).read_text(encoding="utf-8"))
 
@@ -107,10 +118,14 @@ class SaveRoundTripTest(unittest.TestCase):
         if not gcc.engine_can_boot(godot):
             self.skipTest("the installed Godot engine cannot initialise headlessly here")
         self.assertTrue(gcc.prepare_cache(godot), "could not prepare the Godot import cache")
-        finished = subprocess.run(
-            [godot, "--headless", "--disable-crash-handler", "--path", str(ROOT), "--script", TEST_SCRIPT],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=TIMEOUT_SECONDS,
-        )
+        try:
+            finished = subprocess.run(
+                [godot, "--headless", "--disable-crash-handler", "--path", str(ROOT), "--script", TEST_SCRIPT],
+                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired as exc:
+            self.fail("the round trip did not finish within %d seconds; output so far:\n%s"
+                      % (TIMEOUT_SECONDS, _partial_output(exc)[-3000:]))
         output = gcc.combined_output(finished)
         report = "\n".join(line for line in output.splitlines() if line.startswith("CQS0"))
         self.assertEqual(gcc.failing_lines(output), [], "script errors:\n" + output[-3000:])

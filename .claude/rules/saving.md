@@ -40,10 +40,12 @@ not merely remove what the checkpoint lacks.
 
 **A save survives its own round-trip** (CQ-S0, 22 Oct 2026). `python -m
 unittest tests.test_save_roundtrip` runs `tests/save_roundtrip_test.gd`: it
-replays each golden in `tests/fixtures/saves/` by the load route and by an
-in-place `saving._restore`, re-saves it in the same frame and compares the two
-as canonical JSON, then loads and re-saves `save_v1.json`, `save_v2.json` and a
-v6 save. Refactoring the save code leaves the goldens untouched; only a
+replays each golden in `tests/fixtures/saves/` by the load route and by
+`saving._restore` (the function the Challenge rollback and `restore_slot`
+call) over a freshly built, paused world of the same run, re-saves it in the
+same frame and compares the two as canonical JSON, then loads and re-saves
+`save_v1.json`, `save_v2.json` and a v6 save. It does not cover restoring over
+a world that has been running. Refactoring the save code leaves the goldens untouched; only a
 deliberate format change recaptures them, from `test_scenarios/cq_s0_*_capture.json`
 (the test's docstring says how). A difference a route makes today is named in
 the test's `KNOWN_DIFFERENCES` and escalated to Dave, never silently accepted:

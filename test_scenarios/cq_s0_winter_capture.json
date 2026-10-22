@@ -12,8 +12,6 @@
   },
   "actions": [
     {"do": "set_cell_contents", "cell": {"built_index": 0}, "resource": "nectar", "amount": 60.0},
-    
-    
     {"do": "wait", "seconds": 110},
     {"do": "save_run", "name": "CQ-S0 winter"}
   ],

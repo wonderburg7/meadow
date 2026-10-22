@@ -9,10 +9,16 @@ extends SceneTree
 ##                apply the saved settings, level and skill policy, then build
 ##                the world with Session.load_pending set, so main.gd::_ready
 ##                replays the save;
-##   in_place  -- the Challenge rollback and restore_slot's route: build the
-##                run's world as a new run, then saving.gd::_restore over it.
-## The re-saved file is compared with the golden as canonical JSON: keys
-## sorted, and soil `present`, hive `keep_clear` and `fog` compared as sets.
+##   in_place  -- saving.gd::_restore, the function the Challenge rollback and
+##                restore_slot call, over a freshly built world of the same run
+##                that has sat paused for BOOT_FRAMES frames. It does not cover
+##                restoring over a world that has been running.
+## The re-saved file is compared with the golden as canonical JSON, keys
+## sorted. A list whose order is only the order something was walked in is
+## compared by key: bees by id, cells and marked soil by q/r, flowers by place
+## and species; soil `present`, hive `keep_clear` and `fog` as sets. Every
+## other list keeps its order -- bodies among them, which the save promises
+## oldest first.
 ##
 ## The world each golden belongs to is rebuilt from its capture scenario
 ## (test_scenarios/cq_s0_<name>_capture.json), the way
@@ -25,15 +31,15 @@ extends SceneTree
 ## must itself survive a second load unchanged. The v6 save's re-save must
 ## also equal the early golden it was made from.
 ##
-## A difference listed in KNOWN_DIFFERENCES is reported as KNOWN, not a
-## failure; one listed there that no longer happens fails as STALE, so the
-## list cannot outlive the fault it names.
-
+## A difference matched by KNOWN_DIFFERENCES is reported as KNOWN, not a
+## failure; an entry there that no longer matches anything fails as STALE, so
+## the list cannot outlive the fault it names.
+##
+## Scratch files carry this process's id, so runs side by side (verify.ps1's
+## parallel modules, two worktrees) never write or delete each other's.
 
 const GOLDEN_DIR := "res://tests/fixtures/saves/"
 const CAPTURE_DIR := "res://test_scenarios/"
-const OUT_PATH := "user://cq_s0_resaved.json"
-const SCRATCH_PREFIX := "user://cq_s0_"
 const BOOT_FRAMES := 10
 const MAX_LINES_PER_CASE := 40
 ## Godot's JSON writes a float to 15 significant digits, so a value derived
@@ -41,6 +47,8 @@ const MAX_LINES_PER_CASE := 40
 ## a unit out in that last digit. Relative to the value, far below anything
 ## the simulation could tell apart, and far above that rounding.
 const FLOAT_TOLERANCE := 1.0e-12
+## roles.gd FORAGER. Not loaded from roles.gd: it is only a number here.
+const ROLE_FORAGER := 0
 
 ## Which routes each golden takes. A Challenge save cannot be loaded the
 ## ordinary way (debug_panel.gd::set_save_load_enabled), so Challenge 2's
@@ -53,9 +61,12 @@ const GOLDENS := [
 	{"name": "orientation", "routes": ["load", "in_place"]},
 ]
 
-## "<case>" -> the difference paths (indices written [*]) that route is known
-## to produce today. Each is escalated to Dave rather than fixed here: making
-## a route idempotent changes what a loaded run does.
+## "<case>" -> what that route is known to change today, each entry
+## {"bees": <which bees, see _eligible_bees>, "gains": [fields]}: only those
+## bees, and only fields the re-save has and the golden lacks. Any other bee
+## gaining them, or any bee losing or changing them, still fails. Each is
+## escalated to Dave rather than fixed here: making a route idempotent
+## changes what a loaded run does.
 ##
 ## Orientation flight (CQ-S0, 22 Oct 2026): a bee switched into Forager after
 ## she was made has no start point until her first trip (bee.gd::setup takes
@@ -68,18 +79,26 @@ const GOLDENS := [
 ## later slice: saving.gd tells setup() not to start an orientation flight for
 ## a restored bee, so she keeps no start point until her first trip, as saved.
 ## Once it lands this entry fails as STALE, and the fix slice removes it.
-const ORIENTATION_GAINS_START := [
-	"bees[*].search_anchor_x", "bees[*].search_anchor_y",
-	"bees[*].start_x", "bees[*].start_y",
-]
+const ORIENTATION_GAINS_START := {
+	"bees": "forager_without_start_point",
+	"gains": ["search_anchor_x", "search_anchor_y", "start_x", "start_y"],
+}
 const KNOWN_DIFFERENCES := {
-	"orientation:load": ORIENTATION_GAINS_START,
-	"orientation:in_place": ORIENTATION_GAINS_START,
+	"orientation:load": [ORIENTATION_GAINS_START],
+	"orientation:in_place": [ORIENTATION_GAINS_START],
 }
 
-## Keys whose arrays are compared as sets: their order is whatever order a
-## dictionary or the fog grid happened to be walked in.
+## Lists compared as sets: their order is whatever order a dictionary or the
+## fog grid happened to be walked in, and a member has nothing but itself.
 const SET_PATHS := [["soil", "present"], ["hive", "keep_clear"], ["fog"]]
+## Lists compared member by member under a key made of these fields, for the
+## same reason: bees come from a node group, marked soil from a dictionary.
+const KEYED_PATHS := [
+	{"path": ["bees"], "key": ["id"]},
+	{"path": ["cells"], "key": ["q", "r"]},
+	{"path": ["soil", "marked"], "key": ["q", "r"]},
+	{"path": ["flowers"], "key": ["x", "y", "species"]},
+]
 
 ## Loaded on the first frame: each names the GameConfig or Session autoload,
 ## which a --script SceneTree cannot compile against before they exist.
@@ -94,8 +113,9 @@ var _frame := 0
 var _config_snapshot: Dictionary = {}
 var _old_level := 0
 var _failures: PackedStringArray = PackedStringArray()
-var _known_seen: Dictionary = {}
-var _scratch_files: Array = [OUT_PATH]
+var _scratch_prefix := ""
+var _out_path := ""
+var _scratch_files: Array = []
 var _compared := 0
 
 ## Autoloads are read on the first frame, as si1_run_state_test.gd does.
@@ -103,6 +123,9 @@ func _build_jobs() -> void:
 	SaveGame = load("res://scripts/save_game.gd")
 	Levels = load("res://scripts/levels.gd")
 	SaveMigrations = load("res://scripts/save_migrations.gd")
+	_scratch_prefix = "user://cq_s0_%d_" % OS.get_process_id()
+	_out_path = _scratch_prefix + "resaved.json"
+	_scratch_files.append(_out_path)
 	for key: String in SaveGame.saved_settings():
 		_config_snapshot[key] = root.get_node("GameConfig").get(key)
 	_old_level = root.get_node("Session").starting_level
@@ -131,7 +154,7 @@ func _write_v6() -> String:
 	data["version"] = 6
 	for key: String in SaveMigrations.MIGRATED_SETTINGS_V7:
 		data["settings"].erase(key)
-	var path := SCRATCH_PREFIX + "v6.json"
+	var path := _scratch_prefix + "v6.json"
 	_write(path, JSON.stringify(data))
 	return path
 
@@ -186,13 +209,13 @@ func _start(job: Dictionary) -> void:
 
 ## The re-save, taken in the same frame as the replay.
 func _resave_and_compare() -> void:
-	var saved: bool = SaveGame.save(_main, OUT_PATH)
+	var saved: bool = SaveGame.save(_main, _out_path)
 	_free_world()
 	_phase = "next"
 	if not saved:
 		_failures.append("%s: the re-save failed" % _job.case)
 		return
-	var resaved: Dictionary = _parse(OUT_PATH)
+	var resaved: Dictionary = _parse(_out_path)
 	if _job.has("old"):
 		_record_old(resaved)
 	if _job.compare_to != "":
@@ -210,7 +233,7 @@ func _record_old(resaved: Dictionary) -> void:
 	print("CQS0 RECORD %s: version %d loaded and re-saved as version %d, %d bees, %d cells; keys the load added: %s" % [
 		_job.old, int(source.get("version", 0)), int(resaved.get("version", 0)),
 		resaved.get("bees", []).size(), resaved.get("cells", []).size(), ", ".join(added)])
-	var first := SCRATCH_PREFIX + "%s_resaved.json" % _job.old
+	var first := _scratch_prefix + "%s_resaved.json" % _job.old
 	_write(first, JSON.stringify(resaved))
 	_jobs.push_front({
 		"case": "%s:resaved" % _job.old, "source": first, "route": "load",
@@ -248,17 +271,18 @@ func _compare(case_name: String, golden: Dictionary, resaved: Dictionary) -> voi
 	var diffs: Array = []
 	_diff(_canonical(golden), _canonical(resaved), "", diffs)
 	var known: Array = KNOWN_DIFFERENCES.get(case_name, [])
+	var matched: Dictionary = {}
 	var unexpected: Array = []
 	for entry: Dictionary in diffs:
-		if known.has(entry.pattern):
-			_known_seen["%s|%s" % [case_name, entry.pattern]] = true
+		var index := _known_index(known, golden, entry)
+		if index >= 0:
+			matched[index] = true
+			print("CQS0 KNOWN %s: %s" % [case_name, entry.text])
 		else:
 			unexpected.append(entry.text)
-	for pattern: String in known:
-		if _known_seen.has("%s|%s" % [case_name, pattern]):
-			print("CQS0 KNOWN %s: %s" % [case_name, pattern])
-		else:
-			_failures.append("%s: STALE known difference %s no longer happens" % [case_name, pattern])
+	for i: int in known.size():
+		if not matched.has(i):
+			_failures.append("%s: STALE known difference %s no longer happens" % [case_name, JSON.stringify(known[i])])
 	if unexpected.is_empty():
 		print("CQS0 OK %s" % case_name)
 		return
@@ -266,22 +290,81 @@ func _compare(case_name: String, golden: Dictionary, resaved: Dictionary) -> voi
 	for i: int in mini(unexpected.size(), MAX_LINES_PER_CASE):
 		print("CQS0 DIFF %s: %s" % [case_name, unexpected[i]])
 
+## Which entry of `known` a difference is, or -1: a field the re-save gained
+## on one of the bees the entry names, as she is in the golden.
+func _known_index(known: Array, golden: Dictionary, entry: Dictionary) -> int:
+	if entry.kind != "added":
+		return -1
+	for i: int in known.size():
+		for bee_key: String in _eligible_bees(golden, known[i].bees):
+			for field: String in known[i].gains:
+				if entry.path == "bees.%s.%s" % [bee_key, field]:
+					return i
+	return -1
+
+## The keys (as KEYED_PATHS makes them) of the golden's bees a known
+## difference may touch.
+func _eligible_bees(golden: Dictionary, which: String) -> Array:
+	var keys: Array = []
+	for bee: Variant in golden.get("bees", []):
+		if not (bee is Dictionary):
+			continue
+		match which:
+			"forager_without_start_point":
+				if int(bee.get("role", -1)) == ROLE_FORAGER and not bool(bee.get("queen", false)) \
+						and not bee.has("start_x"):
+					keys.append(_key_part(bee.get("id")))
+	return keys
+
 func _canonical(data: Dictionary) -> Dictionary:
 	var out: Dictionary = data.duplicate(true)
 	for keys: Array in SET_PATHS:
-		var holder: Variant = out
-		for i: int in keys.size() - 1:
-			holder = holder.get(keys[i], {}) if holder is Dictionary else null
+		var holder: Variant = _holder(out, keys)
 		if holder is Dictionary and holder.get(keys[-1]) is Array:
-			var members: Array = []
+			var members := {}
 			for item: Variant in holder[keys[-1]]:
-				members.append(JSON.stringify(item))
-			members.sort()
+				members[JSON.stringify(item)] = true
 			holder[keys[-1]] = members
+	for rule: Dictionary in KEYED_PATHS:
+		var keys: Array = rule.path
+		var holder: Variant = _holder(out, keys)
+		if holder is Dictionary and holder.get(keys[-1]) is Array:
+			holder[keys[-1]] = _keyed(holder[keys[-1]], rule.key)
 	return out
 
+## The dictionary that holds the last key of `keys`, or null.
+func _holder(data: Dictionary, keys: Array) -> Variant:
+	var holder: Variant = data
+	for i: int in keys.size() - 1:
+		holder = holder.get(keys[i], {}) if holder is Dictionary else null
+	return holder
+
+## A list as a dictionary under each member's key fields. A key two members
+## share gets " #2", " #3"... in list order, so neither is lost.
+func _keyed(items: Array, fields: Array) -> Dictionary:
+	var out := {}
+	for item: Variant in items:
+		var parts: PackedStringArray = PackedStringArray()
+		for field: String in fields:
+			parts.append(_key_part(item.get(field) if item is Dictionary else null))
+		var key := ",".join(parts)
+		var unique := key
+		var n := 2
+		while out.has(unique):
+			unique = "%s #%d" % [key, n]
+			n += 1
+		out[unique] = item
+	return out
+
+## JSON numbers are floats; a whole one is written as an integer so a bee's
+## key reads "5", not "5.0".
+func _key_part(value: Variant) -> String:
+	if value is float and value == roundf(value) and absf(value) < 1.0e15:
+		return str(int(value))
+	return str(value)
+
 ## Every place `a` (the golden) and `b` (the re-save) disagree, as
-## {"text": readable line, "pattern": path with indices as [*]}.
+## {"text": readable line, "path": where, "kind": added|removed|changed|size}.
 func _diff(a: Variant, b: Variant, path: String, out: Array) -> void:
 	if a is Dictionary and b is Dictionary:
 		var keys: Array = a.keys()
@@ -292,28 +375,27 @@ func _diff(a: Variant, b: Variant, path: String, out: Array) -> void:
 		for key: Variant in keys:
 			var child := "%s.%s" % [path, key] if path != "" else str(key)
 			if not a.has(key):
-				_note(out, child, "only in the re-save: %s" % _short(b[key]))
+				_note(out, child, "added", "only in the re-save: %s" % _short(b[key]))
 			elif not b.has(key):
-				_note(out, child, "only in the golden: %s" % _short(a[key]))
+				_note(out, child, "removed", "only in the golden: %s" % _short(a[key]))
 			else:
 				_diff(a[key], b[key], child, out)
 		return
 	if a is Array and b is Array:
 		if a.size() != b.size():
-			_note(out, path + ".size()", "golden %d, re-save %d" % [a.size(), b.size()])
+			_note(out, path + ".size()", "size", "golden %d, re-save %d" % [a.size(), b.size()])
 		for i: int in mini(a.size(), b.size()):
 			_diff(a[i], b[i], "%s[%d]" % [path, i], out)
 		return
 	if typeof(a) == TYPE_FLOAT and typeof(b) == TYPE_FLOAT:
 		if absf(a - b) > FLOAT_TOLERANCE * maxf(1.0, maxf(absf(a), absf(b))):
-			_note(out, path, "golden %s, re-save %s" % [_short(a), _short(b)])
+			_note(out, path, "changed", "golden %s, re-save %s" % [_short(a), _short(b)])
 		return
 	if typeof(a) != typeof(b) or a != b:
-		_note(out, path, "golden %s, re-save %s" % [_short(a), _short(b)])
+		_note(out, path, "changed", "golden %s, re-save %s" % [_short(a), _short(b)])
 
-func _note(out: Array, path: String, what: String) -> void:
-	var regex := RegEx.create_from_string("\\[\\d+\\]")
-	out.append({"text": "%s -- %s" % [path, what], "pattern": regex.sub(path, "[*]", true)})
+func _note(out: Array, path: String, kind: String, what: String) -> void:
+	out.append({"text": "%s -- %s" % [path, what], "path": path, "kind": kind})
 
 func _short(value: Variant) -> String:
 	var text := JSON.stringify(value)
@@ -335,6 +417,7 @@ func _write(path: String, text: String) -> void:
 	if not _scratch_files.has(path):
 		_scratch_files.append(path)
 
+## Deletes only this run's scratch files (each named with its process id).
 func _finish() -> void:
 	var config: Node = root.get_node("GameConfig")
 	for key: String in _config_snapshot:
