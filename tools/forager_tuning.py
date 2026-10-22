@@ -3,8 +3,8 @@
 
 Keep the colony, window, skills and stage toggles fixed. Results are cached
 under build/fr1b-tuning and recorded in the owning plan, including failed
-sweeps. Exit 2 means the measured candidates need Dave's decision; it is not
-evidence that every possible real-valued configuration is impossible.
+sweeps. Stage order and the 30% gain are provisional reference targets
+(Dave, 22 Oct 2026); missing them is reported, not a simulation failure.
 """
 
 from __future__ import annotations
@@ -159,7 +159,7 @@ def render(results: list[dict], identity: str, screens: list[dict] | None = None
              "and species-passing/recruitment; ties favour recruitment's median food delivery.", "",
              f"Measured {len(results)} distinct configurations. " +
              ("**PASS**: all four median rows rise and recruitment gains at least 30%." if passing else
-              "**DECISION REQUIRED**: no measured configuration meets both requirements; FR-2 remains blocked."), "",
+              "**REFERENCE TARGETS UNMET**: no measured configuration meets both provisional targets."), "",
              ("Selected existing values:" if passing else "Closest measured values (not selected for gameplay):"), "",
              "```json", json.dumps(best["settings"], indent=2), "```", "",
              "| Stage | Median food per forager per day | Per seed (7, 555, 2026, 12345, 90210) | vs previous |",
@@ -192,9 +192,15 @@ def render(results: list[dict], identity: str, screens: list[dict] | None = None
     return "\n".join(lines) + "\n"
 
 
-def record_plan(report: str, path: Path = PLAN) -> None:
+def record_plan(report: str, path: Path = PLAN) -> bool:
+    if not path.exists():
+        return False
     text = path.read_text(encoding="utf-8")
     section = "## FR-1b -- tune the measured foraging-stage order"
+    if section not in text:
+        # finish archives this section. Later campaigns keep their own
+        # report rather than replacing the shipped historical evidence.
+        return False
     start = text.index(section)
     end = text.index("\n## ", start + len(section))
     existing = text[start:end]
@@ -206,6 +212,7 @@ def record_plan(report: str, path: Path = PLAN) -> None:
     else:
         existing = existing.rstrip() + "\n\n" + block + "\n"
     path.write_text(text[:start] + existing + text[end:], encoding="utf-8")
+    return True
 
 
 def main() -> int:
@@ -246,9 +253,10 @@ def main() -> int:
     campaign([candidate for result in strongest for candidate in refinement_candidates(result["settings"])])
     report = render(results, identity, screens)
     (args.output / "report.md").write_text(report, encoding="utf-8")
-    record_plan(report)
-    print(f"Evidence: {args.output / 'report.md'}; recorded in {PLAN}", flush=True)
-    return 0 if any(accepted(result["values"]) for result in results) else 2
+    recorded = record_plan(report)
+    location = f"recorded in {PLAN}" if recorded else "archived plan evidence preserved"
+    print(f"Evidence: {args.output / 'report.md'}; {location}", flush=True)
+    return 0
 
 
 if __name__ == "__main__":

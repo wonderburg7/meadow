@@ -68,9 +68,11 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Files: `tools/forager_tuning.py`, `tests/test_forager_tuning.py`, `test_scenarios/fr1_forager_stages_test.json`, `plans/now/forager-recruitment.md`
    - Check: `python -m unittest tests.test_forager_tuning` passes; `python tools/forager_tuning.py` records the five-seed stage table and chosen existing values in this section; `tools/verify.ps1` is green
    - Proof: `present: plans/now/forager-recruitment.md :: Next: FR-1b -- tune the measured foraging-stage order`
-   - Next after: FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
+   - Next after: FR-1c -- diagnose and repair foraging-stage behaviour
 
 ## Not in the queue, and why
+
+- **FR-1c** (`plans/now/forager-recruitment.md`) -- behaviour diagnosis/fix authorised by Dave, 22 Oct 2026; stage order and 30% are provisional targets. Waits for CQ-L1 to land or release `scripts/bee_foraging.gd`; the plan's block is `queue-gated` until the file overlap clears.
 
 One line each: the id, its plan, and the single thing it waits for.
 

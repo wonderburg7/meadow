@@ -90,7 +90,7 @@ class ForagerTuningTests(unittest.TestCase):
     def test_failed_sweep_is_recorded_idempotently_in_its_own_section(self) -> None:
         result = {"settings": tuning.DEFAULTS, "values": [[value] * 5 for value in (6, 5, 4, 3)]}
         report = tuning.render([result], "identity")
-        self.assertIn("DECISION REQUIRED", report)
+        self.assertIn("REFERENCE TARGETS UNMET", report)
         self.assertIn("not selected for gameplay", report)
         self.assertNotIn("**PASS**", report)
         with tempfile.TemporaryDirectory() as temporary:
@@ -104,8 +104,8 @@ class ForagerTuningTests(unittest.TestCase):
             self.assertIn("Keep brief", first)
             self.assertTrue(first.endswith("## FR-2 -- successor\nKeep next\n"))
 
-    def test_main_records_both_success_and_decision_required_verdicts(self) -> None:
-        for values, expected in (((6, 5, 4, 3), 2), ((1, 2, 3, 4), 0)):
+    def test_provisional_targets_are_reported_without_failing_a_valid_campaign(self) -> None:
+        for values, expected in (((6, 5, 4, 3), "REFERENCE TARGETS UNMET"), ((1, 2, 3, 4), "**PASS**")):
             with self.subTest(expected=expected), tempfile.TemporaryDirectory() as temporary:
                 def measure(settings, *args, stage_count=4):
                     return {"settings": settings, "values": [[value] * 5 for value in values[:stage_count]]}
@@ -115,9 +115,18 @@ class ForagerTuningTests(unittest.TestCase):
                      patch.object(tuning, "record_plan") as record, \
                      patch.object(sys, "argv", ["forager_tuning.py", "--output", temporary]), \
                      patch("sys.stdout", new_callable=StringIO):
-                    self.assertEqual(tuning.main(), expected)
+                    self.assertEqual(tuning.main(), 0)
                 self.assertEqual(record.call_count, 1)
-                self.assertIn("DECISION REQUIRED" if expected == 2 else "**PASS**", record.call_args.args[0])
+                self.assertIn(expected, record.call_args.args[0])
+
+    def test_recording_after_closeout_preserves_the_archived_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "plan.md"
+            original = "FR-1b shipped; see plans/archive/FR-1b_2026-10-22.md.\n## FR-1c -- next\n"
+            path.write_text(original, encoding="utf-8")
+            self.assertFalse(tuning.record_plan("Later measurements", path))
+            self.assertEqual(path.read_text(encoding="utf-8"), original)
+            self.assertFalse(tuning.record_plan("Later measurements", Path(temporary) / "archived-plan.md"))
 
 
 if __name__ == "__main__":
