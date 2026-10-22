@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The sprite exporter (SP-2). Standard library only.
 
-Reads every `.aseprite` (and every plain single-image `.png`) under
+Reads every `.aseprite` (and every plain `.png`: one image, a tile or a grid) under
 assets/sprites/, plus the sprite table assets/sprites/SPRITES.md, then writes:
 
   * one PNG sheet per family beside its source, `<name>_sheet.png`, with a
@@ -96,16 +96,24 @@ class Image:
     def is_empty(self) -> bool:
         return not any(self.pixels[i] for i in range(3, len(self.pixels), 4))
 
-    def border_clear(self) -> bool:
-        """True when the outermost ring of pixels is fully transparent."""
-        w, h = self.width, self.height
-        for x in range(w):
-            if self.pixels[x * 4 + 3] or self.pixels[((h - 1) * w + x) * 4 + 3]:
-                return False
-        for y in range(h):
-            if self.pixels[y * w * 4 + 3] or self.pixels[(y * w + w - 1) * 4 + 3]:
-                return False
-        return True
+    def opaque(self, x: int, y: int) -> bool:
+        return self.pixels[(y * self.width + x) * 4 + 3] != 0
+
+    def grid_crossing(self, fw: int, fh: int) -> tuple[int, int] | None:
+        """The first pixel where art runs across a grid line into the next
+        cell (opaque on both sides of it), or None. Art that only touches a
+        cell's edge is fine: the exporter's gutter keeps it from bleeding,
+        and a wing or sting bobbing to the edge is the drawing, not a
+        mis-cut grid."""
+        for x in range(fw, self.width, fw):
+            for y in range(self.height):
+                if self.opaque(x - 1, y) and self.opaque(x, y):
+                    return x, y
+        for y in range(fh, self.height, fh):
+            for x in range(self.width):
+                if self.opaque(x, y - 1) and self.opaque(x, y):
+                    return x, y
+        return None
 
 
 def decode_png(data: bytes) -> Image:
@@ -353,6 +361,26 @@ def _parse_grid(layout: str, family: str) -> tuple[int, int, list[str]]:
     return fw, fh, names
 
 
+def _cut_grid(sheet: Image, layout: str, family: str) -> tuple[list[Image], list[str], int]:
+    """Cut a whole sheet into WxH frames, one named row each, frames named
+    `<row>.<column>`. Returns the frames, their names and the column count."""
+    fw, fh, rows_ = _parse_grid(layout, family)
+    if sheet.width % fw or sheet.height % fh:
+        raise SpriteError(f"{family}: canvas {sheet.width}x{sheet.height} is not a whole number of {fw}x{fh} frames")
+    cols = sheet.width // fw
+    if sheet.height // fh != len(rows_):
+        raise SpriteError(f"{family}: {sheet.height // fh} rows on the sheet but {len(rows_)} row names in the table")
+    crossing = sheet.grid_crossing(fw, fh)
+    if crossing:
+        raise SpriteError(f"{family}: art runs across a grid line at pixel {crossing[0]},{crossing[1]} (keep each frame inside its cell)")
+    frames, names = [], []
+    for r, rname in enumerate(rows_):
+        for c in range(cols):
+            frames.append(sheet.crop(c * fw, r * fh, fw, fh))
+            names.append(f"{rname}.{c}")
+    return frames, names, cols
+
+
 def _compose_sheet(frames: list[Image], hframes: int, gutter: int) -> Image:
     fw, fh = frames[0].width, frames[0].height
     vframes = (len(frames) + hframes - 1) // hframes
@@ -378,10 +406,13 @@ def build_family(row: Row, source: Path, sheet_name: str) -> Built | None:
     hframes = 1
     gutter = GUTTER
     if source.suffix == ".png":
-        if layout not in ("single", "tile"):
-            raise SpriteError(f"{fam}: a plain .png must use layout 'single' or 'tile', not {layout!r}")
+        if layout not in ("single", "tile", "grid"):
+            raise SpriteError(f"{fam}: a plain .png must use layout 'single', 'tile' or 'grid', not {layout!r}")
         img = decode_png(data)
-        frames, names = [img], ["frame"]
+        if layout == "grid":
+            frames, names, hframes = _cut_grid(img, row.layout, fam)
+        else:
+            frames, names = [img], ["frame"]
         if layout == "tile":
             gutter = 0
     else:
@@ -429,18 +460,7 @@ def build_family(row: Row, source: Path, sheet_name: str) -> Built | None:
             sheet_layers = [l for l in usable if l.name == "sheet"]
             if len(sheet_layers) != 1:
                 raise SpriteError(f"{fam}: a grid sprite needs exactly one layer named 'sheet'")
-            fw, fh, rows_ = _parse_grid(row.layout, fam)
-            if width % fw or height % fh:
-                raise SpriteError(f"{fam}: canvas {width}x{height} is not a whole number of {fw}x{fh} frames")
-            cols = width // fw
-            if height // fh != len(rows_):
-                raise SpriteError(f"{fam}: {height // fh} rows on the sheet but {len(rows_)} row names in the table")
-            frames, names = [], []
-            for r, rname in enumerate(rows_):
-                for c in range(cols):
-                    frames.append(sheet_layers[0].image.crop(c * fw, r * fh, fw, fh))
-                    names.append(f"{rname}.{c}")
-            hframes = cols
+            frames, names, hframes = _cut_grid(sheet_layers[0].image, row.layout, fam)
         else:
             raise SpriteError(f"{fam}: unknown layout {row.layout!r}")
 
@@ -448,9 +468,6 @@ def build_family(row: Row, source: Path, sheet_name: str) -> Built | None:
         raise SpriteError(f"{fam}: frame sizes differ")
     if len(frames) != row.frames:
         raise SpriteError(f"{fam}: the file gives {len(frames)} frames but the table says {row.frames}")
-    for name, f in zip(names, frames):
-        if layout == "grid" and not f.is_empty() and not f.border_clear():
-            raise SpriteError(f"{fam}: frame {name!r} has art on the edge of its grid cell (leave 1 px clear)")
     if layout == "layers":
         if row.levels and len(row.levels) != len(frames) - 1:
             raise SpriteError(f"{fam}: {len(row.levels)} level bounds for {len(frames) - 1} state layers")
