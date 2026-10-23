@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/FR-1d` (`codex/FR-1d`) | Codex | repair the diagnosed foraging behaviour | Codex | in progress | none | `plans/now/forager-recruitment.md` FR-1d -- repair the diagnosed foraging behaviour |
