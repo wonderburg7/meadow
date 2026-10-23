@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/CQ-M9` (`codex/CQ-M9`) | Codex | colony plots reuse resource colours and name their content width | Codex | in progress | none | `plans/now/code-health.md` CQ-M9 -- colony plots reuse resource colours and name their content width |
