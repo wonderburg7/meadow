@@ -131,7 +131,10 @@ def check_live_plans_hold_only_open_work(errors: list[str], warnings: list[str])
 
 def check_baseline_failures(errors: list[str]) -> None:
     # L-35: a quarantined baseline failure carries an expiry so it cannot rot.
-    import stop_causes
+    try:
+        import stop_causes
+    except ImportError:  # a lifecycle fixture repository copies only some tools
+        return
     for problem in stop_causes.expired_entries():
         errors.append(f"tests/baseline_failures.json: {problem}")
 
