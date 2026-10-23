@@ -50,7 +50,6 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-35 | known baseline failures and stop causes are named, not rediagnosed | `tools/verify.ps1`, `tools/slice.ps1`, `tools/stop_causes.py`, `tests/test_stop_causes.py`, `tests/baseline_failures.json`, `tools/check_docs.py` | medium |
 | L-36 | clean checkouts pass the doc checks; stray worktrees are reported | `tools/check_docs.py`, `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | low |
 
 L-31 to L-36 come from the 22 Oct 2026 workflow comparison (Dave asked
@@ -87,40 +86,7 @@ L-33 shipped 2026-10-23; its specification is `plans/archive/L-33_2026-10-23.md`
 
 L-34 shipped 2026-10-23; its specification is `plans/archive/L-34_2026-10-23.md`.
 
-## L-35 -- known baseline failures and stop causes are named, not rediagnosed
-
-**Now.** Unit tests stopped `finish` 23 times in 21 days. Among them were
-fixture lock timeouts, an unavailable `New-TemporaryFile`, NF2's sandboxed
-`APPDATA` and sprite-catalogue failures in CD-3. A failure that also occurs
-on master stops a branch just like a regression. Sandbox, auto-approval and
-credential failures (`Receive-Job: Access is denied`, refused pushes,
-authentication) read as code faults. Dave is asked about the same apparent
-blocker again and again. Only the import cache already gets a "not a code
-fault" line.
-
-**Target.**
-1. `tests/baseline_failures.json` lists confirmed baseline failures. Each
-   entry has a test id, a disposition, an owner and an expiry date.
-2. `verify.ps1` reports a listed, unexpired failure as
-   `baseline, not this branch` and does not fail the stage on it.
-   `check_docs` fails on an expired entry, so the quarantine cannot rot.
-3. `tools/stop_causes.py` sorts a saved verify log or a stop's stderr into
-   one of `code`, `baseline`, `sandbox`, `approval-policy`, `credentials`,
-   `import-cache`, `lock` or `cwd-holder`, using a regex table. Each
-   category carries one remedy line. `slice.ps1` prints both in its stop
-   block.
-4. Adding a pattern is one table row.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] L-35 -- known baseline failures and stop causes are named, not rediagnosed**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-35 -- known baseline failures and stop causes are named, not rediagnosed"
-- Files: `tools/verify.ps1`, `tools/slice.ps1`, `tools/stop_causes.py`, `tests/test_stop_causes.py`, `tests/baseline_failures.json`, `tools/check_docs.py`
-- Check: `python -m unittest tests.test_stop_causes` passes, classifying sample logs for each category (including `Receive-Job: Access is denied`, a refused push and an import-cache boot failure); a listed baseline failure leaves its stage green with a `baseline` note, and an expired entry fails `check_docs`; `.\tools\verify.ps1` is green
-- Proof: `absent: tools/verify.ps1 :: baseline_failures`
-- Next after: L-36
-```
+L-35 shipped 2026-10-24; its specification is `plans/archive/L-35_2026-10-24.md`.
 
 ## L-36 -- clean checkouts pass the doc checks; stray worktrees are reported
 

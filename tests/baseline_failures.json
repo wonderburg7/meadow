@@ -1,0 +1,4 @@
+{
+  "_comment": "Confirmed failures that also occur on master. Each entry: test (dotted unittest id), disposition, owner, expires (YYYY-MM-DD). check_docs fails on an expired entry.",
+  "failures": []
+}

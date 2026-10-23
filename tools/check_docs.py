@@ -129,6 +129,16 @@ def check_live_plans_hold_only_open_work(errors: list[str], warnings: list[str])
             )
 
 
+def check_baseline_failures(errors: list[str]) -> None:
+    # L-35: a quarantined baseline failure carries an expiry so it cannot rot.
+    try:
+        import stop_causes
+    except ImportError:  # a lifecycle fixture repository copies only some tools
+        return
+    for problem in stop_causes.expired_entries():
+        errors.append(f"tests/baseline_failures.json: {problem}")
+
+
 def check_context_layout(errors: list[str]) -> None:
     legacy_root_plans = sorted(ROOT.glob("*_PLAN.md"))
     if legacy_root_plans:
@@ -1444,6 +1454,7 @@ def main() -> int:
     warnings: list[str] = []
     check_plan_metadata(errors, warnings)
     check_context_layout(errors)
+    check_baseline_failures(errors)
     check_live_plans_hold_only_open_work(errors, warnings)
     check_next_steps(errors, warnings)
     check_queue_files(errors)
