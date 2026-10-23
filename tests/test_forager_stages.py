@@ -11,6 +11,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from tools import forager_stages
+from tools.godot_compile_check import find_godot
 from tools.scenario_sweep import short_scenarios
 
 
@@ -46,6 +47,8 @@ class ForagerStagesTests(unittest.TestCase):
         self.assertTrue(all(call.args[-1] == "Godot.exe" for call in run_one.call_args_list))
 
     def test_auto_recruitment_stage_completes_without_stale_mentor_errors(self) -> None:
+        if not find_godot():
+            raise unittest.SkipTest("no Godot executable found -- this test needs a real headless boot")
         name, toggles = forager_stages.STAGES[2]
         with tempfile.TemporaryDirectory(prefix="meadow-fr1-test-") as temporary:
             value = forager_stages._run_one(

@@ -115,7 +115,8 @@ mechanism. The other three call it.
    four tests pass:
    - every dependency it names is archived or merged;
    - no file in `Files:` is in the other lane, a queued slice or an
-     unmerged branch;
+     unmerged branch, counting the open `origin/jules/*` branches that
+     `slice.ps1 owner` has fetched since 23 Oct 2026;
    - its plan section's `Open decisions:` line is `none`, or the line is
      missing (a warning, so existing plans still pass);
    - every path in `Files:` and `Plan:` exists or is to be created.

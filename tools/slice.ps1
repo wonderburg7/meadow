@@ -1814,6 +1814,9 @@ function Invoke-SliceOwner {
     # queued V-1 slice was building the same thing; the branch was never merged.
     # A path is owned by any queue item that lists it, in either lane, and by
     # any unmerged local branch other than this one that already changes it.
+    # Google Jules works only on GitHub, so its open `jules/*` branches never
+    # exist locally; they are fetched and checked against origin/master
+    # (Dave, 23 Oct 2026). Offline, the scan says so and uses what it has.
     param([string[]]$Wanted)
     if (-not $Wanted) {
         Write-Error "owner needs at least one repository-relative path, e.g. tools/slice.ps1 owner tools/verify.ps1"
@@ -1837,8 +1840,21 @@ function Invoke-SliceOwner {
             $owners += [PSCustomObject]@{ kind="branch"; branch=$branch; last_commit=$last; paths=$hits }
         }
     }
+    if ((Invoke-GitSilent -c http.sslBackend=openssl -C $root fetch --prune origin master "+refs/heads/jules/*:refs/remotes/origin/jules/*") -ne 0) {
+        [Console]::Error.WriteLine("owner: could not fetch origin; Jules branches are checked as last fetched")
+    }
+    $remoteBase = if ((Invoke-GitSilent -C $root rev-parse --verify --quiet origin/master) -eq 0) { "origin/master" } else { "master" }
+    $julesBranches = @(Split-GitText (Read-GitText -C $root branch -r --no-merged $remoteBase --list "origin/jules/*" "--format=%(refname:short)"))
+    foreach ($branch in $julesBranches) {
+        $changed = (Split-GitText (Read-GitText -C $root diff --name-only "$remoteBase...$branch"))
+        $hits = @($Wanted | Where-Object { $w = $_; @($changed | Where-Object { Test-OwnedPath -Owned $_ -Wanted $w }).Count -gt 0 })
+        if ($hits) {
+            $last = (Read-GitText -C $root log -1 "--format=%cs %s" $branch).Trim()
+            $owners += [PSCustomObject]@{ kind="jules"; branch=$branch; last_commit=$last; paths=$hits }
+        }
+    }
     $status = if ($owners) { "owned" } else { "clear" }
-    $next = if ($owners) { "stop: ask Dave whether to take the owning slice, wait for it, or finish/delete the branch -- do not build the same change twice" } else { "go ahead" }
+    $next = if ($owners) { "stop: ask Dave whether to take the owning slice, wait for it, or finish/delete the branch (a jules branch: merge or close its pull request) -- do not build the same change twice" } else { "go ahead" }
     [PSCustomObject]@{ status=$status; owners=$owners; next=$next } | ConvertTo-Json -Depth 4 -Compress
     if ($owners) { exit 1 }
 }
