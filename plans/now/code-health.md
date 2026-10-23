@@ -439,6 +439,12 @@ The plot's honey colour deliberately differs (D2). Five content controls,
 including the WP-3 default-order hint, repeat a 300-pixel minimum width.
 The panel's outer rectangle already belongs to `ui_layout.gd`.
 
+**Implementation status, 23 Oct 2026.** Complete on `codex/CQ-M9`: nectar
+and pollen now resolve through `Resources.colour_for`; the other two plot
+colours remain local; the five content minima use one named constant. Next:
+CQ-M10 remains gated on CQ-S0b releasing `FUNCTION_MAP.md`. Hands-on check:
+C-144.
+
 **Change.** Read nectar and pollen colours through `Resources.colour_for`
 in `_series_colour` or when constructing their series data. Keep the bees
 and honey colours, series order, labels and unknown-series fallback.
