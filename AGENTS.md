@@ -3,6 +3,29 @@
 This file is the entry point for ChatGPT and Codex sessions in this
 repository.
 
+**If you are Google Jules, follow this section only and skip the rest of
+this file.** Jules works from GitHub on a Linux VM and does not take part in
+the Claude/Codex slice queue (Dave, 23 Oct 2026):
+
+- Do not run `tools/slice.ps1` or follow `CHATGPT.md` routing. Do not edit
+  `NEXTSTEPS.md`, `plans/workstreams.md`, `plans/now/`, `checks/` or
+  `FUNCTION_MAP.md`.
+- Meadow targets Godot **4.7** (`project.godot`), not 4.3.
+- Branch from the latest `origin/master` as `jules/<topic>`; one finding per
+  pull request, touching only the files the task names. Never merge your
+  own pull request.
+- Behaviour-preserving only: no change to simulation results, `GameConfig`
+  balance values, or save/restore fields (`scripts/saving.gd` and any
+  `to_dict`/`from_dict`).
+- Presentation never gates simulation. A per-node `_process` may also run
+  simulation (`hive_cell.gd` develops brood there): do not move or cull it.
+- Do not remove `is_instance_valid` guards, epoch caches or
+  `Perf.begin`/`Perf.end` calls unless the task says so.
+- Run `python tests/source_checks.py`, `python tests/balance_tests.py` and
+  `python -m unittest discover`; say in the pull request what you could not
+  run (Godot boot, `tools/verify.ps1`, hands-on play).
+- British English in comments and documentation.
+
 **Before reading or acting on any other project file, read
 `docs/agent-rules.md` (the rules Claude and Codex share) and `CHATGPT.md`,
 and follow `CHATGPT.md`'s file-editing and hand-off conventions.** Its "Risk-proportional
