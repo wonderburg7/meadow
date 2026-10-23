@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: L-33 -- one admission check shared by check_docs, start and closeout (L-32 shipped 22 Oct 2026; L-33 to L-36 specified 22 Oct 2026, run in id order); separately, after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none | Verified: 2026-10-22
+Status: active | Owner: Dave / Claude / Codex | Next: L-33 -- one admission check shared by check_docs, start and closeout (Claude lane); L-34 -- command guard (Codex lane, reassigned by Dave 23 Oct 2026); separately, after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: L-33, L-35 and L-36 run in order in Claude; L-34's L-31 prerequisite landed 22 Oct 2026 | Verified: 2026-10-23
 
 ## Objective
 
@@ -60,10 +60,15 @@ whether a hooks, state-machine and multi-agent-review setup would help;
 Codex listed twelve recurring blockers). Its finding: almost none of the
 190 stops in 21 days were correctness escapes, so no extra review agents
 are added; the cost is in verify ambiguity, queue bookkeeping and
-prose-only rules. They run in id order, one file set at a time: every one
+prose-only rules. The Claude slices run in id order, one file set at a time: every one
 but L-34 edits `tools/slice.ps1`. L-31 and L-35 followed CQ-L1
 (`plans/now/code-health.md`), which also edits `tools/verify.ps1`; it landed 22 Oct 2026. L-34
-waited for L-31, whose `stop-verify` it names; L-31 landed 22 Oct 2026. Judging a borderline item
+waited for L-31, whose `stop-verify` it names; L-31 landed 22 Oct 2026.
+Dave reassigned L-34 from the unqueued Claude backlog to Codex on
+23 Oct 2026. Its four files are disjoint from every queued Claude item,
+so it may run independently of L-33, L-35 and L-36. Its `Next after:`
+still names L-35 in Claude; this does not transfer L-35's ownership.
+Judging a borderline item
 with a cheap model was considered and rejected: lanes hold five items,
 far below the break-even the source setup measured.
 
@@ -171,7 +176,7 @@ start, and makes no model calls.
 **Open decisions:** none.
 
 ```queue
-**[Claude] L-34 -- a PreToolUse guard refuses the five closeout-breaking commands**
+**[Codex] L-34 -- a PreToolUse guard refuses the five closeout-breaking commands**
 - Plan: `plans/now/agent-lifecycle.md` -- "L-34 -- a PreToolUse guard refuses the five closeout-breaking commands"
 - Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`, `.claude/settings.json`, `.codex/hooks.json`
 - Check: `python -m unittest tests.test_guard_hook` passes, denying `Stop-Process -Name godot`, `slice.ps1 finish 2>&1 | Tee`, a `finish` from inside `.worktrees/<id>`, a relative ../../tools/verify.ps1 call and a read of a denied path, and allowing ordinary git, python and slice commands; `.\tools\verify.ps1` is green
