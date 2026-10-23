@@ -545,13 +545,13 @@ behaviour.
 1055 static func _score_trip(bee: Node2D) -> void
 1133 # --- leaving the hive ---------------------------------------------
 1134 static func go_to_exit(bee: Node2D, delta: float) -> void
-1178 static func _entrance_wait_spot(bee: Node2D, side: int) -> Vector2
-1190 static func _leave_hive_and_resume(bee: Node2D) -> void
-1217 static func _send_to_scout_point(bee: Node2D) -> void
-1228 # --- scouting -----------------------------------------------------
-1234 static func start_scouting(bee: Node2D) -> void
-1252 # --- waiting at the entrance --------------------------------------
-1257 static func wait_at_entrance(bee: Node2D, delta: float) -> void
+1190 static func _entrance_wait_spot(bee: Node2D, side: int) -> Vector2
+1202 static func _leave_hive_and_resume(bee: Node2D) -> void
+1229 static func _send_to_scout_point(bee: Node2D) -> void
+1240 # --- scouting -----------------------------------------------------
+1246 static func start_scouting(bee: Node2D) -> void
+1264 # --- waiting at the entrance --------------------------------------
+1269 static func wait_at_entrance(bee: Node2D, delta: float) -> void
 1363 # --- the recruitment dance ----------------------------------------
 1371 static func _update_dance_eligibility(bee: Node2D) -> void
 1394 static func leave_recruitment(bee: Node2D) -> void

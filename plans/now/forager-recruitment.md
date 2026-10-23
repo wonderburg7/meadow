@@ -1,7 +1,7 @@
 # Forager recruitment -- Orientation flight, then Auto scouting, then Auto-recruitment
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: FR-1d -- repair the diagnosed foraging behaviour | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-23
+Status: active | Owner: Dave / Claude Code | Next: FR-2 -- needs its full specification and queue block now that FR-1d has landed | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-23
 
 ## Objective
 
@@ -48,7 +48,7 @@ Verified 14 Oct 2026 against master:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | FR-1d | Repair the concrete defects FR-1c establishes | `scripts/bee_foraging.gd`, focused tests/scenarios, this plan | claimed -- implementation awaits high-risk review/integration | high |
-| FR-2 | Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/skill_tree_panel.gd`, `scripts/levels.gd`, `tests/source_checks.py`, tests | no -- after FR-1d; numeric targets are provisional | high |
+| FR-2 | Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/skill_tree_panel.gd`, `scripts/levels.gd`, `tests/source_checks.py`, tests | no -- needs its specification; numeric targets are provisional | high |
 | FR-3 | owning Auto-recruitment switches it on, passing species with Adaptive constancy | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/levels.gd`, tests | no -- after PP-6 | high |
 
 **Dependencies.** FR-1 changes no game file. FR-2 waits for FR-1's table;
@@ -126,7 +126,7 @@ FR-1c shipped 2026-10-22; its specification is `plans/archive/FR-1c_2026-10-22.m
 Level: high
 
 **Implementation status, 23 Oct 2026:** implemented on `codex/FR-1d`;
-awaiting high-risk review and integration. Do not claim or implement it again.
+Claude reviewed the full diff and integrated it on 23 Oct 2026.
 
 Dave authorised this behaviour repair on 22 Oct. Scouts now leave through
 `_leave_hive_and_resume` when the entrance queue has no valid same-resource
@@ -190,7 +190,12 @@ speculative selection changes or tune to force the target.
 15 balance checks, 148-file lint, source checks, boot and generated checks.
 The game-test phase took 735 seconds on three workers.
 
-**Integration ownership blocker:** verification regenerated seven line-number
+**Integration ownership (resolved 23 Oct 2026):** CQ-S0b was queued but
+unclaimed with no branch, so the integration regenerated FUNCTION_MAP.md
+against the final sources and carries it; CQ-S0b regenerates from master
+when it runs. The FR-1d Files line omitted FUNCTION_MAP.md although
+`bee_foraging.gd` is indexed there; the prevention is recorded with L-33's
+admission check. Original note: verification regenerated seven line-number
 entries in FUNCTION_MAP.md for the moved foraging helpers. The owner check
 assigns that generated file to Claude's queued CQ-S0b. Codex restored only
 its automatic map edit and excludes it from this branch's commit. Claude
@@ -212,8 +217,9 @@ and Auto-recruitment enabled. With no matching mentor at the door, watch a
 scout resume her next bout; an established low-rate seeker should retain
 her entrance wait. This is a visual check, not an integration gate.
 
-**Successor:** FR-2 remains blocked until this runtime repair is reviewed
-and integrated; it still needs its full specification and queue block.
+**Successor:** FR-2 is no longer blocked by this repair; it still needs
+its full specification and queue block. The hands-on check is filed in
+`checks/ready/`.
 
 ```queue
 **[Codex] FR-1d -- repair the diagnosed foraging behaviour**
@@ -226,7 +232,8 @@ and integrated; it still needs its full specification and queue block.
 
 ## Not in the queue, and why
 
-- **FR-2:** waits for FR-1d's behaviour fix; its numeric targets are provisional.
+- **FR-2:** needs its full specification and queue block (FR-1d landed
+  23 Oct 2026); its numeric targets are provisional.
 
 ## FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
 
