@@ -13,8 +13,7 @@ import godot_compile_check as gcc
 class ForagerBehaviourTests(unittest.TestCase):
     def test_scout_wait_requires_a_matching_mentor(self):
         godot = gcc.find_godot()
-        if not godot:
-            self.skipTest("no Godot executable found -- this test needs a real boot")
+        self.assertIsNotNone(godot, "FR-1d requires a real Godot boot")
         gcc.ensure_writable_user_dir()
         self.assertTrue(gcc.prepare_cache(godot), "could not prepare the import cache")
         finished = subprocess.run(
