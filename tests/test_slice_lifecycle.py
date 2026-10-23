@@ -276,6 +276,48 @@ class SliceDoctorTest(unittest.TestCase):
         self.assertEqual(0, clear.returncode, clear.stderr)
         self.assertEqual("clear", json.loads(clear.stdout)["status"])
 
+    def test_owner_fetches_open_jules_branches_and_skips_merged_ones(self):
+        """Google Jules pushes `jules/*` branches to GitHub and never to this
+        machine, so owner fetches them (Dave, 23 Oct 2026). One merged on
+        GitHub is judged against origin/master, not a local master that has
+        not pulled it yet."""
+        def git(*args: str) -> str:
+            return subprocess.run(
+                ["git", *args], cwd=self.root, capture_output=True, text=True, check=True
+            ).stdout
+
+        def push_jules_branch(name: str, path: str) -> None:
+            git("switch", "-q", "-c", name, "master")
+            (self.root / path).write_text("# jules\n", encoding="utf-8")
+            git("add", path)
+            git("commit", "-q", "-m", f"jules edits {path}")
+            git("push", "-q", "origin", name)
+            git("switch", "-q", "master")
+
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        git("add", "NEXTSTEPS.md")
+        git("commit", "-q", "-m", "queue")
+        push_jules_branch("jules/open-fix", "tools/open_fix.py")
+        push_jules_branch("jules/merged-fix", "tools/merged_fix.py")
+        git("merge", "-q", "--no-ff", "-m", "merge on GitHub", "jules/merged-fix")
+        git("push", "-q", "origin", "master")
+        git("reset", "-q", "--hard", "HEAD~1")
+        git("branch", "-q", "-D", "jules/open-fix", "jules/merged-fix")
+        git("update-ref", "-d", "refs/remotes/origin/jules/open-fix")
+        git("update-ref", "-d", "refs/remotes/origin/jules/merged-fix")
+
+        owned = self.run_owner("tools/open_fix.py")
+        clear = self.run_owner("tools/merged_fix.py")
+
+        self.assertEqual(1, owned.returncode, owned.stderr)
+        report = json.loads(owned.stdout)
+        self.assertEqual(
+            [("jules", "origin/jules/open-fix", ["tools/open_fix.py"])],
+            [(o["kind"], o["branch"], o["paths"]) for o in report["owners"]],
+        )
+        self.assertEqual(0, clear.returncode, clear.stdout + clear.stderr)
+        self.assertEqual("clear", json.loads(clear.stdout)["status"])
+
     def test_doctor_names_the_bounded_plan_read_and_the_successor(self):
         """A claimed slice must arrive with its own reading command attached.
 
