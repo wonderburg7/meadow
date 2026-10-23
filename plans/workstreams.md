@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/L-33` (`claude/L-33`) | Claude | one admission check shared by check_docs, start and closeout | Claude | in progress | none | `plans/now/agent-lifecycle.md` L-33 -- one admission check shared by check_docs, start and closeout |
