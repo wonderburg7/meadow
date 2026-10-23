@@ -186,6 +186,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` (candidate B is measurement-gated; no open slice) |
 | Closing a slice, merging, filing a check | `plans/reference/closeout.md` |
 | Running one of Dave's reviews | `plans/reference/review-contract.md`, then the review's file in `plans/reference/reviews/` |
+| Google Jules's task list, or adding a task for Jules | `plans/reference/jules.md` (Jules's own; checked with `tools/jules_preflight.py`) |
 | Running several reviews in one session | `/run-reviews` (`.claude/skills/run-reviews/SKILL.md`); its subagents follow `plans/reference/review-runner.md` |
 | System, architecture, organisation or process friction noticed during delivery | `plans/observations/system-improvement-signals.md` (signals only; triage promotes validated work into the appropriate plan) |
 | Provenance for a shipped slice or a finished plan (E1, BS, GC, CR and COL, BB, SI, GP, T3, L-1 to L-26, ...) | `plans/archive/` (search only: `git grep -n <id> HEAD -- plans/archive`) |
