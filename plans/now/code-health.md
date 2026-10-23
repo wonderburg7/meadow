@@ -82,6 +82,14 @@ Recorded once here; a slice may restate one in a sentence and point back.
     runtime).
   - `bee.gd::idle_reason` starting a comb site is fixed by T2-14 in
     `plans/now/tier-two.md`, not here.
+  - Jules's audit (23 Oct 2026) put four options to Dave, none backed by a
+    measured problem, so none is pursued: UI moved into `.tscn` scenes
+    (breaks the headless geometry checks), bee helpers as child nodes (5-10x
+    the node count, and CQ-S4 assumes `bee.gd` owns its fields), signals in
+    place of the epoch counters (signal dispatch on hot paths), and
+    getters/setters around the fields the bee helpers read (call overhead
+    per bee per frame). A profile showing one of those costs reopens it
+    (`docs/agent-rules.md` rule 3).
 
 **Rule texts each decision changes, and the slice that edits them:**
 
@@ -278,6 +286,11 @@ wraps over two lines.
    well as the current one. A tool that reads a line at a time learns to join a
    wrapped call first.
 3. Nothing is reformatted in the repository: CQ-L3 does that.
+4. Every file `tests/source_checks.py` opens is closed: its bare
+   `open(...).read()` and `json.load(open(...))` become `with open` or
+   `Path.read_text`. Jules's audit (23 Oct 2026) found 1,652 unclosed-file
+   `ResourceWarning`s under `python -X dev`, which bury real output in a
+   unittest run.
 
 **Invariants.** A tool's output on today's unformatted source does not change.
 
@@ -285,7 +298,7 @@ wraps over two lines.
 **[Claude] CQ-L2 -- every tool that reads GDScript as text survives gdformat**
 - Plan: `plans/now/code-health.md` -- "CQ-L2 -- every tool that reads GDScript as text survives gdformat"
 - Files: `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, `tests/test_gdformat_survival.py`
-- Check: `python -m unittest tests.test_gdformat_survival` passes: each of the four tools gives the same result on a gdformat-ed copy of every tracked `.gd` as on the original; `python tests/source_checks.py` still passes
+- Check: `python -m unittest tests.test_gdformat_survival` passes: each of the four tools gives the same result on a gdformat-ed copy of every tracked `.gd` as on the original; `python tests/source_checks.py` still passes, and `python -X dev tests/source_checks.py` prints no `ResourceWarning`
 - Proof: `absent: tests/source_checks.py :: gdformat`
 - Next after: CQ-L3
 ```

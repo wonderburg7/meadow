@@ -103,15 +103,16 @@ def user_dir(env: Mapping[str, str] | None = None) -> Path:
     completed scenario look as though it wrote no result.
     """
     env = os.environ if env is None else env
-    appdata = env.get("APPDATA")
-    if not appdata and os.name != "nt":
-        # Godot on Linux and macOS keeps user:// under XDG_DATA_HOME, not APPDATA.
+    if os.name != "nt":
+        # Godot on Linux and macOS keeps user:// under XDG_DATA_HOME and never
+        # reads APPDATA -- which godot_compile_check.ensure_writable_user_dir()
+        # sets on every platform, so it must not win here (Jules, 23 Oct 2026).
         data_home = env.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
         root = Path(data_home) / "godot" / "app_userdata"
-    elif not appdata:
+    elif not env.get("APPDATA"):
         raise RuntimeError("%APPDATA% not set -- can't find the Godot user:// dir")
     else:
-        root = Path(appdata) / "Godot" / "app_userdata"
+        root = Path(env["APPDATA"]) / "Godot" / "app_userdata"
     project_text = (ROOT / "project.godot").read_text(encoding="utf-8")
     name_match = re.search(r'^config/name="([^"]+)"$', project_text, re.MULTILINE)
     if name_match is None:

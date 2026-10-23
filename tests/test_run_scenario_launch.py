@@ -19,6 +19,7 @@ import contextlib
 import io
 import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -108,6 +109,15 @@ class PrivateUserDirTest(unittest.TestCase):
         self.assertEqual(run_scenario.user_dir(first) / "scenario_saves",
                          run_scenario.scenario_saves_dir(session))
         self.assertTrue((self.root / ".gdignore").is_file())
+
+    def test_posix_ignores_a_stray_appdata(self):
+        # ensure_writable_user_dir() sets APPDATA even on Linux, where Godot
+        # reads XDG_DATA_HOME; user_dir must follow Godot (Jules, 23 Oct 2026).
+        env = {"APPDATA": "/tmp/meadow-godot-appdata", "XDG_DATA_HOME": "/home/x/data"}
+        posix_os = types.SimpleNamespace(name="posix", environ={})
+        with mock.patch.object(run_scenario, "os", posix_os):
+            found = run_scenario.user_dir(env)
+        self.assertEqual(Path("/home/x/data") / "godot" / "app_userdata", found.parent)
 
     def test_a_new_run_clears_only_stale_user_dirs(self):
         run_scenario.private_user_env("old")

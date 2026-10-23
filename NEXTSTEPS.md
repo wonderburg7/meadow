@@ -47,7 +47,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 4. **[Claude] CQ-L2 -- every tool that reads GDScript as text survives gdformat**
    - Plan: `plans/now/code-health.md` -- "CQ-L2 -- every tool that reads GDScript as text survives gdformat"
    - Files: `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, `tests/test_gdformat_survival.py`
-   - Check: `python -m unittest tests.test_gdformat_survival` passes: each of the four tools gives the same result on a gdformat-ed copy of every tracked `.gd` as on the original; `python tests/source_checks.py` still passes
+   - Check: `python -m unittest tests.test_gdformat_survival` passes: each of the four tools gives the same result on a gdformat-ed copy of every tracked `.gd` as on the original; `python tests/source_checks.py` still passes, and `python -X dev tests/source_checks.py` prints no `ResourceWarning`
    - Proof: `absent: tests/source_checks.py :: gdformat`
    - Next after: CQ-L3
 
