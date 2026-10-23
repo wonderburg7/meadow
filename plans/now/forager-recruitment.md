@@ -1,7 +1,7 @@
 # Forager recruitment -- Orientation flight, then Auto scouting, then Auto-recruitment
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: FR-1d -- repair the diagnosed foraging behaviour | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-22
+Status: active | Owner: Dave / Claude Code | Next: FR-2 -- needs its full specification and queue block now that FR-1d has landed | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-23
 
 ## Objective
 
@@ -47,8 +47,7 @@ Verified 14 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FR-1d | Repair the concrete defects FR-1c establishes | `scripts/bee_foraging.gd`, focused tests/scenarios, this plan | yes -- CQ-L1 released `scripts/bee_foraging.gd`; FR-1c closes out before refill admits it | high |
-| FR-2 | Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/skill_tree_panel.gd`, `scripts/levels.gd`, `tests/source_checks.py`, tests | no -- after FR-1d; numeric targets are provisional | high |
+| FR-2 | Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/skill_tree_panel.gd`, `scripts/levels.gd`, `tests/source_checks.py`, tests | no -- needs its specification; numeric targets are provisional | high |
 | FR-3 | owning Auto-recruitment switches it on, passing species with Adaptive constancy | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/levels.gd`, tests | no -- after PP-6 | high |
 
 **Dependencies.** FR-1 changes no game file. FR-2 waits for FR-1's table;
@@ -120,49 +119,12 @@ FR-1b shipped 2026-10-22; its specification is `plans/archive/FR-1b_2026-10-22.m
 
 FR-1c shipped 2026-10-22; its specification is `plans/archive/FR-1c_2026-10-22.md`.
 
-## FR-1d -- repair the diagnosed foraging behaviour
-
-<!-- LAYER: design -->
-Level: high
-
-Dave authorised behaviour diagnosis/fix on 22 Oct 2026; FR-1c separates the
-independent measurement from runtime ownership. Its controlled evidence is
-above (or in its archive after closeout). Start with unproductive early-scout
-entrance waits: prove and repair the case where a scout waits despite no
-eligible mentor being able to match, while preserving established-seeker and
-useful mentor waits. Prototype a narrowly scoped guard, not a global wait
-reduction. Include mixed resources, stale mentors, existing matching mentors,
-grace/settlement boundaries and both recruitment modes in the regression checks.
-Keep species/preference semantics unchanged: FR-1c proved the old table's
-confounding, not a defect in explicit constancy. Do not repair speculative
-patch-selection issues without a causal probe. Retain targets as loose guidance.
-Take a fresh same-source baseline before/after the repair: FR-1c's frozen
-measurements used `349cb34fb18d92805fba3d7f8d1d0d805f09b6ed`, before later
-integrated work. Do not interpret intervening changes as the repair's effect.
-No weakening Orientation flight, save fields, skill wiring, new balance fields
-or unrelated performance work. Profile the affected per-bee path first;
-preserve explicit player preferences, both recruitment modes and developer
-toggles. Require causal before/after regression checks, the same five-seed
-stage table and focused/full verification. Runtime changes require high-risk
-review/integration. Refine this section from FR-1c's results before claiming.
-
-**Closeout dependency, 22 Oct 2026:** FR-1c's seven focused tests, prefinish
-and `finish`'s branch verification passed. CQ-L1 has now landed and released
-`bee_foraging.gd`; FR-1c can close out and refill the Codex lane with FR-1d.
-The runtime repair remains unmerged until FR-1d completes its high-risk review.
-
-```queue
-**[Codex] FR-1d -- repair the diagnosed foraging behaviour**
-- Plan: `plans/now/forager-recruitment.md` -- "FR-1d -- repair the diagnosed foraging behaviour"
-- Files: `scripts/bee_foraging.gd`, `tests/test_forager_behaviour.py`, `tests/fr1d_forager_behaviour_test.gd`, `test_scenarios/fr1d_forager_behaviour_test.json`, `plans/now/forager-recruitment.md`
-- Check: causal regression checks and the five-seed comparison pass; `tools/prefinish.py` and `tools/verify.ps1` are green; provisional target misses are documented
-- Proof: `present: plans/now/forager-recruitment.md :: Next: FR-1d -- repair the diagnosed foraging behaviour`
-- Next after: FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
-```
+FR-1d shipped 2026-10-23; its specification is `plans/archive/FR-1d_2026-10-23.md`.
 
 ## Not in the queue, and why
 
-- **FR-2:** waits for FR-1d's behaviour fix; its numeric targets are provisional.
+- **FR-2:** needs its full specification and queue block (FR-1d landed
+  23 Oct 2026); its numeric targets are provisional.
 
 ## FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
 
