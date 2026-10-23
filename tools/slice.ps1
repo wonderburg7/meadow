@@ -694,8 +694,10 @@ function Get-LifecycleProducts {
     # These files describe integration state, not either feature branch.  A
     # slice may cause them to change, but only the lifecycle writes them after
     # merge, so they must not turn two otherwise independent branches into a
-    # false ownership collision.
-    return @("plans/workstreams.md", "checks/ready.md")
+    # false ownership collision.  FUNCTION_MAP.md joined them on 23 Oct 2026
+    # (L-33): finish restores master's copy before the branch commit and the
+    # closeout on master regenerates it.
+    return @("plans/workstreams.md", "checks/ready.md", "FUNCTION_MAP.md")
 }
 
 function Assert-CrossLaneOwnership {
@@ -982,6 +984,14 @@ function Get-SlicePreflight {
 
     Assert-CandidateDefinition -Root $root -Candidate $candidate
     Assert-CrossLaneOwnership -Root $root -Candidate $candidate
+    # L-33: the shared admission test (tools/admission.py) -- landed
+    # dependencies, open decisions, missing paths. Queue-only: the branch scan
+    # is for ad-hoc work, and stale session branches would block every claim.
+    $admission = Invoke-SlicePythonTool -Root $root -PythonPath $script:PythonPath -Arguments @((Join-Path $root "tools\admission.py"), $candidate.Id, "--queue-only", "--root", $root)
+    $blocked = @($admission.Output | Where-Object { $_ -like '*blocked:*' })
+    if ($admission.Exit -eq 1 -and $blocked) {
+        throw "$($candidate.Id) is not admissible -- $($blocked[0])"
+    }
     if (-not (Test-Proof -Root $root -ProofLine $candidate.Proof)) {
         throw "NEXTSTEPS.md item $($candidate.ItemNumber): proof no longer holds -- this may already be built. Open $($candidate.Proof.Split(':', 2)[1].Split('::', 2)[0].Trim()) before requeuing it."
     }
@@ -1668,6 +1678,17 @@ function Invoke-SlicePostMergeCleanup {
         }
     }
 
+    # L-33: drop this slice from other items' gates and repoint references to
+    # plans archived above; what it cannot rewrite it prints as `ambiguous:`.
+    $admissionTool = Join-Path $Root "tools\admission.py"
+    $adhocPaths = @()
+    if (Test-Path -LiteralPath $admissionTool -PathType Leaf) {
+        $clear = Invoke-SlicePythonTool -Root $Root -PythonPath $PythonPath -Arguments @($admissionTool, "--clear-landed", $Target.Id, "--root", $Root)
+        $clear.Output | ForEach-Object { Write-Output $_ }
+        $adhocPaths = @($clear.Output | Where-Object { $_ -like "touched: *" } | ForEach-Object { $_.Substring(9).Trim() })
+        if ($adhocPaths) { $parts += "clear $($Target.Id) from the gates"; $paths += $adhocPaths }
+    }
+
     # The ready-check page is a shared index, deliberately generated only
     # here, once the feature branch is known to be merged. This keeps
     # parallel branches from appending to the same Markdown file. It runs
@@ -1683,10 +1704,18 @@ function Invoke-SlicePostMergeCleanup {
     git -C $Root diff HEAD --quiet -- checks/ready.md
     if ($LASTEXITCODE -ne 0) { $parts += "refresh the ready-check index"; $paths += "checks/ready.md" }
 
+    $mapTool = Join-Path $Root "tools\update_function_map.py"
+    if (Test-Path -LiteralPath $mapTool -PathType Leaf) {
+        & $python $mapTool
+        if ($LASTEXITCODE -ne 0) { throw "could not regenerate FUNCTION_MAP.md" }
+        git -C $Root diff HEAD --quiet -- FUNCTION_MAP.md
+        if ($LASTEXITCODE -ne 0) { $parts += "regenerate the function map"; $paths += "FUNCTION_MAP.md" }
+    }
+
     if ($paths) {
         # archive_slice.py stages its own move (`git mv` leaves the old path
         # in no tree for `git add` to match); only the other two need it.
-        $plain = @($paths | Where-Object { $_ -in @("plans/workstreams.md", "checks/ready.md") } | Select-Object -Unique)
+        $plain = @($paths | Where-Object { $_ -in (@("plans/workstreams.md", "checks/ready.md", "FUNCTION_MAP.md") + $adhocPaths) } | Select-Object -Unique)
         if ($plain) {
             git -C $Root add -- @plain
             if ($LASTEXITCODE -ne 0) { throw "git add failed" }
@@ -2187,6 +2216,9 @@ function Save-SliceBranchWork {
     # Stage and commit everything outstanding in the slice worktree; a clean
     # tree is left alone rather than given an empty commit.
     param([string]$Root, [string]$Message)
+    # L-33: FUNCTION_MAP.md is unowned. verify.ps1 regenerates it on the branch,
+    # but only the closeout on master commits a regenerated copy.
+    if (git -C $Root ls-tree --name-only master -- FUNCTION_MAP.md) { git -C $Root checkout master -- FUNCTION_MAP.md }
     git -C $Root add -A
     if ($LASTEXITCODE -ne 0) { throw "git add failed" }
     $staged = git -C $Root diff --cached --name-only

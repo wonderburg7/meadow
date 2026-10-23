@@ -67,6 +67,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import admission  # noqa: E402
 import backlog  # noqa: E402
 import check_docs  # noqa: E402
 
@@ -309,7 +310,7 @@ def rejection(entry: backlog.Entry, text: str, root: Path,
             return "its proof no longer holds -- it may already be built"
         return f"its block's {proof_errors[0].removeprefix('NEXTSTEPS.md item 0: ')}"
     other = [lane for lane in check_docs.LANES if lane != entry.lane]
-    shared = check_docs._item_files(entry.body) & lane_files(text, other[0])
+    shared = set(admission.lane_conflicts(text, entry.lane, check_docs._item_files(entry.body)))
     if shared:
         return f"the {other[0]} lane already owns {', '.join(sorted(shared))}"
     return None

@@ -766,6 +766,26 @@ def check_released_blocked_checks(warnings: list[str], text: str | None = None,
         )
 
 
+def check_queue_admission(warnings: list[str], text: str | None = None,
+                          root: Path | None = None) -> None:
+    """Warn on any queued item tools/admission.py would not admit (L-33).
+
+    Queue-only: the unmerged-branch scan belongs to ad-hoc work and
+    `admission.py <id>`, since the checkout holds many stale session branches."""
+    try:
+        import admission  # lazy: admission imports this module
+    except ImportError:  # a fixture checkout without the tool
+        return
+
+    root = root or ROOT
+    if text is None:
+        text = (root / "NEXTSTEPS.md").read_text(encoding="utf-8")
+    for queued in admission.queue_items(text):
+        verdict = admission.check_item(text, root, queued)
+        if not verdict.admissible:
+            warnings.append(f"NEXTSTEPS.md: {queued.slice_id} {verdict.line()}")
+
+
 def check_queue_proofs(errors: list[str], text: str | None = None) -> None:
     """Each queue item's Proof: line must still hold against the code it names.
 
@@ -1428,6 +1448,7 @@ def main() -> int:
     check_next_steps(errors, warnings)
     check_queue_files(errors)
     check_queue_proofs(errors)
+    check_queue_admission(warnings)
     check_queue_items_state_a_level(warnings)
     check_queue_ids_are_unused(warnings)
     check_queue_successors(errors)
