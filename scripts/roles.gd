@@ -155,9 +155,6 @@ static func label_for(role_id: int) -> String:
 static func letter_for(role_id: int) -> String:
 	return entry(role_id).letter
 
-static func tip_for(role_id: int) -> String:
-	return entry(role_id).tip
-
 static func colour_for(role_id: int, focus: String = "") -> Color:
 	if role_id == FORAGER and Resources.is_valid(focus):
 		return Resources.colour_for(focus)
@@ -176,12 +173,6 @@ static func mode_label(role_id: int, mode_key: String) -> String:
 		if mode.key == mode_key:
 			return mode.label
 	return mode_key
-
-static func mode_tip(role_id: int, mode_key: String) -> String:
-	for mode in modes_for(role_id):
-		if mode.key == mode_key:
-			return mode.tip
-	return ""
 
 ## The string key main.gd matches on when a role is requested, and back.
 static func key_for(role_id: int) -> String:

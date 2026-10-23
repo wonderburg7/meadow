@@ -1,7 +1,7 @@
 # Google Jules -- task list and how to work it
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: Jules every task; Claude/Codex only to add or prune a task -->
-Status: reference | Owner: Dave / Claude Code | Next: Jules works J-2 to J-7, then the standing tasks; whoever merges a Jules pull request deletes its task block | Dependency: none | Verified: 2026-10-23
+Status: reference | Owner: Dave / Claude Code | Next: Jules works the standing tasks until a numbered task is added; whoever merges a Jules pull request deletes its task block | Dependency: none | Verified: 2026-10-24
 
 Jules works from GitHub on a Linux VM, outside the Claude/Codex slice queue.
 Its work is behaviour-preserving tooling: guards that catch a known bug class
@@ -71,74 +71,7 @@ it, like `tools/heading.py`.
 
 ## Tasks
 
-### J-2 -- Ratchet the presentation-only `is_on_screen` rule
-
-- Files: tools/presentation_gate_check.py (new), tests/test_presentation_gate_check.py (new)
-- After: none
-- Why: `.claude/rules/simulation.md` -- `is_on_screen` may gate label and
-  colour updates only, never a decision, state change or resource move.
-  Reviews on 7 and 15 Oct found no guard.
-- Do: list every `is_on_screen(` call in `scripts/` by enclosing function.
-  Read each one; allowlist it in the tool with a reason only if what it
-  skips is presentation. If any site gates simulation, do not fix it: leave
-  it out of the allowlist, mark the test `expectedFailure` with that site
-  named, and put it first under "Follow-ups" -- that is a gameplay bug for a
-  slice. The test fails when a call appears in a function not on the list.
-
-### J-3 -- Report uncalled GDScript functions
-
-- Files: tools/uncalled.py (new), tests/test_uncalled.py (new)
-- After: none
-- Why: the 15 Oct architecture review counted 21 uncalled functions by hand
-  (`docs/architecture-review-2026-10-15.md`, "Noted, not pursued").
-- Do: print each `scripts/**/*.gd` function with no reference in `scripts/`,
-  `tests/`, `scenes/`, `test_scenarios/` or `tools/`, counting bare and
-  dotted calls, string names and `.tscn` `method=` connections; skip Godot
-  virtuals (`_ready`, `_process`, `_draw`, `_input`, `_notification` and the
-  rest of the `_`-prefixed engine callbacks). Report only: exit 0, one line
-  each plus a total. The test feeds it a small tree with known answers and
-  says the real tree's total in the docstring.
-
-### J-4 -- Remove `Roles.tip_for` and `Roles.mode_tip`
-
-- Files: `scripts/roles.gd`
-- After: none
-- Why: no caller -- readers use `entry.tip` (architecture review, 15 Oct).
-- Do: delete both functions and nothing else; the proof is the caller grep
-  from step 5 run on `origin/master`.
-
-### J-5 -- Unit tests for `tools/func.py`
-
-- Files: tests/test_func_tool.py (new)
-- After: none
-- Why: every Claude and Codex session reads code through this tool
-  (`docs/agent-rules.md` rule 1); nothing tests it.
-- Do: cover one function, several functions in one call, a `static func`,
-  a function followed by comments and blank lines, a missing name (error
-  exit) and a missing file. Tests only: a bug in `func.py` is a Follow-up.
-
-### J-6 -- Unit tests for `tools/heading.py`
-
-- Files: tests/test_heading_tool.py (new)
-- After: none
-- Why: the other routing tool every session uses; tested only through the
-  lifecycle suite, which CI does not run. `heading.py` is named in live
-  plans, so the test may not change it.
-- Do: cover a case-insensitive substring match, a section ending at a
-  same-or-shallower heading, `##` lines inside a fenced block not counting
-  as headings, several matches (first printed, note on stderr) and no match
-  (exit 1, headings listed).
-
-### J-7 -- Unit tests for `tools/gdscript_warnings.py`'s parsing
-
-- Files: tests/test_gdscript_warnings.py (new)
-- After: none
-- Why: no test; its `script_warnings` and `as_res_path` are pure and its
-  exit codes are its contract.
-- Do: feed `script_warnings` sample `-d` boot output (see the docstring) and
-  check the parsed triples; check `as_res_path` on repo-relative and
-  `res://` paths; stub `boot_with_debugger` to check `main` exits 1 only for
-  a warning in a named file and 0 when Godot is missing.
+None open: J-1 to J-7 have merged. Add the next as J-8 (see "Keeping this list").
 
 ## Standing tasks
 
