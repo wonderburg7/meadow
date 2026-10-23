@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.claude/worktrees/admiring-bose-7c9c02` (`claude/admiring-bose-7c9c02`) | ad-hoc (Claude) | GitHub Actions PR gate for Jules PRs: `.github/workflows/pr-checks.yml`, `tests/test_sp5_skep.py` Pillow skip, `tests/test_forager_stages.py` Godot skip | Claude | in progress | none | none (ad-hoc, Dave 23 Oct 2026) |
+| `.worktrees/FR-1d` (`codex/FR-1d`) | Codex | repair the diagnosed foraging behaviour | Codex | in progress | none | `plans/now/forager-recruitment.md` FR-1d -- repair the diagnosed foraging behaviour |
