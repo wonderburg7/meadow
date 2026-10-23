@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-L2 and CQ-S0b in the Claude lane; CQ-M9 specified for the Codex refill; CQ-M8 remains in the Claude backlog | Dependency: Codex's CQ-R8, CQ-R10 and CQ-M10 wait for CQ-S0b to release FUNCTION_MAP.md; CQ-T3 also waits for CQ-L2 to release tests/source_checks.py, and follows CQ-R8; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-23
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-L2, CQ-S0b and CQ-M8 in the Claude lane; CQ-M10 then CQ-R9 for the Codex refill (plan review, 23 Oct 2026); CQ-R12's section is written by whoever claims CQ-R9 | Dependency: CQ-T3 waits for CQ-L2 to release tests/source_checks.py, and follows CQ-R8; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-23
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -121,14 +121,14 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | yes | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
 | CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | yes -- block written (CQ-M3 and CQ-L1 landed 22 Oct 2026) | low |
-| CQ-M10 | `WEATHER_ROLLS_PER_DAY` | `scripts/main.gd`, `FUNCTION_MAP.md` | yes (`FUNCTION_MAP.md` is unowned, 23 Oct 2026) | low |
+| CQ-M10 | `WEATHER_ROLLS_PER_DAY` | `scripts/main.gd`, `FUNCTION_MAP.md` | yes -- Codex block open (`FUNCTION_MAP.md` is unowned, 23 Oct 2026) | low |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once its section is written (CQ-R7 released `hud.gd` and WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes | medium |
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
-| CQ-R9 | `diagnostic_log.gd` snapshot shortened; probe duplicates kept once | `diagnostic_log.gd`, `scripts/headless/diagnostic_probes.gd` | yes | medium |
+| CQ-R9 | `diagnostic_log.gd` snapshot shortened; probe duplicates kept once | `diagnostic_log.gd`, `scripts/headless/diagnostic_probes.gd` | yes -- Codex block written; follows CQ-M10 | medium |
 | CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R11 | `world_building.gd::_seed_flower` decomposed, RNG order kept | `world_building.gd` | yes | medium |
 | CQ-R12 | `challenge_runner.gd` start, C2 failure, stage entry shortened | `challenge_runner.gd`, `challenge_feedback.gd` | yes | medium |
@@ -382,7 +382,7 @@ record, "Save restore".
 ```queue-gated
 **[Claude] CQ-S1 -- Flower owns its save fields**
 - Plan: `plans/now/code-health.md` -- "CQ-S1 -- Flower owns its save fields"
-- Files: `scripts/flower.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `.claude/rules/saving.md`, `docs/agent-rules.md`, `FUNCTION_MAP.md`
+- Files: `scripts/flower.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `.claude/rules/saving.md`, `docs/agent-rules.md`
 - Check: `python -m unittest tests.test_save_roundtrip` passes with unchanged goldens; `tests/test_save_migrations.py` passes; `.\tools\verify.ps1` is green
 - Proof: `present: scripts/saving.gd :: flower.nectar_amount = float(entry.get("nectar", 0.0))`
 - Next after: CQ-S2
@@ -418,10 +418,10 @@ changes.
 ```queue
 **[Claude] CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named**
 - Plan: `plans/now/code-health.md` -- "CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named"
-- Files: `scripts/bee_movement.gd`, `scripts/bee_foraging.gd`, `scripts/bee_mining.gd`, `scripts/bee_building.gd`, `FUNCTION_MAP.md`
+- Files: `scripts/bee_movement.gd`, `scripts/bee_foraging.gd`, `scripts/bee_mining.gd`, `scripts/bee_building.gd`
 - Check: `python tests/source_checks.py` passes; `python tools/prefinish.py` is green; `.\tools\verify.ps1` is green
-- Proof: `present: scripts/bee_mining.gd :: static func miner_go_to_exit`
-- Next after: CQ-M4 -- Challenge level ids named in `levels.gd`
+- Proof: `absent: scripts/bee_movement.gd :: func walk_to_hive_exit`
+- Next after: FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
 ```
 
 CQ-R0 shipped 2026-10-21; its specification is `plans/archive/CQ-R0_2026-10-21.md`.
@@ -446,16 +446,170 @@ draw count and all weather outcomes. Correct the adjacent
 "one roll per in-game day" comment to describe six attempts subject to
 the ten-second floor. No new setting or helper; the weather tick stays.
 
-**Gate.** None on `FUNCTION_MAP.md`, which is unowned (Dave, 23 Oct 2026).
-Recheck both lanes' files when opening the fence.
+**Gate.** None: `FUNCTION_MAP.md` is unowned since L-33 (Dave, 23 Oct
+2026), and no Claude-lane item names `scripts/main.gd`; the plan review
+opened the fence on 23 Oct 2026. SG-2 (Claude backlog) names `main.gd`,
+so it waits for this slice to land before it can join its lane.
 Minimum reasoning: **low**. Read this section and
 `main.gd::_advance_weather` only.
 
-```queue-gated
+```queue
 **[Codex] CQ-M10 -- weather rolls share one named daily count**
 - Plan: `plans/now/code-health.md` -- "CQ-M10 -- weather rolls share one named daily count"
-- Files: `scripts/main.gd`, `FUNCTION_MAP.md`
+- Files: `scripts/main.gd`
 - Check: `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` reports identical simulation results; both weather divisions use the float 6.0 via WEATHER_ROLLS_PER_DAY, with RNG order and the ten-second floor unchanged; `python tools/update_function_map.py --check`, `python tools/prefinish.py` and `.\tools\verify.ps1` are green
 - Proof: `present: scripts/main.gd :: GameConfig.rain_chance_per_day / 6.0`
-- Next after: CQ-M4 -- Challenge level ids named in levels.gd
+- Next after: CQ-R9 -- the diagnostic snapshot built in sections, its probe duplicates kept once
+```
+
+## CQ-R9 -- the diagnostic snapshot built in sections, its probe duplicates kept once
+
+<!-- LAYER: immediate-task -->
+
+Specified by the plan review, 23 Oct 2026, against `1a1f81c`. Minimum
+reasoning: **medium**. Read this section, "Rules for every slice" above,
+and the functions named below (`python tools/func.py`).
+
+**True now.** `diagnostic_log.gd::_snapshot` is one ~150-line function: it
+counts population, foraging preferences, cell contents, bee bread and soil
+blocks inline, then returns one dictionary literal. `start_session` opens
+the file, resets about forty counters and writes the config line in one
+body. Three pieces exist twice, in `diagnostic_log.gd` and
+`scripts/headless/diagnostic_probes.gd` (which `diagnostic_log.gd` already
+preloads as `DiagnosticProbesScript`):
+
+- flower season counts: `diagnostic_log.gd::_flower_season_counts`
+  (in/out of season plus `by_species`, one loop; called from `_snapshot`
+  and once more near line 843) and the probes' `_flower_season_counts`
+  (no species) plus `_flowers_by_species`;
+- first tier-2 affordable: `diagnostic_log.gd::_first_tier2_affordable`
+  and the inline `"resources.first_tier2_affordable"` arm of
+  `selected_snapshot`;
+- top sections: `_performance_snapshot`'s `Perf.top_sections` loop and the
+  `"performance.top_sections_ms"` arm (both 8 sections, both only while
+  `Session.perf_enabled`).
+
+**True afterwards.**
+
+1. `diagnostic_probes.gd` holds each shared piece once, as public statics:
+   `flower_season_counts(world) -> Dictionary` (the `diagnostic_log.gd`
+   version, with `by_species`), `first_tier2_affordable(hive) -> bool`
+   (null-safe, the `diagnostic_log.gd` version) and `top_sections_ms(count:
+   int) -> Dictionary` (empty unless `Session.perf_enabled`).
+   `selected_snapshot` uses them; `_flowers_by_species` and the private
+   `_flower_season_counts` go.
+2. `diagnostic_log.gd` deletes its `_flower_season_counts` and
+   `_first_tier2_affordable` and calls `DiagnosticProbesScript.*` at every
+   former call site; `_performance_snapshot` fills `top_sections_ms` from
+   `top_sections_ms(PERFORMANCE_SNAPSHOT_SECTIONS)` inside its existing
+   `perf_enabled` branch.
+3. `_snapshot` returns its top-level literal built from one helper per
+   group, in today's key order: `_population_section(bees)`,
+   `_resources_section(world)`, `_cells_section(world.hive)`,
+   `_environment_section(world)`, `_foraging_section(world, bees)`,
+   `_crab_spider_section(world)`, `_performance_snapshot(world)` (as
+   today) and `_role_outcomes_section(world)` (which includes the soil
+   block counts). Each helper keeps its group's keys in today's order.
+4. `start_session` calls `_open_session_file()`, `_reset_counters()` and
+   `_write_config_line()`, in that order, with the bodies moved unchanged.
+5. `python tools/update_function_map.py` regenerates the map.
+
+**Must not change.** Every snapshot key, value and group; the config line;
+the event lines; when a snapshot is taken; anything outside these two
+files. Snapshots are hourly, not per frame, so no profile is needed.
+
+**Check, before and after.** Before editing, run `python
+tools/run_scenario.py test_scenarios/slice1_smoke_test.json` and keep the
+last `"type": "snapshot"` line of the session file it names; after, run it
+again. The two lines must be equal as JSON objects once `performance` is
+removed from both. Then run the coverage tests named in the block.
+
+**Stop and escalate** if the two snapshot lines differ in anything but
+`performance`, or if a third copy of a shared piece turns up elsewhere.
+
+**Open decisions:** none.
+
+```queue
+**[Codex] CQ-R9 -- the diagnostic snapshot built in sections, its probe duplicates kept once**
+- Plan: `plans/now/code-health.md` -- "CQ-R9 -- the diagnostic snapshot built in sections, its probe duplicates kept once"
+- Files: `scripts/diagnostic_log.gd`, `scripts/headless/diagnostic_probes.gd`
+- Check: the slice1_smoke_test snapshot line before and after is equal as JSON apart from `performance`; `python -m unittest tests.test_bb1_bee_bread tests.test_sf1_founding_flower_mix tests.test_headless_profiles tests.test_headless_verdicts tests.test_pacing_gates` passes; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` reports no difference; `python tools/prefinish.py` and `.\tools\verify.ps1` are green
+- Proof: `absent: scripts/headless/diagnostic_probes.gd :: static func flower_season_counts`
+- Next after: CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened
+```
+
+## CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened
+
+<!-- LAYER: immediate-task -->
+
+Specified by the plan review, 23 Oct 2026, against `1a1f81c`. Minimum
+reasoning: **medium**. Read this section, "Rules for every slice" above,
+and `challenge_runner.gd::start`, `_check_c2_failure` and `_enter_stage`
+(`python tools/func.py`).
+
+**True now.** Three long functions in `challenge_runner.gd`:
+
+- `start` (~90 lines) resets about thirty run fields, resets the queen's
+  controls, stages the opening, then builds the stage marker inline.
+- `_check_c2_failure` holds the pollen rescue, the nectar rescue and the
+  checkpoint restore in one body. The pollen rescue's Gallerin line ("A
+  colony without pollen cannot raise any bee at all...") is an inline
+  dictionary `{"id": "challenge_2_pollen_rescue", "trigger": "recovery",
+  "repeatable": false, "text": ...}`, while its nectar sibling reads
+  `Feedback.gallerin_prompt("challenge_2_rescue")` from
+  `challenge_feedback.gd`'s `DEFS`. No test reaches either rescue.
+- `_enter_stage` mixes Challenge 1's per-stage queen rules and Challenge
+  2's stage-entry counters with the shared stage entry.
+
+**True afterwards.**
+
+1. `start` calls `_reset_run_state()` (every `_`-field and flag reset, in
+   today's order), `_reset_queen_controls()` (the `main.queen.*` resets
+   and the placement-tool clear) and `_build_stage_marker()`; the view
+   toggle, opening, camera, immunity, checkpoint clear and `_enter_stage()`
+   stay in `start` in today's order.
+2. `_check_c2_failure` keeps its stage guard and reads, then calls
+   `_try_c2_pollen_rescue(pollen) -> bool`, `_c2_nectar_rescue(nectar) ->
+   bool` (true when it rescued; the 2.1 suppression log stays inside it)
+   and `_c2_restore_checkpoint()`, returning after a helper that returns
+   true, exactly where today's body returns.
+3. `challenge_feedback.gd` `DEFS` gains `"challenge_2_pollen_rescue"`
+   beside `"challenge_2_rescue"`, with today's trigger, repeatable flag and
+   text byte for byte; the pollen rescue shows
+   `Feedback.gallerin_prompt("challenge_2_pollen_rescue")`, which builds
+   the same four keys.
+4. `_enter_stage` calls `_apply_c1_stage_rules(stage)` (the
+   `starting_level == 1` queen block, including the 1.8 and 1.11 cases)
+   and, at its end, `_record_c2_stage_entry()` (the five `_c2_*` entry
+   counters). `_run_stage_effects(stage.get("on_enter", []))` stays in
+   `_enter_stage` itself, after `_apply_stage_gate_to_ui()`, because
+   `tests/source_checks.py` (`STAGE_EFFECTS_FUNC`) checks that order there.
+5. New `test_scenarios/cq_r12_c2_pollen_rescue_test.json` (`"challenge":
+   2`, as `bb4_challenge2_route.json` starts): at stage 2.1, empty every
+   cell holding pollen with `set_cell_contents` (find them from the
+   Challenge 2 stocking in `world_building.gd`), then assert, `when`-gated
+   on a short `settle`, `{"hive_total": {"resource": "pollen", "at_least":
+   <Stages.c2_pollen_rescue_amount() at default settings>}}`. New
+   `tests/test_cq_r12_c2_rescue.py` runs it as
+   `tests/test_bb4_challenge_pacing.py` runs its routes. Write and pass it
+   **before** the refactor, so it proves the moved code.
+6. `python tools/update_function_map.py` regenerates the map.
+
+**Must not change.** Any display string; stage order and timing; the
+checkpoint save and restore; rescue thresholds and amounts; what runs
+before `_run_stage_effects`. No new setting.
+
+**Stop and escalate** if the new scenario cannot drain pollen below the
+threshold at stage 2.1 with existing actions (do not add a scenario
+action), or if either route scenario's equivalence differs.
+
+**Open decisions:** none.
+
+```queue
+**[Codex] CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened**
+- Plan: `plans/now/code-health.md` -- "CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened"
+- Files: `scripts/challenge_runner.gd`, `scripts/challenge_feedback.gd`, `test_scenarios/cq_r12_c2_pollen_rescue_test.json`, `tests/test_cq_r12_c2_rescue.py`
+- Check: `python -m unittest tests.test_cq_r12_c2_rescue` passes before and after the refactor (the C2 pollen rescue tops pollen up at stage 2.1); `python tools/equivalence.py test_scenarios/bb4_challenge1_route.json master` and `python tools/equivalence.py test_scenarios/bb4_challenge2_route.json master` report no difference; `python -m unittest tests.test_challenge2_checks tests.test_bb4_challenge_pacing` and `python tests/source_checks.py` pass; `python tools/prefinish.py` and `.\tools\verify.ps1` are green
+- Proof: `absent: scripts/challenge_feedback.gd :: "challenge_2_pollen_rescue"`
+- Next after: CQ-M4 -- Challenge level ids named in `levels.gd`
 ```

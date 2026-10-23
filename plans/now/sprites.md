@@ -108,7 +108,7 @@ its sprite-table row and catalogue entry (`FORAGERS_MEADOW_VIEW_*`).
 ```queue
 **[Claude] SP-6 -- meadow foragers drawn from the sheet**
 - Plan: `plans/now/sprites.md` -- "SP-6 -- meadow foragers drawn from the sheet"
-- Files: `scripts/bee.gd`, `tests/sp6_forager_sprite_test.gd`, `tests/test_sp6_forager_sprite.py`, `FUNCTION_MAP.md`
+- Files: `scripts/bee.gd`, `tests/sp6_forager_sprite_test.gd`, `tests/test_sp6_forager_sprite.py`
 - Check: `python -m unittest tests.test_sp6_forager_sprite` passes: an outdoor worker heading into each of the eight octants shows that direction's row, its frame advances with the wing clock, and its body circles are hidden outdoors and shown indoors; a before/after profile of the display update is recorded in the plan; `.	oolserify.ps1` is green
 - Proof: `absent: scripts/bee.gd :: FORAGERS_MEADOW_VIEW`
 - Next after: None -- plan complete

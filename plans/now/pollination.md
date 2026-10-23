@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-8 -- the C-129 watch run plays at real time (PP-7 landed 15 Oct 2026, but its watch run still ran far faster than real time); then PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter (PP-5 landed 13 Oct 2026: once Priority cells is owned, the cell popup's "Feed first" box marks a brood cell, nurses feed a hungry larva there before any unmarked one, and saves carry each cell's `priority_cell`; PP-4 landed 12 Oct 2026: a flower that set seed replants its own species nearby, the year's seed weights spring regrowth, and saves carry a `seed_bank` record and each flower's lifespan; PP-2 landed 12 Oct 2026, its hands-on check is C-129) | Dependency: PP-6 waits for FR-2 (`plans/now/forager-recruitment.md`, Dave 14 Oct 2026); AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6 | Verified: 2026-10-15
+Status: active | Owner: Dave / Claude Code | Next: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter; it waits for FR-2 (`plans/now/forager-recruitment.md`, specified 23 Oct 2026) | Dependency: PP-6 waits for FR-2 (Dave 14 Oct 2026); AR-4 (`plans/now/alpha-route-evidence.md`) and FR-3 wait for PP-6 | Verified: 2026-10-23
 
 ## Objective
 

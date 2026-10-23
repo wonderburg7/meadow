@@ -840,3 +840,48 @@ explicit request from Dave.
   peak population a Colony Run reaches), written once in
   `plans/design/product-scope.md`.
 - Disposition: promoted -- `plans/design/product-scope.md` §6.1 (provisional 500 bees at 60 fps) and AR-4's check, which replaces it with twice the measured peak (Dave, 16 Oct 2026, product review D5)
+
+### 2026-10-23 — the L-34 guard refuses the prescribed history route to archived plans (from the plan review)
+
+- Source: plan and queue review, 23 Oct 2026 (`docs/plan-review-2026-10-23.md`, hand-off to the agent-workflow review)
+- Area: tools / guard hook
+- Signal: `tools/guard_hook.py::_reason` denies any shell command whose
+  text contains `plans/archive`, `docs/archive`, `_backups` or `.godot`,
+  so `git show HEAD:plans/archive/<file>` and `git grep -n <id> HEAD --
+  plans/archive` are refused. Those are the routes `CLAUDE.md` ("Why a
+  built system is the way it is"), the review contract's rule 1 and the
+  memory note on denied paths prescribe; the file tools stay denied on
+  purpose. A heredoc, commit message or `sed` edit that merely names an
+  archived path is refused the same way (this entry had to be written
+  with the Edit tool).
+- Evidence: this review's `git show` of FR-1d's archived record was
+  refused with "Do not read this denied path."; `DENIED_READ_PATHS` and the
+  substring test in `_reason`.
+- Consequence: no session can read a shipped slice's record from history;
+  closeouts and reviews that name an archived path in a shell command stop.
+- Candidate direction: Hypothesis -- apply the denied-path test only to
+  commands that read the working tree (`cat`, `head`, `tail`, `sed -n`,
+  `grep`/`rg` on a path, `Get-Content`), never to `git` subcommands, with a
+  `tests/test_guard_hook.py` case for each. `slice.ps1 owner` reports both
+  files owned by a Jules branch (`origin/jules/j-2-presentation-gate-check-…`),
+  so the plan review did not edit them.
+- Disposition: untriaged
+
+### 2026-10-23 — refill_lane still treats FUNCTION_MAP.md as owned after L-33 (from the plan review)
+
+- Source: plan and queue review, 23 Oct 2026 (`docs/plan-review-2026-10-23.md`, hand-off to the agent-workflow review)
+- Area: tools / queue admission
+- Signal: L-33 made `FUNCTION_MAP.md` unowned (Dave, 23 Oct 2026) and
+  `tools/admission.py` lists it in `UNOWNED`, but
+  `tools/refill_lane.py --top-up` still refused CQ-M10 and CQ-R9 because a
+  Claude item and a Codex item "both name FUNCTION_MAP.md". The review
+  dropped the file from every `Files:` line (NEXTSTEPS, code-health,
+  drones, sprites) so the Codex lane could refill.
+- Evidence: `grep -n FUNCTION_MAP tools/refill_lane.py tools/admission.py`
+  (only `admission.py`); the dry run's "not added" lines before the edit.
+- Consequence: any new block that lists the map starves the other lane
+  again, and nothing warns.
+- Candidate direction: Hypothesis -- `refill_lane.py`'s collision test
+  reads `admission.UNOWNED`, and `check_docs.py` warns on a `Files:` line
+  naming an unowned file.
+- Disposition: untriaged
