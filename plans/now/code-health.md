@@ -448,8 +448,11 @@ the ten-second floor. No new setting or helper; the weather tick stays.
 
 **Gate.** None: `FUNCTION_MAP.md` is unowned since L-33 (Dave, 23 Oct
 2026), and no Claude-lane item names `scripts/main.gd`; the plan review
-opened the fence on 23 Oct 2026. SG-2 (Claude backlog) names `main.gd`,
-so it waits for this slice to land before it can join its lane.
+opened the fence on 23 Oct 2026.
+
+**Lanes.** SG-2 (Claude backlog) also names `main.gd`; the refill admits
+it to the Claude lane only once this slice has landed.
+
 Minimum reasoning: **low**. Read this section and
 `main.gd::_advance_weather` only.
 
