@@ -200,6 +200,25 @@ function Receive-JobText {
     }
 }
 
+# L-35: a failed unit-test job whose every failing test is listed, unexpired,
+# in tests/baseline_failures.json (it fails on master too) stays green with a
+# note. Returns the note, or "" when anything else failed.
+function Get-BaselineNote {
+    param([object[]]$Output)
+    try {
+        $log = Join-Path ([System.IO.Path]::GetTempPath()) ("meadow-baseline-" + [guid]::NewGuid().ToString("N") + ".log")
+        Set-Content -LiteralPath $log -Value (@($Output | ForEach-Object { "$_" }) -join "`n") -Encoding UTF8
+        try {
+            $ErrorActionPreference = "Continue"
+            $result = @(& $python (Join-Path $PSScriptRoot "stop_causes.py") baseline $log 2>&1 | ForEach-Object { $_.ToString() })
+            if ($LASTEXITCODE -eq 0 -and $result) { return "$($result[0])" }
+        }
+        finally { Remove-Item -LiteralPath $log -Force -ErrorAction SilentlyContinue }
+    }
+    catch { }
+    return ""
+}
+
 function Start-LifecycleJob {
     param($Interpreter, $Root, $Modules)
     Start-Job -Name "lifecycle tests" -ArgumentList $Interpreter, $Root, $Modules -ScriptBlock {
@@ -538,6 +557,10 @@ if ($runBranchScope -and -not $Docs) {
             $script:jobReadDenied = $false
             $captured = Receive-JobText -Job $job
             $ok = ($job.State -eq "Completed" -and -not $script:jobReadDenied)
+            if (-not $ok -and $job.Name -eq "unit tests" -and -not $script:jobReadDenied) {
+                $baselineNote = Get-BaselineNote -Output $captured
+                if ($baselineNote) { $ok = $true; Write-Output "unit tests: $baselineNote" }
+            }
             Write-StageResult -Name $job.Name -Ok $ok -Output $captured -Ms $jobMs
             Write-GameTestSkip -Output $captured
             if (-not $ok) {
@@ -558,6 +581,10 @@ if ($runBranchScope -and -not $Docs) {
             $plainOutput = Receive-JobText -Job $job
             $plainOutput | ForEach-Object { Write-Output $_ }
             $ok = ($job.State -eq "Completed" -and -not $script:jobReadDenied)
+            if (-not $ok -and $job.Name -eq "unit tests" -and -not $script:jobReadDenied) {
+                $baselineNote = Get-BaselineNote -Output $plainOutput
+                if ($baselineNote) { $ok = $true; Write-Output "unit tests: $baselineNote" }
+            }
             # The -Quiet branch above records its stages through
             # Write-StageResult; this branch prints directly, so it records
             # its own or the plain run would be missing from the log.

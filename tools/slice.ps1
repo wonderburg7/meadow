@@ -156,6 +156,29 @@ function Get-SliceRetryLine {
     }
 }
 
+function Get-StopCauseLines {
+    # L-35: tools/stop_causes.py names the cause category and its remedy from
+    # the stop's cause and, for a failed verify, the saved log. Never throws.
+    param([string]$Cause, [string]$Fix)
+    try {
+        $text = $Cause
+        if ($Fix -match 'saved to (\S+?)\.\s') {
+            $logPath = $Matches[1]
+            if (Test-Path -LiteralPath $logPath -PathType Leaf) { $text += "`n" + (Get-Content -LiteralPath $logPath -Raw) }
+        }
+        $temp = Join-Path ([System.IO.Path]::GetTempPath()) ("meadow-stop-" + [guid]::NewGuid().ToString("N") + ".log")
+        Set-Content -LiteralPath $temp -Value $text -Encoding UTF8
+        try {
+            $root = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
+            $run = Invoke-SlicePythonTool -Root $root -PythonPath $script:PythonPath -Arguments @((Join-Path $root "tools\stop_causes.py"), "classify", $temp)
+            if ($run.Exit -eq 0) { return @($run.Output | Where-Object { "$_" -match '^(cause|remedy): ' } | ForEach-Object { "  " + ("$_" -replace '^cause: ', 'Class:  ' -replace '^remedy: ', 'Remedy: ') }) }
+        }
+        finally { Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue }
+    }
+    catch { }
+    return @()
+}
+
 function Write-SliceFailure {
     param([System.Management.Automation.ErrorRecord]$Record)
     $context = $script:SliceContext
@@ -167,6 +190,7 @@ function Write-SliceFailure {
     if ($context.Step) { $lines += "  Step:   $($context.Step)" }
     $lines += "  Cause:  $cause"
     $lines += "  Fix:    $fix"
+    $lines += @(Get-StopCauseLines -Cause $cause -Fix $fix)
     $lines += "  Retry:  $(Get-SliceRetryLine)"
     $lines += "  This block is the whole diagnosis -- there is no need to read tools/slice.ps1."
     foreach ($line in $lines) { [Console]::Error.WriteLine($line) }
