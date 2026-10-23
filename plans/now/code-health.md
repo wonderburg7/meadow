@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: CQ-L2 -- every tool that reads GDScript as text survives gdformat (CQ-L1, CQ-R7 and CQ-M3 landed 22 Oct 2026; CQ-M8, which followed CQ-M3, is in the Claude backlog; CQ-S0's round-trip harness landed 22 Oct 2026; CQ-S0b, its one known difference (a switched forager gains an orientation start point on reload), is in the Claude backlog by Dave's decision) | Dependency: CQ-T3 and CQ-R8 wait only for their sections to be written (CQ-R7, the last queued slice in `scripts/hud.gd`, landed 22 Oct 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026) and DR-1 (`plans/now/drones.md`); the rest is in "Dependencies" | Verified: 2026-10-22
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-L2 and CQ-S0b in the Claude lane; CQ-M9 specified for the Codex refill; CQ-M8 remains in the Claude backlog | Dependency: Codex's CQ-R8, CQ-R10 and CQ-M10 wait for CQ-S0b to release FUNCTION_MAP.md; CQ-T3 also waits for CQ-L2 to release tests/source_checks.py, and follows CQ-R8; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-23
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -101,7 +101,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | --- | --- | --- | --- | --- |
 | CQ-L2 | every tool that reads GDScript as text survives `gdformat` | `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, tests | yes (CQ-L1 landed 22 Oct 2026) | medium |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot` | once its section is written (CQ-R7, the last queued slice in `hud.gd`, landed 22 Oct 2026; CQ-T2 21 Oct 2026) | low |
+| CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | section needed; Codex admission waits for Claude to release `tests/source_checks.py` (CQ-L2) and `FUNCTION_MAP.md` (CQ-S0b) | low |
 | CQ-S0b | a restored forager takes no fresh orientation flight | `bee.gd`, `saving.gd`, `tests/save_roundtrip_test.gd` | yes | medium |
 | CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a, DR-1 | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
@@ -113,16 +113,16 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | yes | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
 | CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | yes -- block written (CQ-M3 and CQ-L1 landed 22 Oct 2026) | low |
-| CQ-M9 | colony plot reads `Resources` colours; width const | `colony_panel.gd` | yes | low |
-| CQ-M10 | `WEATHER_ROLLS_PER_DAY` | `main.gd` | yes | low |
+| CQ-M9 | colony plot reads `Resources` colours; width const | `scripts/colony_panel.gd` | yes -- Codex block below, verified 23 Oct 2026 | low |
+| CQ-M10 | `WEATHER_ROLLS_PER_DAY` | `scripts/main.gd`, `FUNCTION_MAP.md` | Codex admission waits for CQ-S0b to release `FUNCTION_MAP.md` | low |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once its section is written (CQ-R7 released `hud.gd` and WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes | medium |
-| CQ-R8 | hud builders shortened (designation button table) | `hud.gd` | yes | medium |
+| CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed; Codex admission waits for CQ-S0b to release `FUNCTION_MAP.md` | medium |
 | CQ-R9 | `diagnostic_log.gd` snapshot shortened; probe duplicates kept once | `diagnostic_log.gd`, `scripts/headless/diagnostic_probes.gd` | yes | medium |
-| CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd` | yes | medium |
+| CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd`, `FUNCTION_MAP.md` | section needed; Codex admission waits for CQ-S0b to release `FUNCTION_MAP.md` | medium |
 | CQ-R11 | `world_building.gd::_seed_flower` decomposed, RNG order kept | `world_building.gd` | yes | medium |
 | CQ-R12 | `challenge_runner.gd` start, C2 failure, stage entry shortened | `challenge_runner.gd`, `challenge_feedback.gd` | yes | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
@@ -157,7 +157,15 @@ claim while `dry_after`).
   - CQ-T3 types `hud.gd` after the queued slices that reshape it (WP-3, landed
     22 Oct 2026, then CQ-R7), as CQ-T2 waited for CQ-R1's moves; CQ-L1, which held
     `skill_tree_panel.gd` ahead of it, landed 22 Oct 2026. CQ-R7 landed 22 Oct
-    2026, so its section and block are next to write, deciding then whether CQ-R8 goes first.
+    2026. CQ-R8 should precede CQ-T3 to avoid typing the builders twice;
+    both still need sections. For Codex admission, CQ-T3 also waits for
+    Claude's CQ-L2 to release `tests/source_checks.py` and CQ-S0b to release
+    `FUNCTION_MAP.md`. CQ-R8 and CQ-R10 need that map too. These are lane
+    ownership gates, not unshipped functional prerequisites (verified
+    23 Oct 2026 against `a49ac59` and both lanes' `Files:` lists).
+  - CQ-M9 is independent of those gates: `colony_panel.gd` is below the
+    function-map threshold and no Claude queue item owns it. CQ-M10 needs
+    `FUNCTION_MAP.md`, so its Codex block stays gated until CQ-S0b lands.
   - The save moves (CQ-S1 to S5 and CQ-R2) wait for every specified slice that edits
     `save_game.gd`/`saving.gd`: WP-2, SG-2, ED-1, ED-2 (difficulty, ending at ED-3),
     RR-12, SP-8a and DR-1 (`plans/now/drones.md`). Each of those plans carries the reverse pointer.
@@ -407,3 +415,74 @@ changes.
 CQ-R0 shipped 2026-10-21; its specification is `plans/archive/CQ-R0_2026-10-21.md`.
 
 CQ-R7 shipped 2026-10-22; its specification is `plans/archive/CQ-R7_2026-10-22.md`.
+
+## CQ-M9 -- colony plots reuse resource colours and name their content width
+
+<!-- LAYER: immediate-task -->
+
+**Now (verified 23 Oct 2026, `a49ac59`).** `colony_panel.gd::PLOT_SERIES`
+duplicates the nectar and pollen colours in `Resources.RESOURCES`.
+The plot's honey colour deliberately differs (D2). Five content controls,
+including the WP-3 default-order hint, repeat a 300-pixel minimum width.
+The panel's outer rectangle already belongs to `ui_layout.gd`.
+
+**Change.** Read nectar and pollen colours through `Resources.colour_for`
+in `_series_colour` or when constructing their series data. Keep the bees
+and honey colours, series order, labels and unknown-series fallback.
+Name the existing 300-pixel content minimum once in this file and use it
+at all five sites; retain the plot's 110-pixel height. Do not resize the
+panel or introduce a shared spacing scale. No save or simulation change.
+
+**Runtime policy.** Construction and the existing plot draw callback only;
+no new polling, processing callback, cache or persistent state.
+
+**Read:** this section and D2 above; `colony_panel.gd::PLOT_SERIES`,
+`_ready`, `_build_plot`, `_series_colour`, `_rebuild_default_order` and
+`resources.gd::colour_for`. Minimum reasoning: **low**.
+
+**Acceptance.** Check all four series with a populated history: nectar and
+pollen match the resource catalogue; bees and honey keep their existing
+RGBA values; selecting each series keeps its label and history values.
+Run the existing layout regression and WP-3 UI tests. File the targeted
+visual check required by `plans/reference/ui-rules.md`: open Colony,
+switch all four plot series, and check the unchanged colours and readable
+content at minimum window size. No new test harness is needed.
+
+```queue
+**[Codex] CQ-M9 -- colony plots reuse resource colours and name their content width**
+- Plan: `plans/now/code-health.md` -- "CQ-M9 -- colony plots reuse resource colours and name their content width"
+- Files: `scripts/colony_panel.gd`
+- Check: `python -m unittest tests.test_layout_regression tests.test_wp3_backup_order_ui` passes; nectar/pollen use Resources colours, bees/honey retain their RGBA values, all five 300-pixel content minima share one constant; file the four-series visual check; `python tools/prefinish.py` and `.\tools\verify.ps1` are green
+- Proof: `present: scripts/colony_panel.gd :: {"key": "nectar", "label": "Nectar", "colour": Color(0.95, 0.72, 0.20)},`
+- Next after: CQ-M10 -- weather rolls share one named daily count
+```
+
+## CQ-M10 -- weather rolls share one named daily count
+
+<!-- LAYER: immediate-task -->
+
+**Now (verified 23 Oct 2026, `a49ac59`).** `main.gd::_advance_weather`
+uses `6.0` both to spread weather rolls across a day and to scale each
+roll's rain probability. This is a paired structural constant (D2).
+`FUNCTION_MAP.md` records this script's line positions.
+
+**Change.** Name the existing float `WEATHER_ROLLS_PER_DAY := 6.0` in
+`main.gd`, use it at both divisions, and regenerate the function map.
+Keep the ten-second floor, timer/event order, first-crisis guard, random
+draw count and all weather outcomes. Correct the adjacent
+"one roll per in-game day" comment to describe six attempts subject to
+the ten-second floor. No new setting or helper; the weather tick stays.
+
+**Gate.** CQ-S0b must release `FUNCTION_MAP.md` from the Claude lane before
+this enters Codex. Recheck both lanes' files when opening the gate.
+Minimum reasoning: **low**. Read this section and
+`main.gd::_advance_weather` only.
+
+```queue-gated
+**[Codex] CQ-M10 -- weather rolls share one named daily count**
+- Plan: `plans/now/code-health.md` -- "CQ-M10 -- weather rolls share one named daily count"
+- Files: `scripts/main.gd`, `FUNCTION_MAP.md`
+- Check: `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` reports identical simulation results; both weather divisions use the float 6.0 via WEATHER_ROLLS_PER_DAY, with RNG order and the ten-second floor unchanged; `python tools/update_function_map.py --check`, `python tools/prefinish.py` and `.\tools\verify.ps1` are green
+- Proof: `present: scripts/main.gd :: GameConfig.rain_chance_per_day / 6.0`
+- Next after: CQ-M4 -- Challenge level ids named in levels.gd
+```
