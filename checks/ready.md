@@ -32,4 +32,5 @@ unblocker.
 - [C-141 -- Nectar shows an olive warning tint in its last game-hour before it ferments, and reads turning in colour-blind mode](ready/C-141.md)
 - [C-142 -- Reorder a bee's backup jobs and the colony default](ready/C-142.md)
 - [C-143 -- An unmatched scout resumes; an established seeker keeps waiting](ready/C-143.md)
+- [C-144 -- Colony plot series retain readable catalogue colours at minimum window size](ready/C-144.md)
 - [C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface](ready/C-99.md)

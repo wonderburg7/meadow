@@ -17,6 +17,7 @@ extends GamePanel
 
 const UI = preload("res://scripts/ui.gd")
 const Roles = preload("res://scripts/roles.gd")
+const Resources = preload("res://scripts/resources.gd")
 const Bee = preload("res://scripts/bee.gd")
 const Availability = preload("res://scripts/availability.gd")
 
@@ -54,10 +55,12 @@ const STAT_ROWS := [
 ## Which series the history plot is showing.
 const PLOT_SERIES := [
 	{"key": "bees", "label": "Bees", "colour": Color(0.55, 0.85, 0.45)},
-	{"key": "nectar", "label": "Nectar", "colour": Color(0.95, 0.72, 0.20)},
-	{"key": "pollen", "label": "Pollen", "colour": Color(0.55, 0.48, 0.90)},
+	{"key": "nectar", "label": "Nectar"},
+	{"key": "pollen", "label": "Pollen"},
 	{"key": "honey", "label": "Honey", "colour": Color(0.95, 0.45, 0.25)},
 ]
+
+const PLOT_CONTENT_MIN_WIDTH := 300.0
 
 var count_labels: Dictionary = {}   # count key -> Button
 var stat_labels: Dictionary = {}    # stat key -> Label
@@ -108,7 +111,7 @@ func _ready() -> void:
 	hint.text = "Click a row to select every bee in it. Star a readout to keep it in the corner of the screen."
 	hint.theme_type_variation = "Tiny"
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.custom_minimum_size = Vector2(300, 0)
+	hint.custom_minimum_size = Vector2(PLOT_CONTENT_MIN_WIDTH, 0)
 	UiTheme.bind_color(hint, "font_color", "text_secondary")
 	column.add_child(hint)
 
@@ -122,7 +125,7 @@ func _ready() -> void:
 	needing_attention_ok_label.theme_type_variation = "Small"
 	UiTheme.bind_color(needing_attention_ok_label, "font_color", "success")
 	needing_attention_ok_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	needing_attention_ok_label.custom_minimum_size = Vector2(300, 0)
+	needing_attention_ok_label.custom_minimum_size = Vector2(PLOT_CONTENT_MIN_WIDTH, 0)
 	needing_attention_column.add_child(needing_attention_ok_label)
 
 	var jobs := _section(column, "Who is doing what", false)
@@ -140,7 +143,7 @@ func _ready() -> void:
 	favourites_empty_label.theme_type_variation = "Small"
 	UiTheme.bind_color(favourites_empty_label, "font_color", "text_secondary")
 	favourites_empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	favourites_empty_label.custom_minimum_size = Vector2(300, 0)
+	favourites_empty_label.custom_minimum_size = Vector2(PLOT_CONTENT_MIN_WIDTH, 0)
 	favourites_column.add_child(favourites_empty_label)
 
 	_build_plot(_section(column, "Over time", false))
@@ -286,7 +289,7 @@ func _build_plot(column: VBoxContainer) -> void:
 		plot_button_row.add_child(btn)
 
 	plot = Control.new()
-	plot.custom_minimum_size = Vector2(300, 110)
+	plot.custom_minimum_size = Vector2(PLOT_CONTENT_MIN_WIDTH, 110)
 	plot.draw.connect(_draw_plot)
 	column.add_child(plot)
 
@@ -302,6 +305,8 @@ func _choose_series(key: String) -> void:
 	plot.queue_redraw()
 
 func _series_colour() -> Color:
+	if plot_series == Resources.NECTAR or plot_series == Resources.POLLEN:
+		return Resources.colour_for(plot_series)
 	for entry in PLOT_SERIES:
 		if entry.key == plot_series:
 			return entry.colour
@@ -418,7 +423,7 @@ func _rebuild_default_order() -> void:
 	var hint := Label.new()
 	hint.theme_type_variation = "Small"
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.custom_minimum_size = Vector2(300, 0)
+	hint.custom_minimum_size = Vector2(PLOT_CONTENT_MIN_WIDTH, 0)
 	UiTheme.bind_color(hint, "font_color", "text_secondary")
 	if not owned:
 		hint.text = "Buy Work priorities to choose what new bees fall back on when they have no work."

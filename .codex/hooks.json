@@ -1,5 +1,17 @@
 {
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import runpy,subprocess,pathlib;root=pathlib.Path(subprocess.check_output(['git','rev-parse','--show-toplevel'],text=True).strip());runpy.run_path(str(root/'tools'/'guard_hook.py'),run_name='__main__')\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [

@@ -121,7 +121,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | yes | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
 | CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | yes -- block written (CQ-M3 and CQ-L1 landed 22 Oct 2026) | low |
-| CQ-M9 | colony plot reads `Resources` colours; width const | `scripts/colony_panel.gd` | yes -- Codex block below, verified 23 Oct 2026 | low |
 | CQ-M10 | `WEATHER_ROLLS_PER_DAY` | `scripts/main.gd`, `FUNCTION_MAP.md` | Codex admission waits for CQ-S0b to release `FUNCTION_MAP.md` | low |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once its section is written (CQ-R7 released `hud.gd` and WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
@@ -429,46 +428,7 @@ CQ-R0 shipped 2026-10-21; its specification is `plans/archive/CQ-R0_2026-10-21.m
 
 CQ-R7 shipped 2026-10-22; its specification is `plans/archive/CQ-R7_2026-10-22.md`.
 
-## CQ-M9 -- colony plots reuse resource colours and name their content width
-
-<!-- LAYER: immediate-task -->
-
-**Now (verified 23 Oct 2026, `a49ac59`).** `colony_panel.gd::PLOT_SERIES`
-duplicates the nectar and pollen colours in `Resources.RESOURCES`.
-The plot's honey colour deliberately differs (D2). Five content controls,
-including the WP-3 default-order hint, repeat a 300-pixel minimum width.
-The panel's outer rectangle already belongs to `ui_layout.gd`.
-
-**Change.** Read nectar and pollen colours through `Resources.colour_for`
-in `_series_colour` or when constructing their series data. Keep the bees
-and honey colours, series order, labels and unknown-series fallback.
-Name the existing 300-pixel content minimum once in this file and use it
-at all five sites; retain the plot's 110-pixel height. Do not resize the
-panel or introduce a shared spacing scale. No save or simulation change.
-
-**Runtime policy.** Construction and the existing plot draw callback only;
-no new polling, processing callback, cache or persistent state.
-
-**Read:** this section and D2 above; `colony_panel.gd::PLOT_SERIES`,
-`_ready`, `_build_plot`, `_series_colour`, `_rebuild_default_order` and
-`resources.gd::colour_for`. Minimum reasoning: **low**.
-
-**Acceptance.** Check all four series with a populated history: nectar and
-pollen match the resource catalogue; bees and honey keep their existing
-RGBA values; selecting each series keeps its label and history values.
-Run the existing layout regression and WP-3 UI tests. File the targeted
-visual check required by `plans/reference/ui-rules.md`: open Colony,
-switch all four plot series, and check the unchanged colours and readable
-content at minimum window size. No new test harness is needed.
-
-```queue
-**[Codex] CQ-M9 -- colony plots reuse resource colours and name their content width**
-- Plan: `plans/now/code-health.md` -- "CQ-M9 -- colony plots reuse resource colours and name their content width"
-- Files: `scripts/colony_panel.gd`
-- Check: `python -m unittest tests.test_layout_regression tests.test_wp3_backup_order_ui` passes; nectar/pollen use Resources colours, bees/honey retain their RGBA values, all five 300-pixel content minima share one constant; file the four-series visual check; `python tools/prefinish.py` and `.\tools\verify.ps1` are green
-- Proof: `present: scripts/colony_panel.gd :: {"key": "nectar", "label": "Nectar", "colour": Color(0.95, 0.72, 0.20)},`
-- Next after: CQ-M10 -- weather rolls share one named daily count
-```
+CQ-M9 shipped 2026-10-23; its specification is `plans/archive/CQ-M9_2026-10-23.md`.
 
 ## CQ-M10 -- weather rolls share one named daily count
 

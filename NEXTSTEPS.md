@@ -63,20 +63,6 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] CQ-M9 -- colony plots reuse resource colours and name their content width**
-   - Plan: `plans/now/code-health.md` -- "CQ-M9 -- colony plots reuse resource colours and name their content width"
-   - Files: `scripts/colony_panel.gd`
-   - Check: `python -m unittest tests.test_layout_regression tests.test_wp3_backup_order_ui` passes; nectar/pollen use Resources colours, bees/honey retain their RGBA values, all five 300-pixel content minima share one constant; file the four-series visual check; `python tools/prefinish.py` and `.\tools\verify.ps1` are green
-   - Proof: `present: scripts/colony_panel.gd :: {"key": "nectar", "label": "Nectar", "colour": Color(0.95, 0.72, 0.20)},`
-   - Next after: CQ-M10 -- weather rolls share one named daily count
-
-2. **[Codex] L-34 -- a PreToolUse guard refuses the five closeout-breaking commands**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-34 -- a PreToolUse guard refuses the five closeout-breaking commands"
-   - Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`, `.claude/settings.json`, `.codex/hooks.json`
-   - Check: `python -m unittest tests.test_guard_hook` passes, denying `Stop-Process -Name godot`, `slice.ps1 finish 2>&1 | Tee`, a `finish` from inside `.worktrees/<id>`, a relative ../../tools/verify.ps1 call and a read of a denied path, and allowing ordinary git, python and slice commands; `.\tools\verify.ps1` is green
-   - Proof: `absent: .claude/settings.json :: PreToolUse`
-   - Next after: L-35
-
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
