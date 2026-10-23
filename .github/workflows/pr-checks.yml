@@ -83,8 +83,16 @@ jobs:
 
       # godot_compile_check.py skips (exit 0) when the engine cannot start,
       # which is right on a dev machine and wrong here: prove it starts first.
+      # Outside the repo: Godot opens a project.godot in its working folder,
+      # and the bare .godot/ that leaves reads as a ready import cache.
       - name: Godot starts
+        working-directory: ${{ runner.temp }}
         run: '"$MEADOW_GODOT_PATH" --headless --version'
+
+      # A fresh checkout has no .godot/, so no global class cache: import
+      # first or every class_name reference fails to resolve.
+      - name: Import the project
+        run: timeout 600 "$MEADOW_GODOT_PATH" --headless --import --path .
 
       - name: Boot the project
         run: |
