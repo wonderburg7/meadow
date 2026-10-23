@@ -1,7 +1,7 @@
 # Forager recruitment -- Orientation flight, then Auto scouting, then Auto-recruitment
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: FR-1d -- repair the diagnosed foraging behaviour | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-22
+Status: active | Owner: Dave / Claude Code | Next: FR-1d -- repair the diagnosed foraging behaviour | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-23
 
 ## Objective
 
@@ -47,7 +47,7 @@ Verified 14 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FR-1d | Repair the concrete defects FR-1c establishes | `scripts/bee_foraging.gd`, focused tests/scenarios, this plan | yes -- CQ-L1 released `scripts/bee_foraging.gd`; FR-1c closes out before refill admits it | high |
+| FR-1d | Repair the concrete defects FR-1c establishes | `scripts/bee_foraging.gd`, focused tests/scenarios, this plan | claimed -- implementation awaits high-risk review/integration | high |
 | FR-2 | Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/skill_tree_panel.gd`, `scripts/levels.gd`, `tests/source_checks.py`, tests | no -- after FR-1d; numeric targets are provisional | high |
 | FR-3 | owning Auto-recruitment switches it on, passing species with Adaptive constancy | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/levels.gd`, tests | no -- after PP-6 | high |
 
@@ -125,31 +125,95 @@ FR-1c shipped 2026-10-22; its specification is `plans/archive/FR-1c_2026-10-22.m
 <!-- LAYER: design -->
 Level: high
 
-Dave authorised behaviour diagnosis/fix on 22 Oct 2026; FR-1c separates the
-independent measurement from runtime ownership. Its controlled evidence is
-above (or in its archive after closeout). Start with unproductive early-scout
-entrance waits: prove and repair the case where a scout waits despite no
-eligible mentor being able to match, while preserving established-seeker and
-useful mentor waits. Prototype a narrowly scoped guard, not a global wait
-reduction. Include mixed resources, stale mentors, existing matching mentors,
-grace/settlement boundaries and both recruitment modes in the regression checks.
-Keep species/preference semantics unchanged: FR-1c proved the old table's
-confounding, not a defect in explicit constancy. Do not repair speculative
-patch-selection issues without a causal probe. Retain targets as loose guidance.
-Take a fresh same-source baseline before/after the repair: FR-1c's frozen
-measurements used `349cb34fb18d92805fba3d7f8d1d0d805f09b6ed`, before later
-integrated work. Do not interpret intervening changes as the repair's effect.
-No weakening Orientation flight, save fields, skill wiring, new balance fields
-or unrelated performance work. Profile the affected per-bee path first;
-preserve explicit player preferences, both recruitment modes and developer
-toggles. Require causal before/after regression checks, the same five-seed
-stage table and focused/full verification. Runtime changes require high-risk
-review/integration. Refine this section from FR-1c's results before claiming.
+**Implementation status, 23 Oct 2026:** implemented on `codex/FR-1d`;
+awaiting high-risk review and integration. Do not claim or implement it again.
 
-**Closeout dependency, 22 Oct 2026:** FR-1c's seven focused tests, prefinish
-and `finish`'s branch verification passed. CQ-L1 has now landed and released
-`bee_foraging.gd`; FR-1c can close out and refill the Codex lane with FR-1d.
-The runtime repair remains unmerged until FR-1d completes its high-risk review.
+Dave authorised this behaviour repair on 22 Oct. Scouts now leave through
+`_leave_hive_and_resume` when the entrance queue has no valid same-resource
+mentor, and resume their remaining bouts. A scout already waiting also
+leaves if her matching mentor disappears or is taken by another seeker.
+Matching uses the existing validity/resource contract. Established low-rate
+seekers retain the full wait and timeout reset; mentors retain their wait.
+Grace, settlement, species preferences, both recruitment modes and developer
+toggles retain their existing semantics. No balance or save fields changed.
+
+**Causal checks and profiling.** The real-bee Godot fixture first failed
+exactly six assertions against the unchanged runtime: empty, wrong-resource
+and freed-mentor queues, each for nectar and pollen. All 33 assertions then
+passed after the guard. Expanded coverage passes 40 assertions, including
+mentor death during a wait, mentor timeout, grace/third-bout settlement,
+explicit species with species passing off/on, tipsiness, and a completed
+proximity dance. The wrapper fails on script errors as well as assertions.
+A synthetic profile of 1,000 exit calls on one real bee with an empty queue
+took 33,931 microseconds before the repair and 17,053 after. This measures
+that fixture, not colony-wide performance. No index, cache or new per-frame
+system was added; the new scan runs only for a scout at the door.
+
+**Fresh paired campaign.** Baseline commit: `8946f8d4c01e6f12fb54bd60008f5c16c2e2c823`.
+Measured source fingerprints: before `56f0e8824ac2e7a491d7ca58feb1ebd7035a0f0e067b3cf0577f7fdaf137f6ae`;
+after `55abbd962d5f433a1c258e2bf65173f20ce3c5b71325a4aaa43b17b9d675f9db`.
+Both runs use the same source baseline plus this guard, Godot 4.7.2, fixed
+30 fps, unchanged FR-1b defaults, the settled 15-cell colony with 8 nectar
+and 3 pollen foragers, the same skills, and complete days 1--20. Every one
+of the 40 runs passed and reached day 20. Food is nectar plus pollen
+delivered / (20 days x 11 starting foragers). Seed order: 7, 555, 2026,
+12345, 90210. Runtime fingerprints are retained in the local measurement
+manifests; only explanatory comments changed after the after-run began.
+
+| Stage | Before median | After median | After / preceding stage |
+| --- | ---: | ---: | ---: |
+| Orientation flight | 6.0133 | 6.0133 | -- |
+| Auto scouting | 5.8454 | 5.8454 | 0.972x |
+| Auto scouting + Auto-recruitment | 4.7757 | 5.1949 | 0.889x |
+| Auto scouting + Auto-recruitment + species passing | 3.3102 | 3.2064 | 0.617x |
+
+| Stage | Before, by seed | After, by seed |
+| --- | --- | --- |
+| Orientation flight | 4.8253, 6.0133, 8.3810, 4.8707, 6.3986 | 4.8253, 6.0133, 8.3810, 4.8707, 6.3986 |
+| Auto scouting | 4.4272, 7.4413, 9.2718, 5.1354, 5.8454 | 4.4272, 7.4413, 9.2718, 5.1354, 5.8454 |
+| Auto scouting + Auto-recruitment | 3.2282, 6.4012, 7.8084, 3.0379, 4.7757 | 3.9537, 5.1949, 8.9151, 5.5395, 5.1372 |
+| Auto scouting + Auto-recruitment + species passing | 3.0415, 2.5565, 5.0416, 3.3543, 3.3102 | 2.9787, 3.4482, 3.2064, 3.5612, 2.8479 |
+
+Orientation flight and Auto scouting are identical on every seed. The
+Auto-recruitment median rises 8.8%, but effects vary by seed; species
+passing falls 3.1%. Median sampled seeker occupancy falls from 0.8333 to
+0 for recruitment, and from 0.6667 to 0 for species passing; these samples
+are not exact dwell times. Recruitment remains 11.1% below Auto scouting,
+rather than 30% above it; stage order also remains unmet. Those targets
+remain loose guidance. This repair proves the avoidable wait, not a general
+foraging improvement or a species-selection defect; do not broaden it into
+speculative selection changes or tune to force the target.
+
+**Validation:** focused Godot regressions and `tools/prefinish.py` pass
+(boot, 106-script source checks, 11 tests in four affected modules).
+`tools/verify.ps1 -Scope branch` passes: 145 test groups, zero failures,
+15 balance checks, 148-file lint, source checks, boot and generated checks.
+The game-test phase took 735 seconds on three workers.
+
+**Integration ownership blocker:** verification regenerated seven line-number
+entries in FUNCTION_MAP.md for the moved foraging helpers. The owner check
+assigns that generated file to Claude's queued CQ-S0b. Codex restored only
+its automatic map edit and excludes it from this branch's commit. Claude
+must resolve that shared-file ownership, regenerate the map against the
+final sources and include it during review/integration. The green verify
+includes that automatic regeneration; the committed map is intentionally
+still at the baseline. Investigate the missing generated-file dependency
+in FR-1d's Files declaration so future claims detect this overlap before
+implementation. No other lane's source or queue was edited.
+Local raw evidence lives in the ignored build directories fr1d-before and
+fr1d-after, each with a measurement.json manifest and per-run artefacts.
+The tables above preserve the reviewable measurements in Git. Reproduce a
+campaign with `tools.forager_tuning.measure(DEFAULTS, output, fingerprint(),
+None, 2)` from Python, using that module's defaults and fingerprint; it runs
+all four stages on all five seeds at fixed 30 fps.
+
+**Hands-on check for integration:** start a Colony Run with Auto scouting
+and Auto-recruitment enabled. With no matching mentor at the door, watch a
+scout resume her next bout; an established low-rate seeker should retain
+her entrance wait. This is a visual check, not an integration gate.
+
+**Successor:** FR-2 remains blocked until this runtime repair is reviewed
+and integrated; it still needs its full specification and queue block.
 
 ```queue
 **[Codex] FR-1d -- repair the diagnosed foraging behaviour**

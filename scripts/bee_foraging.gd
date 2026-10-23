@@ -1141,9 +1141,9 @@ static func go_to_exit(bee: Node2D, delta: float) -> void:
 	var exit_point: Vector2 = bee.world.hive_entrance_inside() if bee.world else bee.position
 	BeeMovement.move_towards(bee, exit_point, delta)
 	if bee.position.distance_to(exit_point) < 8.0:
-		# Auto-recruitment: a still-scouting bee, or one whose own rate has
-		# drifted outside the recruitment band, waits here rather than
-		# walking straight back out -- see wait_at_entrance. This is the
+		# Auto-recruitment: a scout with a matching mentor, or a bee whose
+		# own rate has drifted outside the recruitment band, waits here
+		# rather than walking back out -- see wait_at_entrance. This is the
 		# one place bee.is_scouting still causes an entrance visit, and
 		# it's only reachable at all when auto_recruitment_on is on -- with
 		# it off, all of scouting's bouts run uninterrupted every time. The
@@ -1158,6 +1158,18 @@ static func go_to_exit(bee: Node2D, delta: float) -> void:
 			var lower: float = GameConfig.recruit_lower_threshold_nectar if bee.resource_type == "nectar" else GameConfig.recruit_lower_threshold_pollen
 			var upper: float = GameConfig.recruit_upper_threshold_nectar if bee.resource_type == "nectar" else GameConfig.recruit_upper_threshold_pollen
 			if bee.is_scouting or (past_grace and bee.avg_collection_rate < lower):
+				# A scout can keep testing patches when nobody can teach her.
+				# Use the match loop's validity/resource rules; an established
+				# low-rate seeker still waits for a mentor who may arrive later.
+				if bee.is_scouting:
+					var matching_mentor := false
+					for mentor: Variant in bee.hive.entrance_mentors:
+						if is_instance_valid(mentor) and mentor.resource_type == bee.resource_type:
+							matching_mentor = true
+							break
+					if not matching_mentor:
+						_leave_hive_and_resume(bee)
+						return
 				bee.timer = GameConfig.recruit_wait_seconds
 				bee.entrance_wait_target = _entrance_wait_spot(bee, -1)
 				bee.state = State.AT_ENTRANCE_SEEKING
@@ -1329,35 +1341,23 @@ static func wait_at_entrance(bee: Node2D, delta: float) -> void:
 		_leave_hive_and_resume(bee)
 		return
 
+	# A matching mentor may have left or been used by another seeker
+	# since this scout reached the door. Continue her bouts immediately,
+	# using the shared exit so she is reparented out of the hive first.
+	if bee.is_scouting:
+		_leave_hive_and_resume(bee)
+		return
+
 	bee.timer -= delta
 	if bee.timer <= 0.0:
 		# Nobody came. Rather than repeat the same low-performing pattern,
-		# drop it and pick a fresh spot -- scouting bees just re-enter
-		# scouting; an established forager with a stale preference tries
-		# a new one the same way a fresh bee would.
-		if bee.is_scouting:
-			# _leave_hive_and_resume, not _send_to_scout_point directly --
-			# this bee is still parented under hive_root (she walked in to
-			# wait at the entrance and never left), and only
-			# _leave_hive_and_resume reparents her out before handing her a
-			# fresh meadow-space scout point. Calling _send_to_scout_point
-			# on its own here set State.MOVE_TO_POINT with a target the
-			# hive-interior pathfinder can't reach, and left her
-			# permanently invisible to the stall watchdog too, since its
-			# very first check is bee._is_inside_hive() -- a seeker who
-			# timed out with no mentor waiting (the common case early in a
-			# run, before anyone's traded enough trips to qualify as one)
-			# got stuck for good the moment this fired. Found via
-			# foraging_features_on_test.json: scouting plus auto-recruitment
-			# together made this the dominant failure mode, freezing most
-			# of the colony's foraging within the first week.
-			_leave_hive_and_resume(bee)
-		else:
-			bee.preferred_species = ""
-			bee.forage_start_point = Vector2(INF, INF)
-			bee.local_search_anchor = Vector2(INF, INF)
-			bee.known_patches.clear()
-			_leave_hive_and_resume(bee)
+		# drop it and pick a fresh spot -- an established forager with a
+		# stale preference tries a new one the same way a fresh bee would.
+		bee.preferred_species = ""
+		bee.forage_start_point = Vector2(INF, INF)
+		bee.local_search_anchor = Vector2(INF, INF)
+		bee.known_patches.clear()
+		_leave_hive_and_resume(bee)
 
 
 # --- the recruitment dance ----------------------------------------
