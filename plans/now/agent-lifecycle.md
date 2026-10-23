@@ -50,7 +50,6 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-33 | one admission check shared by `check_docs`, `start` and closeout | `tools/admission.py`, `tests/test_admission.py`, `tools/check_docs.py`, `tools/slice.ps1`, `plans/reference/queue-steward.md`, `plans/now/code-health.md` | medium |
 | L-34 | a PreToolUse guard refuses the five closeout-breaking commands | `tools/guard_hook.py`, `tests/test_guard_hook.py`, `.claude/settings.json`, `.codex/hooks.json` | low |
 | L-35 | known baseline failures and stop causes are named, not rediagnosed | `tools/verify.ps1`, `tools/slice.ps1`, `tools/stop_causes.py`, `tests/test_stop_causes.py`, `tests/baseline_failures.json`, `tools/check_docs.py` | medium |
 | L-36 | clean checkouts pass the doc checks; stray worktrees are reported | `tools/check_docs.py`, `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | low |
@@ -91,64 +90,7 @@ L-31 shipped 2026-10-22; its specification is `plans/archive/L-31_2026-10-22.md`
 
 L-32 shipped 2026-10-22; its specification is `plans/archive/L-32_2026-10-22.md`.
 
-## L-33 -- one admission check shared by check_docs, start and closeout
-
-**Now.** Readiness, ownership and admission are computed in three places
-and disagree:
-- CD-3 needed `bee.gd` while Claude owned it.
-- GD-2b and FC-2 looked ready but collided with the other lane.
-- CD-3 and CR-1 kept dependencies on slices that had already landed.
-- T2-4a's closeout stopped on a `plans/now/` reference to a plan that had
-  already been archived.
-
-Clearing landed gates is the queue steward's `gates` job, run on Opus at
-high effort.
-
-**Owner first.** `check_docs.py` owns the queue checks, `refill_lane.py`
-owns admission at top-up, and `slice.ps1 owner` owns file ownership. This
-slice extracts their shared test into one module without adding a second
-mechanism. The other three call it.
-
-**Target.**
-1. `tools/admission.py <id>|--all [--json]` returns `admissible` or
-   `blocked: <reason>` for each item. An item is admissible only when all
-   four tests pass:
-   - every dependency it names is archived or merged;
-   - no file in `Files:` is in the other lane, a queued slice or an
-     unmerged branch, counting the open `origin/jules/*` branches that
-     `slice.ps1 owner` has fetched since 23 Oct 2026;
-   - its plan section's `Open decisions:` line is `none`, or the line is
-     missing (a warning, so existing plans still pass);
-   - every path in `Files:` and `Plan:` exists or is to be created.
-2. `check_docs.py` warns on any lane item that is not admissible.
-   `Get-SlicePreflight` calls it.
-3. Post-merge cleanup runs `admission.py --clear-landed <id>`, which drops
-   that id from other items' gates and `## Not in the queue` reasons, and
-   rewrites `plans/now/` references to the archived path.
-4. `plans/reference/queue-steward.md` limits the `gates` job to the items
-   the script reports as ambiguous.
-5. The slice template gains the `Open decisions:` line. L-31 to L-36 carry
-   it already.
-6. `FUNCTION_MAP.md` is unowned, like `checks/ready.md` (Dave, 23 Oct
-   2026). FR-1d's `Files:` omitted it although `bee_foraging.gd` is indexed
-   there, so no overlap check saw it clash with CQ-S0b's claim on it, and
-   the integration had to resolve the ownership by hand. The ownership test
-   ignores it; `finish` restores master's copy before its branch commit and
-   regenerates the map on master in the post-merge closeout commit, beside
-   the ready-check index. Drop it from CQ-S0b's `Files:` (here and in
-   `plans/now/code-health.md`'s block) and from the `## Not in the queue`
-   reasons that wait for CQ-S0b to release it.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] L-33 -- one admission check shared by check_docs, start and closeout**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-33 -- one admission check shared by check_docs, start and closeout"
-- Files: `tools/admission.py`, `tests/test_admission.py`, `tools/check_docs.py`, `tools/slice.ps1`, `plans/reference/queue-steward.md`, `plans/now/code-health.md`
-- Check: `python -m unittest tests.test_admission` passes on fixtures with a landed dependency, a file in the other lane, an open decision and an archived plan reference, each reported with its reason, and an item naming an indexed script stays admissible beside one naming `FUNCTION_MAP.md`; `--clear-landed` removes the landed id from a fixture queue; `.\tools\verify.ps1` is green
-- Proof: `absent: tools/slice.ps1 :: admission.py`
-- Next after: L-34
-```
+L-33 shipped 2026-10-23; its specification is `plans/archive/L-33_2026-10-23.md`.
 
 ## L-34 -- a PreToolUse guard refuses the five closeout-breaking commands
 
