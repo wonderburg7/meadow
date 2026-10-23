@@ -22,9 +22,14 @@ the Claude/Codex slice queue (Dave, 23 Oct 2026):
 - Do not remove `is_instance_valid` guards, epoch caches or
   `Perf.begin`/`Perf.end` calls unless the task says so.
 - Run `python tests/source_checks.py`, `python tests/balance_tests.py` and
-  `python -m unittest discover`; say in the pull request what you could not
-  run (Godot boot, `tools/verify.ps1`, hands-on play).
+  the unit tests as `plans/reference/jules.md` step 6 gives them (`tests/`
+  is not a package, so `unittest discover` finds nothing); say in the pull
+  request what you could not run (Godot boot, `tools/verify.ps1`, hands-on
+  play).
 - British English in comments and documentation.
+- **Your work and method are in `plans/reference/jules.md`**: run
+  `python tools/jules_preflight.py --next` for your task and follow that
+  file's "How to work". Never edit that file.
 
 **Before reading or acting on any other project file, read
 `docs/agent-rules.md` (the rules Claude and Codex share) and `CHATGPT.md`,
