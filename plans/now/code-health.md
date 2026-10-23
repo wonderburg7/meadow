@@ -109,7 +109,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | --- | --- | --- | --- | --- |
 | CQ-L2 | every tool that reads GDScript as text survives `gdformat` | `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, tests | yes (CQ-L1 landed 22 Oct 2026) | medium |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | section needed; Codex admission waits for Claude to release `tests/source_checks.py` (CQ-L2) and `FUNCTION_MAP.md` (CQ-S0b) | low |
+| CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | section needed; Codex admission waits for Claude to release `tests/source_checks.py` (CQ-L2) | low |
 | CQ-S0b | a restored forager takes no fresh orientation flight | `bee.gd`, `saving.gd`, `tests/save_roundtrip_test.gd` | yes | medium |
 | CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a, DR-1 | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
@@ -122,15 +122,15 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
 | CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | yes -- block written (CQ-M3 and CQ-L1 landed 22 Oct 2026) | low |
 | CQ-M9 | colony plot reads `Resources` colours; width const | `scripts/colony_panel.gd` | yes -- Codex block below, verified 23 Oct 2026 | low |
-| CQ-M10 | `WEATHER_ROLLS_PER_DAY` | `scripts/main.gd`, `FUNCTION_MAP.md` | Codex admission waits for CQ-S0b to release `FUNCTION_MAP.md` | low |
+| CQ-M10 | `WEATHER_ROLLS_PER_DAY` | `scripts/main.gd`, `FUNCTION_MAP.md` | yes (`FUNCTION_MAP.md` is unowned, 23 Oct 2026) | low |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once its section is written (CQ-R7 released `hud.gd` and WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes | medium |
-| CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed; Codex admission waits for CQ-S0b to release `FUNCTION_MAP.md` | medium |
+| CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R9 | `diagnostic_log.gd` snapshot shortened; probe duplicates kept once | `diagnostic_log.gd`, `scripts/headless/diagnostic_probes.gd` | yes | medium |
-| CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd`, `FUNCTION_MAP.md` | section needed; Codex admission waits for CQ-S0b to release `FUNCTION_MAP.md` | medium |
+| CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R11 | `world_building.gd::_seed_flower` decomposed, RNG order kept | `world_building.gd` | yes | medium |
 | CQ-R12 | `challenge_runner.gd` start, C2 failure, stage entry shortened | `challenge_runner.gd`, `challenge_feedback.gd` | yes | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
@@ -167,13 +167,13 @@ claim while `dry_after`).
     `skill_tree_panel.gd` ahead of it, landed 22 Oct 2026. CQ-R7 landed 22 Oct
     2026. CQ-R8 should precede CQ-T3 to avoid typing the builders twice;
     both still need sections. For Codex admission, CQ-T3 also waits for
-    Claude's CQ-L2 to release `tests/source_checks.py` and CQ-S0b to release
-    `FUNCTION_MAP.md`. CQ-R8 and CQ-R10 need that map too. These are lane
-    ownership gates, not unshipped functional prerequisites (verified
+    Claude's CQ-L2 to release `tests/source_checks.py`; `FUNCTION_MAP.md` is
+    unowned (Dave, 23 Oct 2026) and gates nothing. This is a lane
+    ownership gate, not unshipped functional prerequisites (verified
     23 Oct 2026 against `a49ac59` and both lanes' `Files:` lists).
   - CQ-M9 is independent of those gates: `colony_panel.gd` is below the
-    function-map threshold and no Claude queue item owns it. CQ-M10 needs
-    `FUNCTION_MAP.md`, so its Codex block stays gated until CQ-S0b lands.
+    function-map threshold and no Claude queue item owns it. CQ-M10's
+    Codex block stays `queue-gated` until it is opened by hand.
   - The save moves (CQ-S1 to S5 and CQ-R2) wait for every specified slice that edits
     `save_game.gd`/`saving.gd`: WP-2, SG-2, ED-1, ED-2 (difficulty, ending at ED-3),
     RR-12, SP-8a and DR-1 (`plans/now/drones.md`). Each of those plans carries the reverse pointer.
@@ -356,7 +356,7 @@ whichever is queued first runs first. CQ-S4 later moves `_restore_bees` into
 ```queue
 **[Claude] CQ-S0b -- a restored forager takes no fresh orientation flight**
 - Plan: `plans/now/code-health.md` -- "CQ-S0b -- a restored forager takes no fresh orientation flight"
-- Files: `scripts/bee.gd`, `scripts/saving.gd`, `tests/save_roundtrip_test.gd`, `FUNCTION_MAP.md`
+- Files: `scripts/bee.gd`, `scripts/saving.gd`, `tests/save_roundtrip_test.gd`
 - Check: `python -m unittest tests.test_save_roundtrip` passes with `KNOWN_DIFFERENCES` empty: both `orientation` routes print `CQS0 OK`, none KNOWN or STALE, and the new in-place case finds the Move-to-point forager heading for her saved start point; `tests/test_save_migrations.py` passes; `.\tools\verify.ps1` is green
 - Proof: `present: tests/save_roundtrip_test.gd :: const ORIENTATION_GAINS_START`
 - Next after: CQ-S1 -- Flower owns its save fields (gated on the alpha chain's save slices)
@@ -486,8 +486,8 @@ draw count and all weather outcomes. Correct the adjacent
 "one roll per in-game day" comment to describe six attempts subject to
 the ten-second floor. No new setting or helper; the weather tick stays.
 
-**Gate.** CQ-S0b must release `FUNCTION_MAP.md` from the Claude lane before
-this enters Codex. Recheck both lanes' files when opening the gate.
+**Gate.** None on `FUNCTION_MAP.md`, which is unowned (Dave, 23 Oct 2026).
+Recheck both lanes' files when opening the fence.
 Minimum reasoning: **low**. Read this section and
 `main.gd::_advance_weather` only.
 

@@ -19,9 +19,12 @@ Given the ids landed in this run (the coordinator batches them: usually
 every slice of the run at once, at its end), plus every id
 `python tools/check_docs.py` warns a deferral "waits for a shipped slice"
 (a landing outside this run, such as the other lane's; Dave, 16 Oct 2026):
-update every line under
-`## Not in the queue, and why` and every plan slice-table row that names one
-of them, to say what it now waits for. Open any `queue-gated` fence whose
+run `python tools/admission.py --clear-landed <id>` for each, which drops
+the id from gate lists and repoints archived `plans/now/` references itself.
+Then update only the lines it prints as `ambiguous:` (a reason that waited
+for nothing else) and every plan slice-table row that names one of them, to
+say what it now waits for; `python tools/admission.py --all` shows which
+items are still blocked and why. Open any `queue-gated` fence whose
 gate has cleared (its gate line under that heading goes too). `finish`
 never rewrites those lines. Docs-only, on the coordinator's worktree
 branch: commit all of it as one "Gates after <ids>" commit, merge it to

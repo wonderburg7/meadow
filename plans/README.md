@@ -107,7 +107,8 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 2. **Separate what exists from what is intended.** Every slice says what is
    true now and what should be true when it is done. A plan that describes
    its target as though it already shipped is how a session builds something
-   twice.
+   twice. End each slice section with an `**Open decisions:**` line, `none` or
+   the questions; `tools/admission.py` blocks a slice whose line names one (L-33).
 3. **Ask whether the work is still needed before improving it.** When a slice
    has sat unstarted, check that its defect still exists, that nothing else
    has solved it, and that something still wants it. Deleting a slice is a

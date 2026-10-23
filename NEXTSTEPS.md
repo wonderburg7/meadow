@@ -53,7 +53,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
 5. **[Claude] CQ-S0b -- a restored forager takes no fresh orientation flight**
    - Plan: `plans/now/code-health.md` -- "CQ-S0b -- a restored forager takes no fresh orientation flight"
-   - Files: `scripts/bee.gd`, `scripts/saving.gd`, `tests/save_roundtrip_test.gd`, `FUNCTION_MAP.md`
+   - Files: `scripts/bee.gd`, `scripts/saving.gd`, `tests/save_roundtrip_test.gd`
    - Check: `python -m unittest tests.test_save_roundtrip` passes with `KNOWN_DIFFERENCES` empty: both `orientation` routes print `CQS0 OK`, none KNOWN or STALE, and the new in-place case finds the Move-to-point forager heading for her saved start point; `tests/test_save_migrations.py` passes; `.\tools\verify.ps1` is green
    - Proof: `present: tests/save_roundtrip_test.gd :: const ORIENTATION_GAINS_START`
    - Next after: CQ-S1 -- Flower owns its save fields (gated on the alpha chain's save slices)
@@ -97,10 +97,10 @@ One line each: the id, its plan, and the single thing it waits for.
 - **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-6, which shares `scripts/skills.gd`.
 - **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices of the alpha chain (SG-2, ED-1, ED-2, RR-12, SP-8a, and DR-1 in `plans/now/drones.md`; WP-2 landed 21 Oct 2026 and WP-3 landed 22 Oct 2026) and ED-3 (Dave, 18 Oct 2026); CQ-S0's round-trip harness landed 22 Oct 2026.
 - **CQ-R2** (`plans/now/code-health.md`) -- the first crisis moves out of `scripts/main.gd` into a new first_crisis.gd, touching the save files; waits, gated with CQ-S1, for the save slices of the alpha chain (SG-2, ED-1, ED-2, RR-12, SP-8a, and DR-1 in `plans/now/drones.md`; WP-2 landed 21 Oct 2026) and ED-3 (Dave, 18 Oct 2026); its plan section is written when that gate clears.
-- **CQ-R8** (`plans/now/code-health.md`) -- hud builders shortened (the designation button table); needs its section and block, then Codex admission waits for CQ-S0b to release `FUNCTION_MAP.md`; prepare before CQ-T3.
-- **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; needs its section and block after CQ-R8, and Codex admission waits for CQ-L2 to release `tests/source_checks.py` and CQ-S0b to release `FUNCTION_MAP.md`.
-- **CQ-R10** (`plans/now/code-health.md`) -- input selection decomposed and sectioned; needs its section and block, then Codex admission waits for CQ-S0b to release `FUNCTION_MAP.md`.
-- **CQ-M10** (`plans/now/code-health.md`) -- weather rolls share one named daily count; Codex admission waits for CQ-S0b to release `FUNCTION_MAP.md`; its gated block is written.
+- **CQ-R8** (`plans/now/code-health.md`) -- hud builders shortened (the designation button table); needs its section and block; prepare before CQ-T3.
+- **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; needs its section and block after CQ-R8, and Codex admission waits for CQ-L2 to release `tests/source_checks.py`.
+- **CQ-R10** (`plans/now/code-health.md`) -- input selection decomposed and sectioned; needs its section and block.
+- **CQ-M10** (`plans/now/code-health.md`) -- weather rolls share one named daily count; its gated block is written.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
 - **DR-2** (`plans/now/drones.md`) -- the cell popup's "Raise a drone" box (Dave, 22 Oct 2026: player-marked drone cells, no skill); waits for DR-1 (Claude backlog), whose saved drone cells it marks; CQ-R7 landed 22 Oct 2026, freeing `scripts/hud.gd`. Its block is `queue-gated` until DR-1 lands.
 ## Copy-paste prompts
