@@ -1,0 +1,95 @@
+# The gate for pull requests opened on GitHub -- Google Jules's above all,
+# which work in a Linux VM and cannot run tools/verify.ps1 or Godot locally.
+#
+# It runs on pull requests to master only. Claude and Codex merge their
+# slices with tools/slice.ps1 finish, which runs verify.ps1 itself and pushes
+# straight to master; a push trigger here would only re-test that.
+#
+# Not covered: the rest of verify.ps1 (the lifecycle suite that drives
+# tools/slice.ps1, check_docs against the local worktrees, the unit tests
+# that boot Godot) and Dave's hands-on, click-driven or visual checks.
+name: PR checks
+
+on:
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    # Explicit bash runs with -eo pipefail, so a piped step keeps its exit code.
+    shell: bash
+
+env:
+  GODOT_VERSION: "4.7.2"
+
+jobs:
+  python:
+    name: Python checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Pillow
+        run: python -m pip install --quiet Pillow
+
+      - name: Source checks
+        run: python tests/source_checks.py
+
+      - name: Balance tests
+        run: python tests/balance_tests.py
+
+      # tests/ is not a package, so unittest discover would find nothing;
+      # run_tests.py takes module ids the way verify.ps1's unit stage passes
+      # them. The lifecycle suite drives tools/slice.ps1 under Windows
+      # PowerShell and stays with verify.ps1. Tests that boot Godot skip
+      # themselves here, since this job installs none.
+      - name: Unit tests
+        run: |
+          modules=$(ls tests/test_*.py | sed 's#^tests/#tests.#; s#\.py$##' \
+            | grep -v -x -e tests.test_slice_lifecycle -e tests.test_two_lane_closeout)
+          python tools/run_tests.py --private-user --label "unit tests" $modules
+
+  godot-boot:
+    name: Godot headless boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download Godot ${{ env.GODOT_VERSION }}
+        run: |
+          name="Godot_v${GODOT_VERSION}-stable_linux.x86_64"
+          curl -fsSL -o "$RUNNER_TEMP/godot.zip" \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/${name}.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/$name"
+          echo "MEADOW_GODOT_PATH=$RUNNER_TEMP/godot/$name" >> "$GITHUB_ENV"
+
+      # godot_compile_check.py skips (exit 0) when the engine cannot start,
+      # which is right on a dev machine and wrong here: prove it starts first.
+      - name: Godot starts
+        run: '"$MEADOW_GODOT_PATH" --headless --version'
+
+      - name: Boot the project
+        run: |
+          python tools/godot_compile_check.py | tee "$RUNNER_TEMP/boot.txt"
+          if grep -q "skipped" "$RUNNER_TEMP/boot.txt"; then
+            echo "::error::the boot check skipped instead of booting the project"
+            exit 1
+          fi

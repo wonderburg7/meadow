@@ -2,7 +2,10 @@
 import unittest
 from pathlib import Path
 
-from PIL import Image
+try:
+    from PIL import Image
+except ImportError:  # Pillow is missing (a Linux agent's VM, say): skip, don't error
+    Image = None
 
 ROOT = Path(__file__).resolve().parent.parent
 HIVE = (ROOT / "scripts" / "hive.gd").read_text(encoding="utf-8")
@@ -33,6 +36,7 @@ class SkepSprites(unittest.TestCase):
         self.assertIn("skep.modulate = RUIN_TINT", RIVAL)
         self.assertIn("skep.modulate = Color.WHITE", RIVAL)
 
+    @unittest.skipIf(Image is None, "Pillow is not installed")
     def test_rival_sheet_is_darker_and_same_shape(self):
         a = Image.open(MEADOW / "hive_skep_sheet.png").convert("RGBA")
         b = Image.open(MEADOW / "hive_skep_rival_sheet.png").convert("RGBA")
