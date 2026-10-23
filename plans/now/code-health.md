@@ -121,7 +121,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | yes | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
 | CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | yes -- block written (CQ-M3 and CQ-L1 landed 22 Oct 2026) | low |
-| CQ-M10 | `WEATHER_ROLLS_PER_DAY` | `scripts/main.gd`, `FUNCTION_MAP.md` | yes -- Codex block open (`FUNCTION_MAP.md` is unowned, 23 Oct 2026) | low |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once its section is written (CQ-R7 released `hud.gd` and WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
@@ -430,40 +429,7 @@ CQ-R7 shipped 2026-10-22; its specification is `plans/archive/CQ-R7_2026-10-22.m
 
 CQ-M9 shipped 2026-10-23; its specification is `plans/archive/CQ-M9_2026-10-23.md`.
 
-## CQ-M10 -- weather rolls share one named daily count
-
-<!-- LAYER: immediate-task -->
-
-**Now (verified 23 Oct 2026, `a49ac59`).** `main.gd::_advance_weather`
-uses `6.0` both to spread weather rolls across a day and to scale each
-roll's rain probability. This is a paired structural constant (D2).
-`FUNCTION_MAP.md` records this script's line positions.
-
-**Change.** Name the existing float `WEATHER_ROLLS_PER_DAY := 6.0` in
-`main.gd`, use it at both divisions, and regenerate the function map.
-Keep the ten-second floor, timer/event order, first-crisis guard, random
-draw count and all weather outcomes. Correct the adjacent
-"one roll per in-game day" comment to describe six attempts subject to
-the ten-second floor. No new setting or helper; the weather tick stays.
-
-**Gate.** None: `FUNCTION_MAP.md` is unowned since L-33 (Dave, 23 Oct
-2026), and no Claude-lane item names `scripts/main.gd`; the plan review
-opened the fence on 23 Oct 2026.
-
-**Lanes.** SG-2 (Claude backlog) also names `main.gd`; the refill admits
-it to the Claude lane only once this slice has landed.
-
-Minimum reasoning: **low**. Read this section and
-`main.gd::_advance_weather` only.
-
-```queue
-**[Codex] CQ-M10 -- weather rolls share one named daily count**
-- Plan: `plans/now/code-health.md` -- "CQ-M10 -- weather rolls share one named daily count"
-- Files: `scripts/main.gd`
-- Check: `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` reports identical simulation results; both weather divisions use the float 6.0 via WEATHER_ROLLS_PER_DAY, with RNG order and the ten-second floor unchanged; `python tools/update_function_map.py --check`, `python tools/prefinish.py` and `.\tools\verify.ps1` are green
-- Proof: `present: scripts/main.gd :: GameConfig.rain_chance_per_day / 6.0`
-- Next after: CQ-R9 -- the diagnostic snapshot built in sections, its probe duplicates kept once
-```
+CQ-M10 shipped 2026-10-24; its specification is `plans/archive/CQ-M10_2026-10-24.md`.
 
 ## CQ-R9 -- the diagnostic snapshot built in sections, its probe duplicates kept once
 
