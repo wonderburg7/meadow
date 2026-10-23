@@ -51,7 +51,6 @@ measurement says what those sessions were doing.
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
 | L-33 | one admission check shared by `check_docs`, `start` and closeout | `tools/admission.py`, `tests/test_admission.py`, `tools/check_docs.py`, `tools/slice.ps1`, `plans/reference/queue-steward.md`, `plans/now/code-health.md` | medium |
-| L-34 | a PreToolUse guard refuses the five closeout-breaking commands | `tools/guard_hook.py`, `tests/test_guard_hook.py`, `.claude/settings.json`, `.codex/hooks.json` | low |
 | L-35 | known baseline failures and stop causes are named, not rediagnosed | `tools/verify.ps1`, `tools/slice.ps1`, `tools/stop_causes.py`, `tests/test_stop_causes.py`, `tests/baseline_failures.json`, `tools/check_docs.py` | medium |
 | L-36 | clean checkouts pass the doc checks; stray worktrees are reported | `tools/check_docs.py`, `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | low |
 
@@ -150,49 +149,7 @@ mechanism. The other three call it.
 - Next after: L-34
 ```
 
-## L-34 -- a PreToolUse guard refuses the five closeout-breaking commands
-
-**Now.** These rules are prose only, and breaking one costs a slice or
-another session's run:
-- stopping Godot or Python by name, or by a PID the session did not
-  start (PP-3);
-- piping `slice.ps1 finish` through `2>&1 |`, which PowerShell 5.1
-  aborts mid-closeout;
-- running `finish` while the shell's working directory is inside the
-  worktree (20 and 21 Oct);
-- calling ../../tools/ from a worktree (CD-3's hand-off);
-- reading the four denied paths.
-
-The repository has no PreToolUse hook. The 7 Oct signal's worry was that a
-hook would widen the deny list; this one only blocks what is already
-forbidden.
-
-**Target.**
-1. `tools/guard_hook.py` reads the hook's JSON from stdin and matches the
-   command against those five patterns.
-2. On a match it denies the call with a one-line reason that names the
-   right command (`slice.ps1 stop-verify`, `slice.ps1 status`, `tools/…`
-   from inside the worktree). It logs the refusal through
-   `tools/hook_log.py`.
-3. It is registered as `PreToolUse` on Bash and PowerShell in
-   `.claude/settings.json`, and as the equivalent entry in
-   `.codex/hooks.json`.
-4. The `cd … &&` habit stays prose: at about four turns a day, refusing it
-   would cost more than it saves.
-
-**Runtime policy.** It runs once per shell tool call, as one local Python
-start, and makes no model calls.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] L-34 -- a PreToolUse guard refuses the five closeout-breaking commands**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-34 -- a PreToolUse guard refuses the five closeout-breaking commands"
-- Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`, `.claude/settings.json`, `.codex/hooks.json`
-- Check: `python -m unittest tests.test_guard_hook` passes, denying `Stop-Process -Name godot`, `slice.ps1 finish 2>&1 | Tee`, a `finish` from inside `.worktrees/<id>`, a relative ../../tools/verify.ps1 call and a read of a denied path, and allowing ordinary git, python and slice commands; `.\tools\verify.ps1` is green
-- Proof: `absent: .claude/settings.json :: PreToolUse`
-- Next after: L-35
-```
+L-34 shipped 2026-10-23; its specification is `plans/archive/L-34_2026-10-23.md`.
 
 ## L-35 -- known baseline failures and stop causes are named, not rediagnosed
 
