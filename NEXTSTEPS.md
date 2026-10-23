@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] L-35 -- known baseline failures and stop causes are named, not rediagnosed**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-35 -- known baseline failures and stop causes are named, not rediagnosed"
-   - Files: `tools/verify.ps1`, `tools/slice.ps1`, `tools/stop_causes.py`, `tests/test_stop_causes.py`, `tests/baseline_failures.json`, `tools/check_docs.py`
-   - Check: `python -m unittest tests.test_stop_causes` passes, classifying sample logs for each category (including `Receive-Job: Access is denied`, a refused push and an import-cache boot failure); a listed baseline failure leaves its stage green with a `baseline` note, and an expired entry fails `check_docs`; `.\tools\verify.ps1` is green
-   - Proof: `absent: tools/verify.ps1 :: baseline_failures`
-   - Next after: L-36
-
-2. **[Claude] L-36 -- clean checkouts pass the doc checks; stray worktrees are reported**
+1. **[Claude] L-36 -- clean checkouts pass the doc checks; stray worktrees are reported**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-36 -- clean checkouts pass the doc checks; stray worktrees are reported"
    - Files: `tools/check_docs.py`, `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
    - Check: in a fresh worktree without `.claude/settings.local.json`, `python tools/check_docs.py` passes; `tests/test_slice_lifecycle.py` covers `doctor` listing an unregistered `.worktrees/*` folder and sweeping a pending deletion; `.\tools\verify.ps1` is green
    - Proof: `absent: tools/check_docs.py :: check-ignore`
    - Next after: none -- the L-31 to L-36 set is complete
 
-3. **[Claude] CQ-L2 -- every tool that reads GDScript as text survives gdformat**
+2. **[Claude] CQ-L2 -- every tool that reads GDScript as text survives gdformat**
    - Plan: `plans/now/code-health.md` -- "CQ-L2 -- every tool that reads GDScript as text survives gdformat"
    - Files: `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, `tests/test_gdformat_survival.py`
    - Check: `python -m unittest tests.test_gdformat_survival` passes: each of the four tools gives the same result on a gdformat-ed copy of every tracked `.gd` as on the original; `python tests/source_checks.py` still passes, and `python -X dev tests/source_checks.py` prints no `ResourceWarning`
    - Proof: `absent: tests/source_checks.py :: gdformat`
    - Next after: CQ-L3
 
-4. **[Claude] CQ-S0b -- a restored forager takes no fresh orientation flight**
+3. **[Claude] CQ-S0b -- a restored forager takes no fresh orientation flight**
    - Plan: `plans/now/code-health.md` -- "CQ-S0b -- a restored forager takes no fresh orientation flight"
    - Files: `scripts/bee.gd`, `scripts/saving.gd`, `tests/save_roundtrip_test.gd`
    - Check: `python -m unittest tests.test_save_roundtrip` passes with `KNOWN_DIFFERENCES` empty: both `orientation` routes print `CQS0 OK`, none KNOWN or STALE, and the new in-place case finds the Move-to-point forager heading for her saved start point; `tests/test_save_migrations.py` passes; `.\tools\verify.ps1` is green
    - Proof: `present: tests/save_roundtrip_test.gd :: const ORIENTATION_GAINS_START`
    - Next after: CQ-S1 -- Flower owns its save fields (gated on the alpha chain's save slices)
 
-5. **[Claude] CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named**
+4. **[Claude] CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named**
    - Plan: `plans/now/code-health.md` -- "CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named"
    - Files: `scripts/bee_movement.gd`, `scripts/bee_foraging.gd`, `scripts/bee_mining.gd`, `scripts/bee_building.gd`
    - Check: `python tests/source_checks.py` passes; `python tools/prefinish.py` is green; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/bee_movement.gd :: func walk_to_hive_exit`
    - Next after: FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
+
+5. **[Claude] DR-1 -- a mated queen lays drones in cells marked for them, saved**
+   - Plan: `plans/now/drones.md` -- "DR-1 -- a mated queen lays drones in cells marked for them, saved"
+   - Files: `scripts/hive_cell.gd`, `scripts/bee_egg_laying.gd`, `scripts/hive.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/cq_s0_mid_capture.json`, `tests/fixtures/saves/cq_s0_early.json`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json`, `tests/test_save_roundtrip.py`, `tests/dr1_drone_cells_test.gd`, `tests/test_dr1_drone_cells.py`
+   - Check: `python -m unittest tests.test_dr1_drone_cells` passes (a mated queen lays a drone in a marked cell and a worker in an unmarked one; the gyne and drone marks clear each other; an unmated queen still lays drones; the mark survives a save and load); `python -m unittest tests.test_save_roundtrip` passes on the re-captured goldens, and `tests/fixtures/saves/cq_s0_mid.json` holds a bee and a brood cell with `"drone": true`; `tests/test_save_migrations.py` passes; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/hive_cell.gd :: hatch_drone`
+   - Next after: DR-2 -- the cell popup's drone box
 
 ### Codex lane
 
