@@ -1,7 +1,7 @@
 # Google Jules -- task list and how to work it
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: Jules every task; Claude/Codex only to add or prune a task -->
-Status: reference | Owner: Dave / Claude Code | Next: Jules works J-1 to J-7, then the standing tasks; whoever merges a Jules pull request deletes its task block | Dependency: none | Verified: 2026-10-23
+Status: reference | Owner: Dave / Claude Code | Next: Jules works J-2 to J-7, then the standing tasks; whoever merges a Jules pull request deletes its task block | Dependency: none | Verified: 2026-10-23
 
 Jules works from GitHub on a Linux VM, outside the Claude/Codex slice queue.
 Its work is behaviour-preserving tooling: guards that catch a known bug class
@@ -70,21 +70,6 @@ under 700 lines with a module docstring saying why it exists and how to run
 it, like `tools/heading.py`.
 
 ## Tasks
-
-### J-1 -- Guard against a function that calls itself
-
-- Files: tools/self_call_check.py (new), tests/test_self_call_check.py (new)
-- After: none
-- Why: `docs/known-pitfalls.md`, "A refactor leaves a function calling
-  itself" -- a stray self-call cost 4 fps and nobody saw it. The 15 Oct
-  verification review (`docs/verification-review-2026-10-15.md`, "Noted, not
-  pursued") says it still has no guard.
-- Do: for each `func <name>(` in `scripts/**/*.gd`, flag a bare `<name>(`
-  call in its own body (not `super.<name>(`, not `other.<name>(`, not in a
-  comment or string). Any intended recursion on `origin/master` goes in an
-  allowlist in the tool with a one-line reason. The test runs the check on
-  the real tree (must pass) and on small inline GDScript samples (a
-  self-call fails; `super.` and `obj.` calls pass).
 
 ### J-2 -- Ratchet the presentation-only `is_on_screen` rule
 
@@ -172,7 +157,7 @@ step of "How to work"; one tool, file or pitfall per pull request.
   editing", "Simulation and behaviour" or "Checks and rules that pass
   without proving anything" in `docs/known-pitfalls.md` that nothing in
   `tests/` enforces: a standalone tools/NAME_check.py and its test, as
-  J-1 does. Mutation-proved, and passing on `origin/master`.
+  `tools/self_call_check.py` does. Mutation-proved, and passing on `origin/master`.
 
 If no standing task fits either, say so and stop. Do not look for other work.
 
