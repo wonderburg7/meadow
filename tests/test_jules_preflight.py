@@ -19,7 +19,7 @@ SPEC.loader.exec_module(preflight)
 
 TASKS = (
     "# Jules\n\n## Tasks\n\n"
-    "### J-1 -- first\n\n- Files: `tools/one.py` (new), `tests/test_one.py` (new)\n- After: none\n\n"
+    "### J-1 -- first\n\n- Files: `tools/one.py`, tests/test_one.py (new)\n- After: none\n\n"
     "### J-2 -- second\n\n- Files: `tools/two.py`\n\n"
     "### J-3 -- third\n\n- Files: `tools/three.py`\n- After: J-1\n\n"
     "### J-4 -- fourth\n\n- Files: `tools/four.py`\n- After: J-9\n"

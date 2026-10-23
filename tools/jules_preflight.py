@@ -37,7 +37,6 @@ TASK_FILE = "plans/reference/jules.md"
 PLANNED = ["NEXTSTEPS.md", "plans/now"]
 BRANCH_PREFIXES = ("origin/claude/", "origin/codex/", "origin/jules/")
 TASK_HEADING = re.compile(r"^###\s+(J-\d+)\s+--\s+(.*?)\s*$")
-BACKTICKED = re.compile(r"`([^`]+)`")
 
 
 @dataclass
@@ -70,7 +69,7 @@ def fetch(root: Path) -> None:
 
 
 def parse_tasks(text: str) -> list[Task]:
-    """Every `### J-<n> -- title` block, with the backticked paths of its `Files:` line and ids of `After:`."""
+    """Every `### J-<n> -- title` block, with the paths of its `Files:` line and the ids of its `After:` line."""
     tasks: list[Task] = []
     for line in text.splitlines():
         heading = TASK_HEADING.match(line)
@@ -81,7 +80,10 @@ def parse_tasks(text: str) -> list[Task]:
             continue
         stripped = line.strip().lstrip("-* ").strip()
         if stripped.startswith("Files:"):
-            tasks[-1].files = BACKTICKED.findall(stripped)
+            # A file the task creates is written bare with "(new)": check_docs.py
+            # fails a backticked path that does not exist yet.
+            entries = stripped.removeprefix("Files:").split(",")
+            tasks[-1].files = [entry.replace("(new)", "").strip().strip("`") for entry in entries if entry.strip()]
         elif stripped.startswith("After:"):
             tasks[-1].after = re.findall(r"J-\d+", stripped)
     return tasks

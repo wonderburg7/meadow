@@ -73,7 +73,7 @@ it, like `tools/heading.py`.
 
 ### J-1 -- Guard against a function that calls itself
 
-- Files: `tools/self_call_check.py` (new), `tests/test_self_call_check.py` (new)
+- Files: tools/self_call_check.py (new), tests/test_self_call_check.py (new)
 - After: none
 - Why: `docs/known-pitfalls.md`, "A refactor leaves a function calling
   itself" -- a stray self-call cost 4 fps and nobody saw it. The 15 Oct
@@ -88,7 +88,7 @@ it, like `tools/heading.py`.
 
 ### J-2 -- Ratchet the presentation-only `is_on_screen` rule
 
-- Files: `tools/presentation_gate_check.py` (new), `tests/test_presentation_gate_check.py` (new)
+- Files: tools/presentation_gate_check.py (new), tests/test_presentation_gate_check.py (new)
 - After: none
 - Why: `.claude/rules/simulation.md` -- `is_on_screen` may gate label and
   colour updates only, never a decision, state change or resource move.
@@ -102,7 +102,7 @@ it, like `tools/heading.py`.
 
 ### J-3 -- Report uncalled GDScript functions
 
-- Files: `tools/uncalled.py` (new), `tests/test_uncalled.py` (new)
+- Files: tools/uncalled.py (new), tests/test_uncalled.py (new)
 - After: none
 - Why: the 15 Oct architecture review counted 21 uncalled functions by hand
   (`docs/architecture-review-2026-10-15.md`, "Noted, not pursued").
@@ -124,7 +124,7 @@ it, like `tools/heading.py`.
 
 ### J-5 -- Unit tests for `tools/func.py`
 
-- Files: `tests/test_func_tool.py` (new)
+- Files: tests/test_func_tool.py (new)
 - After: none
 - Why: every Claude and Codex session reads code through this tool
   (`docs/agent-rules.md` rule 1); nothing tests it.
@@ -134,7 +134,7 @@ it, like `tools/heading.py`.
 
 ### J-6 -- Unit tests for `tools/heading.py`
 
-- Files: `tests/test_heading_tool.py` (new)
+- Files: tests/test_heading_tool.py (new)
 - After: none
 - Why: the other routing tool every session uses; tested only through the
   lifecycle suite, which CI does not run. `heading.py` is named in live
@@ -146,7 +146,7 @@ it, like `tools/heading.py`.
 
 ### J-7 -- Unit tests for `tools/gdscript_warnings.py`'s parsing
 
-- Files: `tests/test_gdscript_warnings.py` (new)
+- Files: tests/test_gdscript_warnings.py (new)
 - After: none
 - Why: no test; its `script_warnings` and `as_res_path` are pure and its
   exit codes are its contract.
