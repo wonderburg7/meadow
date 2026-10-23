@@ -170,15 +170,16 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | --- | --- |
 | AR-4 -- alpha-route evidence: a scripted Colony Run records all five gates | `plans/now/alpha-route-evidence.md` |
 | ED-1 to ED-3 -- difficulty: health for every bee, Easy's rules, choosing Easy at run start | `plans/now/difficulty.md` |
-| FR-1 to FR-3 -- forager recruitment: Orientation flight, then Auto scouting, then Auto-recruitment, each measured better than the last | `plans/now/forager-recruitment.md` |
+| FR-2, FR-3 -- forager recruitment: Auto scouting bought at Foraging tier 2, then Auto-recruitment switched on by ownership | `plans/now/forager-recruitment.md` |
 | HM-1, HM-2 -- Dave's meadow hives and top-bar menu icons | `plans/now/hive-and-menu-art.md` |
-| SP-8, SP-8a -- the meadow floor in stacked blocks, then height's effects | `plans/now/meadow-terrain.md` |
-| PP-6, PP-8 -- pollination: the C-129 watch run, then pricing the route to Gyne rearing | `plans/now/pollination.md` |
-| RR-7 to RR-11 -- run repairs: the Silkscreen hexagon split, winter and fermented nectar, the pre-fermented colour | `plans/now/run-repairs.md` |
+| SP-8a -- the meadow floor drawn in blocks, with everything on it lifted | `plans/now/meadow-terrain.md` |
+| DR-1, DR-2 -- drones: a mated queen lays drones in cells the player marks, then the cell popup's drone box | `plans/now/drones.md` |
+| PP-6 -- pollination: pricing the route to Gyne rearing | `plans/now/pollination.md` |
+| RR-12 -- run repairs: a loaded run keeps its readout history | `plans/now/run-repairs.md` |
 | SG-2, SG-3 -- short-term goals offered, paid and saved in runs, then shown in the Goals drop-down | `plans/now/short-term-goals.md` |
-| SP-6, SP-11 -- comb and bee art: the cup-rim rings, the meadow forager sheet | `plans/now/sprites.md` |
-| T2-10 to T2-13, T2-7b -- tier two: Automation wakes miners, comb cadence, bodies on a role change, the deferred price sweep | `plans/now/tier-two.md` |
-| L-27 to L-30 -- the slice lifecycle: re-verify a resumed finish, keep the next queue block, measure subagents, show released work | `plans/now/agent-lifecycle.md` |
+| SP-6 -- bee art: the meadow forager sheet | `plans/now/sprites.md` |
+| T2-7b -- tier two: the deferred tier-2 price sweep | `plans/now/tier-two.md` |
+| L-35, L-36 -- the slice lifecycle: known baseline failures and stop causes named, clean checkouts pass the doc checks | `plans/now/agent-lifecycle.md` |
 | CQ-L1 to CQ-R14 -- code health: gdlint in verify, static typing, entities owning their save fields, named data and magic numbers, splits by responsibility | `plans/now/code-health.md` (research: `docs/code-health-research-2026-10-18.md`) |
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates (the Colony Run definition itself is `plans/archive/colony-run_2026-10-08.md`) | `plans/design/product-scope.md` |
