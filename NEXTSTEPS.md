@@ -25,8 +25,8 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
 1. **[Claude] L-33 -- one admission check shared by check_docs, start and closeout**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-33 -- one admission check shared by check_docs, start and closeout"
-   - Files: `tools/admission.py`, `tests/test_admission.py`, `tools/check_docs.py`, `tools/slice.ps1`, `plans/reference/queue-steward.md`
-   - Check: `python -m unittest tests.test_admission` passes on fixtures with a landed dependency, a file in the other lane, an open decision and an archived plan reference, each reported with its reason; `--clear-landed` removes the landed id from a fixture queue; `.\tools\verify.ps1` is green
+   - Files: `tools/admission.py`, `tests/test_admission.py`, `tools/check_docs.py`, `tools/slice.ps1`, `plans/reference/queue-steward.md`, `plans/now/code-health.md`
+   - Check: `python -m unittest tests.test_admission` passes on fixtures with a landed dependency, a file in the other lane, an open decision and an archived plan reference, each reported with its reason, and an item naming an indexed script stays admissible beside one naming `FUNCTION_MAP.md`; `--clear-landed` removes the landed id from a fixture queue; `.\tools\verify.ps1` is green
    - Proof: `absent: tools/slice.ps1 :: admission.py`
    - Next after: L-34
 

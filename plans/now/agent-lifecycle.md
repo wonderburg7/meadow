@@ -50,7 +50,7 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-33 | one admission check shared by `check_docs`, `start` and closeout | `tools/admission.py`, `tests/test_admission.py`, `tools/check_docs.py`, `tools/slice.ps1`, `plans/reference/queue-steward.md` | medium |
+| L-33 | one admission check shared by `check_docs`, `start` and closeout | `tools/admission.py`, `tests/test_admission.py`, `tools/check_docs.py`, `tools/slice.ps1`, `plans/reference/queue-steward.md`, `plans/now/code-health.md` | medium |
 | L-34 | a PreToolUse guard refuses the five closeout-breaking commands | `tools/guard_hook.py`, `tests/test_guard_hook.py`, `.claude/settings.json`, `.codex/hooks.json` | low |
 | L-35 | known baseline failures and stop causes are named, not rediagnosed | `tools/verify.ps1`, `tools/slice.ps1`, `tools/stop_causes.py`, `tests/test_stop_causes.py`, `tests/baseline_failures.json`, `tools/check_docs.py` | medium |
 | L-36 | clean checkouts pass the doc checks; stray worktrees are reported | `tools/check_docs.py`, `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | low |
@@ -129,14 +129,23 @@ mechanism. The other three call it.
    the script reports as ambiguous.
 5. The slice template gains the `Open decisions:` line. L-31 to L-36 carry
    it already.
+6. `FUNCTION_MAP.md` is unowned, like `checks/ready.md` (Dave, 23 Oct
+   2026). FR-1d's `Files:` omitted it although `bee_foraging.gd` is indexed
+   there, so no overlap check saw it clash with CQ-S0b's claim on it, and
+   the integration had to resolve the ownership by hand. The ownership test
+   ignores it; `finish` restores master's copy before its branch commit and
+   regenerates the map on master in the post-merge closeout commit, beside
+   the ready-check index. Drop it from CQ-S0b's `Files:` (here and in
+   `plans/now/code-health.md`'s block) and from the `## Not in the queue`
+   reasons that wait for CQ-S0b to release it.
 
 **Open decisions:** none.
 
 ```queue
 **[Claude] L-33 -- one admission check shared by check_docs, start and closeout**
 - Plan: `plans/now/agent-lifecycle.md` -- "L-33 -- one admission check shared by check_docs, start and closeout"
-- Files: `tools/admission.py`, `tests/test_admission.py`, `tools/check_docs.py`, `tools/slice.ps1`, `plans/reference/queue-steward.md`
-- Check: `python -m unittest tests.test_admission` passes on fixtures with a landed dependency, a file in the other lane, an open decision and an archived plan reference, each reported with its reason; `--clear-landed` removes the landed id from a fixture queue; `.\tools\verify.ps1` is green
+- Files: `tools/admission.py`, `tests/test_admission.py`, `tools/check_docs.py`, `tools/slice.ps1`, `plans/reference/queue-steward.md`, `plans/now/code-health.md`
+- Check: `python -m unittest tests.test_admission` passes on fixtures with a landed dependency, a file in the other lane, an open decision and an archived plan reference, each reported with its reason, and an item naming an indexed script stays admissible beside one naming `FUNCTION_MAP.md`; `--clear-landed` removes the landed id from a fixture queue; `.\tools\verify.ps1` is green
 - Proof: `absent: tools/slice.ps1 :: admission.py`
 - Next after: L-34
 ```
