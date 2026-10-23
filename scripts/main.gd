@@ -96,6 +96,9 @@ const PlayerProfile = preload("res://scripts/player_profile.gd")
 ## seeding a given run.
 const DEFAULT_RANDOM_SEED := 12345
 
+## How often weather can be rolled in one in-game day.
+const WEATHER_ROLLS_PER_DAY := 6.0
+
 # --- delegate systems ---------------------------------------------
 ## The six files this script delegates to. Each is a plain Node with a
 ## `main` field pointing back here; none of them are added to the scene
@@ -990,11 +993,11 @@ func _advance_weather(delta: float) -> void:
 			rain_target = 0.0
 			rain_changed.emit(false)
 	elif not _first_crisis_holds_weather():
-		# one roll per in-game day, spread evenly over it
+		# six attempts per in-game day, spread evenly over it (with a ten-second floor)
 		weather_timer -= delta
 		if weather_timer <= 0.0:
-			weather_timer = max(10.0, GameConfig.seconds_per_day / 6.0)
-			if randf() < GameConfig.rain_chance_per_day / 6.0:
+			weather_timer = max(10.0, GameConfig.seconds_per_day / WEATHER_ROLLS_PER_DAY)
+			if randf() < GameConfig.rain_chance_per_day / WEATHER_ROLLS_PER_DAY:
 				rain_target = randf_range(0.35, 1.0)
 				rain_seconds_left = randf_range(GameConfig.rain_min_seconds, GameConfig.rain_max_seconds)
 				rain_changed.emit(true)

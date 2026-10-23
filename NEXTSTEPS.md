@@ -63,21 +63,14 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] CQ-M10 -- weather rolls share one named daily count**
-   - Plan: `plans/now/code-health.md` -- "CQ-M10 -- weather rolls share one named daily count"
-   - Files: `scripts/main.gd`
-   - Check: `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` reports identical simulation results; both weather divisions use the float 6.0 via WEATHER_ROLLS_PER_DAY, with RNG order and the ten-second floor unchanged; `python tools/update_function_map.py --check`, `python tools/prefinish.py` and `.\tools\verify.ps1` are green
-   - Proof: `present: scripts/main.gd :: GameConfig.rain_chance_per_day / 6.0`
-   - Next after: CQ-R9 -- the diagnostic snapshot built in sections, its probe duplicates kept once
-
-2. **[Codex] CQ-R9 -- the diagnostic snapshot built in sections, its probe duplicates kept once**
+1. **[Codex] CQ-R9 -- the diagnostic snapshot built in sections, its probe duplicates kept once**
    - Plan: `plans/now/code-health.md` -- "CQ-R9 -- the diagnostic snapshot built in sections, its probe duplicates kept once"
    - Files: `scripts/diagnostic_log.gd`, `scripts/headless/diagnostic_probes.gd`
    - Check: the slice1_smoke_test snapshot line before and after is equal as JSON apart from `performance`; `python -m unittest tests.test_bb1_bee_bread tests.test_sf1_founding_flower_mix tests.test_headless_profiles tests.test_headless_verdicts tests.test_pacing_gates` passes; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` reports no difference; `python tools/prefinish.py` and `.\tools\verify.ps1` are green
    - Proof: `absent: scripts/headless/diagnostic_probes.gd :: static func flower_season_counts`
    - Next after: CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened
 
-3. **[Codex] CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened**
+2. **[Codex] CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened**
    - Plan: `plans/now/code-health.md` -- "CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened"
    - Files: `scripts/challenge_runner.gd`, `scripts/challenge_feedback.gd`, `test_scenarios/cq_r12_c2_pollen_rescue_test.json`, `tests/test_cq_r12_c2_rescue.py`
    - Check: `python -m unittest tests.test_cq_r12_c2_rescue` passes before and after the refactor (the C2 pollen rescue tops pollen up at stage 2.1); `python tools/equivalence.py test_scenarios/bb4_challenge1_route.json master` and `python tools/equivalence.py test_scenarios/bb4_challenge2_route.json master` report no difference; `python -m unittest tests.test_challenge2_checks tests.test_bb4_challenge_pacing` and `python tests/source_checks.py` pass; `python tools/prefinish.py` and `.\tools\verify.ps1` are green
