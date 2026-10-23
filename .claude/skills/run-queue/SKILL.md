@@ -37,9 +37,11 @@ sitting in a `.worktrees/` directory:
    ids landed so far if there are any, then rerun `doctor`.
 2. **Claim.** Read `advice.dry_after` from `doctor`. When it is true, dispatch the
    steward with `JOB=gates refill` and the ids landed so far (below) or ask
-   Dave *before* `start`, never after:
-   a slice built with nothing admissible behind it is stranded at `finish`'s
-   refill gate (BS-12, 4 Oct 2026). Then run
+   Dave *before* `start`, never after: admission plans ahead, so a
+   successor is specified before the build (`.claude/rules/documentation.md`,
+   5 Oct 2026). `finish` no longer strands such a slice -- since L-32 it
+   merges and prints `lane dry:` -- but that is the backstop, not leave to
+   claim into a dry lane. Then run
    `tools/slice.ps1 start -Lane Claude -Dispatched`. `-Dispatched` tells it a
    worker implements the slice, so it does not check this session's own
    model against the plan level. Keep its JSON, and note `advice.level`.
@@ -93,11 +95,16 @@ sitting in a `.worktrees/` directory:
    - On a stop, read only the stop block. A verify failure inside the
      slice's files goes back to the worker once, then rerun `finish`. A
      stale branch: merge master into it, regenerate `FUNCTION_MAP.md`,
-     rerun. The refill gate (backlog dry), or a block whose `Proof:`
-     fails on master or names a successor with no block, is planning work:
-     dispatch the steward with `JOB=finish-stop`, the stop block and the
-     slice worktree, then rerun. Add `gates` with the ids landed so far, so
-     the lane does not run dry one slice later.
+     rerun. A block whose `Proof:` fails on master, or a refill-gate stop
+     for a successor with no block (not queued, deferred or gated), is
+     planning work: dispatch the steward with `JOB=finish-stop`, the stop
+     block and the slice worktree, then rerun. Add `gates` with the ids
+     landed so far, so the lane does not run dry one slice later.
+   - A dry lane is not a stop (L-32): `finish` merges and, after
+     `Slice landed:`, may print `lane dry: <lane>`, `queue short: n of the
+     3-item floor` or `successor gated: <id>`. `lane dry` or `queue short`
+     for this lane means the lane is short: send `JOB=gates refill` (step 8)
+     before the next `doctor`. `successor gated` alone needs nothing now.
      The lifecycle lock held by another lane's `finish` (the cause names
      its PID): wait for it and rerun in one background call,
      `powershell.exe -NoProfile -Command "Wait-Process -Id <pid>"; (cd <ROOT>/.worktrees/<id> && powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 finish)`.
