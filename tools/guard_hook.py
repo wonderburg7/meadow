@@ -20,7 +20,8 @@ DENIED_READ_PATHS = (".godot", "_backups", "docs/archive", "plans/archive")
 
 
 def _is_worktree(cwd: str) -> bool:
-    return ".worktrees" in {part.lower() for part in Path(cwd).parts}
+    normalised_cwd = cwd.replace("\\", "/")
+    return ".worktrees" in {part.lower() for part in Path(normalised_cwd).parts}
 
 
 def _reason(command: str, cwd: str) -> str:
