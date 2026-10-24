@@ -597,12 +597,12 @@ function Get-StrayWorktreeFolders {
         $listing = @(git -C $Root worktree list --porcelain 2>$null)
         if ($LASTEXITCODE -ne 0) { return @() }
         $registered = @($listing | Where-Object { $_ -like "worktree *" } | ForEach-Object {
-                [System.IO.Path]::GetFullPath($_.Substring("worktree ".Length).Trim()).TrimEnd('')
+                [System.IO.Path]::GetFullPath($_.Substring("worktree ".Length).Trim()).TrimEnd('\', '/')
             })
         $pending = @(Get-PendingWorktreeDeletions -Root $Root | ForEach-Object { Split-Path -Leaf $_.Trim() })
         $strays = @()
         foreach ($folder in @(Get-ChildItem -LiteralPath $worktreeDir -Directory)) {
-            if ($registered -contains $folder.FullName.TrimEnd('')) { continue }
+            if ($registered -contains $folder.FullName.TrimEnd('\', '/')) { continue }
             if ($pending -contains $folder.Name) { continue }
             $strays += [pscustomobject]@{
                 name   = ".worktrees/$($folder.Name)"
