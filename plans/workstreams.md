@@ -49,4 +49,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/CQ-R12` (`codex/CQ-R12`) | Codex | challenge_runner start, C2 failure and stage entry shortened | Codex | in progress | none | `plans/now/code-health.md` CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened |
-| `.worktrees/L-36` (`claude/L-36`) | Claude | clean checkouts pass the doc checks; stray worktrees are reported | Claude | in progress | none | `plans/now/agent-lifecycle.md` L-36 -- clean checkouts pass the doc checks; stray worktrees are reported |
