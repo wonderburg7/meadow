@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/CQ-R9` (`codex/CQ-R9`) | Codex | the diagnostic snapshot built in sections, its probe duplicates kept once | Codex | in progress | none | `plans/now/code-health.md` CQ-R9 -- the diagnostic snapshot built in sections, its probe duplicates kept once |
