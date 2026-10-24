@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude / Codex | Next: L-37 (Codex lane), then L-38 (Codex lane) to count worker edits made from a worktree-relative shell command | Dependency: L-38 follows L-37 in the Codex lane; L-37 owns `tools/guard_hook.py` and its test only | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude / Codex | Next: L-38 (Codex lane) to count worker edits made from a worktree-relative shell command | Dependency: L-38 follows L-37 in the Codex lane | Verified: 2026-10-24
 
 ## Objective
 

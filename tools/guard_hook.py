@@ -17,11 +17,28 @@ import hook_log  # noqa: E402
 
 
 DENIED_READ_PATHS = (".godot", "_backups", "docs/archive", "plans/archive")
+TREE_READERS = frozenset({
+    "cat", "head", "tail", "sed", "grep", "rg", "select-string",
+    "get-content", "type", "ls", "dir", "get-childitem",
+})
 
 
 def _is_worktree(cwd: str) -> bool:
     normalised_cwd = cwd.replace("\\", "/")
     return ".worktrees" in {part.lower() for part in Path(normalised_cwd).parts}
+
+
+def _reads_tree(command: str) -> bool:
+    """Recognise a direct file reader with a denied path as an argument."""
+    for line in command.splitlines():
+        for segment in re.split(r"&&|\|\||[;|]", line):
+            words = segment.strip().split(None, 1)
+            if not words or words[0].lower() not in TREE_READERS:
+                continue
+            arguments = words[1].lower().replace("\\", "/") if len(words) > 1 else ""
+            if any(path in arguments for path in DENIED_READ_PATHS):
+                return True
+    return False
 
 
 def _reason(command: str, cwd: str) -> str:
@@ -37,7 +54,7 @@ def _reason(command: str, cwd: str) -> str:
         return "Run slice.ps1 finish from the primary checkout, not this worktree."
     if _is_worktree(cwd) and "../../tools/" in normalised:
         return "Run tools/… from inside the worktree, not ../../tools/… ."
-    if any(path in normalised for path in DENIED_READ_PATHS):
+    if _reads_tree(command):
         return "Do not read this denied path."
     return ""
 
