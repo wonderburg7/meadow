@@ -1,0 +1,11 @@
+{
+  "challenge": 2,
+  "random_seed": 7012,
+  "actions": [
+    {"do": "assert", "when": {"challenge_stage_id": "2.1"}, "condition": {"challenge_stage_id": "2.1"}},
+    {"do": "set_cell_contents", "cell": {"built_index": 2}, "resource": "pollen", "amount": 0, "when": {"challenge_stage_id": "2.1"}},
+    {"do": "settle", "ticks": 2},
+    {"do": "assert", "when": {"challenge_stage_id": "2.1"}, "condition": {"hive_total": {"resource": "pollen", "at_least": 180}}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 1}
+}

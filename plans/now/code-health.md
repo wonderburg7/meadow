@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-L2, CQ-S0b and CQ-M8 in the Claude lane; CQ-R12 for the Codex refill (CQ-R9 complete, 24 Oct 2026) | Dependency: CQ-T3 waits for CQ-L2 to release tests/source_checks.py, and follows CQ-R8; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-L2, CQ-S0b and CQ-M8 in the Claude lane; CQ-M4 for the Codex refill (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 waits for CQ-L2 to release tests/source_checks.py, and follows CQ-R8; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-24
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -506,4 +506,26 @@ action), or if either route scenario's equivalence differs.
 - Check: `python -m unittest tests.test_cq_r12_c2_rescue` passes before and after the refactor (the C2 pollen rescue tops pollen up at stage 2.1); `python tools/equivalence.py test_scenarios/bb4_challenge1_route.json master` and `python tools/equivalence.py test_scenarios/bb4_challenge2_route.json master` report no difference; `python -m unittest tests.test_challenge2_checks tests.test_bb4_challenge_pacing` and `python tests/source_checks.py` pass; `python tools/prefinish.py` and `.\tools\verify.ps1` are green
 - Proof: `absent: scripts/challenge_feedback.gd :: "challenge_2_pollen_rescue"`
 - Next after: CQ-M4 -- Challenge level ids named in `levels.gd`
+```
+
+## CQ-M4 -- Challenge level ids named in `levels.gd`
+
+Replace the duplicated Challenge 1 and Challenge 2 level literals with
+`Levels.CHALLENGE_1`, `Levels.CHALLENGE_2`, `Levels.CHALLENGE_LEVELS` and
+`Levels.is_challenge()`. Keep the integer values and all save behaviour
+unchanged. Update the readers in `challenge_runner.gd`, `saving.gd`,
+`save_game.gd`, `main.gd`, `debug_panel.gd`, `challenge_complete.gd` and
+`world_building.gd`.
+
+Prove unchanged simulation with the Challenge 1 stage-advance and full route
+scenarios, then regenerate `FUNCTION_MAP.md` and run the relevant source
+checks. Stop if the replacement changes a save compatibility decision.
+
+```queue
+**[Codex] CQ-M4 -- Challenge level ids named in `levels.gd`**
+- Plan: `plans/now/code-health.md` -- "CQ-M4 -- Challenge level ids named in `levels.gd`"
+- Files: `scripts/levels.gd`, `scripts/challenge_runner.gd`, `scripts/saving.gd`, `scripts/save_game.gd`, `scripts/main.gd`, `scripts/debug_panel.gd`, `scripts/challenge_complete.gd`, `scripts/world_building.gd`, `FUNCTION_MAP.md`
+- Check: `python tools/equivalence.py test_scenarios/h4_challenge1_stage_advance_test.json master` and `python tools/equivalence.py test_scenarios/bb4_challenge1_route.json master` report no difference; `python tests/source_checks.py`, `python tools/prefinish.py` and `./tools/verify.ps1` are green
+- Proof: `present: scripts/saving.gd :: if Session.starting_level in [1, 2]:`
+- Next after: CQ-M5 -- CanvasLayer order in `scripts/canvas_layers.gd`
 ```

@@ -209,43 +209,8 @@ func can_debug_advance_stage() -> bool:
 
 # --- starting and the per-frame loop ------------------------------
 func start() -> void:
-	active = true
-	_stage_index = 0
-	_c2_rescue_used = false
-	_c2_pollen_rescue_used = false
-	_c2_rescue_suppressed_logged = false
-	_last_completed_goal_text = ""
-	main.stage_gate.start()
-	# F2s: a key unlocked mid-stage (an event or interaction trigger) shows
-	# its controls at once rather than at the next stage entry.
-	if not main.stage_gate.unlocked_changed.is_connected(_on_gate_unlocked):
-		main.stage_gate.unlocked_changed.connect(_on_gate_unlocked)
-	# Ordinary save/load doesn't record Challenge stage/gate/prompt state,
-	# so a load mid-Challenge would silently drop it -- disabled for the
-	# length of the run; tutorial_checkpoint.gd covers Challenge-internal
-	# rollback instead. Re-enabled in _complete().
-	main.debug_panel.set_save_load_enabled(false)
-	main.fog_of_war.permanent_reveal_override = Session.starting_level == 1
-	queen_command_locked = false
-	_opening_blocks.clear()
-	_opening_started = false
-	_clear_ordered_visit()
-	_new_worker = null
-	_greeting_active = false
-	_hearts_timer = 0.0
-	_goal_poll_timer = 0.0
-	_goal_checked_index_epoch = -1
-	_goal_checked_population_epoch = -1
-	if main.active_placement_tool == "queen_build_cell":
-		main.input_selection.clear_placement_tool()
-	main.queen.player_driven = false
-	main.queen.flower_switch_locked = false
-	main.queen.role_change_locked = false
-	main.queen.role_restricted_to = []
-	_c1_base_nectar_rate = -1.0
-	_c1_base_pollen_rate = -1.0
-	_c1_queen_collections = 0
-	_c1_forage_effects_done = false
+	_reset_run_state()
+	_reset_queen_controls()
 
 	if not main.in_hive_view:
 		main.camera_view._toggle_view()
@@ -283,14 +248,57 @@ func start() -> void:
 	# but a fresh start() shouldn't depend on that indirection to be safe.
 	main.TutorialCheckpoint.clear()
 
+	_build_stage_marker()
+	_enter_stage()
+
+func _reset_run_state() -> void:
+	active = true
+	_stage_index = 0
+	_c2_rescue_used = false
+	_c2_pollen_rescue_used = false
+	_c2_rescue_suppressed_logged = false
+	_last_completed_goal_text = ""
+	main.stage_gate.start()
+	# F2s: a key unlocked mid-stage (an event or interaction trigger) shows
+	# its controls at once rather than at the next stage entry.
+	if not main.stage_gate.unlocked_changed.is_connected(_on_gate_unlocked):
+		main.stage_gate.unlocked_changed.connect(_on_gate_unlocked)
+	# Ordinary save/load doesn't record Challenge stage/gate/prompt state,
+	# so a load mid-Challenge would silently drop it -- disabled for the
+	# length of the run; tutorial_checkpoint.gd covers Challenge-internal
+	# rollback instead. Re-enabled in _complete().
+	main.debug_panel.set_save_load_enabled(false)
+	main.fog_of_war.permanent_reveal_override = Session.starting_level == 1
+	queen_command_locked = false
+	_opening_blocks.clear()
+	_opening_started = false
+	_clear_ordered_visit()
+	_new_worker = null
+	_greeting_active = false
+	_hearts_timer = 0.0
+	_goal_poll_timer = 0.0
+	_goal_checked_index_epoch = -1
+	_goal_checked_population_epoch = -1
+	_c1_base_nectar_rate = -1.0
+	_c1_base_pollen_rate = -1.0
+	_c1_queen_collections = 0
+	_c1_forage_effects_done = false
+
+func _reset_queen_controls() -> void:
+	if main.active_placement_tool == "queen_build_cell":
+		main.input_selection.clear_placement_tool()
+	main.queen.player_driven = false
+	main.queen.flower_switch_locked = false
+	main.queen.role_change_locked = false
+	main.queen.role_restricted_to = []
+
+func _build_stage_marker() -> void:
 	_marker = Polygon2D.new()
 	_marker.polygon = Shapes.circle_points(GameConfig.hive_cell_size * 1.6, 24)
 	_marker.color = Stages.MARKER_COLOUR
 	_marker.z_index = 5
 	_marker.visible = false
 	main.hive_root.add_child(_marker)
-
-	_enter_stage()
 
 func _process(delta: float) -> void:
 	if not active:
@@ -368,6 +376,14 @@ func _check_c2_failure() -> void:
 	var nectar: float = main.hive.total("nectar")
 	var pollen: float = main.hive.total("pollen")
 
+	if _try_c2_pollen_rescue(pollen):
+		return
+	if _c2_nectar_rescue(nectar):
+		return
+	if nectar < Stages.C2_FAILURE_FLOOR:
+		_c2_restore_checkpoint()
+
+func _try_c2_pollen_rescue(pollen: float) -> bool:
 	# Pollen is the price of every new bee. Keep this rescue available through
 	# 2.2, but no later: once its pollen Forager exists the player has the
 	# recovery route this top-up is meant to preserve.
@@ -375,14 +391,11 @@ func _check_c2_failure() -> void:
 		_c2_pollen_rescue_used = true
 		main.hive.deposit("pollen", Stages.c2_pollen_rescue_amount())
 		main.gallerin_panel.clear_queue()
-		main.gallerin_panel.show_now({
-			"id": "challenge_2_pollen_rescue",
-			"trigger": "recovery",
-			"repeatable": false,
-			"text": "A colony without pollen cannot raise any bee at all. I have set a little aside, so you can raise the pollen Forager and restore the supply.",
-		})
-		return
+		main.gallerin_panel.show_now(Feedback.gallerin_prompt("challenge_2_pollen_rescue"))
+		return true
+	return false
 
+func _c2_nectar_rescue(nectar: float) -> bool:
 	# The one-time rescue only ever applies once 2.1 itself is behind us
 	# (its own goal *is* "recover from a dip", so a rescue mid-2.1 would
 	# short-circuit the very thing it's meant to teach).
@@ -392,39 +405,40 @@ func _check_c2_failure() -> void:
 			main.hive.deposit("nectar", Stages.C2_RESCUE_AMOUNT)
 			main.gallerin_panel.clear_queue()
 			main.gallerin_panel.show_now(Feedback.gallerin_prompt("challenge_2_rescue"))
-			return
+			return true
 		if _stage_index == _c2_index("2.1") and not _c2_rescue_suppressed_logged:
 			_c2_rescue_suppressed_logged = true
 			DiagnosticLog.log_action("c2_rescue", _stages()[_stage_index].id, "suppressed", "rescue is withheld during 2.1 by design; nectar %.0f" % nectar)
+	return false
 
-	if nectar < Stages.C2_FAILURE_FLOOR:
-		if not main.TutorialCheckpoint.restore(main):
-			push_error("Challenge 2 checkpoint restore failed")
-			return
-		# A restore replaces main.queen with a new Bee node and rebuilds
-		# main.hive.cells from scratch (see saving.gd::_restore) -- nothing
-		# here may go on using the pre-restore queen/cell references.
-		# _stage_index itself doesn't move: the checkpoint is "the start of
-		# this sub-stage", so this re-enters the same stage rather than
-		# advancing or regressing it.
-		if not is_instance_valid(main.queen):
-			push_error("Challenge 2 checkpoint restore left no queen")
-			return
-		# A restore re-enters the same stage without running its on_exit, so
-		# 4x speed or camera-follow active going into the dip would otherwise
-		# survive the rescue.
-		_run_stage_effects(["camera_follow_off", "speed_multiplier:1.0"])
-		main.queen.energy_immune = true
-		# The restored stage starts over, so its goal text is on screen again
-		# for the full dwell, and a goal met before the dip no longer counts.
-		_stage_dwell = 0.0
-		_stage_goal_met = false
-		_c2_nectar_at_stage_entry = main.hive.total("nectar")
-		_c2_nectar_low_seen = _c2_nectar_at_stage_entry
-		_apply_stage_gate_to_ui()
-		_show_goal(_stages()[_stage_index])
-		main.gallerin_panel.clear_queue()
-		main.gallerin_panel.show_now(Feedback.gallerin_prompt("challenge_2_recovery", "_%d" % _stage_index))
+func _c2_restore_checkpoint() -> void:
+	if not main.TutorialCheckpoint.restore(main):
+		push_error("Challenge 2 checkpoint restore failed")
+		return
+	# A restore replaces main.queen with a new Bee node and rebuilds
+	# main.hive.cells from scratch (see saving.gd::_restore) -- nothing
+	# here may go on using the pre-restore queen/cell references.
+	# _stage_index itself doesn't move: the checkpoint is "the start of
+	# this sub-stage", so this re-enters the same stage rather than
+	# advancing or regressing it.
+	if not is_instance_valid(main.queen):
+		push_error("Challenge 2 checkpoint restore left no queen")
+		return
+	# A restore re-enters the same stage without running its on_exit, so
+	# 4x speed or camera-follow active going into the dip would otherwise
+	# survive the rescue.
+	_run_stage_effects(["camera_follow_off", "speed_multiplier:1.0"])
+	main.queen.energy_immune = true
+	# The restored stage starts over, so its goal text is on screen again
+	# for the full dwell, and a goal met before the dip no longer counts.
+	_stage_dwell = 0.0
+	_stage_goal_met = false
+	_c2_nectar_at_stage_entry = main.hive.total("nectar")
+	_c2_nectar_low_seen = _c2_nectar_at_stage_entry
+	_apply_stage_gate_to_ui()
+	_show_goal(_stages()[_stage_index])
+	main.gallerin_panel.clear_queue()
+	main.gallerin_panel.show_now(Feedback.gallerin_prompt("challenge_2_recovery", "_%d" % _stage_index))
 
 func _c2_index(stage_id: String) -> int:
 	for i: int in range(Stages.STAGES_2.size()):
@@ -482,24 +496,7 @@ func _enter_stage() -> void:
 	# out of the manual-forage arc without a matching list to maintain.
 	if is_instance_valid(main.queen):
 		main.queen.player_driven = stage.get("player_driven", false)
-	if Session.starting_level == 1:
-		# Challenge 1's manual building drives the queen's state directly;
-		# derive her permitted backup work from the same stage keys as the
-		# role controls, rather than maintaining a more-permissive copy here.
-		# Her own laying role and day-one nursing fallback remain intentional
-		# exceptions: neither is taught as a general role at the opening.
-		main.queen.role_restricted_to = _queen_allowed_role_ids(stage.unlocked_keys)
-		main.queen.role_change_locked = stage.id in ["1.6", "1.7", "1.8", "1.9", "1.10"]
-		if stage.id == "1.8":
-			_c1_queen_collections = 0
-		if stage.id == "1.11":
-			# Debug navigation can re-enter this stage. Keep its teaching-rate
-			# override idempotent instead of multiplying it again on every pass.
-			if _c1_base_nectar_rate < 0.0:
-				_c1_base_nectar_rate = main.queen.nectar_collection_rate
-				_c1_base_pollen_rate = main.queen.pollen_collection_rate
-			main.queen.nectar_collection_rate = _c1_base_nectar_rate * Stages.CHALLENGE1_FORAGE_SPEED_MULTIPLIER
-			main.queen.pollen_collection_rate = _c1_base_pollen_rate * Stages.CHALLENGE1_FORAGE_SPEED_MULTIPLIER
+	_apply_c1_stage_rules(stage)
 	if Session.starting_level == 1:
 		main.fog_of_war.set_hive_reveal_mode("queen" if stage.id == "1.1" else "open_space")
 	main.stage_gate.set_unlocked_keys(_stage_unlock_keys(stage.unlocked_keys))
@@ -527,7 +524,29 @@ func _enter_stage() -> void:
 	# entering. tests/source_checks.py enforces this ordering.
 	_run_stage_effects(stage.get("on_enter", []))
 	main.TutorialCheckpoint.save(main)
+	_record_c2_stage_entry()
 
+func _apply_c1_stage_rules(stage: Dictionary) -> void:
+	if Session.starting_level == 1:
+		# Challenge 1's manual building drives the queen's state directly;
+		# derive her permitted backup work from the same stage keys as the
+		# role controls, rather than maintaining a more-permissive copy here.
+		# Her own laying role and day-one nursing fallback remain intentional
+		# exceptions: neither is taught as a general role at the opening.
+		main.queen.role_restricted_to = _queen_allowed_role_ids(stage.unlocked_keys)
+		main.queen.role_change_locked = stage.id in ["1.6", "1.7", "1.8", "1.9", "1.10"]
+		if stage.id == "1.8":
+			_c1_queen_collections = 0
+		if stage.id == "1.11":
+			# Debug navigation can re-enter this stage. Keep its teaching-rate
+			# override idempotent instead of multiplying it again on every pass.
+			if _c1_base_nectar_rate < 0.0:
+				_c1_base_nectar_rate = main.queen.nectar_collection_rate
+				_c1_base_pollen_rate = main.queen.pollen_collection_rate
+			main.queen.nectar_collection_rate = _c1_base_nectar_rate * Stages.CHALLENGE1_FORAGE_SPEED_MULTIPLIER
+			main.queen.pollen_collection_rate = _c1_base_pollen_rate * Stages.CHALLENGE1_FORAGE_SPEED_MULTIPLIER
+
+func _record_c2_stage_entry() -> void:
 	if Session.starting_level == 2:
 		_c2_nectar_at_stage_entry = main.hive.total("nectar")
 		_c2_nectar_low_seen = _c2_nectar_at_stage_entry
