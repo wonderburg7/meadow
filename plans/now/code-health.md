@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-L2, CQ-S0b and CQ-M8 in the Claude lane; CQ-M4 for the Codex refill (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 waits for CQ-L2 to release tests/source_checks.py, and follows CQ-R8; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-L2, CQ-S0b and CQ-M8 in the Claude lane; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 waits for CQ-L2 to release tests/source_checks.py, and follows CQ-R8; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-24
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -290,7 +290,7 @@ wraps over two lines.
 
 **Invariants.** A tool's output on today's unformatted source does not change.
 
-```queue
+```queue-gated
 **[Claude] CQ-L2 -- every tool that reads GDScript as text survives gdformat**
 - Plan: `plans/now/code-health.md` -- "CQ-L2 -- every tool that reads GDScript as text survives gdformat"
 - Files: `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, `tests/test_gdformat_survival.py`
@@ -298,6 +298,11 @@ wraps over two lines.
 - Proof: `absent: tests/source_checks.py :: gdformat`
 - Next after: CQ-L3
 ```
+
+## Not in the queue, and why
+
+- CQ-M4 is deferred until the Claude lane releases `scripts/save_game.gd` and
+  `scripts/saving.gd`; its ownership overlaps that lane's current work.
 
 ## CQ-S0b -- a restored forager takes no fresh orientation flight
 
