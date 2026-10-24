@@ -110,6 +110,11 @@ class GdformatSurvival(unittest.TestCase):
                     "%s: %r became %r" % (name, old, new),
                 )
 
+    def test_wrapped_signature_with_hash_in_string(self):
+        lines = ["func f(", '	a: String = "#fff",', "	b: int,", ") -> void:", "	pass"]
+        entries = update_function_map.index_entries(lines)
+        self.assertEqual(entries, [(1, 'func f(a: String = "#fff", b: int) -> void')])
+
     def test_sprites_catalogue(self):
         results = []
         for tree in (self.original, self.formatted):

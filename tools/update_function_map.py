@@ -92,19 +92,37 @@ def discover_files(scripts: Path = SCRIPTS) -> list[tuple[str, int]]:
 
 
 def _paren_balance(line: str) -> int:
-    """Open minus close brackets on one line, ignoring a trailing comment."""
-    code = line.split("#", 1)[0]
-    return sum(code.count(c) for c in "([{") - sum(code.count(c) for c in ")]}")
+    """Open minus close brackets on one line, ignoring strings and a trailing comment."""
+    depth = 0
+    quote = ""
+    index = 0
+    while index < len(line):
+        char = line[index]
+        if quote:
+            if char == "\\":
+                index += 1
+            elif char == quote:
+                quote = ""
+        elif char in "\"'":
+            quote = char
+        elif char == "#":
+            break
+        elif char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth -= 1
+        index += 1
+    return depth
 
 
-def _joined_signature(lines: list[str], start: int) -> str:
+def _joined_signature(lines: list[str], start: int, first: str) -> str:
     """The `func` line at `start`, joined with the lines gdformat wraps it over.
 
     gdformat puts each parameter on its own line (with a trailing comma) once a
     signature is too long. The map shows the signature on one line, as it reads
     in an unwrapped file, so the wrapped form is folded back to that.
     """
-    text = lines[start].rstrip()
+    text = first
     if not text.endswith(("(", "[", "{")):
         # Hand-wrapped (`func f(a, b,` then a continuation line): the map has
         # always shown just the first line of those, and still does.
@@ -131,7 +149,7 @@ def index_entries(lines: list[str]) -> list[tuple[int, str]]:
             continue
         text = match.group(1).rstrip()
         if not text.startswith("#"):
-            text = _joined_signature(lines, lineno - 1)
+            text = _joined_signature(lines, lineno - 1, text)
         if text.endswith(":"):
             text = text[:-1]
         entries.append((lineno, text))

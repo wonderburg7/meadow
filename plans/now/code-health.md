@@ -319,13 +319,13 @@ wrapped chain as `. name(` on its own line.
 2. `python tools/update_function_map.py` and `python tools/stage_reference.py`
    have been re-run, so the generated files match the formatted source.
 3. `tools/verify.ps1` runs `gdformat --check` over the same files.
-4. `.	oolserify.ps1` is green and a headless boot is unchanged.
+4. `.\tools\verify.ps1` is green and a headless boot is unchanged.
 
 ```queue-gated
 **[Claude] CQ-L3 -- one-off gdformat, then `--check` joins verify**
 - Plan: `plans/now/code-health.md` -- "CQ-L3 -- one-off gdformat, then `--check` joins verify"
 - Files: every tracked `.gd` outside `addons/`, `tools/verify.ps1`, `FUNCTION_MAP.md`, `docs/challenge-stages.md`
-- Check: `gdformat --check` over every tracked `.gd` outside `addons/` reports nothing to change; `.	oolserify.ps1` is green
+- Check: `gdformat --check` over every tracked `.gd` outside `addons/` reports nothing to change; `.\tools\verify.ps1` is green
 - Proof: `absent: tools/verify.ps1 :: gdformat`
 - Next after: CQ-T3
 ```
