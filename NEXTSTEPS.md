@@ -109,6 +109,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **RR-21** (`plans/now/run-repairs.md`) -- no ordinary rain in the first two days, and rain warnings in plain words; waits for SG-4, which owns `scripts/main.gd`.
 - **RR-22** (`plans/now/run-repairs.md`) -- select a number of bees from a multi-selection; waits for GP-5 and SG-4, which own `scripts/hud.gd` and `scripts/main.gd`.
 - **CT-1** (`plans/now/cell-content-tones.md`) -- cells and their caps take a faint tone of their contents (Dave, 24 Oct 2026); waits for DR-1, which owns `scripts/hive_cell.gd` and `scripts/scenario_actions.gd`.
+- **AC-4** (`plans/now/agent-context.md`) -- `GAME_MODEL.md`'s Foraging card follows FR-2; waits for FR-2, which removes `scouting_on`.
 - **HS-2** (`plans/now/hard-soil.md`) -- hard soil fills the outer half of the hive's soil (Dave, 24 Oct 2026); waits for HS-1, DR-1 and CQ-S0b, which own the skill id, `scripts/hive.gd` and `scripts/bee.gd`.
 
 ## Copy-paste prompts
