@@ -32,6 +32,12 @@ import subprocess
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scripts")
 
+
+def _read(path):
+    """Whole file as UTF-8 text, closed again before returning."""
+    with open(path, encoding="utf-8") as handle:
+        return handle.read()
+
 # Built-ins and inherited Node/Control/CanvasItem methods that a script may
 # call bare. Not exhaustive for all of Godot -- just what this project uses.
 # If a legitimate new call is flagged, add it here rather than loosening
@@ -155,6 +161,9 @@ def check_calls(name, code, funcs, problems):
             fn = m.group(1)
             if fn in funcs or fn in KNOWN or fn in NOT_CALLS:
                 continue
+            # gdformat writes a wrapped chain as `. name(` on its own line.
+            if line[:m.start()].rstrip().endswith("."):
+                continue
             problems.append(
                 "%s:%d  call to undefined %s()  ->  %s"
                 % (name, i, fn, line.strip()[:80])
@@ -217,7 +226,7 @@ def check_autoloads(problems):
     if not os.path.exists(project):
         problems.append("project.godot not found")
         return
-    text = open(project, encoding="utf-8").read()
+    text = _read(project)
     section = re.search(r"\[autoload\](.*?)(?=\n\[|\Z)", text, re.S)
     registered = set(re.findall(r"^(\w+)=", section.group(1), re.M)) if section else set()
     for expected in ("GameConfig", "Session", "Perf"):
@@ -559,11 +568,11 @@ def check_goal_cadence_registry(problems):
         if not os.path.exists(path):
             problems.append("%s not found for goal cadence check" % os.path.basename(path))
             return
-    stages_src = open(stages_path, encoding="utf-8").read()
-    runner_src = open(runner_path, encoding="utf-8").read()
+    stages_src = _read(stages_path)
+    runner_src = _read(runner_path)
 
     stage_rows = re.findall(
-        r'"goal":\s*"([^"]+)"\s*,\s*"condition":\s*(\{[^\n]+?\})', stages_src
+        r'"goal":\s*"([^"]+)"\s*,\s*"condition":\s*(\{)', stages_src
     )
     stage_goals = {goal for goal, _condition in stage_rows}
     expected_stage_count = len(re.findall(r'"goal":\s*"([^"]+)"', stages_src))
@@ -614,9 +623,9 @@ def check_catalogue_alignment(problems):
         if not os.path.exists(path):
             problems.append("%s not found for catalogue alignment check" % os.path.basename(path))
             return
-    roles_src = open(roles_path, encoding="utf-8").read()
-    enums_src = open(enums_path, encoding="utf-8").read()
-    resources_src = open(resources_path, encoding="utf-8").read()
+    roles_src = _read(roles_path)
+    enums_src = _read(enums_path)
+    resources_src = _read(resources_path)
 
     enum_match = re.search(r"enum\s+Role\s*\{([^}]*)\}", enums_src, re.S)
     if not enum_match:
@@ -662,7 +671,7 @@ def check_catalogue_alignment(problems):
     # mode and none of which belongs in this alignment check.
     key_names = [n for n in re.findall(r'"key":\s*(\w+),', resources_src) if n in ("NECTAR", "POLLEN")]
     resource_keys = [const_strs[n] for n in key_names if n in const_strs]
-    mode_keys = set(re.findall(r'\{"key":\s*"(\w+)",\s*"label"', roles_src))
+    mode_keys = set(re.findall(r'\{\s*"key":\s*"(\w+)",\s*"label"', roles_src))
     for key in resource_keys:
         if key not in mode_keys:
             problems.append(
@@ -687,7 +696,7 @@ def check_action_catalogue(problems):
             problems.append("%s not found for action catalogue check" % os.path.basename(path))
             return
 
-    actions_src = open(actions_path, encoding="utf-8").read()
+    actions_src = _read(actions_path)
     actions_block = catalogue_block(actions_src, "ACTIONS")
     if actions_block is None:
         problems.append("actions.gd: could not find const ACTIONS")
@@ -697,9 +706,9 @@ def check_action_catalogue(problems):
         problems.append("actions.gd: ACTIONS must contain one row per current work action")
         return
 
-    roles_src = open(roles_path, encoding="utf-8").read()
-    gameconfig_src = open(os.path.join(ROOT, "game_config.gd"), encoding="utf-8").read()
-    stages_src = open(os.path.join(ROOT, "challenge_stages.gd"), encoding="utf-8").read()
+    roles_src = _read(roles_path)
+    gameconfig_src = _read(os.path.join(ROOT, "game_config.gd"))
+    stages_src = _read(os.path.join(ROOT, "challenge_stages.gd"))
     role_names = set(re.findall(r"^const\s+(\w+)\s*:=\s*\d+\s*$", roles_src, re.M))
     role_values = {
         name: int(value)
@@ -715,7 +724,7 @@ def check_action_catalogue(problems):
         "FORAGER": "bee_foraging.gd",
     }
     module_sources = {
-        role: open(os.path.join(ROOT, filename), encoding="utf-8").read()
+        role: _read(os.path.join(ROOT, filename))
         for role, filename in role_modules.items()
     }
 
@@ -788,7 +797,7 @@ def check_action_catalogue(problems):
                 % (role_id, sorted(bands), expected)
             )
 
-    bee_src = open(bee_path, encoding="utf-8").read()
+    bee_src = _read(bee_path)
     required_dispatch = (
         "static var _actions_by_role: Dictionary = _build_actions_by_role()",
         "for action: Variant in _actions_by_role.get(r, []):",
@@ -829,8 +838,8 @@ def check_resource_content_catalogue(problems):
         if not os.path.exists(path):
             problems.append("%s not found for resource content catalogue check" % os.path.basename(path))
             return
-    resources_src = open(resources_path, encoding="utf-8").read()
-    hive_src = open(hive_path, encoding="utf-8").read()
+    resources_src = _read(resources_path)
+    hive_src = _read(hive_path)
 
     if not re.search(r"for\s+\w+(?:\s*:\s*\w+)?\s+in\s+Resources\.content_keys\(\)\s*:", hive_src):
         problems.append(
@@ -934,7 +943,7 @@ def check_role_count_key_ownership(problems):
     for path in glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True):
         if os.path.basename(path) == "roles.gd":
             continue
-        source = open(path, encoding="utf-8").read()
+        source = _read(path)
         for literal in forbidden_literals:
             if literal in source:
                 problems.append(
@@ -954,9 +963,9 @@ def check_hive_stock_epoch_cache(problems):
         if not os.path.exists(path):
             problems.append("%s not found for hive stock epoch check" % os.path.basename(path))
             return
-    hive_src = open(hive_path, encoding="utf-8").read()
-    cell_src = open(cell_path, encoding="utf-8").read()
-    saving_src = open(saving_path, encoding="utf-8").read()
+    hive_src = _read(hive_path)
+    cell_src = _read(cell_path)
+    saving_src = _read(saving_path)
 
     if not re.search(r"var\s+stock_epoch\s*:\s*int\s*=\s*0", hive_src):
         problems.append(
@@ -1020,15 +1029,15 @@ def check_challenge_1_stage_setup(problems):
     if not (os.path.exists(stages_path) and os.path.exists(setup_path)):
         problems.append("challenge_stages.gd / challenge_stage_setup.gd not found for stage setup check")
         return
-    stages_src = open(stages_path, encoding="utf-8").read()
-    setup_src = open(setup_path, encoding="utf-8").read()
+    stages_src = _read(stages_path)
+    setup_src = _read(setup_path)
     keys_match = re.search(r"const KEYS := \[(.*?)\]", setup_src, re.S)
     allowed = set(re.findall(r'"(\w+)"', keys_match.group(1))) if keys_match else set()
     block = re.search(r"const STAGES_1 := \[(.*?)\r?\nconst ", stages_src, re.S)
     if not block or not allowed:
         problems.append("challenge_stage_setup: could not read STAGES_1 or KEYS")
         return
-    records = re.findall(r'"setup": (\{.*\}),\r?\n\s*"id": "(1\.\d+)"', block.group(1))
+    records = re.findall(r'"setup":\s*(\{.*?\}),\s*"id": "(1\.\d+)"', block.group(1), re.S)
     ids = {rid for _, rid in records}
     for n in range(1, 21):
         if "1.%d" % n not in ids:
@@ -1054,7 +1063,7 @@ def check_designation_goals_explicit(problems):
     if not os.path.exists(stages_path):
         problems.append("challenge_stages.gd not found for designation goal check")
         return
-    source = open(stages_path, encoding="utf-8").read()
+    source = _read(stages_path)
     for clause in re.finditer(r'"cell_count":\s*\{([^{}]*)\}', source):
         body = clause.group(1)
         if '"designated"' in body and not re.search(r'"explicit":\s*true', body):
@@ -1078,9 +1087,9 @@ def check_challenge_1_nectar_capacity(problems):
             problems.append("%s not found for Challenge 1 nectar capacity check" % os.path.basename(path))
             return
 
-    stages_src = open(stages_path, encoding="utf-8").read()
-    runner_src = open(runner_path, encoding="utf-8").read()
-    cell_src = open(cell_path, encoding="utf-8").read()
+    stages_src = _read(stages_path)
+    runner_src = _read(runner_path)
+    cell_src = _read(cell_path)
 
     if not re.search(r"const\s+C1_NECTAR_CELL_CAPACITY\s*:=\s*150\.0", stages_src):
         problems.append("challenge_stages.gd: C1_NECTAR_CELL_CAPACITY must be 150.0")
@@ -1214,8 +1223,8 @@ def check_settings_keys(problems):
                 "%s not found for settings key check" % os.path.basename(path)
             )
             return
-    catalogue_src = open(catalogue_path, encoding="utf-8").read()
-    config_src = open(config_path, encoding="utf-8").read()
+    catalogue_src = _read(catalogue_path)
+    config_src = _read(config_path)
 
     tunables = catalogue_block(catalogue_src, "TUNABLES")
     session_block = catalogue_block(catalogue_src, "SESSION_KEYS")
@@ -1366,8 +1375,8 @@ def check_settings_persist(problems):
                 "%s not found for settings persist check" % os.path.basename(path)
             )
             return
-    catalogue_src = open(catalogue_path, encoding="utf-8").read()
-    config_src = open(config_path, encoding="utf-8").read()
+    catalogue_src = _read(catalogue_path)
+    config_src = _read(config_path)
 
     tunables = catalogue_block(catalogue_src, "TUNABLES")
     session_block = catalogue_block(catalogue_src, "SESSION_KEYS")
@@ -1449,7 +1458,7 @@ def check_settings_persist(problems):
 def check_honey_conserves_energy(problems):
     """GC-3: turning nectar into honey cannot increase its energy value."""
     config_path = os.path.join(ROOT, "game_config.gd")
-    source = open(config_path, encoding="utf-8").read()
+    source = _read(config_path)
 
     def default_for(key):
         match = re.search(r"var\s+%s\s*:\s*float\s*=\s*([0-9.]+)" % key, source)
@@ -1742,7 +1751,7 @@ def _progression_catalogue_data(problems):
                 "%s not found for progression catalogue check" % filename
             )
             return None
-        sources[label] = _strip_gd_comments(open(path, encoding="utf-8").read())
+        sources[label] = _strip_gd_comments(_read(path))
 
     consts = {label: _string_consts(src) for label, src in sources.items()}
     # How a catalogue file refers to another one's constants.
@@ -2086,7 +2095,7 @@ def check_progression_resolver(problems):
             % RESOLVER_FILE
         )
         return
-    source = _strip_gd_comments(open(path, encoding="utf-8").read())
+    source = _strip_gd_comments(_read(path))
 
     # --- the chain still consults every gate --------------------
     for name in RESOLVER_FUNCS:
@@ -2210,7 +2219,7 @@ def check_progression_resolver(problems):
         name = os.path.basename(other_path)
         if name == RESOLVER_FILE:
             continue
-        other = _strip_gd_comments(open(other_path, encoding="utf-8").read())
+        other = _strip_gd_comments(_read(other_path))
         for func_name in RESOLVER_FUNCS:
             if re.search(r"^func %s\(" % func_name, other, re.M):
                 problems.append(
@@ -2323,7 +2332,7 @@ def check_progression_foraging_rules(problems):
     if not os.path.exists(resolver_path):
         return
     blocks = _string_consts(
-        _strip_gd_comments(open(resolver_path, encoding="utf-8").read())
+        _strip_gd_comments(_read(resolver_path))
     )
     for name in (
         "BLOCK_BASELINE", "BLOCK_NOT_PERMITTED", "BLOCK_FEATURE",
@@ -2534,7 +2543,7 @@ def check_run_skill_policy(problems):
             % LEVELS_FILE
         )
         return
-    source = _strip_gd_comments(open(path, encoding="utf-8").read())
+    source = _strip_gd_comments(_read(path))
     block = _dict_block(source, "LEVELS")
     if block is None:
         problems.append(
@@ -2567,7 +2576,7 @@ def check_run_skill_policy(problems):
     # string (it may not preload skills.gd), so every row must carry one
     # and every non-empty one must be a real skill id.
     roles_path = os.path.join(ROOT, "roles.gd")
-    roles_source = _strip_gd_comments(open(roles_path, encoding="utf-8").read())
+    roles_source = _strip_gd_comments(_read(roles_path))
     roles_block = roles_source.split("const ROLES := [", 1)[-1].split("\n]", 1)[0]
     role_rows = len(re.findall(r'^\t\t"id":', roles_block, re.M))
     role_skills = re.findall(r'^\t\t"skill": "([^"]*)"', roles_block, re.M)
@@ -2589,7 +2598,7 @@ def check_run_skill_policy(problems):
         name = os.path.basename(other_path)
         if name == RESOLVER_FILE:
             continue
-        other = _strip_gd_comments(open(other_path, encoding="utf-8").read())
+        other = _strip_gd_comments(_read(other_path))
         if "set_skill_policy(" in other:
             problems.append(
                 "%s: calls set_skill_policy() directly. A run's policy comes "
@@ -2672,7 +2681,7 @@ def check_progression_tier_and_cost(problems):
             % LEVELS_FILE
         )
         return
-    levels_source = _strip_gd_comments(open(levels_path, encoding="utf-8").read())
+    levels_source = _strip_gd_comments(_read(levels_path))
     levels_block = _dict_block(levels_source, "LEVELS")
     if levels_block is None:
         problems.append(
@@ -2737,7 +2746,7 @@ def check_progression_transcribed_effects(problems):
     config_path = os.path.join(ROOT, "game_config.gd")
     config_vars = set()
     if os.path.exists(config_path):
-        config_source = _strip_gd_comments(open(config_path, encoding="utf-8").read())
+        config_source = _strip_gd_comments(_read(config_path))
         config_vars = set(re.findall(r"^var\s+(\w+)\s*:", config_source, re.M))
     else:
         problems.append("game_config.gd not found for the transcribed-effects check")
@@ -3036,15 +3045,15 @@ def check_stage_role_skills(problems):
     count of that role, or its queen_laying_backup). Otherwise the stage
     would teach a role the HUD can never offer. What makes a future Honey
     stage safe."""
-    roles_src = open(os.path.join(ROOT, "roles.gd"), encoding="utf-8").read()
-    stages_src = open(os.path.join(ROOT, "challenge_stages.gd"), encoding="utf-8").read()
-    levels_src = open(os.path.join(ROOT, "levels.gd"), encoding="utf-8").read()
-    avail_src = open(os.path.join(ROOT, "run_availability.gd"), encoding="utf-8").read()
+    roles_src = _read(os.path.join(ROOT, "roles.gd"))
+    stages_src = _read(os.path.join(ROOT, "challenge_stages.gd"))
+    levels_src = _read(os.path.join(ROOT, "levels.gd"))
+    avail_src = _read(os.path.join(ROOT, "run_availability.gd"))
 
     role_skill = {}      # role key -> skill id
     role_start_key = {}  # role key -> level/scenario starting count key
     for const, key, skill, start_count_key, start_config in re.findall(
-            r'"id":\s*(\w+),\s*"key":\s*"(\w+)"[^\n]*\n\s*"skill":\s*"([^"]*)"[^\n]*\n\s*"start_count_key":\s*"([^"]*)",\s*"start_config":\s*"([^"]*)"', roles_src):
+            r'"id":\s*(\w+),\s*"key":\s*"(\w+)"[^{}]*?"skill":\s*"([^"]*)"[^\n]*\n\s*"start_count_key":\s*"([^"]*)",\s*"start_config":\s*"([^"]*)"', roles_src):
         if not start_count_key and start_config:
             problems.append(
                 "roles.gd: role %s has start_config but no start_count_key" % key)
@@ -3111,7 +3120,7 @@ def check_developer_table(problems):
     its builder returns before building anything while developer_mode is
     off -- and every reason key run_availability.gd can emit has a sentence
     in the developer table."""
-    debug_src = open(os.path.join(ROOT, "debug_panel.gd"), encoding="utf-8").read()
+    debug_src = _read(os.path.join(ROOT, "debug_panel.gd"))
     body = _func_body(debug_src, "_make_run_availability_button")
     if body is None:
         problems.append("debug_panel.gd: _make_run_availability_button not found")
@@ -3122,8 +3131,8 @@ def check_developer_table(problems):
             problems.append(
                 "debug_panel.gd: _make_run_availability_button must return while "
                 "Session.developer_mode is off, before building the button")
-    avail_src = open(os.path.join(ROOT, "run_availability.gd"), encoding="utf-8").read()
-    panel_src = open(os.path.join(ROOT, "run_availability_panel.gd"), encoding="utf-8").read()
+    avail_src = _read(os.path.join(ROOT, "run_availability.gd"))
+    panel_src = _read(os.path.join(ROOT, "run_availability_panel.gd"))
     table = re.search(r"const REASON_TEXT := \{(.*?)\n\}", panel_src, re.S)
     table_text = table.group(1) if table else ""
     for const in re.findall(r'^const\s+(REASON_\w+)\s*:=\s*"reason\.', avail_src, re.M):
@@ -3149,7 +3158,7 @@ def check_ui_gate_table(problems):
         if not os.path.exists(path):
             problems.append("%s not found for UI gate table check" % name)
             return
-    src = {name: open(path, encoding="utf-8").read() for name, path in paths.items()}
+    src = {name: _read(path) for name, path in paths.items()}
 
     table = _dict_block(src["availability.gd"], "UI_GATES")
     if table is None:
@@ -3251,7 +3260,7 @@ def test_module_wiring_problems(verify, present):
 
 
 def check_test_modules_are_run(problems):
-    verify = open(os.path.join(ROOT, "..", "tools", "verify.ps1"), encoding="utf-8").read()
+    verify = _read(os.path.join(ROOT, "..", "tools", "verify.ps1"))
     present = {os.path.basename(p)[:-3] for p in glob.glob(os.path.join(ROOT, "..", "tests", "test_*.py"))}
     problems.extend(test_module_wiring_problems(verify, present))
 
@@ -3263,8 +3272,8 @@ def check_scenario_condition_keys(problems):
     run time, but no verify stage runs a scenario: before 30 Sep 2026 three
     asserts named keys nothing read and passed unchecked.
     """
-    actions = open(os.path.join(ROOT, "scenario_actions.gd"), encoding="utf-8").read()
-    conditions = open(os.path.join(ROOT, "conditions.gd"), encoding="utf-8").read()
+    actions = _read(os.path.join(ROOT, "scenario_actions.gd"))
+    conditions = _read(os.path.join(ROOT, "conditions.gd"))
     legacy = set(re.findall(r'"(\w+)":\s*"\w+"', actions[actions.index("const LEGACY_WHEN_KEY_MAP"):].split("}", 1)[0]))
     local = set(re.findall(r'"(\w+)"', actions[actions.index("const LOCAL_WHEN_KEYS"):].split("]", 1)[0]))
     native = set(re.findall(r'^\t\t"(\w+)":', conditions.split("static func _met_key", 1)[1].split("static func _progress_key", 1)[0], re.M))
@@ -3276,7 +3285,7 @@ def check_scenario_condition_keys(problems):
     known = legacy | local | native
     for path in sorted(glob.glob(os.path.join(ROOT, "..", "test_scenarios", "*.json"))):
         try:
-            scenario = json.load(open(path, encoding="utf-8"))
+            scenario = json.loads(_read(path))
         except ValueError:
             continue
         clauses = []
@@ -3311,13 +3320,13 @@ def check_asserting_scenarios_are_run(problems):
     `_test` (verification review, 15 Oct 2026).
     """
     tests_dir = os.path.join(ROOT, "..", "tests")
-    test_text = "".join(open(p, encoding="utf-8").read() for p in glob.glob(os.path.join(tests_dir, "test_*.py")))
+    test_text = "".join(_read(p) for p in glob.glob(os.path.join(tests_dir, "test_*.py")))
     for path in sorted(glob.glob(os.path.join(ROOT, "..", "test_scenarios", "*.json"))):
         stem = os.path.basename(path)[:-5]
         if stem.endswith("_test") or stem in SCENARIOS_RUN_BY_NOTHING or stem in test_text:
             continue
         try:
-            scenario = json.load(open(path, encoding="utf-8"))
+            scenario = json.loads(_read(path))
         except ValueError:
             continue
         if any(a.get("do") == "assert" for a in scenario.get("actions", []) if isinstance(a, dict)):
@@ -3415,7 +3424,7 @@ def untyped_declarations(code):
 
 def check_typed_files(problems):
     for rel in TYPED_FILES:
-        source = open(os.path.join(ROOT, "..", rel), encoding="utf-8").read()
+        source = _read(os.path.join(ROOT, "..", rel))
         code = [strip_code(line) for line in source.split("\n")]
         for number, text in untyped_declarations(code):
             problems.append(
@@ -3480,7 +3489,7 @@ def check_preference_keys_cover_session(problems, profile_src, settings_src):
 def check_hand_copied_lists(problems):
     """CQ-M1: both hand-copied lists, checked against the real files."""
     def read(name):
-        return open(os.path.join(ROOT, name), encoding="utf-8").read()
+        return _read(os.path.join(ROOT, name))
     check_baseline_matches_config(
         problems, read("scenario_presets.gd"), read("game_config.gd"))
     check_preference_keys_cover_session(
@@ -3496,7 +3505,7 @@ def main():
     problems = []
     for path in files:
         name = os.path.basename(path)
-        source = open(path, encoding="utf-8").read()
+        source = _read(path)
         lines = source.split("\n")
         code = [strip_code(line) for line in lines]
 
@@ -3515,7 +3524,7 @@ def main():
         funcs, _members = collect_names(code, source)
         # A panel inheriting GamePanel may call its base's functions bare.
         if re.search(r"^extends GamePanel", source, re.M):
-            base_source = open(os.path.join(ROOT, "game_panel.gd"), encoding="utf-8").read()
+            base_source = _read(os.path.join(ROOT, "game_panel.gd"))
             base_funcs, _ = collect_names(
                 [strip_code(line) for line in base_source.split(chr(10))], base_source)
             funcs = funcs | base_funcs

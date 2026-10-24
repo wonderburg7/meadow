@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "scripts" / "challenge_stages.gd"
 TARGET = ROOT / "docs" / "challenge-stages.md"
 
-FIELD = re.compile('"(id|goal|goal_text|instruction)"[ ]*:[ ]*"([^"]*)"')
+FIELD = re.compile(r'"(id|goal|goal_text|instruction)"\s*:\s*"([^"]*)"')
 
 
 def _array_body(text: str, name: str) -> str:
@@ -84,8 +84,8 @@ def _table(stages: list[dict[str, str]]) -> list[str]:
     return lines
 
 
-def render() -> str:
-    text = SOURCE.read_text(encoding="utf-8")
+def render(source: Path = SOURCE) -> str:
+    text = source.read_text(encoding="utf-8")
     lines = [
         "# Challenge stages — what each id means",
         "",

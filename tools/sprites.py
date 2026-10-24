@@ -26,6 +26,7 @@ documented in assets/sprites/SPRITES.md.
 from __future__ import annotations
 
 import argparse
+import re
 import struct
 import sys
 import zlib
@@ -558,6 +559,15 @@ def _same_pixels(path: Path, img: Image) -> bool:
     return old.width == img.width and old.height == img.height and old.pixels == img.pixels
 
 
+def _gd_canon(text: str) -> str:
+    """The catalogue with layout stripped: whitespace and trailing commas.
+
+    gdformat re-wraps the long `const` lines and adds trailing commas, so a
+    formatted catalogue is the same catalogue; `--check` compares this form.
+    """
+    return re.sub(r",(?=[)\]}])", "", re.sub(r"\s+", "", text))
+
+
 def run(root: Path, check: bool, out=print) -> int:
     sprites = root / SPRITES_DIR
     try:
@@ -623,7 +633,7 @@ def run(root: Path, check: bool, out=print) -> int:
     text = catalogue_text(built, sheet_dirs)
     cat = root / CATALOGUE_PATH
     current = cat.read_text(encoding="utf-8").replace("\r\n", "\n") if cat.exists() else None
-    if current != text:
+    if current is None or _gd_canon(current) != _gd_canon(text):
         stale.append(CATALOGUE_PATH.as_posix())
         if not check:
             cat.write_text(text, encoding="utf-8", newline="\n")

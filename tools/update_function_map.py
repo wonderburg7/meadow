@@ -80,10 +80,10 @@ recorded in this file.
 """.format(threshold=LINE_THRESHOLD)
 
 
-def discover_files() -> list[tuple[str, int]]:
+def discover_files(scripts: Path = SCRIPTS) -> list[tuple[str, int]]:
     """Every scripts/*.gd file over LINE_THRESHOLD, biggest first."""
     found = []
-    for path in SCRIPTS.glob("*.gd"):
+    for path in scripts.glob("*.gd"):
         line_count = len(path.read_text(encoding="utf-8").splitlines())
         if line_count > LINE_THRESHOLD:
             found.append((path.name, line_count))
@@ -91,18 +91,58 @@ def discover_files() -> list[tuple[str, int]]:
     return found
 
 
-def build_section(filename: str, line_count: int, description: str) -> str:
-    path = SCRIPTS / filename
-    lines = path.read_text(encoding="utf-8").splitlines()
+def _paren_balance(line: str) -> int:
+    """Open minus close brackets on one line, ignoring a trailing comment."""
+    code = line.split("#", 1)[0]
+    return sum(code.count(c) for c in "([{") - sum(code.count(c) for c in ")]}")
+
+
+def _joined_signature(lines: list[str], start: int) -> str:
+    """The `func` line at `start`, joined with the lines gdformat wraps it over.
+
+    gdformat puts each parameter on its own line (with a trailing comma) once a
+    signature is too long. The map shows the signature on one line, as it reads
+    in an unwrapped file, so the wrapped form is folded back to that.
+    """
+    text = lines[start].rstrip()
+    if not text.endswith(("(", "[", "{")):
+        # Hand-wrapped (`func f(a, b,` then a continuation line): the map has
+        # always shown just the first line of those, and still does.
+        return text
+    depth = _paren_balance(text)
+    index = start
+    while depth > 0 and index + 1 < len(lines):
+        index += 1
+        piece = lines[index].strip()
+        depth += _paren_balance(piece)
+        if text.endswith(("(", "[", "{")) or piece.startswith((")", "]", "}")):
+            text += piece
+        else:
+            text += " " + piece
+    return re.sub(r",\s*([)\]}])", r"\1", text)
+
+
+def index_entries(lines: list[str]) -> list[tuple[int, str]]:
+    """(line number, text) for every section header and function definition."""
     entries = []
     for lineno, line in enumerate(lines, start=1):
         match = LINE_RE.match(line)
         if not match:
             continue
         text = match.group(1).rstrip()
+        if not text.startswith("#"):
+            text = _joined_signature(lines, lineno - 1)
         if text.endswith(":"):
             text = text[:-1]
-        entries.append(f"{lineno:<4} {text}")
+        entries.append((lineno, text))
+    return entries
+
+
+def build_section(filename: str, line_count: int, description: str,
+                  scripts: Path = SCRIPTS) -> str:
+    path = scripts / filename
+    lines = path.read_text(encoding="utf-8").splitlines()
+    entries = [f"{lineno:<4} {text}" for lineno, text in index_entries(lines)]
     body = "\n".join(entries)
     return (
         f"## {filename} ({line_count:,} lines)\n\n"
