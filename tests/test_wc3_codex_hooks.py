@@ -34,7 +34,7 @@ class CodexHooksTest(unittest.TestCase):
             for name in ("hook_log.py", "diagnostics.py"):
                 shutil.copyfile(ROOT / "tools" / name, tools / name)
             subprocess.run(
-                ["git", "init", "-q", str(checkout)],
+                ["git", "init", "-q", "-b", "master", str(checkout)],
                 check=True,
                 capture_output=True,
                 text=True,

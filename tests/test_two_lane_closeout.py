@@ -84,7 +84,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
             "func existing():\n\tpass\n", encoding="utf-8"
         )
         subprocess.run(["git", "init", "-b", "master"], cwd=self.root, capture_output=True, text=True, check=True)
-        subprocess.run(["git", "init", "--bare", str(self.remote)], capture_output=True, text=True, check=True)
+        subprocess.run(["git", "init", "--bare", "-b", "master", str(self.remote)], capture_output=True, text=True, check=True)
         subprocess.run(["git", "config", "user.name", "Meadow Test"], cwd=self.root, check=True)
         subprocess.run(["git", "config", "user.email", "meadow@example.invalid"], cwd=self.root, check=True)
         # A mock verifier: -Scope branch|primary succeed unconditionally so
