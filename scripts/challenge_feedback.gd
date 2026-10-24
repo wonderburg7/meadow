@@ -24,6 +24,12 @@ const DEFS := {
 		"repeatable": false,
 		"text": "Ahem. Field ecologists do not usually carry emergency nectar, but I shall make one exception. Try to keep a forager pipeline going from here.",
 	},
+	"challenge_2_pollen_rescue": {
+		"kind": "gallerin",
+		"trigger": "recovery",
+		"repeatable": false,
+		"text": "A colony without pollen cannot raise any bee at all. I have set a little aside, so you can raise the pollen Forager and restore the supply.",
+	},
 	"challenge_2_recovery": {
 		"kind": "gallerin",
 		"trigger": "recovery",
