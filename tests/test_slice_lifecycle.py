@@ -320,6 +320,45 @@ class SliceDoctorTest(unittest.TestCase):
         self.assertEqual(0, clear.returncode, clear.stdout + clear.stderr)
         self.assertEqual("clear", json.loads(clear.stdout)["status"])
 
+    def test_doc_check_accepts_a_path_git_ignores_when_it_is_absent(self):
+        """L-36: a fresh checkout lacks the gitignored settings.local.json, so a
+        doc naming it must not fail check_docs.py as a dead pointer."""
+        (self.root / ".gitignore").write_text(".claude/settings.local.json\n", encoding="utf-8")
+        original_root = check_docs.ROOT
+        check_docs.ROOT = self.root
+        try:
+            self.assertFalse((self.root / ".claude" / "settings.local.json").exists())
+            self.assertTrue(check_docs.git_ignores(".claude/settings.local.json"))
+            self.assertFalse(check_docs.git_ignores("scripts/sample.gd"))
+        finally:
+            check_docs.ROOT = original_root
+
+    def test_doctor_lists_an_unregistered_worktree_folder_and_sweeps_a_pending_deletion(self):
+        """L-36: doctor names a .worktrees folder git does not register, without
+        deleting it, and its sweep removes a queued folder without listing it."""
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        ghost = self.root / ".worktrees" / "ghost"
+        ghost.mkdir(parents=True)
+        (ghost / "leftover.txt").write_text("held\n", encoding="utf-8")
+        queued = self.root / ".worktrees" / "T-9"
+        queued.mkdir(parents=True)
+        (queued / "leftover.txt").write_text("queued\n", encoding="utf-8")
+        queue_path = self.root / ".git" / "meadow-slice-pending-deletions"
+        queue_path.write_text(".worktrees/T-9\n", encoding="utf-8")
+
+        result = self.run_doctor()
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(
+            [".worktrees/ghost"], [stray["name"] for stray in payload["stray_worktrees"]]
+        )
+        self.assertIn("stray worktree: .worktrees/ghost is not registered", result.stderr)
+        self.assertNotIn("T-9", result.stderr)
+        self.assertTrue(ghost.exists())
+        self.assertFalse(queued.exists())
+        self.assertFalse(queue_path.exists())
+
     def test_doctor_names_the_bounded_plan_read_and_the_successor(self):
         """A claimed slice must arrive with its own reading command attached.
 

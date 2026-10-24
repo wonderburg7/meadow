@@ -1017,6 +1017,20 @@ def queue_declared_files() -> set[str]:
     return declared
 
 
+def git_ignores(rel: str) -> bool:
+    """True when Git's ignore rules match this repo-relative path, whether or not
+    the file exists. `git check-ignore` matches the pattern alone, so a gitignored
+    file missing from a fresh worktree still answers True."""
+    try:
+        result = subprocess.run(
+            ["git", "check-ignore", "-q", "--", rel],
+            cwd=ROOT, capture_output=True, check=False,
+        )
+    except OSError:
+        return False
+    return result.returncode == 0
+
+
 def check_backticked_paths(errors: list[str]) -> None:
     """A backticked repo path must name a file that exists.
 
@@ -1029,8 +1043,10 @@ def check_backticked_paths(errors: list[str]) -> None:
     that is not there and then searching for it, which is exactly the
     expensive path the routing tables exist to avoid.
 
-    The one exception is a path a queue item declares on its `Files:` line --
-    see queue_declared_files above."""
+    Two exceptions: a path a queue item declares on its `Files:` line -- see
+    queue_declared_files above -- and a path Git ignores, such as the
+    machine-local `.claude/settings.local.json`, which a fresh checkout never
+    has and which is not a dead pointer (git_ignores below)."""
     declared = queue_declared_files()
     for path in routable_docs():
         for raw in BACKTICK_TOKEN.findall(path.read_text(encoding="utf-8")):
@@ -1045,7 +1061,7 @@ def check_backticked_paths(errors: list[str]) -> None:
             target = target.split("::", 1)[0].split("#", 1)[0].rstrip(".,;:")
             if not ROUTABLE_SUFFIX.search(target):
                 continue
-            if not (ROOT / target).is_file():
+            if not (ROOT / target).is_file() and not git_ignores(target):
                 errors.append(
                     f"{path.relative_to(ROOT)}: backticked path does not exist: {token}"
                 )

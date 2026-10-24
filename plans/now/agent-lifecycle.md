@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude / Codex | Next: L-36 (Claude lane) and L-37 (Codex lane, no shared file); separately, after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none between L-36 and L-37 (L-37 owns `tools/guard_hook.py` and its test only) | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude / Codex | Next: L-37 (Codex lane, no shared file), once L-36 (Claude lane) has merged; separately, after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none between L-36 and L-37 (L-37 owns `tools/guard_hook.py` and its test only) | Verified: 2026-10-24
 
 ## Objective
 
