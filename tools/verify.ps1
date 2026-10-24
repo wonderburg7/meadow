@@ -161,12 +161,13 @@ $unitModules = @(Get-ChildItem -Path (Join-Path $PSScriptRoot "..\tests") -Filte
 # repositories (workflow_test_support.py's paths and the tools they copy by
 # name); every test builds its queue and ledger there, so NEXTSTEPS.md is not
 # on it. Until 7 Oct 2026 it was all of tools/, so a change to a headless or
-# balance tool ran the suite for nothing.
+# balance tool ran the suite for nothing. tests/test_lifecycle_fixture_tools.py
+# fails when a fixture copies a tool this list leaves out.
 $verifyBase = if ($env:MEADOW_VERIFY_BASE) { $env:MEADOW_VERIFY_BASE } else { "master" }
 
 function Test-LifecycleTouched {
     if ($Full) { return $true }
-    $paths = @("tools/slice.ps1", "tools/verify.ps1", "tools/diagnostics.ps1", "tools/check_docs.py", "tools/backlog.py", "tools/archive_slice.py", "tools/refill_lane.py", "tools/heading.py", "tests/workflow_test_support.py") + @($lifecycleModules | ForEach-Object { ($_ -replace "\.", "/") + ".py" })
+    $paths = @("tools/slice.ps1", "tools/verify.ps1", "tools/diagnostics.ps1", "tools/check_docs.py", "tools/backlog.py", "tools/admission.py", "tools/stop_causes.py", "tools/archive_slice.py", "tools/refill_lane.py", "tools/heading.py", "tests/workflow_test_support.py") + @($lifecycleModules | ForEach-Object { ($_ -replace "\.", "/") + ".py" })
     try {
         $changed = @(& git -C $PSScriptRoot diff --name-only "$verifyBase...HEAD" 2>$null)
         $changed += @(& git -C $PSScriptRoot diff --name-only HEAD 2>$null)

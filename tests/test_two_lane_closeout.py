@@ -70,6 +70,7 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         shutil.copy2(CHECK_DOCS_PATH, self.root / "tools" / "check_docs.py")
         shutil.copy2(BACKLOG_PATH, self.root / "tools" / "backlog.py")
         shutil.copy2(BACKLOG_PATH.with_name("admission.py"), self.root / "tools" / "admission.py")
+        shutil.copy2(BACKLOG_PATH.with_name("stop_causes.py"), self.root / "tools" / "stop_causes.py")
         (self.root / "plans" / "workstreams.md").write_text(
             "| Worktree path (branch) | Lane |\n| --- | --- |\n", encoding="utf-8"
         )
