@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/CQ-R12` (`codex/CQ-R12`) | Codex | challenge_runner start, C2 failure and stage entry shortened | Codex | in progress | none | `plans/now/code-health.md` CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened |
+| `.worktrees/CQ-L2` (`claude/CQ-L2`) | Claude | every tool that reads GDScript as text survives gdformat | Claude | in progress | none | `plans/now/code-health.md` CQ-L2 -- every tool that reads GDScript as text survives gdformat |
