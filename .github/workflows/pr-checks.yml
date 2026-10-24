@@ -5,6 +5,8 @@
 # slices with tools/slice.ps1 finish, which runs verify.ps1 itself and pushes
 # straight to master; a push trigger here would only re-test that.
 #
+# The jules-scope job is for Jules branches alone.
+#
 # Not covered: the rest of verify.ps1 (the lifecycle suite that drives
 # tools/slice.ps1, check_docs against the local worktrees, the unit tests
 # that boot Godot) and Dave's hands-on, click-driven or visual checks.
@@ -100,4 +102,36 @@ jobs:
           if grep -q "skipped" "$RUNNER_TEMP/boot.txt"; then
             echo "::error::the boot check skipped instead of booting the project"
             exit 1
+          fi
+
+  # A Jules commit can carry a snapshot older than master, which shows as
+  # reverts of plans, hooks and queue files the task never named (PR 4, 24 Oct
+  # 2026). This lists them before anyone opens the pull request. It runs the
+  # tool from master, not from the pull request, so a stale branch cannot
+  # supply its own copy; a standing task (jules/s-*) has no Files line and is
+  # skipped. The branch name goes in through env, never into the script text.
+  jules-scope:
+    name: Jules scope
+    if: startsWith(github.head_ref, 'jules/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Files outside the task
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [[ "$HEAD_REF" =~ ^jules/(j-[0-9]+)- ]]; then
+            python tools/jules_preflight.py --scope "${BASH_REMATCH[1]^^}" --ref "$HEAD_SHA"
+          else
+            echo "No numbered task in $HEAD_REF: nothing to check."
           fi
