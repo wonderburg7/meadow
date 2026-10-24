@@ -129,7 +129,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R11 | `world_building.gd::_seed_flower` decomposed, RNG order kept | `world_building.gd` | yes | medium |
-| CQ-R12 | `challenge_runner.gd` start, C2 failure, stage entry shortened | `challenge_runner.gd`, `challenge_feedback.gd` | yes | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
 | CQ-R14 | mid-size builders: `main_menu._ready`, `challenge_complete._ready`, `flower.setup`, `bee._build_visuals` | those four | yes | low |
 
@@ -432,81 +431,7 @@ CQ-M10 shipped 2026-10-24; its specification is `plans/archive/CQ-M10_2026-10-24
 
 CQ-R9 shipped 2026-10-24; its specification is `plans/archive/CQ-R9_2026-10-24.md`.
 
-## CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened
-
-<!-- LAYER: immediate-task -->
-
-Specified by the plan review, 23 Oct 2026, against `1a1f81c`. Minimum
-reasoning: **medium**. Read this section, "Rules for every slice" above,
-and `challenge_runner.gd::start`, `_check_c2_failure` and `_enter_stage`
-(`python tools/func.py`).
-
-**True now.** Three long functions in `challenge_runner.gd`:
-
-- `start` (~90 lines) resets about thirty run fields, resets the queen's
-  controls, stages the opening, then builds the stage marker inline.
-- `_check_c2_failure` holds the pollen rescue, the nectar rescue and the
-  checkpoint restore in one body. The pollen rescue's Gallerin line ("A
-  colony without pollen cannot raise any bee at all...") is an inline
-  dictionary `{"id": "challenge_2_pollen_rescue", "trigger": "recovery",
-  "repeatable": false, "text": ...}`, while its nectar sibling reads
-  `Feedback.gallerin_prompt("challenge_2_rescue")` from
-  `challenge_feedback.gd`'s `DEFS`. No test reaches either rescue.
-- `_enter_stage` mixes Challenge 1's per-stage queen rules and Challenge
-  2's stage-entry counters with the shared stage entry.
-
-**True afterwards.**
-
-1. `start` calls `_reset_run_state()` (every `_`-field and flag reset, in
-   today's order), `_reset_queen_controls()` (the `main.queen.*` resets
-   and the placement-tool clear) and `_build_stage_marker()`; the view
-   toggle, opening, camera, immunity, checkpoint clear and `_enter_stage()`
-   stay in `start` in today's order.
-2. `_check_c2_failure` keeps its stage guard and reads, then calls
-   `_try_c2_pollen_rescue(pollen) -> bool`, `_c2_nectar_rescue(nectar) ->
-   bool` (true when it rescued; the 2.1 suppression log stays inside it)
-   and `_c2_restore_checkpoint()`, returning after a helper that returns
-   true, exactly where today's body returns.
-3. `challenge_feedback.gd` `DEFS` gains `"challenge_2_pollen_rescue"`
-   beside `"challenge_2_rescue"`, with today's trigger, repeatable flag and
-   text byte for byte; the pollen rescue shows
-   `Feedback.gallerin_prompt("challenge_2_pollen_rescue")`, which builds
-   the same four keys.
-4. `_enter_stage` calls `_apply_c1_stage_rules(stage)` (the
-   `starting_level == 1` queen block, including the 1.8 and 1.11 cases)
-   and, at its end, `_record_c2_stage_entry()` (the five `_c2_*` entry
-   counters). `_run_stage_effects(stage.get("on_enter", []))` stays in
-   `_enter_stage` itself, after `_apply_stage_gate_to_ui()`, because
-   `tests/source_checks.py` (`STAGE_EFFECTS_FUNC`) checks that order there.
-5. New `test_scenarios/cq_r12_c2_pollen_rescue_test.json` (`"challenge":
-   2`, as `bb4_challenge2_route.json` starts): at stage 2.1, empty every
-   cell holding pollen with `set_cell_contents` (find them from the
-   Challenge 2 stocking in `world_building.gd`), then assert, `when`-gated
-   on a short `settle`, `{"hive_total": {"resource": "pollen", "at_least":
-   <Stages.c2_pollen_rescue_amount() at default settings>}}`. New
-   `tests/test_cq_r12_c2_rescue.py` runs it as
-   `tests/test_bb4_challenge_pacing.py` runs its routes. Write and pass it
-   **before** the refactor, so it proves the moved code.
-6. `python tools/update_function_map.py` regenerates the map.
-
-**Must not change.** Any display string; stage order and timing; the
-checkpoint save and restore; rescue thresholds and amounts; what runs
-before `_run_stage_effects`. No new setting.
-
-**Stop and escalate** if the new scenario cannot drain pollen below the
-threshold at stage 2.1 with existing actions (do not add a scenario
-action), or if either route scenario's equivalence differs.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened**
-- Plan: `plans/now/code-health.md` -- "CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened"
-- Files: `scripts/challenge_runner.gd`, `scripts/challenge_feedback.gd`, `test_scenarios/cq_r12_c2_pollen_rescue_test.json`, `tests/test_cq_r12_c2_rescue.py`
-- Check: `python -m unittest tests.test_cq_r12_c2_rescue` passes before and after the refactor (the C2 pollen rescue tops pollen up at stage 2.1); `python tools/equivalence.py test_scenarios/bb4_challenge1_route.json master` and `python tools/equivalence.py test_scenarios/bb4_challenge2_route.json master` report no difference; `python -m unittest tests.test_challenge2_checks tests.test_bb4_challenge_pacing` and `python tests/source_checks.py` pass; `python tools/prefinish.py` and `.\tools\verify.ps1` are green
-- Proof: `absent: scripts/challenge_feedback.gd :: "challenge_2_pollen_rescue"`
-- Next after: CQ-M4 -- Challenge level ids named in `levels.gd`
-```
+CQ-R12 shipped 2026-10-24; its specification is `plans/archive/CQ-R12_2026-10-24.md`.
 
 ## CQ-M4 -- Challenge level ids named in `levels.gd`
 
