@@ -1,7 +1,7 @@
 # Google Jules -- task list and how to work it
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: Jules every task; Claude/Codex only to add or prune a task -->
-Status: reference | Owner: Dave / Claude Code | Next: Jules works J-9 to J-12, then the standing tasks; whoever merges a Jules pull request deletes its task block | Dependency: none | Verified: 2026-10-24
+Status: reference | Owner: Dave / Claude Code | Next: Jules works J-10 to J-12, then the standing tasks; whoever merges a Jules pull request deletes its task block | Dependency: none | Verified: 2026-10-24
 
 Jules works from GitHub on a Linux VM, outside the Claude/Codex slice queue.
 Its work is behaviour-preserving tooling: guards that catch a known bug class
@@ -70,18 +70,6 @@ under 700 lines with a module docstring saying why it exists and how to run
 it, like `tools/heading.py`.
 
 ## Tasks
-
-### J-9 -- Unit tests for `tools/create_grass_sprite.py`
-
-- Files: tests/test_create_grass_sprite_tool.py (new)
-- After: none
-- Why: no test names it (the S-1 listing, 24 Oct 2026); its docstring
-  promises a 32×32 tile with no filtering or antialiasing.
-- Do: render into a temporary directory (never over the real asset) and
-  check the image is 32×32 RGBA and that every pixel is either fully
-  transparent or one of the module's named colours -- that is the
-  no-antialiasing promise. Skip the test cleanly when Pillow is missing.
-  Tests only.
 
 ### J-10 -- Remove `Shapes.arc_points`
 

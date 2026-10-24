@@ -3,8 +3,10 @@
 Tests cover:
 - top_bounds and on_top helper logic.
 - draw_sprite output file generation, RGBA format, 32x32 dimensions.
-- Verification that every pixel is transparent or one of the predefined palletized colors (no filtering or antialiasing).
-- Graceful handling when Pillow is missing.
+- Every pixel is transparent or one of the module's named colours (the
+  no-filtering, no-antialiasing promise).
+
+Both tests skip when Pillow is missing, since the tool imports it at load.
 """
 
 import sys
@@ -17,8 +19,8 @@ try:
 except ImportError:
     Image = None
 
-# If Pillow is missing, tools.create_grass_sprite will fail to import because
-# create_grass_sprite.py unconditionally imports PIL. Ensure importing it is guarded/tested.
+# tools/create_grass_sprite.py imports PIL unconditionally, so only import it
+# when Pillow is present.
 if Image is not None:
     from tools import create_grass_sprite
 else:
