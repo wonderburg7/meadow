@@ -151,6 +151,38 @@ class TestForagingEvidenceReportCLI(unittest.TestCase):
             self.assertIn("senescence recharge effect", not_exercised)
             self.assertIn("handling experience", not_exercised)
 
+    def test_every_metric_averaged_across_passed_runs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            runs = []
+            for index, scale in enumerate((1.0, 3.0)):
+                run_dir = tmp_path / ("run%d" % index)
+                run_dir.mkdir()
+                (run_dir / "result.json").write_text(
+                    json.dumps({"process": {"wall_seconds": 10.0 * scale}}), encoding="utf-8")
+                summary = {metric: scale for metric in foraging_evidence_report.METRICS if metric != "runtime_seconds"}
+                (run_dir / "report.json").write_text(json.dumps({"summary": summary}), encoding="utf-8")
+                runs.append({"status": "passed", "result": "run%d/result.json" % index})
+            exp_json = tmp_path / "experiment.json"
+            exp_json.write_text(json.dumps({"name": "grouped", "status": "completed", "seeds": [1, 2],
+                                            "cases": {"entrance": runs}}), encoding="utf-8")
+
+            with patch("sys.stdout", new_callable=io.StringIO):
+                self.assertEqual(foraging_evidence_report.main(["foraging_evidence_report.py", str(exp_json)]), 0)
+            verdict = json.loads((tmp_path / "foraging-evidence-verdict.json").read_text(encoding="utf-8"))
+
+            case = verdict["cases"]["entrance"]
+            self.assertEqual(case["runs"], 2)
+            for metric in foraging_evidence_report.METRICS:
+                expected = {"mean": 20.0, "min": 10.0, "max": 30.0} if metric == "runtime_seconds" else {"mean": 2.0, "min": 1.0, "max": 3.0}
+                self.assertEqual(case["metrics"][metric], expected, metric)
+            self.assertEqual(verdict["not_exercised"], [])
+
+    def test_unreadable_file_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with self.assertRaises(OSError):
+                foraging_evidence_report.main(["foraging_evidence_report.py", tmp_dir])
+
 
 if __name__ == "__main__":
     unittest.main()
