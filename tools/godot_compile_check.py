@@ -44,6 +44,11 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 DEFAULT_GODOT_PATH = r"C:\Program Files\Godot\Godot.exe"
 
+# The unzipped download kept beside the checkout (C:\...\Meadow\Godot_v4.7.2-
+# stable_win64.exe on Dave's home PC). Searched from the repo upwards so a
+# worktree under .worktrees/ finds the same copy; the newest version wins.
+SIDE_BY_SIDE_GODOT_GLOB = "Godot_v4*_win64.exe"
+
 # How many frames to run before quitting. The boot itself is what compiles
 # the scripts; a couple of seconds of frames also catches an error raised
 # from _ready or the first _process rather than at parse time.
@@ -74,6 +79,10 @@ def find_godot() -> str | None:
         found = shutil.which(name)
         if found:
             return found
+    for folder in REPO_ROOT.parents:
+        side_by_side = sorted(folder.glob(SIDE_BY_SIDE_GODOT_GLOB))
+        if side_by_side:
+            return str(side_by_side[-1])
     return None
 
 

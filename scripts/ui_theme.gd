@@ -381,6 +381,10 @@ const TYPE_SIZES := {
 ## TS-1: sample sentence used to match each typeface's width to Standard's.
 const REFERENCE_TEXT := "The quick brown fox jumps over the lazy dog 0123456789"
 const _FACTOR_MEASURE_SIZE := 64
+## Width-matched to Standard, these faces still read slightly small (Dave,
+## C-137, 24 Oct 2026): OpenDyslexic for its tall lower case, Silkscreen for
+## its all-capital pixels. Kept inside TS-1's 8% width tolerance.
+const _TYPEFACE_NUDGE := {"opendyslexic": 1.06, "silkscreen": 1.06}
 static var _typeface_factors: Dictionary = {}
 
 ## How much to scale a font size so `typeface` draws REFERENCE_TEXT as wide as
@@ -396,7 +400,7 @@ static func typeface_size_factor(typeface: String) -> float:
 		var own: float = font.get_string_size(REFERENCE_TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, _FACTOR_MEASURE_SIZE).x
 		var base: float = ThemeDB.fallback_font.get_string_size(REFERENCE_TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, _FACTOR_MEASURE_SIZE).x
 		if own > 0.0 and base > 0.0:
-			factor = base / own
+			factor = base / own * float(_TYPEFACE_NUDGE.get(typeface, 1.0))
 	_typeface_factors[typeface] = factor
 	return factor
 

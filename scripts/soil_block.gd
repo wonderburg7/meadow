@@ -42,7 +42,7 @@ var mine_time_override: float = -1.0
 ## buried behind other soil, because nothing could reach it.
 var is_edge: bool = false
 
-var marker: Polygon2D
+var marker: Line2D
 var progress_label: Label
 var selection_ring: Line2D
 var selected: bool = false
@@ -63,10 +63,16 @@ func _ready() -> void:
 	polygon = Shapes.hexagon_points(block_size * 1.15, squashed)
 	color = Color(0, 0, 0, 0) if Session.use_cell_sprites else SOIL_COLOR
 
-	# hatched marker shown once you've flagged this block for digging
-	marker = Polygon2D.new()
-	marker.polygon = Shapes.hexagon_points(block_size * 0.55, squashed)
-	marker.color = Color(0.95, 0.75, 0.25, 0.9)
+	# a faint amber outline round the top face once you've flagged this
+	# block for digging, in place of the filled yellow hexagon it used to
+	# be (Dave, 24 Oct 2026)
+	marker = Line2D.new()
+	var marker_points := Shapes.hexagon_points(block_size * 0.92, squashed)
+	for p in marker_points:
+		marker.add_point(p)
+	marker.add_point(marker_points[0])
+	marker.width = 1.5
+	marker.default_color = Color(0.95, 0.75, 0.25, 0.6)
 	marker.visible = false
 	add_child(marker)
 
@@ -160,6 +166,11 @@ func art_frame_for(fraction: float) -> int:
 func _refresh_art() -> void:
 	if soil_sprite == null:
 		return
+	# With the art on, the selection ring outlines the block's top face, a
+	# side's height above the floor the node sits on (Dave, 24 Oct 2026).
+	var lift: float = SIDE_HEIGHT_PX * PixelSprite.hive_scale() if Session.use_cell_sprites else 0.0
+	selection_ring.position = Vector2(0.0, -lift)
+	marker.position = selection_ring.position
 	if not Session.use_cell_sprites:
 		if _art_frame != -1:
 			_art_frame = -1
