@@ -1,7 +1,7 @@
 # Google Jules -- task list and how to work it
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: Jules every task; Claude/Codex only to add or prune a task -->
-Status: reference | Owner: Dave / Claude Code | Next: Jules works the standing tasks until a numbered task is added; whoever merges a Jules pull request deletes its task block | Dependency: none | Verified: 2026-10-24
+Status: reference | Owner: Dave / Claude Code | Next: Jules works J-8 to J-12, then the standing tasks; whoever merges a Jules pull request deletes its task block | Dependency: none | Verified: 2026-10-24
 
 Jules works from GitHub on a Linux VM, outside the Claude/Codex slice queue.
 Its work is behaviour-preserving tooling: guards that catch a known bug class
@@ -71,7 +71,68 @@ it, like `tools/heading.py`.
 
 ## Tasks
 
-None open: J-1 to J-7 have merged. Add the next as J-8 (see "Keeping this list").
+### J-8 -- Unit tests for `tools/foraging_evidence_report.py`
+
+- Files: tests/test_foraging_evidence_report_tool.py (new)
+- After: none
+- Why: no test names it (the S-1 listing, 24 Oct 2026); it renders the
+  verdict a foraging experiment is judged by, so a silent parsing slip
+  changes a balance decision.
+- Do: feed it small run JSON written to a temporary directory and check the
+  rendered verdict for each `METRICS` field, a metric missing from a run,
+  several runs grouped together, and each error exit (no argument, missing
+  or unreadable file). Tests only: a bug in the tool is a Follow-up.
+
+### J-9 -- Unit tests for `tools/create_grass_sprite.py`
+
+- Files: tests/test_create_grass_sprite_tool.py (new)
+- After: none
+- Why: no test names it (the S-1 listing, 24 Oct 2026); its docstring
+  promises a 32×32 tile with no filtering or antialiasing.
+- Do: render into a temporary directory (never over the real asset) and
+  check the image is 32×32 RGBA and that every pixel is either fully
+  transparent or one of the module's named colours -- that is the
+  no-antialiasing promise. Skip the test cleanly when Pillow is missing.
+  Tests only.
+
+### J-10 -- Remove `Shapes.arc_points`
+
+- Files: scripts/shapes.gd
+- After: none
+- Why: `tools/uncalled.py` reports it with no caller (24 Oct 2026), and no
+  plan or review names it.
+- Do: delete that one function and nothing else; the proof is the caller
+  grep from step 5 on `origin/master`, plus `git grep -n -w arc_points --
+  plans docs` finding nothing.
+
+### J-11 -- Remove `UiLayout.gallerin_reserve_width`
+
+- Files: scripts/ui_layout.gd
+- After: none
+- Why: `tools/uncalled.py` reports it with no caller (24 Oct 2026); only
+  archived plans name it, as shipped history.
+- Do: delete that one function and nothing else; the proof is the caller
+  grep from step 5 on `origin/master`.
+
+### J-12 -- Guard bare `[]` assigned to another script's typed array
+
+- Files: tools/typed_array_assign_check.py (new), tests/test_typed_array_assign_check.py (new)
+- After: none
+- Why: `docs/known-pitfalls.md`, "A typed `Array[T]` property can't take a
+  bare `[]` from outside its class" -- it throws at runtime on the first
+  call, and nothing in `tests/` catches it.
+- Do: collect every `var NAME: Array[...]` property declared in
+  `scripts/**/*.gd`, then report each `<expr>.NAME = []` in a *different*
+  file (an assignment inside the declaring file is fine). Exit 1 on a hit
+  with file, line and the declaring script; exit 0 otherwise. It must pass
+  on `origin/master`; prove it by adding a `bee.known_patches = []` line to
+  a fixture in the test and showing it fails.
+
+Not tasks yet: `tools/uncalled.py` also lists the adaptation-offer
+functions in `scripts/progression.gd` and `for_group`/`milestone_ids` in
+`scripts/adaptations.gd`. `plans/design/progression.md` §§ adaptations and
+save describe that feature, so removing them is Dave's decision, not
+dead-code removal.
 
 ## Standing tasks
 
