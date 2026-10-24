@@ -116,10 +116,6 @@ static func gallerin_bubble_width(viewport_width: float) -> float:
 	var available := right_band - SELECTION_TRAY_GAP - GallerinPanel.ICON_SIZE.x - GallerinPanel.BUBBLE_GAP - GallerinPanel.ICON_MARGIN
 	return clampf(available, GALLERIN_BUBBLE_MIN_WIDTH, GallerinPanel.BUBBLE_WIDTH)
 
-## Dr Gallerin's complete bottom-right footprint, for callers that need it.
-static func gallerin_reserve_width(viewport_width: float) -> float:
-	return gallerin_bubble_width(viewport_width) + GallerinPanel.ICON_SIZE.x + GallerinPanel.BUBBLE_GAP + GallerinPanel.ICON_MARGIN
-
 ## Chrome UiTheme.panel_stylebox() adds around a panel's content -- content
 ## margin plus border width, per axis. A budget for a panel's outer
 ## rectangle must subtract this before it is applied to a control living
