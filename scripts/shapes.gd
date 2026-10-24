@@ -171,17 +171,6 @@ static func hex_to_pixel(q: int, r: int, size: float, squashed: bool = false) ->
 static func hex_draw_depth(hex: Vector2i) -> int:
 	return 2 * hex.y + hex.x
 
-## Points along a circular arc, centred on origin, from `from_degrees`
-## round to `to_degrees` (anticlockwise). Used to draw the hive wall as
-## a near-complete ring with a gap left for the entrance.
-static func arc_points(radius: float, from_degrees: float, to_degrees: float, segments: int = 64) -> PackedVector2Array:
-	var points := PackedVector2Array()
-	for i in range(segments + 1):
-		var t := float(i) / float(segments)
-		var angle := deg_to_rad(lerp(from_degrees, to_degrees, t))
-		points.append(Vector2(cos(angle), sin(angle)) * radius)
-	return points
-
 ## The axial coordinate of a single position in the outward spiral,
 ## without building the whole list first. Used when a builder adds one
 ## more cell to an existing comb.
