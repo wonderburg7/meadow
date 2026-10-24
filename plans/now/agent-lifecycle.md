@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude / Codex | Next: L-36 (Claude lane) and L-37 (Codex lane, no shared file); separately, after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none between L-36 and L-37 (L-37 owns `tools/guard_hook.py` and its test only) | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude / Codex | Next: L-37 (Codex lane, no shared file), once L-36 (Claude lane) has merged; separately, after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none between L-36 and L-37 (L-37 owns `tools/guard_hook.py` and its test only) | Verified: 2026-10-24
 
 ## Objective
 
@@ -50,7 +50,6 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-36 | clean checkouts pass the doc checks; stray worktrees are reported | `tools/check_docs.py`, `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | low |
 | L-37 | the guard hook lets `git show`/`git grep` read archived plans | `tools/guard_hook.py`, `tests/test_guard_hook.py` | low |
 
 L-31 to L-36 come from the 22 Oct 2026 workflow comparison (Dave asked
@@ -89,39 +88,7 @@ L-34 shipped 2026-10-23; its specification is `plans/archive/L-34_2026-10-23.md`
 
 L-35 shipped 2026-10-24; its specification is `plans/archive/L-35_2026-10-24.md`.
 
-## L-36 -- clean checkouts pass the doc checks; stray worktrees are reported
-
-**Now.** COL-12, SI-1 and T2-5 failed `check_docs` in fresh worktrees
-because a document names the gitignored `.claude/settings.local.json`
-(`docs/context-review-2026-10-07.md`). Agents created empty placeholders
-to get past it. An unregistered `.worktrees/L-28` folder, held by another
-session, blocked RR-10's integration. Removal deferred by a Windows lock
-was found only by the next closeout.
-
-**Target.**
-1. `check_docs.py` skips a referenced path that `git check-ignore`
-   matches.
-2. `slice.ps1 start` and `doctor` sweep the pending-deletions queue and
-   list any unregistered `.worktrees/*` folder, naming the process that
-   holds it. The holder lookup landed on 20 Oct; reuse it.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] L-36 -- clean checkouts pass the doc checks; stray worktrees are reported**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-36 -- clean checkouts pass the doc checks; stray worktrees are reported"
-- Files: `tools/check_docs.py`, `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
-- Check: in a fresh worktree without `.claude/settings.local.json`, `python tools/check_docs.py` passes; `tests/test_slice_lifecycle.py` covers `doctor` listing an unregistered `.worktrees/*` folder and sweeping a pending deletion; `.\tools\verify.ps1` is green
-- Proof: `absent: tools/check_docs.py :: check-ignore`
-- Next after: none -- the L-31 to L-36 set is complete
-```
-
-**Measure after L-36.** Run `python tools/session_cost.py --stops --days 14`
-and compare it with the 22 Oct baseline: 190 stops in 21 days, 60 in branch
-verification and 16 at the refill gate. Separately, before changing
-`/run-queue`'s reviewer rule, count the `in_slice` correctness findings per
-slice level in its trial notes. Skip the reviewer for low slices only if
-those findings are near zero.
+L-36 shipped 2026-10-24; its specification is `plans/archive/L-36_2026-10-24.md`.
 
 ## L-37 -- the guard hook lets `git show`/`git grep` read archived plans
 

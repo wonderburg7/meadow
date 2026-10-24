@@ -582,6 +582,48 @@ function Remove-PendingWorktreeDirectories {
     }
 }
 
+function Get-StrayWorktreeFolders {
+    # L-36: folders under .worktrees/ that git no longer registers, each with
+    # the process holding it (Get-DirectoryHolderSummary, from L-28). Left
+    # behind when a removal was deferred by a Windows lock, or by a session
+    # that died mid-slice. A folder named in the pending-deletions queue is the
+    # sweep's job, not a stray. Listing only: a holder may be a live session,
+    # so nothing is deleted here. Never throws, and answers nothing when git
+    # cannot list its worktrees, since an empty answer must not mean "all stray".
+    param([string]$Root)
+    $worktreeDir = Join-Path $Root ".worktrees"
+    if (-not (Test-Path -LiteralPath $worktreeDir -PathType Container)) { return @() }
+    try {
+        $listing = @(git -C $Root worktree list --porcelain 2>$null)
+        if ($LASTEXITCODE -ne 0) { return @() }
+        $registered = @($listing | Where-Object { $_ -like "worktree *" } | ForEach-Object {
+                [System.IO.Path]::GetFullPath($_.Substring("worktree ".Length).Trim()).TrimEnd('\', '/')
+            })
+        $pending = @(Get-PendingWorktreeDeletions -Root $Root | ForEach-Object { Split-Path -Leaf $_.Trim() })
+        $strays = @()
+        foreach ($folder in @(Get-ChildItem -LiteralPath $worktreeDir -Directory)) {
+            if ($registered -contains $folder.FullName.TrimEnd('\', '/')) { continue }
+            if ($pending -contains $folder.Name) { continue }
+            $strays += [pscustomobject]@{
+                name   = ".worktrees/$($folder.Name)"
+                holder = Get-DirectoryHolderSummary -Path $folder.FullName
+            }
+        }
+        return $strays
+    }
+    catch {
+        return @()
+    }
+}
+
+function Write-StrayWorktreeLines {
+    # One stderr line per stray folder, so `start` keeps stdout to its JSON.
+    param($Strays)
+    foreach ($stray in @($Strays)) {
+        [Console]::Error.WriteLine("stray worktree: $($stray.name) is not registered with git worktree; $($stray.holder) -- remove it once nothing holds it")
+    }
+}
+
 function Get-PrimaryRoot {
     $commonDir = (git rev-parse --git-common-dir).Trim()
     if ($LASTEXITCODE -ne 0) {
@@ -1338,6 +1380,9 @@ function Invoke-SliceDoctor {
 
     $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
     Remove-PendingWorktreeDirectories -Root $root
+    $strays = @()
+    try { $strays = @(Get-StrayWorktreeFolders -Root (Get-PrimaryRoot)) } catch {}
+    Write-StrayWorktreeLines -Strays $strays
     $failures = @(Get-DoctorEnvironmentFailures -Root $root -RequestedPythonPath $PythonPath)
     # WD-2: one env_capability event per doctor, so "how often does the
     # environment rather than the code block a session?" has an answer.
@@ -1383,6 +1428,7 @@ function Invoke-SliceDoctor {
         git_excludes = Get-GlobalExcludesDiagnostic
         godot_capability = $godotCapability
         pending_deletions = Get-PendingWorktreeDeletions -Root $root
+        stray_worktrees = $strays
     } | ConvertTo-Json -Compress
 }
 
@@ -2963,7 +3009,7 @@ function Invoke-SliceFinish {
 
 try {
 switch ($Command) {
-    "start"  { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Invoke-WithLifecycleLock -Root $root { Invoke-SliceStart -Lane $Lane } }
+    "start"  { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Write-StrayWorktreeLines -Strays (Get-StrayWorktreeFolders -Root $root); Invoke-WithLifecycleLock -Root $root { Invoke-SliceStart -Lane $Lane } }
     "finish" { $root = Get-PrimaryRoot; Remove-PendingWorktreeDirectories -Root $root; Invoke-SliceFinishVerify -Root $root -PythonPath $PythonPath; Invoke-WithLifecycleLock -Root $root { Invoke-SliceFinish -PythonPath $PythonPath } }
     "doctor" { Invoke-SliceDoctor -Lane $Lane -PythonPath $PythonPath }
     "status" { Invoke-SliceStatus -Lane $Lane }
