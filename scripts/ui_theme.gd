@@ -383,8 +383,9 @@ const REFERENCE_TEXT := "The quick brown fox jumps over the lazy dog 0123456789"
 const _FACTOR_MEASURE_SIZE := 64
 ## Width-matched to Standard, these faces still read slightly small (Dave,
 ## C-137, 24 Oct 2026): OpenDyslexic for its tall lower case, Silkscreen for
-## its all-capital pixels. Kept inside TS-1's 8% width tolerance.
-const _TYPEFACE_NUDGE := {"opendyslexic": 1.06, "silkscreen": 1.06}
+## its all-capital pixels. Kept inside TS-1's 8% width tolerance: 6% put
+## OpenDyslexic at 108% of Standard at text scale 2 once sizes round.
+const _TYPEFACE_NUDGE := {"opendyslexic": 1.04, "silkscreen": 1.06}
 static var _typeface_factors: Dictionary = {}
 
 ## How much to scale a font size so `typeface` draws REFERENCE_TEXT as wide as
