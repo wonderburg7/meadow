@@ -117,9 +117,6 @@ signal queen_lay_any_cell_toggled(value: bool)
 ## Colony, Foraging and Nursery listen so an already-open window reflows
 ## instead of only sizing itself once in open() (UI-T-2, Dave 8 Sep 2026).
 signal bottom_row_changed()
-## The corner column's height changed (text scale, typeface, a new problem
-## line, PAUSED). Left windows reflow through the same path as bottom_row_changed.
-signal corner_height_changed()
 
 # --- role controls ------------------------------------------------
 ## Mirrors Bee.Role. Kept as plain ints so the HUD doesn't need to
@@ -653,7 +650,6 @@ func _ready() -> void:
 	pause_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pause_label.visible = false
 	corner_column.add_child(pause_label)
-	corner_column.resized.connect(_on_corner_resized)
 
 	_build_top_right_bar()
 	_apply_interface_label_visibility()
@@ -1116,6 +1112,13 @@ func _add_goal_star(label: Control) -> void:
 	star.tooltip_text = "Keep this goal on screen when the Goals list is collapsed."
 	star.mouse_filter = Control.MOUSE_FILTER_STOP
 	star.pressed.connect(func(): _on_goal_star_pressed(star))
+	# On the right, where the right-aligned line ends (Dave, 24 Oct 2026),
+	# with the line's text kept clear of it by a right margin.
+	star.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	star.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	var room := StyleBoxEmpty.new()
+	room.content_margin_right = star.custom_minimum_size.x
+	label.add_theme_stylebox_override("normal", room)
 	label.add_child(star)
 	goal_stars.append(star)
 	goal_star_ids[star] = ""
@@ -2970,9 +2973,6 @@ func _fit_corner_line(line: Button) -> void:
 	if line.get_minimum_size().x > cap:
 		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		line.custom_minimum_size.x = cap
-
-func _on_corner_resized() -> void:
-	corner_height_changed.emit()
 
 ## Bottom edge of the live top-left readout block. Left-side windows ask the
 ## HUD for this instead of guessing a fixed height for a changing column.

@@ -42,14 +42,14 @@ signal signal_clicked(action: String)
 ## The readouts that can be starred into the top-left corner. `key` is
 ## what Session.pinned_stats holds and what the HUD matches on.
 const STAT_ROWS := [
-	{"key": "day", "tip": "The day counter. One in-game day is however many real seconds the settings window says."},
-	{"key": "stores", "tip": "What is actually in the comb: nectar, pollen, ripe honey and royal jelly. Honey only counts once it has been fanned dry."},
-	{"key": "population", "tip": "How the colony is divided between jobs right now."},
-	{"key": "comb", "tip": "How much comb there is, how much of it is free, and how the brood is doing."},
-	{"key": "energy", "tip": "The average energy of every living bee, as a share of a full crop. This is the single best early warning: it falls for a while before bees actually start dying, so a steady slide here is the moment to put more bees on nectar."},
-	{"key": "rates", "tip": "Nectar and pollen coming in, and bees emerging, averaged over the last minute. Rates rather than totals, because what matters is whether the colony is keeping up."},
-	{"key": "recruit_gap", "tip": "How many foragers (past their first few trips, not still scouting) currently read above the 'offer a mentor' threshold or below the 'go and seek one' threshold, out of how many are being judged at all. Only means anything with Auto scouting or Auto-recruitment on -- otherwise no forager's rate is being tracked yet. A placeholder home for this reading until there's a dedicated foraging window."},
-	{"key": "signals", "tip": "The list of things currently going wrong, worst first."},
+	{"key": "day", "name": "the day counter", "tip": "The day counter. One in-game day is however many real seconds the settings window says."},
+	{"key": "stores", "name": "the stores line", "tip": "What is actually in the comb: nectar, pollen, ripe honey and royal jelly. Honey only counts once it has been fanned dry."},
+	{"key": "population", "name": "the jobs line", "tip": "How the colony is divided between jobs right now."},
+	{"key": "comb", "name": "the comb line", "tip": "How much comb there is, how much of it is free, and how the brood is doing."},
+	{"key": "energy", "name": "average energy", "tip": "The average energy of every living bee, as a share of a full crop. This is the single best early warning: it falls for a while before bees actually start dying, so a steady slide here is the moment to put more bees on nectar."},
+	{"key": "rates", "name": "the rates line", "tip": "Nectar and pollen coming in, and bees emerging, averaged over the last minute. Rates rather than totals, because what matters is whether the colony is keeping up."},
+	{"key": "recruit_gap", "name": "the recruitment gap", "tip": "How many foragers (past their first few trips, not still scouting) currently read above the 'offer a mentor' threshold or below the 'go and seek one' threshold, out of how many are being judged at all. Only means anything with Auto scouting or Auto-recruitment on -- otherwise no forager's rate is being tracked yet. A placeholder home for this reading until there's a dedicated foraging window."},
+	{"key": "signals", "name": "the Problems list", "tip": "The list of things currently going wrong, worst first."},
 ]
 
 ## Which series the history plot is showing.
@@ -232,7 +232,7 @@ func _make_stat_row(entry: Dictionary) -> Control:
 	_style_button(star)
 	star.button_pressed = Session.pinned_stats.has(key)
 	star.text = "★" if star.button_pressed else "☆"
-	star.tooltip_text = "Show this in the top-left corner of the screen as well as here."
+	star.tooltip_text = "Show %s in the top-left corner of the screen as well as here." % entry.name
 	star.toggled.connect(func(pressed: bool): _set_pinned(key, pressed))
 	row.add_child(star)
 	star_buttons[key] = star

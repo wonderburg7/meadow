@@ -87,8 +87,8 @@ func _ready() -> void:
 func connect_hud_reflow() -> void:
 	if main.hud == null or main.hud.bottom_row_changed.is_connected(_on_bottom_row_changed):
 		return
+	# Not the corner readout's height, as game_panel.gd explains.
 	main.hud.bottom_row_changed.connect(_on_bottom_row_changed)
-	main.hud.corner_height_changed.connect(_on_bottom_row_changed)
 
 ## With no hud (the menu at boot) there is no corner readout or bottom row
 ## to avoid, so the window takes the full height below the top margin.

@@ -22,7 +22,8 @@ TASKS = (
     "### J-1 -- first\n\n- Files: `tools/one.py`, tests/test_one.py (new)\n- After: none\n\n"
     "### J-2 -- second\n\n- Files: `tools/two.py`\n\n"
     "### J-3 -- third\n\n- Files: `tools/three.py`\n- After: J-1\n\n"
-    "### J-4 -- fourth\n\n- Files: `tools/four.py`\n- After: J-9\n"
+    "### J-4 -- fourth\n\n- Files: `tools/four.py`\n- After: J-9\n- Do: change four.\n\n"
+    "## Standing tasks\n\n- Files: `tools/not_a_task.py`\n"
 )
 
 
@@ -77,6 +78,51 @@ class JulesPreflightTest(unittest.TestCase):
         self.assertEqual(tasks[0].files, ["tools/one.py", "tests/test_one.py"])
         self.assertEqual(tasks[0].after, [])
         self.assertEqual(tasks[2].after, ["J-1"])
+
+    def test_a_task_block_ends_at_the_next_section(self):
+        tasks = preflight.parse_tasks(TASKS)
+        self.assertEqual(tasks[3].files, ["tools/four.py"])
+        self.assertIn("- Do: change four.", tasks[3].body)
+        self.assertNotIn("tools/not_a_task.py", "\n".join(tasks[3].body))
+
+    def test_queue_counts_free_tasks_and_names_each_state(self):
+        self.push_branch("jules/j-1-first", "tools/one.py", merge=True, message="J-1: first")
+        self.push_branch("jules/j-2-second", "tools/two.py")
+        states = [(task.id, state) for task, state, _ in preflight.classify(self.root, preflight.parse_tasks(TASKS))]
+        self.assertEqual(states, [("J-1", "done"), ("J-2", "taken"), ("J-3", "free"), ("J-4", "waits")])
+
+    def test_task_for_ref_reads_the_task_from_the_branch_name(self):
+        self.assertEqual(preflight.task_for_ref(self.root, "origin/jules/j-12-typed-array-9796301"), "J-12")
+        self.assertIsNone(preflight.task_for_ref(self.root, "origin/claude/other"))
+        self.git("checkout", "-q", "-b", "jules/j-3-third")
+        self.assertEqual(preflight.task_for_ref(self.root, "HEAD"), "J-3")
+        self.git("checkout", "-q", "master")
+
+    def test_scope_flags_a_stale_snapshot_as_off_task_files(self):
+        """A commit whose tree predates master reverts files the task never named."""
+        task = preflight.parse_tasks(TASKS)[0]  # J-1: tools/one.py, tests/test_one.py
+        self.git("checkout", "-q", "-b", "jules/j-1-first", "master")
+        self.write("tools/one.py", "# jules\n")
+        self.write("tools/added.py", "# stray\n")
+        (self.root / "plans/now/sample.md").unlink()
+        self.commit("J-1: first")
+        report = preflight.scope_report(self.root, task, "HEAD", base="master")
+        self.assertIn("ok    M tools/one.py", report)
+        self.assertTrue(any(line.startswith("off   A tools/added.py") and "git rm -f tools/added.py" in line for line in report))
+        self.assertTrue(
+            any(line.startswith("off   D plans/now/sample.md") and "git checkout master -- plans/now/sample.md" in line for line in report)
+        )
+        self.assertIn("note  tests/test_one.py -- named in Files but unchanged", report)
+        self.git("checkout", "-q", "master")
+
+    def test_scope_is_clean_when_only_the_named_files_change(self):
+        task = preflight.parse_tasks(TASKS)[1]
+        self.git("checkout", "-q", "-b", "jules/j-2-second", "master")
+        self.write("tools/two.py", "# jules\n")
+        self.commit("J-2: second")
+        report = preflight.scope_report(self.root, task, "HEAD", base="master")
+        self.assertEqual(report, ["ok    M tools/two.py"])
+        self.git("checkout", "-q", "master")
 
     def test_queued_planned_and_branched_paths_are_owned(self):
         self.push_branch("codex/other", "tools/branched.py")

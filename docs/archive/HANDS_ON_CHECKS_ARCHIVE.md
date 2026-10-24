@@ -6,6 +6,123 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 24 Oct 2026 -- Dave's hands-on pass
+
+### C-103 -- the command tray shows all of a comb cell's actions at the smallest window
+
+What this checks: run the game in its own window, not in the Godot
+editor's Game tab. In Git Bash, run `cd /c/Users/dl13860/Documents/Meadow/meadow`
+then `"/c/Program Files/Godot/Godot.exe" --path .`. From the main menu
+start "Scenario 2 A working colony", switch to the hive view and click a
+built comb cell so the command tray opens at the bottom centre. Then drag
+the window's corner in until it will not shrink any further (800x600).
+
+PASS: after the resize the tray's border sits below its last row of buttons, with no button or text cut off at the tray's bottom edge.
+
+If it fails, SR-4 (`plans/archive/scenario-reds_2026-10-04.md`) reopens: the tray is
+re-applied from `scripts/hud.gd::_on_command_content_minimum_size_changed`,
+so a short tray means its content changed size without that signal
+firing. When you report a failure, say how many pixels of the tray's
+content were hidden and whether clicking the cell again fixes it.
+
+Runner: opus -- a precise window-corner drag to 800x600, then a pixel-level clipping judgement
+
+Owner: `plans/now/run-repairs.md`
+
+### C-124 -- A new Colony Run never offers an earlier run's checkpoint
+
+What this checks: start a Colony Run from the main menu and note the run's name in the Saves window (cog, then "Saves..."). Return to the main menu, start a second Colony Run, and open the Saves window again.
+
+PASS: the second run has its own name ("My colony 2" or later), different from the first run's.
+
+If it fails, RR-3 (`plans/now/run-repairs.md`) reopens: two runs sharing a name share a slot, so the game-over screen can offer the other run's checkpoint (`save_slots.gd::fresh_run_name`, `main.gd::_on_level_chosen`).
+
+Runner: sonnet -- two run starts and a name read twice
+
+Owner: `plans/now/run-repairs.md`
+
+### C-131 -- Goals drop-down in a Colony Run: collapse, long-term line, remembered after restart
+
+What this checks: Start a Colony Run from the main menu. Click the Goals header at the top right to fold and unfold the drop-down, then use fast-forward past the winter-countdown day and watch the long-term line change. Quit the game and start it again.
+
+PASS: the Goals header folds the drop-down to itself alone and unfolds it, the long-term line changes at the countdown day, and the folded state is still there after a restart.
+
+If it fails, GP-1 reopens: the header, the long-term wording or the saved preference needs fixing.
+
+Runner: dave
+
+Owner: `plans/archive/goal-presentation_2026-10-15.md`
+
+### C-132 -- Star goals in the Goals drop-down and collapse it
+
+What this checks: In a Colony Run, open the Goals list at the top right of the screen
+and press the small star beside the long-term line and beside the milestone.
+Then press the "Goals [-]" header to collapse the list, then save and load the
+game.
+
+PASS: Both starred lines stay on screen when the list is collapsed, and are still starred after the load.
+
+If it fails, GP-2 is reopened: the star placement on the lines or the collapsed
+view in scripts/hud.gd needs changing.
+
+Runner: dave
+
+Owner: `plans/archive/goal-presentation_2026-10-15.md`
+
+### C-133 -- Hive soil blocks overlap front over back across the whole hive
+
+What this checks: start a game with Settings > Appearance > Cell art on, open the hive view and zoom in on the soil wall, then look round every side of the hive: top, bottom, left and right.
+
+PASS: everywhere round the hive, each soil block's front wall covers the block behind it, as the bottom-right blocks already do (Dave, 14 Oct 2026).
+
+If it fails, SP-10 reopens: the depth formula `Shapes.hex_draw_depth` or where `soil_block.gd::setup` applies it.
+
+Runner: opus -- a fine visual judgement of overlapping art across the whole wall
+
+Owner: `plans/now/sprites.md`
+
+### C-135 -- A miner on Dig on its own starts digging by itself once Automation is bought
+
+What this checks: start a Colony Run. Make one bee a Miner and turn on "Dig on its own" in its Job panel before you own Automation (Skills > Hive Mind). Mark nothing. Buy Automation, then watch the miner for a minute.
+
+PASS: after Automation is bought the miner walks to the soil and starts digging without any block being marked.
+
+If it fails, T2-10 reopens: the no-work guard in `scripts/bee.gd::_try_role_work`.
+
+Runner: sonnet -- a skill purchase and a short wait, judged from still screenshots
+
+Owner: `plans/now/tier-two.md`
+
+### C-144 -- Colony plot series retain readable catalogue colours at minimum window size
+
+What this checks: start a Colony Run, reduce the game window to its minimum
+size, then open Colony. Under Over time, select Bees, Nectar, Pollen and Honey
+in turn and check the plotted line and its label each time.
+
+PASS: each selection retains its existing readable label and history line;
+nectar and pollen match the resource palette, while bees and honey retain their
+previous plot colours, and the Colony content remains readable at minimum size.
+
+If it fails, CQ-M9 reopens: correct `scripts/colony_panel.gd::PLOT_SERIES`,
+`_series_colour` or `PLOT_CONTENT_MIN_WIDTH` without changing the panel's
+outer rectangle.
+
+Runner: dave
+
+Owner: `plans/now/code-health.md`
+
+### C-99 -- Main menu hexes show whole words at text scale 1 and 2 in every typeface
+
+What this checks: on the main menu, open the cog -> Appearance. Set Text scale to 1, then to 2; at each, choose every Typeface in its list in turn and look at the Challenge and Scenario hexagons after each choice.
+
+PASS: every hexagon shows its whole name at both scales in every typeface: no word is split across two lines, and no line is missing or cut off.
+
+If it fails, HO-15 reopens: the fit in `scripts/main_menu.gd::hex_fit_size`.
+
+Runner: sonnet -- many typeface and scale combinations, each read for clipped hexagon names
+
+Owner: `plans/now/run-repairs.md`
+
 ## 15 Oct 2026 -- Dave's hands-on pass
 
 ### C-113 -- Challenge 2 offers Comb worker at 2.7 and Miner at 2.8 as free buys

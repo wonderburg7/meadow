@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-12, the last slice, waits for ED-3 (RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-21
+Status: active | Owner: Dave / Claude Code | Next: RR-12, the last slice, waits for ED-3 (RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-24
 
 ## Objective
 
@@ -43,6 +43,16 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
+| RR-13 | the pre-ferment warning shows 1.5 game days ahead, in a stronger colour | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, tests | no -- waits for DR-1 | low |
+| RR-14 | a sour cell given a new designation is emptied by a comb worker, not at once | `scripts/orders_zones.gd`, `scripts/hud.gd`, tests | no -- waits for DR-1 | low |
+| RR-15 | Fermentation sense keeps fresh nectar out of sour cells for every depositing bee | `scripts/hive.gd`, tests | no -- waits for DR-1 | medium |
+| RR-16 | the queen can resume building a part-built cell | `scripts/orders_zones.gd`, tests | no -- waits for DR-1 | low |
+| RR-17 | a queen on comb work discards sour nectar on command | `scripts/bee.gd`, tests | no -- waits for CQ-S0b | medium |
+| RR-18 | skip saves for the long checks C-140 and C-142 | `test_scenarios/`, `checks/ready/C-140.md`, `checks/ready/C-142.md` | yes | low |
+| RR-19 | comb workers seal and unseal cells over time (15 s to cap, 5 s to uncap) | `scripts/hive_cell.gd`, `scripts/orders_zones.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | no -- waits for DR-1 and CQ-M8 | high |
+| RR-20 | a comb worker carrying a body leaves, stays out one second, and comes back | `scripts/bee_building.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, tests | no -- waits for CQ-M8 | medium |
+| RR-21 | no ordinary rain in the first two days; rain warnings in plain words | `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | no -- waits for SG-4 (`scripts/main.gd`) | medium |
+| RR-22 | select a number of bees from a multi-selection, youngest and oldest | `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, tests | no -- waits for GP-5 and SG-4 | medium |
 
 RR-9 and RR-10 are Codex-lane slices (Dave, 15 Oct 2026, plan review D3:
 the Claude lane was full and the Codex backlog dry); RR-7 and RR-11 stay in
@@ -118,6 +128,426 @@ test shows `day_store_totals` changing a condition's result across a load
 - Check: `python -m unittest tests.test_rr12_readout_history` passes: after a save and load of a run holding history samples, day-store entries, an emergence entry and a recorded trip, `history_samples`, `emergence_log`, `day_store_totals` and `foraging_stats.save_data()` equal their saved values, and a save with `readout_history` removed loads with all four empty; `python -m unittest tests.test_save_migrations` still passes.
 - Proof: `absent: scripts/save_game.gd :: readout_history`
 - Next after: none -- `plans/now/run-repairs.md` is complete once RR-8 and RR-11 have landed
+```
+
+## RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out
+
+Level: low -- claude-sonnet-5-5 at low effort.
+
+**True now.** C-141 failed: "change not conspicuous enough, and warning tint
+should show 1.5 game days before fermentation". `GameConfig.nectar_pre_ferment_fraction`
+(`game_config.gd`, near l.681) is 0.75 of `nectar_ferment_hours` 96, so the
+warning shows 24 h ahead. `PRE_FERMENTED_ART_TINT` is Color(0.9, 0.92, 0.78)
+and `PRE_FERMENTED_NECTAR_COLOR` Color(0.64, 0.83, 0.27) in `hive_cell.gd`
+(near l.115): too close to fresh nectar. The stage is read by nothing but the
+colour (RR-11).
+
+**When done:**
+
+1. `nectar_pre_ferment_fraction` defaults to 0.625 (36 h, 1.5 game days of 24
+   game hours); its comment and the `settings_catalogue.gd` tip for "Pre-ferment
+   at x" (near l.601) say so.
+2. `PRE_FERMENTED_ART_TINT` is Color(0.78, 0.86, 0.35) and
+   `PRE_FERMENTED_NECTAR_COLOR` Color(0.72, 0.85, 0.15), still distinct from
+   `FERMENTED_NECTAR_COLOR` (0.55, 0.68, 0.39).
+3. `tests/rr11_pre_fermented_test.gd`'s boundary rows move to the new fraction.
+4. Dave's hands-on check is filed at closeout: the C-141 re-run, a nectar cell
+   turns visibly yellow-green about a day and a half before it sours.
+
+**Invariants.** Presentation only: no simulation reads the stage. No save
+changes. It shares `scripts/hive_cell.gd` with SP-12 and SP-14
+(`plans/now/sprites.md`): whichever is queued first runs first.
+
+**Open decisions:** none.
+
+```queue-gated
+**[Claude] RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out**
+- Plan: `plans/now/run-repairs.md` -- "RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out"
+- Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `tests/rr11_pre_fermented_test.gd`
+- Check: `python -m unittest tests.test_rr11_pre_fermented` passes with the boundary at 36 h; `python -m unittest tests.test_display_text_golden` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
+- Proof: `absent: scripts/hive_cell.gd :: Color(0.78, 0.86, 0.35)`
+- Next after: none -- the pre-ferment warning is complete
+```
+
+## RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once
+
+Level: low -- claude-sonnet-5-5 at low effort.
+
+**True now.** Dave: "when designating a sour nectar cell as a honey cell, it
+instantly emptied, when bees should be doing that task".
+`orders_zones.gd::_designate_one` (near l.262) calls `cell.clear_cell()` on a
+conflicting cell, and `hud.gd::_apply_discard` (near l.2683) does the same after
+the discard warning. "Discard all sour nectar" (`_on_clear_fermented_requested`)
+instead marks the cell `evict_mode = "discard"`, `evict_requested = true`, and a
+comb worker's `comb_evict_cell` task empties it.
+
+**When done:**
+
+1. In `_designate_one`, when `cell.is_fermented()` and the cell holds stock,
+   the cell takes the designation, is marked `evict_mode = "discard"` and
+   `evict_requested = true`, `bump_display_epoch()` runs, and the function
+   returns before the clear or warning branches.
+2. `hud.gd::_apply_discard` follows the same rule for a sour pending cell (one
+   shared helper in `orders_zones.gd`, not two copies).
+3. A cell that is not sour behaves exactly as today.
+
+**Invariants.** Uses the existing saved eviction fields; no new field, no save
+change. A sour cell with no comb worker stays full until one is free.
+
+**Open decisions:** none.
+
+```queue-gated
+**[Claude] RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once**
+- Plan: `plans/now/run-repairs.md` -- "RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once"
+- Files: `scripts/orders_zones.gd`, `scripts/hud.gd`, `tests/test_nf5_clear_fermented.py`
+- Check: `python -m unittest tests.test_nf5_clear_fermented` passes with a new case (designating a sour nectar cell as honey leaves its stock and sets `evict_requested`, and a comb worker then empties it; a fresh nectar cell behaves as before); `.\tools\verify.ps1` is green
+- Proof: `absent: scripts/orders_zones.gd :: is_fermented() and`
+- Next after: none -- the sour-cell designation is complete
+```
+
+## RR-15 -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee
+
+Level: medium -- claude-sonnet-5-5 at medium effort (a gameplay outcome).
+
+**True now.** Dave: "Queen set to forager still adds nectar to sour nectar
+cells even with fermentation sense". NF-4's rule is that fresh nectar is never
+poured into sour. `hive.gd::find_cell_for` (near l.328), called from
+`bee_foraging.gd` (near l.948 and l.984), never calls `avoids_as_sour`, so any
+depositing bee, the queen included, can top up a fermented cell.
+
+**When done:**
+
+1. In `find_cell_for`, when `resource_type == "nectar"` and
+   `senses_fermentation()`, cells where `avoids_as_sour(cell)` is true are
+   skipped.
+2. `find_cell_for` is shared by haul and evict, so sour nectar can still be
+   moved: `bee_building.gd` (near l.161) already discards rather than moves, and
+   the slice proves that no haul path loses its destination.
+3. The closeout runs the reference arc before and after
+   (`python tools/run_scenario.py test_scenarios/alpha_arc_test.json`) and
+   reports the difference. Do not tune anything.
+
+**Invariants.** Without Fermentation sense nothing changes. Honey, pollen and
+bee bread deposits are untouched.
+
+**Stop and escalate** if the arc's outcome changes by more than a day on any
+gate.
+
+**Open decisions:** none.
+
+```queue-gated
+**[Claude] RR-15 -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee**
+- Plan: `plans/now/run-repairs.md` -- "RR-15 -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee"
+- Files: `scripts/hive.gd`, `tests/test_nf4_fermentation_sense.py`
+- Check: `python -m unittest tests.test_nf4_fermentation_sense` passes with a new case (a forager, and the queen set to forage, with Fermentation sense never deposit nectar into a sour cell; without the sense they still can); `python -m unittest tests.test_nf5_clear_fermented` passes; the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green
+- Proof: `absent: scripts/hive.gd :: avoids_as_sour(cell)`
+- Next after: none -- the fermentation-sense deposit rule is complete
+```
+
+## RR-16 -- the queen can resume building a part-built cell
+
+Level: low -- claude-sonnet-5-5 at low effort.
+
+**True now.** Dave: "the queen's build cell behaviour should be able to be
+applied to an incomplete cell, which she then continues to build".
+`orders_zones.gd::queen_build_at` (near l.24) needs `hive.can_build_on(hex)`,
+which fails on a tile that already holds a site, so she cannot be sent to
+finish one.
+
+**When done:**
+
+1. If `hive.cell_at_tile(hex)` is an unbuilt cell, `queen_build_at` uses it as
+   `target_cell` and sets `TO_BUILD_SITE`, creating nothing. A tile with no cell
+   behaves as today.
+2. A tile holding a finished cell still returns null.
+
+**Invariants.** A Challenge's overrides in `challenge_runner.gd` still apply
+afterwards. No save change.
+
+**Open decisions:** none.
+
+```queue-gated
+**[Claude] RR-16 -- the queen can resume building a part-built cell**
+- Plan: `plans/now/run-repairs.md` -- "RR-16 -- the queen can resume building a part-built cell"
+- Files: `scripts/orders_zones.gd`, `tests/test_rr1_queen_builds.py`
+- Check: `python -m unittest tests.test_rr1_queen_builds` passes with a new case (a part-built site is returned and the queen heads to it; a finished cell returns null; an empty tile still makes a site); `.\tools\verify.ps1` is green
+- Proof: `absent: scripts/orders_zones.gd :: cell_at_tile`
+- Next after: none -- the queen's build is complete
+```
+
+## RR-17 -- a queen on comb work discards sour nectar on command
+
+Level: medium -- claude-sonnet-5-5 at medium effort (cause unconfirmed).
+
+**True now.** Dave: "The queen doesn't respond appropriately when set to comb
+worker and selecting 'Discard all sour nectar'". The command marks cells
+`evict_requested`; comb workers take `comb_evict_cell` (`actions.gd`, near l.74,
+via `bee_building.gd::find_cell_needing_eviction`, near l.38). No queen
+exclusion was found. Suspects: the queen never reaches `bee.gd::_idle_dispatch`
+while laying or feeding, or her `architect_mode` skips the evict row.
+
+**When done:**
+
+1. First a failing repro: `test_scenarios/rr17_queen_discards_sour.json`, a
+   headless scenario with the queen in the comb-worker role, one sour cell and
+   the command issued, asserting the cell is emptied by her within a stated
+   number of seconds. `tests/test_nf5_clear_fermented.py` gains a case that runs it and fails
+   before the fix.
+2. The smallest fix in `scripts/bee.gd` that makes it pass.
+3. Dave's hands-on check is filed at closeout: queen on comb work, press
+   "Discard all sour nectar", she empties a sour cell.
+
+**Invariants.** Her laying and feeding priorities are unchanged. If the cause
+turns out to be a design question (should the queen ever leave egg-laying?),
+stop and escalate with the options.
+
+**Open decisions:** none.
+
+```queue-gated
+**[Claude] RR-17 -- a queen on comb work discards sour nectar on command**
+- Plan: `plans/now/run-repairs.md` -- "RR-17 -- a queen on comb work discards sour nectar on command"
+- Files: `scripts/bee.gd`, `test_scenarios/rr17_queen_discards_sour.json`, `tests/test_nf5_clear_fermented.py`
+- Check: `python -m unittest tests.test_nf5_clear_fermented` (its new queen case) fails before the fix and passes after it (the queen, set to comb work, empties a sour cell after the command); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
+- Proof: `absent: tests/test_nf5_clear_fermented.py :: queen`
+- Next after: none -- the sour-nectar repairs are complete
+```
+
+## RR-18 -- skip saves for the long checks C-140 and C-142
+
+Level: low -- claude-haiku-5-5 (run each scenario and confirm the save appears).
+
+**True now.** Checks C-140 (the first crisis, warned) and C-142 (work
+priorities) take more than five minutes of play to reach, so they break the
+five-minute rule (`plans/reference/check-loop.md` rule 3). Templates:
+`test_scenarios/fc2_first_crisis_prepared.json` and
+`test_scenarios/wp3_backup_order_ui.json`.
+
+**When done:**
+
+1. `test_scenarios/c140_first_crisis_warned.json` copies the first, with a
+   `when: {first_crisis_state: "warned"}` action `save_run` named "C140 warned".
+2. `test_scenarios/c142_work_priorities.json` grants
+   `skill.hive_mind.work_priorities`, hatches three or more bees in mixed
+   roles (as the second template does), then runs `save_run` named
+   "C142 work priorities".
+3. `checks/ready/C-140.md` and `checks/ready/C-142.md` have "What this checks"
+   rewritten to: run the scenario once headless from the repo root (home: `cd
+   C:\Users\david\Documents\Meadow\meadow`; work: `cd
+   C:\Users\dl13860\Documents\Meadow\meadow`; in PowerShell, the exact
+   `python tools/run_scenario.py test_scenarios/<file>.json` line), then open the
+   named save from the cog menu > Saves and carry on from there.
+4. Each scenario is run and the save is seen to appear.
+
+**Invariants.** The checks' pass conditions are unchanged; only the way to
+reach them. No script changes.
+
+**Open decisions:** none.
+
+```queue
+**[Claude] RR-18 -- skip saves for the long checks C-140 and C-142**
+- Plan: `plans/now/run-repairs.md` -- "RR-18 -- skip saves for the long checks C-140 and C-142"
+- Files: `test_scenarios/c140_first_crisis_warned.json`, `test_scenarios/c142_work_priorities.json`, `checks/ready/C-140.md`, `checks/ready/C-142.md`
+- Check: `python tools/run_scenario.py test_scenarios/c140_first_crisis_warned.json` and `python tools/run_scenario.py test_scenarios/c142_work_priorities.json` each finish and leave their named save in the saves list; `python tools/check_docs.py` passes; `.\tools\verify.ps1` is green
+- Proof: `absent: checks/ready/C-140.md :: run_scenario`
+- Next after: none -- the long checks have skip saves
+```
+
+## RR-19 -- comb workers seal and unseal cells over time
+
+Level: high -- claude-sonnet-5-5 at high effort (saves, event ordering, a gameplay outcome).
+
+**True now.** C-127 failed. `hive_cell.gd::set_closed` (near l.1063) flips
+`is_closed` at once, called from `orders_zones.gd` (near l.105).
+`set_fill_then_close` (near l.1070) only converts to closed in `add_resource`
+(near l.908-912), on `amount >= capacity - 0.001` right after a deposit, so a
+cell filled by nectar-to-honey conversion, royal jelly or brood never seals
+(the bug). `take_resource` and `can_withdraw` (near l.1028 and l.1058) lock
+from the moment a flag is set. Bee bread's ripening cap (BB-1, near l.915) is
+intended and stays. The winter close (`season.gd`, near l.299-306) calls
+`set_closed` and stays instant. Eviction is the pattern to follow: a saved
+`evict_requested` flag, the `comb_evict_cell` row in `actions.gd`, and a
+finder in `bee_building.gd`.
+
+**When done** (a comb worker, over time; 15 s to cap and 5 s to uncap at x1,
+Dave, 24 Oct 2026):
+
+1. Seal, Open and "Fill then seal" set a saved pending flag (`pending_seal`,
+   `pending_open`) instead of flipping `is_closed`. "Fill then seal" sets
+   `pending_seal` as soon as the cell is full, tested wherever `amount`
+   changes (not only after a deposit), so converted honey, jelly and brood
+   cells seal too.
+2. A comb worker (the `Roles.COMB_WORKER` role, the queen on comb work as well)
+   takes a new action row beside `comb_evict_cell` (band 1), finds the cell
+   through a new finder in `bee_building.gd`, walks to it, and spends
+   `GameConfig.cell_seal_seconds` (15.0) capping or
+   `GameConfig.cell_unseal_seconds` (5.0) uncapping, both with settings rows.
+   The queen follows RR-17's finding about her reaching the dispatch.
+3. While she works the cap art steps through its `WAX_CELL_SEALED` frames
+   (`_refresh`, near l.1382; `_show_cap`, near l.1448), forwards to seal and
+   backwards to open. Stores stay usable until the cap closes and become
+   usable once it is open.
+4. Saves: the two flags are new fields in `save_game.gd` and `saving.gd` (near
+   l.200-207), defaulting to false for old saves. `tests/test_save_migrations.py`
+   covers an old save.
+5. The closeout runs the reference arc before and after
+   (`python tools/run_scenario.py test_scenarios/alpha_arc_test.json`) and
+   reports the difference. Do not tune anything.
+6. `test_scenarios/rr19_sealing_stocked.json` stocks a full honey cell, a full
+   jelly cell and a full brood cell with `set_cell_contents` and ends with
+   `save_run` named "C127 stocked", so Dave's hands-on check (the C-127 re-run)
+   starts from that save and not from five minutes of play.
+
+**Invariants.** With no comb worker free, a cell stays as it is. Winter's close
+is unchanged. A cell that is already closed and asked to Seal does nothing.
+
+**Stop and escalate** if the reference arc's honey outcome moves by more than
+a day on any gate.
+
+**Open decisions:** none.
+
+```queue-gated
+**[Claude] RR-19 -- comb workers seal and unseal cells over time**
+- Plan: `plans/now/run-repairs.md` -- "RR-19 -- comb workers seal and unseal cells over time"
+- Files: `scripts/hive_cell.gd`, `scripts/orders_zones.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/rr19_sealing_stocked.json`, `tests/test_rr19_sealing.py`, `tests/test_save_migrations.py`
+- Check: `python -m unittest tests.test_rr19_sealing` passes (Seal on a full cell leaves it open until a comb worker has spent 15 s, then closed; Open takes 5 s; "Fill then seal" seals a cell filled by honey conversion, jelly and brood; winter's close is instant); `python -m unittest tests.test_save_migrations` passes with an old save; the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
+- Proof: `absent: scripts/game_config.gd :: cell_seal_seconds`
+- Next after: none -- cell sealing is complete
+```
+
+## RR-20 -- a comb worker carrying a body visibly leaves, stays out one second, and comes back
+
+Level: medium -- claude-sonnet-5-5 at medium effort.
+
+**True now.** Dave: "make it a 1 second pause, where the bee actually leaves
+the nest, stays out for one second, then comes back in". Today
+`bee_building.gd::builder_go_to_waste_exit` (near l.449) walks to
+`world.hive_entrance_inside()`, and within 8 px calls
+`world.move_bee_out_of_hive` and sets `timer = GameConfig.dirt_dump_time`
+(2.0) in `DUMPING_WASTE`. Dave saw her "wait at the inside entrance", so she
+reads as waiting inside, not outside. Suspects: an empty path returning early
+in `bee_movement.gd` (near l.387-389) so she never reaches the 8 px test, or
+the hive view still drawing her.
+
+**When done:**
+
+1. The slice first finds why she reads as waiting inside and says in the
+   closeout what it was.
+2. For a body, a new `GameConfig.body_drop_seconds` (1.0, settings row) is the
+   time outside; `dirt_dump_time` still governs spoil and stores. The bee is
+   visibly outside the skep for that second, then re-enters.
+3. `tests/t2_4b_bodies_test.gd` and `tests/t2_13_carried_body_test.gd` assert
+   she is outside for the second and inside again after it.
+4. Dave's hands-on check is filed at closeout: watch a comb worker carry a body
+   out, wait one second outside and return.
+
+**Invariants.** Stores and spoil dumps keep `dirt_dump_time`. If the cause is
+in `bee.gd` (CQ-S0b's file) stop and escalate with the options.
+
+**Open decisions:** none.
+
+```queue-gated
+**[Claude] RR-20 -- a comb worker carrying a body visibly leaves, stays out one second, and comes back**
+- Plan: `plans/now/run-repairs.md` -- "RR-20 -- a comb worker carrying a body visibly leaves, stays out one second, and comes back"
+- Files: `scripts/bee_building.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/t2_4b_bodies_test.gd`, `tests/t2_13_carried_body_test.gd`
+- Check: `python -m unittest tests.test_t2_4b_bodies tests.test_t2_13_carried_body` pass (the body-carrying bee is outside the hive for 1 s then inside again); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
+- Proof: `absent: scripts/game_config.gd :: body_drop_seconds`
+- Next after: none -- the body drop is complete
+```
+
+## RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words
+
+Level: medium -- claude-sonnet-5-5 at medium effort (a gameplay outcome).
+
+**True now.** Dave: rain must not "happen at the very start of a game, or in
+the first 2 days, unless rain coming sooner is a part of a scenario or
+challenge", and warnings should "use more general terms, like soon or 'by the
+end of the day'". `main.gd::_advance_weather` (near l.981-1012) rolls six
+times a day at `rain_chance_per_day / 6` while `_first_crisis_holds_weather()`
+is false, from time zero. The first crisis schedules and starts its own rain
+(`_advance_first_crisis`), outside the roll. Warnings give clock times:
+`_first_crisis_warning_text` (near l.1148, "coming in about %s"),
+`_show_first_crisis_note` (near l.1179, "Heavy rain due in %s") through
+`_minutes_text`, and the generic "Rain is coming in" warning (near l.1008) has
+no time at all.
+
+**When done:**
+
+1. `GameConfig.rain_free_days` (2.0, settings row): the random roll is skipped
+   while `Session.sim_time < rain_free_days * seconds_per_day`. The first crisis
+   and any scenario or Challenge that starts rain itself are unaffected, and
+   a scenario that wants an early random roll sets `rain_free_days` to 0 with
+   `set_config` (Dave, 24 Oct 2026).
+2. One helper turns the time left and the time of day into a plain phrase:
+   "soon" (within about a game hour), "later today", "by the end of the day",
+   "tomorrow". The first-crisis warning and corner note use it instead of
+   minutes and seconds, and the generic rain warning says when it is due only
+   if a time is known.
+3. `tests/test_fc2_first_crisis.py` and the display-text golden
+   (`python -m unittest tests.test_display_text_golden`) are updated for the
+   new wording.
+4. The closeout runs the reference arc before and after and reports the
+   difference in rain timing. Do not tune anything.
+5. Dave's hands-on check is filed at closeout; C-140 (the first crisis)
+   re-runs after it from its skip save (RR-18).
+
+**Invariants.** The first crisis keeps its schedule and bounds. No save change.
+Shares `scripts/main.gd` with SG-4 and the Select-n slice RR-22: whichever is
+queued first runs first.
+
+**Open decisions:** none.
+
+```queue-gated
+**[Claude] RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words**
+- Plan: `plans/now/run-repairs.md` -- "RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words"
+- Files: `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_fc2_first_crisis.py`, `tests/test_rr21_rain_free_days.py`
+- Check: `python -m unittest tests.test_rr21_rain_free_days tests.test_fc2_first_crisis tests.test_display_text_golden` pass (no random rain before day 2 even at a chance of 1.0; rain rolls again after; the first crisis still fires; warnings read "soon", "later today", "by the end of the day" or "tomorrow"); the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
+- Proof: `absent: scripts/game_config.gd :: rain_free_days`
+- Next after: none -- the rain rule is complete
+```
+
+## RR-22 -- select a number of bees from a multi-selection
+
+Level: medium -- claude-sonnet-5-5 at medium effort.
+
+**True now.** Dave: a button to select n bees, "select 1 bee as default for n,
+with '<<' '<' '>' '>>' buttons to change n by +/- 1 or 5. Also adds buttons
+for 'Select youngest bee', and 'Select oldest bee'". The multi-selection
+summary is the `else` branch of the identity-label code in
+`hud.gd::update_selection` (near l.3739, "%d bees selected",
+`_set_summary_cog_kind("multiple")`). The selection list is
+`main.selected_bees`, set in `input_selection.gd` (near l.168-184) and shown
+through `hud.update_selection`. A bee's age is `Bee.age_seconds`.
+
+**When done:**
+
+1. The multi-selection summary has a "Select n" row: `<<`, `<`, a count, `>`,
+   `>>` (steps of 5 and 1), n starting at 1 and clamped to 1..the selection
+   size, and a "Select" button that narrows `selected_bees` to n bees
+   through a new hud signal handled in `input_selection.gd` (wired in
+   `main.gd`), deselecting the rest with `set_selected(false)`.
+2. Which n bees are kept: the n nearest the selection's centre. This is
+   provisional, Dave to confirm at the hands-on check.
+3. "Select youngest bee" and "Select oldest bee" narrow the selection to the one
+   bee with the least or greatest `age_seconds`.
+4. The row follows `plans/reference/ui-rules.md` and fits at the minimum
+   width (`tests/test_layout_regression.py`); a new test checks the narrowing,
+   the clamp and both extremes.
+5. Dave's hands-on check is filed at closeout: drag-select a crowd, narrow it
+   by n, youngest and oldest.
+
+**Invariants.** A single selection shows no row. Selecting never alters the
+simulation. Presentation and selection state only.
+
+**Open decisions:** which n bees `Select n` keeps (nearest the centre is
+provisional; Dave answers it at the hands-on check).
+
+```queue-gated
+**[Claude] RR-22 -- select a number of bees from a multi-selection**
+- Plan: `plans/now/run-repairs.md` -- "RR-22 -- select a number of bees from a multi-selection"
+- Files: `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, `tests/test_layout_regression.py`, `tests/rr22_select_n_test.gd`, `tests/test_rr22_select_n.py`
+- Check: `python -m unittest tests.test_rr22_select_n` passes (n is clamped to 1..selection size, `>>` steps by 5, Select keeps n bees, youngest and oldest keep the one bee with the least or greatest age); `python -m unittest tests.test_layout_regression` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
+- Proof: `absent: scripts/hud.gd :: select_youngest`
+- Next after: none -- multi-selection narrowing is complete
 ```
 
 ## Not in the queue, and why

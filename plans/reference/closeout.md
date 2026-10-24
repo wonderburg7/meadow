@@ -155,7 +155,9 @@ rules (evidence in `plans/reference/check-loop.md`):
   `Acceptance` and the check it files are the same sentences. If it cannot be
   written as something Dave does and sees, the slice is not specified yet.
 - **A rare condition ships with the way to trigger it.** A check nobody can
-  run on demand goes to `checks/blocked.md` with its unblocker named.
+  run on demand goes to `checks/blocked.md` with its unblocker named. One
+  that takes more than five minutes of play to reach ships with a save that
+  skips to it (`plans/reference/check-loop.md`, rule 3).
 - **File a check only if failing it would change something.** Say in the
   entry what a failure would cause.
 

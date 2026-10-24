@@ -134,6 +134,17 @@ of these has bitten more than once:
   `StyleBoxFlat` one. Extend `StyleBox`, keep the flat box as a member
   (`PanelBox.flat`) and call its `draw()` first. `tests/source_checks.py`
   fails any such subclass that defines `_draw`.
+- **An overlay placed on the node's origin, not where the art shows the
+  thing (24 Oct 2026).** A sprite's offset moves the picture; it does not
+  move anything else drawn or computed at the node. With Cell art on, the
+  cup's rim sits about 11 px above a comb cell's floor centre, and
+  `input_selection.gd::_draw_tile_outline` still draws its hex on the floor
+  centre (C-125, then C-134 failed on the same misfit); a soil block's
+  selection ring sat on the floor, not the top face; and foragers appear at
+  the skep's centre, not its door (C-128). When art changes where a feature
+  appears, list every ring, outline, marker and arrival point that used the
+  old position, and test the overlay against the sprite's measured pixels,
+  not against the constant the overlay was built from.
 
 ## GDScript language and editing
 
@@ -278,6 +289,14 @@ of these has bitten more than once:
   a player's choice must distinguish the choice from the automatic default;
   `designation_is_explicit` was already there to do it. See
   `plans/archive/CHALLENGE1_2026-09-15.md` Slice 20.
+- **A Godot test that skips itself is a pass on a PC with no Godot it can
+  find (24 Oct 2026).** `godot_compile_check.py::find_godot` looked only in
+  `C:\Program Files\Godot` and on `PATH`; Dave's home PC keeps the unzipped
+  `Godot_v4.7.2-stable_win64.exe` beside the repo, so every Godot-booting
+  test there skipped and `verify.ps1` went green without booting the game,
+  and `run_scenario.py` died with `WinError 2` (C-129). `find_godot` now also
+  searches the repo's parent folders. A green verify on a new PC means
+  nothing until it has printed a Godot boot.
 
 ## Performance
 

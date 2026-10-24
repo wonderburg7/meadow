@@ -132,8 +132,16 @@ func _process(delta: float) -> void:
 		if _typed_characters >= _typing_target.length():
 			_finish_typing()
 		else:
-			_bubble_label.visible_characters = int(_typed_characters)
+			_bubble_label.visible_characters = _whole_words_visible(int(_typed_characters))
 	_offer_guidance()
+
+## How many characters to show so the line appears a whole word at a time
+## (Dave, 24 Oct 2026): a word shows once typing has passed its end, so the
+## line takes as long as character-by-character typing did.
+func _whole_words_visible(typed: int) -> int:
+	var space := _typing_target.rfind(" ", typed)
+	var newline := _typing_target.rfind("\n", typed)
+	return maxi(maxi(space, newline), 0)
 
 # --- building the UI -------------------------------------------------
 
@@ -335,7 +343,22 @@ func _build_bubble() -> void:
 	# the whole line first and clips what's drawn afterwards, so the height
 	# _apply_layout() reads is correct from the first frame.
 	_bubble_label.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
-	column.add_child(_bubble_label)
+	_bubble_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# The line shares its row with the close cross at its top right, so the
+	# cross never sits over the words (Dave, 24 Oct 2026: an x, not a
+	# "Dismiss" button).
+	var text_row := HBoxContainer.new()
+	text_row.add_theme_constant_override("separation", 6)
+	column.add_child(text_row)
+	text_row.add_child(_bubble_label)
+	var close_btn := Button.new()
+	close_btn.text = "×"
+	close_btn.tooltip_text = "Hide Dr Gallerin's note."
+	close_btn.custom_minimum_size = Vector2(28, 28)
+	close_btn.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	close_btn.pressed.connect(func(): bubble.visible = false)
+	_style_button(close_btn)
+	text_row.add_child(close_btn)
 	_apply_bubble_font_size()
 
 	_bubble_pointer = Polygon2D.new()
@@ -367,11 +390,6 @@ func _build_bubble() -> void:
 	_history_forward_btn.pressed.connect(_on_history_forward_pressed)
 	_style_button(_history_forward_btn)
 	row.add_child(_history_forward_btn)
-
-	var dismiss_btn := Button.new()
-	dismiss_btn.text = "Dismiss"
-	dismiss_btn.pressed.connect(func(): bubble.visible = false)
-	row.add_child(dismiss_btn)
 
 	var disable_btn := Button.new()
 	disable_btn.text = "Turn off Dr Gallerin"

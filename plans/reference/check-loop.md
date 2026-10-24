@@ -60,6 +60,12 @@ disagree.
    The settings window's **World & start** section also carries Challenge
    stage back/forward controls during an active Challenge, so checks that
    need a late stage can reach it without replaying the whole run.
+   **Five minutes is the limit** (Dave, 24 Oct 2026): a check that would
+   take Dave more than five minutes of play to reach ships with a skip --
+   a `test_scenarios/*.json` that `save_run`s a named save at the moment
+   the check needs, which he opens from the Saves window -- and its record
+   says which save to open. A check that watches bees over time (C-143)
+   is replaced by a headless assertion instead, if one can see it.
 4. **A check is filed only if failing it would change something.** State,
    in the entry, what a failure would cause you to do. "Nothing, we would
    assume it works" means do not file it. (Dave dropped the forager-return
