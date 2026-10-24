@@ -290,7 +290,7 @@ wraps over two lines.
 
 **Invariants.** A tool's output on today's unformatted source does not change.
 
-```queue-gated
+```queue
 **[Claude] CQ-L2 -- every tool that reads GDScript as text survives gdformat**
 - Plan: `plans/now/code-health.md` -- "CQ-L2 -- every tool that reads GDScript as text survives gdformat"
 - Files: `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, `tests/test_gdformat_survival.py`
@@ -301,8 +301,8 @@ wraps over two lines.
 
 ## Not in the queue, and why
 
-- CQ-M4 is deferred until the Claude lane releases `scripts/save_game.gd` and
-  `scripts/saving.gd`; its ownership overlaps that lane's current work.
+- **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`
+  and `scripts/saving.gd`; its ownership overlaps that lane's current work.
 
 ## CQ-S0b -- a restored forager takes no fresh orientation flight
 
@@ -451,7 +451,7 @@ Prove unchanged simulation with the Challenge 1 stage-advance and full route
 scenarios, then regenerate `FUNCTION_MAP.md` and run the relevant source
 checks. Stop if the replacement changes a save compatibility decision.
 
-```queue
+```queue-gated
 **[Codex] CQ-M4 -- Challenge level ids named in `levels.gd`**
 - Plan: `plans/now/code-health.md` -- "CQ-M4 -- Challenge level ids named in `levels.gd`"
 - Files: `scripts/levels.gd`, `scripts/challenge_runner.gd`, `scripts/saving.gd`, `scripts/save_game.gd`, `scripts/main.gd`, `scripts/debug_panel.gd`, `scripts/challenge_complete.gd`, `scripts/world_building.gd`, `FUNCTION_MAP.md`
