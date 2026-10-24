@@ -72,7 +72,8 @@ reading the other tasks, which is what tempts it to batch them.
    print no `off` line. Your tree can be older than `master` (a session that
    started earlier), and that shows as reverts of plans, hooks and queue
    files you never touched. For each `off` line run the command it prints,
-   commit, and run `--scope` again. Never push with an `off` line standing.
+   commit, and run `--scope` again. Never push with an `off` line standing: CI
+   runs the same check on every `jules/j-*` pull request and fails on one.
 8. **Pull request description**, in this order: `Task:` id and title;
    `Preflight:` the output of step 2; `Scope:` the output of step 7; `Ran:`
    each command and its result; `Not run:` Godot locally, `tools/verify.ps1`
