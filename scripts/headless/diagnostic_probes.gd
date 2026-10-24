@@ -13,21 +13,14 @@ static func selected_snapshot(world: Node2D, fields: Array, counters: Dictionary
 			"resources.food_stores": _merge_field(snapshot, "resources", "food_stores", world.hive.total_honey())
 			"resources.stored_nectar": _merge_field(snapshot, "resources", "stored_nectar", world.hive.total("nectar"))
 			"resources.stored_pollen": _merge_field(snapshot, "resources", "stored_pollen", world.hive.total("pollen"))
-			"resources.first_tier2_affordable":
-				var tier2_stores := {"honey": world.hive.total_honey(), "nectar": world.hive.total("nectar"), "pollen": world.hive.total("pollen")}
-				_merge_field(snapshot, "resources", "first_tier2_affordable",
-					Session.progression != null and Session.progression.first_tier2_path_covered(tier2_stores))
+			"resources.first_tier2_affordable": _merge_field(snapshot, "resources", "first_tier2_affordable", first_tier2_affordable(world.hive))
 			"environment.winter_here": _merge_field(snapshot, "environment", "winter_here", Session.winter_here)
-			"environment.flowers_by_species": _merge_field(snapshot, "environment", "flowers_by_species", _flowers_by_species(world))
-			"environment.flowers_in_season": _merge_field(snapshot, "environment", "flowers_in_season", _flower_season_counts(world).in_season)
-			"environment.flowers_out_of_season": _merge_field(snapshot, "environment", "flowers_out_of_season", _flower_season_counts(world).out_of_season)
+			"environment.flowers_by_species": _merge_field(snapshot, "environment", "flowers_by_species", flower_season_counts(world).by_species)
+			"environment.flowers_in_season": _merge_field(snapshot, "environment", "flowers_in_season", flower_season_counts(world).in_season)
+			"environment.flowers_out_of_season": _merge_field(snapshot, "environment", "flowers_out_of_season", flower_season_counts(world).out_of_season)
 			"role_outcomes.cells_completed_total": _merge_field(snapshot, "role_outcomes", "cells_completed_total", int(counters.get("cells_completed", 0)))
 			"performance.fps": _merge_field(snapshot, "performance", "fps", Engine.get_frames_per_second())
-			"performance.top_sections_ms":
-				var sections: Dictionary = {}
-				if Session.perf_enabled:
-					for key: String in Perf.top_sections(8): sections[key] = Perf.averages[key]
-				_merge_field(snapshot, "performance", "top_sections_ms", sections)
+			"performance.top_sections_ms": _merge_field(snapshot, "performance", "top_sections_ms", top_sections_ms(8))
 			"colony.milestone_days":
 				var milestone_days: Dictionary = {}
 				if is_instance_valid(world.colony_milestones) and world.colony_milestones.applies():
@@ -48,22 +41,31 @@ static func _live_bee_count(world: Node2D) -> int:
 		if is_instance_valid(bee): count += 1
 	return count
 
-static func _flowers_by_species(world: Node2D) -> Dictionary:
-	var counts: Dictionary = {}
-	for f: Variant in world.get_tree().get_nodes_in_group("flowers"):
-		if is_instance_valid(f):
-			counts[f.species_name] = int(counts.get(f.species_name, 0)) + 1
-	return counts
-
-
-static func _flower_season_counts(world: Node2D) -> Dictionary:
+static func flower_season_counts(world: Node2D) -> Dictionary:
 	var in_season := 0
 	var out_of_season := 0
+	var by_species: Dictionary = {}
 	for flower: Variant in world.get_tree().get_nodes_in_group("flowers"):
 		if not is_instance_valid(flower):
 			continue
+		by_species[flower.species_name] = int(by_species.get(flower.species_name, 0)) + 1
 		if flower.in_season():
 			in_season += 1
 		else:
 			out_of_season += 1
-	return {"in_season": in_season, "out_of_season": out_of_season}
+	return {"in_season": in_season, "out_of_season": out_of_season, "by_species": by_species}
+
+
+static func first_tier2_affordable(hive: Object) -> bool:
+	if Session.progression == null:
+		return false
+	var stores := {"honey": hive.total_honey(), "nectar": hive.total("nectar"), "pollen": hive.total("pollen")}
+	return Session.progression.first_tier2_path_covered(stores)
+
+
+static func top_sections_ms(count: int) -> Dictionary:
+	var sections: Dictionary = {}
+	if Session.perf_enabled:
+		for key: String in Perf.top_sections(count):
+			sections[key] = Perf.averages[key]
+	return sections

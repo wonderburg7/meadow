@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-L2, CQ-S0b and CQ-M8 in the Claude lane; CQ-M10 then CQ-R9 for the Codex refill (plan review, 23 Oct 2026); CQ-R12's section is written by whoever claims CQ-R9 | Dependency: CQ-T3 waits for CQ-L2 to release tests/source_checks.py, and follows CQ-R8; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-23
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-L2, CQ-S0b and CQ-M8 in the Claude lane; CQ-R12 for the Codex refill (CQ-R9 complete, 24 Oct 2026) | Dependency: CQ-T3 waits for CQ-L2 to release tests/source_checks.py, and follows CQ-R8; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-24
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 

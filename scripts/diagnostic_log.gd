@@ -147,6 +147,12 @@ func _notification(what: int) -> void:
 
 func start_session() -> void:
 	end_session("quit")   # no-op if nothing was open, or already ended by a collapse
+	_open_session_file()
+	_reset_counters()
+	_write_config_line()
+
+
+func _open_session_file() -> void:
 
 	if session_path_override != "":
 		DirAccess.make_dir_recursive_absolute(session_path_override.get_base_dir())
@@ -158,6 +164,9 @@ func start_session() -> void:
 		var suffix: String = ("_%s" % run_id_override) if run_id_override != "" else ""
 		_session_path = "%s/session_%s%s.jsonl" % [LOG_DIR, stamp, suffix]
 	_file = FileAccess.open(_session_path, FileAccess.WRITE)
+
+
+func _reset_counters() -> void:
 	_ended = false
 	_hour_accum = 0.0
 	_total_deaths = 0
@@ -204,6 +213,8 @@ func start_session() -> void:
 	_diagnostic_snapshot_lines = 0
 	_diagnostic_last_snapshot.clear()
 
+
+func _write_config_line() -> void:
 	var config := {"type": "config", "game_time": Session.sim_time, "random_seed": scenario_random_seed,
 		"settings": _config_snapshot()}
 	if not _performance_capture_config.is_empty():
@@ -840,7 +851,7 @@ func end_session(outcome: String) -> void:
 	if _ended or _file == null:
 		_ended = true
 		return
-	var flower_season_counts := _flower_season_counts(get_tree().current_scene)
+	var flower_season_counts := DiagnosticProbesScript.flower_season_counts(get_tree().current_scene)
 	var summary := {
 		"type": "summary",
 		"game_time": Session.sim_time,
@@ -954,208 +965,117 @@ func _config_snapshot() -> Dictionary:
 
 
 # --- the snapshot -------------------------------------------------
-## T2-7: whether the colony could pay for the cheapest first tier-2 path now,
-## for analyze_session.py's first_tier2_day. Once per snapshot, never per frame.
-func _first_tier2_affordable(hive: Object) -> bool:
-	if Session.progression == null:
-		return false
-	var stores := {"honey": hive.total_honey(), "nectar": hive.total("nectar"), "pollen": hive.total("pollen")}
-	return Session.progression.first_tier2_path_covered(stores)
-
-
 func _snapshot(world: Node2D) -> Dictionary:
 	var bees: Array = world.get_tree().get_nodes_in_group("bees")
+	return {"type": "snapshot", "game_time": Session.sim_time, "day": world.day,
+		"population": _population_section(bees), "resources": _resources_section(world),
+		"cells": _cells_section(world.hive), "environment": _environment_section(world),
+		"foraging_behaviour": _foraging_section(world, bees), "crab_spiders": _crab_spider_section(world),
+		"performance": _performance_snapshot(world), "role_outcomes": _role_outcomes_section(world)}
 
+
+func _population_section(bees: Array) -> Dictionary:
 	var by_role: Dictionary = {}
-	for role_key: String in BeeEnums.Role.keys():
-		by_role[role_key.to_lower()] = 0
+	for role_key: String in BeeEnums.Role.keys(): by_role[role_key.to_lower()] = 0
 	by_role["gyne"] = 0
 	var by_state: Dictionary = {}
-	for state_key: String in BeeEnums.State.keys():
-		by_state[state_key] = 0
+	for state_key: String in BeeEnums.State.keys(): by_state[state_key] = 0
 	for b: Variant in bees:
-		if not is_instance_valid(b):
-			continue
+		if not is_instance_valid(b): continue
 		var role_bucket: String = "gyne" if b.is_gyne else BeeEnums.Role.keys()[b.role].to_lower()
 		by_role[role_bucket] = int(by_role[role_bucket]) + 1
 		var state_bucket: String = BeeEnums.State.keys()[b.state]
 		by_state[state_bucket] = int(by_state[state_bucket]) + 1
+	return {"total": bees.size(), "by_role": by_role, "by_state": by_state}
 
-	# Live counts, not just deltas since the last event -- these are what
-	# let a snapshot answer "is floral constancy/recruitment/scouting
-	# actually doing anything right now" on its own, without having to
-	# cross-reference the discrete event lines above.
+
+func _resources_section(world: Node2D) -> Dictionary:
+	var hive: Node2D = world.hive
+	return {"pollen_rate_avg": _rate(world, "pollen"), "nectar_rate_avg": _rate(world, "nectar"),
+		"food_stores": hive.total_honey(), "stored_nectar": hive.total("nectar"), "stored_pollen": hive.total("pollen"),
+		"first_tier2_affordable": DiagnosticProbesScript.first_tier2_affordable(hive)}
+
+
+func _cells_section(hive: Node2D) -> Dictionary:
+	var by_contents: Dictionary = {"empty": hive.cells_holding("").size()}
+	for content_type: String in ["nectar", "pollen", "honey", "jelly", "bee_bread", "brood", "corpse"]:
+		by_contents[content_type] = hive.cells_holding(content_type).size()
+	var sealed := 0
+	for cell: Variant in hive.cells:
+		if is_instance_valid(cell) and cell.is_built and cell.is_closed: sealed += 1
+	var bee_bread_sealed := 0
+	var bee_bread_ripe := 0
+	for cell: Variant in hive.cells_holding("bee_bread"):
+		if cell.is_ripe_bee_bread(): bee_bread_ripe += 1
+		elif cell.is_bee_bread_sealed(): bee_bread_sealed += 1
+	return {"total": hive.cells.size(), "by_contents": by_contents, "sealed": sealed,
+		"bee_bread_sealed": bee_bread_sealed, "bee_bread_ripe": bee_bread_ripe,
+		"stored_bee_bread": hive.total("bee_bread"), "unbuilt": hive.cells_holding("unbuilt").size()}
+
+
+func _environment_section(world: Node2D) -> Dictionary:
+	var flower_season_counts := DiagnosticProbesScript.flower_season_counts(world)
+	return {"rain_intensity": Session.rain_intensity, "season_fraction": Flower.season_fraction(),
+		"disease": world.season.disease if world.season != null and is_instance_valid(world.season) else 0.0,
+		"winter_here": Session.winter_here, "flowers_in_season": flower_season_counts.in_season,
+		"flowers_out_of_season": flower_season_counts.out_of_season, "flowers_by_species": flower_season_counts.by_species}
+
+
+func _foraging_section(world: Node2D, bees: Array) -> Dictionary:
 	var scouting_now := 0
 	var by_preferred_species: Dictionary = {}
-	# Settled foragers (not mid-scout) split by whether they've got a
-	# floral-constancy preference, so a snapshot can answer "are the bees
-	# with a preferred species actually collecting faster" directly,
-	# without needing to cross-reference individual bees by hand.
 	var rate_with_preference_sum := 0.0
 	var rate_with_preference_n := 0
 	var rate_without_preference_sum := 0.0
 	var rate_without_preference_n := 0
 	for b: Variant in bees:
-		if not is_instance_valid(b):
-			continue
-		if b.is_scouting:
-			scouting_now += 1
-		if b.preferred_species != "":
-			by_preferred_species[b.preferred_species] = int(by_preferred_species.get(b.preferred_species, 0)) + 1
+		if not is_instance_valid(b): continue
+		if b.is_scouting: scouting_now += 1
+		if b.preferred_species != "": by_preferred_species[b.preferred_species] = int(by_preferred_species.get(b.preferred_species, 0)) + 1
 		if b.role == BeeEnums.Role.FORAGER and not b.is_scouting:
-			if b.preferred_species != "":
-				rate_with_preference_sum += b.avg_collection_rate
-				rate_with_preference_n += 1
-			else:
-				rate_without_preference_sum += b.avg_collection_rate
-				rate_without_preference_n += 1
+			if b.preferred_species != "": rate_with_preference_sum += b.avg_collection_rate; rate_with_preference_n += 1
+			else: rate_without_preference_sum += b.avg_collection_rate; rate_without_preference_n += 1
+	var hive: Node2D = world.hive
+	return {"orientation_flight_on": GameConfig.orientation_flight_on, "floral_constancy_on": GameConfig.floral_constancy_on,
+		"scouting_on": GameConfig.scouting_on, "auto_recruitment_on": GameConfig.auto_recruitment_on,
+		"proximity_recruitment_on": GameConfig.proximity_recruitment_on, "tarsal_markers_on": GameConfig.tarsal_markers_on,
+		"probabilistic_choice_on": GameConfig.probabilistic_choice_on, "handling_experience_on": GameConfig.handling_experience_on,
+		"adaptive_constancy_on": GameConfig.adaptive_constancy_on, "flower_senescence_on": GameConfig.flower_senescence_on,
+		"scouting_now": scouting_now, "with_preferred_species": by_preferred_species,
+		"avg_rate_with_preferred_species": rate_with_preference_sum / rate_with_preference_n if rate_with_preference_n > 0 else 0.0,
+		"avg_rate_without_preferred_species": rate_without_preference_sum / rate_without_preference_n if rate_without_preference_n > 0 else 0.0,
+		"entrance_mentors_waiting": hive.entrance_mentors.size(), "dance_eligible_mentors": hive.dance_eligible_mentors.size(),
+		"dance_eligible_seekers": hive.dance_eligible_seekers.size(), "orientation_flights_total": _orientation_flights,
+		"tarsal_marks_total": _tarsal_marks, "tarsal_rejections_total": _tarsal_rejections,
+		"flower_visits_total": _flower_visits, "unique_flowers_visited": _flowers_visited_ids.size(),
+		"recruitment_followups_total": _recruitment_followups, "recruit_partner_overlaps_total": _recruit_partner_overlaps,
+		"foragers_settled_total": _foragers_settled}
 
+
+func _crab_spider_section(world: Node2D) -> Dictionary:
 	var active_spiders := 0
 	if GameConfig.predators_on:
 		for f: Variant in world.get_tree().get_nodes_in_group("flowers"):
-			if is_instance_valid(f) and f.has_crab_spider:
-				active_spiders += 1
-	var flower_season_counts := _flower_season_counts(world)
+			if is_instance_valid(f) and f.has_crab_spider: active_spiders += 1
+	return {"predators_on": GameConfig.predators_on, "alarm_pheromone_on": GameConfig.alarm_pheromone_on,
+		"recruit_suppression_on": GameConfig.crab_spider_recruit_suppression_on,
+		"preferred_species": Session.crab_spider_preferred_species, "active_spiders": active_spiders}
 
-	var hive: Node2D = world.hive
-	var by_contents: Dictionary = {}
-	# "" is the internal empty-cell sentinel.  Publish it under a printable
-	# key so JSON-object consumers do not need a special case for an empty
-	# property name.
-	by_contents["empty"] = hive.cells_holding("").size()
-	for content_type: String in ["nectar", "pollen", "honey", "jelly", "bee_bread", "brood", "corpse"]:
-		by_contents[content_type] = hive.cells_holding(content_type).size()
-	var sealed := 0
-	for cell: Variant in hive.cells:
-		if is_instance_valid(cell) and cell.is_built and cell.is_closed:
-			sealed += 1
-	# BB-1: bee bread cells that have filled and sealed, and those ripe.
-	var bee_bread_sealed := 0
-	var bee_bread_ripe := 0
-	for cell: Variant in hive.cells_holding("bee_bread"):
-		if cell.is_ripe_bee_bread():
-			bee_bread_ripe += 1
-		elif cell.is_bee_bread_sealed():
-			bee_bread_sealed += 1
 
-	# Live, not cumulative -- how much diggable soil is left, split by
-	# whether a miner could reach it at all (is_edge) versus what the
-	# player has actually queued (marked_for_mining). blocks_mined below
-	# is the cumulative counterpart: how much has already come out.
+func _role_outcomes_section(world: Node2D) -> Dictionary:
 	var exposed_blocks := 0
 	var marked_blocks := 0
 	for block: Variant in world.get_tree().get_nodes_in_group("soil_blocks"):
-		if not is_instance_valid(block):
-			continue
-		if block.is_edge:
-			exposed_blocks += 1
-		if block.marked_for_mining:
-			marked_blocks += 1
-
-	return {
-		"type": "snapshot",
-		"game_time": Session.sim_time,
-		"day": world.day,
-		"population": {
-			"total": bees.size(),
-			"by_role": by_role,
-			"by_state": by_state,
-		},
-		"resources": {
-			"pollen_rate_avg": _rate(world, "pollen"),
-			"nectar_rate_avg": _rate(world, "nectar"),
-			"food_stores": hive.total_honey(),
-			"stored_nectar": hive.total("nectar"),
-			"stored_pollen": hive.total("pollen"),
-			"first_tier2_affordable": _first_tier2_affordable(hive),
-		},
-		"cells": {
-			"total": hive.cells.size(),
-			"by_contents": by_contents,
-			"sealed": sealed,
-			"bee_bread_sealed": bee_bread_sealed,
-			"bee_bread_ripe": bee_bread_ripe,
-			"stored_bee_bread": hive.total("bee_bread"),
-			"unbuilt": hive.cells_holding("unbuilt").size(),
-		},
-		"environment": {
-			"rain_intensity": Session.rain_intensity,
-			"season_fraction": Flower.season_fraction(),
-			"disease": world.season.disease if world.season != null and is_instance_valid(world.season) else 0.0,
-			"winter_here": Session.winter_here,
-			"flowers_in_season": flower_season_counts.in_season,
-			"flowers_out_of_season": flower_season_counts.out_of_season,
-			"flowers_by_species": flower_season_counts.by_species,
-		},
-		"foraging_behaviour": {
-			"orientation_flight_on": GameConfig.orientation_flight_on,
-			"floral_constancy_on": GameConfig.floral_constancy_on,
-			"scouting_on": GameConfig.scouting_on,
-			"auto_recruitment_on": GameConfig.auto_recruitment_on,
-			"proximity_recruitment_on": GameConfig.proximity_recruitment_on,
-			"tarsal_markers_on": GameConfig.tarsal_markers_on,
-			"probabilistic_choice_on": GameConfig.probabilistic_choice_on,
-			"handling_experience_on": GameConfig.handling_experience_on,
-			"adaptive_constancy_on": GameConfig.adaptive_constancy_on,
-			"flower_senescence_on": GameConfig.flower_senescence_on,
-			"scouting_now": scouting_now,
-			"with_preferred_species": by_preferred_species,
-			"avg_rate_with_preferred_species": rate_with_preference_sum / rate_with_preference_n if rate_with_preference_n > 0 else 0.0,
-			"avg_rate_without_preferred_species": rate_without_preference_sum / rate_without_preference_n if rate_without_preference_n > 0 else 0.0,
-			"entrance_mentors_waiting": hive.entrance_mentors.size(),
-			"dance_eligible_mentors": hive.dance_eligible_mentors.size(),
-			"dance_eligible_seekers": hive.dance_eligible_seekers.size(),
-			"orientation_flights_total": _orientation_flights,
-			"tarsal_marks_total": _tarsal_marks,
-			"tarsal_rejections_total": _tarsal_rejections,
-			"flower_visits_total": _flower_visits,
-			"unique_flowers_visited": _flowers_visited_ids.size(),
-			"recruitment_followups_total": _recruitment_followups,
-			"recruit_partner_overlaps_total": _recruit_partner_overlaps,
-			"foragers_settled_total": _foragers_settled,
-		},
-		"crab_spiders": {
-			"predators_on": GameConfig.predators_on,
-			"alarm_pheromone_on": GameConfig.alarm_pheromone_on,
-			"recruit_suppression_on": GameConfig.crab_spider_recruit_suppression_on,
-			"preferred_species": Session.crab_spider_preferred_species,
-			"active_spiders": active_spiders,
-		},
-		"performance": _performance_snapshot(world),
-		"role_outcomes": {
-			"brood_feeds_total": _brood_feeds,
-			"brood_hatches_total": _brood_hatches,
-			"brood_hatches_by_role_mode": _brood_hatches_by_role_mode,
-			"jelly_batches_total": _jelly_batches,
-			"larval_deaths_total": _larval_deaths,
-			"cells_completed_total": _cells_completed,
-			"cells_cleaned_total": _cells_cleaned,
-			"cells_evicted_total": _cells_evicted,
-			"cells_restocked_total": _cells_restocked,
-			"blocks_mined_total": _blocks_mined,
-			"honey_batches_deposited_total": _honey_batches_deposited,
-			"cells_ripened_total": _cells_ripened,
-			"exposed_soil_blocks": exposed_blocks,
-			"marked_soil_blocks": marked_blocks,
-		},
-	}
-
-
-## Live rather than cumulative: a flower can become in- or out-of-season as
-## the calendar advances, even when no flower is born or dies in that hour.
-func _flower_season_counts(world: Node2D) -> Dictionary:
-	var in_season := 0
-	var out_of_season := 0
-	var by_species: Dictionary = {}
-	for flower: Variant in world.get_tree().get_nodes_in_group("flowers"):
-		if not is_instance_valid(flower):
-			continue
-		by_species[flower.species_name] = int(by_species.get(flower.species_name, 0)) + 1
-		if flower.in_season():
-			in_season += 1
-		else:
-			out_of_season += 1
-	return {"in_season": in_season, "out_of_season": out_of_season, "by_species": by_species}
+		if not is_instance_valid(block): continue
+		if block.is_edge: exposed_blocks += 1
+		if block.marked_for_mining: marked_blocks += 1
+	return {"brood_feeds_total": _brood_feeds, "brood_hatches_total": _brood_hatches,
+		"brood_hatches_by_role_mode": _brood_hatches_by_role_mode, "jelly_batches_total": _jelly_batches,
+		"larval_deaths_total": _larval_deaths, "cells_completed_total": _cells_completed,
+		"cells_cleaned_total": _cells_cleaned, "cells_evicted_total": _cells_evicted,
+		"cells_restocked_total": _cells_restocked, "blocks_mined_total": _blocks_mined,
+		"honey_batches_deposited_total": _honey_batches_deposited, "cells_ripened_total": _cells_ripened,
+		"exposed_soil_blocks": exposed_blocks, "marked_soil_blocks": marked_blocks}
 
 
 ## fps and game_speed are free reads (Engine.get_frames_per_second(),
@@ -1180,10 +1100,7 @@ func _performance_snapshot(world: Node2D) -> Dictionary:
 	if Session.perf_enabled:
 		perf["worst_frame_ms"] = Perf.last_worst_ms
 		perf["p95_worst_frame_ms"] = Perf.percentile_ms(0.95)
-		var sections: Dictionary = {}
-		for key: String in Perf.top_sections(PERFORMANCE_SNAPSHOT_SECTIONS):
-			sections[key] = Perf.averages[key]
-		perf["top_sections_ms"] = sections
+		perf["top_sections_ms"] = DiagnosticProbesScript.top_sections_ms(PERFORMANCE_SNAPSHOT_SECTIONS)
 	return perf
 
 
