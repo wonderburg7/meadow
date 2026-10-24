@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude / Codex | Next: L-35 -- known baseline failures and stop causes are named (Claude lane), then L-36; separately, after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: L-35 then L-36, in order, in Claude (both edit `tools/slice.ps1` and `tools/check_docs.py`) | Verified: 2026-10-23
+Status: active | Owner: Dave / Claude / Codex | Next: L-36 (Claude lane) and L-37 (Codex lane, no shared file); separately, after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none between L-36 and L-37 (L-37 owns `tools/guard_hook.py` and its test only) | Verified: 2026-10-24
 
 ## Objective
 
@@ -51,6 +51,7 @@ measurement says what those sessions were doing.
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
 | L-36 | clean checkouts pass the doc checks; stray worktrees are reported | `tools/check_docs.py`, `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | low |
+| L-37 | the guard hook lets `git show`/`git grep` read archived plans | `tools/guard_hook.py`, `tests/test_guard_hook.py` | low |
 
 L-31 to L-36 come from the 22 Oct 2026 workflow comparison (Dave asked
 whether a hooks, state-machine and multi-agent-review setup would help;
@@ -121,6 +122,39 @@ verification and 16 at the refill gate. Separately, before changing
 `/run-queue`'s reviewer rule, count the `in_slice` correctness findings per
 slice level in its trial notes. Skip the reviewer for low slices only if
 those findings are near zero.
+
+## L-37 -- the guard hook lets `git show`/`git grep` read archived plans
+
+**Now.** `CLAUDE.md` ("Why a built system is the way it is") and the review
+contract send a session to `git grep -n <id> HEAD -- plans/archive` for a
+shipped slice's record. `tools/guard_hook.py::_reason` refuses any shell
+command whose text contains `plans/archive`, `docs/archive`, `_backups` or
+`.godot`, so that route is denied ("Do not read this denied path.") and the
+session retries or reads around it, which costs requests. A heredoc or
+commit message that merely names an archived path is refused the same way
+(`plans/observations/system-improvement-signals.md`, 23 Oct 2026 entry).
+
+**Target.** The denied-path test applies only to a command that reads the
+working tree at that path: `cat`, `head`, `tail`, `sed`, `grep`/`rg`/`Select-String`,
+`Get-Content`, `type`, `ls`/`dir`/`Get-ChildItem` on it. A command whose first
+word is `git` (so `git show HEAD:plans/archive/x.md`, `git grep ... HEAD --
+plans/archive`, `git log -- plans/archive`) is allowed, as is `git commit -m`
+text naming a path. The file tools stay denied on purpose (the `Read`
+deny list is untouched), and the four existing denial cases keep passing.
+
+**Open decisions:** none.
+
+The change relaxes a deny rule only for read-only `git` history commands,
+which `CLAUDE.md` already prescribes.
+
+```queue
+**[Codex] L-37 -- the guard hook lets `git show`/`git grep` read archived plans**
+- Plan: `plans/now/agent-lifecycle.md` -- "L-37 -- the guard hook lets `git show`/`git grep` read archived plans"
+- Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`
+- Check: `python -m unittest tests.test_guard_hook` passes with new cases: `git show HEAD:plans/archive/x.md`, `git grep -n L-31 HEAD -- plans/archive` and `git commit -m "see plans/archive/x"` are allowed; `Get-Content plans/archive/x.md`, `cat docs/archive/x.md`, `rg foo _backups` and `ls .godot` are still denied; `.\tools\verify.ps1` is green
+- Proof: `absent: tools/guard_hook.py :: def _reads_tree`
+- Next after: none -- the L-31 to L-37 set is complete
+```
 
 ## Standing rules
 

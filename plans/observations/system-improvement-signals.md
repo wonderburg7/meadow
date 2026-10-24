@@ -865,7 +865,8 @@ explicit request from Dave.
   `tests/test_guard_hook.py` case for each. `slice.ps1 owner` reports both
   files owned by a Jules branch (`origin/jules/j-2-presentation-gate-check-…`),
   so the plan review did not edit them.
-- Disposition: untriaged
+- Disposition: promoted 24 Oct 2026 as L-37 in `plans/now/agent-lifecycle.md`
+  (Codex lane; `slice.ps1 owner` now reports both files clear).
 
 ### 2026-10-23 — refill_lane still treats FUNCTION_MAP.md as owned after L-33 (from the plan review)
 
@@ -884,4 +885,7 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- `refill_lane.py`'s collision test
   reads `admission.UNOWNED`, and `check_docs.py` warns on a `Files:` line
   naming an unowned file.
-- Disposition: untriaged
+- Disposition: superseded 24 Oct 2026 -- `refill_lane.py` already calls
+  `admission.lane_conflicts`, whose `shared_paths` skips `UNOWNED`
+  (checked: a shared `FUNCTION_MAP.md` returns no conflict); only the
+  optional `check_docs.py` warning remains and is not worth a slice.
