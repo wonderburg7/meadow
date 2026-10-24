@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-L2, CQ-S0b and CQ-M8 in the Claude lane; CQ-M10 then CQ-R9 for the Codex refill (plan review, 23 Oct 2026); CQ-R12's section is written by whoever claims CQ-R9 | Dependency: CQ-T3 waits for CQ-L2 to release tests/source_checks.py, and follows CQ-R8; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-23
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-L2, CQ-S0b and CQ-M8 in the Claude lane; CQ-R12 for the Codex refill (CQ-R9 complete, 24 Oct 2026) | Dependency: CQ-T3 waits for CQ-L2 to release tests/source_checks.py, and follows CQ-R8; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-24
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -127,7 +127,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes | medium |
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
-| CQ-R9 | `diagnostic_log.gd` snapshot shortened; probe duplicates kept once | `diagnostic_log.gd`, `scripts/headless/diagnostic_probes.gd` | yes -- Codex block written; follows CQ-M10 | medium |
 | CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R11 | `world_building.gd::_seed_flower` decomposed, RNG order kept | `world_building.gd` | yes | medium |
 | CQ-R12 | `challenge_runner.gd` start, C2 failure, stage entry shortened | `challenge_runner.gd`, `challenge_feedback.gd` | yes | medium |
@@ -431,81 +430,7 @@ CQ-M9 shipped 2026-10-23; its specification is `plans/archive/CQ-M9_2026-10-23.m
 
 CQ-M10 shipped 2026-10-24; its specification is `plans/archive/CQ-M10_2026-10-24.md`.
 
-## CQ-R9 -- the diagnostic snapshot built in sections, its probe duplicates kept once
-
-<!-- LAYER: immediate-task -->
-
-Specified by the plan review, 23 Oct 2026, against `1a1f81c`. Minimum
-reasoning: **medium**. Read this section, "Rules for every slice" above,
-and the functions named below (`python tools/func.py`).
-
-**True now.** `diagnostic_log.gd::_snapshot` is one ~150-line function: it
-counts population, foraging preferences, cell contents, bee bread and soil
-blocks inline, then returns one dictionary literal. `start_session` opens
-the file, resets about forty counters and writes the config line in one
-body. Three pieces exist twice, in `diagnostic_log.gd` and
-`scripts/headless/diagnostic_probes.gd` (which `diagnostic_log.gd` already
-preloads as `DiagnosticProbesScript`):
-
-- flower season counts: `diagnostic_log.gd::_flower_season_counts`
-  (in/out of season plus `by_species`, one loop; called from `_snapshot`
-  and once more near line 843) and the probes' `_flower_season_counts`
-  (no species) plus `_flowers_by_species`;
-- first tier-2 affordable: `diagnostic_log.gd::_first_tier2_affordable`
-  and the inline `"resources.first_tier2_affordable"` arm of
-  `selected_snapshot`;
-- top sections: `_performance_snapshot`'s `Perf.top_sections` loop and the
-  `"performance.top_sections_ms"` arm (both 8 sections, both only while
-  `Session.perf_enabled`).
-
-**True afterwards.**
-
-1. `diagnostic_probes.gd` holds each shared piece once, as public statics:
-   `flower_season_counts(world) -> Dictionary` (the `diagnostic_log.gd`
-   version, with `by_species`), `first_tier2_affordable(hive) -> bool`
-   (null-safe, the `diagnostic_log.gd` version) and `top_sections_ms(count:
-   int) -> Dictionary` (empty unless `Session.perf_enabled`).
-   `selected_snapshot` uses them; `_flowers_by_species` and the private
-   `_flower_season_counts` go.
-2. `diagnostic_log.gd` deletes its `_flower_season_counts` and
-   `_first_tier2_affordable` and calls `DiagnosticProbesScript.*` at every
-   former call site; `_performance_snapshot` fills `top_sections_ms` from
-   `top_sections_ms(PERFORMANCE_SNAPSHOT_SECTIONS)` inside its existing
-   `perf_enabled` branch.
-3. `_snapshot` returns its top-level literal built from one helper per
-   group, in today's key order: `_population_section(bees)`,
-   `_resources_section(world)`, `_cells_section(world.hive)`,
-   `_environment_section(world)`, `_foraging_section(world, bees)`,
-   `_crab_spider_section(world)`, `_performance_snapshot(world)` (as
-   today) and `_role_outcomes_section(world)` (which includes the soil
-   block counts). Each helper keeps its group's keys in today's order.
-4. `start_session` calls `_open_session_file()`, `_reset_counters()` and
-   `_write_config_line()`, in that order, with the bodies moved unchanged.
-5. `python tools/update_function_map.py` regenerates the map.
-
-**Must not change.** Every snapshot key, value and group; the config line;
-the event lines; when a snapshot is taken; anything outside these two
-files. Snapshots are hourly, not per frame, so no profile is needed.
-
-**Check, before and after.** Before editing, run `python
-tools/run_scenario.py test_scenarios/slice1_smoke_test.json` and keep the
-last `"type": "snapshot"` line of the session file it names; after, run it
-again. The two lines must be equal as JSON objects once `performance` is
-removed from both. Then run the coverage tests named in the block.
-
-**Stop and escalate** if the two snapshot lines differ in anything but
-`performance`, or if a third copy of a shared piece turns up elsewhere.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] CQ-R9 -- the diagnostic snapshot built in sections, its probe duplicates kept once**
-- Plan: `plans/now/code-health.md` -- "CQ-R9 -- the diagnostic snapshot built in sections, its probe duplicates kept once"
-- Files: `scripts/diagnostic_log.gd`, `scripts/headless/diagnostic_probes.gd`
-- Check: the slice1_smoke_test snapshot line before and after is equal as JSON apart from `performance`; `python -m unittest tests.test_bb1_bee_bread tests.test_sf1_founding_flower_mix tests.test_headless_profiles tests.test_headless_verdicts tests.test_pacing_gates` passes; `python tools/equivalence.py test_scenarios/slice1_smoke_test.json master` reports no difference; `python tools/prefinish.py` and `.\tools\verify.ps1` are green
-- Proof: `absent: scripts/headless/diagnostic_probes.gd :: static func flower_season_counts`
-- Next after: CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened
-```
+CQ-R9 shipped 2026-10-24; its specification is `plans/archive/CQ-R9_2026-10-24.md`.
 
 ## CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened
 
