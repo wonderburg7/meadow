@@ -48,3 +48,5 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/jules-process-review` (`claude/jules-process-review-4f2a9c`) | Ad hoc | Jules process review: jules.md, AGENTS.md Jules section, jules_preflight.py and its test | Claude Code | in progress | none | none |
+| `.worktrees/CQ-R12` (`codex/CQ-R12`) | Codex | challenge_runner start, C2 failure and stage entry shortened | Codex | in progress | none | `plans/now/code-health.md` CQ-R12 -- challenge_runner start, C2 failure and stage entry shortened |
