@@ -345,6 +345,8 @@ func _restore_bees(bees: Array) -> Array:
 		var bee: Variant = main.Bee.new()
 		bee.is_queen = bool(entry.get("queen", false))
 		bee.is_gyne = bool(entry.get("gyne", false))
+		# CQ-S0b: setup() takes no orientation flight for a restored bee.
+		bee.is_restored = true
 		# COL-9, additive: a save from before them loads every queen mated
 		# and nothing a drone. Set before the bee enters the tree, so
 		# _ready() draws a drone at his own size.
@@ -411,6 +413,9 @@ func _restore_bees(bees: Array) -> Array:
 		var restored_start := Vector2(float(entry.get("start_x", INF)), float(entry.get("start_y", INF)))
 		if restored_start.x != INF:
 			bee.set_forage_start_point(restored_start, "save_restore")
+			# move_target is unsaved: a forager saved mid-flight heads for her start point.
+			if bee.state == bee.State.MOVE_TO_POINT:
+				bee.move_target = bee.forage_start_point
 		# Older saves have no search_anchor_x/y -- fall back to the
 		# start point just restored above rather than INF, so a save made
 		# before Slice 5 doesn't silently lose her anchor on first load.
