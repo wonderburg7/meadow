@@ -605,11 +605,6 @@ func count_cell_completed() -> void:
 	_cells_completed += 1
 
 
-## Read by the dev-only smoke scenario's early-success condition.
-func cell_completed_count() -> int:
-	return _cells_completed
-
-
 ## Called from bee_building.gd::architect_clean() once a dead larva is
 ## fully cleared out.
 func count_cell_cleaned() -> void:
