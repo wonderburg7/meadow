@@ -1212,30 +1212,3 @@ Selection, drag and placement resolution.
 707  func _tile_centre(hex: Vector2i) -> Vector2
 712  func _draw_start_point_marker(point: Vector2) -> void
 ```
-
-## skills.gd (703 lines)
-
-The skill catalogue and tree layout: ids, names, costs, prerequisites and slots.
-
-```
-45   # --- cost currencies ----------------------------------------------
-76   # --- sectors ------------------------------------------------------
-92   # --- skill ids ----------------------------------------------------
-143  # --- the catalogue ------------------------------------------------
-633  # --- lookups ------------------------------------------------------
-635  static func entry(skill_id: String) -> Dictionary
-641  static func has(skill_id: String) -> bool
-644  static func ids() -> Array
-647  static func label_for(skill_id: String) -> String
-650  static func cost_for(skill_id: String) -> Dictionary
-653  static func is_baseline(skill_id: String) -> bool
-665  static func is_cut(skill_id: String) -> bool
-669  static func is_built(skill_id: String) -> bool
-673  static func for_sector(sector_key: String) -> Array
-676  static func for_sector_tier(sector_key: String, tier: int) -> Array
-681  static func baseline_ids() -> Array
-684  static func sector_keys() -> Array
-690  static func sector_index(sector_key: String) -> int
-696  static func sector_label(sector_key: String) -> String
-702  static func ring_for_tier(tier: int) -> int
-```
