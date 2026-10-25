@@ -9,6 +9,9 @@ const Role = BeeEnums.Role
 const State = BeeEnums.State
 const BeeMovement = preload("res://scripts/bee_movement.gd")
 
+## How close a miner must get to its stand point beside the block.
+const STAND_REACH := 8.0
+
 ## Catalogue finders all take one bee and return whether they started work.
 static func _start_mining(bee: Node2D, block: Node2D, mark: bool = false) -> bool:
 	if block == null:
@@ -56,7 +59,7 @@ static func miner_go_to_site(bee: Node2D, delta: float) -> void:
 		return
 
 	BeeMovement.move_towards(bee, stand_point, delta)
-	if bee.position.distance_to(stand_point) < 8.0:
+	if bee.position.distance_to(stand_point) < STAND_REACH:
 		bee.target_block.claim_miner(bee)
 		bee.state = State.MINING
 
@@ -87,9 +90,7 @@ static func miner_dig(bee: Node2D, delta: float) -> void:
 
 
 static func miner_go_to_exit(bee: Node2D, delta: float) -> void:
-	var exit_point: Vector2 = bee.world.hive_entrance_inside() if bee.world else bee.position
-	BeeMovement.move_towards(bee, exit_point, delta)
-	if bee.position.distance_to(exit_point) < 8.0:
+	if BeeMovement.walk_to_hive_exit(bee, delta):
 		if bee.world:
 			bee.world.move_bee_out_of_hive(bee)
 		bee.timer = GameConfig.dirt_dump_time

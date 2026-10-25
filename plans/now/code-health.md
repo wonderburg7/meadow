@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M8 in the Claude lane (CQ-S0b complete, 25 Oct 2026; CQ-L2 complete, 24 Oct 2026; CQ-L3 waits for both lanes to empty); CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M8 complete, 25 Oct 2026 (CQ-S0b complete, 25 Oct 2026; CQ-L2 complete, 24 Oct 2026; CQ-L3 waits for both lanes to empty); CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-24
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -118,7 +118,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-M5 | CanvasLayer order in scripts/canvas_layers.gd | 10 UI scripts | yes | medium |
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | yes | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
-| CQ-M8 | `BeeMovement.walk_to_hive_exit`; reach distances named | `bee_movement.gd`, 3 bee modules | yes -- block written (CQ-M3 and CQ-L1 landed 22 Oct 2026) | low |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once its section is written (CQ-R7 released `hud.gd` and WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
@@ -331,47 +330,7 @@ CQ-M2 shipped 2026-10-21; its specification is `plans/archive/CQ-M2_2026-10-21.m
 
 CQ-M3 shipped 2026-10-22; its specification is `plans/archive/CQ-M3_2026-10-22.md`.
 
-## CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named
-
-**True now** (22 Oct 2026, after CQ-M3). Three modules walk a bee to the hive door with
-the same three lines: `bee.world.hive_entrance_inside()` (or `bee.position` with no
-world), `BeeMovement.move_towards`, then a `distance_to(exit_point) < 8.0` test.
-They are `bee_foraging.gd::go_to_exit`, `bee_mining.gd::miner_go_to_exit` and
-`bee_building.gd::builder_go_to_waste_exit`. Each module also tests arrival with bare
-reach numbers (`bee_building.gd` 2.0, 8.0, 10.0; `bee_foraging.gd` 6.0;
-`bee_mining.gd` 8.0).
-
-**When done:**
-
-- `BeeMovement.walk_to_hive_exit(bee, delta) -> bool` does the three lines and returns
-  true once the bee is within `EXIT_REACH` (8.0, a named const in `bee_movement.gd`).
-  The three callers use it; what each does on arrival stays where it is.
-- Each module's remaining reach literal becomes a named const at the top of that
-  module (for example `STAND_REACH`, `CELL_REACH`), same value, same behaviour.
-
-**Invariants.** Every value stays the same. No save key, setting or display string
-changes.
-
-```queue
-**[Claude] CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named**
-- Plan: `plans/now/code-health.md` -- "CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named"
-- Files: `scripts/bee_movement.gd`, `scripts/bee_foraging.gd`, `scripts/bee_mining.gd`, `scripts/bee_building.gd`
-- Check: `python tests/source_checks.py` passes; `python tools/prefinish.py` is green; `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/bee_movement.gd :: func walk_to_hive_exit`
-- Next after: FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
-```
-
-CQ-R0 shipped 2026-10-21; its specification is `plans/archive/CQ-R0_2026-10-21.md`.
-
-CQ-R7 shipped 2026-10-22; its specification is `plans/archive/CQ-R7_2026-10-22.md`.
-
-CQ-M9 shipped 2026-10-23; its specification is `plans/archive/CQ-M9_2026-10-23.md`.
-
-CQ-M10 shipped 2026-10-24; its specification is `plans/archive/CQ-M10_2026-10-24.md`.
-
-CQ-R9 shipped 2026-10-24; its specification is `plans/archive/CQ-R9_2026-10-24.md`.
-
-CQ-R12 shipped 2026-10-24; its specification is `plans/archive/CQ-R12_2026-10-24.md`.
+CQ-M8 shipped 2026-10-25; its specification is `plans/archive/CQ-M8_2026-10-25.md`.
 
 ## CQ-M4 -- Challenge level ids named in `levels.gd`
 

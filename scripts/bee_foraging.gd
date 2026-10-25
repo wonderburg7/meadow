@@ -13,6 +13,9 @@ const BeeMovement = preload("res://scripts/bee_movement.gd")
 const BeeStatus = preload("res://scripts/bee_status.gd")
 const CrabSpider = preload("res://scripts/crab_spider.gd")
 
+## How close a forager must get to its flower stand point.
+const STAND_REACH := 6.0
+
 const SCOUT_BOUTS := 3
 ## How many of a recruited bee's (and her mentor's) trips get logged
 ## against their pre-match rate -- see wait_at_entrance's match branch and
@@ -888,7 +891,7 @@ static func approach_cell(bee: Node2D, cell: Node2D, delta: float) -> int:
 		bee.slot_cell = cell
 	var stand_point: Vector2 = cell.slot_position(bee.cell_slot)
 	BeeMovement.move_towards(bee, stand_point, delta)
-	return 1 if bee.position.distance_to(stand_point) < 6.0 else 0
+	return 1 if bee.position.distance_to(stand_point) < STAND_REACH else 0
 
 
 static func release_cell_slot(bee: Node2D) -> void:
@@ -1138,9 +1141,7 @@ static func go_to_exit(bee: Node2D, delta: float) -> void:
 		bee.state = State.SHELTERING
 		return
 
-	var exit_point: Vector2 = bee.world.hive_entrance_inside() if bee.world else bee.position
-	BeeMovement.move_towards(bee, exit_point, delta)
-	if bee.position.distance_to(exit_point) < 8.0:
+	if BeeMovement.walk_to_hive_exit(bee, delta):
 		# Auto-recruitment: a scout with a matching mentor, or a bee whose
 		# own rate has drifted outside the recruitment band, waits here
 		# rather than walking back out -- see wait_at_entrance. This is the
