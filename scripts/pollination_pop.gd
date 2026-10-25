@@ -56,13 +56,6 @@ func show_at(flower: Node2D) -> void:
 	set_process(true)
 	queue_redraw()
 
-func active_count() -> int:
-	var count := 0
-	for age in _ages:
-		if age < LIFETIME:
-			count += 1
-	return count
-
 func _process(delta: float) -> void:
 	var any := false
 	for i in POOL:

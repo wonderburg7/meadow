@@ -39,14 +39,6 @@ func build_left_window(min_width: float) -> void:
 	panel.offset_left = UiLayout.SELECTION_TRAY_LEFT_MARGIN
 	add_to_group("left_window")
 
-## Top-right anchoring for windows opened from the button bar.
-func build_top_right_window(min_width: float, top: float, right: float) -> void:
-	_build_panel(min_width)
-	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	panel.offset_top = top
-	panel.offset_right = right
-
 func _build_panel(min_width: float) -> void:
 	panel = PanelContainer.new()
 	panel.theme = UiTheme.build_theme()
