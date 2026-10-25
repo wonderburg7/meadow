@@ -63,14 +63,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] L-37 -- the guard hook lets `git show`/`git grep` read archived plans**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-37 -- the guard hook lets `git show`/`git grep` read archived plans"
-   - Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`
-   - Check: `python -m unittest tests.test_guard_hook` passes with new cases: `git show HEAD:plans/archive/x.md`, `git grep -n L-31 HEAD -- plans/archive` and `git commit -m "see plans/archive/x"` are allowed; `Get-Content plans/archive/x.md`, `cat docs/archive/x.md`, `rg foo _backups` and `ls .godot` are still denied; `.\tools\verify.ps1` is green
-   - Proof: `absent: tools/guard_hook.py :: def _reads_tree`
-   - Next after: L-38 -- count worker product edits from worktree-relative shell commands
-
-2. **[Codex] L-38 -- count worker product edits from worktree-relative shell commands**
+1. **[Codex] L-38 -- count worker product edits from worktree-relative shell commands**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-38 -- count worker product edits from worktree-relative shell commands"
    - Files: `tools/session_cost.py`, `tests/test_session_cost_scope.py`
    - Check: `python -m unittest tests.test_session_cost_scope` passes, including `cd .worktrees/L-38; sed -i ... tools/session_cost.py`, `cd .worktrees/L-38; cp ... scripts/bee.gd`, established worktree cwd, and read-only/non-product countercases; `python tools/session_cost.py --phases` reports the worker count when transcripts are available

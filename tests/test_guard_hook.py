@@ -65,6 +65,29 @@ class GuardHookTest(unittest.TestCase):
             with self.subTest(denied_path=denied_path):
                 self.assert_denied(f"Get-Content {denied_path}/state.txt", "denied path")
 
+    def test_denies_tree_readers_on_denied_paths(self) -> None:
+        for command in (
+            "Get-Content plans/archive/x.md",
+            "cat docs/archive/x.md",
+            "rg foo _backups",
+            "ls .godot",
+        ):
+            with self.subTest(command=command):
+                self.assert_denied(command, "denied path")
+
+    def test_allows_history_and_path_mentions(self) -> None:
+        for command in (
+            "git show HEAD:plans/archive/x.md",
+            "git grep -n L-31 HEAD -- plans/archive",
+            'git commit -m "see plans/archive/x"',
+            "git log -- plans/archive",
+            "echo plans/archive/x.md",
+        ):
+            with self.subTest(command=command):
+                returncode, output = self.run_hook(command)
+                self.assertEqual(returncode, 0)
+                self.assertEqual(output, {})
+
     def test_allows_ordinary_commands_and_cd_setup(self) -> None:
         for command in ("git status", "python tools/heading.py plans/now/example.md heading", "cd .worktrees/L-34 && git status"):
             with self.subTest(command=command):
