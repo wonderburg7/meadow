@@ -46,6 +46,7 @@ DESCRIPTIONS = {
     "scenario_actions.gd": "The headless verbs, `when` clauses and layout assertions.",
     "game_config.gd": "The balance fields.",
     "input_selection.gd": "Selection, drag and placement resolution.",
+    "skills.gd": "The skill catalogue and tree layout: ids, names, costs, prerequisites and slots.",
 }
 
 # Only top-level (column-0) section headers and function definitions --
