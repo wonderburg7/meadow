@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/HS-1` (`claude/HS-1`) | Claude | Mighty Mandible joins the skill tree | Claude | in progress | none | `plans/now/hard-soil.md` HS-1 -- Mighty Mandible joins the skill tree |
