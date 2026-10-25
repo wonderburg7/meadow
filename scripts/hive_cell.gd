@@ -276,8 +276,21 @@ var hatch_focus: String = "nectar"
 var hatch_automine: bool = false
 ## Set from the cell popup: the queen lays a gyne into this cell rather
 ## than a worker. Costs her far more pollen and takes several times as
-## long to raise, so it's a deliberate choice per cell.
-var hatch_gyne: bool = false
+## long to raise, so it's a deliberate choice per cell. A cell carries at
+## most one mark, so setting it clears hatch_drone.
+var hatch_gyne: bool = false:
+	set(value):
+		hatch_gyne = value
+		if value:
+			hatch_drone = false
+## DR-1. The queen lays a drone into this cell, mated or not, at a worker
+## egg's cost. A setting of the cell like hatch_gyne, so it outlasts the
+## larva in it; setting it clears hatch_gyne. Saved; false in an older save.
+var hatch_drone: bool = false:
+	set(value):
+		hatch_drone = value
+		if value:
+			hatch_gyne = false
 ## PP-5. Set from the cell popup's "Feed first" box once Priority cells is
 ## owned: nurses choosing a hungry larva take one in a marked cell before any
 ## other (bee_nursery.gd::choose_brood_cell). A setting of the cell, like
@@ -515,6 +528,10 @@ func _overlay_colour() -> Array:
 				return [Color(0.24, 0.24, 0.26), ""]
 			if hatch_gyne:
 				return [GYNE_BROOD_COLOR, "G"]
+			# DR-1: tagged, in the unset grey. Its own colour is DR-2's to
+			# choose: bee.gd's DRONE_COLOUR sits too close to bee bread's.
+			if hatch_drone:
+				return [Color(0.62, 0.62, 0.66), "D"]
 			if hatch_role < 0:
 				return [Color(0.62, 0.62, 0.66), "?"]
 			return [Roles.colour_for(hatch_role, hatch_focus), Roles.tag_for_key(Roles.count_key(hatch_role, hatch_focus))]

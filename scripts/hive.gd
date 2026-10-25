@@ -393,7 +393,7 @@ func find_empty_cell() -> Node2D:
 	for cell: Variant in cells:
 		if not is_instance_valid(cell) or not cell.is_nursery_cell():
 			continue
-		if cell.hatch_role >= 0 or cell.hatch_gyne:
+		if cell.hatch_role >= 0 or cell.hatch_gyne or cell.hatch_drone:
 			configured.append(cell)
 		else:
 			unset.append(cell)
@@ -510,6 +510,8 @@ func zone_summary() -> Dictionary:
 		var key: String = "unset"
 		if cell.hatch_gyne:
 			key = "gyne"
+		elif cell.hatch_drone:
+			key = "drone"
 		elif cell.hatch_role == 0:
 			key = Roles.count_key(cell.hatch_role, cell.hatch_focus)
 		elif cell.hatch_role > 0:

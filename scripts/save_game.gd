@@ -220,6 +220,8 @@ static func _cells_data(world: Node2D) -> Array:
 			"hatch_automine": cell.hatch_automine,
 			"hatch_locked": cell.hatch_role_locked,
 			"hatch_gyne": cell.hatch_gyne,
+			# DR-1, additive: the drone mark.
+			"hatch_drone": cell.hatch_drone,
 			# PP-5, additive: the "Feed first" mark.
 			"priority_cell": cell.priority_cell,
 			"priority": cell.nursery_priority,
