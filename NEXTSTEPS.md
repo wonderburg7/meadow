@@ -103,9 +103,9 @@ One line each: the id, its plan, and the single thing it waits for.
 - **RR-16** (`plans/now/run-repairs.md`) -- the queen can resume building a part-built cell; waits for DR-1, which owns `scripts/orders_zones.gd`.
 - **RR-17** (`plans/now/run-repairs.md`) -- a queen on comb work discards sour nectar on command; waits for which owns `scripts/bee.gd`.
 - **FR-4** (`plans/now/forager-recruitment.md`) -- a headless assertion replaces the C-143 hands-on check; waits for DR-1, which owns `scripts/scenario_actions.gd`.
-- **T2-15** (`plans/now/tier-two.md`) -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked; waits for DR-1 and CQ-M8, which own `scripts/hive.gd` and `scripts/bee_building.gd`.
-- **RR-19** (`plans/now/run-repairs.md`) -- comb workers seal and unseal cells over time; waits for DR-1 and CQ-M8, which own `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd` and `scripts/bee_building.gd`.
-- **RR-20** (`plans/now/run-repairs.md`) -- a comb worker carrying a body leaves, stays out one second, and comes back; waits for CQ-M8, which owns `scripts/bee_building.gd` and `scripts/bee_movement.gd`.
+- **T2-15** (`plans/now/tier-two.md`) -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked; waits for DR-1 and which own `scripts/hive.gd` and `scripts/bee_building.gd`.
+- **RR-19** (`plans/now/run-repairs.md`) -- comb workers seal and unseal cells over time; waits for DR-1 and which own `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd` and `scripts/bee_building.gd`.
+- **RR-20** (`plans/now/run-repairs.md`) -- a comb worker carrying a body leaves, stays out one second, and comes back; waits for which owns `scripts/bee_building.gd` and `scripts/bee_movement.gd`.
 - **RR-21** (`plans/now/run-repairs.md`) -- no ordinary rain in the first two days, and rain warnings in plain words; waits for SG-4, which owns `scripts/main.gd`.
 - **RR-22** (`plans/now/run-repairs.md`) -- select a number of bees from a multi-selection; waits for GP-5 and SG-4, which own `scripts/hud.gd` and `scripts/main.gd`.
 - **CT-1** (`plans/now/cell-content-tones.md`) -- cells and their caps take a faint tone of their contents (Dave, 24 Oct 2026); waits for DR-1, which owns `scripts/hive_cell.gd` and `scripts/scenario_actions.gd`.
