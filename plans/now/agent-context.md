@@ -1,7 +1,7 @@
 # Agent context -- boundary rules that load themselves
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: AC-1 -- every rule glob matches a file (Claude backlog; the lane is full) | Dependency: AC-4 waits for FR-2 (`plans/now/forager-recruitment.md`); AC-1 to AC-3 share no file with either lane | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: AC-2 -- `.claude/rules/ui.md` loads with the UI scripts (Claude lane) | Dependency: AC-4 waits for FR-2 (`plans/now/forager-recruitment.md`); AC-1 to AC-3 share no file with either lane | Verified: 2026-10-24
 
 ## Objective
 
@@ -67,7 +67,6 @@ Both are recommendations awaiting Dave; neither blocks AC-1 to AC-3.
 
 | Slice | What | Files | Level | Depends on |
 | --- | --- | --- | --- | --- |
-| AC-1 | every rule glob matches a file; a rule file over 100 lines warns | `tools/check_docs.py`, `tests/test_rule_globs.py` | low | none |
 | AC-2 | `.claude/rules/ui.md` loads with the UI scripts | `.claude/rules/ui.md`, `plans/reference/ui-rules.md` | low | AC-1 (its check proves the globs) |
 | AC-3 | `.claude/rules/headless.md` loads with the harness | `.claude/rules/headless.md`, `docs/headless-run-contract.md` | low | AC-1 |
 | AC-4 | the Foraging card follows FR-2 | `GAME_MODEL.md` | low | FR-2 ships |
@@ -81,48 +80,7 @@ opened, read-only or not. Each new rule stays under 40 lines including its
 front matter, points to the long document by heading instead of copying it,
 and states each boundary in one line.
 
-## AC-1 -- every rule glob matches a file
-
-Level: low.
-
-**True now.** Nothing checks that a `paths:` glob in `.claude/rules/*.md`
-still matches a file. A rename, or a new file outside the glob, silently
-stops a rule loading, and no session notices because the rule simply never
-appears.
-
-**Done when.** `tools/check_docs.py` has `check_rule_globs(errors, warnings)`,
-called from `main()` after `check_backticked_paths(errors)`. For each
-`.claude/rules/*.md` it reads the front matter between the first two `---`
-lines; a file with no `paths:` list is an error; each listed glob that
-matches no file under `ROOT` (`ROOT.glob(pattern)`) is an error naming the
-rule and the glob; a rule file longer than 100 lines is a warning (the
-largest today, `simulation.md`, is 97).
-
-**Where to look.** `tools/check_docs.py`: `main()` and
-`check_backticked_paths` for the pattern (`python tools/func.py
-tools/check_docs.py main check_backticked_paths`). For the test shape,
-`tests/test_source_checks.py`'s `QueueSchemaChecksTest`, which sets
-`check_docs.ROOT` to a temporary folder.
-
-**Where not to look.** Do not edit any `.claude/rules/*.md`, and do not
-read `tests/test_source_checks.py` past the one test class named above.
-`verify.ps1` finds `tests/test_*.py` by itself; do not add the new module to
-it.
-
-**Test.** `tests/test_rule_globs.py`: a rule whose glob matches a file
-passes; one whose glob matches nothing is an error naming it; one with no
-front matter is an error; a 101-line rule warns; the real repository passes.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] AC-1 -- every rule glob matches a file**
-- Plan: `plans/now/agent-context.md` -- "AC-1 -- every rule glob matches a file"
-- Files: `tools/check_docs.py`, `tests/test_rule_globs.py`
-- Check: `python -m unittest tests.test_rule_globs` passes (a dead glob and a missing front matter are errors, a 101-line rule warns, the real repository is clean); `python tools/check_docs.py` passes; `.\tools\verify.ps1` is green
-- Proof: `absent: tools/check_docs.py :: def check_rule_globs`
-- Next after: AC-2 -- `.claude/rules/ui.md` loads with the UI scripts
-```
+AC-1 shipped 2026-10-25; its specification is `plans/archive/AC-1_2026-10-25.md`.
 
 ## AC-2 -- `.claude/rules/ui.md` loads with the UI scripts
 
