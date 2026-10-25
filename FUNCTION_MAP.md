@@ -992,7 +992,7 @@ restart.
 1191 func _restart() -> void
 ```
 
-## diagnostic_log.gd (1,178 lines)
+## diagnostic_log.gd (1,173 lines)
 
 The session JSONL writer, counters and capture profiles.
 
@@ -1039,50 +1039,49 @@ The session JSONL writer, counters and capture profiles.
 593  func count_jelly_batch() -> void
 598  func count_larval_death() -> void
 604  func count_cell_completed() -> void
-609  func cell_completed_count() -> int
-615  func count_cell_cleaned() -> void
-622  func count_cell_evicted() -> void
-628  func count_cell_restocked() -> void
-634  func count_block_mined() -> void
-640  func count_honey_batch_deposited() -> void
-646  func count_cell_ripened() -> void
-650  # --- player actions and commands ----------------------------------
-655  func log_action(do: String, target_desc: String, result: String, reason: String) -> void
-671  func log_command_issue(selected_count: int, commandable_count: int, branch: String,
-700  func log_selection_panels_hidden(source: String, shown_count: int, selected_count: int) -> void
-712  # --- reading events back ------------------------------------------
-720  func event_count(type: String, subtype: String = "") -> int
-766  # --- the per-frame tick and session end ---------------------------
-771  func tick(delta: float, world: Node2D) -> void
-807  func _sample_nectar_age_on_day_change(world: Node2D) -> void
-840  func _nectar_age_summary() -> Dictionary
-850  func end_session(outcome: String) -> void
-908  # --- configuration ------------------------------------------------
-909  func session_path() -> String
-913  func set_queen_alive(alive: bool) -> void
-917  func configure_scenario_diagnostics(raw: Variant) -> bool
-926  func configure_performance_capture(config: Dictionary) -> void
-930  func effective_diagnostics() -> Dictionary
-936  func _snapshot_interval() -> float
-949  func _selected_snapshot(world: Node2D) -> Dictionary
-955  # --- building entries -----------------------------------------------
-959  func _config_snapshot() -> Dictionary
-967  # --- the snapshot -------------------------------------------------
-968  func _snapshot(world: Node2D) -> Dictionary
-977  func _population_section(bees: Array) -> Dictionary
-992  func _resources_section(world: Node2D) -> Dictionary
-999  func _cells_section(hive: Node2D) -> Dictionary
-1016 func _environment_section(world: Node2D) -> Dictionary
-1024 func _foraging_section(world: Node2D, bees: Array) -> Dictionary
-1055 func _crab_spider_section(world: Node2D) -> Dictionary
-1065 func _role_outcomes_section(world: Node2D) -> Dictionary
-1094 func _performance_snapshot(world: Node2D) -> Dictionary
-1111 func _rate(world: Node2D, key: String) -> float
-1123 # --- writing to disk ----------------------------------------------
-1127 func _current_day() -> int
-1131 func _prune_old_sessions() -> void
-1149 func _write(entry: Dictionary) -> void
-1158 func _capture_entry(entry: Dictionary) -> bool
+610  func count_cell_cleaned() -> void
+617  func count_cell_evicted() -> void
+623  func count_cell_restocked() -> void
+629  func count_block_mined() -> void
+635  func count_honey_batch_deposited() -> void
+641  func count_cell_ripened() -> void
+645  # --- player actions and commands ----------------------------------
+650  func log_action(do: String, target_desc: String, result: String, reason: String) -> void
+666  func log_command_issue(selected_count: int, commandable_count: int, branch: String,
+695  func log_selection_panels_hidden(source: String, shown_count: int, selected_count: int) -> void
+707  # --- reading events back ------------------------------------------
+715  func event_count(type: String, subtype: String = "") -> int
+761  # --- the per-frame tick and session end ---------------------------
+766  func tick(delta: float, world: Node2D) -> void
+802  func _sample_nectar_age_on_day_change(world: Node2D) -> void
+835  func _nectar_age_summary() -> Dictionary
+845  func end_session(outcome: String) -> void
+903  # --- configuration ------------------------------------------------
+904  func session_path() -> String
+908  func set_queen_alive(alive: bool) -> void
+912  func configure_scenario_diagnostics(raw: Variant) -> bool
+921  func configure_performance_capture(config: Dictionary) -> void
+925  func effective_diagnostics() -> Dictionary
+931  func _snapshot_interval() -> float
+944  func _selected_snapshot(world: Node2D) -> Dictionary
+950  # --- building entries -----------------------------------------------
+954  func _config_snapshot() -> Dictionary
+962  # --- the snapshot -------------------------------------------------
+963  func _snapshot(world: Node2D) -> Dictionary
+972  func _population_section(bees: Array) -> Dictionary
+987  func _resources_section(world: Node2D) -> Dictionary
+994  func _cells_section(hive: Node2D) -> Dictionary
+1011 func _environment_section(world: Node2D) -> Dictionary
+1019 func _foraging_section(world: Node2D, bees: Array) -> Dictionary
+1050 func _crab_spider_section(world: Node2D) -> Dictionary
+1060 func _role_outcomes_section(world: Node2D) -> Dictionary
+1089 func _performance_snapshot(world: Node2D) -> Dictionary
+1106 func _rate(world: Node2D, key: String) -> float
+1118 # --- writing to disk ----------------------------------------------
+1122 func _current_day() -> int
+1126 func _prune_old_sessions() -> void
+1144 func _write(entry: Dictionary) -> void
+1153 func _capture_entry(entry: Dictionary) -> bool
 ```
 
 ## game_config.gd (1,015 lines)
