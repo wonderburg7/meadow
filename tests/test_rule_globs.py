@@ -68,6 +68,38 @@ class RuleGlobsTests(unittest.TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIn("paths:", errors[0])
 
+    def test_inline_scalar_paths_passes(self) -> None:
+        self.write_rule("inline.md", '---\npaths: "scripts/bee*.gd"\n---\nBody.\n')
+        errors, warnings = self.run_check()
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
+
+    def test_inline_scalar_paths_dead_glob_is_an_error(self) -> None:
+        self.write_rule("inline_dead.md", "---\npaths: scripts/hive*.gd\n---\nBody.\n")
+        errors, _ = self.run_check()
+        self.assertEqual(len(errors), 1)
+        self.assertIn("inline_dead.md", errors[0])
+        self.assertIn("scripts/hive*.gd", errors[0])
+
+    def test_inline_list_paths_reports_only_the_dead_glob(self) -> None:
+        self.write_rule("list.md", '---\npaths: ["scripts/bee*.gd", "scripts/nope*.gd"]\n---\nBody.\n')
+        errors, _ = self.run_check()
+        self.assertEqual(len(errors), 1)
+        self.assertIn("scripts/nope*.gd", errors[0])
+        self.assertNotIn("scripts/bee*.gd", errors[0])
+
+    def test_inline_list_with_only_matching_globs_passes(self) -> None:
+        self.write_rule("list_ok.md", "---\npaths: [scripts/bee*.gd]\n---\nBody.\n")
+        errors, warnings = self.run_check()
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
+
+    def test_bare_paths_key_is_an_error(self) -> None:
+        self.write_rule("bare_key.md", "---\npaths:\n---\nBody.\n")
+        errors, _ = self.run_check()
+        self.assertEqual(len(errors), 1)
+        self.assertIn("paths: list", errors[0])
+
     def test_rule_over_100_lines_warns(self) -> None:
         text = rule_text(["scripts/bee*.gd"])
         long_text = text + "".join(f"Line {n}.\n" for n in range(101 - len(text.splitlines())))

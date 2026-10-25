@@ -1070,9 +1070,18 @@ def check_backticked_paths(errors: list[str]) -> None:
 RULE_LINE_LIMIT = 100
 
 
+def _unquote(item: str) -> str:
+    return item.strip().strip("\"'")
+
+
 def rule_front_matter_globs(text: str) -> list[str] | None:
     """The `paths:` globs between a rule's first two `---` lines, or None when
-    the file has no front matter at all."""
+    the file has no front matter at all.
+
+    Claude Code accepts three spellings of the list: a block list (`- glob`
+    lines under `paths:`), an inline scalar (`paths: "a/**/*.gd"`) and an
+    inline list (`paths: ["a", "b"]`). All three load the rule, so all three
+    are read here."""
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
         return None
@@ -1083,9 +1092,15 @@ def rule_front_matter_globs(text: str) -> list[str] | None:
     in_paths = False
     for line in lines[1:closing[0]]:
         if line.startswith("paths:"):
-            in_paths = True
+            inline = line[len("paths:"):].strip()
+            in_paths = not inline
+            if inline.startswith("["):
+                globs.extend(_unquote(item) for item in inline.strip("[]").split(",")
+                             if item.strip())
+            elif inline:
+                globs.append(_unquote(inline))
         elif in_paths and line.lstrip().startswith("- "):
-            globs.append(line.lstrip()[2:].strip().strip('"\''))
+            globs.append(_unquote(line.lstrip()[2:]))
         elif line.strip():
             in_paths = False
     return globs
