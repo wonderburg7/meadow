@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight**
-   - Plan: `plans/now/forager-recruitment.md` -- "FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight"
-   - Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/bee.gd`, `scripts/skill_tree_panel.gd`, `scripts/levels.gd`, `tests/source_checks.py`, `test_scenarios/pp2_points_spendable.json`, `test_scenarios/fr2_auto_scouting_test.json`, `tests/test_fr2_auto_scouting.py`
-   - Check: `python -m unittest tests.test_fr2_auto_scouting` passes (Auto scouting bought after Orientation flight: scouts settle and no orientation flight runs); `python tools/run_scenario.py test_scenarios/pp2_points_spendable.json` and `test_scenarios/ap8_bought_orientation_test.json` pass; `python tests/source_checks.py` passes its grid check with Auto scouting at (5, -1) and Auto-recruitment at (9, -1); `python tools/prefinish.py` and `.\tools\verify.ps1` are green
-   - Proof: `absent: scripts/bee_foraging.gd :: static func scouting_on`
-   - Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
-
-2. **[Claude] HS-1 -- Mighty Mandible joins the skill tree**
+1. **[Claude] HS-1 -- Mighty Mandible joins the skill tree**
    - Plan: `plans/now/hard-soil.md` -- "HS-1 -- Mighty Mandible joins the skill tree"
    - Files: `scripts/skills.gd`, `plans/design/progression.md`
    - Check: `.\tools\verify.ps1` is green, including the skill-catalogue and tree-layout checks. Hands-on: none needed -- HS-2 files the check that covers the skill.
    - Proof: `absent: scripts/skills.gd :: skill.colony.mighty_mandible`
    - Next after: HS-2
 
-3. **[Claude] AC-1 -- every rule glob matches a file**
+2. **[Claude] AC-1 -- every rule glob matches a file**
    - Plan: `plans/now/agent-context.md` -- "AC-1 -- every rule glob matches a file"
    - Files: `tools/check_docs.py`, `tests/test_rule_globs.py`
    - Check: `python -m unittest tests.test_rule_globs` passes (a dead glob and a missing front matter are errors, a 101-line rule warns, the real repository is clean); `python tools/check_docs.py` passes; `.\tools\verify.ps1` is green
    - Proof: `absent: tools/check_docs.py :: def check_rule_globs`
    - Next after: AC-2 -- `.claude/rules/ui.md` loads with the UI scripts
 
-4. **[Claude] AC-2 -- `.claude/rules/ui.md` loads with the UI scripts**
+3. **[Claude] AC-2 -- `.claude/rules/ui.md` loads with the UI scripts**
    - Plan: `plans/now/agent-context.md` -- "AC-2 -- `.claude/rules/ui.md` loads with the UI scripts"
    - Files: `.claude/rules/ui.md`, `plans/reference/ui-rules.md`
    - Check: `python -m unittest tests.test_rule_globs` passes with the new rule's six globs each matching a file; `.claude/rules/ui.md` is under 40 lines; `python tools/check_docs.py` passes
    - Proof: `absent: plans/reference/ui-rules.md :: .claude/rules/ui.md`
    - Next after: AC-3 -- `.claude/rules/headless.md` loads with the harness
 
-5. **[Claude] AC-3 -- `.claude/rules/headless.md` loads with the harness**
+4. **[Claude] AC-3 -- `.claude/rules/headless.md` loads with the harness**
    - Plan: `plans/now/agent-context.md` -- "AC-3 -- `.claude/rules/headless.md` loads with the harness"
    - Files: `.claude/rules/headless.md`, `docs/headless-run-contract.md`
    - Check: `python -m unittest tests.test_rule_globs` passes with the new rule's six globs each matching a file; `.claude/rules/headless.md` is under 40 lines; `python tools/check_docs.py` passes
    - Proof: `absent: docs/headless-run-contract.md :: .claude/rules/headless.md`
    - Next after: AC-4 -- the Foraging card follows FR-2
+
+5. **[Claude] SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved**
+   - Plan: `plans/now/short-term-goals.md` -- "SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved"
+   - Files: `scripts/short_term_goals.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/conditions.gd`, `scripts/hive.gd`, `scripts/bee_honey.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/sg2_short_term_goals.json`, `tests/test_sg2_short_term_goals.py`
+   - Check: `python -m unittest tests.test_sg2_short_term_goals` passes (in a Colony Run with no pollen income the pollen goal is offered, and finishing it pays pollen worth about a quarter of a day's gross income; "Lay in honey for winter" can finish before the countdown's last day while the CR-2 winter milestone still waits for it; no goal is offered in Challenge 1 or 2; offered and finished goals survive save and restore; an old save loads with none); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/save_game.gd :: short_term_goals`
+   - Next after: SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss
 
 ### Codex lane
 
