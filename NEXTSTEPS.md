@@ -70,11 +70,20 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `absent: tools/session_cost.py :: def _shell_product_edit`
    - Next after: none -- agent-lifecycle plan complete
 
+2. **[Codex] CQ-R11 -- split flower seeding without changing RNG order**
+   - Plan: `plans/now/code-health.md` -- "CQ-R11 -- split flower seeding without changing RNG order"
+   - Files: `scripts/world_building.gd`, `FUNCTION_MAP.md`
+   - Check: `python tools/equivalence.py test_scenarios/sf1_founding_flower_mix_test.json master`, `python tools/equivalence.py test_scenarios/pp4_seed_set.json master` and `python tools/equivalence.py test_scenarios/pp1_pollination_ledger.json master` report no differences; `python tools/prefinish.py` passes
+   - Proof: `present: scripts/world_building.gd :: func _seed_flower(`
+   - Next after: CQ-R6 -- extract the HUD bee-command rows
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
+- **CQ-R6** (`plans/now/code-health.md`) -- extract the HUD bee-command rows after CQ-R11; waits for the Claude lane's GP-5 to release `scripts/hud.gd`.
+- **CQ-M4** (`plans/now/code-health.md`) -- name Challenge level ids; waits for the Claude lane to release `scripts/save_game.gd` and `scripts/saving.gd`.
 - **RR-12** (`plans/now/run-repairs.md`) -- a loaded run keeps its readout history (Dave, 16 Oct 2026); waits for ED-3, the last of the alpha chain, which shares `scripts/main.gd` and the save files.
 - **SP-8a** (`plans/now/meadow-terrain.md`) -- the meadow floor drawn in blocks, with everything on it lifted (Dave, 12 Oct 2026); waits for ED-3, the last of the alpha chain (SG-2 to ED-3; WP-2 landed 21 Oct 2026 and WP-3 landed 22 Oct 2026), which shares `scripts/main.gd` and the save files (Dave, 16 Oct 2026).
 - **HM-2** (`plans/now/hive-and-menu-art.md`) -- five top-bar buttons drawn from Dave's menu icons; waits for Dave to queue it (his call, 13 Oct 2026); its gated block is written.
