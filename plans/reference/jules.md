@@ -92,40 +92,6 @@ it, like `tools/heading.py`.
 
 ## Tasks
 
-### J-10 -- Remove `Shapes.arc_points`
-
-- Files: scripts/shapes.gd
-- After: none
-- Why: `tools/uncalled.py` reports it with no caller (24 Oct 2026), and no
-  plan or review names it.
-- Do: delete that one function and nothing else; the proof is the caller
-  grep from step 5 on `origin/master`, plus `git grep -n -w arc_points --
-  plans docs` finding nothing.
-
-### J-11 -- Remove `UiLayout.gallerin_reserve_width`
-
-- Files: scripts/ui_layout.gd
-- After: none
-- Why: `tools/uncalled.py` reports it with no caller (24 Oct 2026); only
-  archived plans name it, as shipped history.
-- Do: delete that one function and nothing else; the proof is the caller
-  grep from step 5 on `origin/master`.
-
-### J-12 -- Guard bare `[]` assigned to another script's typed array
-
-- Files: tools/typed_array_assign_check.py (new), tests/test_typed_array_assign_check.py (new)
-- After: none
-- Why: `docs/known-pitfalls.md`, "A typed `Array[T]` property can't take a
-  bare `[]` from outside its class" -- it throws at runtime on the first
-  call, and nothing in `tests/` catches it.
-- Do: collect every `var NAME: Array[...]` property declared in
-  `scripts/**/*.gd`, then report each `<expr>.NAME = []` in a *different*
-  file (an assignment inside the declaring file is fine). Exit 1 on a hit
-  with file, line and the declaring script; exit 0 otherwise. It must pass
-  on `origin/master`; prove it by adding a `bee.known_patches = []` line to
-  a fixture in the test and showing it fails. Cover `Dictionary[K, V]`
-  properties the same way (the pitfall names both).
-
 ### J-13 -- Remove `Availability.is_suppressed` and `Availability.resource_query`
 
 - Files: scripts/availability.gd
@@ -183,6 +149,52 @@ it, like `tools/heading.py`.
   them back, then check a missing and a corrupt file; check `module_file`
   and `local_imports` on a small temporary package; check `default_workers`
   is at least one. Tests only.
+
+### J-18 -- Unit tests for `tools/refill_lane.py`'s queue-text helpers
+
+- Files: tests/test_refill_lane_helpers.py (new)
+- After: none
+- Why: no test names `queued_ids`, `deferred_ids`, `capacity_deferrals`,
+  `clear_deferral`, `lane_files`, `gated_reason` or `append_item` (25 Oct
+  2026); `finish` refills both lanes with them after every merge.
+- Do: build a small `NEXTSTEPS.md`-shaped string in the test with a Claude
+  lane, a Codex lane and a deferral, copying its shape from the real file.
+  Check `queued_ids` returns each lane's ids in order, `deferred_ids` and
+  `capacity_deferrals` find the deferral, `clear_deferral` removes only
+  that one, `lane_files` keeps each lane's files apart, and `gated_reason`
+  gives an empty and a non-empty answer. Never read or write the real
+  `NEXTSTEPS.md`. Tests only: a bug in `refill_lane.py` is a Follow-up.
+
+### J-19 -- Unit tests for `tools/check_docs.py`'s queue checks that take text
+
+- Files: tests/test_check_docs_queue_helpers.py (new)
+- After: none
+- Why: no test names `check_queue_files`, `check_queue_admission` or
+  `proof_error_is_shape` (25 Oct 2026); they are what makes a bad queue item
+  fail `check_docs.py` instead of reaching a slice.
+- Do: pass each one a queue string built in the test, never the real
+  `NEXTSTEPS.md`: one well-formed item that adds no error, and one item
+  missing what the check looks for that adds one. For
+  `proof_error_is_shape`, one error string it accepts and one it rejects.
+  A check that needs the real plans folder to run is left out and named
+  under "Follow-ups". Tests only.
+
+### J-20 -- Unit tests for `tools/jules_preflight.py`'s git helpers
+
+- Files: tests/test_jules_preflight_git.py (new)
+- After: none
+- Why: `tests/test_jules_preflight.py` does not name `open_branches`,
+  `branch_files`, `is_done`, `is_taken` or `planned_mentions` (25 Oct
+  2026); they decide which task Jules is given next.
+- Do: in a temporary directory, make a bare repository and a clone of it
+  (they read `git branch -r`, so the branch must be on that clone's
+  `origin`). On `master`, commit once with a subject starting `J-2:`; push a
+  `jules/j-1-x` branch that adds one file; fetch. Pass the clone as `root`
+  and `origin/master` as `base`. Check `open_branches` and `branch_files` see
+  the branch and its file, `is_taken` is true for J-1 and false for J-2, and
+  `is_done` is true for J-2 and false for J-1. Build each `Task` with
+  `parse_tasks` from a two-task string. Never touch the real repository or
+  its remote. Tests only.
 
 ### Not tasks yet
 

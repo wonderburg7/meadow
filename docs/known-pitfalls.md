@@ -175,6 +175,8 @@ of these has bitten more than once:
   `plans/archive/HANDS_ON_FIXES_2026-08-31.md` Slice A1) — worth a beat of
   suspicion for any other `Array[T]`/`Dictionary[K,V]`-typed field a
   restore/deserialize path resets wholesale from outside its class.
+  `tools/typed_array_assign_check.py` now fails the unit run on the
+  literal form (`<expr>.name = []` or `= {}` in another file; J-12).
 - **A leftover line surviving a multi-step edit.** Fixing a comment
   during one `Edit` call, then fixing the code again in a second call
   a few turns later, left a stray line from the first version sitting
