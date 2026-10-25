@@ -116,6 +116,7 @@ const COMB_WORKER := "skill.colony.comb_worker"
 const MINER := "skill.colony.miner"
 const FERMENTATION_SENSE := "skill.colony.fermentation_sense"
 const RESTOCKING := "skill.colony.restocking"
+const MIGHTY_MANDIBLE := "skill.colony.mighty_mandible"
 const CELL_PRIORITY := "skill.colony.cell_priority"
 
 const THREAT_DETECTION := "skill.defence.threat_detection"
@@ -400,6 +401,15 @@ const SKILLS := [
 		"requires_previous_tier": true, "all_of": [COMB_WORKER], "any_of": [],
 		"feature": "", "introduced_by": "", "effects": [], "icon": "",
 		"status": "existing", "baseline": false, "open": false,
+	},
+	{
+		"id": MIGHTY_MANDIBLE, "name": "Mighty Mandible",
+		"description": "Miners learn to chew through the stony soil that rings the hive's outer half. It is slow going, but it opens up the deep ground.",
+		"sector": "colony", "tier": 3, "axial": Vector2i(1, -7),
+		"max_rank": 1, "cost": {BEE_BREAD: 10, HONEY: 40, POLLEN: 120},
+		"requires_previous_tier": true, "all_of": [MINER], "any_of": [],
+		"feature": "", "introduced_by": "", "effects": [], "icon": "",
+		"status": "new", "baseline": false, "open": false,
 	},
 
 	# --- Defence --------------------------------------------------
