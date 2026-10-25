@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/DR-1` (`claude/DR-1`) | Claude | a mated queen lays drones in cells marked for them, saved | Claude | in progress | none | `plans/now/drones.md` DR-1 -- a mated queen lays drones in cells marked for them, saved |
