@@ -64,7 +64,7 @@ class SliceDoctorTest(unittest.TestCase):
             check=True,
         )
         subprocess.run(
-            ["git", "init", "--bare", str(self.remote)],
+            ["git", "init", "--bare", "-b", "master", str(self.remote)],
             capture_output=True,
             text=True,
             check=True,
