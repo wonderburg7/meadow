@@ -70,6 +70,20 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `absent: tools/session_cost.py :: def _shell_product_edit`
    - Next after: none -- agent-lifecycle plan complete
 
+2. **[Codex] CQ-R11 -- split flower seeding without changing RNG order**
+   - Plan: `plans/now/code-health.md` -- "CQ-R11 -- split flower seeding without changing RNG order"
+   - Files: `scripts/world_building.gd`, `FUNCTION_MAP.md`
+   - Check: `python tools/equivalence.py test_scenarios/sf1_founding_flower_mix_test.json master`, `python tools/equivalence.py test_scenarios/pp4_seed_set.json master` and `python tools/equivalence.py test_scenarios/pp1_pollination_ledger.json master` report no differences; `python tools/prefinish.py` passes
+   - Proof: `present: scripts/world_building.gd :: func _seed_flower(`
+   - Next after: CQ-R6 -- extract the HUD bee-command rows
+
+3. **[Codex] CQ-R6 -- extract the HUD bee-command rows**
+   - Plan: `plans/now/code-health.md` -- "CQ-R6 -- extract the HUD bee-command rows"
+   - Files: `scripts/hud.gd`, `scripts/hud_command_rows.gd`, `FUNCTION_MAP.md`
+   - Check: `python -m unittest tests.test_layout_regression tests.test_hc8_tray_first_open tests.test_hc16_tray_reselect` and `python tools/prefinish.py` pass; a hands-on check covers the command buttons
+   - Proof: `present: scripts/hud.gd :: func _rebuild_role_controls(`
+   - Next after: CQ-M4 -- gated until the Claude lane releases the save files
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
