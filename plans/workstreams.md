@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/CQ-M8` (`claude/CQ-M8`) | Claude | `BeeMovement.walk_to_hive_exit`; reach distances named | Claude | in progress | none | `plans/now/code-health.md` CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named |
