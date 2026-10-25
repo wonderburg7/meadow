@@ -50,7 +50,6 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-37 | the guard hook lets `git show`/`git grep` read archived plans | `tools/guard_hook.py`, `tests/test_guard_hook.py` | low |
 | L-38 | count worker product edits from worktree-relative shell commands | `tools/session_cost.py`, `tests/test_session_cost_scope.py` | medium |
 
 L-31 to L-36 come from the 22 Oct 2026 workflow comparison (Dave asked
@@ -91,38 +90,7 @@ L-35 shipped 2026-10-24; its specification is `plans/archive/L-35_2026-10-24.md`
 
 L-36 shipped 2026-10-24; its specification is `plans/archive/L-36_2026-10-24.md`.
 
-## L-37 -- the guard hook lets `git show`/`git grep` read archived plans
-
-**Now.** `CLAUDE.md` ("Why a built system is the way it is") and the review
-contract send a session to `git grep -n <id> HEAD -- plans/archive` for a
-shipped slice's record. `tools/guard_hook.py::_reason` refuses any shell
-command whose text contains `plans/archive`, `docs/archive`, `_backups` or
-`.godot`, so that route is denied ("Do not read this denied path.") and the
-session retries or reads around it, which costs requests. A heredoc or
-commit message that merely names an archived path is refused the same way
-(`plans/observations/system-improvement-signals.md`, 23 Oct 2026 entry).
-
-**Target.** The denied-path test applies only to a command that reads the
-working tree at that path: `cat`, `head`, `tail`, `sed`, `grep`/`rg`/`Select-String`,
-`Get-Content`, `type`, `ls`/`dir`/`Get-ChildItem` on it. A command whose first
-word is `git` (so `git show HEAD:plans/archive/x.md`, `git grep ... HEAD --
-plans/archive`, `git log -- plans/archive`) is allowed, as is `git commit -m`
-text naming a path. The file tools stay denied on purpose (the `Read`
-deny list is untouched), and the four existing denial cases keep passing.
-
-**Open decisions:** none.
-
-The change relaxes a deny rule only for read-only `git` history commands,
-which `CLAUDE.md` already prescribes.
-
-```queue
-**[Codex] L-37 -- the guard hook lets `git show`/`git grep` read archived plans**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-37 -- the guard hook lets `git show`/`git grep` read archived plans"
-- Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`
-- Check: `python -m unittest tests.test_guard_hook` passes with new cases: `git show HEAD:plans/archive/x.md`, `git grep -n L-31 HEAD -- plans/archive` and `git commit -m "see plans/archive/x"` are allowed; `Get-Content plans/archive/x.md`, `cat docs/archive/x.md`, `rg foo _backups` and `ls .godot` are still denied; `.\tools\verify.ps1` is green
-- Proof: `absent: tools/guard_hook.py :: def _reads_tree`
-- Next after: L-38 -- count worker product edits from worktree-relative shell commands
-```
+L-37 shipped 2026-10-25; its specification is `plans/archive/L-37_2026-10-25.md`.
 
 ## L-38 -- count worker product edits from worktree-relative shell commands
 
