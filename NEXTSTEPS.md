@@ -101,7 +101,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **RR-14** (`plans/now/run-repairs.md`) -- a sour cell given a new designation is emptied by a comb worker, not at once; waits for DR-1, which owns `scripts/orders_zones.gd`.
 - **RR-15** (`plans/now/run-repairs.md`) -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee; waits for DR-1, which owns `scripts/hive.gd`.
 - **RR-16** (`plans/now/run-repairs.md`) -- the queen can resume building a part-built cell; waits for DR-1, which owns `scripts/orders_zones.gd`.
-- **RR-17** (`plans/now/run-repairs.md`) -- a queen on comb work discards sour nectar on command; waits for CQ-S0b, which owns `scripts/bee.gd`.
+- **RR-17** (`plans/now/run-repairs.md`) -- a queen on comb work discards sour nectar on command; waits for which owns `scripts/bee.gd`.
 - **FR-4** (`plans/now/forager-recruitment.md`) -- a headless assertion replaces the C-143 hands-on check; waits for DR-1, which owns `scripts/scenario_actions.gd`.
 - **T2-15** (`plans/now/tier-two.md`) -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked; waits for DR-1 and CQ-M8, which own `scripts/hive.gd` and `scripts/bee_building.gd`.
 - **RR-19** (`plans/now/run-repairs.md`) -- comb workers seal and unseal cells over time; waits for DR-1 and CQ-M8, which own `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd` and `scripts/bee_building.gd`.
@@ -110,7 +110,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **RR-22** (`plans/now/run-repairs.md`) -- select a number of bees from a multi-selection; waits for GP-5 and SG-4, which own `scripts/hud.gd` and `scripts/main.gd`.
 - **CT-1** (`plans/now/cell-content-tones.md`) -- cells and their caps take a faint tone of their contents (Dave, 24 Oct 2026); waits for DR-1, which owns `scripts/hive_cell.gd` and `scripts/scenario_actions.gd`.
 - **AC-4** (`plans/now/agent-context.md`) -- `GAME_MODEL.md`'s Foraging card follows FR-2; waits for FR-2, which removes `scouting_on`.
-- **HS-2** (`plans/now/hard-soil.md`) -- hard soil fills the outer half of the hive's soil (Dave, 24 Oct 2026); waits for HS-1, DR-1 and CQ-S0b, which own the skill id, `scripts/hive.gd` and `scripts/bee.gd`.
+- **HS-2** (`plans/now/hard-soil.md`) -- hard soil fills the outer half of the hive's soil (Dave, 24 Oct 2026); waits for HS-1, DR-1 and which own the skill id, `scripts/hive.gd` and `scripts/bee.gd`.
 
 ## Copy-paste prompts
 

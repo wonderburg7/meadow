@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/CQ-S0b` (`claude/CQ-S0b`) | Claude | a restored forager takes no fresh orientation flight | Claude | in progress | none | `plans/now/code-health.md` CQ-S0b -- a restored forager takes no fresh orientation flight |
