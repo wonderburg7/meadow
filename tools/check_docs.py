@@ -1067,6 +1067,55 @@ def check_backticked_paths(errors: list[str]) -> None:
                 )
 
 
+RULE_LINE_LIMIT = 100
+
+
+def rule_front_matter_globs(text: str) -> list[str] | None:
+    """The `paths:` globs between a rule's first two `---` lines, or None when
+    the file has no front matter at all."""
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return None
+    closing = [i for i in range(1, len(lines)) if lines[i].strip() == "---"]
+    if not closing:
+        return None
+    globs: list[str] = []
+    in_paths = False
+    for line in lines[1:closing[0]]:
+        if line.startswith("paths:"):
+            in_paths = True
+        elif in_paths and line.lstrip().startswith("- "):
+            globs.append(line.lstrip()[2:].strip().strip('"\''))
+        elif line.strip():
+            in_paths = False
+    return globs
+
+
+def check_rule_globs(errors: list[str], warnings: list[str]) -> None:
+    """Every path-scoped rule in .claude/rules must load: its front matter
+    lists globs and each glob matches a file.
+
+    A glob that matches nothing never loads its rule, and no session notices,
+    because the rule simply never appears. A rule over RULE_LINE_LIMIT lines
+    warns: it is read in full by every session that touches its paths."""
+    for rule in sorted((ROOT / ".claude" / "rules").glob("*.md")):
+        label = f".claude/rules/{rule.name}"
+        text = rule.read_text(encoding="utf-8")
+        globs = rule_front_matter_globs(text)
+        if globs is None:
+            errors.append(f"{label}: no front matter between the first two '---' lines")
+        elif not globs:
+            errors.append(f"{label}: front matter has no paths: list")
+        for glob in globs or []:
+            if not any(match.is_file() for match in ROOT.glob(glob)):
+                errors.append(f"{label}: paths glob matches no file: {glob}")
+        lines = len(text.splitlines())
+        if lines > RULE_LINE_LIMIT:
+            warnings.append(
+                f"{label} is {lines} lines (over {RULE_LINE_LIMIT}); split it by responsibility"
+            )
+
+
 LANDED_RECORD = re.compile(r"^\s*\*\*Landed\b[^*]*\*\*", re.MULTILINE)
 
 
@@ -1545,6 +1594,7 @@ def main() -> int:
     check_plan_queue_blocks(errors, warnings)
     check_markdown_links(errors)
     check_backticked_paths(errors)
+    check_rule_globs(errors, warnings)
     check_no_landed_records_in_live_plans(errors)
     check_checks(errors)
     check_review_records(errors)

@@ -1,7 +1,7 @@
 # Agent context -- boundary rules that load themselves
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: AC-1 -- every rule glob matches a file (Claude backlog; the lane is full) | Dependency: AC-4 waits for FR-2 (`plans/now/forager-recruitment.md`); AC-1 to AC-3 share no file with either lane | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: AC-2 -- `.claude/rules/ui.md` loads with the UI scripts (Claude lane) | Dependency: AC-4 waits for FR-2 (`plans/now/forager-recruitment.md`); AC-1 to AC-3 share no file with either lane | Verified: 2026-10-24
 
 ## Objective
 
