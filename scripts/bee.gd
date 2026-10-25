@@ -1129,7 +1129,7 @@ func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGE
 	# simpler fallback: one point, kept, no comparison. Only at creation:
 	# a bee switched into Forager later (set_role) keeps whatever
 	# preference it already had.
-	if GameConfig.scouting_on and bee_role == Role.FORAGER:
+	if BeeForaging.scouting_on() and bee_role == Role.FORAGER:
 		BeeForaging.start_scouting(self)
 	elif BeeForaging.orientation_flight_on() and bee_role == Role.FORAGER and not is_restored:
 		BeeForaging.take_orientation_flight(self)

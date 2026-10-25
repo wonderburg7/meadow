@@ -64,7 +64,7 @@ class SliceDoctorTest(unittest.TestCase):
             check=True,
         )
         subprocess.run(
-            ["git", "init", "--bare", str(self.remote)],
+            ["git", "init", "--bare", "-b", "master", str(self.remote)],
             capture_output=True,
             text=True,
             check=True,
@@ -893,6 +893,45 @@ class SliceDoctorTest(unittest.TestCase):
         )
         self.assertNotEqual(0, finish.returncode)
         self.assertIn("uncommitted changes to checks/ready.md", finish.stdout + finish.stderr)
+
+    def test_finish_stops_before_verifying_on_a_staged_file_in_the_primary_checkout(self):
+        """git merge refuses while the primary index differs from HEAD. L-37
+        (25 Oct 2026) verified in full and stopped only at the merge; the
+        failing mock verifier proves the stop now comes first, and the staged
+        work is left in place."""
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        (self.root / "tools" / "verify.ps1").write_text(
+            "param([string]$PythonPath, [switch]$ResolvePythonOnly, [switch]$Quiet, [string]$Scope)\n"
+            "if ($ResolvePythonOnly) { Write-Output $PSCommandPath; exit 0 }\nexit 1\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "add", "NEXTSTEPS.md", "tools/verify.ps1"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "use failing mock verifier"], cwd=self.root, capture_output=True, check=True)
+        start = subprocess.run(
+            [self.powershell, "-NoProfile", "-File", str(self.root / "tools" / "slice.ps1"), "start", "-Lane", "Codex"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(0, start.returncode, start.stderr)
+        worktree = self.root / ".worktrees" / "T-1"
+        (worktree / "scripts" / "sample.gd").write_text("func new_function():\n\tpass\n", encoding="utf-8")
+        self.write_refill(worktree)
+        (self.root / "tools" / "someone_elses.py").write_text("print('in progress')\n", encoding="utf-8")
+        subprocess.run(["git", "add", "tools/someone_elses.py"], cwd=self.root, check=True)
+
+        finish = subprocess.run(
+            [self.powershell, "-NoProfile", "-Command", "Set-Location -LiteralPath '{}'; & '{}' finish".format(
+                str(worktree).replace("'", "''"), str(worktree / "tools" / "slice.ps1").replace("'", "''")
+            )],
+            cwd=self.root, capture_output=True, text=True, timeout=90,
+        )
+        output = finish.stdout + finish.stderr
+        self.assertNotEqual(0, finish.returncode)
+        self.assertIn("staged changes to tools/someone_elses.py", output)
+        self.assertNotIn("verify.ps1 (-Scope branch) failed", output)
+        staged = subprocess.run(
+            ["git", "diff", "--cached", "--name-only"], cwd=self.root, capture_output=True, text=True, check=True
+        ).stdout.split()
+        self.assertEqual(["tools/someone_elses.py"], staged)
 
     def test_finish_completes_when_the_worktree_directory_cannot_be_deleted(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")

@@ -637,7 +637,16 @@ static func record_species_visit(bee: Node2D, species: String) -> void:
 			bee.species_experience[other] = left
 
 
+## FR-2: Auto scouting is the setting OR the owned skill. Each caller sits
+## behind an arrival, a finished visit or a trip end, never per frame.
+static func scouting_on() -> bool:
+	return GameConfig.scouting_on or (Session.progression != null and Session.progression.is_behaviour_enabled("scouting_on"))
+
+
+## FR-2: owning Auto scouting replaces the orientation flight.
 static func orientation_flight_on() -> bool:
+	if scouting_on():
+		return false
 	return GameConfig.orientation_flight_on or (Session.progression != null and Session.progression.is_behaviour_enabled("orientation_flight_on"))
 
 
@@ -701,7 +710,7 @@ static func start_collecting(bee: Node2D) -> void:
 	# Slice 1 trip-timing instrumentation -- gated the same as
 	# trip_start_time/trip_load_amount just below, since those are what
 	# _score_trip needs to actually be running for this to mean anything.
-	if GameConfig.scouting_on or GameConfig.auto_recruitment_on:
+	if scouting_on() or GameConfig.auto_recruitment_on:
 		if bee.trip_first_flower_time < 0.0:
 			bee.trip_first_flower_time = Session.sim_time
 		bee.trip_flowers_visited += 1
@@ -809,7 +818,7 @@ static func finish_collecting(bee: Node2D) -> void:
 	var handling_seconds := -1.0
 	if bee.flower_visit_started_at >= 0.0:
 		handling_seconds = Session.sim_time - bee.flower_visit_started_at
-	if (GameConfig.scouting_on or GameConfig.auto_recruitment_on) and handling_seconds >= 0.0:
+	if (scouting_on() or GameConfig.auto_recruitment_on) and handling_seconds >= 0.0:
 		bee.trip_handling_seconds += handling_seconds
 	if handling_seconds >= 0.0:
 		bee.flower_visit_started_at = -1.0
@@ -921,7 +930,7 @@ static func go_to_deposit_cell(bee: Node2D, delta: float) -> void:
 		# apart -- proof no scored trip had happened in between, not just
 		# a stable patch. See the recruitment-competition investigation,
 		# NEXTSTEPS.md.
-		if GameConfig.scouting_on or GameConfig.auto_recruitment_on:
+		if scouting_on() or GameConfig.auto_recruitment_on:
 			bee.trip_load_amount = 0.0
 			_score_trip(bee)
 			if bee._apply_pending_role():
@@ -995,7 +1004,7 @@ static func finish_depositing(bee: Node2D) -> void:
 	# Captured once, before the first cell takes its share, so a trip
 	# split across several cells still scores against the whole trip.
 	# Needed by either scouting or auto-recruitment, not just the latter.
-	if (GameConfig.scouting_on or GameConfig.auto_recruitment_on) and bee.trip_load_amount < 0.0:
+	if (scouting_on() or GameConfig.auto_recruitment_on) and bee.trip_load_amount < 0.0:
 		bee.trip_load_amount = bee.current_load
 	var placed := 0.0
 	if bee.target_cell and is_instance_valid(bee.target_cell):
@@ -1017,7 +1026,7 @@ static func finish_depositing(bee: Node2D) -> void:
 		return
 
 	bee.current_load_type = ""
-	if GameConfig.scouting_on or GameConfig.auto_recruitment_on:
+	if scouting_on() or GameConfig.auto_recruitment_on:
 		_score_trip(bee)
 	# The load is delivered, so a queued role change takes effect now --
 	# this is the "finish depositing first" case.
@@ -1067,7 +1076,7 @@ static func _score_trip(bee: Node2D) -> void:
 	# comment -- and can be null very early (a bee scored before main has
 	# finished wiring itself up shouldn't happen, but this matches every
 	# other bee.world caller's null guard rather than assuming).
-	if bee.world != null and (GameConfig.scouting_on or GameConfig.auto_recruitment_on):
+	if bee.world != null and (scouting_on() or GameConfig.auto_recruitment_on):
 		var search_flight: float = (bee.trip_first_flower_time - bee.trip_start_time) if bee.trip_first_flower_time >= 0.0 else 0.0
 		var species: String = bee.preferred_species if bee.preferred_species != "" else bee.scout_species
 		bee.world.foraging_stats.record_trip(
@@ -1206,7 +1215,7 @@ static func _leave_hive_and_resume(bee: Node2D) -> void:
 		bee.world.move_bee_out_of_hive(bee)
 	if bee.resume_pending_zone_command():
 		return
-	if (GameConfig.scouting_on or GameConfig.auto_recruitment_on) and bee.role == Role.FORAGER:
+	if (scouting_on() or GameConfig.auto_recruitment_on) and bee.role == Role.FORAGER:
 		bee.trip_start_time = Session.sim_time
 		bee.trip_first_flower_time = -1.0
 		bee.trip_handling_seconds = 0.0

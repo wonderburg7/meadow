@@ -2253,7 +2253,7 @@ FORAGING_TIER_2 = (
     "skill.foraging.associative_learning",
     "skill.foraging.adaptive_constancy",
 )
-BASELINE_SKILL = "skill.foraging.auto_scouting"
+BASELINE_SKILL = "skill.colony.cell_priority"
 PREDATOR_SKILL = "skill.defence.threat_detection"
 
 COST_RE = re.compile(r"(\w+)\s*:\s*(\d+(?:\.\d+)?)")
@@ -2607,6 +2607,11 @@ def check_run_skill_policy(problems):
             )
 
 
+# FR-2 (decision 6): Challenges 1 and 2 ban Auto scouting although Foraging
+# tier 3 sits above it; neither Challenge reaches Foraging tier 3.
+BAN_EXEMPT_SKILLS = {"skill.foraging.auto_scouting"}
+
+
 def check_progression_tier_and_cost(problems):
     """Section 9.2's tier-and-cost group: every skill's recipe names at
     least one resource from its own tier's TIER_REQUIRED row and nothing
@@ -2695,6 +2700,8 @@ def check_progression_tier_and_cost(problems):
             skill = skills.get(skill_id)
             if skill is None:
                 continue
+            if skill_id in BAN_EXEMPT_SKILLS:
+                continue
             sector, tier = skill["sector"], skill["tier"]
             if (sector, tier + 1) in branch_tiers:
                 problems.append(
@@ -2726,6 +2733,8 @@ TRANSCRIBED_EFFECTS = {
     "skill.colony.fermentation_sense": ("enable_behaviour", "fermentation_sense_on"),
     # PP-1: Pollinator points is an owned-skill behaviour (pollination.gd).
     "skill.foraging.pollinator_points": ("enable_behaviour", "pollinator_points_on"),
+    # FR-2: Auto scouting is a bought behaviour that replaces Orientation flight.
+    "skill.foraging.auto_scouting": ("enable_behaviour", "scouting_on"),
 }
 SKILL_ONLY_BEHAVIOURS = {"weather_sensing_on", "rain_recall_on", "fermentation_sense_on",
                          "pollinator_points_on"}

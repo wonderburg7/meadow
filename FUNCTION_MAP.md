@@ -475,7 +475,7 @@ Every setting's key, label, range and tip, plus the read/write and Prerequisites
 1636 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
-## bee_foraging.gd (1,530 lines)
+## bee_foraging.gd (1,539 lines)
 
 The forager's search, scouting, recruitment and species-preference
 behaviour.
@@ -524,44 +524,45 @@ behaviour.
 617  static func probabilistic_choice_on() -> bool
 620  static func handling_experience_on() -> bool
 627  static func record_species_visit(bee: Node2D, species: String) -> void
-640  static func orientation_flight_on() -> bool
-644  # --- accepting or rejecting a flower ------------------------------
-645  static func worth_feeding(bee: Node2D, f: Node2D) -> bool
-658  static func reject_flower(bee: Node2D) -> void
-676  # --- collecting ---------------------------------------------------
-677  static func start_collecting(bee: Node2D) -> void
-750  static func _handling_experience_scale(bee: Node2D, species: String) -> float
-759  static func collect(bee: Node2D, delta: float) -> void
-808  static func finish_collecting(bee: Node2D) -> void
-851  # --- entering the hive and depositing -----------------------------
-855  static func enter_hive(bee: Node2D) -> void
-882  static func approach_cell(bee: Node2D, cell: Node2D, delta: float) -> int
-897  static func release_cell_slot(bee: Node2D) -> void
-904  static func go_to_deposit_cell(bee: Node2D, delta: float) -> void
-994  static func finish_depositing(bee: Node2D) -> void
-1034 static func _after_delivery_state(bee: Node2D) -> int
-1045 static func _resume_own_job_if_indoors(bee: Node2D) -> bool
-1053 # --- scoring a trip -----------------------------------------------
-1058 static func _score_trip(bee: Node2D) -> void
-1136 # --- leaving the hive ---------------------------------------------
-1137 static func go_to_exit(bee: Node2D, delta: float) -> void
-1191 static func _entrance_wait_spot(bee: Node2D, side: int) -> Vector2
-1203 static func _leave_hive_and_resume(bee: Node2D) -> void
-1230 static func _send_to_scout_point(bee: Node2D) -> void
-1241 # --- scouting -----------------------------------------------------
-1247 static func start_scouting(bee: Node2D) -> void
-1265 # --- waiting at the entrance --------------------------------------
-1270 static func wait_at_entrance(bee: Node2D, delta: float) -> void
-1364 # --- the recruitment dance ----------------------------------------
-1372 static func _update_dance_eligibility(bee: Node2D) -> void
-1395 static func leave_recruitment(bee: Node2D) -> void
-1417 static func check_dance_proximity(bee: Node2D, _delta: float) -> void
-1442 static func _start_dance(mentor: Node2D, seeker: Node2D) -> void
-1462 static func dance(bee: Node2D, delta: float) -> void
-1474 static func _end_dance(bee: Node2D) -> void
-1496 static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void
-1523 # --- remote deposit -----------------------------------------------
-1525 static func deposit_everything_remotely(bee: Node2D) -> void
+642  static func scouting_on() -> bool
+647  static func orientation_flight_on() -> bool
+653  # --- accepting or rejecting a flower ------------------------------
+654  static func worth_feeding(bee: Node2D, f: Node2D) -> bool
+667  static func reject_flower(bee: Node2D) -> void
+685  # --- collecting ---------------------------------------------------
+686  static func start_collecting(bee: Node2D) -> void
+759  static func _handling_experience_scale(bee: Node2D, species: String) -> float
+768  static func collect(bee: Node2D, delta: float) -> void
+817  static func finish_collecting(bee: Node2D) -> void
+860  # --- entering the hive and depositing -----------------------------
+864  static func enter_hive(bee: Node2D) -> void
+891  static func approach_cell(bee: Node2D, cell: Node2D, delta: float) -> int
+906  static func release_cell_slot(bee: Node2D) -> void
+913  static func go_to_deposit_cell(bee: Node2D, delta: float) -> void
+1003 static func finish_depositing(bee: Node2D) -> void
+1043 static func _after_delivery_state(bee: Node2D) -> int
+1054 static func _resume_own_job_if_indoors(bee: Node2D) -> bool
+1062 # --- scoring a trip -----------------------------------------------
+1067 static func _score_trip(bee: Node2D) -> void
+1145 # --- leaving the hive ---------------------------------------------
+1146 static func go_to_exit(bee: Node2D, delta: float) -> void
+1200 static func _entrance_wait_spot(bee: Node2D, side: int) -> Vector2
+1212 static func _leave_hive_and_resume(bee: Node2D) -> void
+1239 static func _send_to_scout_point(bee: Node2D) -> void
+1250 # --- scouting -----------------------------------------------------
+1256 static func start_scouting(bee: Node2D) -> void
+1274 # --- waiting at the entrance --------------------------------------
+1279 static func wait_at_entrance(bee: Node2D, delta: float) -> void
+1373 # --- the recruitment dance ----------------------------------------
+1381 static func _update_dance_eligibility(bee: Node2D) -> void
+1404 static func leave_recruitment(bee: Node2D) -> void
+1426 static func check_dance_proximity(bee: Node2D, _delta: float) -> void
+1451 static func _start_dance(mentor: Node2D, seeker: Node2D) -> void
+1471 static func dance(bee: Node2D, delta: float) -> void
+1483 static func _end_dance(bee: Node2D) -> void
+1505 static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void
+1532 # --- remote deposit -----------------------------------------------
+1534 static func deposit_everything_remotely(bee: Node2D) -> void
 ```
 
 ## hive_cell.gd (1,524 lines)
@@ -992,7 +993,7 @@ restart.
 1191 func _restart() -> void
 ```
 
-## diagnostic_log.gd (1,178 lines)
+## diagnostic_log.gd (1,173 lines)
 
 The session JSONL writer, counters and capture profiles.
 
@@ -1039,50 +1040,49 @@ The session JSONL writer, counters and capture profiles.
 593  func count_jelly_batch() -> void
 598  func count_larval_death() -> void
 604  func count_cell_completed() -> void
-609  func cell_completed_count() -> int
-615  func count_cell_cleaned() -> void
-622  func count_cell_evicted() -> void
-628  func count_cell_restocked() -> void
-634  func count_block_mined() -> void
-640  func count_honey_batch_deposited() -> void
-646  func count_cell_ripened() -> void
-650  # --- player actions and commands ----------------------------------
-655  func log_action(do: String, target_desc: String, result: String, reason: String) -> void
-671  func log_command_issue(selected_count: int, commandable_count: int, branch: String,
-700  func log_selection_panels_hidden(source: String, shown_count: int, selected_count: int) -> void
-712  # --- reading events back ------------------------------------------
-720  func event_count(type: String, subtype: String = "") -> int
-766  # --- the per-frame tick and session end ---------------------------
-771  func tick(delta: float, world: Node2D) -> void
-807  func _sample_nectar_age_on_day_change(world: Node2D) -> void
-840  func _nectar_age_summary() -> Dictionary
-850  func end_session(outcome: String) -> void
-908  # --- configuration ------------------------------------------------
-909  func session_path() -> String
-913  func set_queen_alive(alive: bool) -> void
-917  func configure_scenario_diagnostics(raw: Variant) -> bool
-926  func configure_performance_capture(config: Dictionary) -> void
-930  func effective_diagnostics() -> Dictionary
-936  func _snapshot_interval() -> float
-949  func _selected_snapshot(world: Node2D) -> Dictionary
-955  # --- building entries -----------------------------------------------
-959  func _config_snapshot() -> Dictionary
-967  # --- the snapshot -------------------------------------------------
-968  func _snapshot(world: Node2D) -> Dictionary
-977  func _population_section(bees: Array) -> Dictionary
-992  func _resources_section(world: Node2D) -> Dictionary
-999  func _cells_section(hive: Node2D) -> Dictionary
-1016 func _environment_section(world: Node2D) -> Dictionary
-1024 func _foraging_section(world: Node2D, bees: Array) -> Dictionary
-1055 func _crab_spider_section(world: Node2D) -> Dictionary
-1065 func _role_outcomes_section(world: Node2D) -> Dictionary
-1094 func _performance_snapshot(world: Node2D) -> Dictionary
-1111 func _rate(world: Node2D, key: String) -> float
-1123 # --- writing to disk ----------------------------------------------
-1127 func _current_day() -> int
-1131 func _prune_old_sessions() -> void
-1149 func _write(entry: Dictionary) -> void
-1158 func _capture_entry(entry: Dictionary) -> bool
+610  func count_cell_cleaned() -> void
+617  func count_cell_evicted() -> void
+623  func count_cell_restocked() -> void
+629  func count_block_mined() -> void
+635  func count_honey_batch_deposited() -> void
+641  func count_cell_ripened() -> void
+645  # --- player actions and commands ----------------------------------
+650  func log_action(do: String, target_desc: String, result: String, reason: String) -> void
+666  func log_command_issue(selected_count: int, commandable_count: int, branch: String,
+695  func log_selection_panels_hidden(source: String, shown_count: int, selected_count: int) -> void
+707  # --- reading events back ------------------------------------------
+715  func event_count(type: String, subtype: String = "") -> int
+761  # --- the per-frame tick and session end ---------------------------
+766  func tick(delta: float, world: Node2D) -> void
+802  func _sample_nectar_age_on_day_change(world: Node2D) -> void
+835  func _nectar_age_summary() -> Dictionary
+845  func end_session(outcome: String) -> void
+903  # --- configuration ------------------------------------------------
+904  func session_path() -> String
+908  func set_queen_alive(alive: bool) -> void
+912  func configure_scenario_diagnostics(raw: Variant) -> bool
+921  func configure_performance_capture(config: Dictionary) -> void
+925  func effective_diagnostics() -> Dictionary
+931  func _snapshot_interval() -> float
+944  func _selected_snapshot(world: Node2D) -> Dictionary
+950  # --- building entries -----------------------------------------------
+954  func _config_snapshot() -> Dictionary
+962  # --- the snapshot -------------------------------------------------
+963  func _snapshot(world: Node2D) -> Dictionary
+972  func _population_section(bees: Array) -> Dictionary
+987  func _resources_section(world: Node2D) -> Dictionary
+994  func _cells_section(hive: Node2D) -> Dictionary
+1011 func _environment_section(world: Node2D) -> Dictionary
+1019 func _foraging_section(world: Node2D, bees: Array) -> Dictionary
+1050 func _crab_spider_section(world: Node2D) -> Dictionary
+1060 func _role_outcomes_section(world: Node2D) -> Dictionary
+1089 func _performance_snapshot(world: Node2D) -> Dictionary
+1106 func _rate(world: Node2D, key: String) -> float
+1118 # --- writing to disk ----------------------------------------------
+1122 func _current_day() -> int
+1126 func _prune_old_sessions() -> void
+1144 func _write(entry: Dictionary) -> void
+1153 func _capture_entry(entry: Dictionary) -> bool
 ```
 
 ## game_config.gd (1,015 lines)
@@ -1211,4 +1211,31 @@ Selection, drag and placement resolution.
 698  func _draw_tile_outline(centre: Vector2, colour: Color, width: float, dashed: bool) -> void
 707  func _tile_centre(hex: Vector2i) -> Vector2
 712  func _draw_start_point_marker(point: Vector2) -> void
+```
+
+## skills.gd (703 lines)
+
+The skill catalogue and tree layout: ids, names, costs, prerequisites and slots.
+
+```
+45   # --- cost currencies ----------------------------------------------
+76   # --- sectors ------------------------------------------------------
+92   # --- skill ids ----------------------------------------------------
+143  # --- the catalogue ------------------------------------------------
+633  # --- lookups ------------------------------------------------------
+635  static func entry(skill_id: String) -> Dictionary
+641  static func has(skill_id: String) -> bool
+644  static func ids() -> Array
+647  static func label_for(skill_id: String) -> String
+650  static func cost_for(skill_id: String) -> Dictionary
+653  static func is_baseline(skill_id: String) -> bool
+665  static func is_cut(skill_id: String) -> bool
+669  static func is_built(skill_id: String) -> bool
+673  static func for_sector(sector_key: String) -> Array
+676  static func for_sector_tier(sector_key: String, tier: int) -> Array
+681  static func baseline_ids() -> Array
+684  static func sector_keys() -> Array
+690  static func sector_index(sector_key: String) -> int
+696  static func sector_label(sector_key: String) -> String
+702  static func ring_for_tier(tier: int) -> int
 ```

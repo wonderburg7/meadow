@@ -58,7 +58,7 @@ const LEVELS := {
 		"cells": 0, "nectar_foragers": 0, "pollen_foragers": 0,
 		"nurses": 0, "builders": 0, "miners": 0,
 		"weather": false, "disease": false, "rival_hive": false, "winter": false,
-		"skill_grants": [], "skill_bans": [], "skill_delays": {},
+		"skill_grants": [], "skill_bans": ["skill.foraging.auto_scouting", "skill.foraging.auto_recruitment"], "skill_delays": {},
 		# Challenge 1 does not teach backup roles: a queen set to Laying with
 		# no backup chosen takes this one (a Roles key) automatically, so the
 		# first hatch is fed without a separate lesson (Dave, 17 Sep 2026).
@@ -87,7 +87,7 @@ const LEVELS := {
 		"nurses": 0, "builders": 0, "miners": 0,
 		"stock": {"nectar": 2, "pollen": 1},
 		"weather": false, "disease": false, "rival_hive": false, "winter": false,
-		"skill_grants": [], "skill_bans": [], "skill_delays": {},
+		"skill_grants": [], "skill_bans": ["skill.foraging.auto_scouting", "skill.foraging.auto_recruitment"], "skill_delays": {},
 	},
 	3: {
 		"cells": 3, "nectar_foragers": 1, "pollen_foragers": 1,
