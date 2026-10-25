@@ -353,6 +353,18 @@ func _on_cell_gyne_requested(anchor: Node2D, as_gyne: bool) -> void:
 			_designate_one(cell, "brood")
 
 
+## DR-1. The drone mark: the gyne handler's twin, with no skill to buy (Dave,
+## 22 Oct 2026). Setting it clears a cell's gyne mark (hive_cell.gd), and a
+## marked cell that is not yet a nursery cell is reserved for brood. DR-2
+## connects the cell popup's drone box to it.
+func _on_cell_drone_requested(anchor: Node2D, as_drone: bool) -> void:
+	for cell: Variant in _cells_to_act_on(anchor):
+		cell.hatch_drone = as_drone
+		cell.bump_display_epoch()
+		if as_drone and cell.designated_type != "brood":
+			_designate_one(cell, "brood")
+
+
 func _warn_gyne_rearing_required() -> void:
 	main.hud.show_warning("Buy Gyne rearing before marking a cell to raise a gyne.", "gyne_rearing_required", 2.0)
 

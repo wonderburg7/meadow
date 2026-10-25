@@ -22,10 +22,11 @@ static func has_room_for_egg(bee: Node2D) -> bool:
 ## has to eat considerably more before she can lay it. She looks at what
 ## the colony has actually asked for: if any free cell is set aside to
 ## raise a gyne, that's the next egg. An unmated queen lays only drones,
-## at a worker egg's cost, whatever the cell asks for (COL-9).
+## at a worker egg's cost, whatever the cell asks for (COL-9), and so does
+## any queen into a cell marked for a drone (DR-1).
 static func pollen_needed_for_next_egg(bee: Node2D) -> float:
 	var next: Variant = bee.hive.find_empty_cell()
-	if bee.is_mated and next != null and is_instance_valid(next) and next.hatch_gyne:
+	if bee.is_mated and next != null and is_instance_valid(next) and next.hatch_gyne and not next.hatch_drone:
 		return GameConfig.gyne_egg_pollen_cost
 	return GameConfig.egg_pollen_cost
 
@@ -100,7 +101,9 @@ static func queen_lay(bee: Node2D, delta: float) -> void:
 		if bee.target_cell != null and is_instance_valid(bee.target_cell) and bee.target_cell.is_empty():
 			# COL-9: an unmated queen's eggs are unfertilised, so they become
 			# drones -- never a worker, never a gyne, whatever the cell asks.
-			var as_drone: bool = not bee.is_mated
+			# DR-1: a mated queen lays an unfertilised egg into a cell the
+			# player has marked for a drone.
+			var as_drone: bool = not bee.is_mated or bee.target_cell.hatch_drone
 			var as_gyne: bool = bee.target_cell.hatch_gyne and not as_drone
 			bee.target_cell.start_brood(as_gyne, as_drone)
 			# Only now does the priority share-out move on. Everything up to

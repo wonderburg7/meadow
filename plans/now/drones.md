@@ -1,7 +1,7 @@
 # Drones -- a mated queen lays drones in cells the player marks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: DR-1 -- a mated queen lays drones in cells marked for them, saved (Claude backlog); then DR-2 -- the cell popup's drone box, gated on DR-1 | Dependency: DR-2 waits for DR-1 (CQ-R7, `plans/now/code-health.md`, released `scripts/hud.gd` 22 Oct 2026); DR-1 shares the save files with SG-2, ED-1, ED-2 and CQ-S0b, one at a time in queue order; CQ-S1 to CQ-S5 and CQ-R2 wait for DR-1 | Verified: 2026-10-22
+Status: active | Owner: Dave / Claude Code | Next: DR-2 -- the cell popup's drone box (Claude lane; DR-1 landed 25 Oct 2026) | Dependency: none left -- DR-1 has landed and CQ-R7 (`plans/now/code-health.md`) released `scripts/hud.gd` 22 Oct 2026 | Verified: 2026-10-25
 
 ## Objective
 
@@ -57,7 +57,7 @@ Verified 22 Oct 2026 against master `7398865`.
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | DR-1 | a mated queen lays drones in cells marked for them; saved; goldens re-captured | see its `Files:` line | yes | high (save field, simulation, golden re-capture) |
-| DR-2 | the cell popup's drone box | `scripts/hud.gd`, `scripts/main.gd`, `scripts/nursery_panel.gd`, `scripts/orders_zones.gd` | no -- after DR-1 (CQ-R7 released `scripts/hud.gd` 22 Oct 2026) | medium |
+| DR-2 | the cell popup's drone box | `scripts/hud.gd`, `scripts/main.gd`, `scripts/nursery_panel.gd`, `scripts/orders_zones.gd` | yes -- DR-1 landed 25 Oct 2026 | medium |
 
 **Dependencies.** DR-1 edits `scripts/save_game.gd` and `scripts/saving.gd`.
 SG-2 (`plans/now/short-term-goals.md`), ED-1 and ED-2 (`plans/now/difficulty.md`)
@@ -146,7 +146,7 @@ The cell popup in `hud.gd` has the "Raise a gyne (a future queen)" box
 passes `tests/test_layout_regression.py`. The box follows
 `plans/reference/ui-rules.md`.
 
-```queue-gated
+```queue
 **[Claude] DR-2 -- the cell popup's drone box**
 - Plan: `plans/now/drones.md` -- "DR-2 -- the cell popup's drone box"
 - Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/nursery_panel.gd`, `scripts/orders_zones.gd`, `tests/test_layout_regression.py`
@@ -157,9 +157,8 @@ passes `tests/test_layout_regression.py`. The box follows
 
 ## Not in the queue, and why
 
-- **DR-2:** waits for DR-1. CQ-R7 (`plans/now/code-health.md`), which reshaped
-  the cell popup in `scripts/hud.gd`, landed 22 Oct 2026. Open its fence when
-  DR-1 has landed.
+- Nothing: DR-2, the last slice, is queued now that DR-1 has landed
+  (25 Oct 2026).
 
 ## Read on demand
 
