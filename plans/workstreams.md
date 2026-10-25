@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/CQ-L2` (`claude/CQ-L2`) | Claude | every tool that reads GDScript as text survives gdformat | Claude | in progress | none | `plans/now/code-health.md` CQ-L2 -- every tool that reads GDScript as text survives gdformat |
