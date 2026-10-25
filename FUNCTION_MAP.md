@@ -475,7 +475,7 @@ Every setting's key, label, range and tip, plus the read/write and Prerequisites
 1636 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
-## bee_foraging.gd (1,530 lines)
+## bee_foraging.gd (1,539 lines)
 
 The forager's search, scouting, recruitment and species-preference
 behaviour.
@@ -524,44 +524,45 @@ behaviour.
 617  static func probabilistic_choice_on() -> bool
 620  static func handling_experience_on() -> bool
 627  static func record_species_visit(bee: Node2D, species: String) -> void
-640  static func orientation_flight_on() -> bool
-644  # --- accepting or rejecting a flower ------------------------------
-645  static func worth_feeding(bee: Node2D, f: Node2D) -> bool
-658  static func reject_flower(bee: Node2D) -> void
-676  # --- collecting ---------------------------------------------------
-677  static func start_collecting(bee: Node2D) -> void
-750  static func _handling_experience_scale(bee: Node2D, species: String) -> float
-759  static func collect(bee: Node2D, delta: float) -> void
-808  static func finish_collecting(bee: Node2D) -> void
-851  # --- entering the hive and depositing -----------------------------
-855  static func enter_hive(bee: Node2D) -> void
-882  static func approach_cell(bee: Node2D, cell: Node2D, delta: float) -> int
-897  static func release_cell_slot(bee: Node2D) -> void
-904  static func go_to_deposit_cell(bee: Node2D, delta: float) -> void
-994  static func finish_depositing(bee: Node2D) -> void
-1034 static func _after_delivery_state(bee: Node2D) -> int
-1045 static func _resume_own_job_if_indoors(bee: Node2D) -> bool
-1053 # --- scoring a trip -----------------------------------------------
-1058 static func _score_trip(bee: Node2D) -> void
-1136 # --- leaving the hive ---------------------------------------------
-1137 static func go_to_exit(bee: Node2D, delta: float) -> void
-1191 static func _entrance_wait_spot(bee: Node2D, side: int) -> Vector2
-1203 static func _leave_hive_and_resume(bee: Node2D) -> void
-1230 static func _send_to_scout_point(bee: Node2D) -> void
-1241 # --- scouting -----------------------------------------------------
-1247 static func start_scouting(bee: Node2D) -> void
-1265 # --- waiting at the entrance --------------------------------------
-1270 static func wait_at_entrance(bee: Node2D, delta: float) -> void
-1364 # --- the recruitment dance ----------------------------------------
-1372 static func _update_dance_eligibility(bee: Node2D) -> void
-1395 static func leave_recruitment(bee: Node2D) -> void
-1417 static func check_dance_proximity(bee: Node2D, _delta: float) -> void
-1442 static func _start_dance(mentor: Node2D, seeker: Node2D) -> void
-1462 static func dance(bee: Node2D, delta: float) -> void
-1474 static func _end_dance(bee: Node2D) -> void
-1496 static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void
-1523 # --- remote deposit -----------------------------------------------
-1525 static func deposit_everything_remotely(bee: Node2D) -> void
+642  static func scouting_on() -> bool
+647  static func orientation_flight_on() -> bool
+653  # --- accepting or rejecting a flower ------------------------------
+654  static func worth_feeding(bee: Node2D, f: Node2D) -> bool
+667  static func reject_flower(bee: Node2D) -> void
+685  # --- collecting ---------------------------------------------------
+686  static func start_collecting(bee: Node2D) -> void
+759  static func _handling_experience_scale(bee: Node2D, species: String) -> float
+768  static func collect(bee: Node2D, delta: float) -> void
+817  static func finish_collecting(bee: Node2D) -> void
+860  # --- entering the hive and depositing -----------------------------
+864  static func enter_hive(bee: Node2D) -> void
+891  static func approach_cell(bee: Node2D, cell: Node2D, delta: float) -> int
+906  static func release_cell_slot(bee: Node2D) -> void
+913  static func go_to_deposit_cell(bee: Node2D, delta: float) -> void
+1003 static func finish_depositing(bee: Node2D) -> void
+1043 static func _after_delivery_state(bee: Node2D) -> int
+1054 static func _resume_own_job_if_indoors(bee: Node2D) -> bool
+1062 # --- scoring a trip -----------------------------------------------
+1067 static func _score_trip(bee: Node2D) -> void
+1145 # --- leaving the hive ---------------------------------------------
+1146 static func go_to_exit(bee: Node2D, delta: float) -> void
+1200 static func _entrance_wait_spot(bee: Node2D, side: int) -> Vector2
+1212 static func _leave_hive_and_resume(bee: Node2D) -> void
+1239 static func _send_to_scout_point(bee: Node2D) -> void
+1250 # --- scouting -----------------------------------------------------
+1256 static func start_scouting(bee: Node2D) -> void
+1274 # --- waiting at the entrance --------------------------------------
+1279 static func wait_at_entrance(bee: Node2D, delta: float) -> void
+1373 # --- the recruitment dance ----------------------------------------
+1381 static func _update_dance_eligibility(bee: Node2D) -> void
+1404 static func leave_recruitment(bee: Node2D) -> void
+1426 static func check_dance_proximity(bee: Node2D, _delta: float) -> void
+1451 static func _start_dance(mentor: Node2D, seeker: Node2D) -> void
+1471 static func dance(bee: Node2D, delta: float) -> void
+1483 static func _end_dance(bee: Node2D) -> void
+1505 static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void
+1532 # --- remote deposit -----------------------------------------------
+1534 static func deposit_everything_remotely(bee: Node2D) -> void
 ```
 
 ## hive_cell.gd (1,524 lines)

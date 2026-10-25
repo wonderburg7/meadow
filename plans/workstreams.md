@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/FR-2` (`claude/FR-2`) | Claude | Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight | Claude | in progress | none | `plans/now/forager-recruitment.md` FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight |

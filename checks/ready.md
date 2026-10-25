@@ -88,3 +88,4 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-146 -- An open Colony window keeps its size while warning lines come and go above it](ready/C-146.md)
 - [C-147 -- A selected soil block's ring outlines the top of the block](ready/C-147.md)
 - [C-148 -- Goal stars sit at the right-hand end of their lines](ready/C-148.md)
+- [C-149 -- Auto scouting is offered after Orientation flight and replaces it](ready/C-149.md)
