@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/AC-1` (`claude/AC-1`) | Claude | every rule glob matches a file | Claude | in progress | none | `plans/now/agent-context.md` AC-1 -- every rule glob matches a file |
