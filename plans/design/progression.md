@@ -165,6 +165,7 @@ Comb, cells and stores. Absorbs the old Hive sector minus honey (now Brood) and 
 | `skill.colony.miner` | 2 | Existing (was `skill.hive.excavation`) | — | Unlocks the Miner role and manual dig orders. |
 | `skill.colony.fermentation_sense` | 2 | Existing (built by NF-4, 10 Oct 2026) | — | Bees tell fermented nectar from fresh and avoid it: hungry bees eat it only when no other food is left, nurses never carry it to brood and restock orders never draw from it; honey makers take the oldest nectar first instead of the closest. Costs 20 honey and 140 nectar, from NF-4's comparison run. Slot decided by Dave, 7 Oct 2026; behaviour and order in `plans/archive/nectar-fermentation_2026-10-10.md` decisions 4, 5 and 9. |
 | `skill.colony.restocking` | 3 | Existing (was `skill.hive.store_management`) | Comb worker | Restocking behaviour, storage orders, keep-empty controls and the related Comb worker mode. |
+| `skill.colony.mighty_mandible` | 3 | New | Miner | Lets Miners dig hard soil, at 2.5x the time. |
 | — | 4 | — | — | **Empty.** Dave to fill; candidates in section 5.8. |
 
 ### 5.4 Defence

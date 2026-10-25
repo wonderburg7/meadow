@@ -1,7 +1,7 @@
 # Hard soil -- the hive's outer soil needs Mighty Mandible to dig
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HS-1 is startable; HS-2 waits for HS-1, DR-1 (`plans/now/drones.md`, owns `scripts/hive.gd`) and CQ-S0b (`plans/now/code-health.md`, owns `scripts/bee.gd`) | Dependency: DR-1, CQ-S0b; PP-6 and FR-3 also edit `scripts/skills.gd` later | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: HS-1 built on claude/HS-1 (merge pending); HS-2 waits for HS-1 to merge, DR-1 (`plans/now/drones.md`, owns `scripts/hive.gd`) and CQ-S0b (`plans/now/code-health.md`, owns `scripts/bee.gd`) | Dependency: DR-1, CQ-S0b; PP-6 and FR-3 also edit `scripts/skills.gd` later | Verified: 2026-10-24
 
 ## Objective
 
