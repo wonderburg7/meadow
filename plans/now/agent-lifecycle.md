@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude / Codex | Next: L-37 (Codex lane, no shared file), once L-36 (Claude lane) has merged; separately, after L-29 (17 Oct 2026), `tools/session_cost.py` finds product edits in only 11 of 52 slice-worker subagent transcripts, so worker edits are probably still undercounted (likely paths built with `cd`, or other Bash forms) -- a follow-up slice to specify | Dependency: none between L-36 and L-37 (L-37 owns `tools/guard_hook.py` and its test only) | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude / Codex | Next: L-37 (Codex lane), then L-38 (Codex lane) to count worker edits made from a worktree-relative shell command | Dependency: L-38 follows L-37 in the Codex lane; L-37 owns `tools/guard_hook.py` and its test only | Verified: 2026-10-24
 
 ## Objective
 
@@ -51,6 +51,7 @@ measurement says what those sessions were doing.
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
 | L-37 | the guard hook lets `git show`/`git grep` read archived plans | `tools/guard_hook.py`, `tests/test_guard_hook.py` | low |
+| L-38 | count worker product edits from worktree-relative shell commands | `tools/session_cost.py`, `tests/test_session_cost_scope.py` | medium |
 
 L-31 to L-36 come from the 22 Oct 2026 workflow comparison (Dave asked
 whether a hooks, state-machine and multi-agent-review setup would help;
@@ -120,7 +121,36 @@ which `CLAUDE.md` already prescribes.
 - Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`
 - Check: `python -m unittest tests.test_guard_hook` passes with new cases: `git show HEAD:plans/archive/x.md`, `git grep -n L-31 HEAD -- plans/archive` and `git commit -m "see plans/archive/x"` are allowed; `Get-Content plans/archive/x.md`, `cat docs/archive/x.md`, `rg foo _backups` and `ls .godot` are still denied; `.\tools\verify.ps1` is green
 - Proof: `absent: tools/guard_hook.py :: def _reads_tree`
-- Next after: none -- the L-31 to L-37 set is complete
+- Next after: L-38 -- count worker product edits from worktree-relative shell commands
+```
+
+## L-38 -- count worker product edits from worktree-relative shell commands
+
+**Now.** After L-29, `tools/session_cost.py --phases` finds product edits in
+only 11 of 52 slice-worker subagent transcripts. Its Bash edit check requires
+an explicit `.worktrees/<id>/<product dir>/` path in the same command. A worker
+that changes into its worktree and then runs `sed -i` or `cp` on a relative
+product path is counted as making no product edit. The current unit cases
+cover only absolute worktree paths.
+
+**Target.** Extend the existing `session_cost.py` edit classifier to resolve
+worktree-relative shell write targets in a worker transcript, including a
+`cd` in the same command and an established worktree cwd. Count only writes
+under the listed product directories. Keep read-only commands, notes and
+edits outside the worktree uncounted. Add transcript-level tests for both
+counted and uncounted forms, then report the before/after worker count from
+`--phases` if local transcripts are available. This measures work; it changes
+no game or closeout behaviour.
+
+**Open decisions:** none.
+
+```queue
+**[Codex] L-38 -- count worker product edits from worktree-relative shell commands**
+- Plan: `plans/now/agent-lifecycle.md` -- "L-38 -- count worker product edits from worktree-relative shell commands"
+- Files: `tools/session_cost.py`, `tests/test_session_cost_scope.py`
+- Check: `python -m unittest tests.test_session_cost_scope` passes, including `cd .worktrees/L-38; sed -i ... tools/session_cost.py`, `cd .worktrees/L-38; cp ... scripts/bee.gd`, established worktree cwd, and read-only/non-product countercases; `python tools/session_cost.py --phases` reports the worker count when transcripts are available
+- Proof: `absent: tools/session_cost.py :: def _shell_product_edit`
+- Next after: none -- agent-lifecycle plan complete
 ```
 
 ## Standing rules
