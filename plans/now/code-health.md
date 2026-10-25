@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R11 then CQ-R6 in the Codex lane (Dave, 25 Oct 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-25
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R11 in the Codex lane, then CQ-R6 after GP-5 releases scripts/hud.gd (Dave's order, 25 Oct 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-25
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -115,14 +115,14 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
-| CQ-M5 | CanvasLayer order in scripts/canvas_layers.gd | 10 UI scripts | after FR-2 releases `scripts/skill_tree_panel.gd` and `tests/source_checks.py` | medium |
+| CQ-M5 | CanvasLayer order in scripts/canvas_layers.gd | 10 UI scripts | yes -- FR-2 released `scripts/skill_tree_panel.gd` and `tests/source_checks.py` on 25 Oct 2026 | medium |
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | yes | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once its section is written (CQ-R7 released `hud.gd` and WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
-| CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes -- follows CQ-R11 in the Codex lane | medium |
+| CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | gated -- follows CQ-R11 and waits for GP-5 to release `scripts/hud.gd` | medium |
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R11 | `world_building.gd::_seed_flower` decomposed, RNG order kept | `world_building.gd` | yes -- specified 25 Oct 2026 | medium |
@@ -294,6 +294,8 @@ wrapped chain as `. name(` on its own line.
 
 - **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`
   and `scripts/saving.gd`; its ownership overlaps that lane's current work.
+- **CQ-R6** -- follows CQ-R11 but waits for the Claude lane's GP-5 to release
+  `scripts/hud.gd`; keep its queue block gated until that ownership clears.
 
 CQ-S0b shipped 2026-10-25; its specification is `plans/archive/CQ-S0b_2026-10-25.md`.
 
@@ -394,7 +396,7 @@ Reasoning: **medium**.
 
 **Open decisions:** none.
 
-```queue
+```queue-gated
 **[Codex] CQ-R6 -- extract the HUD bee-command rows**
 - Plan: `plans/now/code-health.md` -- "CQ-R6 -- extract the HUD bee-command rows"
 - Files: `scripts/hud.gd`, `scripts/hud_command_rows.gd`, `FUNCTION_MAP.md`

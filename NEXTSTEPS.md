@@ -77,18 +77,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `present: scripts/world_building.gd :: func _seed_flower(`
    - Next after: CQ-R6 -- extract the HUD bee-command rows
 
-3. **[Codex] CQ-R6 -- extract the HUD bee-command rows**
-   - Plan: `plans/now/code-health.md` -- "CQ-R6 -- extract the HUD bee-command rows"
-   - Files: `scripts/hud.gd`, `scripts/hud_command_rows.gd`, `FUNCTION_MAP.md`
-   - Check: `python -m unittest tests.test_layout_regression tests.test_hc8_tray_first_open tests.test_hc16_tray_reselect` and `python tools/prefinish.py` pass; a hands-on check covers the command buttons
-   - Proof: `present: scripts/hud.gd :: func _rebuild_role_controls(`
-   - Next after: CQ-M4 -- gated until the Claude lane releases the save files
-
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
+- **CQ-R6** (`plans/now/code-health.md`) -- extract the HUD bee-command rows after CQ-R11; waits for the Claude lane's GP-5 to release `scripts/hud.gd`.
+- **CQ-M4** (`plans/now/code-health.md`) -- name Challenge level ids; waits for the Claude lane to release `scripts/save_game.gd` and `scripts/saving.gd`.
 - **RR-12** (`plans/now/run-repairs.md`) -- a loaded run keeps its readout history (Dave, 16 Oct 2026); waits for ED-3, the last of the alpha chain, which shares `scripts/main.gd` and the save files.
 - **SP-8a** (`plans/now/meadow-terrain.md`) -- the meadow floor drawn in blocks, with everything on it lifted (Dave, 12 Oct 2026); waits for ED-3, the last of the alpha chain (SG-2 to ED-3; WP-2 landed 21 Oct 2026 and WP-3 landed 22 Oct 2026), which shares `scripts/main.gd` and the save files (Dave, 16 Oct 2026).
 - **HM-2** (`plans/now/hive-and-menu-art.md`) -- five top-bar buttons drawn from Dave's menu icons; waits for Dave to queue it (his call, 13 Oct 2026); its gated block is written.
