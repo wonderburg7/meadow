@@ -405,6 +405,17 @@ static func move_towards(bee: Node2D, target: Vector2, delta: float) -> void:
 	Perf.end("bee_move")
 
 
+## How close a bee must fly to the hive door to count as being at the exit.
+const EXIT_REACH := 8.0
+
+## Walks a bee to the hive door. Returns true once it is within EXIT_REACH
+## of the inside entrance point. What the bee does on arrival is the caller's.
+static func walk_to_hive_exit(bee: Node2D, delta: float) -> bool:
+	var exit_point: Vector2 = bee.world.hive_entrance_inside() if bee.world else bee.position
+	move_towards(bee, exit_point, delta)
+	return bee.position.distance_to(exit_point) < EXIT_REACH
+
+
 ## NF-3. A tipsy bee's flight swings either side of its course, up to
 ## GameConfig.tipsy_wobble_degrees, so it weaves rather than flying
 ## straight. Turned about the bee rather than the aim, so the distance left

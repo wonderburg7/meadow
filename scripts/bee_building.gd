@@ -15,6 +15,12 @@ const State = BeeEnums.State
 const BeeMovement = preload("res://scripts/bee_movement.gd")
 const BeeForaging = preload("res://scripts/bee_foraging.gd")
 
+## Arrival distances for the builder's walks. Same values as before.
+const STAND_REACH := 2.0
+const CELL_REACH := 10.0
+const HAUL_REACH := 10.0
+const BODY_REACH := 8.0
+
 ## Catalogue finders all take one bee and return whether they started work.
 ## The cleaning row (actions.gd `comb_clean_cell`, gated on Cleaning) clears
 ## dead larvae first and, with none waiting, carries out the oldest body no
@@ -102,7 +108,7 @@ static func builder_go_to_site(bee: Node2D, delta: float) -> void:
 		bee.target_cell = null
 		bee.state = State.BUILD_IDLE
 		return
-	if bee.position.distance_to(stand_point) < 2.0:
+	if bee.position.distance_to(stand_point) < STAND_REACH:
 		bee.target_cell.claim_builder(bee)
 		DiagnosticLog.log_build_target(bee, bee.target_cell, "claimed", "arrived_at_build_approach", "arrived", "route_ok")
 		bee.state = State.BUILDING
@@ -138,7 +144,7 @@ static func builder_go_to_haul_source(bee: Node2D, delta: float) -> void:
 		bee.state = State.BUILD_IDLE
 		return
 	BeeMovement.move_towards(bee, bee.target_cell.position, delta)
-	if bee.position.distance_to(bee.target_cell.position) < 10.0:
+	if bee.position.distance_to(bee.target_cell.position) < CELL_REACH:
 		var moving_type: String = bee.target_cell.content_type
 		# NF-5: checked before the take, since a take that empties the
 		# cell clears its stamp. Fermented nectar is never moved to
@@ -351,7 +357,7 @@ static func builder_go_to_haul_target(bee: Node2D, delta: float) -> void:
 			bee.state = State.BUILD_IDLE
 			return
 	BeeMovement.move_towards(bee, bee.haul_target.position, delta)
-	if bee.position.distance_to(bee.haul_target.position) < 10.0:
+	if bee.position.distance_to(bee.haul_target.position) < HAUL_REACH:
 		var placed: float = bee.haul_target.add_resource(bee.current_load_type, bee.current_load)
 		bee.current_load -= placed
 		bee.hive.announce()
@@ -424,7 +430,7 @@ static func _go_to_body(bee: Node2D, delta: float) -> void:
 		_drop_body_job(bee)
 		return
 	BeeMovement.move_towards(bee, bee.target_body.position, delta)
-	if bee.position.distance_to(bee.target_body.position) < 8.0:
+	if bee.position.distance_to(bee.target_body.position) < BODY_REACH:
 		bee.state = State.CLEANING
 
 
@@ -447,9 +453,7 @@ static func _lift_body(bee: Node2D, delta: float) -> void:
 ## a miner hauling spoil: walk to the entrance, step outside, spend a
 ## moment dumping, then come back in and pick up the next job.
 static func builder_go_to_waste_exit(bee: Node2D, delta: float) -> void:
-	var exit_point: Vector2 = bee.world.hive_entrance_inside() if bee.world else bee.position
-	BeeMovement.move_towards(bee, exit_point, delta)
-	if bee.position.distance_to(exit_point) < 8.0:
+	if BeeMovement.walk_to_hive_exit(bee, delta):
 		if bee.world:
 			bee.world.move_bee_out_of_hive(bee)
 		bee.timer = GameConfig.dirt_dump_time
