@@ -46,51 +46,12 @@ Verified 24 Oct 2026 against master `248da728`.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HS-1 | Mighty Mandible exists on the tree (buyable, no effect yet) | `scripts/skills.gd`, `plans/design/progression.md` | yes | low |
 | HS-2 | Hard soil generated, greyer, 2.5x slower, gated on Mighty Mandible | `scripts/soil_block.gd`, `scripts/hive.gd`, `scripts/bee.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `test_scenarios/hs2_hard_soil.json`, `tests/test_hs2_hard_soil.py` | no -- waits for HS-1, DR-1 and CQ-S0b | medium |
 
 HS-2 needs HS-1's skill id. Neither slice touches `world_building.gd`,
 `save_game.gd` or `saving.gd`. A slice reads its own section only.
 
-## HS-1 -- Mighty Mandible joins the skill tree
-
-Level: low.
-
-**Build.**
-1. `scripts/skills.gd`: `const MIGHTY_MANDIBLE := "skill.colony.mighty_mandible"`
-   beside `MINER`.
-2. A catalogue entry straight after Restocking's, in the Colony block, with
-   Restocking's field order: `"name": "Mighty Mandible"`, `"description":
-   "Miners learn to chew through the stony soil that rings the hive's outer
-   half. It is slow going, but it opens up the deep ground."`, `"sector":
-   "colony"`, `"tier": 3`, `"axial": Vector2i(1, -7)` (ring 7, straight out
-   from Miner), `"cost": {BEE_BREAD: 10, HONEY: 40, POLLEN: 120}` (a tier-3
-   recipe names bee bread, section 4.2), `"requires_previous_tier": true`,
-   `"all_of": [MINER]`, `"effects": []`, `"status": "new"`, the rest as
-   Restocking.
-3. If verify's tree-layout check rejects `(1, -7)`, try `(2, -7)`, then
-   `(-1, -6)`, and comment the chosen slot the way Miner's entry is
-   commented. Move no other skill.
-4. `plans/design/progression.md`, "5.3 Colony": one row for
-   `skill.colony.mighty_mandible` -- "Lets Miners dig hard soil, at 2.5x
-   the time", tier 3, requires Miner, status new. Write the description in
-   the same voice as the table's other rows.
-
-**True afterwards.** The skill shows on the tree one step out from Miner and
-can be bought; nothing reads it yet. Runtime: none.
-
-**Must not change.** Any other skill's id, slot, cost or prerequisites.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] HS-1 -- Mighty Mandible joins the skill tree**
-- Plan: `plans/now/hard-soil.md` -- "HS-1 -- Mighty Mandible joins the skill tree"
-- Files: `scripts/skills.gd`, `plans/design/progression.md`
-- Check: `.\tools\verify.ps1` is green, including the skill-catalogue and tree-layout checks. Hands-on: none needed -- HS-2 files the check that covers the skill.
-- Proof: `absent: scripts/skills.gd :: skill.colony.mighty_mandible`
-- Next after: HS-2
-```
+HS-1 shipped 2026-10-25; its specification is `plans/archive/HS-1_2026-10-25.md`.
 
 ## HS-2 -- hard soil fills the outer half of the hive's soil
 
