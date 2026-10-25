@@ -227,6 +227,9 @@ PP-6 prices the route.
 because tier 3 now waits for Auto scouting, if the grid check rejects
 `(5, -1)` or `(9, -1)`, or if a Challenge stage check changes.
 
+FR-2 does not edit `GAME_MODEL.md`: its Foraging and Availability cards
+follow FR-2 in AC-4 (`plans/now/agent-context.md`), gated on FR-2.
+
 **Open decisions:** none.
 
 ```queue
