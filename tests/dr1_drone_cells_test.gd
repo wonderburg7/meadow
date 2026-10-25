@@ -5,6 +5,7 @@ extends SceneTree
 ## - a mated queen lays a drone, at a worker egg's cost, into a cell marked
 ##   for a drone, and a worker into an unmarked one; the queen looks to a
 ##   marked cell before an unset one, and the nursery readout keys it "drone";
+## - a mark left on a cell the player has un-reserved raises a worker;
 ## - marking a gyne cell for a drone clears its gyne mark, and the reverse;
 ## - an unmated queen still lays a drone into a gyne-marked cell;
 ## - the mark survives a save and load, and a save without the key loads
@@ -72,6 +73,13 @@ func _run() -> void:
 		_fail("the founding queen is not mated")
 		return
 	_main.selected_cells.clear()
+	# No cell starts with a role or a mark, so the marked cells below are the
+	# only ones the queen looks to first.
+	for cell in hive.cells:
+		if is_instance_valid(cell):
+			cell.hatch_role = -1
+			cell.hatch_gyne = false
+			cell.hatch_drone = false
 
 	# 1. A mated queen lays a drone in a marked cell, a worker in an unmarked one.
 	var drone_cell: Node2D = _free_cell(hive, [])
@@ -83,8 +91,7 @@ func _run() -> void:
 	_check(drone_cell.hatch_drone, "the drone request did not mark the cell")
 	_check(drone_cell.designated_type == "brood", "a drone cell is reserved for '%s', not brood" % drone_cell.designated_type)
 	_check(int(hive.zone_summary()["by_role"].get("drone", 0)) == 1, "the nursery readout does not key the drone cell \"drone\"")
-	if not _other_configured_cell(hive, drone_cell):
-		_check(hive.find_empty_cell() == drone_cell, "the queen does not look to the drone cell before an unset one")
+	_check(hive.find_empty_cell() == drone_cell, "the queen does not look to the drone cell before an unset one")
 	queen.pollen_eaten = game_config.gyne_egg_pollen_cost
 	if _lay(egg_laying, queen, drone_cell) == null:
 		return
@@ -104,11 +111,21 @@ func _run() -> void:
 	mark_cell.hatch_gyne = true
 	orders._on_cell_drone_requested(mark_cell, true)
 	_check(mark_cell.hatch_drone and not mark_cell.hatch_gyne, "marking a gyne cell for a drone left its gyne mark")
-	if hive.find_empty_cell() == mark_cell:
-		_check(is_equal_approx(egg_laying.pollen_needed_for_next_egg(queen), game_config.egg_pollen_cost),
-			"a mated queen waits for a gyne egg's pollen for a drone cell")
+	_check(hive.find_empty_cell() == mark_cell, "the queen does not look to the drone cell next")
+	_check(is_equal_approx(egg_laying.pollen_needed_for_next_egg(queen), game_config.egg_pollen_cost),
+		"a mated queen waits for a gyne egg's pollen for a drone cell")
 	mark_cell.hatch_gyne = true
 	_check(mark_cell.hatch_gyne and not mark_cell.hatch_drone, "marking a drone cell for a gyne left its drone mark")
+
+	# A mark left on a cell the player has un-reserved raises a worker. Level 3
+	# has only three empty cells, so the worker cell is emptied for it.
+	var unreserved_cell: Node2D = worker_cell
+	unreserved_cell.clear_cell()
+	orders._on_cell_drone_requested(unreserved_cell, true)
+	unreserved_cell.set_designation("")
+	if _lay(egg_laying, queen, unreserved_cell) == null:
+		return
+	_check(not unreserved_cell.brood_is_drone, "a mated queen laid a drone into an un-reserved cell")
 
 	# 3. An unmated queen still lays a drone into a gyne-marked cell.
 	queen.is_mated = false
@@ -119,6 +136,7 @@ func _run() -> void:
 
 	# 4. The mark survives a save and load.
 	var drone_hex: Vector2i = drone_cell.axial
+	var marked_before: int = _marked_count()
 	var save_game: GDScript = _main.SaveGame
 	if not save_game.save(_main, SAVE_PATH):
 		_fail("could not write the test save")
@@ -128,7 +146,7 @@ func _run() -> void:
 	var restored: Node2D = _cell_at(drone_hex)
 	_check(restored != null and restored.hatch_drone and not restored.hatch_gyne, "the restored cell lost its drone mark")
 	_check(restored != null and restored.content_type == "brood" and restored.brood_is_drone, "the restored cell lost its drone larva")
-	_check(_marked_count() == 1, "the save restored %d drone-marked cells, not 1" % _marked_count())
+	_check(_marked_count() == marked_before, "the save restored %d drone-marked cells, not %d" % [_marked_count(), marked_before])
 
 	# A save without the key marks no cell.
 	var old_save: Dictionary = data.duplicate(true)
@@ -160,17 +178,6 @@ func _free_cell(hive: Node2D, exclude: Array) -> Node2D:
 			continue
 		return cell
 	return null
-
-
-## Whether any nursery cell but `except` has a role or mark set, which would
-## share the queen's lays with it.
-func _other_configured_cell(hive: Node2D, except: Node2D) -> bool:
-	for cell in hive.cells:
-		if cell == except or not is_instance_valid(cell) or not cell.is_nursery_cell():
-			continue
-		if cell.hatch_role >= 0 or cell.hatch_gyne or cell.hatch_drone:
-			return true
-	return false
 
 
 func _cell_at(hex: Vector2i) -> Node2D:

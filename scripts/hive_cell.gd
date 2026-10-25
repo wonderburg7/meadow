@@ -126,6 +126,10 @@ const BROOD_COLOR := Color(0.9, 0.9, 0.85)
 const CORPSE_COLOR := Color(0.24, 0.21, 0.14)
 const JELLY_COLOR := Color(1.0, 1.0, 0.68)
 const GYNE_BROOD_COLOR := Color(1.0, 0.86, 0.31)
+## DR-1. The "role" overlay's colour for a cell marked for a drone: the value
+## of bee.gd's DRONE_COLOUR, written out because bee.gd preloads this file and
+## so this file cannot preload bee.gd.
+const DRONE_MARK_COLOR := Color(0.62, 0.52, 0.78)
 const SITE_COLOR := Color(0.42, 0.34, 0.16)
 
 ## BB-1. Bee bread in three states: a pale mauve while it is being packed,
@@ -528,6 +532,8 @@ func _overlay_colour() -> Array:
 				return [Color(0.24, 0.24, 0.26), ""]
 			if hatch_gyne:
 				return [GYNE_BROOD_COLOR, "G"]
+			if hatch_drone:
+				return [DRONE_MARK_COLOR, "D"]
 			if hatch_role < 0:
 				return [Color(0.62, 0.62, 0.66), "?"]
 			return [Roles.colour_for(hatch_role, hatch_focus), Roles.tag_for_key(Roles.count_key(hatch_role, hatch_focus))]

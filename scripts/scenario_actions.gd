@@ -727,9 +727,11 @@ static func _do_hatch_role(main: Node2D, action: Dictionary) -> void:
 	_log("hatch_role", "%s -> %s/%s" % [hex, role_key, focus], "accepted", "")
 
 ## DR-1. Calls orders_zones._on_cell_drone_requested, the function the cell
-## popup's drone box reaches (DR-2), for the cell at "hex". {"drone": false}
-## clears the mark; absent sets it. Checks the cell's own hatch_drone
-## afterwards, so a request that did not take shows as a rejection.
+## popup's drone box reaches (DR-2), for the cell at "hex" only: the handler
+## acts on the whole selection, so the selection is set aside for the call
+## and put back, as set_restock_order does. {"drone": false} clears the mark;
+## absent sets it. Checks the cell's own hatch_drone afterwards, so a request
+## that did not take shows as a rejection.
 static func _do_mark_drone_cell(main: Node2D, action: Dictionary) -> void:
 	var hex: Array = action.get("hex", [])
 	var cell: Node2D = _resolve_cell(main, hex)
@@ -737,7 +739,10 @@ static func _do_mark_drone_cell(main: Node2D, action: Dictionary) -> void:
 	if cell == null:
 		_log("mark_drone_cell", str(hex), "rejected", "no cell at that hex")
 		return
+	var previous_cells: Array = main.selected_cells
+	main.selected_cells = []
 	main.orders_zones._on_cell_drone_requested(cell, as_drone)
+	main.selected_cells = previous_cells
 	if cell.hatch_drone != as_drone:
 		_log("mark_drone_cell", "%s -> %s" % [hex, as_drone], "rejected",
 			"cell's drone mark ended up %s" % cell.hatch_drone)

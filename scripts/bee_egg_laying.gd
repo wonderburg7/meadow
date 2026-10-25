@@ -26,7 +26,7 @@ static func has_room_for_egg(bee: Node2D) -> bool:
 ## any queen into a cell marked for a drone (DR-1).
 static func pollen_needed_for_next_egg(bee: Node2D) -> float:
 	var next: Variant = bee.hive.find_empty_cell()
-	if bee.is_mated and next != null and is_instance_valid(next) and next.hatch_gyne and not next.hatch_drone:
+	if bee.is_mated and next != null and is_instance_valid(next) and next.hatch_gyne:
 		return GameConfig.gyne_egg_pollen_cost
 	return GameConfig.egg_pollen_cost
 
@@ -102,8 +102,11 @@ static func queen_lay(bee: Node2D, delta: float) -> void:
 			# COL-9: an unmated queen's eggs are unfertilised, so they become
 			# drones -- never a worker, never a gyne, whatever the cell asks.
 			# DR-1: a mated queen lays an unfertilised egg into a cell the
-			# player has marked for a drone.
-			var as_drone: bool = not bee.is_mated or bee.target_cell.hatch_drone
+			# player has marked for a drone -- while it is still a nursery
+			# cell. A mark left on a cell the player has since un-reserved is
+			# not shown anywhere, so the spare-comb fallback ignores it.
+			var as_drone: bool = not bee.is_mated \
+					or (bee.target_cell.hatch_drone and bee.target_cell.is_nursery_cell())
 			var as_gyne: bool = bee.target_cell.hatch_gyne and not as_drone
 			bee.target_cell.start_brood(as_gyne, as_drone)
 			# Only now does the priority share-out move on. Everything up to

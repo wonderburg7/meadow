@@ -237,9 +237,15 @@ func _restore_cells(cells: Array) -> void:
 		cell.hatch_focus = str(entry.get("hatch_focus", "nectar"))
 		cell.hatch_automine = bool(entry.get("hatch_automine", false))
 		cell.hatch_role_locked = bool(entry.get("hatch_locked", false))
-		cell.hatch_gyne = bool(entry.get("hatch_gyne", false))
 		# DR-1, additive: a save from before DR-1 marks no cell for a drone.
-		cell.hatch_drone = bool(entry.get("hatch_drone", false))
+		# A cell carries one mark; a save holding both keeps the gyne mark.
+		var gyne_mark: bool = bool(entry.get("hatch_gyne", false))
+		var drone_mark: bool = bool(entry.get("hatch_drone", false))
+		if gyne_mark and drone_mark:
+			push_warning("Save: cell %s is marked for both a gyne and a drone; keeping the gyne mark." % [hex])
+			drone_mark = false
+		cell.hatch_gyne = gyne_mark
+		cell.hatch_drone = drone_mark
 		# PP-5, additive: a save from before PP-5 marks no cell.
 		cell.priority_cell = bool(entry.get("priority_cell", false))
 		cell.nursery_priority = int(entry.get("priority", 1))
