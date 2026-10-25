@@ -24,7 +24,7 @@ class OtherCheckoutTest(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.other = Path(self.temp_dir.name).resolve() / "other"
         self.other.mkdir()
-        subprocess.run(["git", "init", "-q", str(self.other)], check=True)
+        subprocess.run(["git", "init", "-q", "-b", "master", str(self.other)], check=True)
         self.plain = Path(self.temp_dir.name).resolve() / "plain"
         self.plain.mkdir()
 
