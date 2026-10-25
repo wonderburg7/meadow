@@ -330,11 +330,19 @@ func _state_colour(state: String) -> Color:
 
 func _skill_tip(skill: Dictionary, state: String, reason: String) -> String:
 	return "%s\n%s\nCost: %s\n%s%s" % [skill.name, skill.get("description", ""),
-		_cost_text(skill), _sentence(_state_text(state, reason)), _not_built_note(skill)]
+		_cost_text(skill), _sentence(_state_text(state, reason)), _not_built_note(skill) + _replaced_note(skill)]
 
 ## FBB-1: a node whose effect is not built says so rather than sell nothing.
 func _not_built_note(skill: Dictionary) -> String:
 	return "" if Skills.is_built(str(skill.get("id", ""))) else "\nNot built yet: buying it changes nothing yet."
+
+## FR-2: Orientation flight says so once Auto scouting has replaced it.
+func _replaced_note(skill: Dictionary) -> String:
+	if str(skill.get("id", "")) != Skills.ORIENTATION_FLIGHT:
+		return ""
+	if Session.progression == null or not Session.progression.is_owned(Skills.AUTO_SCOUTING):
+		return ""
+	return "\nReplaced by Auto scouting: new foragers now scout for themselves."
 
 func _cost_text(skill: Dictionary) -> String:
 	if Session.progression != null and Session.progression.is_free(str(skill.get("id", ""))):

@@ -217,6 +217,17 @@ const SKILLS := [
 		"status": "existing", "baseline": false, "open": false,
 	},
 	{
+		# FR-2 (plans/now/forager-recruitment.md, decision 1): a purchase that
+		# replaces Orientation flight, no longer a baseline capability.
+		"id": AUTO_SCOUTING, "name": "Auto scouting",
+		"description": "A new forager samples a few areas and keeps the best one.",
+		"sector": "foraging", "tier": 2, "axial": Vector2i(5, -1),
+		"max_rank": 1, "cost": {HONEY: 20, NECTAR: 180, POLLEN: 80},
+		"requires_previous_tier": true, "all_of": [ORIENTATION_FLIGHT], "any_of": [],
+		"feature": "", "introduced_by": "", "effects": [{"type": "enable_behaviour", "key": "scouting_on"}], "icon": "",
+		"status": "existing", "baseline": false, "open": false,
+	},
+	{
 		"id": WEIGHTED_FLOWER_CHOICE, "name": "Weighted flower choice",
 		"description": "Foragers weigh what a flower is likely to yield against how long it takes and how far it is, instead of always taking the nearest.",
 		"sector": "foraging", "tier": 3, "axial": Vector2i(7, 0),
@@ -252,9 +263,9 @@ const SKILLS := [
 	{
 		"id": AUTO_RECRUITMENT, "name": "Auto-recruitment",
 		"description": "A forager that has found something good tells the others at the entrance, so a productive area fills up on its own.",
-		"sector": "foraging", "tier": 4, "axial": Vector2i(8, 1),
+		"sector": "foraging", "tier": 4, "axial": Vector2i(9, -1),
 		"max_rank": 1, "cost": {POLLINATOR_POINTS: 25, BEE_BREAD: 30, NECTAR: 250},
-		"requires_previous_tier": true, "all_of": [], "any_of": [],
+		"requires_previous_tier": true, "all_of": [AUTO_SCOUTING], "any_of": [],
 		"feature": "", "introduced_by": "", "effects": [], "icon": "",
 		"status": "existing", "baseline": false, "open": false,
 	},
@@ -580,15 +591,6 @@ const SKILLS := [
 	# --- Baseline capabilities (section 5.7) ----------------------
 	# On from the start, not purchasable, no grid position. Reserved as
 	# data so promoting one to a node later is an edit, not a rewrite.
-	{
-		"id": AUTO_SCOUTING, "name": "Auto scouting",
-		"description": "A new forager samples a few areas and keeps the best one.",
-		"sector": "foraging", "tier": 0, "axial": Vector2i(0, 0),
-		"max_rank": 1, "cost": {},
-		"requires_previous_tier": false, "all_of": [], "any_of": [],
-		"feature": "", "introduced_by": "", "effects": [], "icon": "",
-		"status": "baseline", "baseline": true, "open": false,
-	},
 	{
 		"id": CELL_PRIORITY, "name": "Cell priority",
 		"description": "Cells, zones and orders can be given priority over one another.",
