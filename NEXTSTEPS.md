@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] CQ-L2 -- every tool that reads GDScript as text survives gdformat**
-   - Plan: `plans/now/code-health.md` -- "CQ-L2 -- every tool that reads GDScript as text survives gdformat"
-   - Files: `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, `tests/test_gdformat_survival.py`
-   - Check: `python -m unittest tests.test_gdformat_survival` passes: each of the four tools gives the same result on a gdformat-ed copy of every tracked `.gd` as on the original; `python tests/source_checks.py` still passes, and `python -X dev tests/source_checks.py` prints no `ResourceWarning`
-   - Proof: `absent: tests/source_checks.py :: gdformat`
-   - Next after: CQ-L3
-
-2. **[Claude] CQ-S0b -- a restored forager takes no fresh orientation flight**
+1. **[Claude] CQ-S0b -- a restored forager takes no fresh orientation flight**
    - Plan: `plans/now/code-health.md` -- "CQ-S0b -- a restored forager takes no fresh orientation flight"
    - Files: `scripts/bee.gd`, `scripts/saving.gd`, `tests/save_roundtrip_test.gd`
    - Check: `python -m unittest tests.test_save_roundtrip` passes with `KNOWN_DIFFERENCES` empty: both `orientation` routes print `CQS0 OK`, none KNOWN or STALE, and the new in-place case finds the Move-to-point forager heading for her saved start point; `tests/test_save_migrations.py` passes; `.\tools\verify.ps1` is green
    - Proof: `present: tests/save_roundtrip_test.gd :: const ORIENTATION_GAINS_START`
    - Next after: CQ-S1 -- Flower owns its save fields (gated on the alpha chain's save slices)
 
-3. **[Claude] CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named**
+2. **[Claude] CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named**
    - Plan: `plans/now/code-health.md` -- "CQ-M8 -- `BeeMovement.walk_to_hive_exit`; reach distances named"
    - Files: `scripts/bee_movement.gd`, `scripts/bee_foraging.gd`, `scripts/bee_mining.gd`, `scripts/bee_building.gd`
    - Check: `python tests/source_checks.py` passes; `python tools/prefinish.py` is green; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/bee_movement.gd :: func walk_to_hive_exit`
    - Next after: FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight
 
-4. **[Claude] DR-1 -- a mated queen lays drones in cells marked for them, saved**
+3. **[Claude] DR-1 -- a mated queen lays drones in cells marked for them, saved**
    - Plan: `plans/now/drones.md` -- "DR-1 -- a mated queen lays drones in cells marked for them, saved"
    - Files: `scripts/hive_cell.gd`, `scripts/bee_egg_laying.gd`, `scripts/hive.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/cq_s0_mid_capture.json`, `tests/fixtures/saves/cq_s0_early.json`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json`, `tests/test_save_roundtrip.py`, `tests/dr1_drone_cells_test.gd`, `tests/test_dr1_drone_cells.py`
    - Check: `python -m unittest tests.test_dr1_drone_cells` passes (a mated queen lays a drone in a marked cell and a worker in an unmarked one; the gyne and drone marks clear each other; an unmated queen still lays drones; the mark survives a save and load); `python -m unittest tests.test_save_roundtrip` passes on the re-captured goldens, and `tests/fixtures/saves/cq_s0_mid.json` holds a bee and a brood cell with `"drone": true`; `tests/test_save_migrations.py` passes; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/hive_cell.gd :: hatch_drone`
    - Next after: DR-2 -- the cell popup's drone box
 
-5. **[Claude] FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight**
+4. **[Claude] FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight**
    - Plan: `plans/now/forager-recruitment.md` -- "FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight"
    - Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/skill_tree_panel.gd`, `scripts/levels.gd`, `tests/source_checks.py`, `test_scenarios/pp2_points_spendable.json`, `test_scenarios/fr2_auto_scouting_test.json`, `tests/test_fr2_auto_scouting.py`
    - Check: `python -m unittest tests.test_fr2_auto_scouting` passes (Auto scouting bought after Orientation flight: scouts settle and no orientation flight runs); `python tools/run_scenario.py test_scenarios/pp2_points_spendable.json` and `test_scenarios/ap8_bought_orientation_test.json` pass; `python tests/source_checks.py` passes its grid check with Auto scouting at (5, -1) and Auto-recruitment at (9, -1); `python tools/prefinish.py` and `.\tools\verify.ps1` are green
    - Proof: `absent: scripts/bee_foraging.gd :: static func scouting_on`
    - Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
+
+5. **[Claude] HS-1 -- Mighty Mandible joins the skill tree**
+   - Plan: `plans/now/hard-soil.md` -- "HS-1 -- Mighty Mandible joins the skill tree"
+   - Files: `scripts/skills.gd`, `plans/design/progression.md`
+   - Check: `.\tools\verify.ps1` is green, including the skill-catalogue and tree-layout checks. Hands-on: none needed -- HS-2 files the check that covers the skill.
+   - Proof: `absent: scripts/skills.gd :: skill.colony.mighty_mandible`
+   - Next after: HS-2
 
 ### Codex lane
 

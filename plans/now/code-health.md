@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-L2, CQ-S0b and CQ-M8 in the Claude lane; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 waits for CQ-L2 to release tests/source_checks.py, and follows CQ-R8; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-S0b and CQ-M8 in the Claude lane (CQ-L2 complete, 24 Oct 2026; CQ-L3 waits for both lanes to empty); CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-24
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -107,7 +107,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 
 | Slice | Outcome | Files it owns (block has the full list) | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CQ-L2 | every tool that reads GDScript as text survives `gdformat` | `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, tests | yes (CQ-L1 landed 22 Oct 2026) | medium |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
 | CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | section needed; Codex admission waits for Claude to release `tests/source_checks.py` (CQ-L2) | low |
 | CQ-S0b | a restored forager takes no fresh orientation flight | `bee.gd`, `saving.gd`, `tests/save_roundtrip_test.gd` | yes | medium |
@@ -261,42 +260,36 @@ balance. "Leave" is a deliberate decision.
 
 CQ-L1 shipped 2026-10-22; its specification is `plans/archive/CQ-L1_2026-10-22.md`.
 
-## CQ-L2 -- every tool that reads GDScript as text survives gdformat
+CQ-L2 shipped 2026-10-24; its specification is `plans/archive/CQ-L2_2026-10-24.md`.
 
-**True now.** CQ-L1 landed gdlint in `verify.ps1`. `gdformat` (gdtoolkit 4.5.0) is
-not run anywhere, and nothing proves that the tools which read `.gd` files as text
-(`tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`,
-`tools/sprites.py`) give the same answers on formatted code. `gdformat` rewrites
-indentation, blank lines, line wrapping and trailing commas; a parser written
-against the hand-formatted style can miss a call that CQ-L3's one-off reformat
-wraps over two lines.
+## CQ-L3 -- one-off gdformat, then `--check` joins verify
+
+Level: medium. Gated: both lanes must be empty (`plans/workstreams.md`), because
+the reformat touches every tracked `.gd`.
+
+**True now.** CQ-L2 landed 24 Oct 2026: `tests/test_gdformat_survival.py` shows
+`tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`
+and `tools/sprites.py` give the same answers on a gdformat-ed copy. Two things it
+found stay as they are: `FUNCTION_MAP.md` indexes a hand-wrapped signature by its
+first line only, while a formatted one is shown whole; and gdformat writes a
+wrapped chain as `. name(` on its own line.
 
 **When done:**
 
-1. `tests/test_gdformat_survival.py` copies the tracked `.gd` files (outside
-   `addons/`) into a temporary folder, runs `python -m gdtoolkit.formatter` over the
-   copy, and runs each of the four tools' parsing functions on both the original and
-   the copy. Every result is identical. It skips with one line where gdtoolkit is
-   missing.
-2. Each parser that differs is fixed in its own tool, to read the formatted form as
-   well as the current one. A tool that reads a line at a time learns to join a
-   wrapped call first.
-3. Nothing is reformatted in the repository: CQ-L3 does that.
-4. Every file `tests/source_checks.py` opens is closed: its bare
-   `open(...).read()` and `json.load(open(...))` become `with open` or
-   `Path.read_text`. Jules's audit (23 Oct 2026) found 1,652 unclosed-file
-   `ResourceWarning`s under `python -X dev`, which bury real output in a
-   unittest run.
+1. `gdformat` (gdtoolkit 4.5.0) has run once over every tracked `.gd` outside
+   `addons/`, in one commit that changes nothing else.
+2. `python tools/update_function_map.py` and `python tools/stage_reference.py`
+   have been re-run, so the generated files match the formatted source.
+3. `tools/verify.ps1` runs `gdformat --check` over the same files.
+4. `.\tools\verify.ps1` is green and a headless boot is unchanged.
 
-**Invariants.** A tool's output on today's unformatted source does not change.
-
-```queue
-**[Claude] CQ-L2 -- every tool that reads GDScript as text survives gdformat**
-- Plan: `plans/now/code-health.md` -- "CQ-L2 -- every tool that reads GDScript as text survives gdformat"
-- Files: `tests/source_checks.py`, `tools/stage_reference.py`, `tools/update_function_map.py`, `tools/sprites.py`, `tests/test_gdformat_survival.py`
-- Check: `python -m unittest tests.test_gdformat_survival` passes: each of the four tools gives the same result on a gdformat-ed copy of every tracked `.gd` as on the original; `python tests/source_checks.py` still passes, and `python -X dev tests/source_checks.py` prints no `ResourceWarning`
-- Proof: `absent: tests/source_checks.py :: gdformat`
-- Next after: CQ-L3
+```queue-gated
+**[Claude] CQ-L3 -- one-off gdformat, then `--check` joins verify**
+- Plan: `plans/now/code-health.md` -- "CQ-L3 -- one-off gdformat, then `--check` joins verify"
+- Files: every tracked `.gd` outside `addons/`, `tools/verify.ps1`, `FUNCTION_MAP.md`, `docs/challenge-stages.md`
+- Check: `gdformat --check` over every tracked `.gd` outside `addons/` reports nothing to change; `.\tools\verify.ps1` is green
+- Proof: `absent: tools/verify.ps1 :: gdformat`
+- Next after: CQ-T3
 ```
 
 ## Not in the queue, and why
