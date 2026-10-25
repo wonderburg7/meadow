@@ -457,5 +457,5 @@ checks. Stop if the replacement changes a save compatibility decision.
 - Files: `scripts/levels.gd`, `scripts/challenge_runner.gd`, `scripts/saving.gd`, `scripts/save_game.gd`, `scripts/main.gd`, `scripts/debug_panel.gd`, `scripts/challenge_complete.gd`, `scripts/world_building.gd`, `FUNCTION_MAP.md`
 - Check: `python tools/equivalence.py test_scenarios/h4_challenge1_stage_advance_test.json master` and `python tools/equivalence.py test_scenarios/bb4_challenge1_route.json master` report no difference; `python tests/source_checks.py`, `python tools/prefinish.py` and `./tools/verify.ps1` are green
 - Proof: `present: scripts/saving.gd :: if Session.starting_level in [1, 2]:`
-- Next after: CQ-M5 -- CanvasLayer order in `scripts/canvas_layers.gd`
+- Next after: CQ-M5 -- CanvasLayer order in scripts/canvas_layers.gd
 ```
