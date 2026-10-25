@@ -1,7 +1,7 @@
 # Hard soil -- the hive's outer soil needs Mighty Mandible to dig
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HS-1 built on claude/HS-1 (merge pending); HS-2 waits for HS-1 to merge, DR-1 (`plans/now/drones.md`, owns `scripts/hive.gd`) and CQ-S0b (`plans/now/code-health.md`, owns `scripts/bee.gd`) | Dependency: DR-1, CQ-S0b; PP-6 and FR-3 also edit `scripts/skills.gd` later | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: HS-2 -- HS-1, DR-1 (`plans/now/drones.md`) and CQ-S0b (`plans/now/code-health.md`) all landed 25 Oct 2026, so its block is open | Dependency: none left; PP-6 and FR-3 also edit `scripts/skills.gd` later | Verified: 2026-10-24
 
 ## Objective
 
@@ -46,7 +46,7 @@ Verified 24 Oct 2026 against master `248da728`.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| HS-2 | Hard soil generated, greyer, 2.5x slower, gated on Mighty Mandible | `scripts/soil_block.gd`, `scripts/hive.gd`, `scripts/bee.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `test_scenarios/hs2_hard_soil.json`, `tests/test_hs2_hard_soil.py` | no -- waits for HS-1, DR-1 and CQ-S0b | medium |
+| HS-2 | Hard soil generated, greyer, 2.5x slower, gated on Mighty Mandible | `scripts/soil_block.gd`, `scripts/hive.gd`, `scripts/bee.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `test_scenarios/hs2_hard_soil.json`, `tests/test_hs2_hard_soil.py` | yes -- HS-1, DR-1 and CQ-S0b landed 25 Oct 2026 | medium |
 
 HS-2 needs HS-1's skill id. Neither slice touches `world_building.gd`,
 `save_game.gd` or `saving.gd`. A slice reads its own section only.
@@ -57,9 +57,9 @@ HS-1 shipped 2026-10-25; its specification is `plans/archive/HS-1_2026-10-25.md`
 
 Level: medium.
 
-**Gate:** HS-1 merged; DR-1 (`plans/now/drones.md`) merged, as it owns
-`scripts/hive.gd`; CQ-S0b (`plans/now/code-health.md`) merged, as it owns
-`scripts/bee.gd`. Re-fence this block `queue` when all three have landed.
+**Gate:** none left: HS-1, DR-1 (`plans/now/drones.md`, which owned
+`scripts/hive.gd`) and CQ-S0b (`plans/now/code-health.md`, which owned
+`scripts/bee.gd`) all landed 25 Oct 2026.
 
 **Build.**
 1. `scripts/game_config.gd`, beside `block_mine_time`, with a settings row
@@ -143,7 +143,7 @@ digging happens in the soft inner rings.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] HS-2 -- hard soil fills the outer half of the hive's soil**
 - Plan: `plans/now/hard-soil.md` -- "HS-2 -- hard soil fills the outer half of the hive's soil"
 - Files: `scripts/soil_block.gd`, `scripts/hive.gd`, `scripts/bee.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `test_scenarios/hs2_hard_soil.json`, `tests/test_hs2_hard_soil.py`

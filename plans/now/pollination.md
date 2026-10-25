@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter; it waits for FR-2 (`plans/now/forager-recruitment.md`, specified 23 Oct 2026) | Dependency: PP-6 waits for FR-2 (Dave 14 Oct 2026); AR-4 (`plans/now/alpha-route-evidence.md`) and FR-3 wait for PP-6 | Verified: 2026-10-23
+Status: active | Owner: Dave / Claude Code | Next: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter; FR-2 (`plans/now/forager-recruitment.md`) landed 25 Oct 2026, so its block is open | Dependency: PP-6 followed FR-2 (Dave 14 Oct 2026; landed 25 Oct 2026); AR-4 (`plans/now/alpha-route-evidence.md`) and FR-3 wait for PP-6 | Verified: 2026-10-23
 
 ## Objective
 
@@ -49,7 +49,7 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | no -- after FR-2 (`plans/now/forager-recruitment.md`) puts Auto scouting on the route (AR-5, `plans/now/alpha-route-evidence.md`, gave the reference player an early-laying queen 21 Oct 2026; PP-5 landed 13 Oct 2026) | medium |
+| PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | yes -- FR-2 (`plans/now/forager-recruitment.md`) put Auto scouting on the route 25 Oct 2026 (AR-5, `plans/now/alpha-route-evidence.md`, gave the reference player an early-laying queen 21 Oct 2026; PP-5 landed 13 Oct 2026) | medium |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
 once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
@@ -84,7 +84,7 @@ PP-8 shipped 2026-10-16; its specification is `plans/archive/PP-8_2026-10-16.md`
 
 <!-- LAYER: design -->
 
-Its block is gated: it waits for FR-2 (`plans/now/forager-recruitment.md`), which puts Auto scouting on the route (Dave, 14 Oct 2026). AR-5 (`plans/now/alpha-route-evidence.md`), whose reference queen lays from her first free cell instead of day 17 so this sweep prices for a colony that grows (Dave, 16 Oct 2026, product review D2), landed 21 Oct 2026. PP-5 landed 13 Oct 2026 (PP-1 to PP-4 and T2-7 landed 11-12 Oct 2026). Intent (Dave, 10 Oct
+Its gate cleared when FR-2 (`plans/now/forager-recruitment.md`) landed 25 Oct 2026, putting Auto scouting on the route (Dave, 14 Oct 2026). AR-5 (`plans/now/alpha-route-evidence.md`), whose reference queen lays from her first free cell instead of day 17 so this sweep prices for a colony that grows (Dave, 16 Oct 2026, product review D2), landed 21 Oct 2026. PP-5 landed 13 Oct 2026 (PP-1 to PP-4 and T2-7 landed 11-12 Oct 2026). Intent (Dave, 10 Oct
 2026): a reasonably played Colony Run first affords Gyne rearing after the
 first winter. The reference player in `alpha_arc_test.json` buys along the
 route; `pacing_gates.py` reports the day Gyne rearing becomes affordable;
@@ -112,11 +112,11 @@ Decisions (Dave, 14 Oct 2026):
 - **Auto scouting is on the route; Auto-recruitment is not.** Dave made
   Auto scouting a Foraging tier-2 node that replaces Orientation flight
   (`plans/now/forager-recruitment.md` decision 1), so every route player
-  buys it before Pollinator points: PP-6 waits for FR-2 to add it and
+  buys it before Pollinator points: FR-2 added it (25 Oct 2026) and PP-6
   prices it with the rest of the route. Auto-recruitment (tier 4, off the
   route) is priced by FR-3's own sweep; PP-6 leaves its cost as it is.
 
-```queue-gated
+```queue
 **[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
 - Plan: `plans/now/pollination.md` -- "PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter"
 - Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
@@ -127,4 +127,4 @@ Decisions (Dave, 14 Oct 2026):
 
 ## Not in the queue, and why
 
-- **PP-6** waits for FR-2 (`plans/now/forager-recruitment.md`); AR-5 landed 21 Oct 2026, PP-5 13 Oct 2026.
+- Nothing: PP-6's gate cleared when FR-2 (`plans/now/forager-recruitment.md`) landed 25 Oct 2026.

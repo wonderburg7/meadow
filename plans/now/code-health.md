@@ -108,7 +108,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | Slice | Outcome | Files it owns (block has the full list) | Startable | Level |
 | --- | --- | --- | --- | --- |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | section needed; Codex admission waits for Claude to release `tests/source_checks.py` (CQ-L2) | low |
+| CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | section needed, after CQ-R8 (CQ-L2 released `tests/source_checks.py` 24 Oct 2026) | low |
 | CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a, DR-1 | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
@@ -159,8 +159,8 @@ claim while `dry_after`).
     22 Oct 2026, then CQ-R7), as CQ-T2 waited for CQ-R1's moves; CQ-L1, which held
     `skill_tree_panel.gd` ahead of it, landed 22 Oct 2026. CQ-R7 landed 22 Oct
     2026. CQ-R8 should precede CQ-T3 to avoid typing the builders twice;
-    both still need sections. For Codex admission, CQ-T3 also waits for
-    Claude's CQ-L2 to release `tests/source_checks.py`; `FUNCTION_MAP.md` is
+    both still need sections. For Codex admission, CQ-T3 also waited for
+    Claude's CQ-L2 to release `tests/source_checks.py` (released 24 Oct 2026); `FUNCTION_MAP.md` is
     unowned (Dave, 23 Oct 2026) and gates nothing. This is a lane
     ownership gate, not unshipped functional prerequisites (verified
     23 Oct 2026 against `a49ac59` and both lanes' `Files:` lists).

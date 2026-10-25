@@ -1,7 +1,7 @@
 # Cell content tones -- a sealed cell hints at what it holds
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: CT-1, gated on DR-1 (`plans/now/drones.md`), which owns `scripts/hive_cell.gd` and `scripts/scenario_actions.gd` | Dependency: DR-1 | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: CT-1 -- DR-1 (`plans/now/drones.md`) landed 25 Oct 2026, releasing `scripts/hive_cell.gd` and `scripts/scenario_actions.gd` | Dependency: none left | Verified: 2026-10-24
 
 ## Objective
 
@@ -29,7 +29,7 @@ Verified 24 Oct 2026 against master `248da728`.
 
 | Slice | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CT-1 | Cells and caps take a faint content tone, stronger when fuller | `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, `test_scenarios/ct1_cell_tones.json`, `tests/test_ct1_cell_tones.py` | no -- waits for DR-1 | low |
+| CT-1 | Cells and caps take a faint content tone, stronger when fuller | `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, `test_scenarios/ct1_cell_tones.json`, `tests/test_ct1_cell_tones.py` | yes -- DR-1 landed 25 Oct 2026 | low |
 
 A slice reads its own section below and nothing else.
 
@@ -37,9 +37,8 @@ A slice reads its own section below and nothing else.
 
 Level: low.
 
-**Gate:** DR-1 (`plans/now/drones.md`) owns `scripts/hive_cell.gd` and
-`scripts/scenario_actions.gd`. Re-fence this block `queue` when DR-1 has
-merged.
+**Gate:** none left: DR-1 (`plans/now/drones.md`) landed 25 Oct 2026,
+releasing `scripts/hive_cell.gd` and `scripts/scenario_actions.gd`.
 
 **Build** (all in `scripts/hive_cell.gd` unless named):
 
@@ -101,7 +100,7 @@ accessible cue.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] CT-1 -- sealed cells take a faint tone of what they hold**
 - Plan: `plans/now/cell-content-tones.md` -- "CT-1 -- sealed cells take a faint tone of what they hold"
 - Files: `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, `test_scenarios/ct1_cell_tones.json`, `tests/test_ct1_cell_tones.py`

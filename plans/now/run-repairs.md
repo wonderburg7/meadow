@@ -43,14 +43,14 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
-| RR-13 | the pre-ferment warning shows 1.5 game days ahead, in a stronger colour | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, tests | no -- waits for DR-1 | low |
-| RR-14 | a sour cell given a new designation is emptied by a comb worker, not at once | `scripts/orders_zones.gd`, `scripts/hud.gd`, tests | no -- waits for DR-1 | low |
-| RR-15 | Fermentation sense keeps fresh nectar out of sour cells for every depositing bee | `scripts/hive.gd`, tests | no -- waits for DR-1 | medium |
-| RR-16 | the queen can resume building a part-built cell | `scripts/orders_zones.gd`, tests | no -- waits for DR-1 | low |
-| RR-17 | a queen on comb work discards sour nectar on command | `scripts/bee.gd`, tests | no -- waits for CQ-S0b | medium |
+| RR-13 | the pre-ferment warning shows 1.5 game days ahead, in a stronger colour | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | low |
+| RR-14 | a sour cell given a new designation is emptied by a comb worker, not at once | `scripts/orders_zones.gd`, `scripts/hud.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | low |
+| RR-15 | Fermentation sense keeps fresh nectar out of sour cells for every depositing bee | `scripts/hive.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | medium |
+| RR-16 | the queen can resume building a part-built cell | `scripts/orders_zones.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | low |
+| RR-17 | a queen on comb work discards sour nectar on command | `scripts/bee.gd`, tests | yes -- CQ-S0b landed 25 Oct 2026 | medium |
 | RR-18 | skip saves for the long checks C-140 and C-142 | `test_scenarios/`, `checks/ready/C-140.md`, `checks/ready/C-142.md` | yes | low |
-| RR-19 | comb workers seal and unseal cells over time (15 s to cap, 5 s to uncap) | `scripts/hive_cell.gd`, `scripts/orders_zones.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | no -- waits for DR-1 and CQ-M8 | high |
-| RR-20 | a comb worker carrying a body leaves, stays out one second, and comes back | `scripts/bee_building.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, tests | no -- waits for CQ-M8 | medium |
+| RR-19 | comb workers seal and unseal cells over time (15 s to cap, 5 s to uncap) | `scripts/hive_cell.gd`, `scripts/orders_zones.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- DR-1 and CQ-M8 landed 25 Oct 2026 | high |
+| RR-20 | a comb worker carrying a body leaves, stays out one second, and comes back | `scripts/bee_building.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, tests | yes -- CQ-M8 landed 25 Oct 2026 | medium |
 | RR-21 | no ordinary rain in the first two days; rain warnings in plain words | `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | no -- waits for SG-4 (`scripts/main.gd`) | medium |
 | RR-22 | select a number of bees from a multi-selection, youngest and oldest | `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, tests | no -- waits for GP-5 and SG-4 | medium |
 
@@ -160,7 +160,7 @@ changes. It shares `scripts/hive_cell.gd` with SP-12 and SP-14
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out**
 - Plan: `plans/now/run-repairs.md` -- "RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out"
 - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `tests/rr11_pre_fermented_test.gd`
@@ -196,7 +196,7 @@ change. A sour cell with no comb worker stays full until one is free.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once**
 - Plan: `plans/now/run-repairs.md` -- "RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once"
 - Files: `scripts/orders_zones.gd`, `scripts/hud.gd`, `tests/test_nf5_clear_fermented.py`
@@ -235,7 +235,7 @@ gate.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] RR-15 -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee**
 - Plan: `plans/now/run-repairs.md` -- "RR-15 -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee"
 - Files: `scripts/hive.gd`, `tests/test_nf4_fermentation_sense.py`
@@ -266,7 +266,7 @@ afterwards. No save change.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] RR-16 -- the queen can resume building a part-built cell**
 - Plan: `plans/now/run-repairs.md` -- "RR-16 -- the queen can resume building a part-built cell"
 - Files: `scripts/orders_zones.gd`, `tests/test_rr1_queen_builds.py`
@@ -303,7 +303,7 @@ stop and escalate with the options.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] RR-17 -- a queen on comb work discards sour nectar on command**
 - Plan: `plans/now/run-repairs.md` -- "RR-17 -- a queen on comb work discards sour nectar on command"
 - Files: `scripts/bee.gd`, `test_scenarios/rr17_queen_discards_sour.json`, `tests/test_nf5_clear_fermented.py`
@@ -405,7 +405,7 @@ a day on any gate.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] RR-19 -- comb workers seal and unseal cells over time**
 - Plan: `plans/now/run-repairs.md` -- "RR-19 -- comb workers seal and unseal cells over time"
 - Files: `scripts/hive_cell.gd`, `scripts/orders_zones.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/rr19_sealing_stocked.json`, `tests/test_rr19_sealing.py`, `tests/test_save_migrations.py`
@@ -445,7 +445,7 @@ in `bee.gd` (CQ-S0b's file) stop and escalate with the options.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] RR-20 -- a comb worker carrying a body visibly leaves, stays out one second, and comes back**
 - Plan: `plans/now/run-repairs.md` -- "RR-20 -- a comb worker carrying a body visibly leaves, stays out one second, and comes back"
 - Files: `scripts/bee_building.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/t2_4b_bodies_test.gd`, `tests/t2_13_carried_body_test.gd`

@@ -48,7 +48,7 @@ Verified 14 Oct 2026 against master:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | FR-3 | owning Auto-recruitment switches it on, passing species with Adaptive constancy | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/levels.gd`, tests | no -- after PP-6 | high |
-| FR-4 | a headless assertion replaces the C-143 hands-on check | `scripts/scenario_actions.gd`, tests | no -- waits for DR-1 | medium |
+| FR-4 | a headless assertion replaces the C-143 hands-on check | `scripts/scenario_actions.gd`, tests | no -- `scripts/scenario_actions.gd` was released 25 Oct 2026, but `tools/admission.py` reads C-143 as an unlanded slice | medium |
 
 **Dependencies.** FR-1 changes no game file. FR-2 waits for FR-1's table;
 if a stage is not better than the one before, a tuning slice (FR-1b) is

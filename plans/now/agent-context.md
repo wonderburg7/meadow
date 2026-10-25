@@ -1,7 +1,7 @@
 # Agent context -- boundary rules that load themselves
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: AC-2 -- `.claude/rules/ui.md` loads with the UI scripts (Claude lane) | Dependency: AC-4 waits for FR-2 (`plans/now/forager-recruitment.md`); AC-1 to AC-3 share no file with either lane | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: AC-2 -- `.claude/rules/ui.md` loads with the UI scripts (Claude lane) | Dependency: AC-4 followed FR-2 (`plans/now/forager-recruitment.md`), landed 25 Oct 2026; AC-1 to AC-3 share no file with either lane | Verified: 2026-10-24
 
 ## Objective
 
@@ -69,7 +69,7 @@ Both are recommendations awaiting Dave; neither blocks AC-1 to AC-3.
 | --- | --- | --- | --- | --- |
 | AC-2 | `.claude/rules/ui.md` loads with the UI scripts | `.claude/rules/ui.md`, `plans/reference/ui-rules.md` | low | AC-1 (its check proves the globs) |
 | AC-3 | `.claude/rules/headless.md` loads with the harness | `.claude/rules/headless.md`, `docs/headless-run-contract.md` | low | AC-1 |
-| AC-4 | the Foraging card follows FR-2 | `GAME_MODEL.md` | low | FR-2 ships |
+| AC-4 | the Foraging card follows FR-2 | `GAME_MODEL.md` | low | yes -- FR-2 landed 25 Oct 2026 |
 
 A slice reads its own section and the files it names; nothing else in this
 plan. The rule files are Claude-only (`AGENTS.md` sends Codex to
@@ -225,8 +225,8 @@ whole.
 
 ## AC-4 -- the Foraging card follows FR-2
 
-Level: low. Gated: FR-2 removes `scouting_on`, so the card is correct today
-and wrong the day FR-2 merges.
+Level: low. FR-2 landed 25 Oct 2026 and removed `scouting_on`, so the card
+is now stale.
 
 **True now.** `GAME_MODEL.md`'s "System: Foraging" says `scouting_on`
 requires `orientation_flight_on` (entry 7), and the
@@ -245,7 +245,7 @@ grep for the names the cards use.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] AC-4 -- the Foraging card follows FR-2**
 - Plan: `plans/now/agent-context.md` -- "AC-4 -- the Foraging card follows FR-2"
 - Files: `GAME_MODEL.md`

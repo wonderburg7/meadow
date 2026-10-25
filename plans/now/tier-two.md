@@ -36,7 +36,7 @@ What the open slices build on:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | T2-7b | The tier-2 price sweep T2-7 deferred: tier-2 costs set so the arc's first tier-2 purchase lands around day 5 | `scripts/skills.gd`, `plans/design/progression.md`, tests; specified when AR-4 lands | no -- after AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker | medium |
-| T2-15 | with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked | `scripts/hive.gd`, `scripts/bee_building.gd`, tests | no -- waits for DR-1 and CQ-M8 | medium |
+| T2-15 | with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked | `scripts/hive.gd`, `scripts/bee_building.gd`, tests | yes -- DR-1 and CQ-M8 landed 25 Oct 2026 | medium |
 
 **Dependencies.** T2-7b waits for AR-4
 (`plans/now/alpha-route-evidence.md`): the alpha arc makes no honey, so the
@@ -95,7 +95,7 @@ gate.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked**
 - Plan: `plans/now/tier-two.md` -- "T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked"
 - Files: `scripts/hive.gd`, `scripts/bee_building.gd`, `tests/test_nf5_clear_fermented.py`

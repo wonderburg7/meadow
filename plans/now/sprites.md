@@ -66,9 +66,9 @@ from the art in front-over-back order. What the open slices build on:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, tests | yes (CQ-L1 landed 22 Oct 2026) | high (per-bee hot path) |
-| SP-12 | every outline on a comb cell sits on the cup's rim, proved by a new pixel assertion | `scripts/input_selection.gd`, `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, tests | no -- waits for DR-1 | medium |
-| SP-13 | foragers come and go at the skep's door | `scripts/hive.gd`, `scripts/rival_hive.gd`, `scripts/sprite_catalogue.gd` | no -- waits for DR-1 | low |
-| SP-14 | no outline on an unselected comb cell while cell art is on | `scripts/hive_cell.gd` | no -- waits for DR-1 | low |
+| SP-12 | every outline on a comb cell sits on the cup's rim, proved by a new pixel assertion | `scripts/input_selection.gd`, `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | medium |
+| SP-13 | foragers come and go at the skep's door | `scripts/hive.gd`, `scripts/rival_hive.gd`, `scripts/sprite_catalogue.gd` | yes -- DR-1 landed 25 Oct 2026 | low |
+| SP-14 | no outline on an unselected comb cell while cell art is on | `scripts/hive_cell.gd` | yes -- DR-1 landed 25 Oct 2026 | low |
 
 **Dependencies.** RR-11 (`plans/now/run-repairs.md`) waits for SP-11 to
 release `scripts/hive_cell.gd`. SP-6's last gate, CQ-L1
@@ -161,7 +161,7 @@ cost is added: the rim points are built once and cached.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels**
 - Plan: `plans/now/sprites.md` -- "SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels"
 - Files: `scripts/input_selection.gd`, `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, `test_scenarios/sp_outline_rim.json`, `tests/test_sp_outline_rim.py`, `tests/sp11_cell_rim_test.gd`, `tests/test_sp11_cell_rim.py`
@@ -199,7 +199,7 @@ on the skep still selects it.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] SP-13 -- foragers come and go at the skep's door**
 - Plan: `plans/now/sprites.md` -- "SP-13 -- foragers come and go at the skep's door"
 - Files: `scripts/hive.gd`, `scripts/rival_hive.gd`, `scripts/sprite_catalogue.gd`
@@ -234,7 +234,7 @@ whichever is queued first runs first.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] SP-14 -- no outline on an unselected comb cell while the cell art is on**
 - Plan: `plans/now/sprites.md` -- "SP-14 -- no outline on an unselected comb cell while the cell art is on"
 - Files: `scripts/hive_cell.gd`

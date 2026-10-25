@@ -95,6 +95,17 @@ The cell popup in `hud.gd` has the "Raise a gyne (a future queen)" box
 passes `tests/test_layout_regression.py`. The box follows
 `plans/reference/ui-rules.md`.
 
+**Carried over from DR-1's review (25 Oct 2026; notes for the worker, not decisions).**
+
+- `NurseryPanel.row_order()` (`scripts/nursery_panel.gd`) needs a "drone"
+  row, so the zone counts add up once drone cells are marked.
+- `orders_zones.gd::_apply_zone_glow` passes only `hatch_gyne` to
+  `NurseryPanel.colour_for`/`tag_for`; the drone mark has to reach them too.
+- `bee.gd`'s `DRONE_COLOUR` is only 0.087 OKLab from `BEE_BREAD_COLOR`, under
+  BB-1's distinctness rule, so the drone-mark glow colour in item 2 needs
+  Dave's choice. The comb role overlay currently tags a drone cell "D" in
+  the unset grey.
+
 ```queue
 **[Claude] DR-2 -- the cell popup's drone box**
 - Plan: `plans/now/drones.md` -- "DR-2 -- the cell popup's drone box"

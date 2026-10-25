@@ -85,32 +85,16 @@ One line each: the id, its plan, and the single thing it waits for.
 - **ED-2** (`plans/now/difficulty.md`) -- a run's difficulty and Easy's rules; waits for ED-1.
 - **ED-3** (`plans/now/difficulty.md`) -- choosing Easy at run start; waits for ED-2.
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces.
-- **PP-6** (`plans/now/pollination.md`) -- the sweep prices the gyne route so Gyne rearing is first affordable in the 11 days after the first winter; waits for which puts Auto scouting on the route (Dave, 14 Oct 2026); AR-5 landed 21 Oct 2026 (`plans/now/alpha-route-evidence.md`: its reference queen lays early).
 - **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-6, which shares `scripts/skills.gd`.
 - **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices of the alpha chain (SG-2, ED-1, ED-2, RR-12, SP-8a in `plans/now/drones.md`; WP-2 landed 21 Oct 2026 and WP-3 landed 22 Oct 2026) and ED-3 (Dave, 18 Oct 2026); CQ-S0's round-trip harness landed 22 Oct 2026.
 - **CQ-R2** (`plans/now/code-health.md`) -- the first crisis moves out of `scripts/main.gd` into a new first_crisis.gd, touching the save files; waits, gated with CQ-S1, for the save slices of the alpha chain (SG-2, ED-1, ED-2, RR-12, SP-8a in `plans/now/drones.md`; WP-2 landed 21 Oct 2026) and ED-3 (Dave, 18 Oct 2026); its plan section is written when that gate clears.
 - **CQ-R8** (`plans/now/code-health.md`) -- hud builders shortened (the designation button table); needs its section and block; prepare before CQ-T3.
-- **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; needs its section and block after CQ-R8, and Codex admission waits for CQ-L2 to release `tests/source_checks.py`.
+- **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; needs its section and block after CQ-R8 (CQ-L2 released `tests/source_checks.py` 24 Oct 2026).
 - **CQ-R10** (`plans/now/code-health.md`) -- input selection decomposed and sectioned; needs its section and block.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
-- **DR-2** (`plans/now/drones.md`) -- the cell popup's "Raise a drone" box (Dave, 22 Oct 2026: player-marked drone cells, no skill); waits for DR-1 (Claude backlog), whose saved drone cells it marks; CQ-R7 landed 22 Oct 2026, freeing `scripts/hud.gd`. Its block is `queue-gated` until DR-1 lands.
-- **SP-12** (`plans/now/sprites.md`) -- every outline on a comb cell sits on the cup's rim, proved by a new pixel assertion; waits for which owns `scripts/hive_cell.gd` and `scripts/scenario_actions.gd`.
-- **SP-13** (`plans/now/sprites.md`) -- foragers come and go at the skep's door; waits for which owns `scripts/hive.gd`.
-- **SP-14** (`plans/now/sprites.md`) -- no outline on an unselected comb cell while cell art is on; waits for which owns `scripts/hive_cell.gd`.
-- **RR-13** (`plans/now/run-repairs.md`) -- the pre-ferment warning shows 1.5 game days ahead in a stronger colour; waits for which owns `scripts/hive_cell.gd`.
-- **RR-14** (`plans/now/run-repairs.md`) -- a sour cell given a new designation is emptied by a comb worker, not at once; waits for which owns `scripts/orders_zones.gd`.
-- **RR-15** (`plans/now/run-repairs.md`) -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee; waits for which owns `scripts/hive.gd`.
-- **RR-16** (`plans/now/run-repairs.md`) -- the queen can resume building a part-built cell; waits for which owns `scripts/orders_zones.gd`.
-- **RR-17** (`plans/now/run-repairs.md`) -- a queen on comb work discards sour nectar on command; waits for which owns `scripts/bee.gd`.
-- **FR-4** (`plans/now/forager-recruitment.md`) -- a headless assertion replaces the C-143 hands-on check; waits for which owns `scripts/scenario_actions.gd`.
-- **T2-15** (`plans/now/tier-two.md`) -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked; waits for DR-1 and which own `scripts/hive.gd` and `scripts/bee_building.gd`.
-- **RR-19** (`plans/now/run-repairs.md`) -- comb workers seal and unseal cells over time; waits for DR-1 and which own `scripts/hive_cell.gd`, `scripts/hive.gd`, `scripts/save_game.gd`, `scripts/saving.gd` and `scripts/bee_building.gd`.
-- **RR-20** (`plans/now/run-repairs.md`) -- a comb worker carrying a body leaves, stays out one second, and comes back; waits for which owns `scripts/bee_building.gd` and `scripts/bee_movement.gd`.
+- **FR-4** (`plans/now/forager-recruitment.md`) -- a headless assertion replaces the C-143 hands-on check; `scripts/scenario_actions.gd` was released 25 Oct 2026, but `tools/admission.py` reads C-143, the check it retires, as an unlanded slice, so its block stays `queue-gated` until admission ignores check ids.
 - **RR-21** (`plans/now/run-repairs.md`) -- no ordinary rain in the first two days, and rain warnings in plain words; waits for SG-4, which owns `scripts/main.gd`.
 - **RR-22** (`plans/now/run-repairs.md`) -- select a number of bees from a multi-selection; waits for GP-5 and SG-4, which own `scripts/hud.gd` and `scripts/main.gd`.
-- **CT-1** (`plans/now/cell-content-tones.md`) -- cells and their caps take a faint tone of their contents (Dave, 24 Oct 2026); waits for which owns `scripts/hive_cell.gd` and `scripts/scenario_actions.gd`.
-- **AC-4** (`plans/now/agent-context.md`) -- `GAME_MODEL.md`'s Foraging card follows FR-2; waits for FR-2, which removes `scouting_on`.
-- **HS-2** (`plans/now/hard-soil.md`) -- hard soil fills the outer half of the hive's soil (Dave, 24 Oct 2026); waits for HS-1 and which own the skill id, `scripts/hive.gd` and `scripts/bee.gd`.
 
 ## Copy-paste prompts
 
