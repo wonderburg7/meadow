@@ -94,6 +94,9 @@ var timer: float = 0.0
 ## until _idle_dispatch has actually searched its role catalogue.
 var work_search_found: bool = true
 var is_queen: bool = false
+## Set by saving.gd before setup(): a bee rebuilt from a save takes no fresh
+## orientation flight, so she keeps (or lacks) the start point as saved.
+var is_restored: bool = false
 
 ## A gyne: a future queen, raised on royal jelly and several times more
 ## expensive than a worker. She can do any worker job while she is here,
@@ -1128,7 +1131,7 @@ func setup(hive_node: Node2D, type: String, id: int, bee_role: int = Role.FORAGE
 	# preference it already had.
 	if GameConfig.scouting_on and bee_role == Role.FORAGER:
 		BeeForaging.start_scouting(self)
-	elif BeeForaging.orientation_flight_on() and bee_role == Role.FORAGER:
+	elif BeeForaging.orientation_flight_on() and bee_role == Role.FORAGER and not is_restored:
 		BeeForaging.take_orientation_flight(self)
 	else:
 		state = _default_state_for_role()

@@ -49,6 +49,9 @@ const MAX_LINES_PER_CASE := 40
 const FLOAT_TOLERANCE := 1.0e-12
 ## roles.gd FORAGER. Not loaded from roles.gd: it is only a number here.
 const ROLE_FORAGER := 0
+## bee_enums.gd::State.MOVE_TO_POINT, as saved in a bee's `state`.
+const STATE_MOVE_TO_POINT: int = preload("res://scripts/bee_enums.gd").State.MOVE_TO_POINT
+var _move_point_id := -1
 
 ## Which routes each golden takes. A Challenge save cannot be loaded the
 ## ordinary way (debug_panel.gd::set_save_load_enabled), so Challenge 2's
@@ -68,25 +71,9 @@ const GOLDENS := [
 ## escalated to Dave rather than fixed here: making a route idempotent
 ## changes what a loaded run does.
 ##
-## Orientation flight (CQ-S0, 22 Oct 2026): a bee switched into Forager after
-## she was made has no start point until her first trip (bee.gd::setup takes
-## an orientation flight only for a bee created as a Forager). Saved before
-## that trip, she has none; but the replay builds her through setup() as a
-## Forager, so with orientation flight on she takes a flight to a new random
-## point, and the re-save gains start_x/start_y and the search anchor that
-## follows them. Both routes, since both go through _restore_bees.
-## Kept as a known difference (Dave, 22 Oct 2026). The intended fix, for a
-## later slice: saving.gd tells setup() not to start an orientation flight for
-## a restored bee, so she keeps no start point until her first trip, as saved.
-## Once it lands this entry fails as STALE, and the fix slice removes it.
-const ORIENTATION_GAINS_START := {
-	"bees": "forager_without_start_point",
-	"gains": ["search_anchor_x", "search_anchor_y", "start_x", "start_y"],
-}
-const KNOWN_DIFFERENCES := {
-	"orientation:load": [ORIENTATION_GAINS_START],
-	"orientation:in_place": [ORIENTATION_GAINS_START],
-}
+##
+## Empty since CQ-S0b: a restored forager takes no fresh orientation flight.
+const KNOWN_DIFFERENCES := {}
 
 ## Lists compared as sets: their order is whatever order a dictionary or the
 ## fog grid happened to be walked in, and a member has nothing but itself.
@@ -136,6 +123,10 @@ func _build_jobs() -> void:
 				"case": "%s:%s" % [golden.name, route], "source": path,
 				"route": route, "capture": golden.name, "compare_to": path,
 			})
+	_jobs.append({
+		"case": "orientation:move_point", "source": GOLDEN_DIR + "cq_s0_orientation.json",
+		"route": "in_place", "capture": "orientation", "compare_to": "", "move_point": true,
+	})
 	_jobs.append(_old_job("v1", "res://tests/fixtures/save_v1.json", ""))
 	_jobs.append(_old_job("v2", "res://tests/fixtures/save_v2.json", ""))
 	_jobs.append(_old_job("v6", _write_v6(), GOLDEN_DIR + "cq_s0_early.json"))
@@ -173,7 +164,15 @@ func _process(_delta: float) -> bool:
 		"settle":
 			if _frame >= BOOT_FRAMES:
 				var data: Dictionary = SaveGame.read(_job.source)
+				var target := Vector2.ZERO
+				if _job.has("move_point"):
+					target = _set_move_point(data)
 				_main.saving._restore(data)
+				if _job.has("move_point"):
+					_check_move_point(target)
+					_free_world()
+					_phase = "next"
+					return false
 				_resave_and_compare()
 	return false
 
@@ -206,6 +205,31 @@ func _start(job: Dictionary) -> void:
 		_resave_and_compare()
 	else:
 		_phase = "settle"
+
+## CQ-S0b: the first start-pointed forager is saved in Move-to-point.
+## Returns her start point.
+func _set_move_point(data: Dictionary) -> Vector2:
+	for bee: Dictionary in data.get("bees", []):
+		if int(bee.get("role", -1)) == ROLE_FORAGER and bee.has("start_x") and not bool(bee.get("queen", false)):
+			bee["state"] = STATE_MOVE_TO_POINT
+			_move_point_id = int(bee.get("id", -1))
+			return Vector2(float(bee.start_x), float(bee.start_y))
+	_failures.append("orientation:move_point: no start-pointed forager in the golden")
+	return Vector2.ZERO
+
+func _check_move_point(saved_start: Vector2) -> void:
+	_compared += 1
+	for node: Node in _main.get_tree().get_nodes_in_group("bees"):
+		if node.bee_id != _move_point_id or node.is_queen:
+			continue
+		if node.state != STATE_MOVE_TO_POINT:
+			_failures.append("orientation:move_point: bee %d is not in Move-to-point" % _move_point_id)
+		elif node.move_target.distance_to(node.forage_start_point) > 0.001 or node.move_target == Vector2.ZERO:
+			_failures.append("orientation:move_point: bee %d heads for %s, not her start point %s" % [_move_point_id, node.move_target, node.forage_start_point])
+		else:
+			print("CQS0 OK orientation:move_point (start %s, heading %s)" % [saved_start, node.move_target])
+		return
+	_failures.append("orientation:move_point: bee %d not found" % _move_point_id)
 
 ## The re-save, taken in the same frame as the replay.
 func _resave_and_compare() -> void:

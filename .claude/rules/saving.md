@@ -49,8 +49,8 @@ a world that has been running. Refactoring the save code leaves the goldens unto
 deliberate format change recaptures them, from `test_scenarios/cq_s0_*_capture.json`
 (the test's docstring says how). A difference a route makes today is named in
 the test's `KNOWN_DIFFERENCES` and escalated to Dave, never silently accepted:
-one stands now -- with orientation flight on, a bee switched into Forager and
-saved before her first trip gains a start point on reload.
+none stands now (CQ-S0b: a restored bee takes no fresh orientation flight, so a
+forager saved before her first trip comes back without a start point).
 
 **`queue_free()` is deferred, not immediate.** Godot doesn't remove a
 freed node from the tree or its groups until end of frame, so a

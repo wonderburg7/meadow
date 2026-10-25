@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-S0b and CQ-M8 in the Claude lane (CQ-L2 complete, 24 Oct 2026; CQ-L3 waits for both lanes to empty); CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M8 in the Claude lane (CQ-S0b complete, 25 Oct 2026; CQ-L2 complete, 24 Oct 2026; CQ-L3 waits for both lanes to empty); CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-24
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -109,7 +109,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | --- | --- | --- | --- | --- |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
 | CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | section needed; Codex admission waits for Claude to release `tests/source_checks.py` (CQ-L2) | low |
-| CQ-S0b | a restored forager takes no fresh orientation flight | `bee.gd`, `saving.gd`, `tests/save_roundtrip_test.gd` | yes | medium |
 | CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a, DR-1 | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
@@ -297,64 +296,7 @@ wrapped chain as `. name(` on its own line.
 - **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`
   and `scripts/saving.gd`; its ownership overlaps that lane's current work.
 
-## CQ-S0b -- a restored forager takes no fresh orientation flight
-
-Level: medium. Dave chose to queue this on 22 Oct 2026, when CQ-S0's
-harness found it; it changes what a loaded run does, by his decision.
-
-**True now** (verified 22 Oct 2026 against `ddf96a3`). `saving.gd::_restore_bees`
-builds every bee through `bee.gd::setup`, which, for a Forager with
-orientation flight on (and scouting off), calls
-`BeeForaging.take_orientation_flight`: a random point near the hive becomes
-her start point, she is sent there in Move-to-point, and a diagnostic event
-is logged. The restore then overwrites the start point and anchor only when
-the save has them. So a bee switched into Forager and saved before her first
-trip (she has no start point) comes back with a fresh one, and her re-save
-gains `start_x`/`start_y`/`search_anchor_x`/`search_anchor_y`.
-`tests/save_roundtrip_test.gd` records this as `ORIENTATION_GAINS_START` in
-`KNOWN_DIFFERENCES` for both routes of the `orientation` golden. The load
-also draws a random point it then discards, and a forager saved mid-flight
-keeps her saved start point but flies to the fresh one: `move_target` is not
-saved, and today only the fresh flight sets it.
-
-**When done:**
-
-1. `saving.gd` marks each bee as restored before `setup()` (as it sets
-   `is_queen`/`is_drone` before she enters the tree), and `setup()` takes no
-   orientation flight for a restored bee: she keeps no start point until her
-   first trip, as saved. A bee made in play is unchanged.
-2. A restored forager whose saved state is Move-to-point and who has a saved
-   start point heads for that point (`move_target` is her start point), not
-   for `Vector2.ZERO`.
-3. `ORIENTATION_GAINS_START` and both `KNOWN_DIFFERENCES` entries are removed,
-   with the comment above them. `KNOWN_DIFFERENCES` and its STALE check stay,
-   empty, for the next known difference.
-4. `tests/save_roundtrip_test.gd` gains one in-place case that restores a copy
-   of the `orientation` golden with one start-pointed forager set to
-   Move-to-point and asserts point 2.
-
-**Invariants.** No save field is added, removed or renamed, and no golden is
-re-captured. Scouting at restore (`GameConfig.scouting_on`, which
-`start_scouting` handles and no save records) is unchanged: no golden runs
-with scouting on, and it is not this slice. A player-commanded
-Move-to-point bee still loses her target on load (`move_target` is unsaved);
-that is a separate defect for its own slice, not this one. A seeded test that
-replays after a load may shift, because the load no longer draws a random
-point: say so in the commit, never re-tune to hide it.
-
-**Shared files.** `scripts/saving.gd` with SG-2 (`plans/now/short-term-goals.md`)
-and DR-1 (`plans/now/drones.md`), `scripts/bee.gd` with SP-6 (`plans/now/sprites.md`), all Claude lane:
-whichever is queued first runs first. CQ-S4 later moves `_restore_bees` into
-`bee.gd` and keeps the restored mark.
-
-```queue
-**[Claude] CQ-S0b -- a restored forager takes no fresh orientation flight**
-- Plan: `plans/now/code-health.md` -- "CQ-S0b -- a restored forager takes no fresh orientation flight"
-- Files: `scripts/bee.gd`, `scripts/saving.gd`, `tests/save_roundtrip_test.gd`
-- Check: `python -m unittest tests.test_save_roundtrip` passes with `KNOWN_DIFFERENCES` empty: both `orientation` routes print `CQS0 OK`, none KNOWN or STALE, and the new in-place case finds the Move-to-point forager heading for her saved start point; `tests/test_save_migrations.py` passes; `.\tools\verify.ps1` is green
-- Proof: `present: tests/save_roundtrip_test.gd :: const ORIENTATION_GAINS_START`
-- Next after: CQ-S1 -- Flower owns its save fields (gated on the alpha chain's save slices)
-```
+CQ-S0b shipped 2026-10-25; its specification is `plans/archive/CQ-S0b_2026-10-25.md`.
 
 ## CQ-S1 -- Flower owns its save fields
 
