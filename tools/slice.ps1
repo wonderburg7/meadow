@@ -2653,6 +2653,28 @@ function Invoke-SliceBranchVerify {
     }
 }
 
+function Assert-PrimaryIndexMatchesHead {
+    # git merge refuses while the primary checkout's index differs from HEAD,
+    # and the dirty-coordination check covers only the lifecycle products. On
+    # 25 Oct 2026 L-37 ran its whole branch and primary verification with
+    # another branch's files staged on master, then stopped at "merging into
+    # master". finish calls this before verifying, so a staged file stops it
+    # in seconds. An unstaged edit is left alone, as git merge leaves it.
+    # Skipped once the branch is merged, and while MERGE_HEAD is this
+    # branch's: an interrupted finish's own half-done merge is staged, and
+    # the locked half aborts and redoes it.
+    param([object]$Target)
+    $root = $Target.Root
+    if (Test-SliceBranchMerged -Root $root -Branch $Target.Branch) { return }
+    $mergeHead = (Invoke-GitText -C $root rev-parse -q --verify MERGE_HEAD).Text.Trim()
+    $branchHead = (Invoke-GitText -C $root rev-parse -q --verify "refs/heads/$($Target.Branch)").Text.Trim()
+    if ($mergeHead -and $mergeHead -eq $branchHead) { return }
+    $staged = @(Split-GitText (Invoke-GitText -C $root diff --cached --name-only).Text)
+    if ($staged) {
+        Stop-Slice -Cause "$($Target.Id) -- the primary checkout has staged changes to $($staged -join ', '), so git merge would refuse" -Fix "in the primary checkout run tools/slice.ps1 owner on those files to find whose work they are, then commit them on their own branch or set them aside with git stash push -m <tag> -- <files> (never discard them), and retry"
+    }
+}
+
 function Invoke-SliceFinishVerify {
     # finish's half before the lock. A stop here never reaches
     # Invoke-WithLifecycleLock's outcome record, so it writes its own and
@@ -2660,7 +2682,9 @@ function Invoke-SliceFinishVerify {
     param([string]$Root, [string]$PythonPath)
     $started = Get-Date
     try {
-        Invoke-SliceBranchVerify -Target (Get-SliceFinishTarget) -PythonPath $PythonPath
+        $target = Get-SliceFinishTarget
+        Assert-PrimaryIndexMatchesHead -Target $target
+        Invoke-SliceBranchVerify -Target $target -PythonPath $PythonPath
     }
     catch {
         Write-LifecycleOutcome -Root $Root -Started $started -Outcome "stopped" -Cause $_.Exception.Message
@@ -2819,6 +2843,9 @@ function Invoke-SliceFinish {
         $dirtyFiles = @($dirtyCoordination | ForEach-Object { $_.Substring(3).Trim() } | Select-Object -Unique)
         Stop-Slice -Cause "$id -- the primary checkout has uncommitted changes to $($dirtyFiles -join ', ')" -Fix "in the primary checkout, git diff those files: commit them if they are a deliberate edit, or git checkout -- them if they are a stray one, then retry"
     }
+    # Again under the lock: `resume` never ran the pre-lock half, and the
+    # index may have changed while finish waited for the lock.
+    Assert-PrimaryIndexMatchesHead -Target $target
 
     Set-SliceStep "synchronising master with origin"
     Sync-PrimaryMaster -Root $root -Reason "finish"
