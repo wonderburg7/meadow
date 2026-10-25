@@ -25,7 +25,6 @@ extends RefCounted
 ## unlocked", matching `StageGate.is_unlocked()`'s own contract.
 
 const Roles = preload("res://scripts/roles.gd")
-const Resources = preload("res://scripts/resources.gd")
 const Actions = preload("res://scripts/actions.gd")
 
 const OK := "ok"
@@ -119,9 +118,6 @@ static func suppress(key: String) -> void:
 static func unsuppress(key: String) -> void:
 	_suppressed.erase(key)
 	invalidate()
-
-static func is_suppressed(key: String) -> bool:
-	return _suppressed.has(key)
 
 ## The exact key `stage_gate`/`allowed_mode_keys` use for one role's
 ## sub-mode: bare for Forager ("nectar", "pollen"), "<role_key>_<mode_key>"
@@ -223,17 +219,4 @@ static func action_query(action_id: String, bee: Node2D = null, stage_gate: Node
 	for role_id: Variant in action.get("roles", []):
 		if not _role_skill_owned(role_id, progression, bee):
 			return {"available": false, "reason": REASON_SKILL_NOT_OWNED}
-	return {"available": true, "reason": OK}
-
-## Whether `resource_key` is a known, currently-enabled resource. Composes
-## catalogue existence and `resources.gd`'s own `config_flag` (empty means
-## no config gate; nectar/pollen have none today).
-static func resource_query(resource_key: String) -> Dictionary:
-	if not Resources.is_valid(resource_key):
-		return {"available": false, "reason": REASON_UNKNOWN_KEY}
-	var flag: String = Resources.entry(resource_key).get("config_flag", "")
-	if not flag.is_empty() and not GameConfig.get(flag):
-		return {"available": false, "reason": REASON_CONFIG_DISABLED}
-	if _suppressed.has(resource_key):
-		return {"available": false, "reason": REASON_SUPPRESSED}
 	return {"available": true, "reason": OK}
