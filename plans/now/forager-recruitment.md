@@ -1,7 +1,7 @@
 # Forager recruitment -- Orientation flight, then Auto scouting, then Auto-recruitment
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: FR-2 -- specified with its queue block (plan review, 23 Oct 2026); it follows CQ-L2 and CQ-M8 in the Claude lane, which hold `tests/source_checks.py` and `scripts/bee_foraging.gd` | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-24
+Status: active (FR-2 landed) | Owner: Dave / Claude Code | Next: PP-6 (`plans/now/pollination.md`), then FR-3 -- FR-2 landed: Auto scouting is a Foraging tier-2 purchase at (5, -1) that replaces Orientation flight (`scripts/bee.gd` joined its files, 25 Oct 2026, for the new-forager scouting gate) | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-24
 
 ## Objective
 
@@ -47,7 +47,7 @@ Verified 14 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FR-2 | Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/skill_tree_panel.gd`, `scripts/levels.gd`, `tests/source_checks.py`, tests | yes -- block written; same lane as CQ-L2 and CQ-M8, which hold two of its files | medium |
+| FR-2 | Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/bee.gd`, `scripts/skill_tree_panel.gd`, `scripts/levels.gd`, `tests/source_checks.py`, tests | yes -- block written; same lane as CQ-L2 and CQ-M8, which hold two of its files | medium |
 | FR-3 | owning Auto-recruitment switches it on, passing species with Adaptive constancy | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/levels.gd`, tests | no -- after PP-6 | high |
 | FR-4 | a headless assertion replaces the C-143 hands-on check | `scripts/scenario_actions.gd`, tests | no -- waits for DR-1 | medium |
 
@@ -235,7 +235,7 @@ follow FR-2 in AC-4 (`plans/now/agent-context.md`), gated on FR-2.
 ```queue
 **[Claude] FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight**
 - Plan: `plans/now/forager-recruitment.md` -- "FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight"
-- Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/skill_tree_panel.gd`, `scripts/levels.gd`, `tests/source_checks.py`, `test_scenarios/pp2_points_spendable.json`, `test_scenarios/fr2_auto_scouting_test.json`, `tests/test_fr2_auto_scouting.py`
+- Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/bee.gd`, `scripts/skill_tree_panel.gd`, `scripts/levels.gd`, `tests/source_checks.py`, `test_scenarios/pp2_points_spendable.json`, `test_scenarios/fr2_auto_scouting_test.json`, `tests/test_fr2_auto_scouting.py`
 - Check: `python -m unittest tests.test_fr2_auto_scouting` passes (Auto scouting bought after Orientation flight: scouts settle and no orientation flight runs); `python tools/run_scenario.py test_scenarios/pp2_points_spendable.json` and `test_scenarios/ap8_bought_orientation_test.json` pass; `python tests/source_checks.py` passes its grid check with Auto scouting at (5, -1) and Auto-recruitment at (9, -1); `python tools/prefinish.py` and `.\tools\verify.ps1` are green
 - Proof: `absent: scripts/bee_foraging.gd :: static func scouting_on`
 - Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter

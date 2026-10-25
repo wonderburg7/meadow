@@ -13,6 +13,7 @@
     {"do": "set_cell_contents", "hex": [0, 0], "resource": "bee_bread", "amount": 60},
     {"do": "grant_skill", "skill": "skill.foraging.weighted_flower_choice"},
     {"do": "grant_skill", "skill": "skill.foraging.pollinator_points"},
+    {"do": "grant_skill", "skill": "skill.foraging.auto_scouting"},
     {"do": "wait", "seconds": 15},
     {"do": "buy_skill", "skill": "skill.foraging.auto_recruitment", "expect_refused": true},
     {"do": "assert", "condition": {"skill_owned": "skill.foraging.auto_recruitment", "owned": false}},
