@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] DR-1 -- a mated queen lays drones in cells marked for them, saved**
-   - Plan: `plans/now/drones.md` -- "DR-1 -- a mated queen lays drones in cells marked for them, saved"
-   - Files: `scripts/hive_cell.gd`, `scripts/bee_egg_laying.gd`, `scripts/hive.gd`, `scripts/orders_zones.gd`, `scripts/scenario_actions.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/cq_s0_mid_capture.json`, `tests/fixtures/saves/cq_s0_early.json`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json`, `tests/test_save_roundtrip.py`, `tests/dr1_drone_cells_test.gd`, `tests/test_dr1_drone_cells.py`
-   - Check: `python -m unittest tests.test_dr1_drone_cells` passes (a mated queen lays a drone in a marked cell and a worker in an unmarked one; the gyne and drone marks clear each other; an unmated queen still lays drones; the mark survives a save and load); `python -m unittest tests.test_save_roundtrip` passes on the re-captured goldens, and `tests/fixtures/saves/cq_s0_mid.json` holds a bee and a brood cell with `"drone": true`; `tests/test_save_migrations.py` passes; `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/hive_cell.gd :: hatch_drone`
-   - Next after: DR-2 -- the cell popup's drone box
-
-2. **[Claude] FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight**
+1. **[Claude] FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight**
    - Plan: `plans/now/forager-recruitment.md` -- "FR-2 -- Auto scouting becomes a Foraging tier-2 purchase that replaces Orientation flight"
    - Files: `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/skill_tree_panel.gd`, `scripts/levels.gd`, `tests/source_checks.py`, `test_scenarios/pp2_points_spendable.json`, `test_scenarios/fr2_auto_scouting_test.json`, `tests/test_fr2_auto_scouting.py`
    - Check: `python -m unittest tests.test_fr2_auto_scouting` passes (Auto scouting bought after Orientation flight: scouts settle and no orientation flight runs); `python tools/run_scenario.py test_scenarios/pp2_points_spendable.json` and `test_scenarios/ap8_bought_orientation_test.json` pass; `python tests/source_checks.py` passes its grid check with Auto scouting at (5, -1) and Auto-recruitment at (9, -1); `python tools/prefinish.py` and `.\tools\verify.ps1` are green
    - Proof: `absent: scripts/bee_foraging.gd :: static func scouting_on`
    - Next after: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
 
-3. **[Claude] HS-1 -- Mighty Mandible joins the skill tree**
+2. **[Claude] HS-1 -- Mighty Mandible joins the skill tree**
    - Plan: `plans/now/hard-soil.md` -- "HS-1 -- Mighty Mandible joins the skill tree"
    - Files: `scripts/skills.gd`, `plans/design/progression.md`
    - Check: `.\tools\verify.ps1` is green, including the skill-catalogue and tree-layout checks. Hands-on: none needed -- HS-2 files the check that covers the skill.
    - Proof: `absent: scripts/skills.gd :: skill.colony.mighty_mandible`
    - Next after: HS-2
 
-4. **[Claude] AC-1 -- every rule glob matches a file**
+3. **[Claude] AC-1 -- every rule glob matches a file**
    - Plan: `plans/now/agent-context.md` -- "AC-1 -- every rule glob matches a file"
    - Files: `tools/check_docs.py`, `tests/test_rule_globs.py`
    - Check: `python -m unittest tests.test_rule_globs` passes (a dead glob and a missing front matter are errors, a 101-line rule warns, the real repository is clean); `python tools/check_docs.py` passes; `.\tools\verify.ps1` is green
    - Proof: `absent: tools/check_docs.py :: def check_rule_globs`
    - Next after: AC-2 -- `.claude/rules/ui.md` loads with the UI scripts
 
-5. **[Claude] AC-2 -- `.claude/rules/ui.md` loads with the UI scripts**
+4. **[Claude] AC-2 -- `.claude/rules/ui.md` loads with the UI scripts**
    - Plan: `plans/now/agent-context.md` -- "AC-2 -- `.claude/rules/ui.md` loads with the UI scripts"
    - Files: `.claude/rules/ui.md`, `plans/reference/ui-rules.md`
    - Check: `python -m unittest tests.test_rule_globs` passes with the new rule's six globs each matching a file; `.claude/rules/ui.md` is under 40 lines; `python tools/check_docs.py` passes
    - Proof: `absent: plans/reference/ui-rules.md :: .claude/rules/ui.md`
    - Next after: AC-3 -- `.claude/rules/headless.md` loads with the harness
+
+5. **[Claude] AC-3 -- `.claude/rules/headless.md` loads with the harness**
+   - Plan: `plans/now/agent-context.md` -- "AC-3 -- `.claude/rules/headless.md` loads with the harness"
+   - Files: `.claude/rules/headless.md`, `docs/headless-run-contract.md`
+   - Check: `python -m unittest tests.test_rule_globs` passes with the new rule's six globs each matching a file; `.claude/rules/headless.md` is under 40 lines; `python tools/check_docs.py` passes
+   - Proof: `absent: docs/headless-run-contract.md :: .claude/rules/headless.md`
+   - Next after: AC-4 -- the Foraging card follows FR-2
 
 ### Codex lane
 
