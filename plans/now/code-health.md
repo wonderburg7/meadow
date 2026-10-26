@@ -122,7 +122,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once its section is written (CQ-R7 released `hud.gd` and WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
-| CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | gated -- follows CQ-R11 and waits for GP-5 to release `scripts/hud.gd` | medium |
+| CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | gated -- waits for GP-5 to release `scripts/hud.gd` | medium |
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd`, `FUNCTION_MAP.md` | yes -- specified 26 Oct 2026 | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
@@ -293,7 +293,7 @@ wrapped chain as `. name(` on its own line.
 
 - **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`
   and `scripts/saving.gd`; its ownership overlaps that lane's current work.
-- **CQ-R6** -- follows CQ-R11 but waits for the Claude lane's GP-5 to release
+- **CQ-R6** -- waits for the Claude lane's GP-5 to release
   `scripts/hud.gd`; keep its queue block gated until that ownership clears.
 - **CQ-M6** -- waits for the Claude lane's CT-1 to release
   `scripts/hive_cell.gd`; keep its queue block gated until that ownership

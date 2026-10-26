@@ -75,7 +75,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
-- **CQ-R6** (`plans/now/code-health.md`) -- extract the HUD bee-command rows after CQ-R11; waits for the Claude lane's GP-5 to release `scripts/hud.gd`.
+- **CQ-R6** (`plans/now/code-health.md`) -- extract the HUD bee-command rows; waits for the Claude lane's GP-5 to release `scripts/hud.gd`.
 - **CQ-M4** (`plans/now/code-health.md`) -- name Challenge level ids; waits for the Claude lane to release `scripts/save_game.gd` and `scripts/saving.gd`.
 - **RR-12** (`plans/now/run-repairs.md`) -- a loaded run keeps its readout history (Dave, 16 Oct 2026); waits for ED-3, the last of the alpha chain, which shares `scripts/main.gd` and the save files.
 - **SP-8a** (`plans/now/meadow-terrain.md`) -- the meadow floor drawn in blocks, with everything on it lifted (Dave, 12 Oct 2026); waits for ED-3, the last of the alpha chain (SG-2 to ED-3; WP-2 landed 21 Oct 2026 and WP-3 landed 22 Oct 2026), which shares `scripts/main.gd` and the save files (Dave, 16 Oct 2026).
