@@ -30,10 +30,30 @@ const Levels = preload("res://scripts/levels.gd")
 ## NURSES; tests/test_conditions.py fails if the two drift apart.
 const AUTOMATION_SKILL := "skill.hive_mind.automation"
 
-## The six milestones, in the order a colony usually meets them. The label is
+## The nine milestones, in the order a colony usually meets them. The label is
 ## for CR-3's readout; the goal is COL-1's short player-facing line for the
 ## goal shelf.
 const MILESTONES := [
+	# SG-4: the opening, one step at a time. Each is shown alone until met.
+	{
+		"id": "first_cell", "label": "First cell",
+		"goal": "Build your first cell",
+		"condition": {"built_cells_at_least": 1},
+	},
+	{
+		"id": "first_stores", "label": "First stores",
+		"goal": "Bring in nectar and pollen",
+		# The stores the first egg was laid on, rounded down in the closeout.
+		"condition": {"all_of": [
+			{"hive_total": {"resource": "nectar", "at_least": 245}},
+			{"hive_total": {"resource": "pollen", "at_least": 155}},
+		]},
+	},
+	{
+		"id": "first_egg", "label": "First egg",
+		"goal": "Let the queen lay an egg",
+		"condition": {"brood_stage": {"stage": "egg", "at_least": 1}},
+	},
 	{
 		"id": "first_worker", "label": "First worker",
 		"goal": "Raise your first worker",
@@ -80,6 +100,10 @@ const MILESTONES := [
 	},
 ]
 
+## SG-4: the three opening milestones. main.gd checks them once a second
+## while one is unmet (opening_pending), so a finished cell or a laid egg
+## shows within a second.
+const OPENING := ["first_cell", "first_stores", "first_egg"]
 ## COL-2: the key under which the win is recorded in met_days, beside the
 ## milestone ids, so the saved record needs no new field.
 const VICTORY := "victory"
@@ -107,6 +131,17 @@ var favourites: Array = []
 func applies() -> bool:
 	var level: Dictionary = Levels.get_level(Session.starting_level)
 	return str(level.get("run_type", "")) == "colony"
+
+
+## SG-4: true in a Colony Run while an opening step is still unmet. main.gd's
+## one-second check asks this first, so the run does nothing once they are met.
+func opening_pending() -> bool:
+	if not applies():
+		return false
+	for id: Variant in OPENING:
+		if not met_days.has(id):
+			return true
+	return false
 
 
 ## Called from main.gd on day change and on population change. Checks only

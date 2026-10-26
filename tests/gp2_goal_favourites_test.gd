@@ -71,7 +71,7 @@ func _run() -> void:
 		return
 	long_star.pressed.emit()
 	_star_for(hud.current_goal_label).pressed.emit()
-	_check(ms.favourites == ["long_term", "first_worker"], "favourites are %s" % [ms.favourites])
+	_check(ms.favourites == ["long_term", "first_cell"], "favourites are %s" % [ms.favourites])
 	_check(_star_for(hud.long_term_goal_label).text == "★", "the long-term star does not show as on")
 	_star_for(hud.current_goal_label).pressed.emit()
 	_check(ms.favourites == ["long_term"], "pressing again did not unstar: %s" % [ms.favourites])
@@ -86,29 +86,29 @@ func _run() -> void:
 		"collapsed, the ordinary lines still show")
 	if hud.favourites_box.get_child_count() == 2:
 		var milestone_line: String = hud.favourites_box.get_child(1).text
-		_check(milestone_line.contains("Raise your first worker"), "the starred milestone line reads '%s'" % milestone_line)
+		_check(milestone_line.contains("Build your first cell"), "the starred milestone line reads '%s'" % milestone_line)
 		_check(not milestone_line.contains("[s]"), "an unmet favourite is struck through")
 
 	# Unstarred: nothing shows collapsed.
 	ms.toggle_favourite("long_term")
-	ms.toggle_favourite("first_worker")
+	ms.toggle_favourite("first_cell")
 	_check(not hud.favourites_box.visible, "collapsed with no stars, the favourites box shows")
 	ms.toggle_favourite("long_term")
-	ms.toggle_favourite("first_worker")
+	ms.toggle_favourite("first_cell")
 
 	# Met: struck through today, dropped after the day changes.
-	ms.met_days["first_worker"] = _main.day
+	ms.met_days["first_cell"] = _main.day
 	ms.show_next()
-	_check(ms.favourites.has("first_worker"), "a favourite met today was dropped at once")
+	_check(ms.favourites.has("first_cell"), "a favourite met today was dropped at once")
 	var struck := false
 	for line: Node in hud.favourites_box.get_children():
-		if line.text.contains("[s]") and line.text.contains("Raise your first worker"):
+		if line.text.contains("[s]") and line.text.contains("Build your first cell"):
 			struck = true
 	_check(struck, "a met favourite is not struck through while collapsed")
 	_check(hud.favourites_box.get_child_count() == 2, "met today, %d lines show" % hud.favourites_box.get_child_count())
 	_main.day += 1
 	ms.evaluate()
-	_check(not ms.favourites.has("first_worker"), "a met favourite survived the day change")
+	_check(not ms.favourites.has("first_cell"), "a met favourite survived the day change")
 	_check(ms.favourites == ["long_term"], "favourites after the day change: %s" % [ms.favourites])
 	_check(hud.favourites_box.get_child_count() == 1, "after the day change, %d lines show" % hud.favourites_box.get_child_count())
 
