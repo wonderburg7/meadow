@@ -369,14 +369,27 @@ var reseed_timer: float = 0.0
 var rate_samples: Array = []
 var rate_sample_timer: float = 10.0 + randf() * 2.0
 ## CR-2: the stores at each day boundary, for conditions.gd's net_income rate
-## key -- {day, nectar, pollen, nectar_collected, pollen_collected}, one per
-## new day, keeping the last DAY_STORE_SAMPLES. Neither history_samples (a
+## key -- {day, nectar, pollen, honey, and each one's _collected}, one per
+## new day, keeping the last DAY_STORE_SAMPLES (honey since SG-2, for the
+## short-term goals' daily income). Neither history_samples (a
 ## fixed count of 5 s samples for the colony window's plot, whose span moves
 ## with the day length) nor rate_samples (60 s of lifetime collection) holds a
 ## whole day, so this is its own series. Not saved: after a load the window
 ## refills over the next few days.
 const DAY_STORE_SAMPLES := 8
 var day_store_totals: Array = []
+## SG-2 (plans/now/short-term-goals.md): the short-term goals' state, as
+## short_term_goals.gd reads and writes it -- offered, dismissed, finished and
+## held_since, each keyed by goal id. Offered, met and paid by
+## year_winter.gd::_refresh_short_term_goals in a Colony Run or Scenario;
+## saved by save_game.gd. Empty in a Challenge, in a new run and after
+## loading a save from before SG-2.
+var short_term_goals: Dictionary = {}
+## The day the goals were last refreshed on, so the first refresh of a new day
+## is the one that starts a whole-day goal's clock; 0 until the run's first
+## refresh, which is not a boundary. Set to the loaded day by
+## saving.gd::_restore, so a load is not mistaken for a day boundary.
+var short_term_goal_day: int = 0
 var cluster_centers: Dictionary = {}   # species name -> Array[Vector2]
 var microhabitat_zones: Dictionary = {}   # microhabitat name -> Array[{"centre": Vector2, "radius": float}]
 var panning: bool = false          # middle mouse button held
@@ -968,6 +981,8 @@ func _sample_day_stores() -> void:
 		"pollen": hive.total("pollen"),
 		"nectar_collected": hive.lifetime_nectar_collected,
 		"pollen_collected": hive.lifetime_pollen_collected,
+		"honey": hive.total("honey"),
+		"honey_collected": hive.lifetime_honey_made,
 	})
 	while day_store_totals.size() > DAY_STORE_SAMPLES:
 		day_store_totals.pop_front()

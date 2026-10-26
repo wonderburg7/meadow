@@ -65,6 +65,8 @@ static func _met_key(main: Node2D, key: String, value: Variant) -> bool:
 			return _non_queen_adults(main) >= int(value)
 		"winter_ready":
 			return _winter_ready(main) == bool(value)
+		"winter_on_track":
+			return _winter_on_track(main) == bool(value)
 		"winter_over":
 			return _winter_over() == bool(value)
 		"brood_stage":
@@ -179,6 +181,19 @@ static func _built_cell_count(main: Node2D) -> int:
 	return _cached_cells(main).size()
 
 
+## SG-2: built cells as built_cells_at_least counts them, for the short-term
+## goals' "Make room" (year_winter.gd::_refresh_short_term_goals).
+static func built_cell_count(main: Node2D) -> int:
+	return _built_cell_count(main)
+
+
+## SG-2: one resource's income over the last `days` whole days, as the
+## net_income leaf reads it -- {net, collected}, or {} while the window is
+## not full. The short-term goals' net and gross daily income.
+static func income_window(main: Node2D, resource: String, days: int) -> Dictionary:
+	return _net_income(main, {"resource": resource, "days": days})
+
+
 ## BS-1: `{"skill_owned": "<skill id>"}`, for a stage goal that asks the
 ## player to buy a skill. The run's resolver is the only answer to "is this
 ## owned"; no resolver means nothing is.
@@ -244,6 +259,22 @@ static func _winter_ready(main: Node2D) -> bool:
 	var forecast: Dictionary = main.year_winter._winter_forecast(bees)
 	if float(forecast.get("days_left", INF)) > 1.0:
 		return false
+	return float(forecast.get("held_energy", 0.0)) >= float(forecast.get("required_energy", 0.0))
+
+
+## SG-2 (Dave, 15 Oct 2026, architecture review D1 option B): the same
+## forecast comparison as _winter_ready, with the same bee count, on any day
+## of the countdown rather than only its last. "Lay in honey for winter"
+## finishes on it, so it can finish early while the CR-2 milestone waits.
+## _winter_ready keeps its own copy of the comparison: tests/test_conditions.py
+## pins that body's text.
+static func _winter_on_track(main: Node2D) -> bool:
+	if not Session.winter_coming or Session.winter_here:
+		return false
+	var bees := 0
+	for count: Variant in main._role_counts().values():
+		bees += int(count)
+	var forecast: Dictionary = main.year_winter._winter_forecast(bees)
 	return float(forecast.get("held_energy", 0.0)) >= float(forecast.get("required_energy", 0.0))
 
 

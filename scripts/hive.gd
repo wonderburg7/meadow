@@ -40,6 +40,11 @@ var _tier_credit: Array = [0.0, 0.0, 0.0]
 ## down from being eaten/used -- these only ever go up.
 var lifetime_nectar_collected: float = 0.0
 var lifetime_pollen_collected: float = 0.0
+## SG-2: honey made, counted as each deposit lands in a cell
+## (bee_honey.gd::honey_deposit), for the short-term goals' gross daily honey
+## income. Not saved: its only reader is main.gd's day-store window, which is
+## not saved either, and saving.gd::_restore resets both together.
+var lifetime_honey_made: float = 0.0
 var lifetime_births: int = 0
 
 ## Foragers currently waiting at the entrance willing to pass on their
@@ -87,6 +92,8 @@ func remove_dance_eligible_seeker(bee: Node2D) -> void:
 func record_collection(resource_type: String, amount: float) -> void:
 	if resource_type == "nectar":
 		lifetime_nectar_collected += amount
+	elif resource_type == "honey":
+		lifetime_honey_made += amount
 	else:
 		lifetime_pollen_collected += amount
 
@@ -265,6 +272,33 @@ func deposit(resource_type: String, amount: float) -> float:
 			break
 		if cell.is_empty():
 			remaining -= cell.add_resource(resource_type, remaining)
+	announce()
+	return amount - remaining
+
+## SG-2: a finished short-term goal's reward, put into the comb as deposit()
+## puts a load -- part-filled cells of the resource first, then free ones.
+## Honey arrives ripe: it does not re-wet a cell it tops up, and a fresh cell
+## starts ripe rather than as wet mix for the honey makers to fan. Returns
+## what fitted; a full comb keeps the rest.
+func pay_reward(resource_type: String, amount: float) -> float:
+	if resource_type == "" or amount <= 0.0:
+		return 0.0
+	var remaining := amount
+	for fresh_cells: bool in [false, true]:
+		for cell: Variant in cells:
+			if remaining <= 0.0:
+				break
+			if not (cell.is_empty() if fresh_cells else cell.content_type == resource_type):
+				continue
+			var ripen: float = cell.ripen_progress if cell.content_type == "honey" else GameConfig.honey_ripen_time
+			var added: float = cell.add_resource(resource_type, remaining)
+			remaining -= added
+			if resource_type == "honey" and added > 0.0:
+				cell.ripen_progress = ripen
+				cell.bump_display_epoch()
+	if resource_type == "honey":
+		invalidate_index()
+		invalidate_stock()
 	announce()
 	return amount - remaining
 

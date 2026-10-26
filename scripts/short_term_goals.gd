@@ -15,31 +15,43 @@ const CATALOGUE := [
 
 ## Return offers for the vacant slots. Record each with accept() when shown.
 ## Facts: net_daily_income and gross_daily_income map resource to amount;
-## built_cells, winter_coming and winter_ready supplement diagnostics.compute.
-## Thresholds: few_free_cells, many_waiting_bees and few_waiting_bees.
-static func available(facts: Dictionary, state: Dictionary, day: int, thresholds: Dictionary, reward_fraction: float) -> Array:
+## built_cells, winter_coming, winter_here and winter_ready supplement
+## diagnostics.compute. Thresholds: few_free_cells, many_waiting_bees and few_waiting_bees.
+## SG-2: a resource missing from an income map is unknown, not zero -- its
+## one-day window has not filled since the run began or was loaded. No goal is
+## offered while its own resource's gross income is unknown, since the reward
+## is fixed at offer and would pay nothing. The reward is reward_fraction of
+## that gross income and, while the fraction is above zero, never less than
+## reward_floor; a fraction of zero turns rewards off. What is returned is
+## what finish() pays.
+static func available(facts: Dictionary, state: Dictionary, day: int, thresholds: Dictionary, reward_fraction: float, reward_floor: float = 0.0) -> Array:
 	var offered: Dictionary = state.get("offered", {})
 	var dismissed: Dictionary = state.get("dismissed", {})
 	var finished: Dictionary = state.get("finished", {})
 	# Dismiss leaves its slot empty until tomorrow, even if another trigger
 	# holds. This prevents an immediate replacement under the player's hand.
 	var dismissed_today: int = 0
-	for dismissed_day in dismissed.values():
+	for dismissed_day: Variant in dismissed.values():
 		if int(dismissed_day) == day:
 			dismissed_today += 1
 	var vacant: int = maxi(0, 2 - offered.size() - dismissed_today)
 	var result: Array = []
-	for goal in CATALOGUE:
+	for goal: Dictionary in CATALOGUE:
 		if result.size() >= vacant:
 			break
 		var id: String = goal.id
 		if offered.has(id) or int(dismissed.get(id, -1)) == day or int(finished.get(id, -1)) == day:
 			continue
+		if not facts.get("gross_daily_income", {}).has(goal.resource):
+			continue
 		if not _trigger(id, facts, thresholds):
 			continue
 		var entry: Dictionary = goal.duplicate()
 		entry["offered_day"] = day
-		entry["reward"] = maxf(0.0, reward_fraction) * maxf(0.0, float(facts.get("gross_daily_income", {}).get(goal.resource, 0.0)))
+		var reward: float = maxf(0.0, reward_fraction) * maxf(0.0, float(facts.get("gross_daily_income", {}).get(goal.resource, 0.0)))
+		if reward_fraction > 0.0:
+			reward = maxf(reward, reward_floor)
+		entry["reward"] = reward
 		if id == "make_room":
 			entry["built_cells_target"] = int(facts.get("built_cells", 0)) + maxi(1, int(thresholds.get("few_free_cells", 1)))
 		result.append(entry)
@@ -68,6 +80,25 @@ static func dismiss(state: Dictionary, id: String, day: int) -> void:
 	state["held_since"] = held_since
 
 
+## SG-2 (Dave, 26 Oct 2026): an offer whose season has passed leaves quietly
+## -- neither dismissed nor finished, paying nothing, its slot free at once.
+## Only "Lay in honey for winter" has one: it goes when winter arrives
+## (facts.winter_here) or the countdown ends (facts.winter_coming false), and
+## may be offered again in the next countdown. There is no general expiry
+## rule; any other offer stays until it is finished or dismissed. Returns the
+## ids withdrawn.
+static func withdraw_lapsed(state: Dictionary, facts: Dictionary) -> Array:
+	var offered: Dictionary = state.get("offered", {})
+	var lapsed: Array = []
+	if offered.has("honey_for_winter") and (bool(facts.get("winter_here", false)) or not bool(facts.get("winter_coming", false))):
+		lapsed.append("honey_for_winter")
+	for id: String in lapsed:
+		offered.erase(id)
+		var held_since: Dictionary = state.get("held_since", {})
+		held_since.erase(id)
+	return lapsed
+
+
 static func finish(state: Dictionary, id: String, day: int) -> float:
 	var offered: Dictionary = state.get("offered", {})
 	if not offered.has(id):
@@ -94,6 +125,10 @@ static func progress(entry: Dictionary, facts: Dictionary, state: Dictionary, da
 	var condition: bool = false
 	match id:
 		"pollen_surplus":
+			# SG-2: an unknown rate neither advances nor interrupts the day's
+			# clock, and shows no progress until the rate is known again.
+			if not facts.get("net_daily_income", {}).has("pollen"):
+				return {"current": 0, "target": 1, "done": false}
 			current = float(facts.get("net_daily_income", {}).get("pollen", 0.0))
 			condition = current > 0.0
 			# A positive rate is the condition; the full day is the progress.
@@ -130,7 +165,8 @@ static func progress(entry: Dictionary, facts: Dictionary, state: Dictionary, da
 static func _trigger(id: String, facts: Dictionary, thresholds: Dictionary) -> bool:
 	match id:
 		"pollen_surplus":
-			return float(facts.get("net_daily_income", {}).get("pollen", 0.0)) <= 0.0
+			var net: Dictionary = facts.get("net_daily_income", {})
+			return net.has("pollen") and float(net.pollen) <= 0.0
 		"clear_blocked_work":
 			return int(facts.get("blocked_cells", 0)) > 0 or int(facts.get("blocked_work", 0)) > 0
 		"make_room":
@@ -140,5 +176,6 @@ static func _trigger(id: String, facts: Dictionary, thresholds: Dictionary) -> b
 		"put_waiting_bees_to_work":
 			return int(facts.get("waiting_for_work", 0)) >= int(thresholds.get("many_waiting_bees", 1))
 		"honey_for_winter":
-			return bool(facts.get("winter_coming", false)) and not bool(facts.get("winter_ready", false))
+			# SG-2: not once winter is here -- winter_ready is false then too.
+			return bool(facts.get("winter_coming", false)) and not bool(facts.get("winter_here", false)) and not bool(facts.get("winter_ready", false))
 	return false

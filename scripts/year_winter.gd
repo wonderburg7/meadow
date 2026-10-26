@@ -12,6 +12,11 @@ extends Node
 
 const ProblemMessages = preload("res://scripts/problem_messages.gd")
 const ColonyDiagnostics = preload("res://scripts/colony_diagnostics.gd")
+const Conditions = preload("res://scripts/conditions.gd")
+const ShortTermGoals = preload("res://scripts/short_term_goals.gd")
+## SG-2: the resources whose daily income the short-term goals read, each
+## sampled at the day boundary by main.gd::_sample_day_stores.
+const GOAL_INCOME_RESOURCES := ["nectar", "pollen", "honey"]
 
 var main: Node2D
 
@@ -237,8 +242,57 @@ func _refresh_signals(delta: float) -> void:
 	})
 
 	main.hud.update_signals(lines)
+	_refresh_short_term_goals(facts)
 	_refresh_panels(bees, facts, counts)
 	Perf.end("signals")
+
+## SG-2 (plans/now/short-term-goals.md): offers, advances and pays the
+## short-term goals, on this one-second refresh and never per frame, in a
+## Colony Run or a Scenario. A Challenge keeps its own stage goals: the early
+## return above covers a running one, and the level check one that has
+## finished. Every added fact is read from its one authority in conditions.gd.
+## A resource whose one-day window is not full yet is left out of both income
+## maps, which short_term_goals.gd reads as unknown rather than zero. The
+## state is main's; this file holds none.
+func _refresh_short_term_goals(facts: Dictionary) -> void:
+	if Session.starting_level in [1, 2]:
+		return
+	var goal_facts: Dictionary = facts.duplicate()
+	var net: Dictionary = {}
+	var gross: Dictionary = {}
+	for resource: String in GOAL_INCOME_RESOURCES:
+		var income: Dictionary = Conditions.income_window(main, resource, 1)
+		if income.is_empty():
+			continue
+		net[resource] = float(income.net)
+		gross[resource] = float(income.collected)
+	goal_facts["net_daily_income"] = net
+	goal_facts["gross_daily_income"] = gross
+	goal_facts["built_cells"] = Conditions.built_cell_count(main)
+	goal_facts["winter_coming"] = Session.winter_coming
+	goal_facts["winter_here"] = Session.winter_here
+	goal_facts["winter_ready"] = Conditions.met(main, {"winter_on_track": true})
+	var thresholds := {
+		"few_free_cells": int(GameConfig.goal_few_free_cells),
+		"many_waiting_bees": int(GameConfig.goal_many_waiting_bees),
+		"few_waiting_bees": int(GameConfig.goal_few_waiting_bees),
+	}
+	var state: Dictionary = main.short_term_goals
+	var day: int = main.day
+	# 0 means no refresh yet this run: its first is not a day boundary.
+	var at_day_change: bool = main.short_term_goal_day != 0 and main.short_term_goal_day != day
+	main.short_term_goal_day = day
+	ShortTermGoals.withdraw_lapsed(state, goal_facts)
+	var offered: Dictionary = state.get("offered", {})
+	for id: String in offered.keys():
+		var entry: Dictionary = offered[id]
+		if not ShortTermGoals.progress(entry, goal_facts, state, day, thresholds, at_day_change).done:
+			continue
+		var reward: float = ShortTermGoals.finish(state, id, day)
+		main.hive.pay_reward(str(entry.resource), reward)
+	for entry: Dictionary in ShortTermGoals.available(goal_facts, state, day, thresholds,
+			GameConfig.goal_reward_fraction, GameConfig.goal_reward_floor):
+		ShortTermGoals.accept(state, entry)
 
 func _refresh_panels(bees: Array, facts: Dictionary, counts: Dictionary) -> void:
 	var energy_share: float = 0.0

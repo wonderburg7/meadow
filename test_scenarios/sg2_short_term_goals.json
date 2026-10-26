@@ -1,0 +1,8 @@
+{
+  "run_type": "colony",
+  "cells": 16, "nectar_foragers": 2, "pollen_foragers": 2,
+  "nurses": 1, "builders": 0, "miners": 0, "honey_makers": 1,
+  "weather": false, "disease": false, "rival_hive": false, "winter": false,
+  "skill_grants": [], "skill_bans": [], "skill_delays": {},
+  "random_seed": 2602
+}
