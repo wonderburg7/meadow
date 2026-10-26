@@ -50,7 +50,6 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-38 | count worker product edits from worktree-relative shell commands | `tools/session_cost.py`, `tests/test_session_cost_scope.py` | medium |
 
 L-31 to L-36 come from the 22 Oct 2026 workflow comparison (Dave asked
 whether a hooks, state-machine and multi-agent-review setup would help;
@@ -92,34 +91,7 @@ L-36 shipped 2026-10-24; its specification is `plans/archive/L-36_2026-10-24.md`
 
 L-37 shipped 2026-10-25; its specification is `plans/archive/L-37_2026-10-25.md`.
 
-## L-38 -- count worker product edits from worktree-relative shell commands
-
-**Now.** After L-29, `tools/session_cost.py --phases` finds product edits in
-only 11 of 52 slice-worker subagent transcripts. Its Bash edit check requires
-an explicit `.worktrees/<id>/<product dir>/` path in the same command. A worker
-that changes into its worktree and then runs `sed -i` or `cp` on a relative
-product path is counted as making no product edit. The current unit cases
-cover only absolute worktree paths.
-
-**Target.** Extend the existing `session_cost.py` edit classifier to resolve
-worktree-relative shell write targets in a worker transcript, including a
-`cd` in the same command and an established worktree cwd. Count only writes
-under the listed product directories. Keep read-only commands, notes and
-edits outside the worktree uncounted. Add transcript-level tests for both
-counted and uncounted forms, then report the before/after worker count from
-`--phases` if local transcripts are available. This measures work; it changes
-no game or closeout behaviour.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] L-38 -- count worker product edits from worktree-relative shell commands**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-38 -- count worker product edits from worktree-relative shell commands"
-- Files: `tools/session_cost.py`, `tests/test_session_cost_scope.py`
-- Check: `python -m unittest tests.test_session_cost_scope` passes, including `cd .worktrees/L-38; sed -i ... tools/session_cost.py`, `cd .worktrees/L-38; cp ... scripts/bee.gd`, established worktree cwd, and read-only/non-product countercases; `python tools/session_cost.py --phases` reports the worker count when transcripts are available
-- Proof: `absent: tools/session_cost.py :: def _shell_product_edit`
-- Next after: none -- agent-lifecycle plan complete
-```
+L-38 shipped 2026-10-26; its specification is `plans/archive/L-38_2026-10-26.md`.
 
 ## Standing rules
 
