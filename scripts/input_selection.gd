@@ -115,8 +115,11 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 		for b: Variant in _bees_in_current_view():
 			if box.has_point(b.global_position):
 				picked.append(b)
-		if picked.is_empty() and main.in_hive_view and _box_pick_comb(box, add_to_group_selection):
-			return
+		if picked.is_empty():
+			if main.in_hive_view and _box_pick_comb(box, add_to_group_selection):
+				return
+			if _box_pick_death_marker(box):
+				return
 
 	_apply_bee_pick(picked, additive)
 
@@ -177,6 +180,9 @@ func _box_pick_comb(box: Rect2, add: bool) -> bool:
 		_select_blocks(boxed_blocks, add)
 		return true
 
+	return false
+
+func _box_pick_death_marker(box: Rect2) -> bool:
 	# A death mark is the last thing worth catching before selecting nothing.
 	var boxed_markers: Array = []
 	for m: Variant in _death_markers_in_current_view():
