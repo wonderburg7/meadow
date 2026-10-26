@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] AC-2 -- `.claude/rules/ui.md` loads with the UI scripts**
-   - Plan: `plans/now/agent-context.md` -- "AC-2 -- `.claude/rules/ui.md` loads with the UI scripts"
-   - Files: `.claude/rules/ui.md`, `plans/reference/ui-rules.md`
-   - Check: `python -m unittest tests.test_rule_globs` passes with the new rule's six globs each matching a file; `.claude/rules/ui.md` is under 40 lines; `python tools/check_docs.py` passes
-   - Proof: `absent: plans/reference/ui-rules.md :: .claude/rules/ui.md`
-   - Next after: AC-3 -- `.claude/rules/headless.md` loads with the harness
-
-2. **[Claude] AC-3 -- `.claude/rules/headless.md` loads with the harness**
+1. **[Claude] AC-3 -- `.claude/rules/headless.md` loads with the harness**
    - Plan: `plans/now/agent-context.md` -- "AC-3 -- `.claude/rules/headless.md` loads with the harness"
    - Files: `.claude/rules/headless.md`, `docs/headless-run-contract.md`
    - Check: `python -m unittest tests.test_rule_globs` passes with the new rule's six globs each matching a file; `.claude/rules/headless.md` is under 40 lines; `python tools/check_docs.py` passes
    - Proof: `absent: docs/headless-run-contract.md :: .claude/rules/headless.md`
    - Next after: AC-4 -- the Foraging card follows FR-2
 
-3. **[Claude] SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved**
+2. **[Claude] SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved**
    - Plan: `plans/now/short-term-goals.md` -- "SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved"
    - Files: `scripts/short_term_goals.gd`, `scripts/year_winter.gd`, `scripts/main.gd`, `scripts/conditions.gd`, `scripts/hive.gd`, `scripts/bee_honey.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/sg2_short_term_goals.json`, `tests/test_sg2_short_term_goals.py`
    - Check: `python -m unittest tests.test_sg2_short_term_goals` passes (in a Colony Run with no pollen income the pollen goal is offered, and finishing it pays pollen worth about a quarter of a day's gross income; "Lay in honey for winter" can finish before the countdown's last day while the CR-2 winter milestone still waits for it; no goal is offered in Challenge 1 or 2; offered and finished goals survive save and restore; an old save loads with none); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/save_game.gd :: short_term_goals`
    - Next after: SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss
 
-4. **[Claude] GP-5 -- a Goals button in the second HUD row replaces the Goals header**
+3. **[Claude] GP-5 -- a Goals button in the second HUD row replaces the Goals header**
    - Plan: `plans/now/short-term-goals.md` -- "GP-5 -- a Goals button in the second HUD row replaces the Goals header"
    - Files: `scripts/hud.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/test_layout_regression.py`
    - Check: `python -m unittest tests.test_gp1_goals_dropdown` passes against `goals_button`; `python -m unittest tests.test_layout_regression` passes at the minimum width; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
    - Proof: `absent: scripts/hud.gd :: goals_button`
    - Next after: none -- the Goals toggle move is complete
 
-5. **[Claude] SG-4 -- opening milestones lead the player to the first worker**
+4. **[Claude] SG-4 -- opening milestones lead the player to the first worker**
    - Plan: `plans/now/short-term-goals.md` -- "SG-4 -- opening milestones lead the player to the first worker"
    - Files: `scripts/colony_milestones.gd`, `scripts/main.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/test_conditions.py`
    - Check: `python -m unittest tests.test_gp1_goals_dropdown tests.test_gp2_goal_favourites tests.test_conditions` pass (a new run reads "Build your first cell", then the stores step, then the egg step, then "Raise your first worker", each within a second of its condition holding; a save without the three ids loads and ticks them); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
    - Proof: `absent: scripts/colony_milestones.gd :: first_egg`
    - Next after: none -- the opening milestones are complete
+
+5. **[Claude] AC-4 -- the Foraging card follows FR-2**
+   - Plan: `plans/now/agent-context.md` -- "AC-4 -- the Foraging card follows FR-2"
+   - Files: `GAME_MODEL.md`
+   - Check: every `file.gd::name` and backticked field in the two cards is found by grep in the file it names; `python tools/check_docs.py` passes
+   - Proof: `present: GAME_MODEL.md :: unlocks first;`
+   - Next after: None -- plan complete
 
 ### Codex lane
 

@@ -1,7 +1,7 @@
 # Agent context -- boundary rules that load themselves
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: AC-2 -- `.claude/rules/ui.md` loads with the UI scripts (Claude lane) | Dependency: AC-4 followed FR-2 (`plans/now/forager-recruitment.md`), landed 25 Oct 2026; AC-1 to AC-3 share no file with either lane | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: AC-3 -- `.claude/rules/headless.md` loads with the harness (Claude lane) | Dependency: AC-4 followed FR-2 (`plans/now/forager-recruitment.md`), landed 25 Oct 2026; AC-1 to AC-3 share no file with either lane | Verified: 2026-10-24
 
 ## Objective
 
@@ -67,7 +67,6 @@ Both are recommendations awaiting Dave; neither blocks AC-1 to AC-3.
 
 | Slice | What | Files | Level | Depends on |
 | --- | --- | --- | --- | --- |
-| AC-2 | `.claude/rules/ui.md` loads with the UI scripts | `.claude/rules/ui.md`, `plans/reference/ui-rules.md` | low | AC-1 (its check proves the globs) |
 | AC-3 | `.claude/rules/headless.md` loads with the harness | `.claude/rules/headless.md`, `docs/headless-run-contract.md` | low | AC-1 |
 | AC-4 | the Foraging card follows FR-2 | `GAME_MODEL.md` | low | yes -- FR-2 landed 25 Oct 2026 |
 
@@ -82,77 +81,7 @@ and states each boundary in one line.
 
 AC-1 shipped 2026-10-25; its specification is `plans/archive/AC-1_2026-10-25.md`.
 
-## AC-2 -- `.claude/rules/ui.md` loads with the UI scripts
-
-Level: low.
-
-**True now.** Opening `hud.gd` or a panel loads `gdscript.md` only. The UI
-rules are in `plans/reference/ui-rules.md` (74 lines), which a session
-finds only through `CLAUDE.md`'s routing table.
-
-**Done when.** `.claude/rules/ui.md` exists with the text below, each
-sentence checked against the file it names before it is written (drop a
-sentence that no longer holds rather than rewording it into something new).
-`plans/reference/ui-rules.md`'s opening paragraph gains one sentence: "The
-pointer `.claude/rules/ui.md` loads itself with the UI scripts."
-
-```text
----
-paths:
-  - "scripts/hud*.gd"
-  - "scripts/*_panel.gd"
-  - "scripts/ui*.gd"
-  - "scripts/main_menu.gd"
-  - "scripts/game_over.gd"
-  - "scripts/challenge_complete.gd"
----
-
-# UI and presentation scripts
-
-These files show what the simulation decided. Before changing a panel,
-layout, colour or accessibility setting, read
-`python tools/heading.py plans/reference/ui-rules.md "Durable rules"`.
-Bug catalogue: `docs/known-pitfalls.md`, "UI layout and theme".
-
-**Where to look**
-- A function in `hud.gd`: `python tools/func.py scripts/hud.gd <name>`;
-  `FUNCTION_MAP.md` indexes its sections. The cell popup stays in `hud.gd`
-  (code-health D1).
-- A persistent panel's rectangle: `ui_layout.gd` returns it, and
-  `ui_panel_layout.gd::apply()` is the only writer of its offsets.
-- Colours and type variations: `UiTheme` (`ui_theme.gd`).
-- A geometry assertion: `scripts/scenario_actions.gd`, section "assertion
-  checks", and `tests/fixtures/layout_panels.json`.
-
-**Where not to look** -- each is owned elsewhere; change it there:
-- A decision, state change or resource move: the simulation scripts. A
-  panel asks them to act; it never decides for them.
-- A balance number: `game_config.gd` and its settings row. No UI file
-  writes `GameConfig` (`tests/source_checks.py`,
-  `GAMECONFIG_WRITE_ALLOWLIST`). UI spacing stays a named const here.
-- A role's name, colour, letter or tooltip: `roles.gd`.
-- Run or UI state that outlives a panel: `Session` (`session.gd`).
-- Save fields: `.claude/rules/saving.md`.
-
-A geometry change ships its assertion; any visual change also files a
-hands-on check (`plans/reference/closeout.md`).
-```
-
-**Where not to look.** Do not edit `CLAUDE.md`, the other rule files or any
-`.gd` file. Do not read `hud.gd`; the facts above are checked with grep
-(`ui_panel_layout.gd`'s `func apply`, `GAMECONFIG_WRITE_ALLOWLIST`, the
-`known-pitfalls.md` heading) and `python tools/heading.py`.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] AC-2 -- `.claude/rules/ui.md` loads with the UI scripts**
-- Plan: `plans/now/agent-context.md` -- "AC-2 -- `.claude/rules/ui.md` loads with the UI scripts"
-- Files: `.claude/rules/ui.md`, `plans/reference/ui-rules.md`
-- Check: `python -m unittest tests.test_rule_globs` passes with the new rule's six globs each matching a file; `.claude/rules/ui.md` is under 40 lines; `python tools/check_docs.py` passes
-- Proof: `absent: plans/reference/ui-rules.md :: .claude/rules/ui.md`
-- Next after: AC-3 -- `.claude/rules/headless.md` loads with the harness
-```
+AC-2 shipped 2026-10-26; its specification is `plans/archive/AC-2_2026-10-26.md`.
 
 ## AC-3 -- `.claude/rules/headless.md` loads with the harness
 
