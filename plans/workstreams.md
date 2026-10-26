@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/L-38` (`codex/L-38`) | Codex | count worker product edits from worktree-relative shell commands | Codex | in progress | none | `plans/now/agent-lifecycle.md` L-38 -- count worker product edits from worktree-relative shell commands |
