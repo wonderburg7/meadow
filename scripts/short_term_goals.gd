@@ -15,8 +15,8 @@ const CATALOGUE := [
 
 ## Return offers for the vacant slots. Record each with accept() when shown.
 ## Facts: net_daily_income and gross_daily_income map resource to amount;
-## built_cells, winter_coming and winter_ready supplement diagnostics.compute.
-## Thresholds: few_free_cells, many_waiting_bees and few_waiting_bees.
+## built_cells, winter_coming, winter_here and winter_ready supplement
+## diagnostics.compute. Thresholds: few_free_cells, many_waiting_bees and few_waiting_bees.
 ## SG-2: a resource missing from an income map is unknown, not zero -- its
 ## one-day window has not filled since the run began or was loaded. No goal is
 ## offered while its own resource's gross income is unknown, since the reward
@@ -78,6 +78,25 @@ static func dismiss(state: Dictionary, id: String, day: int) -> void:
 	var held_since: Dictionary = state.get("held_since", {})
 	held_since.erase(id)
 	state["held_since"] = held_since
+
+
+## SG-2 (Dave, 26 Oct 2026): an offer whose season has passed leaves quietly
+## -- neither dismissed nor finished, paying nothing, its slot free at once.
+## Only "Lay in honey for winter" has one: it goes when winter arrives
+## (facts.winter_here) or the countdown ends (facts.winter_coming false), and
+## may be offered again in the next countdown. There is no general expiry
+## rule; any other offer stays until it is finished or dismissed. Returns the
+## ids withdrawn.
+static func withdraw_lapsed(state: Dictionary, facts: Dictionary) -> Array:
+	var offered: Dictionary = state.get("offered", {})
+	var lapsed: Array = []
+	if offered.has("honey_for_winter") and (bool(facts.get("winter_here", false)) or not bool(facts.get("winter_coming", false))):
+		lapsed.append("honey_for_winter")
+	for id: String in lapsed:
+		offered.erase(id)
+		var held_since: Dictionary = state.get("held_since", {})
+		held_since.erase(id)
+	return lapsed
 
 
 static func finish(state: Dictionary, id: String, day: int) -> float:
@@ -157,5 +176,6 @@ static func _trigger(id: String, facts: Dictionary, thresholds: Dictionary) -> b
 		"put_waiting_bees_to_work":
 			return int(facts.get("waiting_for_work", 0)) >= int(thresholds.get("many_waiting_bees", 1))
 		"honey_for_winter":
-			return bool(facts.get("winter_coming", false)) and not bool(facts.get("winter_ready", false))
+			# SG-2: not once winter is here -- winter_ready is false then too.
+			return bool(facts.get("winter_coming", false)) and not bool(facts.get("winter_here", false)) and not bool(facts.get("winter_ready", false))
 	return false

@@ -160,6 +160,7 @@ func _colony_case() -> void:
 		"the reward went into the stores (pollen rose %.2f, rewards %.2f)" % [rise, paid_pollen])
 
 	_winter_part()
+	_winter_lapse()
 	_save_part()
 	_reward_rules()
 
@@ -212,6 +213,30 @@ func _winter_part() -> void:
 	_main.colony_milestones.evaluate()
 	_check(_main.colony_milestones.day_met("winter_ready") == _main.day, "the CR-2 winter milestone is met on the last day")
 	session.winter_coming = false
+
+
+## (Dave, 26 Oct 2026) An unfinished winter offer leaves quietly when winter
+## arrives and when the countdown ends: not finished, not dismissed, unpaid.
+func _winter_lapse() -> void:
+	var session: Node = root.get_node("Session")
+	var goals: GDScript = load("res://scripts/short_term_goals.gd")
+	var kept: Dictionary = _main.short_term_goals.duplicate(true)
+	for ending: String in ["winter arrives", "the countdown ends"]:
+		_main.short_term_goals = {}
+		goals.accept(_main.short_term_goals, {"id": "honey_for_winter", "label": "Lay in honey for winter",
+			"resource": "honey", "offered_day": _main.day, "reward": 5.0})
+		session.winter_coming = ending == "winter arrives"
+		session.winter_here = ending == "winter arrives"
+		var honey_before: float = _main.hive.total("honey")
+		_refresh()
+		_check(not _offered().has("honey_for_winter") and not _finished().has("honey_for_winter")
+			and not _main.short_term_goals.get("dismissed", {}).has("honey_for_winter")
+			and is_equal_approx(_main.hive.total("honey"), honey_before),
+			"the winter offer leaves quietly, unpaid, when %s (%s, honey %.2f -> %.2f)" % [ending,
+				_canonical(_main.short_term_goals), honey_before, _main.hive.total("honey")])
+	session.winter_coming = false
+	session.winter_here = false
+	_main.short_term_goals = kept
 
 
 ## Offered and finished goals survive a save and an in-place restore; a save

@@ -270,6 +270,7 @@ func _refresh_short_term_goals(facts: Dictionary) -> void:
 	goal_facts["gross_daily_income"] = gross
 	goal_facts["built_cells"] = Conditions.built_cell_count(main)
 	goal_facts["winter_coming"] = Session.winter_coming
+	goal_facts["winter_here"] = Session.winter_here
 	goal_facts["winter_ready"] = Conditions.met(main, {"winter_on_track": true})
 	var thresholds := {
 		"few_free_cells": int(GameConfig.goal_few_free_cells),
@@ -281,6 +282,7 @@ func _refresh_short_term_goals(facts: Dictionary) -> void:
 	# 0 means no refresh yet this run: its first is not a day boundary.
 	var at_day_change: bool = main.short_term_goal_day != 0 and main.short_term_goal_day != day
 	main.short_term_goal_day = day
+	ShortTermGoals.withdraw_lapsed(state, goal_facts)
 	var offered: Dictionary = state.get("offered", {})
 	for id: String in offered.keys():
 		var entry: Dictionary = offered[id]

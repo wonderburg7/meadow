@@ -195,6 +195,21 @@ floor as an optional sixth argument and returns the reward that is paid (a
 fraction of zero pays nothing). An in-place restore (`saving.gd::_restore`)
 empties the day-store window and resets `hive.lifetime_honey_made`, as a
 load's fresh scene does, so no window mixes two worlds; neither is saved.
+
+**Decided in the SG-2 review (Dave, 26 Oct 2026).** (1) An unfinished "Lay in
+honey for winter" offer is withdrawn quietly when winter arrives or the
+countdown ends (`short_term_goals.gd::withdraw_lapsed`): not finished, not
+dismissed, unpaid, its slot free at once, and it may be offered again next
+countdown. It is not offered while winter is here either (`_trigger` reads
+the added `winter_here` fact, since `winter_ready` is false through winter).
+There is no general expiry rule; any other offer stays until it is finished
+or dismissed. **For SG-3:** a withdrawn winter offer simply
+leaves the drop-down -- no completion note, no Dr Gallerin line. (2) Rewards
+go into the same stores the goals measure, and may count towards another
+goal (a "Feed every larva" pollen payout can help finish "Build a pollen
+surplus"). Left so on purpose: the rewards are small, and the pacing
+evidence is measured with them in.
+
 The save field is written only while the state is non-empty, so a run with
 no goals saves exactly as before and the CQ-S0 goldens stand unchanged; the
 goals' own round trip is `tests/test_sg2_short_term_goals.py`. The four
