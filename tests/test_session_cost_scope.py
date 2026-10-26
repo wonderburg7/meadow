@@ -151,6 +151,52 @@ class ScriptedEditTest(unittest.TestCase):
         self.assertFalse(session_cost._product_edit(
             _tool("Bash", command=f"cat {wt}"), None))
 
+    def _phase_counts(self, command, cwd):
+        """Run a miniature transcript, rather than testing a shell string alone."""
+        rows = [_user("go")] + [_assistant("m") for _ in range(3)]
+        rows[2]["cwd"] = cwd
+        rows[2]["message"]["content"] = [_tool("Bash", command=command)]
+        with tempfile.TemporaryDirectory() as temp:
+            transcript = Path(temp) / "worker.jsonl"
+            _write(transcript, rows)
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                session_cost.run_phases([transcript])
+        counts = {}
+        for phase, label in session_cost.PHASE_LABELS.items():
+            line = next(line for line in out.getvalue().splitlines() if line.startswith(label))
+            counts[phase] = int(line[len(label):].split()[0])
+        return counts
+
+    def test_worktree_relative_shell_writes_count_in_transcripts(self):
+        primary = "C:/x/meadow"
+        cases = (
+            "cd .worktrees/L-38; sed -i 's/a/b/' tools/session_cost.py",
+            "cd .worktrees/L-38; cp /tmp/bee.gd scripts/bee.gd",
+        )
+        for command in cases:
+            counts = self._phase_counts(command, primary)
+            self.assertEqual(counts["implementing"], 1, command)
+            self.assertEqual(counts["no_edit"], 0, command)
+
+        counts = self._phase_counts(
+            "sed -i 's/a/b/' tools/session_cost.py",
+            "C:/x/meadow/.worktrees/L-38",
+        )
+        self.assertEqual(counts["implementing"], 1)
+        self.assertEqual(counts["no_edit"], 0)
+
+    def test_relative_read_only_and_non_product_writes_stay_uncounted(self):
+        cwd = "C:/x/meadow/.worktrees/L-38"
+        for command in (
+            "cat tools/session_cost.py",
+            "sed -i 's/a/b/' docs/note.md",
+            "cp /tmp/bee.gd C:/tmp/bee.gd",
+        ):
+            counts = self._phase_counts(command, cwd)
+            self.assertEqual(counts["implementing"], 0, command)
+            self.assertEqual(counts["no_edit"], 3, command)
+
 
 class WorkerAgentModelTest(unittest.TestCase):
     """Each slice-worker agent's pinned model is one its level allows, so the

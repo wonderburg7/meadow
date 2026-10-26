@@ -63,14 +63,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] L-38 -- count worker product edits from worktree-relative shell commands**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-38 -- count worker product edits from worktree-relative shell commands"
-   - Files: `tools/session_cost.py`, `tests/test_session_cost_scope.py`
-   - Check: `python -m unittest tests.test_session_cost_scope` passes, including `cd .worktrees/L-38; sed -i ... tools/session_cost.py`, `cd .worktrees/L-38; cp ... scripts/bee.gd`, established worktree cwd, and read-only/non-product countercases; `python tools/session_cost.py --phases` reports the worker count when transcripts are available
-   - Proof: `absent: tools/session_cost.py :: def _shell_product_edit`
-   - Next after: none -- agent-lifecycle plan complete
-
-2. **[Codex] CQ-R11 -- split flower seeding without changing RNG order**
+1. **[Codex] CQ-R11 -- split flower seeding without changing RNG order**
    - Plan: `plans/now/code-health.md` -- "CQ-R11 -- split flower seeding without changing RNG order"
    - Files: `scripts/world_building.gd`, `FUNCTION_MAP.md`
    - Check: `python tools/equivalence.py test_scenarios/sf1_founding_flower_mix_test.json master`, `python tools/equivalence.py test_scenarios/pp4_seed_set.json master` and `python tools/equivalence.py test_scenarios/pp1_pollination_ledger.json master` report no differences; `python tools/prefinish.py` passes
