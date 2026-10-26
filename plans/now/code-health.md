@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R10 in the Codex lane (CQ-R11 complete); CQ-M6 waits for CT-1 to release scripts/hive_cell.gd, and CQ-R6 waits for GP-5 to release scripts/hud.gd (Dave's order, 25 Oct 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R10 in the Codex lane (CQ-R11 complete), then CQ-R14; CQ-M6 waits for CT-1 to release scripts/hive_cell.gd, and CQ-R6 waits for GP-5 to release scripts/hud.gd (Dave's order, 25 Oct 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -126,7 +126,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd`, `FUNCTION_MAP.md` | yes -- specified 26 Oct 2026 | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
-| CQ-R14 | mid-size builders: `main_menu._ready`, `challenge_complete._ready`, `flower.setup`, `bee._build_visuals` | those four | yes | low |
+| CQ-R14 | mid-size builders: `main_menu._ready`, `challenge_complete._ready`, `flower.setup`, `bee._build_visuals` | those four | yes -- specified 26 Oct 2026 | low |
 
 Only the first slice of each chain carries a full section and block. A row without one
 gets its block written by the session that claims its predecessor, from this table,
@@ -442,5 +442,34 @@ deterministic coverage. Reasoning: **medium**.
 - Files: `scripts/input_selection.gd`, `FUNCTION_MAP.md`, `checks/ready.md`
 - Check: `python tools/equivalence.py test_scenarios/e1_placement_exclusion_test.json master`, `python tools/equivalence.py test_scenarios/hr2_click_view_switch_test.json master` and `python tools/equivalence.py test_scenarios/rr1_queen_builds_test.json master` report no differences; `python tools/prefinish.py` passes; a hands-on check covers the untested inputs
 - Proof: `present: scripts/input_selection.gd :: func _unhandled_input(event: InputEvent) -> void:`
+- Next after: CQ-R14 -- split the mid-size visual builders
+```
+
+## CQ-R14 -- split the mid-size visual builders
+
+**Now.** `main_menu.gd::_ready`, `challenge_complete.gd::_ready`,
+`flower.gd::setup` and `bee.gd::_build_visuals` each build several distinct
+pieces in one function. All four functions remain on master (verified
+26 Oct 2026). The D2 research record identifies the extraction seams and
+existing sprite and menu coverage. `tools/slice.ps1 owner` reports each of
+these files clear of the other lane on 26 Oct 2026.
+
+**When done.** Split flower setup into `_init_stats`,
+`_build_flower_visuals` and `_build_spider_visuals`; bee visuals into
+`_build_status_rings`, `_build_body` and `_build_heading_markers`; and the
+menu and challenge-complete builders by their existing sub-widgets. Keep
+construction order, node names, geometry, colours, RNG calls, display strings
+and simulation results unchanged. These remain one-time build calls, with no
+new per-frame work. Regenerate `FUNCTION_MAP.md` after mapped-script edits.
+Reasoning: **low**.
+
+**Open decisions:** none.
+
+```queue
+**[Codex] CQ-R14 -- split the mid-size visual builders**
+- Plan: `plans/now/code-health.md` -- "CQ-R14 -- split the mid-size visual builders"
+- Files: `scripts/main_menu.gd`, `scripts/challenge_complete.gd`, `scripts/flower.gd`, `scripts/bee.gd`, `FUNCTION_MAP.md`
+- Check: `python -m unittest tests.test_sp1_pixel_sprite tests.test_ho15_menu_hex_fit` and `python tools/equivalence.py test_scenarios/sf1_founding_flower_mix_test.json master` pass with no differences; `python tools/prefinish.py` passes
+- Proof: `present: scripts/flower.gd :: func setup(index: int, starting_age: float = -1.0) -> void:`
 - Next after: CQ-M6 -- name selection green and caste appearance (gated on CT-1)
 ```

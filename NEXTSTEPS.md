@@ -68,6 +68,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Files: `scripts/input_selection.gd`, `FUNCTION_MAP.md`, `checks/ready.md`
    - Check: `python tools/equivalence.py test_scenarios/e1_placement_exclusion_test.json master`, `python tools/equivalence.py test_scenarios/hr2_click_view_switch_test.json master` and `python tools/equivalence.py test_scenarios/rr1_queen_builds_test.json master` report no differences; `python tools/prefinish.py` passes; a hands-on check covers the untested inputs
    - Proof: `present: scripts/input_selection.gd :: func _unhandled_input(event: InputEvent) -> void:`
+   - Next after: CQ-R14 -- split the mid-size visual builders
+
+2. **[Codex] CQ-R14 -- split the mid-size visual builders**
+   - Plan: `plans/now/code-health.md` -- "CQ-R14 -- split the mid-size visual builders"
+   - Files: `scripts/main_menu.gd`, `scripts/challenge_complete.gd`, `scripts/flower.gd`, `scripts/bee.gd`, `FUNCTION_MAP.md`
+   - Check: `python -m unittest tests.test_sp1_pixel_sprite tests.test_ho15_menu_hex_fit` and `python tools/equivalence.py test_scenarios/sf1_founding_flower_mix_test.json master` pass with no differences; `python tools/prefinish.py` passes
+   - Proof: `present: scripts/flower.gd :: func setup(index: int, starting_age: float = -1.0) -> void:`
    - Next after: CQ-M6 -- name selection green and caste appearance (gated on CT-1)
 
 ## Not in the queue, and why
