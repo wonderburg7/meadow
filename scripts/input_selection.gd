@@ -12,71 +12,82 @@ var selected_world_object: Node2D = null
 ## The kept-clear tile whose summary is showing (HR-1).
 var selected_keep_clear_hex: Vector2i = Vector2i.ZERO
 
+# --- Keyboard and pointer input ---
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
-		match event.keycode:
-			KEY_SPACE:
-				main.camera_view._toggle_pause()
-			KEY_TAB:
-				main.camera_view._toggle_view()
-			KEY_C:
-				main.year_winter._toggle_panel(main.colony_panel)
-			KEY_N:
-				main.year_winter._toggle_panel(main.nursery_panel)
-			KEY_G:
-				main.year_winter._toggle_panel(main.foraging_panel)
-			KEY_F:
-				main.camera_view._zoom_to_fit()
-			KEY_O:
-				main.orders_zones._cycle_comb_overlay()
-			KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9:
-				var slot: int = event.keycode - KEY_0
-				if event.ctrl_pressed:
-					main.camera_view._save_control_group(slot)
-				else:
-					main.camera_view._recall_control_group(slot)
-			KEY_Z:
-				if event.ctrl_pressed:
-					main.orders_zones._undo_last_designation()
-
+		_handle_key(event)
 	elif event is InputEventMouseButton:
-		match event.button_index:
-			MOUSE_BUTTON_WHEEL_UP:
-				if event.pressed and not main.camera_view._pointer_over_ui():
-					main.camera_view._zoom_by(1.1)
-			MOUSE_BUTTON_WHEEL_DOWN:
-				if event.pressed and not main.camera_view._pointer_over_ui():
-					main.camera_view._zoom_by(1.0 / 1.1)
-			MOUSE_BUTTON_LEFT:
-				if event.pressed and main.camera_view._pointer_over_ui():
-					pass
-				elif event.pressed:
-					main.dragging = true
-					main.drag_start = main.get_global_mouse_position()
-					main.drag_current = main.drag_start
-				else:
-					_finish_drag(event.shift_pressed, event.ctrl_pressed)
-			MOUSE_BUTTON_MIDDLE:
-				main.panning = event.pressed
-				main.pan_anchor = event.position
-			MOUSE_BUTTON_RIGHT:
-				# Godot delivers a fast second right-click as a further pressed
-				# event with double_click set, so the same order was issued twice.
-				# That duplicate is the only difference between a double right-click
-				# and two spaced ones, which is exactly what C-14's symptom tracks
-				# (Dave, 8 Sep 2026).
-				if event.pressed and not event.double_click:
-					_issue_command(main.get_global_mouse_position())
-
+		_handle_mouse_button(event)
 	elif event is InputEventMouseMotion:
-		if main.panning:
-			var cam: Variant = main.camera_view._active_camera()
-			cam.position -= (event.position - main.pan_anchor) / cam.zoom.x
-			main.pan_anchor = event.position
-		elif main.dragging:
-			main.drag_current = main.get_global_mouse_position()
+		_handle_mouse_motion(event)
 
-# CQ-R10 shortens this function; until then the early returns stay.
+func _handle_key(event: InputEventKey) -> void:
+	match event.keycode:
+		KEY_SPACE:
+			main.camera_view._toggle_pause()
+		KEY_TAB:
+			main.camera_view._toggle_view()
+		KEY_C:
+			main.year_winter._toggle_panel(main.colony_panel)
+		KEY_N:
+			main.year_winter._toggle_panel(main.nursery_panel)
+		KEY_G:
+			main.year_winter._toggle_panel(main.foraging_panel)
+		KEY_F:
+			main.camera_view._zoom_to_fit()
+		KEY_O:
+			main.orders_zones._cycle_comb_overlay()
+		KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9:
+			var slot: int = event.keycode - KEY_0
+			if event.ctrl_pressed:
+				main.camera_view._save_control_group(slot)
+			else:
+				main.camera_view._recall_control_group(slot)
+		KEY_Z:
+			if event.ctrl_pressed:
+				main.orders_zones._undo_last_designation()
+
+
+func _handle_mouse_button(event: InputEventMouseButton) -> void:
+	match event.button_index:
+		MOUSE_BUTTON_WHEEL_UP:
+			if event.pressed and not main.camera_view._pointer_over_ui():
+				main.camera_view._zoom_by(1.1)
+		MOUSE_BUTTON_WHEEL_DOWN:
+			if event.pressed and not main.camera_view._pointer_over_ui():
+				main.camera_view._zoom_by(1.0 / 1.1)
+		MOUSE_BUTTON_LEFT:
+			if event.pressed and main.camera_view._pointer_over_ui():
+				pass
+			elif event.pressed:
+				main.dragging = true
+				main.drag_start = main.get_global_mouse_position()
+				main.drag_current = main.drag_start
+			else:
+				_finish_drag(event.shift_pressed, event.ctrl_pressed)
+		MOUSE_BUTTON_MIDDLE:
+			main.panning = event.pressed
+			main.pan_anchor = event.position
+		MOUSE_BUTTON_RIGHT:
+			# Godot delivers a fast second right-click as a further pressed
+			# event with double_click set, so the same order was issued twice.
+			# That duplicate is the only difference between a double right-click
+			# and two spaced ones, which is exactly what C-14's symptom tracks
+			# (Dave, 8 Sep 2026).
+			if event.pressed and not event.double_click:
+				_issue_command(main.get_global_mouse_position())
+
+
+func _handle_mouse_motion(event: InputEventMouseMotion) -> void:
+	if main.panning:
+		var cam: Variant = main.camera_view._active_camera()
+		cam.position -= (event.position - main.pan_anchor) / cam.zoom.x
+		main.pan_anchor = event.position
+	elif main.dragging:
+		main.drag_current = main.get_global_mouse_position()
+
+
+# --- Picking bees, comb and world objects ---
 func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 	if not main.dragging:
 		return
@@ -96,91 +107,100 @@ func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
 		elif _click_switches_view(main.drag_start):
 			return
 		elif main.in_hive_view:
-			var cell: Variant = _cell_at(main.drag_start)
-			if cell:
-				_select_cells([cell], add_to_group_selection)
+			if _click_pick_in_hive(main.drag_start, add_to_group_selection):
 				return
-			var block: Variant = _soil_at(main.drag_start)
-			if block:
-				_select_blocks([block], add_to_group_selection)
-				return
-			var marker: Variant = _death_marker_at(main.drag_start)
-			if marker:
-				_select_world_object("death", marker)
-				return
-			var clear_hex := _hex_at(main.drag_start)
-			if main.hive.is_keep_clear(clear_hex):
-				_clear_world_object_selection()
-				_clear_cell_selection()
-				_clear_block_selection()
-				selected_keep_clear_hex = clear_hex
-				main.hud.show_object_summary("keep_clear", {"hex": clear_hex})
-				return
-			_clear_cell_selection()
-			_clear_block_selection()
-		else:
-			var flower: Variant = main.world_building._flower_at(main.drag_start)
-			if flower:
-				_select_world_object("flower", flower)
-				return
-			var obstacle: Variant = main.world_building._obstacle_at(main.drag_start)
-			if obstacle:
-				_select_world_object("obstacle", obstacle)
-				return
-			var marker: Variant = _death_marker_at(main.drag_start)
-			if marker:
-				_select_world_object("death", marker)
-				return
+		elif _click_pick_in_meadow(main.drag_start):
+			return
 	else:
 		for b: Variant in _bees_in_current_view():
 			if box.has_point(b.global_position):
 				picked.append(b)
+		if picked.is_empty() and main.in_hive_view and _box_pick_comb(box, add_to_group_selection):
+			return
 
-		if picked.is_empty() and main.in_hive_view:
-			var boxed_cells: Array = []
-			for c: Variant in get_tree().get_nodes_in_group("hive_cells"):
-				if is_instance_valid(c) and box.has_point(c.global_position):
-					boxed_cells.append(c)
-			if not boxed_cells.is_empty():
-				_select_cells(boxed_cells, add_to_group_selection)
-				return
+	_apply_bee_pick(picked, additive)
 
-			var boxed_blocks: Array = []
-			for b: Variant in get_tree().get_nodes_in_group("soil_blocks"):
-				if is_instance_valid(b) and box.has_point(b.global_position):
-					boxed_blocks.append(b)
-			if not boxed_blocks.is_empty():
-				_select_blocks(boxed_blocks, add_to_group_selection)
-				return
+func _click_pick_in_hive(p: Vector2, add: bool) -> bool:
+	var cell: Variant = _cell_at(p)
+	if cell:
+		_select_cells([cell], add)
+		return true
+	var block: Variant = _soil_at(p)
+	if block:
+		_select_blocks([block], add)
+		return true
+	var marker: Variant = _death_marker_at(p)
+	if marker:
+		_select_world_object("death", marker)
+		return true
+	var clear_hex := _hex_at(p)
+	if main.hive.is_keep_clear(clear_hex):
+		_clear_world_object_selection()
+		_clear_cell_selection()
+		_clear_block_selection()
+		selected_keep_clear_hex = clear_hex
+		main.hud.show_object_summary("keep_clear", {"hex": clear_hex})
+		return true
+	_clear_cell_selection()
+	_clear_block_selection()
+	return false
 
-		# No bee, cell or soil block in the box -- a death mark is the last
-		# thing worth catching before falling through to "select nothing".
-		if picked.is_empty():
-			var boxed_markers: Array = []
-			for m: Variant in _death_markers_in_current_view():
-				if box.has_point(m.global_position):
-					boxed_markers.append(m)
-			if not boxed_markers.is_empty():
-				_select_world_object("death", boxed_markers[0])
-				return  # gdlint: ignore=max-returns
+func _click_pick_in_meadow(p: Vector2) -> bool:
+	var flower: Variant = main.world_building._flower_at(p)
+	if flower:
+		_select_world_object("flower", flower)
+		return true
+	var obstacle: Variant = main.world_building._obstacle_at(p)
+	if obstacle:
+		_select_world_object("obstacle", obstacle)
+		return true
+	var marker: Variant = _death_marker_at(p)
+	if marker:
+		_select_world_object("death", marker)
+		return true
+	return false
 
+func _box_pick_comb(box: Rect2, add: bool) -> bool:
+	var boxed_cells: Array = []
+	for c: Variant in get_tree().get_nodes_in_group("hive_cells"):
+		if is_instance_valid(c) and box.has_point(c.global_position):
+			boxed_cells.append(c)
+	if not boxed_cells.is_empty():
+		_select_cells(boxed_cells, add)
+		return true
+
+	var boxed_blocks: Array = []
+	for b: Variant in get_tree().get_nodes_in_group("soil_blocks"):
+		if is_instance_valid(b) and box.has_point(b.global_position):
+			boxed_blocks.append(b)
+	if not boxed_blocks.is_empty():
+		_select_blocks(boxed_blocks, add)
+		return true
+
+	# A death mark is the last thing worth catching before selecting nothing.
+	var boxed_markers: Array = []
+	for m: Variant in _death_markers_in_current_view():
+		if box.has_point(m.global_position):
+			boxed_markers.append(m)
+	if not boxed_markers.is_empty():
+		_select_world_object("death", boxed_markers[0])
+		return true
+	return false
+
+func _apply_bee_pick(picked: Array, additive: bool) -> void:
 	_clear_world_object_selection()
-
 	if not picked.is_empty():
 		_clear_cell_selection()
 		_clear_block_selection()
-
 	if not additive:
 		for b: Variant in main.selected_bees:
 			if is_instance_valid(b):
 				b.set_selected(false)
 		main.selected_bees.clear()
-
 	for b: Variant in picked:
 		if not main.selected_bees.has(b):
 			b.set_selected(true)
 			main.selected_bees.append(b)
-
 	main.hud.update_selection(main.selected_bees)
 
 func _select_cells(cells: Array, additive: bool) -> void:
@@ -327,6 +347,7 @@ func _hex_at(global_point: Vector2) -> Vector2i:
 ##                is armed ("" = none; the handler finds its own)
 ##   role      -- Bee.Role name a captured bee must have
 ##   first_only-- only the first selected bee is considered
+# --- Click-to-place tools ---
 const PLACEMENT_TOOLS: Array = [
 	{"id": "build_cell", "handler": "_place_build_cell", "queues": true, "view": "hive",
 		"captures": "pending_builder_bees", "role": "BUILDER"},
@@ -503,6 +524,7 @@ const HIVE_CLICK_RADIUS := 40.0
 const COMMAND_REFUSED_WARNING_KEY := "command_refused"
 const COMMAND_REFUSED_WARNING_GAP := 4.0
 
+# --- Right-click orders ---
 func _issue_command(world_point: Vector2) -> void:
 	_prune_invalid_selected_bees()
 	if main.selected_bees.is_empty():
@@ -525,35 +547,39 @@ func _issue_command(world_point: Vector2) -> void:
 		)
 		return
 	_show_click_marker(world_point)
-	if main.in_hive_view and world_point.distance_to(main.hive_root.to_global(main.hive_entrance_inside())) <= EXIT_CLICK_RADIUS:
+	if main.in_hive_view:
+		_command_in_hive(world_point, commandable, targets_before)
+	else:
+		_command_in_meadow(world_point, commandable, targets_before)
+
+func _command_in_hive(world_point: Vector2, commandable: Array, targets_before: Array) -> void:
+	if world_point.distance_to(main.hive_root.to_global(main.hive_entrance_inside())) <= EXIT_CLICK_RADIUS:
 		for b: Variant in commandable:
 			b.command_exit_hive()
 		DiagnosticLog.log_command_issue(main.selected_bees.size(), commandable.size(), "exit", targets_before)
 		return
-	# Right-clicking the meadow-side hive marker sends a loaded bee home to
-	# deposit directly, the same direct-command spirit as the entrance-click
-	# case above (Bee.command_return_and_deposit).
-	if not main.in_hive_view and world_point.distance_to(main.hive.global_position) <= HIVE_CLICK_RADIUS:
+	var cell := _cell_at(world_point)
+	for b: Variant in commandable:
+		if cell != null and b.player_driven and b.current_load > 0.0:
+			if b._is_inside_hive():
+				b.command_deposit_at(cell)
+			else:
+				b.command_deposit_at_after_enter(cell)
+		elif b._is_inside_hive():
+			b.command_move_to(world_point)
+		else:
+			b.command_move_through_entrance(world_point, true)
+	DiagnosticLog.log_command_issue(main.selected_bees.size(), commandable.size(), "cell" if cell != null else "move", targets_before)
+
+func _command_in_meadow(world_point: Vector2, commandable: Array, targets_before: Array) -> void:
+	# The hive marker sends a loaded bee home to deposit directly.
+	if world_point.distance_to(main.hive.global_position) <= HIVE_CLICK_RADIUS:
 		for b: Variant in commandable:
 			if b.player_driven:
 				b.command_return_only()
 			else:
 				b.command_return_and_deposit()
 		DiagnosticLog.log_command_issue(main.selected_bees.size(), commandable.size(), "return", targets_before)
-		return
-	if main.in_hive_view:
-		var cell := _cell_at(world_point)
-		for b: Variant in commandable:
-			if cell != null and b.player_driven and b.current_load > 0.0:
-				if b._is_inside_hive():
-					b.command_deposit_at(cell)
-				else:
-					b.command_deposit_at_after_enter(cell)
-			elif b._is_inside_hive():
-				b.command_move_to(world_point)
-			else:
-				b.command_move_through_entrance(world_point, true)
-		DiagnosticLog.log_command_issue(main.selected_bees.size(), commandable.size(), "cell" if cell != null else "move", targets_before)
 		return
 	var flower: Variant = main.world_building._flower_at(world_point)
 	for b: Variant in commandable:
@@ -607,6 +633,7 @@ func _ensure_hive_view() -> void:
 		main.in_hive_view = true
 		main.camera_view._apply_view()
 
+# --- Selection and order drawing ---
 func _draw_selection_box() -> void:
 	Perf.begin("draw")
 	if main.dragging:
