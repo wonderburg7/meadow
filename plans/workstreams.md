@@ -49,4 +49,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/CQ-R10` (`codex/CQ-R10`) | Codex | decompose input selection | Codex | in progress | none | `plans/now/code-health.md` CQ-R10 -- decompose input selection |
-| `.worktrees/GP-5` (`claude/GP-5`) | Claude | a Goals button in the second HUD row replaces the Goals header | Claude | in progress | none | `plans/now/short-term-goals.md` GP-5 -- a Goals button in the second HUD row replaces the Goals header |

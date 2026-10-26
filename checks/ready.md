@@ -89,3 +89,4 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-147 -- A selected soil block's ring outlines the top of the block](ready/C-147.md)
 - [C-148 -- Goal stars sit at the right-hand end of their lines](ready/C-148.md)
 - [C-149 -- Auto scouting is offered after Orientation flight and replaces it](ready/C-149.md)
+- [C-150 -- GP-5: press Goals in the second HUD row, the list opens and closes; restart the game and it remembers](ready/C-150.md)
