@@ -49,4 +49,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/CQ-R10` (`codex/CQ-R10`) | Codex | decompose input selection | Codex | in progress | none | `plans/now/code-health.md` CQ-R10 -- decompose input selection |
-| `.worktrees/CT-1` (`claude/CT-1`) | Claude | sealed cells take a faint tone of what they hold | Claude | in progress | none | `plans/now/cell-content-tones.md` CT-1 -- sealed cells take a faint tone of what they hold |
