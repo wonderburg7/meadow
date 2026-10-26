@@ -1,7 +1,7 @@
 # Agent context -- boundary rules that load themselves
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: AC-3 -- `.claude/rules/headless.md` loads with the harness (Claude lane) | Dependency: AC-4 followed FR-2 (`plans/now/forager-recruitment.md`), landed 25 Oct 2026; AC-1 to AC-3 share no file with either lane | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: AC-4 -- the Foraging card follows FR-2 (Claude lane) | Dependency: AC-4 followed FR-2 (`plans/now/forager-recruitment.md`), landed 25 Oct 2026; AC-1 to AC-3 share no file with either lane | Verified: 2026-10-24
 
 ## Objective
 
@@ -67,7 +67,6 @@ Both are recommendations awaiting Dave; neither blocks AC-1 to AC-3.
 
 | Slice | What | Files | Level | Depends on |
 | --- | --- | --- | --- | --- |
-| AC-3 | `.claude/rules/headless.md` loads with the harness | `.claude/rules/headless.md`, `docs/headless-run-contract.md` | low | AC-1 |
 | AC-4 | the Foraging card follows FR-2 | `GAME_MODEL.md` | low | yes -- FR-2 landed 25 Oct 2026 |
 
 A slice reads its own section and the files it names; nothing else in this
@@ -83,74 +82,7 @@ AC-1 shipped 2026-10-25; its specification is `plans/archive/AC-1_2026-10-25.md`
 
 AC-2 shipped 2026-10-26; its specification is `plans/archive/AC-2_2026-10-26.md`.
 
-## AC-3 -- `.claude/rules/headless.md` loads with the harness
-
-Level: low.
-
-**True now.** Opening `scenario_actions.gd`, a `challenge_*.gd` or a
-scenario JSON loads at most `gdscript.md` (and `saving.md` for
-`challenge_runner.gd`). The run contract is
-`docs/headless-run-contract.md`, 440-plus lines, reached only through
-`CLAUDE.md`.
-
-**Done when.** `.claude/rules/headless.md` exists with the text below,
-checked sentence by sentence as in AC-2. `docs/headless-run-contract.md`'s
-opening paragraph gains: "The pointer `.claude/rules/headless.md` loads
-itself with the harness scripts and scenarios."
-
-```text
----
-paths:
-  - "scripts/scenario_*.gd"
-  - "scripts/headless/*.gd"
-  - "scripts/challenge_*.gd"
-  - "scripts/stage_gate.gd"
-  - "test_scenarios/*.json"
-  - "tools/run_scenario.py"
----
-
-# Scenarios, Challenges and headless runs
-
-The run contract is `docs/headless-run-contract.md`. Read the heading you
-need with `python tools/heading.py`, never the whole file: "Choosing a
-run", "Scenario expectations", "Challenge scenarios", "Placement verbs",
-"Settling the layout before a geometry assertion", "Artefacts".
-
-**Where to look**
-- A verb, trigger, selector or assertion: `scripts/scenario_actions.gd`,
-  sections "verbs", "triggers", "selectors", "assertion checks".
-- What a stage id asks the player: `docs/challenge-stages.md`, generated
-  by `python tools/stage_reference.py` -- regenerate it, never edit it.
-- One run: `python tools/run_scenario.py test_scenarios/<name>.json`. A
-  failed run is read from its `failure.json` ("Artefacts"), not raw logs.
-
-**Where not to look**
-- The stage index: `advance_challenge_stage` reaches a stage through the
-  runner's `debug_advance_stage()`; never write the index.
-- A default in `game_config.gd`, to make a scenario pass: a run's own
-  overrides are in "Experiment manifests"; a balance change is simulated
-  first (`docs/agent-rules.md`, rule 2).
-- Save rules for `challenge_runner.gd`: `.claude/rules/saving.md`.
-
-A stage id is never bare in prose (`docs/agent-rules.md`).
-```
-
-**Where not to look.** Do not edit any `.gd`, `.json` or Python file, or
-the other rule files. Check the six heading names with `grep -n "^## "
-docs/headless-run-contract.md` and the four section names with
-`grep -n "^# --- " scripts/scenario_actions.gd`; do not read either file
-whole.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] AC-3 -- `.claude/rules/headless.md` loads with the harness**
-- Plan: `plans/now/agent-context.md` -- "AC-3 -- `.claude/rules/headless.md` loads with the harness"
-- Files: `.claude/rules/headless.md`, `docs/headless-run-contract.md`
-- Check: `python -m unittest tests.test_rule_globs` passes with the new rule's six globs each matching a file; `.claude/rules/headless.md` is under 40 lines; `python tools/check_docs.py` passes
-- Proof: `absent: docs/headless-run-contract.md :: .claude/rules/headless.md`
-- Next after: AC-4 -- the Foraging card follows FR-2
-```
+AC-3 shipped 2026-10-26; its specification is `plans/archive/AC-3_2026-10-26.md`.
 
 ## AC-4 -- the Foraging card follows FR-2
 
