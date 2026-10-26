@@ -125,7 +125,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | gated -- follows CQ-R11 and waits for GP-5 to release `scripts/hud.gd` | medium |
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd`, `FUNCTION_MAP.md` | yes -- specified 26 Oct 2026 | medium |
-| CQ-R11 | `world_building.gd::_seed_flower` decomposed, RNG order kept | `world_building.gd` | yes -- specified 25 Oct 2026 | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
 | CQ-R14 | mid-size builders: `main_menu._ready`, `challenge_complete._ready`, `flower.setup`, `bee._build_visuals` | those four | yes | low |
 
@@ -359,29 +358,7 @@ checks. Stop if the replacement changes a save compatibility decision.
 - Next after: CQ-M5 -- CanvasLayer order in scripts/canvas_layers.gd
 ```
 
-## CQ-R11 -- split flower seeding without changing RNG order
-
-**Now.** `world_building.gd::_seed_flower` still combines the founding birth
-window, flower-anchor choice, bush-unit count and placement. The D2 research
-record names those responsibilities and the three existing equivalence runs.
-
-**Target.** Extract `_founding_birth_window(founding)`,
-`_pick_flower_anchor(species)` with its `cluster_centers` bookkeeping,
-`_bush_unit_count(species, max)` and `_place_bush_unit(anchor, unit)`.
-Keep RNG calls in exactly their current order and keep every display string,
-save field and result unchanged. Regenerate `FUNCTION_MAP.md` after the script
-edit. Reasoning: **medium**.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] CQ-R11 -- split flower seeding without changing RNG order**
-- Plan: `plans/now/code-health.md` -- "CQ-R11 -- split flower seeding without changing RNG order"
-- Files: `scripts/world_building.gd`, `FUNCTION_MAP.md`, `tools/update_function_map.py`
-- Check: `python tools/equivalence.py test_scenarios/sf1_founding_flower_mix_test.json master`, `python tools/equivalence.py test_scenarios/pp4_seed_set.json master` and `python tools/equivalence.py test_scenarios/pp1_pollination_ledger.json master` report no differences; `python tools/prefinish.py` passes
-- Proof: `present: scripts/world_building.gd :: func _seed_flower(`
-- Next after: CQ-R10 -- decompose input selection
-```
+CQ-R11 shipped 2026-10-26; its specification is `plans/archive/CQ-R11_2026-10-26.md`.
 
 ## CQ-R6 -- extract the HUD bee-command rows
 

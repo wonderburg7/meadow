@@ -63,14 +63,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] CQ-R11 -- split flower seeding without changing RNG order**
-   - Plan: `plans/now/code-health.md` -- "CQ-R11 -- split flower seeding without changing RNG order"
-   - Files: `scripts/world_building.gd`, `FUNCTION_MAP.md`
-   - Check: `python tools/equivalence.py test_scenarios/sf1_founding_flower_mix_test.json master`, `python tools/equivalence.py test_scenarios/pp4_seed_set.json master` and `python tools/equivalence.py test_scenarios/pp1_pollination_ledger.json master` report no differences; `python tools/prefinish.py` passes
-   - Proof: `present: scripts/world_building.gd :: func _seed_flower(`
-   - Next after: CQ-R10 -- decompose input selection
-
-2. **[Codex] CQ-R10 -- decompose input selection**
+1. **[Codex] CQ-R10 -- decompose input selection**
    - Plan: `plans/now/code-health.md` -- "CQ-R10 -- decompose input selection"
    - Files: `scripts/input_selection.gd`, `FUNCTION_MAP.md`, `checks/ready.md`
    - Check: `python tools/equivalence.py test_scenarios/e1_placement_exclusion_test.json master`, `python tools/equivalence.py test_scenarios/hr2_click_view_switch_test.json master` and `python tools/equivalence.py test_scenarios/rr1_queen_builds_test.json master` report no differences; `python tools/prefinish.py` passes; a hands-on check covers the untested inputs
