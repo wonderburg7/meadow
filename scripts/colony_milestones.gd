@@ -200,6 +200,24 @@ func restore(data: Dictionary) -> void:
 	var points: Variant = data.get(GENETIC_POINTS)
 	if typeof(points) == TYPE_INT or typeof(points) == TYPE_FLOAT:
 		genetic_points = maxi(0, int(points))
+	# SG-4: a save from before the opening steps has none of their ids. If a
+	# later milestone is already met, backfill the steps on the earliest such
+	# day: the shelf then shows the real next goal, and the last-met line stays
+	# the later milestone (a tie goes to the one listed later).
+	var has_opening := false
+	for id: Variant in OPENING:
+		if data.has(id):
+			has_opening = true
+	if not has_opening:
+		var later_days: Array = []
+		for milestone: Dictionary in MILESTONES:
+			var later_id: String = milestone.id
+			if not OPENING.has(later_id) and met_days.has(later_id):
+				later_days.append(int(met_days[later_id]))
+		if not later_days.is_empty():
+			var earliest: int = later_days.min()
+			for id: Variant in OPENING:
+				met_days[id] = earliest
 	# GP-2: keep only ids this file knows; a record without the key has none.
 	favourites.clear()
 	var starred: Variant = data.get(FAVOURITES)

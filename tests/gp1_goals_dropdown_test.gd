@@ -105,6 +105,27 @@ func _check_content() -> void:
 		ms.met_days.erase(step[0])
 	ms.show_next()
 
+	# SG-4: an old save with first_worker met but no opening ids. The steps
+	# are backfilled met, the shelf shows the real next goal, and the last-met
+	# line is still first_worker.
+	ms.restore({"first_worker": 5})
+	ms.show_next()
+	_check(ms.day_met("first_cell") == 5 and ms.day_met("first_egg") == 5, "the opening steps were not backfilled")
+	_check(hud.current_goal_label.text == "Unlock your first automation",
+		"an old save shows '%s' as next" % hud.current_goal_label.text)
+	var done_texts: Array = []
+	for entry: Variant in hud.colony_goal_entries:
+		if entry.done:
+			done_texts.append(str(entry.text))
+	_check(done_texts == ["Raise your first worker"], "an old save's last-met line is %s" % [done_texts])
+
+	# A save with none of the milestones: the opening steps stay unmet.
+	ms.restore({})
+	ms.show_next()
+	_check(ms.day_met("first_cell") == -1, "a fresh save backfilled the opening steps")
+	_check(hud.current_goal_label.text == "Build your first cell",
+		"a fresh save shows '%s' as next" % hud.current_goal_label.text)
+
 
 	# The long-term line, phase by phase.
 	_session.winter_coming = false
