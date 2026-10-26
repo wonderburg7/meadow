@@ -315,10 +315,11 @@ var current_goal_label: Label
 var goal_progress_row: HBoxContainer
 var goal_progress_bar: ProgressBar
 var goal_progress_label: Label
-## GP-1: the Colony Run's Goals drop-down. The header button folds the
-## shelf; `colony_goal_entries` holds what set_colony_goals was last given
-## (each with an `id`, so GP-2 can star it). Both stay empty in a Challenge.
-var goals_header: Button
+## GP-1: the Colony Run's Goals drop-down. The Goals button in the second
+## row folds the shelf (GP-5); `colony_goal_entries` holds what
+## set_colony_goals was last given (each with an `id`, so GP-2 can star
+## it). Both stay empty in a Challenge.
+var goals_button: Button
 var long_term_goal_label: Label
 var colony_goal_entries: Array = []
 ## GP-2: a star on each line (child of the label) and the box that holds the
@@ -850,6 +851,21 @@ func _build_top_right_bar() -> void:
 	row2.add_child(skills_button)
 	_register_gated_control("skills_button", func(): return skills_button)
 
+	# GP-5: the Goals drop-down's toggle, beside Skills. Text-only: no
+	# UiIcon shape draws "Goals", and an icon-only button would show
+	# nothing in the default icon-only setting. Pressed = the list is open.
+	goals_button = Button.new()
+	_style_button(goals_button)
+	goals_button.text = "Goals"
+	goals_button.custom_minimum_size = Vector2(TOP_BAR_BUTTON_WIDTH, TOP_BAR_CONTROL_HEIGHT)
+	goals_button.tooltip_text = "Opens and closes the Goals list."
+	goals_button.focus_mode = Control.FOCUS_NONE
+	goals_button.toggle_mode = true
+	goals_button.visible = false
+	goals_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	goals_button.pressed.connect(_on_goals_button_pressed)
+	row2.add_child(goals_button)
+
 	# Only the *other* view's icon and word ever show (UI_PLAN.md section
 	# 2's Meadow/Hive exclusivity rule) -- set_view_label swaps both.
 	view_button = _icon_button("hive", "Hive", TOP_BAR_BUTTON_WIDTH, "Switch to the Hive view.")
@@ -932,16 +948,6 @@ func _build_goal_shelf() -> void:
 	goal_shelf.custom_minimum_size = Vector2(320, 0)
 	goal_shelf.add_theme_constant_override("separation", 1)
 	add_child(goal_shelf)
-
-	# GP-1: the Goals header, the only part of the shelf that takes clicks.
-	goals_header = Button.new()
-	goals_header.flat = true
-	goals_header.visible = false
-	goals_header.size_flags_horizontal = Control.SIZE_SHRINK_END
-	goals_header.theme_type_variation = "Body"
-	goals_header.mouse_filter = Control.MOUSE_FILTER_STOP
-	goals_header.pressed.connect(_on_goals_header_pressed)
-	goal_shelf.add_child(goals_header)
 
 	# GP-2: starred lines, shown while the drop-down is collapsed.
 	favourites_box = VBoxContainer.new()
@@ -1032,7 +1038,7 @@ func set_settings_button_width(width: float) -> void:
 func set_challenge_goal(text: String, completed_text: String = "", progress_current: float = -1.0, progress_target: float = -1.0) -> void:
 	# A Challenge's shelf has no header and no long-term line (GP-1).
 	colony_goal_entries = []
-	goals_header.visible = false
+	goals_button.visible = false
 	long_term_goal_label.visible = false
 	favourites_box.visible = false
 	for star in goal_stars:
@@ -1085,14 +1091,14 @@ func set_colony_goals(entries: Array) -> void:
 	current_goal_label.text = next_text
 	completed_goal_label.text = "[s]%s[/s]" % done_text if not done_text.is_empty() else ""
 	goal_progress_row.visible = false
-	goals_header.visible = true
+	goals_button.visible = true
 	goal_shelf.visible = true
 	_apply_goals_collapsed()
 
 func _apply_goals_collapsed() -> void:
-	if not goals_header.visible:
+	if not goals_button.visible:
 		return
-	goals_header.text = "Goals [+]" if Session.goals_collapsed else "Goals [-]"
+	goals_button.button_pressed = not Session.goals_collapsed
 	var open: bool = not Session.goals_collapsed
 	long_term_goal_label.visible = open and not long_term_goal_label.text.is_empty()
 	current_goal_label.visible = open and not current_goal_label.text.is_empty()
@@ -1165,7 +1171,7 @@ func _rebuild_favourites(entries: Array) -> void:
 		line.text = "[right]%s[/right]" % ("[s]%s[/s]" % text if done else text)
 		favourites_box.add_child(line)
 
-func _on_goals_header_pressed() -> void:
+func _on_goals_button_pressed() -> void:
 	Session.goals_collapsed = not Session.goals_collapsed
 	Session.save_preferences()
 	_apply_goals_collapsed()
