@@ -190,7 +190,7 @@ static func built_cell_count(main: Node2D) -> int:
 ## SG-2: one resource's income over the last `days` whole days, as the
 ## net_income leaf reads it -- {net, collected}, or {} while the window is
 ## not full. The short-term goals' net and gross daily income.
-static func income(main: Node2D, resource: String, days: int) -> Dictionary:
+static func income_window(main: Node2D, resource: String, days: int) -> Dictionary:
 	return _net_income(main, {"resource": resource, "days": days})
 
 

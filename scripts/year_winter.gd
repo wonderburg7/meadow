@@ -261,7 +261,7 @@ func _refresh_short_term_goals(facts: Dictionary) -> void:
 	var net: Dictionary = {}
 	var gross: Dictionary = {}
 	for resource: String in GOAL_INCOME_RESOURCES:
-		var income: Dictionary = Conditions.income(main, resource, 1)
+		var income: Dictionary = Conditions.income_window(main, resource, 1)
 		if income.is_empty():
 			continue
 		net[resource] = float(income.net)

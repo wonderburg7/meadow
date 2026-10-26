@@ -28,12 +28,12 @@ static func available(facts: Dictionary, state: Dictionary, day: int, thresholds
 	# Dismiss leaves its slot empty until tomorrow, even if another trigger
 	# holds. This prevents an immediate replacement under the player's hand.
 	var dismissed_today: int = 0
-	for dismissed_day in dismissed.values():
+	for dismissed_day: Variant in dismissed.values():
 		if int(dismissed_day) == day:
 			dismissed_today += 1
 	var vacant: int = maxi(0, 2 - offered.size() - dismissed_today)
 	var result: Array = []
-	for goal in CATALOGUE:
+	for goal: Dictionary in CATALOGUE:
 		if result.size() >= vacant:
 			break
 		var id: String = goal.id

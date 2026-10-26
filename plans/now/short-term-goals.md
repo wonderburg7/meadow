@@ -187,7 +187,10 @@ non-Challenge scenario fails the scenario tests that reject any action not
 "accepted" (`test_col6_winter_skip`, `test_rr1_queen_builds`,
 `test_t2_1_comb_miner_gate`). `_winter_ready` keeps its own copy of the
 forecast comparison rather than calling `_winter_on_track`, because
-`tests/test_conditions.py` pins that body's text. The save field is written only while the state is non-empty, so a run with
+`tests/test_conditions.py` pins that body's text; for the same reason the
+income wrapper is `income_window(main, resource, days)`, since a function
+named `income` is shadowed (a GDScript warning) by the net_income leaf's
+local `income`, whose text that test also pins. The save field is written only while the state is non-empty, so a run with
 no goals saves exactly as before and the CQ-S0 goldens stand unchanged; the
 goals' own round trip is `tests/test_sg2_short_term_goals.py`. The four
 `GameConfig` values' settings rows (`goal_*`, World & start, persist none)

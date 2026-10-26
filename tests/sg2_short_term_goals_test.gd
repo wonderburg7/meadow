@@ -131,7 +131,7 @@ func _colony_case() -> void:
 
 	# A day on which 40 pollen came in and none of it stayed: no pollen income.
 	_next_day(40.0, 0.0)
-	var income: Dictionary = Conditions.income(_main, "pollen", 1)
+	var income: Dictionary = Conditions.income_window(_main, "pollen", 1)
 	_check(not income.is_empty() and float(income.net) <= 0.0 and is_equal_approx(float(income.collected), 40.0),
 		"the day's pollen income reads net %s, gross %s" % [income.get("net"), income.get("collected")])
 	_refresh()
@@ -227,7 +227,7 @@ func _challenge_case() -> void:
 	_main.day_store_totals.clear()
 	_main._sample_day_stores()
 	_next_day(40.0, 0.0)
-	var income: Dictionary = Conditions.income(_main, "pollen", 1)
+	var income: Dictionary = Conditions.income_window(_main, "pollen", 1)
 	_check(not income.is_empty() and float(income.net) <= 0.0, "%s has the pollen shortfall that offers the goal elsewhere" % _case)
 	_refresh()
 	_check(_main.short_term_goals.is_empty(), "no goal is offered in %s" % _case)
