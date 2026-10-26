@@ -92,39 +92,6 @@ it, like `tools/heading.py`.
 
 ## Tasks
 
-### J-13 -- Remove `Availability.is_suppressed` and `Availability.resource_query`
-
-- Files: scripts/availability.gd
-- After: none
-- Why: `tools/uncalled.py` reports both with no caller (24 Oct 2026); only
-  `docs/architecture-review-2026-09-30.md` names them.
-- Do: delete those two functions and nothing else; the proof is the caller
-  grep from step 5 on `origin/master` for each name.
-
-### J-14 -- Remove three more uncalled functions in files no plan names
-
-- Files: scripts/diagnostic_log.gd, scripts/game_panel.gd, scripts/pollination_pop.gd
-- After: none
-- Why: `tools/uncalled.py` reports `cell_completed_count`,
-  `build_top_right_window` and `active_count` with no caller (24 Oct 2026);
-  no live plan or review names them.
-- Do: delete those three functions, one per file, and nothing else; the
-  proof is the caller grep from step 5 for each name. If any one has a
-  caller after all, leave that one and say so under "Follow-ups".
-
-### J-15 -- Unit tests for the pure functions in `tools/admission.py`
-
-- Files: tests/test_admission_helpers.py (new)
-- After: none
-- Why: `tests/test_admission.py` names none of `is_unowned`, `shared_paths`,
-  `find_item`, `deferral_reason`, `plan_section`, `dependency_ids`,
-  `is_landed` or `archived_plan_for` (24 Oct 2026); they decide whether a
-  slice may enter a lane.
-- Do: read each, then test the ones that take strings, lists or dictionaries
-  with one passing and one failing input each. A function that needs a git
-  repository is left out and named under "Follow-ups". Tests only: a bug in
-  `admission.py` is a Follow-up.
-
 ### J-16 -- Unit tests for `tools/new_check.py`'s id and text helpers
 
 - Files: tests/test_new_check_helpers.py (new)
@@ -136,48 +103,6 @@ it, like `tools/heading.py`.
   next free id with gaps and with none used, the record text for a pass and
   for a failure, and `insert_entries` adding under the right heading and
   leaving the rest byte-identical. Tests only.
-
-### J-17 -- Unit tests for `tools/run_tests.py`'s timing and module helpers
-
-- Files: tests/test_run_tests_helpers.py (new)
-- After: none
-- Why: `tests/test_run_tests.py` does not name `load_timings`,
-  `save_timings`, `module_file`, `local_imports`, `expand_cases` or
-  `default_workers` (24 Oct 2026); CI and `verify.ps1` both schedule the
-  whole unit run with them.
-- Do: write the timings to a temporary file (never the real one) and read
-  them back, then check a missing and a corrupt file; check `module_file`
-  and `local_imports` on a small temporary package; check `default_workers`
-  is at least one. Tests only.
-
-### J-18 -- Unit tests for `tools/refill_lane.py`'s queue-text helpers
-
-- Files: tests/test_refill_lane_helpers.py (new)
-- After: none
-- Why: no test names `queued_ids`, `deferred_ids`, `capacity_deferrals`,
-  `clear_deferral`, `lane_files`, `gated_reason` or `append_item` (25 Oct
-  2026); `finish` refills both lanes with them after every merge.
-- Do: build a small `NEXTSTEPS.md`-shaped string in the test with a Claude
-  lane, a Codex lane and a deferral, copying its shape from the real file.
-  Check `queued_ids` returns each lane's ids in order, `deferred_ids` and
-  `capacity_deferrals` find the deferral, `clear_deferral` removes only
-  that one, `lane_files` keeps each lane's files apart, and `gated_reason`
-  gives an empty and a non-empty answer. Never read or write the real
-  `NEXTSTEPS.md`. Tests only: a bug in `refill_lane.py` is a Follow-up.
-
-### J-19 -- Unit tests for `tools/check_docs.py`'s queue checks that take text
-
-- Files: tests/test_check_docs_queue_helpers.py (new)
-- After: none
-- Why: no test names `check_queue_files`, `check_queue_admission` or
-  `proof_error_is_shape` (25 Oct 2026); they are what makes a bad queue item
-  fail `check_docs.py` instead of reaching a slice.
-- Do: pass each one a queue string built in the test, never the real
-  `NEXTSTEPS.md`: one well-formed item that adds no error, and one item
-  missing what the check looks for that adds one. For
-  `proof_error_is_shape`, one error string it accepts and one it rejects.
-  A check that needs the real plans folder to run is left out and named
-  under "Follow-ups". Tests only.
 
 ### J-20 -- Unit tests for `tools/jules_preflight.py`'s git helpers
 
@@ -218,6 +143,74 @@ it, like `tools/heading.py`.
   stripped case-insensitively; check `_level_allows` for one model each
   level accepts and one it refuses. Build every row in the test; never read
   a real transcript. Tests only.
+
+### J-22 -- Unit tests for `tools/archive_slice.py`'s text helpers
+
+- Files: tests/test_archive_slice_helpers.py (new)
+- After: none
+- Why: no test names `resolve_item`, `find_section`,
+  `_foreign_queue_blocks` or `_drop_routing_rows` (26 Oct 2026); closeout
+  archives the wrong section, or leaves a successor's queue block behind,
+  through them.
+- Do: build every string in the test, never reading the real
+  `NEXTSTEPS.md`, plans or `plans/README.md`. Give `resolve_item` a
+  `## Next up` text holding two items whose `- Plan:` lines have the form
+  ``- Plan: `plans/x.md` -- "Heading"``, one heading containing an escaped
+  `\"`; check it returns the plan path and the unescaped heading for each
+  id, and `None` for an id not queued and for an item with no Plan line.
+  Give `find_section` a list of lines with two headings that both contain
+  the wanted text, only the second naming the id; check it picks the
+  second, picks the first when neither names the id, matches case-
+  insensitively, does not treat `X-1` as naming `X-10`, and returns `None`
+  when nothing matches. Give `_foreign_queue_blocks` a section with one
+  ```` ```queue ```` block for the slice itself, one ```` ```queue-gated ````
+  block for another id, and one fence left unclosed, each block's first
+  line in the queue-item form `**[Claude] ID -- name**`; check only the
+  other id's block comes back, with its fence line numbers and its id. Give
+  `_drop_routing_rows` a three-row table where one row's Read cell is the
+  plan, one only mentions the plan in its first cell, and one names another
+  plan; check only the first row is removed. Tests only.
+
+### J-23 -- Unit tests for `tools/review_due.py`'s `status_of` and `check_backlog`
+
+- Files: tests/test_review_due_status.py (new)
+- After: none
+- Why: `tests/test_review_tools.py` covers the record and header helpers
+  but not `status_of` or `check_backlog` (26 Oct 2026); they decide which
+  reviews `review_due.py` reports as due.
+- Do: in a temporary directory, `git init` a repository and pass it as
+  `root`; never touch the real repository. Commit a watched file, then a
+  record docs/demo-2026-10-01.md (in the temporary repository) whose text
+  has a `Reviewed: <that commit's hash>` line, then two more commits
+  changing the watched file and one changing an unwatched file. Build a
+  `Prompt` with key `demo` and that one watched path, pass a one-item list
+  naming that record as `tracked`, and check `status_of` gives the record,
+  its date, the hash as `since`, `commits` 2 and `changed` naming only the
+  watched file. Add one case each for the three `problem` texts: no record
+  for the key, a record with no `Reviewed:` line, and a `Reviewed: deadbeef`
+  line git cannot resolve. For `check_backlog`, write three
+  `checks/ready/C-*.md` files under the temporary root (two with `Runner:
+  haiku`, one with no Runner line) and check the exact string, `hands-on
+  checks waiting: 3 (2 haiku, 1 unset)`; and with an empty folder, `hands-on
+  checks waiting: 0`. Tests only.
+
+### J-24 -- Unit tests for `tools/stop_causes.py`'s baseline helpers
+
+- Files: tests/test_stop_causes_baseline.py (new)
+- After: none
+- Why: `tests/test_stop_causes.py` reaches `failing_tests`, `live_ids` and
+  `unlisted` only through `classify`'s category (26 Oct 2026); they decide
+  whether a red verify stage is waved through as a known master failure.
+- Do: pass every baseline as a dict built in the test and a fixed `today`,
+  never reading `tests/baseline_failures.json`. Check `failing_tests` turns
+  a unittest log with one `FAIL:` line and one `ERROR:` line in the
+  `test_x (module.Class)` form into `module.Class.test_x`, keeps a class
+  part that already ends with the method name as it is, and ignores other
+  lines. Check `live_ids` keeps an entry expiring today and one expiring
+  later, drops one that expired yesterday, and skips without raising an
+  entry with no `expires` and one whose date is not `YYYY-MM-DD`. Check
+  `unlisted` returns, in order, the failing ids that are not live, and an
+  empty list when every one is. Tests only.
 
 ### Not tasks yet
 
