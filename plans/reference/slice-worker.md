@@ -61,9 +61,8 @@ that rewrites every line of a file means an edit dropped the `\r`.
      a wrong outcome). A fault you could not reproduce goes in `check_run`
      in those words: a check that passes before and after the fix proves
      nothing.
-   - Clear a GDScript warning by changing the code, never with
-     `@warning_ignore`: `tests/source_checks.py` reads an annotation as a
-     call to an undefined function and fails `verify.ps1`.
+   - Clear a GDScript warning by changing the code; `@warning_ignore` is a
+     last resort that needs a comment saying why the warning is wrong.
    - A new `tests/test_*.py` module needs no registration: `tools/verify.ps1`
      finds every one itself (7 Oct 2026). Only an exemption is written down,
      with its reason, in verify.ps1's `$testsNotInVerify`.
