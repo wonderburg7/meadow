@@ -82,12 +82,50 @@ func _check_content() -> void:
 	_check(hud.goals_button.button_pressed, "expanded, the Goals button is not pressed")
 	_check(hud.long_term_goal_label.visible and not hud.long_term_goal_label.text.is_empty(),
 		"the long-term line is not showing")
-	_check(hud.current_goal_label.visible and hud.current_goal_label.text == "Raise your first worker",
+	_check(hud.current_goal_label.visible and hud.current_goal_label.text == "Build your first cell",
 		"the next milestone is '%s'" % hud.current_goal_label.text)
 	var ids: Array = []
 	for entry: Variant in hud.colony_goal_entries:
 		ids.append(str(entry.id))
-	_check(ids == ["long_term", "first_worker"], "entries carry ids %s" % [ids])
+	_check(ids == ["long_term", "first_cell"], "entries carry ids %s" % [ids])
+
+	# SG-4: the opening walk. Each step shows alone until it is met, in order.
+	var walk := [
+		["first_cell", "Build your first cell"],
+		["first_stores", "Bring in nectar and pollen"],
+		["first_egg", "Let the queen lay an egg"],
+	]
+	for i: int in walk.size():
+		_check(hud.current_goal_label.text == walk[i][1], "step %d reads '%s'" % [i, hud.current_goal_label.text])
+		ms.met_days[walk[i][0]] = _main.day
+		ms.show_next()
+	_check(hud.current_goal_label.text == "Raise your first worker",
+		"after the opening the line is '%s'" % hud.current_goal_label.text)
+	for step: Array in walk:
+		ms.met_days.erase(step[0])
+	ms.show_next()
+
+	# SG-4: an old save with first_worker met but no opening ids. The steps
+	# are backfilled met, the shelf shows the real next goal, and the last-met
+	# line is still first_worker.
+	ms.restore({"first_worker": 5})
+	ms.show_next()
+	_check(ms.day_met("first_cell") == 5 and ms.day_met("first_egg") == 5, "the opening steps were not backfilled")
+	_check(hud.current_goal_label.text == "Unlock your first automation",
+		"an old save shows '%s' as next" % hud.current_goal_label.text)
+	var done_texts: Array = []
+	for entry: Variant in hud.colony_goal_entries:
+		if entry.done:
+			done_texts.append(str(entry.text))
+	_check(done_texts == ["Raise your first worker"], "an old save's last-met line is %s" % [done_texts])
+
+	# A save with none of the milestones: the opening steps stay unmet.
+	ms.restore({})
+	ms.show_next()
+	_check(ms.day_met("first_cell") == -1, "a fresh save backfilled the opening steps")
+	_check(hud.current_goal_label.text == "Build your first cell",
+		"a fresh save shows '%s' as next" % hud.current_goal_label.text)
+
 
 	# The long-term line, phase by phase.
 	_session.winter_coming = false

@@ -128,6 +128,10 @@ var foraging_stats: Node
 var year_winter: Node
 ## CR-2: the Colony Run's milestone evaluator. Idle in any other run.
 var colony_milestones: ColonyMilestones
+## SG-4: seconds since the opening milestones were last checked. No event
+## fires for a finished cell or a laid egg, so the run checks once a second
+## while one of them is still unmet, and never otherwise.
+var _opening_milestone_clock: float = 0.0
 ## PP-1: the Pollinator Points and Pollination Contribution ledger.
 var pollination: Pollination
 var camera_view: Node
@@ -831,6 +835,11 @@ func _process(delta: float) -> void:
 	_check_for_loss()
 	if not get_tree().paused:
 		Session.sim_time += delta
+		_opening_milestone_clock += delta
+		if _opening_milestone_clock >= 1.0:
+			_opening_milestone_clock = 0.0
+			if colony_milestones.opening_pending():
+				colony_milestones.evaluate()
 		var new_day: int = 1 + int(Session.sim_time / max(1.0, GameConfig.seconds_per_day))
 		if new_day != day:
 			day = new_day

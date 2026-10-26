@@ -81,7 +81,6 @@ Verified 13 Oct 2026 against master `06bd26c`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | SG-3 | The goals in the Goals drop-down, with progress, reward, star and Dismiss | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/guidance_catalogue.gd`, `test_scenarios/sg3_goal_shelf.json`, `tests/test_sg3_goal_shelf.py` | no -- after SG-2 | medium |
-| SG-4 | opening milestones (first cell, first stores, first egg) lead the player to the first worker | `scripts/colony_milestones.gd`, `scripts/main.gd`, tests | yes | low |
 
 SG-1 supplies the standalone catalogue and rules. SG-2 and SG-3 are Claude lane, after Work
 Priorities (Dave's order, 13 Oct 2026: tier 3, then short-term goals, then
@@ -133,66 +132,7 @@ holds diagnostic explanations keyed by `ColonyDiagnostics` fact ids, and
 
 GP-5 shipped 2026-10-26; its specification is `plans/archive/GP-5_2026-10-26.md`.
 
-## SG-4 -- opening milestones lead the player to the first worker
-
-Level: low -- claude-sonnet-5-5 at low effort.
-
-**True now.** C-139 failed: "needs more incremental goals before 'Raise your
-first worker'". `colony_milestones.gd` `MILESTONES` (near l.36) opens with
-`first_worker`, so a new Colony Run's Goals line reads "Raise your first
-worker" from the first second, with nothing between an empty hive and a
-hatched bee. The shelf already shows the first unmet milestone only
-(`show_next`). `evaluate()` runs on day change, a death, a gyne and a hatch
-(`main.gd`, near l.676-697 and l.959), so a state-based step could show late.
-`Conditions` already has `built_cells_at_least`, `hive_total` and
-`brood_stage`, and `_brood_stage` takes `"egg"` (the winter-recovery
-milestone uses it).
-
-**When done:**
-
-1. Three milestones go in front of `first_worker`, in this order, each shown
-   alone until met (Dave, 24 Oct 2026):
-   - `first_cell`, "Build your first cell": `{"built_cells_at_least": 1}`.
-   - `first_stores`, "Bring in nectar and pollen": `all_of` of `hive_total`
-     nectar and pollen, each `at_least` N. The implementer picks N by running
-     `test_scenarios/alpha_arc_test.json`, printing the hive's nectar and
-     pollen totals when the first egg is laid, and taking that figure rounded
-     down (at least 1); the figure is written in the closeout.
-   - `first_egg`, "Let the queen lay an egg":
-     `{"brood_stage": {"stage": "egg", "at_least": 1}}`.
-2. The steps evaluate promptly. No event fires today when a cell is finished
-   or an egg is laid (`hive.gd` has only `storage_changed`, which covers
-   stores but not the other two), so the cheapest hook is a one-second
-   accumulator in `main.gd::_process`, next to where `Session.sim_time` is
-   advanced, that calls `colony_milestones.evaluate()` only while a Colony Run
-   has an unmet opening step. It stops once all three are met, so there is
-   no steady per-frame cost.
-3. The saved record is unchanged in shape: `restore()` drops unknown ids, and
-   an older save missing the three ids loads them unmet and they tick on the
-   next evaluate, since their conditions are state-based.
-4. `tests/gp1_goals_dropdown_test.gd` (near l.84) and
-   `tests/gp2_goal_favourites_test.gd` (near l.89 and l.105), which assert the
-   "Raise your first worker" line at the start, assert "Build your first
-   cell" instead, and a new case walks the four lines in order. The wording
-   "six milestones" in `tests/test_conditions.py` and the milestone comment is
-   brought up to nine.
-5. Dave's hands-on check is the C-139 re-run: a first worker within about ten
-   minutes, each step readable.
-
-**Invariants.** Colony Run only; a Challenge and a Scenario shelf are
-unchanged. No balance value. SG-3 (`plans/now/short-term-goals.md`, gated)
-also edits `colony_milestones.gd`, `hud.gd` and `main.gd`: it rebases on this.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] SG-4 -- opening milestones lead the player to the first worker**
-- Plan: `plans/now/short-term-goals.md` -- "SG-4 -- opening milestones lead the player to the first worker"
-- Files: `scripts/colony_milestones.gd`, `scripts/main.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/test_conditions.py`
-- Check: `python -m unittest tests.test_gp1_goals_dropdown tests.test_gp2_goal_favourites tests.test_conditions` pass (a new run reads "Build your first cell", then the stores step, then the egg step, then "Raise your first worker", each within a second of its condition holding; a save without the three ids loads and ticks them); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-- Proof: `absent: scripts/colony_milestones.gd :: first_egg`
-- Next after: none -- the opening milestones are complete
-```
+SG-4 shipped 2026-10-26; its specification is `plans/archive/SG-4_2026-10-26.md`.
 
 ## Open questions
 

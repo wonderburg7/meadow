@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] SG-4 -- opening milestones lead the player to the first worker**
-   - Plan: `plans/now/short-term-goals.md` -- "SG-4 -- opening milestones lead the player to the first worker"
-   - Files: `scripts/colony_milestones.gd`, `scripts/main.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/test_conditions.py`
-   - Check: `python -m unittest tests.test_gp1_goals_dropdown tests.test_gp2_goal_favourites tests.test_conditions` pass (a new run reads "Build your first cell", then the stores step, then the egg step, then "Raise your first worker", each within a second of its condition holding; a save without the three ids loads and ticks them); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-   - Proof: `absent: scripts/colony_milestones.gd :: first_egg`
-   - Next after: none -- the opening milestones are complete
-
-2. **[Claude] AC-4 -- the Foraging card follows FR-2**
+1. **[Claude] AC-4 -- the Foraging card follows FR-2**
    - Plan: `plans/now/agent-context.md` -- "AC-4 -- the Foraging card follows FR-2"
    - Files: `GAME_MODEL.md`
    - Check: every `file.gd::name` and backticked field in the two cards is found by grep in the file it names; `python tools/check_docs.py` passes
    - Proof: `present: GAME_MODEL.md :: unlocks first;`
    - Next after: None -- plan complete
 
-3. **[Claude] CT-1 -- sealed cells take a faint tone of what they hold**
+2. **[Claude] CT-1 -- sealed cells take a faint tone of what they hold**
    - Plan: `plans/now/cell-content-tones.md` -- "CT-1 -- sealed cells take a faint tone of what they hold"
    - Files: `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, `test_scenarios/ct1_cell_tones.json`, `tests/test_ct1_cell_tones.py`
    - Check: `python -m unittest tests.test_ct1_cell_tones` passes, asserting full honey and pollen tone at 0.28, quarter-full honey between 0.10 and 0.13 and an empty cell at 0; `.\tools\verify.ps1` is green. Hands-on: in the CT-1 scenario, the closed honey, pollen and nectar cells and the sealed bee bread cell each show a faint, different tint, and the full honey cell's tint is stronger than the quarter-full one's.
    - Proof: `absent: scripts/hive_cell.gd :: func content_tone(`
    - Next after: none -- `plans/now/cell-content-tones.md` is complete
 
-4. **[Claude] DR-2 -- the cell popup's drone box**
+3. **[Claude] DR-2 -- the cell popup's drone box**
    - Plan: `plans/now/drones.md` -- "DR-2 -- the cell popup's drone box"
    - Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/nursery_panel.gd`, `scripts/orders_zones.gd`, `tests/test_layout_regression.py`
    - Check: `tests/test_layout_regression.py` passes with the popup's new row; `python -m unittest tests.test_display_text_golden` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed in `checks/ready.md`
    - Proof: `absent: scripts/hud.gd :: cell_drone_requested`
    - Next after: None -- plan complete
 
-5. **[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
+4. **[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
    - Plan: `plans/now/pollination.md` -- "PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter"
    - Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
    - Check: `python -m unittest tests.test_pacing_gates` passes; `pacing_gates.py` reports the day Gyne rearing first becomes affordable in the reference Colony Run, and its median falls from the first winter's end to 11 days after it (days 42 to 52); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
    - Proof: `absent: tools/pacing_gates.py :: gyne_rearing_affordable`
    - Next after: none -- the pollination plan is complete; AR-4 in `plans/now/alpha-route-evidence.md` then starts in the Codex lane, and FR-3 in `plans/now/forager-recruitment.md` follows
+
+5. **[Claude] RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out**
+   - Plan: `plans/now/run-repairs.md` -- "RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out"
+   - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `tests/rr11_pre_fermented_test.gd`
+   - Check: `python -m unittest tests.test_rr11_pre_fermented` passes with the boundary at 36 h; `python -m unittest tests.test_display_text_golden` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
+   - Proof: `absent: scripts/hive_cell.gd :: Color(0.78, 0.86, 0.35)`
+   - Next after: none -- the pre-ferment warning is complete
 
 ### Codex lane
 

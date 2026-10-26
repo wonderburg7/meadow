@@ -161,13 +161,14 @@ class WinterReadyKeyTest(unittest.TestCase):
 
 
 class ColonyMilestonesTest(unittest.TestCase):
-    """CR-2: the six milestones are conditions.gd data, evaluated only in a
+    """CR-2: the nine milestones are conditions.gd data, evaluated only in a
     Colony Run and only from main.gd's day and population hooks."""
 
     MILESTONES = (SCRIPTS / "colony_milestones.gd").read_text(encoding="utf-8")
 
-    def test_six_milestones_each_a_condition(self):
-        ids = ("first_worker", "first_automation", "stable_income",
+    def test_nine_milestones_each_a_condition(self):
+        ids = ("first_cell", "first_stores", "first_egg", "first_worker",
+               "first_automation", "stable_income",
                "winter_ready", "winter_recovery", "first_gyne")
         for milestone_id in ids:
             with self.subTest(id=milestone_id):
@@ -201,12 +202,15 @@ class ColonyMilestonesTest(unittest.TestCase):
         hatch = main.split("func _hatch_ready_brood()", 1)[1].split("\nfunc ", 1)[0]
         self.assertIn("colony_milestones.evaluate()", hatch)
         process = main.split("func _process(", 1)[1].split("\nfunc ", 1)[0]
-        self.assertNotIn("colony_milestones", process)
+        # SG-4: _process makes two milestone calls: the one-second opening check and its evaluate.
+        self.assertEqual(2, process.count("colony_milestones"))
+        self.assertIn("colony_milestones.opening_pending()", process)
+        self.assertIn("_opening_milestone_clock >= 1.0", process)
 
 
     def test_every_milestone_has_a_goal_and_shelf_follows_first_unmet(self):
         block = self.MILESTONES.split("const MILESTONES", 1)[1].split("\n]\n", 1)[0]
-        self.assertEqual(6, len(re.findall(r'"goal": "[^"]+",', block)))
+        self.assertEqual(9, len(re.findall(r'"goal": "[^"]+",', block)))
         show = self.MILESTONES.split("func show_next()", 1)[1].split("\nfunc ", 1)[0]
         self.assertIn("not applies()", show)
         self.assertIn("elif next_goal.is_empty():", show)
