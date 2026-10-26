@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/SG-2` (`claude/SG-2`) | Claude | goals offered, completed and paid in Colony Runs and Scenarios, and saved | Claude | in progress | none | `plans/now/short-term-goals.md` SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved |
+| `.worktrees/CQ-R10` (`codex/CQ-R10`) | Codex | decompose input selection | Codex | in progress | none | `plans/now/code-health.md` CQ-R10 -- decompose input selection |
