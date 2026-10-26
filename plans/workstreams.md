@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/SG-2` (`claude/SG-2`) | Claude | goals offered, completed and paid in Colony Runs and Scenarios, and saved | Claude | in progress | none | `plans/now/short-term-goals.md` SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved |
+| `.worktrees/CQ-R11` (`codex/CQ-R11`) | Codex | split flower seeding without changing RNG order | Codex | in progress | none | `plans/now/code-health.md` CQ-R11 -- split flower seeding without changing RNG order |

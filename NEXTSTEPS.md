@@ -68,14 +68,14 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Files: `scripts/world_building.gd`, `FUNCTION_MAP.md`
    - Check: `python tools/equivalence.py test_scenarios/sf1_founding_flower_mix_test.json master`, `python tools/equivalence.py test_scenarios/pp4_seed_set.json master` and `python tools/equivalence.py test_scenarios/pp1_pollination_ledger.json master` report no differences; `python tools/prefinish.py` passes
    - Proof: `present: scripts/world_building.gd :: func _seed_flower(`
-   - Next after: CQ-R6 -- extract the HUD bee-command rows
+   - Next after: CQ-R10 -- decompose input selection
 
-2. **[Codex] CQ-M6 -- name selection green and caste appearance**
-   - Plan: `plans/now/code-health.md` -- "CQ-M6 -- name selection green and caste appearance"
-   - Files: `scripts/world_draw.gd`, `scripts/bee.gd`, `scripts/death_marker.gd`, `scripts/flower.gd`, `scripts/hive_cell.gd`, `scripts/input_selection.gd`, `scripts/obstacle.gd`, `scripts/soil_block.gd`, `FUNCTION_MAP.md`
-   - Check: `python -m unittest tests.test_sp11_cell_rim tests.test_sp9_soil_art tests.test_col9_drones` and `python tools/prefinish.py` pass; rendered selection alphas and caste sizes remain unchanged
-   - Proof: `present: scripts/obstacle.gd :: selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)`
-   - Next after: CQ-M7 -- name world draw order
+2. **[Codex] CQ-R10 -- decompose input selection**
+   - Plan: `plans/now/code-health.md` -- "CQ-R10 -- decompose input selection"
+   - Files: `scripts/input_selection.gd`, `FUNCTION_MAP.md`, `checks/ready.md`
+   - Check: `python tools/equivalence.py test_scenarios/e1_placement_exclusion_test.json master`, `python tools/equivalence.py test_scenarios/hr2_click_view_switch_test.json master` and `python tools/equivalence.py test_scenarios/rr1_queen_builds_test.json master` report no differences; `python tools/prefinish.py` passes; a hands-on check covers the untested inputs
+   - Proof: `present: scripts/input_selection.gd :: func _unhandled_input(event: InputEvent) -> void:`
+   - Next after: CQ-M6 -- name selection green and caste appearance (gated on CT-1)
 
 ## Not in the queue, and why
 
@@ -99,7 +99,8 @@ One line each: the id, its plan, and the single thing it waits for.
 - **CQ-R2** (`plans/now/code-health.md`) -- the first crisis moves out of `scripts/main.gd` into a new first_crisis.gd, touching the save files; waits, gated with CQ-S1, for the save slices of the alpha chain (SG-2, ED-1, ED-2, RR-12, SP-8a in `plans/now/drones.md`; WP-2 landed 21 Oct 2026) and ED-3 (Dave, 18 Oct 2026); its plan section is written when that gate clears.
 - **CQ-R8** (`plans/now/code-health.md`) -- hud builders shortened (the designation button table); needs its section and block; prepare before CQ-T3.
 - **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; needs its section and block after CQ-R8 (CQ-L2 released `tests/source_checks.py` 24 Oct 2026).
-- **CQ-R10** (`plans/now/code-health.md`) -- input selection decomposed and sectioned; needs its section and block.
+- **CQ-M6** (`plans/now/code-health.md`) -- selection green and caste appearance named; waits for CT-1 to release `scripts/hive_cell.gd`.
+- **CQ-M7** (`plans/now/code-health.md`) -- world draw order named; waits for CQ-M6 and then needs its section and block.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
 - **FR-4** (`plans/now/forager-recruitment.md`) -- a headless assertion replaces the C-143 hands-on check; `scripts/scenario_actions.gd` was released 25 Oct 2026, but `tools/admission.py` reads C-143, the check it retires, as an unlanded slice, so its block stays `queue-gated` until admission ignores check ids.
 - **RR-21** (`plans/now/run-repairs.md`) -- no ordinary rain in the first two days, and rain warnings in plain words; waits for SG-4, which owns `scripts/main.gd`.

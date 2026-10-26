@@ -196,6 +196,29 @@ it, like `tools/heading.py`.
   `parse_tasks` from a two-task string. Never touch the real repository or
   its remote. Tests only.
 
+### J-21 -- Unit tests for `tools/session_cost.py`'s outcome and row helpers
+
+- Files: tests/test_session_cost_helpers.py (new)
+- After: none
+- Why: no test names `classify_outcome`, `_is_finish_call`,
+  `_is_worker_dispatch`, `_edit_paths` or `_level_allows` (26 Oct 2026);
+  `session_cost.py --events` reports the workflow's blockers through them.
+- Do: give `classify_outcome` one command/result/is_error triple that
+  reaches each of its seven return values (`expected_no_match`,
+  `partially_denied`, `diagnostic_in_success`, `test_failure`,
+  `environment_failure`, `lifecycle_failure`, `agent_mistake`), plus one
+  showing a failing `slice.ps1` run with `FAILED` in it is
+  `lifecycle_failure`, not `test_failure`; check `_is_finish_call` is true
+  for a Bash and a PowerShell `tools/slice.ps1 finish` block and false for
+  `slice.ps1 start` and for a Read block; check `_is_worker_dispatch` is
+  true for an Agent block with `subagent_type` `slice-worker-low` and false
+  for `Explore`; feed `_edit_paths` hand-built rows with an Edit, a Write, a
+  NotebookEdit (`notebook_path`), a Read and a user row, and check it returns
+  the three edited paths with forward slashes and the repository root
+  stripped case-insensitively; check `_level_allows` for one model each
+  level accepts and one it refuses. Build every row in the test; never read
+  a real transcript. Tests only.
+
 ### Not tasks yet
 
 `tools/uncalled.py` also lists the adaptation-offer
