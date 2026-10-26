@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R11 in the Codex lane, then CQ-R10; CQ-M6 waits for CT-1 to release scripts/hive_cell.gd, and CQ-R6 waits for GP-5 to release scripts/hud.gd (Dave's order, 25 Oct 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R10 in the Codex lane (CQ-R11 complete); CQ-M6 waits for CT-1 to release scripts/hive_cell.gd, and CQ-R6 waits for GP-5 to release scripts/hud.gd (Dave's order, 25 Oct 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -125,7 +125,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | gated -- follows CQ-R11 and waits for GP-5 to release `scripts/hud.gd` | medium |
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd`, `FUNCTION_MAP.md` | yes -- specified 26 Oct 2026 | medium |
-| CQ-R11 | `world_building.gd::_seed_flower` decomposed, RNG order kept | `world_building.gd` | yes -- specified 25 Oct 2026 | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
 | CQ-R14 | mid-size builders: `main_menu._ready`, `challenge_complete._ready`, `flower.setup`, `bee._build_visuals` | those four | yes | low |
 
@@ -359,29 +358,7 @@ checks. Stop if the replacement changes a save compatibility decision.
 - Next after: CQ-M5 -- CanvasLayer order in scripts/canvas_layers.gd
 ```
 
-## CQ-R11 -- split flower seeding without changing RNG order
-
-**Now.** `world_building.gd::_seed_flower` still combines the founding birth
-window, flower-anchor choice, bush-unit count and placement. The D2 research
-record names those responsibilities and the three existing equivalence runs.
-
-**Target.** Extract `_founding_birth_window(founding)`,
-`_pick_flower_anchor(species)` with its `cluster_centers` bookkeeping,
-`_bush_unit_count(species, max)` and `_place_bush_unit(anchor, unit)`.
-Keep RNG calls in exactly their current order and keep every display string,
-save field and result unchanged. Regenerate `FUNCTION_MAP.md` after the script
-edit. Reasoning: **medium**.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] CQ-R11 -- split flower seeding without changing RNG order**
-- Plan: `plans/now/code-health.md` -- "CQ-R11 -- split flower seeding without changing RNG order"
-- Files: `scripts/world_building.gd`, `FUNCTION_MAP.md`
-- Check: `python tools/equivalence.py test_scenarios/sf1_founding_flower_mix_test.json master`, `python tools/equivalence.py test_scenarios/pp4_seed_set.json master` and `python tools/equivalence.py test_scenarios/pp1_pollination_ledger.json master` report no differences; `python tools/prefinish.py` passes
-- Proof: `present: scripts/world_building.gd :: func _seed_flower(`
-- Next after: CQ-R10 -- decompose input selection
-```
+CQ-R11 shipped 2026-10-26; its specification is `plans/archive/CQ-R11_2026-10-26.md`.
 
 ## CQ-R6 -- extract the HUD bee-command rows
 
