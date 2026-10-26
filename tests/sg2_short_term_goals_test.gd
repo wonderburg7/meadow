@@ -20,6 +20,8 @@ extends SceneTree
 
 const BOOT_FRAMES := 10
 const SCENARIO := "res://test_scenarios/sg2_short_term_goals.json"
+## Reads no autoload, so it can be preloaded (as sg1_short_term_goals_test.gd does).
+const Goals = preload("res://scripts/short_term_goals.gd")
 
 ## Loaded on the first frame: each names an autoload, which a --script
 ## SceneTree cannot compile against before they exist.
@@ -169,15 +171,14 @@ func _colony_case() -> void:
 ## at least the floor, and nothing at all when the fraction is zero. An
 ## unknown pollen rate shows no progress.
 func _reward_rules() -> void:
-	var goals: GDScript = load("res://scripts/short_term_goals.gd")
 	var facts := {"net_daily_income": {"pollen": 0.0}, "gross_daily_income": {"pollen": 4.0}}
 	var thresholds := {"few_free_cells": 0, "many_waiting_bees": 99, "few_waiting_bees": 0}
-	var floored: Array = goals.available(facts, {}, 2, thresholds, 0.25, 5.0)
+	var floored: Array = Goals.available(facts, {}, 2, thresholds, 0.25, 5.0)
 	_check(floored.size() == 1 and is_equal_approx(float(floored[0].reward), 5.0), "a small income's reward is raised to the floor")
-	var off: Array = goals.available(facts, {}, 2, thresholds, 0.0, 5.0)
+	var off: Array = Goals.available(facts, {}, 2, thresholds, 0.0, 5.0)
 	_check(off.size() == 1 and is_zero_approx(float(off[0].reward)), "a reward fraction of zero pays nothing, floor or not")
 	var clock := {"held_since": {"pollen_surplus": 1}}
-	var unknown: Dictionary = goals.progress({"id": "pollen_surplus"}, {"net_daily_income": {}}, clock, 3, thresholds, true)
+	var unknown: Dictionary = Goals.progress({"id": "pollen_surplus"}, {"net_daily_income": {}}, clock, 3, thresholds, true)
 	_check(not unknown.done and int(unknown.current) == 0 and clock.held_since.has("pollen_surplus"),
 		"an unknown pollen rate shows no progress and keeps the clock")
 
@@ -219,11 +220,10 @@ func _winter_part() -> void:
 ## arrives and when the countdown ends: not finished, not dismissed, unpaid.
 func _winter_lapse() -> void:
 	var session: Node = root.get_node("Session")
-	var goals: GDScript = load("res://scripts/short_term_goals.gd")
 	var kept: Dictionary = _main.short_term_goals.duplicate(true)
 	for ending: String in ["winter arrives", "the countdown ends"]:
 		_main.short_term_goals = {}
-		goals.accept(_main.short_term_goals, {"id": "honey_for_winter", "label": "Lay in honey for winter",
+		Goals.accept(_main.short_term_goals, {"id": "honey_for_winter", "label": "Lay in honey for winter",
 			"resource": "honey", "offered_day": _main.day, "reward": 5.0})
 		session.winter_coming = ending == "winter arrives"
 		session.winter_here = ending == "winter arrives"
