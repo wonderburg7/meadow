@@ -1159,6 +1159,60 @@ and the menu buttons.
 732  func _is_completed(stage: Dictionary) -> bool
 ```
 
+## world_building.gd (718 lines)
+
+World layout, flower seeding and colony setup.
+
+```
+37   func _build_meadow() -> void
+68   func _rebuild_flower_grid() -> void
+73   func is_on_screen(node: Node2D) -> bool
+86   func _place_rival_hive() -> void
+108  func _scatter_obstacles() -> void
+114  func _place_obstacles(placed: Array, count: int, kind: int, radius_range: Vector2, gap: float) -> void
+144  func _spawn_starting_foragers() -> void
+173  func _build_microhabitat_zones() -> void
+195  func _random_point_in_zone(habitat: String) -> Vector2
+209  func _seed_flower(founding: bool = false, max_units: int = 4) -> int
+237  func _founding_birth_window(founding: bool) -> Array
+253  func _pick_flower_anchor(species: Dictionary) -> Vector2
+284  func _bush_unit_count(species: Dictionary, max_units: int) -> int
+291  func _place_bush_unit(anchor: Vector2, unit: int) -> Vector2
+309  func _add_flower(pos: Vector2, species_index: int, starting_age: float = -1.0) -> Node2D
+318  func _plant_seed(ledger: Variant, entry: Array) -> int
+330  func _in_field(point: Vector2) -> Vector2
+336  func _is_clear_ground(point: Vector2) -> bool
+344  func _clear_of_obstacles(point: Vector2) -> Vector2
+362  func _random_zone_centre(radius: float) -> Vector2
+369  func _random_field_point() -> Vector2
+380  func _hive_centre_local() -> Vector2
+383  func _build_hive_interior() -> void
+399  func _dig_out_chamber(centre_local: Vector2, interior_rings: int, soil_depth: int, spacing: float) -> void
+416  func _add_entrance_marker() -> void
+424  func _build_starting_comb(centre_local: Vector2, spacing: float) -> void
+440  func _stock_starting_comb(cells: Array, level: Dictionary) -> void
+453  func _spawn_hive_occupants(centre_local: Vector2, interior_rings: int, spacing: float) -> void
+474  func _is_open_tile(hex: Vector2i, ring: int, interior_rings: int) -> bool
+482  func _add_floor_tile(hex: Vector2i, centre_local: Vector2, spacing: float) -> void
+493  func _add_soil_block(hex: Vector2i, centre_local: Vector2, spacing: float) -> void
+502  func _add_rock_block(hex: Vector2i, centre_local: Vector2, spacing: float) -> void
+519  func _entrance_tiles(interior_rings: int, soil_depth: int) -> Dictionary
+526  func hive_entrance_inside() -> Vector2
+548  func entrance_wait_point(side: int) -> Vector2
+555  func _build_cameras() -> void
+564  func _spawn_bee(focus: String, preferred_species: String = "") -> void
+574  func _spawn_hatched_bee(role: int, cell: Node2D, as_gyne: bool = false, focus_override: String = "") -> Node2D
+607  func _spawn_indoor_bee(role: int) -> Node2D
+623  func _stagger_starter_age(bee: Node2D) -> void
+632  func move_bee_into_hive(bee: Node2D) -> void
+647  func move_bee_out_of_hive(bee: Node2D) -> void
+667  func mark_death(bee: Node2D) -> void
+688  func _apply_scenery_setting() -> void
+702  func finish_mining(block: Node2D) -> void
+708  func _obstacle_at(point: Vector2) -> Node2D
+714  func _flower_at(point: Vector2) -> Node2D
+```
+
 ## input_selection.gd (717 lines)
 
 Selection, drag and placement resolution.
