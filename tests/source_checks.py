@@ -157,7 +157,8 @@ def check_calls(name, code, funcs, problems):
     function that was renamed out from under it.
     """
     for i, line in enumerate(code, 1):
-        for m in re.finditer(r"(?<![\w.$])([a-z_]\w*)\s*\(", line):
+        # `@` excludes annotations such as `@warning_ignore("...")`.
+        for m in re.finditer(r"(?<![\w.$@])([a-z_]\w*)\s*\(", line):
             fn = m.group(1)
             if fn in funcs or fn in KNOWN or fn in NOT_CALLS:
                 continue

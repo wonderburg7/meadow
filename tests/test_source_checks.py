@@ -97,6 +97,21 @@ class InnerClassCallChecksTest(unittest.TestCase):
         self.assertEqual(1, len(problems), problems)
         self.assertIn("not_a_function()", problems[0])
 
+    def test_an_annotation_is_not_a_call(self):
+        """SC-3 (2 Oct 2026) failed `finish` on `@warning_ignore(...)`."""
+        code = [
+            '@warning_ignore("integer_division")',
+            "func f():",
+            "\tnot_a_function()",
+        ]
+        funcs, _members = source_checks.collect_names(code, "\n".join(code))
+        problems = []
+
+        source_checks.check_calls("sample.gd", code, funcs, problems)
+
+        self.assertEqual(1, len(problems), problems)
+        self.assertIn("not_a_function()", problems[0])
+
 
 class TestModuleWiringTest(unittest.TestCase):
     """verify.ps1 finds tests/test_*.py itself (7 Oct 2026); only its

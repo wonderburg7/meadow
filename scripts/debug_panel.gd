@@ -593,9 +593,6 @@ func _build_actions(column: VBoxContainer) -> void:
 
 	column.add_child(HSeparator.new())
 
-## One action button on its own row, filling the window's width with its
-## info badge pinned to the right. The button expands rather than sitting at
-## its text width so a row of one does not read as a stray short button.
 ## HO-3: the Triggers group exists only with Developer mode on.
 func _rebuild_triggers() -> void:
 	for child in triggers_box.get_children():
@@ -689,6 +686,9 @@ func _on_run_availability_pressed() -> void:
 				run_availability_panel.hide())
 	run_availability_panel.open()
 
+## One action button on its own row, filling the window's width with its
+## info badge pinned to the right. The button expands rather than sitting at
+## its text width so a row of one does not read as a stray short button.
 func _add_action_row(parent: Control, button: Button, tip: String) -> void:
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var row := UI.with_info(button, tip)
