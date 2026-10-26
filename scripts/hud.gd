@@ -55,6 +55,8 @@ signal cell_keep_empty_requested(cell: Node2D, keep_empty: bool)
 signal cell_empty_by_bee_requested(cell: Node2D)
 ## Whether the queen lays a gyne into this cell rather than a worker.
 signal cell_gyne_requested(cell: Node2D, as_gyne: bool)
+## DR-2: whether the queen lays a drone (a male) into this cell.
+signal cell_drone_requested(cell: Node2D, as_drone: bool)
 ## PP-5: nurses feed a hungry larva in this cell before any unmarked one.
 signal cell_feed_first_requested(cell: Node2D, feed_first: bool)
 ## "Click a spot" modes -- main.gd arms the named tool from
@@ -481,6 +483,8 @@ var clear_fermented_btn: Button
 var hatch_lock_box: CheckBox
 var gyne_box: CheckBox
 var gyne_row: HBoxContainer
+var drone_box: CheckBox
+var drone_row: HBoxContainer
 ## PP-5: the "Feed first" box, shown only once Priority cells is owned.
 var feed_first_box: CheckBox
 var feed_first_row: HBoxContainer
@@ -1897,6 +1901,21 @@ func _build_raises_controls(column: VBoxContainer) -> void:
 	)
 	gyne_row.add_child(gyne_box)
 	gyne_row.add_child(_info("A gyne is a future queen. She costs the queen several times as much pollen to lay, takes four times as long to develop, and can only be fed on royal jelly with pollen and honey -- so you need nurses producing jelly before one will grow at all. She can do any worker job in the meantime, though she is bigger, slower and hungrier than a worker."))
+
+	# DR-2: whether the queen lays a drone here. No skill to buy.
+	drone_row = HBoxContainer.new()
+	column.add_child(drone_row)
+	drone_box = CheckBox.new()
+	_style_button(drone_box)
+	drone_box.text = "Raise a drone (a male)"
+	drone_box.theme_type_variation = "Small"
+	drone_box.toggled.connect(func(pressed: bool):
+		if active_cell and is_instance_valid(active_cell):
+			cell_drone_requested.emit(active_cell, pressed)
+			_refresh_cell_popup()
+	)
+	drone_row.add_child(drone_box)
+	drone_row.add_child(_info("A drone is a male bee. The queen lays him from an unfertilised egg, he does no work and eats from the stores, and he is needed to mate a gyne. Ticking this clears the gyne box for the cell, and the other way round."))
 	lock_row.add_child(_info("On: every bee this cell ever raises comes out in the chosen role, so you can earmark a cell as a builder nursery once and forget about it. Off: the role applies to the next bee only and then clears, so a one-off choice doesn't quietly govern the cell forever."))
 
 	# PP-5: nurses come to the larva here before any unmarked one.
@@ -2411,6 +2430,7 @@ func _refresh_cell_popup() -> void:
 	keep_empty_box.set_pressed_no_signal(active_cell.keep_empty)
 	hatch_lock_box.set_pressed_no_signal(active_cell.hatch_role_locked)
 	gyne_box.set_pressed_no_signal(active_cell.hatch_gyne)
+	drone_box.set_pressed_no_signal(active_cell.hatch_drone)
 	feed_first_box.set_pressed_no_signal(active_cell.priority_cell)
 	_light_current_options()
 	_apply_cell_popup_gating()
@@ -2445,6 +2465,8 @@ func _apply_cell_popup_gating() -> void:
 		hatch_locked_note.visible = not any_raise_option
 	if gyne_row != null:
 		gyne_row.visible = allowed_role_keys.is_empty()
+	if drone_row != null:
+		drone_row.visible = allowed_role_keys.is_empty()
 	if feed_first_row != null:
 		feed_first_row.visible = BeeNursery.priority_cells_owned()
 	if lock_row != null:

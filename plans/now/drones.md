@@ -1,7 +1,7 @@
 # Drones -- a mated queen lays drones in cells the player marks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: DR-2 -- the cell popup's drone box (Claude lane; DR-1 landed 25 Oct 2026) | Dependency: none left -- DR-1 has landed and CQ-R7 (`plans/now/code-health.md`) released `scripts/hud.gd` 22 Oct 2026 | Verified: 2026-10-25
+Status: active | Owner: Dave / Claude Code | Next: nothing further -- DR-2 landed 26 Oct 2026; Dave's hands-on check C-153 remains | Dependency: none left -- DR-1 has landed and CQ-R7 (`plans/now/code-health.md`) released `scripts/hud.gd` 22 Oct 2026 | Verified: 2026-10-26
 
 ## Objective
 

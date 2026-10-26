@@ -16,6 +16,7 @@ extends GamePanel
 
 const UI = preload("res://scripts/ui.gd")
 const Roles = preload("res://scripts/roles.gd")
+const Bee = preload("res://scripts/bee.gd")
 
 ## A readout here has been starred or unstarred into the top-left corner.
 signal pinned_changed()
@@ -62,6 +63,8 @@ const RING_LEGEND_TEXT_X := 166.0
 static func _key_label(key: String) -> String:
 	if key == "gyne":
 		return "Gynes"
+	if key == "drone":
+		return "Drones"
 	if key == "unset":
 		return "No role set"
 	return Roles.label_for_key(key)
@@ -69,6 +72,8 @@ static func _key_label(key: String) -> String:
 static func _key_tag(key: String) -> String:
 	if key == "gyne":
 		return "G"
+	if key == "drone":
+		return "D"
 	if key == "unset":
 		return "?"
 	return Roles.tag_for_key(key)
@@ -76,6 +81,8 @@ static func _key_tag(key: String) -> String:
 static func _key_colour(key: String) -> Color:
 	if key == "gyne":
 		return GYNE_COLOUR
+	if key == "drone":
+		return Bee.DRONE_COLOUR
 	if key == "unset":
 		return UNSET_COLOUR
 	return Roles.colour_for_key(key)
@@ -84,6 +91,7 @@ static func _key_colour(key: String) -> Color:
 static func row_order() -> Array:
 	var keys: Array = Roles.count_keys()
 	keys.append("gyne")
+	keys.append("drone")
 	keys.append("unset")
 	return keys
 
@@ -255,18 +263,22 @@ func _make_readout(column: Node, variation: String) -> Label:
 	return label
 
 ## The colour a zone cell should glow, given the role it is set to raise.
-static func colour_for(role: int, focus: String, is_gyne: bool) -> Color:
+static func colour_for(role: int, focus: String, is_gyne: bool, is_drone: bool = false) -> Color:
 	if is_gyne:
 		return GYNE_COLOUR
+	if is_drone:
+		return Bee.DRONE_COLOUR
 	if role < 0:
 		return UNSET_COLOUR
 	return Roles.colour_for(role, focus)
 
 ## The short tag standing in for colour_for's colour, given to the comb's
 ## zone glow so it stays legible with Session.colour_blind_mode on.
-static func tag_for(role: int, focus: String, is_gyne: bool) -> String:
+static func tag_for(role: int, focus: String, is_gyne: bool, is_drone: bool = false) -> String:
 	if is_gyne:
 		return "G"
+	if is_drone:
+		return "D"
 	if role < 0:
 		return "?"
 	return Roles.tag_for_key(Roles.count_key(role, focus))
