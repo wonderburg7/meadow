@@ -46,6 +46,18 @@ class LayoutRegressionTest(unittest.TestCase):
     def test_settings_stage_row_fixture_passes(self):
         self._assert_fixture_passes(SETTINGS_FIXTURE)
 
+    def test_cell_popup_has_the_drone_box_wired_up(self):
+        # DR-2: the popup's "Raise a drone" row sits under the gyne row, is
+        # gated like it, and reaches the DR-1 handler. Static: the fixtures
+        # above do not open the cell popup.
+        hud = (ROOT / "scripts" / "hud.gd").read_text(encoding="utf-8")
+        main = (ROOT / "scripts" / "main.gd").read_text(encoding="utf-8")
+        self.assertIn("signal cell_drone_requested", hud)
+        self.assertIn('drone_box.text = "Raise a drone (a male)"', hud)
+        self.assertLess(hud.index("gyne_row = HBoxContainer.new()"), hud.index("drone_row = HBoxContainer.new()"))
+        self.assertIn("drone_row.visible = allowed_role_keys.is_empty()", hud)
+        self.assertIn("hud.cell_drone_requested.connect(orders_zones._on_cell_drone_requested)", main)
+
     def _assert_fixture_passes(self, fixture: Path):
         godot_path = _resolve_godot_path()
         if not godot_path:

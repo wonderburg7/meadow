@@ -620,6 +620,7 @@ func _ready() -> void:
 	hud.cell_empty_by_bee_requested.connect(input_selection._on_cell_empty_by_bee_requested)
 	hud.cell_keep_empty_requested.connect(orders_zones._on_cell_keep_empty_requested)
 	hud.cell_gyne_requested.connect(orders_zones._on_cell_gyne_requested)
+	hud.cell_drone_requested.connect(orders_zones._on_cell_drone_requested)
 	hud.cell_feed_first_requested.connect(orders_zones._on_cell_feed_first_requested)
 	hud.placement_tool_requested.connect(input_selection.request_placement_tool)
 	hud.restock_targets_requested.connect(orders_zones._on_restock_targets_requested)

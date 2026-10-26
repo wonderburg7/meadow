@@ -1,7 +1,7 @@
 # Drones -- a mated queen lays drones in cells the player marks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: DR-2 -- the cell popup's drone box (Claude lane; DR-1 landed 25 Oct 2026) | Dependency: none left -- DR-1 has landed and CQ-R7 (`plans/now/code-health.md`) released `scripts/hud.gd` 22 Oct 2026 | Verified: 2026-10-25
+Status: active | Owner: Dave / Claude Code | Next: nothing further -- DR-2 landed 26 Oct 2026; Dave's hands-on check C-153 remains | Dependency: none left -- DR-1 has landed and CQ-R7 (`plans/now/code-health.md`) released `scripts/hud.gd` 22 Oct 2026 | Verified: 2026-10-26
 
 ## Objective
 
@@ -56,7 +56,6 @@ Verified 22 Oct 2026 against master `7398865`.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| DR-2 | the cell popup's drone box | `scripts/hud.gd`, `scripts/main.gd`, `scripts/nursery_panel.gd`, `scripts/orders_zones.gd` | yes -- DR-1 landed 25 Oct 2026 | medium |
 
 **Dependencies.** DR-1 edits `scripts/save_game.gd` and `scripts/saving.gd`.
 SG-2 (`plans/now/short-term-goals.md`), ED-1 and ED-2 (`plans/now/difficulty.md`)
@@ -68,52 +67,7 @@ Claude slice that reshaped the cell popup in `scripts/hud.gd`; it landed 22 Oct 
 
 DR-1 shipped 2026-10-25; its specification is `plans/archive/DR-1_2026-10-25.md`.
 
-## DR-2 -- the cell popup's drone box
-
-Level: medium.
-
-**True now.** After DR-1 a drone mark exists, but only a scenario can set it.
-The cell popup in `hud.gd` has the "Raise a gyne (a future queen)" box
-(`gyne_box`, signal `cell_gyne_requested`, connected in `main.gd`) and the
-"Feed first" box.
-
-**When done:**
-
-1. The cell popup has a "Raise a drone (a male)" box under the gyne box, shown
-   for a nursery cell with no skill needed. It emits `cell_drone_requested`,
-   which `main.gd` connects to `orders_zones.gd::_on_cell_drone_requested`.
-   Ticking one box unticks the other, as DR-1's marks do.
-2. A drone-marked cell is drawn with its own colour and tag in the nursery
-   zones overlay (`nursery_panel.gd::colour_for`/`tag_for`, called from
-   `orders_zones.gd`). The colour is the drone's own `DRONE_COLOUR`, not a new
-   one.
-3. Dave's hands-on check is filed at closeout, because the slice is
-   click-driven: tick the box on an empty nursery cell, see the cell's drone
-   tag, and see a drone hatch from it.
-
-**Invariants.** Presentation only: the simulation is DR-1's. The popup's layout
-passes `tests/test_layout_regression.py`. The box follows
-`plans/reference/ui-rules.md`.
-
-**Carried over from DR-1's review (25 Oct 2026; notes for the worker, not decisions).**
-
-- `NurseryPanel.row_order()` (`scripts/nursery_panel.gd`) needs a "drone"
-  row, so the zone counts add up once drone cells are marked.
-- `orders_zones.gd::_apply_zone_glow` passes only `hatch_gyne` to
-  `NurseryPanel.colour_for`/`tag_for`; the drone mark has to reach them too.
-- `bee.gd`'s `DRONE_COLOUR` is only 0.087 OKLab from `BEE_BREAD_COLOR`, under
-  BB-1's distinctness rule, so the drone-mark glow colour in item 2 needs
-  Dave's choice. The comb role overlay currently tags a drone cell "D" in
-  the unset grey.
-
-```queue
-**[Claude] DR-2 -- the cell popup's drone box**
-- Plan: `plans/now/drones.md` -- "DR-2 -- the cell popup's drone box"
-- Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/nursery_panel.gd`, `scripts/orders_zones.gd`, `tests/test_layout_regression.py`
-- Check: `tests/test_layout_regression.py` passes with the popup's new row; `python -m unittest tests.test_display_text_golden` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed in `checks/ready.md`
-- Proof: `absent: scripts/hud.gd :: cell_drone_requested`
-- Next after: None -- plan complete
-```
+DR-2 shipped 2026-10-26; its specification is `plans/archive/DR-2_2026-10-26.md`.
 
 ## Not in the queue, and why
 
