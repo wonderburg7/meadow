@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] CT-1 -- sealed cells take a faint tone of what they hold**
-   - Plan: `plans/now/cell-content-tones.md` -- "CT-1 -- sealed cells take a faint tone of what they hold"
-   - Files: `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, `test_scenarios/ct1_cell_tones.json`, `tests/test_ct1_cell_tones.py`
-   - Check: `python -m unittest tests.test_ct1_cell_tones` passes, asserting full honey and pollen tone at 0.28, quarter-full honey between 0.10 and 0.13 and an empty cell at 0; `.\tools\verify.ps1` is green. Hands-on: in the CT-1 scenario, the closed honey, pollen and nectar cells and the sealed bee bread cell each show a faint, different tint, and the full honey cell's tint is stronger than the quarter-full one's.
-   - Proof: `absent: scripts/hive_cell.gd :: func content_tone(`
-   - Next after: none -- `plans/now/cell-content-tones.md` is complete
-
-2. **[Claude] DR-2 -- the cell popup's drone box**
+1. **[Claude] DR-2 -- the cell popup's drone box**
    - Plan: `plans/now/drones.md` -- "DR-2 -- the cell popup's drone box"
    - Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/nursery_panel.gd`, `scripts/orders_zones.gd`, `tests/test_layout_regression.py`
    - Check: `tests/test_layout_regression.py` passes with the popup's new row; `python -m unittest tests.test_display_text_golden` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed in `checks/ready.md`
    - Proof: `absent: scripts/hud.gd :: cell_drone_requested`
    - Next after: None -- plan complete
 
-3. **[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
+2. **[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
    - Plan: `plans/now/pollination.md` -- "PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter"
    - Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
    - Check: `python -m unittest tests.test_pacing_gates` passes; `pacing_gates.py` reports the day Gyne rearing first becomes affordable in the reference Colony Run, and its median falls from the first winter's end to 11 days after it (days 42 to 52); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
    - Proof: `absent: tools/pacing_gates.py :: gyne_rearing_affordable`
    - Next after: none -- the pollination plan is complete; AR-4 in `plans/now/alpha-route-evidence.md` then starts in the Codex lane, and FR-3 in `plans/now/forager-recruitment.md` follows
 
-4. **[Claude] RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out**
+3. **[Claude] RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out**
    - Plan: `plans/now/run-repairs.md` -- "RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out"
    - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `tests/rr11_pre_fermented_test.gd`
    - Check: `python -m unittest tests.test_rr11_pre_fermented` passes with the boundary at 36 h; `python -m unittest tests.test_display_text_golden` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
    - Proof: `absent: scripts/hive_cell.gd :: Color(0.78, 0.86, 0.35)`
    - Next after: none -- the pre-ferment warning is complete
 
-5. **[Claude] RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once**
+4. **[Claude] RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once**
    - Plan: `plans/now/run-repairs.md` -- "RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once"
    - Files: `scripts/orders_zones.gd`, `scripts/hud.gd`, `tests/test_nf5_clear_fermented.py`
    - Check: `python -m unittest tests.test_nf5_clear_fermented` passes with a new case (designating a sour nectar cell as honey leaves its stock and sets `evict_requested`, and a comb worker then empties it; a fresh nectar cell behaves as before); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/orders_zones.gd :: is_fermented() and`
    - Next after: none -- the sour-cell designation is complete
+
+5. **[Claude] RR-15 -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee**
+   - Plan: `plans/now/run-repairs.md` -- "RR-15 -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee"
+   - Files: `scripts/hive.gd`, `tests/test_nf4_fermentation_sense.py`
+   - Check: `python -m unittest tests.test_nf4_fermentation_sense` passes with a new case (a forager, and the queen set to forage, with Fermentation sense never deposit nectar into a sour cell; without the sense they still can); `python -m unittest tests.test_nf5_clear_fermented` passes; the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/hive.gd :: avoids_as_sour(cell)`
+   - Next after: none -- the fermentation-sense deposit rule is complete
 
 ### Codex lane
 
