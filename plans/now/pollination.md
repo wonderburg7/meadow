@@ -119,7 +119,7 @@ Decisions (Dave, 14 Oct 2026):
 ```queue
 **[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
 - Plan: `plans/now/pollination.md` -- "PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter"
-- Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
+- Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `scripts/progression.gd`, `scripts/headless/diagnostic_probes.gd`, `tools/analyze_session.py`, `tools/headless/profiles.py`, `tests/test_pp6_gyne_rearing_affordable.py` (widened by Dave, 26 Oct 2026, for the T2-7-style probe; "affordable" is the whole path from zero: Honey worker, Bee bread, Royal jelly and Gyne rearing summed as one `_path_cost`)
 - Check: `python -m unittest tests.test_pacing_gates` passes; `pacing_gates.py` reports the day Gyne rearing first becomes affordable in the reference Colony Run, and its median falls from the first winter's end to 11 days after it (days 42 to 52); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
 - Proof: `absent: tools/pacing_gates.py :: gyne_rearing_affordable`
 - Next after: none -- the pollination plan is complete; AR-4 in `plans/now/alpha-route-evidence.md` then starts in the Codex lane, and FR-3 in `plans/now/forager-recruitment.md` follows

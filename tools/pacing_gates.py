@@ -34,6 +34,8 @@ BAND_FRACTION = 0.25
 WINTER_BAND_DAYS = 1
 FIRST_WORKER_BY_DAY = 17.0
 FIRST_AUTOMATION_DAYS = (5.0, 8.0)
+# PP-6: Gyne rearing first becomes affordable in the first 11 days after winter ends.
+GYNE_AFFORDABLE_AFTER_WINTER_DAYS = (1.0, 11.0)
 SCENARIO = ROOT / "test_scenarios" / "alpha_arc_test.json"
 
 
@@ -130,6 +132,34 @@ def build_rows(analyses: list[dict[str, Any]], day_length_seconds: float) -> lis
             "boundary": boundary,
         })
     return rows
+
+
+def gyne_rearing_affordable(analyses: list[dict[str, Any]]) -> dict[str, Any]:
+    """PP-6: the median day Gyne rearing's whole path first becomes affordable,
+    against the first 11 days after the first winter ends (days 42 to 52 on a
+    30-day season and 10-day winter), read from each run's own schedule."""
+    _entered, ended = winter_schedule(analyses)
+    low = ended + GYNE_AFFORDABLE_AFTER_WINTER_DAYS[0]
+    high = ended + GYNE_AFFORDABLE_AFTER_WINTER_DAYS[1]
+    values = [analysis.get("milestone_times", {}).get("gyne_rearing_affordable_day") for analysis in analyses]
+    complete = bool(values) and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in values)
+    median_day = statistics.median(values) if complete else None
+    inside = median_day is not None and low <= median_day <= high
+    return {
+        "milestone": "gyne rearing",
+        "median_day": median_day,
+        "band": (low, high),
+        "inside_band": inside,
+        "status": "in band" if inside else "out of band" if complete else "unavailable",
+        "days": values,
+    }
+
+
+def render_gyne_rearing_row(row: dict[str, Any]) -> str:
+    median = "missing" if row["median_day"] is None else "%.2f" % row["median_day"]
+    days = ", ".join("missing" if d is None else "%.2f" % d for d in row["days"])
+    return "Gyne rearing affordable: median day %s, band days %.0f-%.0f, %s, per seed: %s" % (
+        median, row["band"][0], row["band"][1], row["status"], days)
 
 
 SEED_COLUMNS = ("1st worker", "food safe", "w entered", "w survived")
@@ -284,6 +314,7 @@ def main() -> int:
     winter_entered_day, winter_ended_day = winter_schedule(analyses)
     print(render_seed_rows(seed_rows(analyses), winter_entered_day, winter_ended_day))
     print(render_tier2_row(tier2_row(analyses)))
+    print(render_gyne_rearing_row(gyne_rearing_affordable(analyses)))
     return 0
 
 

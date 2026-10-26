@@ -385,6 +385,16 @@ func first_tier2_path_covered(stores: Dictionary) -> bool:
 	return false
 
 
+## PP-6: the stores cover Gyne rearing's whole path from zero -- Honey worker
+## (the spine) plus Gyne rearing and its `all_of` chain (Bee bread, Royal
+## jelly), summed per resource by _path_cost() and checked by _covers(), the
+## way first_tier2_path_covered counts. Read once per diagnostic snapshot.
+func gyne_rearing_path_covered(stores: Dictionary) -> bool:
+	var path := {Skills.HONEY_WORKER: true}
+	_add_with_prerequisites(Skills.GYNE_REARING, path)
+	return _path_offered(path) and _covers(_path_cost(path), stores)
+
+
 func _add_with_prerequisites(skill_id: String, path: Dictionary) -> void:
 	if path.has(skill_id) and skill_id != Skills.HONEY_WORKER:
 		return
