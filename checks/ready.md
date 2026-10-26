@@ -92,3 +92,4 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-150 -- GP-5: press Goals in the second HUD row, the list opens and closes; restart the game and it remembers](ready/C-150.md)
 - [C-151 -- SG-4 opening milestones: a new Colony Run shows the opening steps in order](ready/C-151.md)
 - [C-152 -- CT-1 cell tones: closed cells wear a faint tint of their contents](ready/C-152.md)
+- [C-153 -- Tick Raise a drone on an empty nursery cell and watch a drone hatch](ready/C-153.md)
