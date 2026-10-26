@@ -54,6 +54,7 @@ const LOCAL_WHEN_KEYS := [
 	"queen_watch_hits_at_most", "in_hive_view", "camera_following_queen",
 	"challenge_overflow_discards", "cell_empty", "selected_mine_queue_at_least",
 	"challenge_goal_met", "queen_build_offered", "first_crisis_state", "first_crisis_recovered",
+	"cell_tone_strength",
 ]
 
 # --- run_pending --------------------------------------------------
@@ -264,6 +265,8 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_set_cell_contents(main, action)
 		"empty_cell":
 			_do_empty_cell(main, action)
+		"close_cell":
+			_do_close_cell(main, action)
 		"clear_fermented":
 			_do_clear_fermented(main)
 		"watch_queen_states":
@@ -348,6 +351,14 @@ static func _when_met(main: Node2D, when: Dictionary) -> bool:
 	if when.has("cell_empty"):
 		var watched: Node2D = _resolve_cell_ref(main, when["cell_empty"])
 		if watched == null or watched.amount > 0.0:
+			return false
+	if when.has("cell_tone_strength"):
+		# CT-1: a cell's tone strength (hive_cell.gd, tone_strength), within [min, max].
+		var toned: Dictionary = when["cell_tone_strength"]
+		var toned_cell: Node2D = _resolve_cell_ref(main, toned.get("cell", {"hex": toned.get("hex", [])}))
+		if toned_cell == null:
+			return false
+		if toned_cell.tone_strength < float(toned.get("min", 0.0)) or toned_cell.tone_strength > float(toned.get("max", 1.0)):
 			return false
 	if when.has("selected_mine_queue_at_least"):
 		if main.selected_bees.is_empty() or not is_instance_valid(main.selected_bees[0]):
@@ -1120,6 +1131,16 @@ static func _do_empty_cell(main: Node2D, action: Dictionary) -> void:
 		_log("empty_cell", str(action), "rejected", "the queen did not take the order")
 		return
 	_log("empty_cell", str(action), "accepted", "")
+
+## CT-1. {"do": "close_cell", "cell": {"built_index": n}} (or "hex") -- the
+## cell's own set_closed(true), so it wears its cap whatever it holds.
+static func _do_close_cell(main: Node2D, action: Dictionary) -> void:
+	var cell: Node2D = _resolve_cell_ref(main, action.get("cell", {"hex": action.get("hex", [])}))
+	if cell == null:
+		_log("close_cell", str(action), "rejected", "no cell there")
+		return
+	cell.set_closed(true)
+	_log("close_cell", str(action), "accepted", "")
 
 ## NF-5. {"do": "clear_fermented"} -- the cell popup's "Discard all sour
 ## nectar" button, through the same handler. Logs how many cells it marked.

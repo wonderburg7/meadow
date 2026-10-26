@@ -1,7 +1,7 @@
 # Cell content tones -- a sealed cell hints at what it holds
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: CT-1 -- DR-1 (`plans/now/drones.md`) landed 25 Oct 2026, releasing `scripts/hive_cell.gd` and `scripts/scenario_actions.gd` | Dependency: none left | Verified: 2026-10-24
+Status: complete | Owner: Dave / Claude Code | Next: None -- plan complete; its hands-on check is C-152 in `checks/ready/C-152.md` | Dependency: none left | Verified: 2026-10-26
 
 ## Objective
 

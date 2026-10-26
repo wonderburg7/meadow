@@ -60,6 +60,20 @@ const CELL_ART := {
 ## time, as the flat brood colour does without sprites.
 const STARVING_ART_TINT := Color(1.0, 0.45, 0.4)
 
+## CT-1. How strongly a cell's contents tint it, from 0 (empty) to
+## CONTENT_TONE_MAX (full), in eight steps with how full the cell is.
+static func content_tone_strength(fraction: float) -> float:
+	if fraction <= 0.0:
+		return 0.0
+	var step: float = ceil(clampf(fraction, 0.0, 1.0) * 8.0) / 8.0
+	return lerpf(CONTENT_TONE_MIN, CONTENT_TONE_MAX, step)
+
+## CT-1. The tint for a cell's art and cap: white at zero strength. At full
+## strength it keeps the content colour's hue, with saturation held between
+## 0.35 and 0.8 and full value, so multiplying the art by it never dims it.
+static func content_tone(base: Color, strength: float) -> Color:
+	return Color.WHITE.lerp(Color.from_hsv(base.h, clampf(base.s, 0.35, 0.8), 1.0), strength)
+
 ## SP-4. Which sheet and frame a nectar or pollen cell shows at `fraction`
 ## full, from the catalogue's level bounds (percent, rising): the first level
 ## whose bound is at least the fill, frame 0 (the empty cup) at nothing.
@@ -137,6 +151,12 @@ const SITE_COLOR := Color(0.42, 0.34, 0.16)
 const BEE_BREAD_COLOR := Color(0.80, 0.58, 0.84)
 const BEE_BREAD_SEALED_COLOR := Color(0.46, 0.34, 0.64)
 const BEE_BREAD_RIPE_COLOR := Color(0.74, 0.24, 0.56)
+
+## CT-1. How strongly a cell's contents tint its art and cap: a nearly empty
+## cell takes the faintest tone, a full one the strongest, in eight steps (as
+## many as the cap sheet has stages). Presentation only, so no GameConfig field.
+const CONTENT_TONE_MIN := 0.06
+const CONTENT_TONE_MAX := 0.28
 
 # --- cell state ---------------------------------------------------
 
@@ -246,6 +266,9 @@ var nursery_priority: int = Priority.MEDIUM
 ## This is how you set honey aside for winter rather than watching the
 ## colony drink it the moment it ripens.
 var is_closed: bool = false
+## CT-1. The tone strength `_refresh` last applied, 0 for no tint. The scenario
+## assert `cell_tone_strength` (scenario_actions.gd) reads it.
+var tone_strength: float = 0.0
 ## Set from the honey popup's "Fill then close". The cell refuses
 ## withdrawals from the moment it is set, so it can actually reach the
 ## top instead of being sipped from as fast as it fills, and closes
@@ -1398,6 +1421,10 @@ func _refresh() -> void:
 	# A cell the player has closed wears the whole cap, whatever is in it.
 	if is_closed:
 		cap_stage = SpriteCatalogue.WAX_CELL_SEALED_HFRAMES
+	# CT-1. A cell holding food or bee bread tints its art and cap by how full
+	# it is; brood, corpses and empty cells stay white.
+	tone_strength = content_tone_strength(fill_fraction()) if content_type in ["nectar", "honey", "pollen", "jelly", "bee_bread"] else 0.0
+	var tone: Color = content_tone(color, tone_strength)
 
 	# The designation ring is colour-only: a cell reserved for pollen and
 	# one reserved for honey are the same shape, same size, same
@@ -1437,7 +1464,8 @@ func _refresh() -> void:
 		color = Color(color.r, color.g, color.b, 0.0)
 	else:
 		_apply_fill_shading()
-	empty_sprite.modulate = art_tint
+	empty_sprite.modulate = art_tint * tone
+	cap_sprite.modulate = tone
 	_show_cap(cap_stage if empty_sprite.visible else 0)
 	# The cap says "closed" by itself; the bar stays for the flat look and
 	# for a cell still filling towards its close.
