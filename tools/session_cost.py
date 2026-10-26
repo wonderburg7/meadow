@@ -3,6 +3,7 @@
 import argparse
 import json
 import re
+import shlex
 import statistics
 import subprocess
 import sys
@@ -117,13 +118,14 @@ def _repo_context_chars(rows, repo_root):
 _WORKTREE_PRODUCT_PATH = re.compile(
     r"\.worktrees/[^/\s'\"]+/(?:" + "|".join(re.escape(d) for d in PRODUCT_DIRS) + ")"
 )
+_WORKTREE_CWD = re.compile(r"(?:^|/)\.worktrees/[^/\s'\"]+(?:/|$)")
 
 
 _SCRIPT_SUFFIXES = (".py", ".sh", ".ps1")
 _WRITES_FILE = re.compile(r"write|open\(|sed -i|\bcp\b|Set-Content|shutil", re.IGNORECASE)
 
 
-def _scripted_product_edit(block):
+def _scripted_product_edit(block, cwd=None):
     """True for a scratchpad edit script or a sed -i / cp command aimed at a
     product path inside a slice worktree."""
     inp = block.get("input", {}) or {}
@@ -142,15 +144,45 @@ def _scripted_product_edit(block):
         if not isinstance(command, str):
             return False
         command = command.replace("\\", "/")
-        return ("sed -i" in command or "cp " in command) and bool(_WORKTREE_PRODUCT_PATH.search(command))
+        if not ("sed -i" in command or re.search(r"\bcp\s", command)):
+            return False
+        if _WORKTREE_PRODUCT_PATH.search(command):
+            return True
+
+        # Slice workers normally run each command from their worktree.  The
+        # transcript may state that cwd, or establish it in a compound shell
+        # command before a relative sed/cp target.
+        in_worktree = bool(cwd and _WORKTREE_CWD.search(str(cwd).replace("\\", "/")))
+        for part in re.split(r"(?:&&|\|\||;)", command):
+            cd = re.search(r"(?:^|\s)cd\s+(?:--\s+)?(['\"]?)([^\s'\"&|;]+)\1", part)
+            if cd:
+                in_worktree = bool(_WORKTREE_CWD.search(cd.group(2)))
+                continue
+            if not in_worktree:
+                continue
+            try:
+                words = shlex.split(part)
+            except ValueError:
+                continue
+            if not words:
+                continue
+            if words[0] == "cp" and len(words) > 2:
+                target = words[-1]
+            elif len(words) > 3 and words[0] == "sed" and words[1] == "-i":
+                target = words[-1]
+            else:
+                continue
+            target = target.replace("\\", "/").lstrip("./")
+            if any(target.startswith(directory) for directory in PRODUCT_DIRS):
+                return True
     return False
 
 
-def _product_edit(block, repo_root):
+def _product_edit(block, repo_root, cwd=None):
     """True if an assistant content block is a file edit under a product dir."""
     if not isinstance(block, dict) or block.get("type") != "tool_use":
         return False
-    if _scripted_product_edit(block):
+    if _scripted_product_edit(block, cwd):
         return True
     if block.get("name") not in ("Edit", "Write", "NotebookEdit"):
         return False
@@ -345,7 +377,7 @@ def run_phases(files, subagents=None):
                 + usage.get("cache_read_input_tokens", 0)
                 + usage.get("cache_creation_input_tokens", 0)
             )
-            if any(_product_edit(b, repo_root) for b in message.get("content", []) or []):
+            if any(_product_edit(b, repo_root, row.get("cwd")) for b in message.get("content", []) or []):
                 edit_indices.append(len(sizes) - 1)
 
         if not sizes:
@@ -882,7 +914,7 @@ def run_no_edit_reasons(files):
                 + usage.get("cache_read_input_tokens", 0)
                 + usage.get("cache_creation_input_tokens", 0)
             )
-            if any(_product_edit(b, repo_root) for b in message.get("content", []) or []):
+            if any(_product_edit(b, repo_root, row.get("cwd")) for b in message.get("content", []) or []):
                 made_product_edit = True
 
         if not sizes or made_product_edit:
