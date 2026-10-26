@@ -6,7 +6,7 @@ Status: reference | Owner: Dave / Claude Code | Next: nothing -- revise a rule w
 The durable rules of the UI plan, kept live when the plan itself was archived
 on completion (`plans/archive/ui_2026-09-20.md`, which the `Read` tool cannot
 open). Moved here by the context review of 7 Oct 2026 so `CLAUDE.md`'s UI
-route leads to a file a session can read. The rule text is unchanged.
+route leads to a file a session can read. The rule text is unchanged. The pointer `.claude/rules/ui.md` loads itself with the UI scripts.
 
 ## Durable rules
 

@@ -5,6 +5,8 @@ Status: Slice 5 implemented | Schema version: `1`
 This is the single contract reference for the headless runner. The runner
 remains the compatibility entry point, and existing scenario JSON continues
 to work without an `expect` block.
+The pointer `.claude/rules/headless.md` loads itself with the harness
+scripts and scenarios.
 
 Balance and full reports include `milestone_times`: each pacing milestone's
 first qualifying snapshot as elapsed in-game days, while `milestones` retains

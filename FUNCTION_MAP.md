@@ -951,11 +951,11 @@ restart.
 491  func _make_controls_help() -> Control
 538  # --- the action buttons -------------------------------------------
 550  func _build_actions(column: VBoxContainer) -> void
-600  func _rebuild_triggers() -> void
-635  func _on_end_run_pressed() -> void
-646  func _refresh_developer_row() -> void
-673  func _make_run_availability_button() -> Button
-682  func _on_run_availability_pressed() -> void
+597  func _rebuild_triggers() -> void
+632  func _on_end_run_pressed() -> void
+643  func _refresh_developer_row() -> void
+670  func _make_run_availability_button() -> Button
+679  func _on_run_availability_pressed() -> void
 692  func _add_action_row(parent: Control, button: Button, tip: String) -> void
 698  func _make_winter_action() -> Control
 710  func _on_winter_pressed() -> void

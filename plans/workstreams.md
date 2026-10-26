@@ -48,4 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/AC-2` (`claude/AC-2`) | Claude | `.claude/rules/ui.md` loads with the UI scripts | Claude | in progress | none | `plans/now/agent-context.md` AC-2 -- `.claude/rules/ui.md` loads with the UI scripts |
+| `.worktrees/SG-2` (`claude/SG-2`) | Claude | goals offered, completed and paid in Colony Runs and Scenarios, and saved | Claude | in progress | none | `plans/now/short-term-goals.md` SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved |
