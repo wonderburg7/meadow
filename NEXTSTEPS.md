@@ -70,6 +70,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `present: scripts/world_building.gd :: func _seed_flower(`
    - Next after: CQ-R6 -- extract the HUD bee-command rows
 
+2. **[Codex] CQ-M6 -- name selection green and caste appearance**
+   - Plan: `plans/now/code-health.md` -- "CQ-M6 -- name selection green and caste appearance"
+   - Files: `scripts/world_draw.gd`, `scripts/bee.gd`, `scripts/death_marker.gd`, `scripts/flower.gd`, `scripts/hive_cell.gd`, `scripts/input_selection.gd`, `scripts/obstacle.gd`, `scripts/soil_block.gd`, `FUNCTION_MAP.md`
+   - Check: `python -m unittest tests.test_sp11_cell_rim tests.test_sp9_soil_art tests.test_col9_drones` and `python tools/prefinish.py` pass; rendered selection alphas and caste sizes remain unchanged
+   - Proof: `present: scripts/obstacle.gd :: selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)`
+   - Next after: CQ-M7 -- name world draw order
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
