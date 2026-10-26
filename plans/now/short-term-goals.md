@@ -1,7 +1,7 @@
 # Short-term goals -- optional outcomes the colony's state suggests
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss (startable now SG-2 has landed; it should follow straight on, since SG-2 alone pays rewards the player cannot see) | Dependency: SG-2 landed 26 Oct 2026; GP-2 landed 13 Oct 2026 | Verified: 2026-10-26
+Status: active | Owner: Dave / Claude Code | Next: SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss (startable now SG-2 has landed; it should follow straight on, since SG-2 alone pays rewards the player cannot see) | Dependency: SG-2 landed 26 Oct 2026; GP-2 landed 13 Oct 2026; GP-5 landed 26 Oct 2026 | Verified: 2026-10-26
 
 ## Objective
 

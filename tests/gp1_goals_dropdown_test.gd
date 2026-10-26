@@ -2,17 +2,17 @@ extends SceneTree
 ## GP-1 test: the Colony Run's Goals drop-down and the long-term line.
 ##
 ## Boots the real Main.tscn into the Colony Run's level row (8) and checks:
-## - the shelf shows the Goals header, the long-term line and the next
-##   milestone, and the header's button folds and unfolds them;
+## - the shelf shows the long-term line and the next milestone, and the
+##   Goals button in the second row folds and unfolds them;
 ## - the long-term line follows the run's phase (before the countdown, the
 ##   countdown, winter, after winter in and out of the mating window, won);
 ## - evaluate() refreshes that line on a day change with no milestone newly
 ##   met;
-## - collapsed, only the header shows, and expanded and collapsed the shelf
+## - collapsed, only the Goals button shows, and expanded and collapsed the shelf
 ##   stays inside the viewport at ui_layout.gd's MIN_SUPPORTED_WIDTH;
 ## - the collapsed state is a profile preference and comes back from a
 ##   profile's data;
-## - a Challenge's shelf (set_challenge_goal) has no header or long-term line.
+## - a Challenge's shelf (set_challenge_goal) has no Goals button or long-term line.
 ##
 ## Run by tests/test_gp1_goals_dropdown.py (with APPDATA pointed at a temp
 ## folder, so the toggle's save_preferences never touches a real profile):
@@ -43,7 +43,7 @@ func _process(_delta: float) -> bool:
 		"expanded":
 			if _frame - _phase_frame >= LAYOUT_FRAMES:
 				_check_inside("expanded")
-				_main.hud.goals_header.pressed.emit()
+				_main.hud.goals_button.pressed.emit()
 				_start_layout("collapsed")
 		"collapsed":
 			if _frame - _phase_frame >= LAYOUT_FRAMES:
@@ -77,8 +77,9 @@ func _check_content() -> void:
 	var ms: RefCounted = _main.colony_milestones
 	_check(ms.applies(), "the Colony Run's rules do not apply on level %d" % COLONY_RUN_LEVEL)
 	ms.show_next()
-	_check(hud.goals_header.visible, "no Goals header in a Colony Run")
-	_check(hud.goals_header.text.begins_with("Goals"), "the header reads '%s'" % hud.goals_header.text)
+	_check(hud.goals_button.visible, "no Goals button in a Colony Run")
+	_check(hud.goals_button.text == "Goals", "the button reads '%s'" % hud.goals_button.text)
+	_check(hud.goals_button.button_pressed, "expanded, the Goals button is not pressed")
 	_check(hud.long_term_goal_label.visible and not hud.long_term_goal_label.text.is_empty(),
 		"the long-term line is not showing")
 	_check(hud.current_goal_label.visible and hud.current_goal_label.text == "Raise your first worker",
@@ -141,8 +142,9 @@ func _check_inside(label: String) -> void:
 
 func _check_collapsed() -> void:
 	var hud: CanvasLayer = _main.hud
-	_check(_session.goals_collapsed, "the header press did not collapse the drop-down")
-	_check(hud.goals_header.visible, "collapsed, the header is gone")
+	_check(_session.goals_collapsed, "the button press did not collapse the drop-down")
+	_check(hud.goals_button.visible and not hud.goals_button.button_pressed,
+		"collapsed, the Goals button is missing or still pressed")
 	_check(not hud.long_term_goal_label.visible and not hud.current_goal_label.visible
 		and not hud.completed_goal_label.visible, "collapsed, goal lines still show")
 
@@ -157,12 +159,12 @@ func _check_profile_and_challenge() -> void:
 	_session.goals_collapsed = true
 	profile.apply_to_session({"preferences": {}})
 	_check(_session.goals_collapsed, "a profile without the key changed the state")
-	hud.goals_header.pressed.emit()
+	hud.goals_button.pressed.emit()
 	_check(not _session.goals_collapsed and hud.long_term_goal_label.visible, "pressing again did not expand")
 
 	hud.set_challenge_goal("Do the thing", "Did the other thing")
-	_check(not hud.goals_header.visible and not hud.long_term_goal_label.visible,
-		"a Challenge's shelf shows the Goals header or long-term line")
+	_check(not hud.goals_button.visible and not hud.long_term_goal_label.visible,
+		"a Challenge's shelf shows the Goals button or long-term line")
 	_check(hud.current_goal_label.visible and hud.current_goal_label.text == "Do the thing"
 		and hud.completed_goal_label.visible, "a Challenge's shelf lines changed")
 	_session.goals_collapsed = true
