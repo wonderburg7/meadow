@@ -1,7 +1,7 @@
 # Forager recruitment -- Orientation flight, then Auto scouting, then Auto-recruitment
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active (FR-2 landed) | Owner: Dave / Claude Code | Next: PP-6 (`plans/now/pollination.md`), then FR-3 -- FR-2 landed: Auto scouting is a Foraging tier-2 purchase at (5, -1) that replaces Orientation flight (`scripts/bee.gd` joined its files, 25 Oct 2026, for the new-forager scouting gate) | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-24
+Status: active (FR-2 landed) | Owner: Dave / Claude Code | Next: PP-9 (`plans/now/pollination.md`, the sweep Dave split from PP-6 26 Oct 2026), then FR-3 -- FR-2 landed: Auto scouting is a Foraging tier-2 purchase at (5, -1) that replaces Orientation flight (`scripts/bee.gd` joined its files, 25 Oct 2026, for the new-forager scouting gate) | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 → PP-9 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-24
 
 ## Objective
 
@@ -47,7 +47,7 @@ Verified 14 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FR-3 | owning Auto-recruitment switches it on, passing species with Adaptive constancy | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/levels.gd`, tests | no -- after PP-6 | high |
+| FR-3 | owning Auto-recruitment switches it on, passing species with Adaptive constancy | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/levels.gd`, tests | no -- after PP-9 | high |
 | FR-4 | a headless assertion replaces the C-143 hands-on check | `scripts/scenario_actions.gd`, tests | no -- `scripts/scenario_actions.gd` was released 25 Oct 2026, but `tools/admission.py` reads C-143 as an unlanded slice | medium |
 
 **Dependencies.** FR-1 changes no game file. FR-2 waits for FR-1's table;
@@ -59,9 +59,9 @@ because upcoming rebalancing may change the figures substantially. FR-1c
 diagnoses through the harness while CQ-L1 owns `bee_foraging.gd`; FR-1d
 applies the evidenced repair once that ownership clears. Both precede FR-2.
 Auto scouting sits on the gyne
-route (decision 1), so PP-6 (`plans/now/pollination.md`) prices the route
-only after FR-2 lands, and AR-4 (`plans/now/alpha-route-evidence.md`)
-still waits for PP-6. FR-3 shares `skills.gd` with PP-6, so it follows it.
+route (decision 1), so PP-9 (`plans/now/pollination.md`) prices the route
+now FR-2 has landed, and AR-4 (`plans/now/alpha-route-evidence.md`)
+waits for PP-9. FR-3 shares `skills.gd` with PP-9, so it follows it.
 HP-1 (`plans/archive/hot-path-cadence_2026-10-18.md`) moves SEARCHING's flower check onto
 the think tick; if it lands after FR-1, it re-runs FR-1's table and stops
 if the stage order changes.
@@ -79,7 +79,7 @@ Decisions (Dave, 14 Oct 2026):
    learning and Adaptive constancy, with `all_of: [ORIENTATION_FLIGHT]`;
    Auto-recruitment gains `all_of: [AUTO_SCOUTING]`. Because tier 3 opens
    only once every tier-2 node is owned, every Colony Run reaching
-   Pollinator points owns Auto scouting: it is on the gyne route and PP-6
+   Pollinator points owns Auto scouting: it is on the gyne route and PP-9
    prices it.
 2. **The three stages read as one progression.** Node placement draws the
    chain (Orientation flight `(3, -1)` → Auto scouting on a free tier-2
@@ -123,8 +123,8 @@ FR-1d shipped 2026-10-23; its specification is `plans/archive/FR-1d_2026-10-23.m
 
 ## Not in the queue, and why
 
-- **FR-3:** waits for PP-6 (`plans/now/pollination.md`), which shares
-  `scripts/skills.gd`; specified fully once PP-6 lands.
+- **FR-3:** waits for PP-9 (`plans/now/pollination.md`), which shares
+  `scripts/skills.gd`; specified fully once PP-9 lands.
 
 FR-2 shipped 2026-10-25; its specification is `plans/archive/FR-2_2026-10-25.md`.
 
@@ -136,7 +136,7 @@ Decisions 4, 5, 6 and 7. Auto-recruitment's `enable_behaviour`
 `auto_recruitment_on`, read through a helper as FR-2's are; species passing
 under Adaptive constancy; a sweep of the `recruit_*` values in
 `game_config.gd` to decision 4's gain, which also prices the node.
-Specified fully once PP-6 lands.
+Specified fully once PP-9 lands.
 
 ## FR-4 -- a headless assertion replaces the C-143 hands-on check
 

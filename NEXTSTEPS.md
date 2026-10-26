@@ -25,10 +25,10 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
 1. **[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
    - Plan: `plans/now/pollination.md` -- "PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter"
-   - Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
-   - Check: `python -m unittest tests.test_pacing_gates` passes; `pacing_gates.py` reports the day Gyne rearing first becomes affordable in the reference Colony Run, and its median falls from the first winter's end to 11 days after it (days 42 to 52); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
+   - Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `scripts/progression.gd`, `scripts/headless/diagnostic_probes.gd`, `tools/analyze_session.py`, `tools/headless/profiles.py`, `tests/test_pp6_gyne_rearing_affordable.py` (widened by Dave, 26 Oct 2026, for the T2-7-style probe; "affordable" is the whole path from zero: Honey worker, Bee bread, Royal jelly and Gyne rearing summed as one `_path_cost`)
+   - Check: `python -m unittest tests.test_pp6_gyne_rearing_affordable tests.test_pacing_gates` passes; the reference Colony Run's snapshots carry `resources.gyne_rearing_affordable` and `pacing_gates.py` prints its Gyne-rearing row (the first day the whole path is affordable, or that it never was) with no band requirement; no price moves (Dave split the sweep off as PP-9, 26 Oct 2026); `.\tools\verify.ps1` is green
    - Proof: `absent: tools/pacing_gates.py :: gyne_rearing_affordable`
-   - Next after: none -- the pollination plan is complete; AR-4 in `plans/now/alpha-route-evidence.md` then starts in the Codex lane, and FR-3 in `plans/now/forager-recruitment.md` follows
+   - Next after: PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter
 
 2. **[Claude] RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out**
    - Plan: `plans/now/run-repairs.md` -- "RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out"
@@ -93,7 +93,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **ED-2** (`plans/now/difficulty.md`) -- a run's difficulty and Easy's rules; waits for ED-1.
 - **ED-3** (`plans/now/difficulty.md`) -- choosing Easy at run start; waits for ED-2.
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces.
-- **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-6, which shares `scripts/skills.gd`.
+- **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-9 (the sweep Dave split from PP-6, 26 Oct 2026), which shares `scripts/skills.gd`.
 - **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices of the alpha chain (ED-1, ED-2, RR-12, SP-8a in `plans/now/drones.md`; WP-2 landed 21 Oct 2026 and WP-3 landed 22 Oct 2026) and ED-3 (Dave, 18 Oct 2026); CQ-S0's round-trip harness landed 22 Oct 2026.
 - **CQ-R2** (`plans/now/code-health.md`) -- the first crisis moves out of `scripts/main.gd` into a new first_crisis.gd, touching the save files; waits, gated with CQ-S1, for the save slices of the alpha chain (ED-1, ED-2, RR-12, SP-8a in `plans/now/drones.md`; WP-2 landed 21 Oct 2026) and ED-3 (Dave, 18 Oct 2026); its plan section is written when that gate clears.
 - **CQ-R8** (`plans/now/code-health.md`) -- hud builders shortened (the designation button table); needs its section and block; prepare before CQ-T3.
