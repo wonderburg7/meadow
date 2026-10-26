@@ -241,40 +241,41 @@ static func _non_queen_adults(main: Node2D) -> int:
 	return maxi(0, total)
 
 
-## CR-2: the winter window's own verdict (_winter_on_track) judged on the
-## colony that meets winter: only on the countdown's last day (the forecast's
-## days_left at most 1), up to the day boundary winter arrives on. main.gd
-## emits day_changed before season.gd's once-a-second tick sets winter_here,
-## so that boundary is still checked. An earlier verdict says nothing about
-## the colony winter finds, and a met milestone is never re-checked.
+## CR-2: the winter window's own verdict -- year_winter.gd's forecast, read
+## the way winter_panel.gd::refresh reads it ("On track" when the comb holds
+## at least what winter needs) -- judged on the colony that meets winter: only
+## on the countdown's last day (the forecast's days_left at most 1), up to the
+## day boundary winter arrives on. main.gd emits day_changed before season.gd's
+## once-a-second tick sets winter_here, so that boundary is still checked. An
+## earlier verdict says nothing about the colony winter finds, and a met
+## milestone is never re-checked. The bee count is the whole population, queen
+## included, as main's panel refresh passes it.
 static func _winter_ready(main: Node2D) -> bool:
 	if not Session.winter_coming or Session.winter_here:
 		return false
-	var forecast: Dictionary = main.year_winter._winter_forecast(_winter_bees(main))
-	if float(forecast.get("days_left", INF)) > 1.0:
-		return false
-	return _winter_on_track(main)
-
-
-## SG-2 (Dave, 15 Oct 2026, architecture review D1 option B): the same
-## verdict on any day of the countdown -- year_winter.gd's forecast, read the
-## way winter_panel.gd::refresh reads it ("On track" when the comb holds at
-## least what winter needs). "Lay in honey for winter" finishes on it, so it
-## can finish before the last day while the CR-2 milestone still waits.
-static func _winter_on_track(main: Node2D) -> bool:
-	if not Session.winter_coming or Session.winter_here:
-		return false
-	var forecast: Dictionary = main.year_winter._winter_forecast(_winter_bees(main))
-	return float(forecast.get("held_energy", 0.0)) >= float(forecast.get("required_energy", 0.0))
-
-
-## The bee count both winter leaves pass the forecast: the whole population,
-## queen included, as main's panel refresh passes it.
-static func _winter_bees(main: Node2D) -> int:
 	var bees := 0
 	for count: Variant in main._role_counts().values():
 		bees += int(count)
-	return bees
+	var forecast: Dictionary = main.year_winter._winter_forecast(bees)
+	if float(forecast.get("days_left", INF)) > 1.0:
+		return false
+	return float(forecast.get("held_energy", 0.0)) >= float(forecast.get("required_energy", 0.0))
+
+
+## SG-2 (Dave, 15 Oct 2026, architecture review D1 option B): the same
+## forecast comparison as _winter_ready, with the same bee count, on any day
+## of the countdown rather than only its last. "Lay in honey for winter"
+## finishes on it, so it can finish early while the CR-2 milestone waits.
+## _winter_ready keeps its own copy of the comparison: tests/test_conditions.py
+## pins that body's text.
+static func _winter_on_track(main: Node2D) -> bool:
+	if not Session.winter_coming or Session.winter_here:
+		return false
+	var bees := 0
+	for count: Variant in main._role_counts().values():
+		bees += int(count)
+	var forecast: Dictionary = main.year_winter._winter_forecast(bees)
+	return float(forecast.get("held_energy", 0.0)) >= float(forecast.get("required_energy", 0.0))
 
 
 ## CR-2: a winter has come and gone. season.gd sets winter_ends_day when winter

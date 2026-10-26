@@ -286,20 +286,10 @@ func _refresh_short_term_goals(facts: Dictionary) -> void:
 		if not ShortTermGoals.progress(entry, goal_facts, state, day, thresholds, at_day_change).done:
 			continue
 		var reward: float = ShortTermGoals.finish(state, id, day)
-		var paid: float = main.hive.pay_reward(str(entry.resource), reward)
-		_log_goal(id, "finished", {"day": day, "resource": entry.resource, "reward": reward, "paid": paid,
-			"offered_day": entry.get("offered_day", day)})
+		main.hive.pay_reward(str(entry.resource), reward)
 	for entry: Dictionary in ShortTermGoals.available(goal_facts, state, day, thresholds, GameConfig.goal_reward_fraction):
 		entry["reward"] = maxf(float(entry.reward), GameConfig.goal_reward_floor)
 		ShortTermGoals.accept(state, entry)
-		_log_goal(str(entry.id), "offered", {"day": day, "resource": entry.resource, "reward": entry.reward,
-			"gross": gross.get(entry.resource, 0.0), "net": net.get(entry.resource, 0.0)})
-
-## One trace line per offer and finish (DiagnosticLog's "recorded" action),
-## what the SG-2 sweep counts. A handful of lines a run in ordinary play.
-func _log_goal(id: String, event: String, detail: Dictionary) -> void:
-	detail["event"] = event
-	DiagnosticLog.log_action("short_term_goal", id, "recorded", JSON.stringify(detail))
 
 func _refresh_panels(bees: Array, facts: Dictionary, counts: Dictionary) -> void:
 	var energy_share: float = 0.0
