@@ -178,10 +178,13 @@ over it (see Foraging's Persistence entry below).
    `current_flower`/`current_load` (gated by `main.gd.is_on_screen`),
    and the stats readout `foraging_panel.gd` would add
     (`plans/archive/FORAGING_EVIDENCE_2026-09-03.md`, built; evidence campaign remains).
-7. **Availability** — `orientation_flight_on` unlocks first;
-   `scouting_on` requires it; `floral_constancy_on` and
-   `auto_recruitment_on` both require `scouting_on`. All off by
-   default. Full detail in the Availability/prerequisites card below.
+7. **Availability** — `scouting_on` (Auto scouting) is a Foraging
+   tier-2 purchase that needs Orientation flight owned first
+   (`skills.gd::AUTO_SCOUTING`), and it replaces `orientation_flight_on`:
+   switching one on switches the other off. `floral_constancy_on`,
+   `auto_recruitment_on` and `proximity_recruitment_on` all require
+   `scouting_on`. All off by default. Full detail in the
+   Availability/prerequisites card below.
 8. **Persistence** — `save_game.gd`'s per-bee block saves
    `preferred_species` and `forage_start_point` (`preferred`,
    `start_x`/`start_y`). It does **not** save `avg_collection_rate`,
@@ -222,8 +225,11 @@ over it (see Foraging's Persistence entry below).
    checkbox widgets (`toggle_boxes`) updated to match, so the UI never
    shows a toggle on that the cascade just switched off underneath it.
 5. **Connection** — today wired to two independent chains: Foraging's
-   `orientation_flight_on → scouting_on → {floral_constancy_on,
-   auto_recruitment_on}`, and predator-response's
+   `scouting_on` excludes `orientation_flight_on`
+   (`prerequisites.gd::MUTUALLY_EXCLUSIVE`) and gates
+   `floral_constancy_on`, `auto_recruitment_on` and
+   `proximity_recruitment_on` (`prerequisites.gd::TOGGLE_PREREQUISITE`),
+   and predator-response's
    `predators_on → {crab_spider_recruit_suppression_on,
    alarm_pheromone_on}`. Lives entirely inside `debug_panel.gd` — a
    presentation file — which is section 13's one confirmed live pain
