@@ -51,8 +51,8 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | RR-18 | skip saves for the long checks C-140 and C-142 | `test_scenarios/`, `checks/ready/C-140.md`, `checks/ready/C-142.md` | yes | low |
 | RR-19 | comb workers seal and unseal cells over time (15 s to cap, 5 s to uncap) | `scripts/hive_cell.gd`, `scripts/orders_zones.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- DR-1 and CQ-M8 landed 25 Oct 2026 | high |
 | RR-20 | a comb worker carrying a body leaves, stays out one second, and comes back | `scripts/bee_building.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, tests | yes -- CQ-M8 landed 25 Oct 2026 | medium |
-| RR-21 | no ordinary rain in the first two days; rain warnings in plain words | `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | no -- waits for SG-4 (`scripts/main.gd`) | medium |
-| RR-22 | select a number of bees from a multi-selection, youngest and oldest | `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, tests | no -- waits for GP-5 and SG-4 | medium |
+| RR-21 | no ordinary rain in the first two days; rain warnings in plain words | `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | yes -- SG-4 landed 26 Oct 2026 | medium |
+| RR-22 | select a number of bees from a multi-selection, youngest and oldest | `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, tests | no -- after the Codex lane's CQ-R10 releases `scripts/input_selection.gd` (GP-5 and SG-4 landed 26 Oct 2026) | medium |
 
 RR-9 and RR-10 are Codex-lane slices (Dave, 15 Oct 2026, plan review D3:
 the Claude lane was full and the Codex backlog dry); RR-7 and RR-11 stay in
@@ -496,7 +496,7 @@ queued first runs first.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words**
 - Plan: `plans/now/run-repairs.md` -- "RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words"
 - Files: `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_fc2_first_crisis.py`, `tests/test_rr21_rain_free_days.py`
@@ -541,7 +541,7 @@ simulation. Presentation and selection state only.
 **Open decisions:** which n bees `Select n` keeps (nearest the centre is
 provisional; Dave answers it at the hands-on check).
 
-```queue-gated
+```queue
 **[Claude] RR-22 -- select a number of bees from a multi-selection**
 - Plan: `plans/now/run-repairs.md` -- "RR-22 -- select a number of bees from a multi-selection"
 - Files: `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, `tests/test_layout_regression.py`, `tests/rr22_select_n_test.gd`, `tests/test_rr22_select_n.py`

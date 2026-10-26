@@ -1,7 +1,7 @@
 # Meadow terrain -- the meadow floor in stacked blocks, then height's effects
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: SP-8a -- the meadow floor drawn in blocks, with everything on it lifted, gated until the alpha chain (FC-2 landed 17 Oct 2026) has landed -- SG-2, SG-3 and ED-1 to ED-3 (WP-2 landed 21 Oct 2026, WP-3 22 Oct 2026) -- since all of them and SP-8a edit `scripts/main.gd` or the save files (Dave, 16 Oct 2026, product review D3); height's simulation effects are cut after it and wait for AR-4 | Dependency: ED-3 (`plans/now/difficulty.md`), the last of that chain; the block art is exported (`plans/now/sprites.md`, SP-2 and SP-9 landed) | Verified: 2026-10-16
+Status: active | Owner: Dave / Claude Code | Next: SP-8a -- the meadow floor drawn in blocks, with everything on it lifted, gated until the alpha chain (FC-2 landed 17 Oct 2026) has landed -- SG-3 and ED-1 to ED-3 (WP-2 landed 21 Oct 2026, WP-3 22 Oct 2026, SG-2 26 Oct 2026) -- since all of them and SP-8a edit `scripts/main.gd` or the save files (Dave, 16 Oct 2026, product review D3); height's simulation effects are cut after it and wait for AR-4 | Dependency: ED-3 (`plans/now/difficulty.md`), the last of that chain; the block art is exported (`plans/now/sprites.md`, SP-2 and SP-9 landed) | Verified: 2026-10-16
 
 ## Objective
 
@@ -21,7 +21,7 @@ names `MeadowTerrain`. SP-8a's "True now" has the detail.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-8a | the meadow floor drawn in blocks, with everything on it lifted | see its `Files:` line below | no -- after ED-3, the last of the alpha chain SG-2 to ED-3 (WP-2 landed 21 Oct 2026, WP-3 22 Oct 2026; Dave, 16 Oct 2026) | high |
+| SP-8a | the meadow floor drawn in blocks, with everything on it lifted | see its `Files:` line below | no -- after ED-3, the last of the alpha chain SG-3 to ED-3 (WP-2 landed 21 Oct 2026, WP-3 22 Oct 2026, SG-2 26 Oct 2026; Dave, 16 Oct 2026) | high |
 | SP-8 (rest) | height's effects: flight cost, where flowers grow, scouting reach | to be cut after SP-8a | no -- after SP-8a and AR-4 (`plans/now/alpha-route-evidence.md`) | high (balance) |
 
 **Dependencies.** SP-8a waits for the alpha chain that followed FC-2 (`plans/archive/crisis-readiness_2026-10-17.md`, landed 17 Oct 2026): WP-2 and WP-3 (`plans/archive/work-priorities_2026-10-22.md`), SG-2 and SG-3 (`plans/now/short-term-goals.md`) and ED-1 to ED-3 (`plans/now/difficulty.md`), in Dave's order, because the closed alpha runs on placeholder art (Dave, 16 Oct 2026, product review D3). Height's simulation effects (SP-8's rest) wait for AR-4 (`plans/now/alpha-route-evidence.md`), so they cannot move balance under PP-6's and T2-7b's price sweeps.
