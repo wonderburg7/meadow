@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/CQ-R10` (`codex/CQ-R10`) | Codex | decompose input selection | Codex | in progress | none | `plans/now/code-health.md` CQ-R10 -- decompose input selection |
+| `.worktrees/DR-2` (`claude/DR-2`) | Claude | the cell popup's drone box | Claude | in progress | none | `plans/now/drones.md` DR-2 -- the cell popup's drone box |
