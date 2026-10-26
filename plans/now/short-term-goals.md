@@ -190,7 +190,12 @@ forecast comparison rather than calling `_winter_on_track`, because
 `tests/test_conditions.py` pins that body's text; for the same reason the
 income wrapper is `income_window(main, resource, days)`, since a function
 named `income` is shadowed (a GDScript warning) by the net_income leaf's
-local `income`, whose text that test also pins. The save field is written only while the state is non-empty, so a run with
+local `income`, whose text that test also pins. `available()` takes the
+floor as an optional sixth argument and returns the reward that is paid (a
+fraction of zero pays nothing). An in-place restore (`saving.gd::_restore`)
+empties the day-store window and resets `hive.lifetime_honey_made`, as a
+load's fresh scene does, so no window mixes two worlds; neither is saved.
+The save field is written only while the state is non-empty, so a run with
 no goals saves exactly as before and the CQ-S0 goldens stand unchanged; the
 goals' own round trip is `tests/test_sg2_short_term_goals.py`. The four
 `GameConfig` values' settings rows (`goal_*`, World & start, persist none)

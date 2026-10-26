@@ -42,8 +42,8 @@ var lifetime_nectar_collected: float = 0.0
 var lifetime_pollen_collected: float = 0.0
 ## SG-2: honey made, counted as each deposit lands in a cell
 ## (bee_honey.gd::honey_deposit), for the short-term goals' gross daily honey
-## income. Not saved: like the day-store window it feeds, it only matters as
-## a difference within one session.
+## income. Not saved: its only reader is main.gd's day-store window, which is
+## not saved either, and saving.gd::_restore resets both together.
 var lifetime_honey_made: float = 0.0
 var lifetime_births: int = 0
 

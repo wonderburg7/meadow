@@ -161,6 +161,24 @@ func _colony_case() -> void:
 
 	_winter_part()
 	_save_part()
+	_reward_rules()
+
+
+## The reward available() returns is the one paid: a quarter of gross income,
+## at least the floor, and nothing at all when the fraction is zero. An
+## unknown pollen rate shows no progress.
+func _reward_rules() -> void:
+	var goals: GDScript = load("res://scripts/short_term_goals.gd")
+	var facts := {"net_daily_income": {"pollen": 0.0}, "gross_daily_income": {"pollen": 4.0}}
+	var thresholds := {"few_free_cells": 0, "many_waiting_bees": 99, "few_waiting_bees": 0}
+	var floored: Array = goals.available(facts, {}, 2, thresholds, 0.25, 5.0)
+	_check(floored.size() == 1 and is_equal_approx(float(floored[0].reward), 5.0), "a small income's reward is raised to the floor")
+	var off: Array = goals.available(facts, {}, 2, thresholds, 0.0, 5.0)
+	_check(off.size() == 1 and is_zero_approx(float(off[0].reward)), "a reward fraction of zero pays nothing, floor or not")
+	var clock := {"held_since": {"pollen_surplus": 1}}
+	var unknown: Dictionary = goals.progress({"id": "pollen_surplus"}, {"net_daily_income": {}}, clock, 3, thresholds, true)
+	_check(not unknown.done and int(unknown.current) == 0 and clock.held_since.has("pollen_surplus"),
+		"an unknown pollen rate shows no progress and keeps the clock")
 
 
 ## "Lay in honey for winter" finishes on any countdown day; the CR-2
@@ -207,7 +225,10 @@ func _save_part() -> void:
 	var data: Dictionary = SaveGame.read(_save_path)
 	_check(data.has("short_term_goals"), "the save holds the goals")
 	_main.short_term_goals = {}
+	_main.hive.record_collection("honey", 7.0)
 	_main.saving._restore(data)
+	_check(_main.day_store_totals.is_empty() and is_zero_approx(_main.hive.lifetime_honey_made),
+		"an in-place restore starts the income window afresh, as a load does")
 	_check(_canonical(_main.short_term_goals) == _canonical(before),
 		"offered and finished goals come back from the save (%s, saved %s)" % [_canonical(_main.short_term_goals), _canonical(before)])
 	data.erase("short_term_goals")

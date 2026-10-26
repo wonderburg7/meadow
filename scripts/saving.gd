@@ -115,6 +115,13 @@ func _restore(data: Dictionary) -> void:
 	# day boundary: a whole-day goal's clock starts at the next one.
 	main.short_term_goals = main.SaveGame.short_term_goals(data)
 	main.short_term_goal_day = main.day
+	# SG-2: the day-store window is not saved, so a load starts it empty in a
+	# fresh scene. An in-place restore empties it too, or the next windows
+	# would difference this world's samples against the replayed one's. Honey
+	# made is read only through that window, so it restarts from zero with it,
+	# as a load's fresh hive does; it is therefore not saved either.
+	main.day_store_totals.clear()
+	main.hive.lifetime_honey_made = 0.0
 	# GD-2b: an older save has no guidance block, which intentionally clears
 	# the ledger instead of treating a previously shown explanation as new.
 	main.gallerin_panel.guidance_policy.restore(data.get("guidance", {}))

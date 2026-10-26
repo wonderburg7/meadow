@@ -386,7 +386,8 @@ var day_store_totals: Array = []
 ## loading a save from before SG-2.
 var short_term_goals: Dictionary = {}
 ## The day the goals were last refreshed on, so the first refresh of a new day
-## is the one that starts a whole-day goal's clock. Set to the loaded day by
+## is the one that starts a whole-day goal's clock; 0 until the run's first
+## refresh, which is not a boundary. Set to the loaded day by
 ## saving.gd::_restore, so a load is not mistaken for a day boundary.
 var short_term_goal_day: int = 0
 var cluster_centers: Dictionary = {}   # species name -> Array[Vector2]

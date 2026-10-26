@@ -502,10 +502,11 @@ var honey_warning_total: float = 10.0
 ## room" is offered at or below goal_few_free_cells free cells and asks for
 ## that many more built; "Put waiting bees to work" is offered at
 ## goal_many_waiting_bees bees waiting for work and done at
-## goal_few_waiting_bees or fewer. A goal never pays less than
-## goal_reward_floor, so one offered while its resource is barely coming in
-## (the pollen goal on a colony with no pollen foragers yet) still pays
-## something. Set by the SG-2 sweep (the table in that plan section).
+## goal_few_waiting_bees or fewer. While the fraction is above zero a goal
+## never pays less than goal_reward_floor, so one offered while its resource
+## is barely coming in (the pollen goal on a colony with no pollen foragers
+## yet) still pays something; a fraction of zero turns rewards off. Set by
+## the SG-2 sweep (the table in that plan section).
 var goal_reward_fraction: float = 0.25
 var goal_reward_floor: float = 5.0
 var goal_few_free_cells: float = 1.0

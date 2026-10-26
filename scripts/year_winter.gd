@@ -278,7 +278,8 @@ func _refresh_short_term_goals(facts: Dictionary) -> void:
 	}
 	var state: Dictionary = main.short_term_goals
 	var day: int = main.day
-	var at_day_change: bool = main.short_term_goal_day != day
+	# 0 means no refresh yet this run: its first is not a day boundary.
+	var at_day_change: bool = main.short_term_goal_day != 0 and main.short_term_goal_day != day
 	main.short_term_goal_day = day
 	var offered: Dictionary = state.get("offered", {})
 	for id: String in offered.keys():
@@ -287,8 +288,8 @@ func _refresh_short_term_goals(facts: Dictionary) -> void:
 			continue
 		var reward: float = ShortTermGoals.finish(state, id, day)
 		main.hive.pay_reward(str(entry.resource), reward)
-	for entry: Dictionary in ShortTermGoals.available(goal_facts, state, day, thresholds, GameConfig.goal_reward_fraction):
-		entry["reward"] = maxf(float(entry.reward), GameConfig.goal_reward_floor)
+	for entry: Dictionary in ShortTermGoals.available(goal_facts, state, day, thresholds,
+			GameConfig.goal_reward_fraction, GameConfig.goal_reward_floor):
 		ShortTermGoals.accept(state, entry)
 
 func _refresh_panels(bees: Array, facts: Dictionary, counts: Dictionary) -> void:
