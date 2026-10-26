@@ -213,6 +213,28 @@ func _seed_flower(founding: bool = false, max_units: int = 4) -> int:
 	if ledger != null and ledger.seed_in_season(gap):
 		return _plant_seed(ledger, gap)
 	var excluded_species: Array = ["Poppy"] if Session.starting_level == 1 else []
+	var birth_window: Array = _founding_birth_window(founding)
+	var starting_age: float = birth_window[0]
+	var birth_fraction: float = birth_window[1]
+	var weights: Array = main.FlowerSpecies.species_weights(excluded_species, birth_fraction, counts)
+	var species_index: int = main.FlowerSpecies.pick_from_weights(weights, excluded_species)
+	var species: Dictionary = main.FlowerSpecies.SPECIES[species_index]
+	var anchor: Vector2 = _pick_flower_anchor(species)
+
+	# A bushy species (Bramble) plants several flower units together as
+	# one bush, rather than leaving it to chance whether a later re-seed
+	# lands close enough to read as the same plant.
+	var unit_count: int = _bush_unit_count(species, max_units)
+	var dropped: int = ledger.drop_empty_gaps(unit_count - 1) if ledger != null else 0
+
+	for unit: int in range(unit_count):
+		var pos: Vector2 = _place_bush_unit(anchor, unit)
+		var flower: Node2D = _add_flower(pos, species_index, starting_age)
+		if ledger != null:
+			ledger.log_replant("seasonal", flower, weights, counts, unit == 0, gap, dropped)
+	return unit_count
+
+func _founding_birth_window(founding: bool) -> Array:
 	var starting_age := -1.0
 	var birth_fraction := -1.0
 	if founding:
@@ -226,9 +248,9 @@ func _seed_flower(founding: bool = false, max_units: int = 4) -> int:
 		var birth_day: float = 1.0 + (Session.sim_time - starting_age) / maxf(1.0, GameConfig.seconds_per_day)
 		var day_in_year: float = fposmod(birth_day - 1.0, year_days) + 1.0
 		birth_fraction = clampf((day_in_year - 1.0) / season_days, 0.0, 1.0)
-	var weights: Array = main.FlowerSpecies.species_weights(excluded_species, birth_fraction, counts)
-	var species_index: int = main.FlowerSpecies.pick_from_weights(weights, excluded_species)
-	var species: Dictionary = main.FlowerSpecies.SPECIES[species_index]
+	return [starting_age, birth_fraction]
+
+func _pick_flower_anchor(species: Dictionary) -> Vector2:
 	var species_name: String = species.name
 	var cluster_radius: float = species.get("cluster_radius", 70.0)
 	var cluster_chance: float = species.get("cluster_chance", 0.6)
@@ -257,35 +279,31 @@ func _seed_flower(founding: bool = false, max_units: int = 4) -> int:
 			centers.pop_front()
 		main.cluster_centers[species_name] = centers
 
-	# A bushy species (Bramble) plants several flower units together as
-	# one bush, rather than leaving it to chance whether a later re-seed
-	# lands close enough to read as the same plant.
+	return anchor
+
+func _bush_unit_count(species: Dictionary, max_units: int) -> int:
 	var unit_count := 1
 	if species.get("bushy", false):
 		unit_count = randi_range(
 			species.get("bush_min_units", 2), species.get("bush_max_units", 4))
-	unit_count = mini(unit_count, max_units)
-	var dropped: int = ledger.drop_empty_gaps(unit_count - 1) if ledger != null else 0
+	return mini(unit_count, max_units)
 
-	for unit: int in range(unit_count):
-		var pos: Vector2 = anchor
-		if unit > 0:
-			var a := randf() * TAU
-			var d := randf_range(BUSH_UNIT_SPREAD.x, BUSH_UNIT_SPREAD.y)
-			pos = anchor + Vector2(cos(a), sin(a)) * d
-		for retry: int in range(8):
-			if _is_clear_ground(pos):
-				break
-			if unit == 0:
-				pos = _random_field_point()
-			else:
-				var a2 := randf() * TAU
-				var d2 := randf_range(BUSH_UNIT_SPREAD.x, BUSH_UNIT_SPREAD.y)
-				pos = anchor + Vector2(cos(a2), sin(a2)) * d2
-		var flower: Node2D = _add_flower(pos, species_index, starting_age)
-		if ledger != null:
-			ledger.log_replant("seasonal", flower, weights, counts, unit == 0, gap, dropped)
-	return unit_count
+func _place_bush_unit(anchor: Vector2, unit: int) -> Vector2:
+	var pos: Vector2 = anchor
+	if unit > 0:
+		var a := randf() * TAU
+		var d := randf_range(BUSH_UNIT_SPREAD.x, BUSH_UNIT_SPREAD.y)
+		pos = anchor + Vector2(cos(a), sin(a)) * d
+	for retry: int in range(8):
+		if _is_clear_ground(pos):
+			break
+		if unit == 0:
+			pos = _random_field_point()
+		else:
+			var a2 := randf() * TAU
+			var d2 := randf_range(BUSH_UNIT_SPREAD.x, BUSH_UNIT_SPREAD.y)
+			pos = anchor + Vector2(cos(a2), sin(a2)) * d2
+	return pos
 
 ## Every replacement and founder goes in here: clear of obstacles, then set up.
 func _add_flower(pos: Vector2, species_index: int, starting_age: float = -1.0) -> Node2D:

@@ -46,6 +46,7 @@ DESCRIPTIONS = {
     "scenario_actions.gd": "The headless verbs, `when` clauses and layout assertions.",
     "game_config.gd": "The balance fields.",
     "input_selection.gd": "Selection, drag and placement resolution.",
+    "world_building.gd": "World layout, flower seeding and colony setup.",
     "skills.gd": "The skill catalogue and tree layout: ids, names, costs, prerequisites and slots.",
 }
 

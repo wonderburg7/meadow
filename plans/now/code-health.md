@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R11 in the Codex lane, then CQ-R10; CQ-M6 waits for CT-1 to release scripts/hive_cell.gd, and CQ-R6 waits for GP-5 to release scripts/hud.gd (Dave's order, 25 Oct 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R10 in the Codex lane (CQ-R11 complete); CQ-M6 waits for CT-1 to release scripts/hive_cell.gd, and CQ-R6 waits for GP-5 to release scripts/hud.gd (Dave's order, 25 Oct 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -377,7 +377,7 @@ edit. Reasoning: **medium**.
 ```queue
 **[Codex] CQ-R11 -- split flower seeding without changing RNG order**
 - Plan: `plans/now/code-health.md` -- "CQ-R11 -- split flower seeding without changing RNG order"
-- Files: `scripts/world_building.gd`, `FUNCTION_MAP.md`
+- Files: `scripts/world_building.gd`, `FUNCTION_MAP.md`, `tools/update_function_map.py`
 - Check: `python tools/equivalence.py test_scenarios/sf1_founding_flower_mix_test.json master`, `python tools/equivalence.py test_scenarios/pp4_seed_set.json master` and `python tools/equivalence.py test_scenarios/pp1_pollination_ledger.json master` report no differences; `python tools/prefinish.py` passes
 - Proof: `present: scripts/world_building.gd :: func _seed_flower(`
 - Next after: CQ-R10 -- decompose input selection
