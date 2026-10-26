@@ -1,7 +1,7 @@
 # Agent context -- boundary rules that load themselves
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: AC-2 -- `.claude/rules/ui.md` loads with the UI scripts (Claude lane) | Dependency: AC-4 followed FR-2 (`plans/now/forager-recruitment.md`), landed 25 Oct 2026; AC-1 to AC-3 share no file with either lane | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: AC-3 -- `.claude/rules/headless.md` loads with the harness (Claude lane) | Dependency: AC-4 followed FR-2 (`plans/now/forager-recruitment.md`), landed 25 Oct 2026; AC-1 to AC-3 share no file with either lane | Verified: 2026-10-24
 
 ## Objective
 
