@@ -164,6 +164,11 @@ static func save(world: Node2D, path: String = SAVE_PATH) -> bool:
 	# run's level policy at its start. Absent otherwise.
 	if Session.run_developer_changes:
 		data["developer_changes"] = true
+	# SG-2: the short-term goals offered, dismissed and finished, and the
+	# whole-day clocks under way. Additive, and absent while there are none,
+	# which reads the same as a save from before SG-2 (short_term_goals()).
+	if not world.short_term_goals.is_empty():
+		data["short_term_goals"] = world.short_term_goals.duplicate(true)
 
 	# SI-3: all-or-nothing -- a failed write leaves the old save in place.
 	return SaveSlots.write_atomic(path, JSON.stringify(data))
@@ -476,6 +481,22 @@ static func milestone_days(data: Dictionary) -> Dictionary:
 	if typeof(days) != TYPE_DICTIONARY:
 		return {}
 	return days
+
+## SG-2 (plans/now/short-term-goals.md): the short-term goals' state as
+## saving.gd::_restore hands it to main.gd. An additive field, with no
+## FORMAT_VERSION bump and no migration: a save without it -- or with
+## something other than a dictionary there -- has no goals offered, dismissed
+## or finished. Only short_term_goals.gd's four maps are kept.
+static func short_term_goals(data: Dictionary) -> Dictionary:
+	var saved: Variant = data.get("short_term_goals")
+	var state: Dictionary = {}
+	if typeof(saved) != TYPE_DICTIONARY:
+		return state
+	for key: String in ["offered", "dismissed", "finished", "held_since"]:
+		var part: Variant = saved.get(key)
+		if typeof(part) == TYPE_DICTIONARY:
+			state[key] = part.duplicate(true)
+	return state
 
 ## Puts the saved tuning values back before anything is built, so the
 ## world comes out the same shape it was saved in.

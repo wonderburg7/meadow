@@ -495,6 +495,23 @@ var pollen_warning_stock_multiplier: float = 0.5
 var nectar_warning_total: float = 40.0
 var honey_warning_total: float = 10.0
 
+## SG-2 (plans/now/short-term-goals.md decisions 2 and 4): the short-term
+## goals offered in a Colony Run or Scenario. A finished goal pays this
+## fraction of a day's gross income of its own resource, fixed when it is
+## offered, so the reward stays small for five bees or five hundred. "Make
+## room" is offered at or below goal_few_free_cells free cells and asks for
+## that many more built; "Put waiting bees to work" is offered at
+## goal_many_waiting_bees bees waiting for work and done at
+## goal_few_waiting_bees or fewer. A goal never pays less than
+## goal_reward_floor, so one offered while its resource is barely coming in
+## (the pollen goal on a colony with no pollen foragers yet) still pays
+## something. Set by the SG-2 sweep (the table in that plan section).
+var goal_reward_fraction: float = 0.25
+var goal_reward_floor: float = 5.0
+var goal_few_free_cells: float = 1.0
+var goal_many_waiting_bees: float = 8.0
+var goal_few_waiting_bees: float = 4.0
+
 ## A larva that has gone this long with nothing to eat dies. The cell is
 ## then blocked by the body until a comb worker on maintenance clears it
 ## out and carries it away -- neglect costs you the cell as well as the

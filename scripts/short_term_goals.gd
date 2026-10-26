@@ -17,6 +17,10 @@ const CATALOGUE := [
 ## Facts: net_daily_income and gross_daily_income map resource to amount;
 ## built_cells, winter_coming and winter_ready supplement diagnostics.compute.
 ## Thresholds: few_free_cells, many_waiting_bees and few_waiting_bees.
+## SG-2: a resource missing from an income map is unknown, not zero -- its
+## one-day window has not filled since the run began or was loaded. No goal is
+## offered while its own resource's gross income is unknown, since the reward
+## is fixed at offer and would pay nothing.
 static func available(facts: Dictionary, state: Dictionary, day: int, thresholds: Dictionary, reward_fraction: float) -> Array:
 	var offered: Dictionary = state.get("offered", {})
 	var dismissed: Dictionary = state.get("dismissed", {})
@@ -34,6 +38,8 @@ static func available(facts: Dictionary, state: Dictionary, day: int, thresholds
 			break
 		var id: String = goal.id
 		if offered.has(id) or int(dismissed.get(id, -1)) == day or int(finished.get(id, -1)) == day:
+			continue
+		if not facts.get("gross_daily_income", {}).has(goal.resource):
 			continue
 		if not _trigger(id, facts, thresholds):
 			continue
@@ -94,6 +100,11 @@ static func progress(entry: Dictionary, facts: Dictionary, state: Dictionary, da
 	var condition: bool = false
 	match id:
 		"pollen_surplus":
+			# SG-2: an unknown rate neither advances nor interrupts the day.
+			if not facts.get("net_daily_income", {}).has("pollen"):
+				var known_since: Dictionary = state.get("held_since", {})
+				var so_far: int = maxi(0, day - int(known_since.get(id, day)))
+				return {"current": so_far, "target": 1, "done": false}
 			current = float(facts.get("net_daily_income", {}).get("pollen", 0.0))
 			condition = current > 0.0
 			# A positive rate is the condition; the full day is the progress.
@@ -130,7 +141,8 @@ static func progress(entry: Dictionary, facts: Dictionary, state: Dictionary, da
 static func _trigger(id: String, facts: Dictionary, thresholds: Dictionary) -> bool:
 	match id:
 		"pollen_surplus":
-			return float(facts.get("net_daily_income", {}).get("pollen", 0.0)) <= 0.0
+			var net: Dictionary = facts.get("net_daily_income", {})
+			return net.has("pollen") and float(net.pollen) <= 0.0
 		"clear_blocked_work":
 			return int(facts.get("blocked_cells", 0)) > 0 or int(facts.get("blocked_work", 0)) > 0
 		"make_room":

@@ -155,7 +155,10 @@ static func honey_deposit(bee: Node2D, delta: float) -> void:
 	if bee.timer > 0.0:
 		return
 	if bee.target_cell != null and is_instance_valid(bee.target_cell):
-		bee.honey_load -= bee.target_cell.add_resource("honey", bee.honey_load)
+		var added: float = bee.target_cell.add_resource("honey", bee.honey_load)
+		bee.honey_load -= added
+		# SG-2: honey made, for the short-term goals' gross daily income.
+		bee.hive.record_collection("honey", added)
 		bee.hive.announce()
 		bee.fan_target = bee.target_cell
 	BeeForaging.release_cell_slot(bee)

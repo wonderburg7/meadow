@@ -110,6 +110,11 @@ func _restore(data: Dictionary) -> void:
 	# and waiting seeds with it.
 	main.pollination.restore(data.get("pollination"))
 	main.pollination.restore_seed(data.get("seed_bank"))
+	# SG-2: here too, so an in-place restore puts the short-term goals back as
+	# a load does. A save from before SG-2 has none. The loaded day is not a
+	# day boundary: a whole-day goal's clock starts at the next one.
+	main.short_term_goals = main.SaveGame.short_term_goals(data)
+	main.short_term_goal_day = main.day
 	# GD-2b: an older save has no guidance block, which intentionally clears
 	# the ledger instead of treating a previously shown explanation as new.
 	main.gallerin_panel.guidance_policy.restore(data.get("guidance", {}))

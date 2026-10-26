@@ -1,7 +1,7 @@
 # Short-term goals -- optional outcomes the colony's state suggests
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: SG-2 -- goals offered, met and paid in Colony Runs and Scenarios, and saved (Claude backlog), then SG-3 | Dependency: SG-2's gate cleared when WP-3 (`plans/archive/work-priorities_2026-10-22.md`) landed 22 Oct 2026, in Dave's order (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`, released the save files 17 Oct 2026); SG-3 waits for SG-2 (GP-2 landed 13 Oct 2026) | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss (startable now SG-2 has landed; it should follow straight on, since SG-2 alone pays rewards the player cannot see) | Dependency: SG-2 landed 26 Oct 2026; GP-2 landed 13 Oct 2026 | Verified: 2026-10-26
 
 ## Objective
 
@@ -99,7 +99,7 @@ Challenge goal shelf's behaviour.
 
 ## Not in the queue, and why
 
-SG-3 waits for SG-2 (WP-3 landed 22 Oct 2026, clearing SG-2's gate).
+SG-3's gate cleared when SG-2 landed (26 Oct 2026).
 CQ-S0b (`plans/now/code-health.md`) also edits `scripts/saving.gd`'s bee
 restore, and DR-1 (`plans/now/drones.md`) both save files; whichever is
 queued first runs first.
@@ -174,6 +174,56 @@ authority in `conditions.gd`; read it there, never recompute it.
   `short_term_goals.gd` is unchanged by this. `winter_coming` is
   `Session.winter_coming`.
 
+**As built (26 Oct 2026).** The goals' state is `main.gd::short_term_goals`
+(with `short_term_goal_day`, which marks the first refresh of a new day as
+the day boundary); `year_winter.gd::_refresh_short_term_goals` runs after the
+Challenge early return and also skips levels 1 and 2, so a finished Challenge
+offers none either. A finished goal pays through `hive.gd::pay_reward`, which
+fills cells as `deposit` does but puts honey in ripe, so a honey reward never
+re-wets a ripe cell. Each offer and finish writes a `short_term_goal` trace
+line (DiagnosticLog's "recorded" action), which is what the sweep counts.
+The save field is written only while the state is non-empty, so a run with
+no goals saves exactly as before and the CQ-S0 goldens stand unchanged; the
+goals' own round trip is `tests/test_sg2_short_term_goals.py`. The four
+`GameConfig` values' settings rows (`goal_*`, World & start, persist none)
+are in `scripts/settings_catalogue.gd`, which every `GameConfig` field needs.
+
+**The sweep (26 Oct 2026).** Three seeds (20260923-25) of the reference
+Colony Run, `test_scenarios/alpha_arc_test.json` (to day 43, the first winter
+over), with the values below. Rewards are in the goal's own resource.
+
+| Goal | Offered (per run) | Finished | Days open (median) | Reward at offer (min / median / max) | Paid per run | First offered (day) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Build a pollen surplus | 8 (2.7) | 8 | 11 | 5.0 / 5.0 / 5.0 | 10.0 | 3, 3, 3 |
+| Clear blocked work | 3 (1.0) | 3 | 0 | 5.0 / 5.0 / 5.0 | 5.0 | 26, 17, - |
+| Make room | 10 (3.3) | 7 | 2 | 5.0 / 24.1 / 36.1 | 55.3 | 3, 3, 3 |
+| Feed every larva | 0 | 0 | - | - | 0 | - |
+| Put waiting bees to work | 0 | 0 | - | - | 0 | - |
+| Lay in honey for winter | 5 (1.7) | 2 | 0 | 5.0 / 5.0 / 5.0 | 3.3 | 29, 26, 21 |
+
+The reference colony stays tiny (the queen alone to about day 20, at most
+seven bees, five cells), so its pollen and honey income is a few units a day
+and a quarter of it is close to nothing: before the floor, six of seven pollen
+offers and every honey offer paid 0. **`goal_reward_floor` = 5** makes each
+pay something while staying under a third of one forager's pollen load (15);
+nectar rewards (Make room, 20-36) are the quarter-day figure itself. Pollen
+paid less than offered (10.0 a run against 13.3 offered) because the five
+cells were full when it landed: a full comb keeps the rest, by design.
+
+The waiting-bees thresholds needed a larger colony than the reference one,
+whose waiting count never passed one. In `test_scenarios/colony_30_bees_test.json`
+(31 bees, a Scenario, seeds 1-3) six to eleven bees wait for work at some
+point every day, so the first trial's 4 / 1 offered "Put waiting bees to
+work" on day 3 of every run and never finished it, holding a slot for the
+rest of the run. **`goal_many_waiting_bees` = 8, `goal_few_waiting_bees` = 4**
+offer it once in three runs, finished after 11 days for 34.5 nectar, and
+leave the second slot free for the others (pollen surplus 4 offers / 1
+finished, Feed every larva 4 / 4, Make room 3 / 0 within the 20 short days).
+**`goal_few_free_cells` = 1**: the reference colony sits at zero or one free
+cell most of its run, and "Make room" asking for one more cell finished 7 of
+10 times, two days after the offer. **`goal_reward_fraction` = 0.25**, as
+decision 2 set it.
+
 ```queue
 **[Claude] SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved**
 - Plan: `plans/now/short-term-goals.md` -- "SG-2 -- goals offered, completed and paid in Colony Runs and Scenarios, and saved"
@@ -199,7 +249,7 @@ holds diagnostic explanations keyed by `ColonyDiagnostics` fact ids, and
 `explanation()`'s evidence line covers only the two workforce facts (its
 `else` branch is the comb one), so a goal row there would show comb evidence.
 
-```queue-gated
+```queue
 **[Claude] SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss**
 - Plan: `plans/now/short-term-goals.md` -- "SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss"
 - Files: `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/guidance_catalogue.gd`, `test_scenarios/sg3_goal_shelf.json`, `tests/test_sg3_goal_shelf.py`

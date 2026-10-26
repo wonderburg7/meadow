@@ -100,6 +100,37 @@ const TUNABLES := [
 		"category": "World & start",
 		"tip": "The \"almost no pollen\" line is kept off the problem strip until this day. A colony this young genuinely has no pollen and there is nothing useful to do about it, so warning from the first minute only teaches you to ignore the strip.",
 	},
+	# SG-2: the short-term goals' reward and thresholds (plans/now/short-term-goals.md).
+	{
+		"persist": "none",
+		"key": "goal_reward_fraction", "label": "Goal reward x day's income", "step": 0.05, "min": 0.0, "max": 2.0,
+		"category": "World & start",
+		"tip": "A finished short-term goal pays this share of a day's income of its own resource, fixed when the goal is offered. At 0.25 it is worth about a quarter of a day's collecting.",
+	},
+	{
+		"persist": "none",
+		"key": "goal_reward_floor", "label": "Goal reward at least", "step": 1.0, "min": 0.0,
+		"category": "World & start",
+		"tip": "The least a finished short-term goal pays, in its own resource, so a goal offered while hardly any of it is coming in still pays something.",
+	},
+	{
+		"persist": "none",
+		"key": "goal_few_free_cells", "label": "Make room at free cells", "step": 1.0, "min": 0.0,
+		"category": "World & start",
+		"tip": "\"Make room\" is offered when the comb has this many free cells or fewer, and asks for this many more to be built (at least one).",
+	},
+	{
+		"persist": "none",
+		"key": "goal_many_waiting_bees", "label": "Waiting-bees goal from", "step": 1.0, "min": 1.0,
+		"category": "World & start",
+		"tip": "\"Put waiting bees to work\" is offered when at least this many bees are waiting for work.",
+	},
+	{
+		"persist": "none",
+		"key": "goal_few_waiting_bees", "label": "Waiting-bees goal done at", "step": 1.0, "min": 0.0,
+		"category": "World & start",
+		"tip": "\"Put waiting bees to work\" is done once this many bees or fewer are waiting for work.",
+	},
 	{
 		"persist": "run",
 		"key": "pollen_warning_stock_multiplier", "label": "Pollen warning x egg cost", "step": 0.05, "min": 0.0,
