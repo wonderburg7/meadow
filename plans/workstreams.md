@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/AC-3` (`claude/AC-3`) | Claude | `.claude/rules/headless.md` loads with the harness | Claude | in progress | none | `plans/now/agent-context.md` AC-3 -- `.claude/rules/headless.md` loads with the harness |
