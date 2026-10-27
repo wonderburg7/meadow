@@ -225,6 +225,14 @@ func _advance_mining_work_epoch() -> void:
 func tile_is_free(hex: Vector2i) -> bool:
 	return not occupied_tiles.has(hex)
 
+## RR-16: the unbuilt cell (a part-built site) on a tile, or null. A finished
+## cell gives null, so the caller can fall back to the general build.
+func site_at_tile(hex: Vector2i) -> Node2D:
+	var node: Variant = occupied_tiles.get(hex)
+	if node != null and is_instance_valid(node) and node.get("is_built") == false:
+		return node
+	return null
+
 ## Is this tile inside the open part of the hive (not soil, not beyond
 ## the wall)? Comb can only be drawn on free interior tiles.
 func tile_is_interior(hex: Vector2i) -> bool:
