@@ -25,10 +25,10 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
 1. **[Claude] PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter**
    - Plan: `plans/now/pollination.md` -- "PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter"
-   - Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
-   - Check: the weak baseline's cause is recorded in this section; `python -m unittest tests.test_pacing_gates tests.test_pp6_gyne_rearing_affordable` passes; over 3 seeds of the reference Colony Run, `pacing_gates.py`'s Gyne-rearing row reports a median day from the first winter's end to 11 days after it (days 42 to 52); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
-   - Proof: `absent: test_scenarios/alpha_arc_test.json :: skill.foraging.pollinator_points`
-   - Next after: none -- the pollination plan is complete; AR-4 in `plans/now/alpha-route-evidence.md` then starts in the Codex lane, and FR-3 in `plans/now/forager-recruitment.md` follows
+   - Files: `test_scenarios/alpha_arc_test.json`, `scripts/conditions.gd`, `tests/test_conditions.py`
+   - Check: `python -m unittest tests.test_conditions tests.test_pp6_gyne_rearing_affordable` passes (`skill_affordable` has its match arm and reads `Progression.purchase_blocker` with the Buy button's stores); over 3 seeds of the reference Colony Run (`python tools/pacing_gates.py`) the run owns Pollinator points (`skill.foraging.pollinator_points`), the Gyne-rearing row reports a day on each seed (any day, no band), and the first-worker row stays in band (median by day 17); the weak baseline's cause stays recorded in this section; no price, recipe or `config_overrides` entry that redefines what is measured moves; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/conditions.gd :: skill_affordable`
+   - Next after: PP-10 -- the sweep prices the route so Gyne rearing is first affordable after the first winter
 
 2. **[Claude] RR-19 -- comb workers seal and unseal cells over time**
    - Plan: `plans/now/run-repairs.md` -- "RR-19 -- comb workers seal and unseal cells over time"
@@ -88,19 +88,20 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
+- **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for PP-10 (`plans/now/pollination.md`), the sweep that prices the gyne route (Dave split PP-9, 27 Oct 2026).
+- **PP-10** (`plans/now/pollination.md`) -- the sweep prices the route so Gyne rearing is first affordable after the first winter; waits for PP-9, whose reference route it sweeps against.
 - **CQ-M5b** (`plans/now/code-health.md`) -- the last CanvasLayer readers and the bare-layer source check; waits for RR-21 to release `scripts/main.gd` and the Jules J-14 branch to settle `scripts/game_panel.gd`.
 - **CQ-M4** (`plans/now/code-health.md`) -- name Challenge level ids; waits for the Claude lane to release `scripts/save_game.gd` and `scripts/saving.gd`.
 - **RR-12** (`plans/now/run-repairs.md`) -- a loaded run keeps its readout history (Dave, 16 Oct 2026); waits for ED-3, the last of the alpha chain, which shares `scripts/main.gd` and the save files.
 - **SP-8a** (`plans/now/meadow-terrain.md`) -- the meadow floor drawn in blocks, with everything on it lifted (Dave, 12 Oct 2026); waits for ED-3, the last of the alpha chain (SG-3 to ED-3; WP-2 landed 21 Oct 2026, WP-3 landed 22 Oct 2026 and SG-2 landed 26 Oct 2026), which shares `scripts/main.gd` and the save files (Dave, 16 Oct 2026).
 - **HM-2** (`plans/now/hive-and-menu-art.md`) -- five top-bar buttons drawn from Dave's menu icons; waits for Dave to queue it (his call, 13 Oct 2026); its gated block is written.
 - **HM-1** (`plans/now/hive-and-menu-art.md`) -- your hive and rival hives drawn from Dave's meadow hive art; waits for Dave to fit the large hive's layer 0 on its 54x41 canvas in Aseprite.
-- **T2-7b** (`plans/now/tier-two.md`) -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4, whose arc buys a Honey worker, and is specified when it lands.
+- **T2-7b** (`plans/now/tier-two.md`) -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4 (which waits for PP-10), whose arc buys a Honey worker, and is specified when it lands.
 - **ED-1** (`plans/now/difficulty.md`) -- every bee has health; waits for SG-3 (Dave's order; FC-2 landed 17 Oct 2026, freeing the save files).
 - **ED-2** (`plans/now/difficulty.md`) -- a run's difficulty and Easy's rules; waits for ED-1.
 - **ED-3** (`plans/now/difficulty.md`) -- choosing Easy at run start; waits for ED-2.
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces.
-- **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-9 (the sweep Dave split from 26 Oct 2026), which shares `scripts/skills.gd`.
+- **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-10 (`plans/now/pollination.md`, the sweep Dave split from PP-9 27 Oct 2026), which shares `scripts/skills.gd`.
 - **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices of the alpha chain (ED-1, ED-2, RR-12, SP-8a in `plans/now/drones.md`; WP-2 landed 21 Oct 2026 and WP-3 landed 22 Oct 2026) and ED-3 (Dave, 18 Oct 2026); CQ-S0's round-trip harness landed 22 Oct 2026.
 - **CQ-R2** (`plans/now/code-health.md`) -- the first crisis moves out of `scripts/main.gd` into a new first_crisis.gd, touching the save files; waits, gated with CQ-S1, for the save slices of the alpha chain (ED-1, ED-2, RR-12, SP-8a in `plans/now/drones.md`; WP-2 landed 21 Oct 2026) and ED-3 (Dave, 18 Oct 2026); its plan section is written when that gate clears.
 - **CQ-R8** (`plans/now/code-health.md`) -- hud builders shortened (the designation button table); needs its section and block; prepare before CQ-T3.
