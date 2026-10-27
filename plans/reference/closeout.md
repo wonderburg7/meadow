@@ -145,7 +145,11 @@ sentence or two, one `PASS:` line stating the single condition, one `Runner:`
 line (who runs it in a pass: `plans/reference/check-runner.md`, "Choosing a
 runner"), one `Owner:` line naming the plan;
 `python tools/new_check.py --name "<name>" --owner <plan> --runner <runner>`
-writes the skeleton with the next free id. Dave replies by id. Move blocked
+writes the skeleton with the next free id. That id is free only in this
+checkout: if master spends it before the merge, `finish` moves the branch's
+check to a free id and rewrites its mentions in the files the branch changed
+(`new_check.py --renumber-clashes master`), so report the id `finish`
+prints. Dave replies by id. Move blocked
 checks to `checks/blocked.md`; archive confirmed ones with
 `python tools/new_check.py --confirm C-<n>`, which also regenerates the
 index and lists the live lines that still name the id. Three admission

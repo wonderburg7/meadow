@@ -167,7 +167,7 @@ $verifyBase = if ($env:MEADOW_VERIFY_BASE) { $env:MEADOW_VERIFY_BASE } else { "m
 
 function Test-LifecycleTouched {
     if ($Full) { return $true }
-    $paths = @("tools/slice.ps1", "tools/verify.ps1", "tools/diagnostics.ps1", "tools/check_docs.py", "tools/backlog.py", "tools/admission.py", "tools/stop_causes.py", "tools/archive_slice.py", "tools/refill_lane.py", "tools/heading.py", "tests/workflow_test_support.py") + @($lifecycleModules | ForEach-Object { ($_ -replace "\.", "/") + ".py" })
+    $paths = @("tools/slice.ps1", "tools/verify.ps1", "tools/diagnostics.ps1", "tools/check_docs.py", "tools/backlog.py", "tools/admission.py", "tools/stop_causes.py", "tools/archive_slice.py", "tools/refill_lane.py", "tools/heading.py", "tools/new_check.py", "tests/workflow_test_support.py") + @($lifecycleModules | ForEach-Object { ($_ -replace "\.", "/") + ".py" })
     try {
         $changed = @(& git -C $PSScriptRoot diff --name-only "$verifyBase...HEAD" 2>$null)
         $changed += @(& git -C $PSScriptRoot diff --name-only HEAD 2>$null)

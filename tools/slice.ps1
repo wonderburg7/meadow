@@ -2734,6 +2734,15 @@ function Invoke-SliceFinish {
     # worktree with master's tip counted every check master confirmed after
     # the branch forked: L-16's report "gained" C-74..C-92 (2 Oct 2026), and
     # such a stale branch passed the gate without filing a check of its own.
+    # A check filed here can take an id master spent after the fork (CQ-R10
+    # and GP-5 both took C-150, 27 Oct 2026), and the merge then stopped on an
+    # add/add conflict. Move this branch's check to a free id first; the edit
+    # is committed with the outstanding work below.
+    $renumber = Invoke-SlicePythonTool -Root $worktreeRoot -PythonPath $PythonPath -Arguments @((Join-Path $worktreeRoot "tools\new_check.py"), "--renumber-clashes", "master", "--root", $worktreeRoot)
+    $renumber.Output | ForEach-Object { Write-Output $_ }
+    if ($renumber.Exit -ne 0) {
+        Stop-Slice -Cause "$id -- tools/new_check.py --renumber-clashes failed (exit $($renumber.Exit)); its reason is printed above" -Fix "in the worktree run python tools/new_check.py --renumber-clashes master, fix what it names, and retry finish"
+    }
     $mergeBaseRead = Invoke-GitText -C $worktreeRoot merge-base master HEAD
     if ($mergeBaseRead.ExitCode -ne 0) { throw "could not find the merge base of master and $branch" }
     $mergeBase = $mergeBaseRead.Text.Trim()

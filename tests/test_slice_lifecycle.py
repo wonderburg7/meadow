@@ -27,6 +27,7 @@ class SliceDoctorTest(unittest.TestCase):
         (self.root / ".codex").mkdir()
         (self.root / "checks" / "ready").mkdir(parents=True)
         shutil.copy2(SLICE_PATH, self.root / "tools" / "slice.ps1")
+        shutil.copy2(SLICE_PATH.with_name("new_check.py"), self.root / "tools" / "new_check.py")
         shutil.copy2(VERIFY_PATH, self.root / "tools" / "verify.ps1")
         shutil.copy2(DIAGNOSTICS_PATH, self.root / "tools" / "diagnostics.ps1")
         shutil.copy2(CHECK_DOCS_PATH, self.root / "tools" / "check_docs.py")

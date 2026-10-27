@@ -119,6 +119,56 @@ None -- first run.
 """
 
 
+class RenumberClashesTest(unittest.TestCase):
+    """finish moves a branch's new check off an id master spent since the fork."""
+
+    def test_only_clashing_ids_move_past_every_id_in_use(self):
+        self.assertEqual(new_check.plan_renumbers({150, 151}, {149, 150, 153}), {150: 154})
+        self.assertEqual(new_check.plan_renumbers({160}, {150}), {})
+
+    def test_rewrite_leaves_longer_ids_alone(self):
+        self.assertEqual(
+            new_check.rewrite_ids("C-150 and C-1500, C-15", {150: 154}), "C-154 and C-1500, C-15"
+        )
+
+    def git(self, *args):
+        subprocess.run(["git", "-C", str(self.root), *args], check=True, capture_output=True)
+
+    def write(self, rel, text):
+        path = self.root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def test_a_branch_check_clashing_with_master_is_renamed_and_its_plan_follows(self):
+        self.root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+        self.git("init", "-q", "-b", "master")
+        self.git("config", "user.email", "t@example.com")
+        self.git("config", "user.name", "t")
+        self.write("checks/ready/C-4.md", ready_record(4))
+        self.write("plans/now/sample.md", "Status: active\n")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "base")
+        self.git("checkout", "-q", "-b", "work")
+        self.write("checks/ready/C-5.md", ready_record(5))
+        self.write("plans/now/sample.md", "Status: active | C-5 filed\n")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "branch check")
+        self.git("checkout", "-q", "master")
+        self.write("checks/ready/C-5.md", "# C-5 -- master's own\n")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "master check")
+        self.git("checkout", "-q", "work")
+
+        self.assertEqual(new_check.renumber_clashes(self.root, "master"), {5: 6})
+        self.assertTrue((self.root / "checks/ready/C-6.md").read_text().startswith("# C-6 --"))
+        self.assertIn("C-6 filed", (self.root / "plans/now/sample.md").read_text())
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "renumber")
+        self.git("merge", "-q", "master", "-m", "merge")  # raises on an add/add conflict
+        self.assertEqual(new_check.renumber_clashes(self.root, "master"), {})
+
+
 class ReviewRecordTest(unittest.TestCase):
     def errors(self, text: str) -> list[str]:
         return check_docs.review_record_errors("docs/plan-review-2026-09-28.md", text)

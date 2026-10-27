@@ -207,6 +207,97 @@ def confirm_main(raw_ids: list[str], note: str | None) -> int:
     return 0
 
 
+# --- Renumbering a branch's ids that master spent meanwhile ---
+# Two worktrees each allocate the next free id from their own checkout, so a
+# check filed on a branch can take an id master spent after the branch forked.
+# The merge then stopped on an add/add conflict in checks/ready/C-<n>.md
+# (CQ-R10 and GP-5 both took C-150, 27 Oct 2026). finish runs
+# --renumber-clashes on the branch before merging, so the branch's check moves
+# to an id free on both sides instead.
+
+
+def git_text(root: Path, *args: str) -> str:
+    run = subprocess.run(
+        ["git", "-C", str(root), *args], capture_output=True, text=True, encoding="utf-8"
+    )
+    if run.returncode != 0:
+        raise RuntimeError(f"git {' '.join(args)} failed: {run.stderr.strip()}")
+    return run.stdout
+
+
+def ids_in(text: str) -> set[int]:
+    return {int(n) for n in CHECK_ID.findall(text)}
+
+
+def ids_spent_on(root: Path, ref: str) -> set[int]:
+    """Every id ref's tree spends: its ready records, blocked.md and the archive."""
+    spent: set[int] = set()
+    for name in git_text(root, "ls-tree", "--name-only", ref, "checks/ready/").split():
+        spent |= ids_in(Path(name).name)
+    for rel in ("checks/blocked.md", ARCHIVE_REL):
+        try:
+            spent |= ids_in(git_text(root, "show", f"{ref}:{rel}"))
+        except RuntimeError:
+            continue
+    return spent
+
+
+def plan_renumbers(added: set[int], taken: set[int]) -> dict[int, int]:
+    """Map each added id another line already took to a new id taken by neither."""
+    mapping: dict[int, int] = {}
+    in_use = set(taken) | set(added)
+    for old in sorted(added & taken):
+        new = max(in_use) + 1
+        in_use.add(new)
+        mapping[old] = new
+    return mapping
+
+
+def rewrite_ids(text: str, mapping: dict[int, int]) -> str:
+    return CHECK_ID.sub(lambda m: f"C-{mapping.get(int(m.group(1)), int(m.group(1)))}", text)
+
+
+def renumber_clashes(root: Path, target: str) -> dict[int, int]:
+    """Move the branch's new checks off ids target has spent since the fork.
+
+    An id the branch added was free at the merge base, so every mention of it
+    on the branch means the branch's own check: each Markdown file the branch
+    changed is rewritten, not just the record. Leaves the edits uncommitted."""
+    base = git_text(root, "merge-base", target, "HEAD").strip()
+    changed = set(git_text(root, "diff", "--name-only", base, "--").split())
+    changed |= set(git_text(root, "ls-files", "--others", "--exclude-standard").split())
+    added_records = git_text(
+        root, "diff", "--name-only", "--diff-filter=A", base, "--", "checks/ready"
+    ).split()
+    added_records += git_text(
+        root, "ls-files", "--others", "--exclude-standard", "--", "checks/ready"
+    ).split()
+    added = {
+        int(m.group(1))
+        for rel in added_records
+        if (m := re.fullmatch(r"C-(\d+)\.md", Path(rel).name))
+    }
+    mapping = plan_renumbers(added, ids_spent_on(root, target))
+    if not mapping:
+        return mapping
+    for old, new in mapping.items():
+        (root / "checks" / "ready" / f"C-{old}.md").rename(root / "checks" / "ready" / f"C-{new}.md")
+    renamed = {f"checks/ready/C-{old}.md": f"checks/ready/C-{new}.md" for old, new in mapping.items()}
+    for rel in sorted(changed):
+        path = root / renamed.get(rel, rel)
+        if path.suffix != ".md" or not path.is_file() or rel == "checks/ready.md":
+            continue
+        text = path.read_text(encoding="utf-8")
+        updated = rewrite_ids(text, mapping)
+        if updated != text:
+            path.write_text(updated, encoding="utf-8")
+    # check_docs.py owns the index's format and reads the checkout it lives in.
+    index_tool = root / "tools" / "check_docs.py"
+    if index_tool.is_file():
+        subprocess.run([sys.executable, str(index_tool), "--write-ready-index"], cwd=root, check=True)
+    return mapping
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--name", help="short name after the id in the heading")
@@ -232,8 +323,21 @@ def main() -> int:
     parser.add_argument(
         "--note", help="with --confirm: one line recorded under each archived entry"
     )
+    parser.add_argument(
+        "--renumber-clashes",
+        metavar="REF",
+        help="move checks this branch added off ids REF (e.g. master) spent since the fork",
+    )
+    parser.add_argument(
+        "--root", default=str(ROOT), help="with --renumber-clashes: the branch's checkout"
+    )
     args = parser.parse_args()
 
+    if args.renumber_clashes:
+        mapping = renumber_clashes(Path(args.root), args.renumber_clashes)
+        for old, new in mapping.items():
+            print(f"renumbered C-{old} -> C-{new} ({args.renumber_clashes} took C-{old} meanwhile)")
+        return 0
     if args.confirm:
         if args.name or args.owner or args.runner or args.id is not None:
             parser.error("--confirm cannot be combined with --name, --owner, --runner or --id")

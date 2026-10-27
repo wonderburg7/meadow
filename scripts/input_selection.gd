@@ -342,6 +342,7 @@ func _hex_at(global_point: Vector2) -> Vector2i:
 	var local_point: Vector2 = main.hive_root.to_local(global_point)
 	return main.Shapes.pixel_to_hex(local_point - main.hive.comb_centre, GameConfig.hive_cell_spacing, Session.use_sprite_hex_grid)
 
+# --- Click-to-place tools ---
 ## The "click a spot" tools, entered from the HUD and consumed by the next
 ## left click (see _finish_drag). Only one is ever active -- main.gd's
 ## active_placement_tool. A new tool is a row here plus a `_place_*` handler
@@ -353,7 +354,6 @@ func _hex_at(global_point: Vector2) -> Vector2i:
 ##                is armed ("" = none; the handler finds its own)
 ##   role      -- Bee.Role name a captured bee must have
 ##   first_only-- only the first selected bee is considered
-# --- Click-to-place tools ---
 const PLACEMENT_TOOLS: Array = [
 	{"id": "build_cell", "handler": "_place_build_cell", "queues": true, "view": "hive",
 		"captures": "pending_builder_bees", "role": "BUILDER"},
