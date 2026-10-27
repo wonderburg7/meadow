@@ -39,7 +39,8 @@ AR-1, AR-2 and AR-3 shipped 7 Oct 2026; each has its record in `plans/archive/`,
 ## Not in the queue, and why
 
 AR-4 is gated on Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026); the gyne
-route is `plans/now/pollination.md`, whose last slice, PP-9, opens AR-4. T2-7
+route is `plans/now/pollination.md`, whose last slice, PP-10 (the sweep Dave
+split from PP-9, 27 Oct 2026), opens AR-4. T2-7
 (`plans/now/tier-two.md`, landed 11 Oct 2026) added a `first_tier2_day` row to
 `tools/pacing_gates.py`; AR-4 keeps that row when it is admitted. AR-4's arc
 buying a Honey worker opens T2-7b, the tier-2 price sweep T2-7 deferred. It cannot be
@@ -62,7 +63,7 @@ season after the first winter, about days 47 to 65 on today's calendar).
 `winter_schedule` already does for the 60-minute gate; the target worked
 out from minutes and day length is still printed, for information only. Today's
 conversion puts 90 minutes at day 27, before the first winter ends, so the
-gate could never pass. PP-9 (`plans/now/pollination.md`) sets the day Gyne
+gate could never pass. PP-10 (`plans/now/pollination.md`) sets the day Gyne
 rearing becomes affordable to the first 11 days after winter, which leaves
 this window reachable.
 

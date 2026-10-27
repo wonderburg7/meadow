@@ -29,6 +29,7 @@ class ConditionsVocabularyTest(unittest.TestCase):
             "brood_cells_at_least": 1,
             "queen_alive": True,
             "skill_owned": "skill.brood.nurses",
+            "skill_affordable": "skill.brood.honey_worker",
             "event_count": {"type": "brood_feed", "at_least": 1},
             "disease": {"at_most": 0.5},
             "net_income": {"resource": "nectar", "days": 3, "at_least": 0.0},
@@ -53,6 +54,50 @@ class ConditionsVocabularyTest(unittest.TestCase):
         ):
             with self.subTest(key=key):
                 self.assertIn('"%s":' % key, SOURCE.split("static func _progress_key", 1)[1])
+
+    def test_skill_affordable_asks_progression_with_the_buy_buttons_stores(self):
+        # PP-9: Progression owns the rule; the leaf only hands it the stores.
+        body = function_body(SOURCE, "_skill_affordable")
+        self.assertIn("Session.progression.purchase_blocker(skill_id, _spendable_stores(main))", body)
+        self.assertIn('== ""', body)
+        self.assertIn('"skill_affordable":', SOURCE.split("static func _progress_key", 1)[1])
+
+    def test_skill_affordable_needs_no_hud(self):
+        for name in ("_skill_affordable", "_spendable_stores"):
+            with self.subTest(func=name):
+                code = "\n".join(line for line in function_body(SOURCE, name).splitlines()
+                                 if not line.lstrip().startswith("#"))
+                self.assertNotIn("hud", code)
+                self.assertNotIn("skill_tree_panel", code)
+
+    def test_spendable_stores_filter_as_the_skill_tree_does(self):
+        mine = function_body(SOURCE, "_spendable_stores")
+        panel = (SCRIPTS / "skill_tree_panel.gd").read_text(encoding="utf-8").split("func _stores()", 1)[1].split("\nfunc ", 1)[0]
+        for rule in ("can_withdraw()", "is_ripe_honey()", "is_ripe_bee_bread()", "is_fermented()",
+                     "main.pollination.points > 0"):
+            with self.subTest(rule=rule):
+                self.assertIn(rule, panel)
+                self.assertIn(rule, mine)
+
+    def test_spendable_stores_are_scanned_at_most_once_a_game_hour(self):
+        body = function_body(SOURCE, "_spendable_stores")
+        self.assertIn("GameConfig.seconds_per_day / 24.0", body)
+        self.assertIn("Session.progression.owned_ids().size()", body)
+        self.assertIn("if key == _stores_cache_key:\n\t\treturn _stores_cache", body.replace("\r\n", "\n"))
+
+    def test_price_keys_match_the_catalogue_and_the_panel(self):
+        skills = (SCRIPTS / "skills.gd").read_text(encoding="utf-8")
+        resources = (SCRIPTS / "resources.gd").read_text(encoding="utf-8")
+        mapping = dict(re.findall(r'Resources\.([A-Z_]+): "([a-z_]+)"', SOURCE))
+        self.assertEqual({"NECTAR", "POLLEN", "HONEY", "JELLY", "BEE_BREAD"}, set(mapping))
+        panel = (SCRIPTS / "skill_tree_panel.gd").read_text(encoding="utf-8")
+        for content, price in mapping.items():
+            with self.subTest(content=content):
+                self.assertIsNotNone(re.search(r'const %s := "%s"' % (price.upper(), price), skills))
+                self.assertIsNotNone(re.search(r"const %s :=" % content, resources))
+                self.assertIn("Skills.%s: Resources.%s," % (price.upper(), content), panel)
+        self.assertIn('const POLLINATOR_POINTS := "pollinator_points"', skills)
+        self.assertIn('stores["pollinator_points"]', SOURCE)
 
     def test_evaluator_reads_cached_apis_instead_of_scene_groups(self):
         self.assertIn("main._role_counts()", SOURCE)
