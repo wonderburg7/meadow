@@ -17,11 +17,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 
+import subprocess  # noqa: E402
+
+import godot_compile_check as gcc  # noqa: E402
 from analyze_session import load_entries  # noqa: E402
 from godot_compile_check import find_godot  # noqa: E402
 from run_scenario import run_once  # noqa: E402
 
 FIXTURE = ROOT / "test_scenarios" / "rr1_queen_builds_test.json"
+RESUME_SCRIPT = "res://tests/rr16_queen_resume_test.gd"
+RESUME_TIMEOUT_SECONDS = 300
 
 
 class QueenBuildsTest(unittest.TestCase):
@@ -36,6 +41,28 @@ class QueenBuildsTest(unittest.TestCase):
         self.assertEqual(bad, [], "actions not accepted: %s" % bad)
         done = [e for e in actions if e.get("do") == "assert" and "built_cells_at_least" in str(e.get("target"))]
         self.assertTrue(done, "the built-cell assertion never ran")
+
+    def test_queen_resumes_a_part_built_site(self):
+        godot = gcc.find_godot()
+        if not godot:
+            self.skipTest("no Godot executable found -- this test needs a real boot")
+        gcc.ensure_writable_user_dir()
+        if not gcc.engine_can_boot(godot):
+            self.skipTest("the installed Godot engine cannot initialise headlessly here")
+        self.assertTrue(gcc.prepare_cache(godot), "could not prepare the Godot import cache")
+        finished = subprocess.run(
+            [godot, "--headless", "--disable-crash-handler", "--path", str(ROOT),
+             "--script", RESUME_SCRIPT],
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            timeout=RESUME_TIMEOUT_SECONDS,
+        )
+        output = gcc.combined_output(finished)
+        script_errors = gcc.failing_lines(output)
+        failures = [line for line in output.splitlines() if line.startswith("RR16 FAIL")]
+        self.assertEqual(script_errors, [], "script errors:\n" + "\n".join(script_errors))
+        self.assertEqual(failures, [], "\n".join(failures))
+        self.assertIn("RR16 PASS", output, "the test script did not report a pass:\n" + output[-2000:])
+        self.assertEqual(finished.returncode, 0, "Godot exited with code %d" % finished.returncode)
 
     def test_orders_zones_owns_the_general_build(self):
         source = (ROOT / "scripts" / "orders_zones.gd").read_text(encoding="utf-8")

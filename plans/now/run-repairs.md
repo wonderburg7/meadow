@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-12, the last slice, waits for ED-3 (RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: RR-12, the last slice, waits for ED-3 (RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-24
 
 ## Objective
 
@@ -43,7 +43,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
-| RR-16 | the queen can resume building a part-built cell | `scripts/orders_zones.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | low |
 | RR-17 | a queen on comb work discards sour nectar on command | `scripts/bee.gd`, tests | yes -- CQ-S0b landed 25 Oct 2026 | medium |
 | RR-18 | skip saves for the long checks C-140 and C-142 | `test_scenarios/`, `checks/ready/C-140.md`, `checks/ready/C-142.md` | yes | low |
 | RR-19 | comb workers seal and unseal cells over time (15 s to cap, 5 s to uncap) | `scripts/hive_cell.gd`, `scripts/orders_zones.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- DR-1 and CQ-M8 landed 25 Oct 2026 | high |
@@ -133,36 +132,7 @@ RR-14 shipped 2026-10-27; its specification is `plans/archive/RR-14_2026-10-27.m
 
 RR-15 shipped 2026-10-27; its specification is `plans/archive/RR-15_2026-10-27.md`.
 
-## RR-16 -- the queen can resume building a part-built cell
-
-Level: low -- claude-sonnet-5-5 at low effort.
-
-**True now.** Dave: "the queen's build cell behaviour should be able to be
-applied to an incomplete cell, which she then continues to build".
-`orders_zones.gd::queen_build_at` (near l.24) needs `hive.can_build_on(hex)`,
-which fails on a tile that already holds a site, so she cannot be sent to
-finish one.
-
-**When done:**
-
-1. If `hive.cell_at_tile(hex)` is an unbuilt cell, `queen_build_at` uses it as
-   `target_cell` and sets `TO_BUILD_SITE`, creating nothing. A tile with no cell
-   behaves as today.
-2. A tile holding a finished cell still returns null.
-
-**Invariants.** A Challenge's overrides in `challenge_runner.gd` still apply
-afterwards. No save change.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] RR-16 -- the queen can resume building a part-built cell**
-- Plan: `plans/now/run-repairs.md` -- "RR-16 -- the queen can resume building a part-built cell"
-- Files: `scripts/orders_zones.gd`, `tests/test_rr1_queen_builds.py`
-- Check: `python -m unittest tests.test_rr1_queen_builds` passes with a new case (a part-built site is returned and the queen heads to it; a finished cell returns null; an empty tile still makes a site); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/orders_zones.gd :: cell_at_tile`
-- Next after: none -- the queen's build is complete
-```
+RR-16 shipped 2026-10-27; its specification is `plans/archive/RR-16_2026-10-27.md`.
 
 ## RR-17 -- a queen on comb work discards sour nectar on command
 
