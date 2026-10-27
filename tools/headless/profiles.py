@@ -21,6 +21,7 @@ SNAPSHOT_FIELDS = frozenset({
     "environment.flowers_in_season", "environment.flowers_out_of_season",
     "role_outcomes.cells_completed_total", "performance.fps", "performance.top_sections_ms",
     "colony.milestone_days", "resources.first_tier2_affordable",
+    "resources.gyne_rearing_affordable",
 })
 SUMMARY_FIELDS = frozenset({
     "outcome", "total_deaths", "deaths_by_cause", "deaths_by_role", "queen_alive",

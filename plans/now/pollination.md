@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter; FR-2 (`plans/now/forager-recruitment.md`) landed 25 Oct 2026, so its block is open | Dependency: PP-6 followed FR-2 (Dave 14 Oct 2026; landed 25 Oct 2026); AR-4 (`plans/now/alpha-route-evidence.md`) and FR-3 wait for PP-6 | Verified: 2026-10-23
+Status: active | Owner: Dave / Claude Code | Next: PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter (Dave split PP-6, 26 Oct 2026: PP-6 lands the probe, PP-9 the sweep) | Dependency: PP-6 followed FR-2 (Dave 14 Oct 2026; landed 25 Oct 2026); PP-9 follows PP-6; AR-4 (`plans/now/alpha-route-evidence.md`) and FR-3 wait for PP-9 | Verified: 2026-10-26
 
 ## Objective
 
@@ -49,7 +49,7 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | yes -- FR-2 (`plans/now/forager-recruitment.md`) put Auto scouting on the route 25 Oct 2026 (AR-5, `plans/now/alpha-route-evidence.md`, gave the reference player an early-laying queen 21 Oct 2026; PP-5 landed 13 Oct 2026) | medium |
+| PP-9 | the reference route reaches Gyne rearing, then the sweep prices it after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | yes -- its block reaches master with PP-6's probe | high |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
 once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
@@ -57,11 +57,13 @@ once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
 it in the Claude lane (T2-6 landed 11 Oct 2026; BB-2 and NF-4, which shared them too, landed 10 Oct 2026). PP-2 and PP-4 build on PP-1's ledger; PP-2's
 `skill_tree_panel.gd` is free since BB-3 landed (10 Oct 2026). PP-3 shares no file with the Claude
 lane and ran in the Codex lane. PP-5 shares `orders_zones.gd` with PP-3
-and `bee_nursery.gd` with BB-2 and NF-4, both landed 10 Oct 2026. PP-6 balances everything above; T2-7
+and `bee_nursery.gd` with BB-2 and NF-4, both landed 10 Oct 2026. PP-9 balances everything above; T2-7
 (`plans/now/tier-two.md`), which it followed, landed 11 Oct 2026 without moving
-prices. AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-6, and T2-7b,
-the tier-2 price sweep on the same arc, waits for AR-4. PP-6 itself waits for FR-2
-(`plans/now/forager-recruitment.md`), which adds Auto scouting to the route.
+prices. AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-9, and T2-7b,
+the tier-2 price sweep on the same arc, waits for AR-4. PP-6 followed FR-2
+(`plans/now/forager-recruitment.md`, landed 25 Oct 2026), which added Auto
+scouting to the route. PP-9 follows PP-6, whose probe and pacing row it
+sweeps against; FR-3 shares `skills.gd` with PP-9 and follows it.
 
 **Reads.** A slice reads its own section, product-scope §10's 10 Oct 2026
 decisions (`python tools/heading.py plans/design/product-scope.md "10.
@@ -80,16 +82,18 @@ PP-7 shipped 2026-10-15; its specification is `plans/archive/PP-7_2026-10-15.md`
 
 PP-8 shipped 2026-10-16; its specification is `plans/archive/PP-8_2026-10-16.md`.
 
-## PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
+PP-6 shipped 2026-10-27; its specification is `plans/archive/PP-6_2026-10-27.md`.
+
+## PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter
 
 <!-- LAYER: design -->
 
-Its gate cleared when FR-2 (`plans/now/forager-recruitment.md`) landed 25 Oct 2026, putting Auto scouting on the route (Dave, 14 Oct 2026). AR-5 (`plans/now/alpha-route-evidence.md`), whose reference queen lays from her first free cell instead of day 17 so this sweep prices for a colony that grows (Dave, 16 Oct 2026, product review D2), landed 21 Oct 2026. PP-5 landed 13 Oct 2026 (PP-1 to PP-4 and T2-7 landed 11-12 Oct 2026). Intent (Dave, 10 Oct
+Intent (Dave, 10 Oct
 2026): a reasonably played Colony Run first affords Gyne rearing after the
 first winter. The reference player in `alpha_arc_test.json` buys along the
 route; `pacing_gates.py` reports the day Gyne rearing becomes affordable;
 the point awards and tier-3/4 recipes in `skills.gd` are set to the intent.
-Its end opens AR-4. PP-4's simulation found the meadow at about 250 flowers
+PP-9's end opens AR-4. PP-4's simulation found the meadow at about 250 flowers
 at the game's own pace (see PP-4's table): the sweep should see whether
 `flower_regrow_seconds` holds Pollinator Points back.
 
@@ -112,19 +116,58 @@ Decisions (Dave, 14 Oct 2026):
 - **Auto scouting is on the route; Auto-recruitment is not.** Dave made
   Auto scouting a Foraging tier-2 node that replaces Orientation flight
   (`plans/now/forager-recruitment.md` decision 1), so every route player
-  buys it before Pollinator points: FR-2 added it (25 Oct 2026) and PP-6
+  buys it before Pollinator points: FR-2 added it (25 Oct 2026) and PP-9
   prices it with the rest of the route. Auto-recruitment (tier 4, off the
-  route) is priced by FR-3's own sweep; PP-6 leaves its cost as it is.
+  route) is priced by FR-3's own sweep; PP-9 leaves its cost as it is.
+
+What is true now (verified 26 Oct 2026 on PP-6's branch). A one-seed
+reference run (seed 20260923) reached its first worker on day 22.18 against
+a 1.5 target, never afforded a tier-2 skill, and came out of winter with 4
+bees alive. `alpha_arc_test.json` assigns only comb worker, forager (nectar,
+pollen) and laying roles and buys no skill, so the reference player makes
+no bee bread or royal jelly and earns no Pollinator Points: the path PP-6
+measures is unreachable and no price sweep can move it. AR-5
+(`plans/archive/AR-5_2026-10-21.md`) gave the reference queen early laying,
+yet the first-worker day says it may not be having that effect here.
+
+The work, in this order (Dave, 26 Oct 2026):
+
+1. **Find why the baseline is weak.** Read the run's own probes and
+   `analyze_session.py` output, starting with whether AR-5's early laying
+   reaches `alpha_arc_test.json`, and record the cause in this section. A
+   fix inside the reference route (the scenario file) is in scope. If the
+   cause is in the simulation and fixing it would change a gameplay outcome
+   beyond the reference route, stop and escalate to Dave with the options
+   and their costs (`docs/agent-rules.md` rule 5) before moving anything.
+2. **Give the reference route the path.** In `alpha_arc_test.json`, assign
+   honey-maker and nurse roles, buy Bee bread and Royal jelly so
+   `honey_ferment` and `nurse_jelly` (`assign_role`'s role_mode keys) make
+   bee bread and royal jelly, and buy -- or, with the reason recorded, grant
+   -- Pollinator points (`skill.foraging.pollinator_points`, via `buy_skill`
+   or `grant_skill`) and the tier-2 nodes it needs, Auto scouting among them.
+   PP-6's probe counts the whole path from zero even after the route owns
+   part of it (Dave's meaning, 26 Oct 2026); if that alone keeps the band
+   out of reach, escalate rather than redefine it.
+3. **Run the sweep** of `scripts/skills.gd` (point awards, the tier-3/4
+   recipes, Auto scouting) and `scripts/game_config.gd` (including
+   `flower_regrow_seconds`, per PP-4's note above) over 3 seeds until the
+   median `gyne_rearing_affordable` day falls in the band, and record the
+   sweep's table in this section.
+
+Reasoning level high: an ambiguous baseline bug, then a balance sweep that
+sets a gameplay outcome.
+
+**Open decisions:** none
 
 ```queue
-**[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
-- Plan: `plans/now/pollination.md` -- "PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter"
+**[Claude] PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter**
+- Plan: `plans/now/pollination.md` -- "PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter"
 - Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
-- Check: `python -m unittest tests.test_pacing_gates` passes; `pacing_gates.py` reports the day Gyne rearing first becomes affordable in the reference Colony Run, and its median falls from the first winter's end to 11 days after it (days 42 to 52); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
-- Proof: `absent: tools/pacing_gates.py :: gyne_rearing_affordable`
+- Check: the weak baseline's cause is recorded in this section; `python -m unittest tests.test_pacing_gates tests.test_pp6_gyne_rearing_affordable` passes; over 3 seeds of the reference Colony Run, `pacing_gates.py`'s Gyne-rearing row reports a median day from the first winter's end to 11 days after it (days 42 to 52); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
+- Proof: `absent: test_scenarios/alpha_arc_test.json :: skill.foraging.pollinator_points`
 - Next after: none -- the pollination plan is complete; AR-4 in `plans/now/alpha-route-evidence.md` then starts in the Codex lane, and FR-3 in `plans/now/forager-recruitment.md` follows
 ```
 
 ## Not in the queue, and why
 
-- Nothing: PP-6's gate cleared when FR-2 (`plans/now/forager-recruitment.md`) landed 25 Oct 2026.
+- Nothing: PP-9 follows PP-6, and its block reaches master with PP-6's merge.
