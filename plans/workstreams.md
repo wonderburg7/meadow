@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/PP-9` (`claude/PP-9`) | Claude | the reference route reaches Gyne rearing, then the sweep prices it after the first winter | Claude | in progress | none | `plans/now/pollination.md` PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter |
