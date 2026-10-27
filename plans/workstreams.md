@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/RR-15` (`claude/RR-15`) | Claude | Fermentation sense keeps fresh nectar out of sour cells for every depositing bee | Claude | in progress | none | `plans/now/run-repairs.md` RR-15 -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee |
