@@ -694,9 +694,10 @@ var starting_honey_makers: float = 0.0
 ## a staffed colony rarely sees it, and an unstaffed one ferments by day 8.
 var nectar_ferment_hours: float = 96.0
 ## RR-11. Nectar older than this fraction of nectar_ferment_hours shows as
-## pre-fermented, a warning colour; 0.75 of 96 h gives one game-day's
-## notice (Dave, 15 Oct 2026). It is still ordinary nectar until it ferments.
-var nectar_pre_ferment_fraction: float = 0.75
+## pre-fermented, a warning colour. 0.625 of 96 h is 60 h, so the warning
+## shows 36 game hours (1.5 game days) before it ferments (RR-13, Dave,
+## 27 Oct 2026). It is still ordinary nectar until it ferments.
+var nectar_pre_ferment_fraction: float = 0.625
 ## NF-3. A bee that eats from a fermented cell (bee_survival.gd::feed_self)
 ## is tipsy for tipsy_seconds of game time; eating again restarts the clock
 ## rather than adding to it. While tipsy it moves at tipsy_speed_factor of
