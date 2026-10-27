@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -103,6 +104,81 @@ class ClearFermentedTest(unittest.TestCase):
         before = float(_cell(self.saves["before"], self.control)["amount"])
         after = float(_cell(self.saves["moved"], self.control)["amount"])
         self.assertAlmostEqual(after, before, places=3, msg="the control cell took the moved nectar")
+
+# RR-14. A sour cell given a new designation keeps its stock and is emptied by
+# a comb worker, while a fresh nectar cell given the same designation is not
+# marked. Its own fixture, written to a scratch folder, so the NF-5 run above
+# and its saves are untouched.
+DESIGNATE_FIXTURE = {
+    "cells": 15, "nectar_foragers": 0, "pollen_foragers": 0,
+    "nurses": 0, "builders": 2, "miners": 0, "honey_makers": 0,
+    "weather": False, "disease": False, "rival_hive": False, "winter": False,
+    "random_seed": 5205,
+    "config_overrides": {"seconds_per_day": 20, "nectar_ferment_hours": 12},
+    "actions": [
+        {"do": "set_cell_contents", "cell": {"hex": [0, 0]}, "resource": "nectar", "amount": 60},
+        {"do": "wait", "seconds": 15},
+        {"do": "set_cell_contents", "cell": {"hex": [1, 0]}, "resource": "nectar", "amount": 60},
+        {"do": "save_run", "name": "RR14 before"},
+        {"do": "designate_cell", "hex": [0, 0], "content": "honey"},
+        {"do": "designate_cell", "hex": [1, 0], "content": "honey"},
+        {"do": "save_run", "name": "RR14 designated"},
+        {"do": "wait", "seconds": 40},
+        {"do": "save_run", "name": "RR14 done"},
+    ],
+    "stop": {"when_actions_resolved": True, "max_days": 10},
+}
+DESIGNATE_SAVES = ("before", "designated", "done")
+SOUR_HEX = (0, 0)
+FRESH_HEX = (1, 0)
+
+
+class DesignateSourCellTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        godot_path = find_godot()
+        if not godot_path:
+            raise unittest.SkipTest("no Godot executable found -- this test needs a real headless boot")
+        cls._tmp = tempfile.TemporaryDirectory()
+        fixture = Path(cls._tmp.name) / "rr14_designate_sour.json"
+        fixture.write_text(json.dumps(DESIGNATE_FIXTURE), encoding="utf-8")
+        session_file = run_once(fixture, godot_path, timeout=300, fixed_fps=30)
+        if session_file is None:
+            raise AssertionError("scenario run produced no session log")
+        cls.rejected = [e for e in load_entries(session_file)
+                        if e.get("type") == "action" and e.get("result") == "rejected"]
+        scratch = scenario_saves_dir(session_file)
+        cls.saves = {}
+        for name in DESIGNATE_SAVES:
+            path = scratch / ("rr14-%s.json" % name)
+            if path.exists():
+                cls.saves[name] = json.loads(path.read_text(encoding="utf-8"))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
+
+    def setUp(self):
+        self.assertEqual(self.rejected, [], "a scenario action was rejected")
+        missing = [n for n in DESIGNATE_SAVES if n not in self.saves]
+        self.assertEqual(missing, [], "the run did not write every save")
+
+    def test_sour_cell_takes_the_designation_and_keeps_its_stock(self):
+        cell = _cell(self.saves["designated"], SOUR_HEX)
+        self.assertEqual(cell.get("designated"), "honey")
+        self.assertTrue(cell.get("evict"), "the sour cell was not marked for discard")
+        self.assertEqual(cell.get("evict_mode"), "discard")
+        self.assertEqual(cell.get("content"), "nectar", "the sour cell was emptied at once")
+        self.assertGreater(float(cell.get("amount", 0.0)), 0.0)
+
+    def test_fresh_cell_given_the_same_designation_is_not_marked(self):
+        cell = _cell(self.saves["designated"], FRESH_HEX)
+        self.assertEqual(cell.get("designated"), "honey")
+        self.assertFalse(cell.get("evict", False), "the fresh nectar cell was marked")
+
+    def test_comb_worker_empties_the_sour_cell(self):
+        cell = _cell(self.saves["done"], SOUR_HEX)
+        self.assertNotEqual(cell.get("content"), "nectar", "no comb worker emptied the sour cell")
 
 
 if __name__ == "__main__":

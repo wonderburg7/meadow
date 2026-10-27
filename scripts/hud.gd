@@ -2711,8 +2711,9 @@ func _apply_discard() -> void:
 		action.call()
 		return
 	if pending_cell and is_instance_valid(pending_cell):
-		pending_cell.clear_cell()
-		pending_cell.set_designation(pending_type)
+		if not main.orders_zones.mark_sour_for_comb(pending_cell, pending_type):
+			pending_cell.clear_cell()
+			pending_cell.set_designation(pending_type)
 	pending_cell = null
 	pending_type = ""
 	_refresh_cell_popup()
