@@ -49,4 +49,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/CQ-R10` (`codex/CQ-R10`) | Codex | decompose input selection | Codex | in progress | none | `plans/now/code-health.md` CQ-R10 -- decompose input selection |
-| `.worktrees/PP-6` (`claude/PP-6`) | Claude | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter | Claude | in progress | none | `plans/now/pollination.md` PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter |

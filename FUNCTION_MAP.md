@@ -1120,6 +1120,75 @@ The balance fields.
 996  # --- winter ---
 ```
 
+## input_selection.gd (750 lines)
+
+Selection, drag and placement resolution.
+
+```
+15   # --- Keyboard and pointer input ---
+16   func _unhandled_input(event: InputEvent) -> void
+24   func _handle_key(event: InputEventKey) -> void
+51   func _handle_mouse_button(event: InputEventMouseButton) -> void
+81   func _handle_mouse_motion(event: InputEventMouseMotion) -> void
+90   # --- Picking bees, comb and world objects ---
+91   func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void
+126  func _click_pick_in_hive(p: Vector2, add: bool) -> bool
+151  func _click_pick_in_meadow(p: Vector2) -> bool
+166  func _box_pick_comb(box: Rect2, add: bool) -> bool
+185  func _box_pick_death_marker(box: Rect2) -> bool
+196  func _apply_bee_pick(picked: Array, additive: bool) -> void
+212  func _select_cells(cells: Array, additive: bool) -> void
+232  func _clear_cell_selection() -> void
+238  func _select_blocks(blocks: Array, additive: bool) -> void
+262  func _clear_block_selection() -> void
+268  func _select_world_object(kind: String, object: Node2D) -> void
+276  func _clear_world_object_selection() -> void
+281  func _on_soil_mark_requested(mark: bool) -> void
+286  func _on_keep_clear_clear_requested() -> void
+290  func _bees_in_current_view() -> Array
+294  func _death_markers_in_current_view() -> Array
+301  func _click_switches_view(point: Vector2) -> bool
+317  func _bee_at(point: Vector2) -> Node2D
+323  func _cell_at(point: Vector2) -> Node2D
+329  func _soil_at(point: Vector2) -> Node2D
+335  func _death_marker_at(point: Vector2) -> Node2D
+341  func _hex_at(global_point: Vector2) -> Vector2i
+356  # --- Click-to-place tools ---
+385  func _placement_tool_def(tool_id: String) -> Dictionary
+395  func request_placement_tool(tool_id: String) -> void
+422  func clear_placement_tool() -> void
+428  func _place_with_active_tool(ctrl_held: bool) -> void
+436  func _place_build_cell(global_point: Vector2, keep_adding: bool) -> void
+446  func _place_queen_build_cell(global_point: Vector2, _keep_adding: bool = false) -> void
+453  func _place_mine_target(global_point: Vector2, keep_adding: bool) -> void
+464  func _place_keep_clear(global_point: Vector2, _keep_adding: bool) -> void
+469  func _place_home_cell(global_point: Vector2, _keep_adding: bool = false) -> void
+480  func _on_cell_empty_by_bee_requested(cell: Node2D) -> void
+489  func _place_home_cell_all(global_point: Vector2, _keep_adding: bool = false) -> void
+497  func _place_mine_home(global_point: Vector2, _keep_adding: bool = false) -> void
+505  func _place_forage_start(global_point: Vector2, _keep_adding: bool = false) -> void
+511  func _place_floral_preference(global_point: Vector2, _keep_adding: bool = false) -> void
+533  # --- Right-click orders ---
+534  func _issue_command(world_point: Vector2) -> void
+561  func _command_in_hive(world_point: Vector2, commandable: Array, targets_before: Array) -> void
+580  func _command_in_meadow(world_point: Vector2, commandable: Array, targets_before: Array) -> void
+606  func _prune_invalid_selected_bees() -> void
+615  func _show_click_marker(world_point: Vector2) -> void
+621  func _on_role_selection_requested(role: int, focus: String) -> void
+637  func _ensure_hive_view() -> void
+642  # --- Selection and order drawing ---
+643  func _draw_selection_box() -> void
+660  func _draw_hive_orders() -> void
+693  func _draw_build_hover() -> void
+702  func _draw_home_marker(point: Vector2) -> void
+708  func _build_queue_points(bee: Node2D) -> Array
+714  func _mine_queue_points(bee: Node2D) -> Array
+721  func _draw_order_chain(bee: Node2D, points: Array, colour: Color) -> void
+731  func _draw_tile_outline(centre: Vector2, colour: Color, width: float, dashed: bool) -> void
+740  func _tile_centre(hex: Vector2i) -> Vector2
+745  func _draw_start_point_marker(point: Vector2) -> void
+```
+
 ## main_menu.gd (735 lines)
 
 The main menu overlay: the honeycomb of stage hexes, their name fitting,
@@ -1215,60 +1284,6 @@ World layout, flower seeding and colony setup.
 702  func finish_mining(block: Node2D) -> void
 708  func _obstacle_at(point: Vector2) -> Node2D
 714  func _flower_at(point: Vector2) -> Node2D
-```
-
-## input_selection.gd (717 lines)
-
-Selection, drag and placement resolution.
-
-```
-15   func _unhandled_input(event: InputEvent) -> void
-80   func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void
-186  func _select_cells(cells: Array, additive: bool) -> void
-206  func _clear_cell_selection() -> void
-212  func _select_blocks(blocks: Array, additive: bool) -> void
-236  func _clear_block_selection() -> void
-242  func _select_world_object(kind: String, object: Node2D) -> void
-250  func _clear_world_object_selection() -> void
-255  func _on_soil_mark_requested(mark: bool) -> void
-260  func _on_keep_clear_clear_requested() -> void
-264  func _bees_in_current_view() -> Array
-268  func _death_markers_in_current_view() -> Array
-275  func _click_switches_view(point: Vector2) -> bool
-291  func _bee_at(point: Vector2) -> Node2D
-297  func _cell_at(point: Vector2) -> Node2D
-303  func _soil_at(point: Vector2) -> Node2D
-309  func _death_marker_at(point: Vector2) -> Node2D
-315  func _hex_at(global_point: Vector2) -> Vector2i
-358  func _placement_tool_def(tool_id: String) -> Dictionary
-368  func request_placement_tool(tool_id: String) -> void
-395  func clear_placement_tool() -> void
-401  func _place_with_active_tool(ctrl_held: bool) -> void
-409  func _place_build_cell(global_point: Vector2, keep_adding: bool) -> void
-419  func _place_queen_build_cell(global_point: Vector2, _keep_adding: bool = false) -> void
-426  func _place_mine_target(global_point: Vector2, keep_adding: bool) -> void
-437  func _place_keep_clear(global_point: Vector2, _keep_adding: bool) -> void
-442  func _place_home_cell(global_point: Vector2, _keep_adding: bool = false) -> void
-453  func _on_cell_empty_by_bee_requested(cell: Node2D) -> void
-462  func _place_home_cell_all(global_point: Vector2, _keep_adding: bool = false) -> void
-470  func _place_mine_home(global_point: Vector2, _keep_adding: bool = false) -> void
-478  func _place_forage_start(global_point: Vector2, _keep_adding: bool = false) -> void
-484  func _place_floral_preference(global_point: Vector2, _keep_adding: bool = false) -> void
-506  func _issue_command(world_point: Vector2) -> void
-574  func _prune_invalid_selected_bees() -> void
-583  func _show_click_marker(world_point: Vector2) -> void
-589  func _on_role_selection_requested(role: int, focus: String) -> void
-605  func _ensure_hive_view() -> void
-610  func _draw_selection_box() -> void
-627  func _draw_hive_orders() -> void
-660  func _draw_build_hover() -> void
-669  func _draw_home_marker(point: Vector2) -> void
-675  func _build_queue_points(bee: Node2D) -> Array
-681  func _mine_queue_points(bee: Node2D) -> Array
-688  func _draw_order_chain(bee: Node2D, points: Array, colour: Color) -> void
-698  func _draw_tile_outline(centre: Vector2, colour: Color, width: float, dashed: bool) -> void
-707  func _tile_centre(hex: Vector2i) -> Vector2
-712  func _draw_start_point_marker(point: Vector2) -> void
 ```
 
 ## skills.gd (703 lines)
