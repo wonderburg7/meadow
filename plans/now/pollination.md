@@ -194,6 +194,36 @@ pollen cells each flipped seed 20260923 from owning Pollinator points to
 stalling. `alpha_arc_test.json` is unchanged; the candidate is in the
 worker's hand-off.
 
+**Repeating actions (Dave, 27 Oct 2026: option 2, `scenario_actions.gd`
+added to PP-9).** Any action can now carry `"every_days": n`, and there is a
+`keep_role` verb that tops a role up to a count or a share of the adults,
+moving the youngest donors through `_do_assign_role`. Both are headless-only
+and covered by `tests/test_pp9_repeating_actions.py`.
+
+Per-seed numbers from four three-seed runs built on them (to day 60-70):
+
+- **Shares instead of locks.** Pollen 0.3, nurses 0.12 and honey 0.12 by
+  `keep_role` every day starved pollen on every seed. Seed 20260923 got as
+  far as Adaptive constancy on day 58.8; the queens of seeds 20260924 and
+  20260925 died on days 28 and 17.
+- **Floors from four adults on** (pollen 2, nurse 1, honey 2, comb 1 on top
+  of the locked cells) took foragers off nectar too early. All three queens
+  starved by day 27.
+- **The same floors from ten adults and day 20, plus a second jelly burst
+  after winter.** This was the best run:
+  - Seed 20260923 owns Pollinator points and Royal jelly on day 26.3. It
+    holds 736-1197 honey, 933-1200 nectar and 4229-4977 pollen from day 60
+    to 69, and still reports no Gyne-rearing day. Its shortfall is among bee
+    bread, jelly and Pollinator Points, which the snapshots do not log.
+  - Seed 20260924 reaches Auto scouting on day 29.4, one purchase short of
+    Pollinator points before winter. The winter bill takes 18 bees and the
+    queen dies by day 50.
+  - Seed 20260925 reaches Auto scouting on day 58.6 but never holds the
+    150 nectar Pollinator points costs, and its queen dies by day 69.
+
+First worker stays in band throughout (8.41, 7.56 and 8.68). No seed reports
+a `gyne_rearing_affordable` day, so `alpha_arc_test.json` stays unchanged.
+
 If the band PP-10 sweeps for still looks out of reach once the route owns
 Pollinator points, PP-9 records that here and lands anyway: pricing is
 PP-10's job.
@@ -205,7 +235,7 @@ Reasoning level high: the route sets the arc AR-4, T2-7b and FR-3 measure.
 ```queue
 **[Claude] PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter**
 - Plan: `plans/now/pollination.md` -- "PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter"
-- Files: `test_scenarios/alpha_arc_test.json`, `scripts/conditions.gd`, `tests/test_conditions.py`
+- Files: `test_scenarios/alpha_arc_test.json`, `scripts/conditions.gd`, `tests/test_conditions.py`, `scripts/scenario_actions.gd`, `tests/test_pp9_repeating_actions.py`
 - Check: `python -m unittest tests.test_conditions tests.test_pp6_gyne_rearing_affordable` passes (`skill_affordable` has its match arm and reads `Progression.purchase_blocker` with the Buy button's stores); over 3 seeds of the reference Colony Run (`python tools/pacing_gates.py`) the run owns Pollinator points (`skill.foraging.pollinator_points`), the Gyne-rearing row reports a day on each seed (any day, no band), and the first-worker row stays in band (median by day 17); the weak baseline's cause stays recorded in this section; no price, recipe or `config_overrides` entry that redefines what is measured moves; `.\tools\verify.ps1` is green
 - Proof: `absent: scripts/conditions.gd :: skill_affordable`
 - Next after: PP-10 -- the sweep prices the route so Gyne rearing is first affordable after the first winter
