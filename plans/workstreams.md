@@ -48,6 +48,5 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/CQ-R14` (`codex/CQ-R14`) | Codex | split the mid-size visual builders | Codex | in progress | none | `plans/now/code-health.md` CQ-R14 -- split the mid-size visual builders |
 | `.worktrees/RR-19` (`claude/RR-19`) | Claude | comb workers seal and unseal cells over time | Claude | in progress | none | `plans/now/run-repairs.md` RR-19 -- comb workers seal and unseal cells over time |
 | `.claude/worktrees/meadow-cq-r14-review-7516c6` (`claude/meadow-cq-r14-review-7516c6`) | Claude | finish checks the queue on a clean merge before committing it | Claude | in progress | none | ad hoc -- `tools/slice.ps1`, `tools/refill_lane.py`, `tests/test_refill_lane_check.py` |

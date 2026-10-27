@@ -100,6 +100,13 @@ func _ready() -> void:
 ## `starting_age` is supplied only for the founding cohort. Its default keeps
 ## all existing callers drawing a random age after their lifespan is rolled.
 func setup(index: int, starting_age: float = -1.0) -> void:
+	_init_stats(index, starting_age)
+	_build_flower_visuals()
+	_build_spider_visuals()
+	_build_amount_labels()
+
+
+func _init_stats(index: int, starting_age: float) -> void:
 	species_index = index % FlowerSpecies.SPECIES.size()
 	var s: Dictionary = FlowerSpecies.SPECIES[species_index]
 	species_name = s.name
@@ -123,6 +130,10 @@ func setup(index: int, starting_age: float = -1.0) -> void:
 	# choose the species before this setup runs.
 	age_seconds = starting_age if starting_age >= 0.0 else randf() * lifespan_seconds
 
+
+
+func _build_flower_visuals() -> void:
+	var s: Dictionary = FlowerSpecies.SPECIES[species_index]
 	polygon = Shapes.square_points(Vector2(28, 28))
 	color = s.color
 
@@ -162,6 +173,9 @@ func setup(index: int, starting_age: float = -1.0) -> void:
 	centre_dot.color = s.centre
 	add_child(centre_dot)
 
+
+
+func _build_spider_visuals() -> void:
 	# A small dark shape, hidden except for the brief flash a spider gets
 	# on an attack or a relocation (or the dev reveal toggle) -- see
 	# CRAB_SPIDER_PLAN.md section 7. Placeholder-art style, same as
@@ -192,6 +206,9 @@ func setup(index: int, starting_age: float = -1.0) -> void:
 	crab_spider_dev_marker.visible = false
 	add_child(crab_spider_dev_marker)
 
+
+
+func _build_amount_labels() -> void:
 	# nectar amount reads bottom-left, pollen amount reads bottom-right
 	nectar_label = Label.new()
 	nectar_label.position = Vector2(-16, 11)

@@ -852,6 +852,12 @@ func _build_visuals() -> void:
 	visual_root = Node2D.new()
 	add_child(visual_root)
 
+	_build_status_rings(outline_radius)
+	_build_body(outline_radius, body_radius, size_factor)
+	_build_heading_markers(outline_radius)
+
+
+func _build_status_rings(outline_radius: float) -> void:
 	selection_ring = Polygon2D.new()
 	selection_ring.polygon = Shapes.circle_points(outline_radius + 4.0)
 	selection_ring.color = Color(0.2, 1.0, 0.4, 0.85)
@@ -898,6 +904,9 @@ func _build_visuals() -> void:
 	dance_ring.visible = false
 	visual_root.add_child(dance_ring)
 
+
+
+func _build_body(outline_radius: float, body_radius: float, size_factor: float) -> void:
 	var outline := Polygon2D.new()
 	outline.polygon = Shapes.circle_points(outline_radius)
 	outline.color = Color(0.05, 0.05, 0.05)   # black outline
@@ -924,6 +933,9 @@ func _build_visuals() -> void:
 	centre_dot.visible = false
 	visual_root.add_child(centre_dot)
 
+
+
+func _build_heading_markers(outline_radius: float) -> void:
 	# A wedge pointing along heading, deliberately brighter/larger than
 	# the role markers so it reads from a distance rather than needing a
 	# close look. Rest shape points along local +X; _update_heading_marker

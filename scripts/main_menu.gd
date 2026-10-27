@@ -204,6 +204,11 @@ func _ready() -> void:
 
 	_build_settings_button(right_pane)
 
+	_build_left_content(left_pane)
+	_build_right_content(right_pane)
+
+
+func _build_left_content(left_pane: VBoxContainer) -> void:
 	var title := Label.new()
 	title.text = "Meadow"
 	title.theme_type_variation = "Heading"
@@ -255,6 +260,9 @@ func _ready() -> void:
 		if group.key != GROUPS[-1].key:
 			left_pane.add_child(HSeparator.new())
 
+
+
+func _build_right_content(right_pane: VBoxContainer) -> void:
 	var right_scroll := ScrollContainer.new()
 	right_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	# Without this, a ScrollContainer sizes its child to the child's own
