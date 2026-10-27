@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R14 then CQ-R6 (hud.gd released by GP-5 and RR-14, 26-27 Oct 2026) then CQ-M5a in the Codex lane (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for RR-21 to release scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for RR-19 to release scripts/hive_cell.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R6 (hud.gd released by GP-5 and RR-14, 26-27 Oct 2026) then CQ-M5a in the Codex lane (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for RR-21 to release scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for RR-19 to release scripts/hive_cell.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -126,7 +126,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes -- GP-5 and RR-14 released `scripts/hud.gd`, 26-27 Oct 2026 | medium |
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
-| CQ-R14 | mid-size builders: `main_menu._ready`, `challenge_complete._ready`, `flower.setup`, `bee._build_visuals` | those four | yes -- specified 26 Oct 2026 | low |
 
 Only the first slice of each chain carries a full section and block. A row without one
 gets its block written by the session that claims its predecessor, from this table,
@@ -489,31 +488,4 @@ Reasoning: **low**.
 
 CQ-R10 shipped 2026-10-27; its specification is `plans/archive/CQ-R10_2026-10-27.md`.
 
-## CQ-R14 -- split the mid-size visual builders
-
-**Now.** `main_menu.gd::_ready`, `challenge_complete.gd::_ready`,
-`flower.gd::setup` and `bee.gd::_build_visuals` each build several distinct
-pieces in one function. All four functions remain on master (verified
-26 Oct 2026). The D2 research record identifies the extraction seams and
-existing sprite and menu coverage. `tools/slice.ps1 owner` reports each of
-these files clear of the other lane on 26 Oct 2026.
-
-**When done.** Split flower setup into `_init_stats`,
-`_build_flower_visuals` and `_build_spider_visuals`; bee visuals into
-`_build_status_rings`, `_build_body` and `_build_heading_markers`; and the
-menu and challenge-complete builders by their existing sub-widgets. Keep
-construction order, node names, geometry, colours, RNG calls, display strings
-and simulation results unchanged. These remain one-time build calls, with no
-new per-frame work. Regenerate `FUNCTION_MAP.md` after mapped-script edits.
-Reasoning: **low**.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] CQ-R14 -- split the mid-size visual builders**
-- Plan: `plans/now/code-health.md` -- "CQ-R14 -- split the mid-size visual builders"
-- Files: `scripts/main_menu.gd`, `scripts/challenge_complete.gd`, `scripts/flower.gd`, `scripts/bee.gd`, `FUNCTION_MAP.md`
-- Check: `python -m unittest tests.test_sp1_pixel_sprite tests.test_ho15_menu_hex_fit` and `python tools/equivalence.py test_scenarios/sf1_founding_flower_mix_test.json master` pass with no differences; `python tools/prefinish.py` passes
-- Proof: `present: scripts/flower.gd :: func setup(index: int, starting_age: float = -1.0) -> void:`
-- Next after: CQ-R6 -- extract the HUD bee-command rows
-```
+CQ-R14 shipped 2026-10-27; its specification is `plans/archive/CQ-R14_2026-10-27.md`.
