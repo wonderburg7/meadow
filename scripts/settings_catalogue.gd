@@ -631,7 +631,7 @@ const TUNABLES := [
 		"persist": "none",
 		"key": "nectar_pre_ferment_fraction", "label": "Pre-ferment at x", "step": 0.05, "min": 0.0, "max": 1.0,
 		"category": "Honey",
-		"tip": "Raw nectar older than this share of its fermenting time shows a warning colour. It is still ordinary nectar until it ferments.",
+		"tip": "Raw nectar older than this share of its fermenting time shows a warning colour. The default, 0.625, gives 1.5 game days' notice before it ferments. It is still ordinary nectar until it ferments.",
 	},
 	{
 		"persist": "none",

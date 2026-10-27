@@ -124,10 +124,11 @@ const NECTAR_COLOR := Color(0.73333, 0.97255, 0.14118)
 ## honey at a glance. Colour-blind mode adds a "sour" tag (see _refresh).
 const FERMENTED_NECTAR_COLOR := Color(0.55, 0.68, 0.39)
 
-## RR-11. Nectar nearing its fermenting time shows the midpoint of fresh and
-## fermented as a warning. It is still ordinary nectar until it ferments.
-const PRE_FERMENTED_NECTAR_COLOR := Color(0.64, 0.83, 0.27)
-const PRE_FERMENTED_ART_TINT := Color(0.9, 0.92, 0.78)
+## RR-11. Nectar nearing its fermenting time shows a yellow-green warning,
+## clearly apart from fresh nectar and from the fermented olive (RR-13).
+## It is still ordinary nectar until it ferments.
+const PRE_FERMENTED_NECTAR_COLOR := Color(0.72, 0.85, 0.15)
+const PRE_FERMENTED_ART_TINT := Color(0.78, 0.86, 0.35)
 
 ## SP-3. Pollen is the sprite orange (255, 123, 0), exactly. Honey is a
 ## darker amber so every cell content stays 0.10 apart in OKLab

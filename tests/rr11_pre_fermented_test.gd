@@ -43,7 +43,7 @@ func _run() -> void:
 	cell.add_resource("nectar", 5.0)
 	var stamp: float = session.sim_time
 	session.use_cell_sprites = false
-	var expected: Array = [[0.5, false, false], [0.8, true, false], [1.1, false, true]]
+	var expected: Array = [[0.6, false, false], [0.65, true, false], [1.1, false, true]]
 	for row: Array in expected:
 		session.sim_time = stamp + span * float(row[0])
 		_check(cell.is_pre_fermented() == row[1], "at %.1f pre_fermented was %s" % [row[0], cell.is_pre_fermented()])
