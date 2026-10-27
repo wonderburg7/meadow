@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-12, the last slice, waits for ED-3 (RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: RR-12, the last slice, waits for ED-3 (RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-24
 
 ## Objective
 
@@ -43,7 +43,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
-| RR-14 | a sour cell given a new designation is emptied by a comb worker, not at once | `scripts/orders_zones.gd`, `scripts/hud.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | low |
 | RR-15 | Fermentation sense keeps fresh nectar out of sour cells for every depositing bee | `scripts/hive.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | medium |
 | RR-16 | the queen can resume building a part-built cell | `scripts/orders_zones.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | low |
 | RR-17 | a queen on comb work discards sour nectar on command | `scripts/bee.gd`, tests | yes -- CQ-S0b landed 25 Oct 2026 | medium |
@@ -131,41 +130,7 @@ test shows `day_store_totals` changing a condition's result across a load
 
 RR-13 shipped 2026-10-27; its specification is `plans/archive/RR-13_2026-10-27.md`.
 
-## RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once
-
-Level: low -- claude-sonnet-5-5 at low effort.
-
-**True now.** Dave: "when designating a sour nectar cell as a honey cell, it
-instantly emptied, when bees should be doing that task".
-`orders_zones.gd::_designate_one` (near l.262) calls `cell.clear_cell()` on a
-conflicting cell, and `hud.gd::_apply_discard` (near l.2683) does the same after
-the discard warning. "Discard all sour nectar" (`_on_clear_fermented_requested`)
-instead marks the cell `evict_mode = "discard"`, `evict_requested = true`, and a
-comb worker's `comb_evict_cell` task empties it.
-
-**When done:**
-
-1. In `_designate_one`, when `cell.is_fermented()` and the cell holds stock,
-   the cell takes the designation, is marked `evict_mode = "discard"` and
-   `evict_requested = true`, `bump_display_epoch()` runs, and the function
-   returns before the clear or warning branches.
-2. `hud.gd::_apply_discard` follows the same rule for a sour pending cell (one
-   shared helper in `orders_zones.gd`, not two copies).
-3. A cell that is not sour behaves exactly as today.
-
-**Invariants.** Uses the existing saved eviction fields; no new field, no save
-change. A sour cell with no comb worker stays full until one is free.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once**
-- Plan: `plans/now/run-repairs.md` -- "RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once"
-- Files: `scripts/orders_zones.gd`, `scripts/hud.gd`, `tests/test_nf5_clear_fermented.py`
-- Check: `python -m unittest tests.test_nf5_clear_fermented` passes with a new case (designating a sour nectar cell as honey leaves its stock and sets `evict_requested`, and a comb worker then empties it; a fresh nectar cell behaves as before); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/orders_zones.gd :: is_fermented() and`
-- Next after: none -- the sour-cell designation is complete
-```
+RR-14 shipped 2026-10-27; its specification is `plans/archive/RR-14_2026-10-27.md`.
 
 ## RR-15 -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee
 

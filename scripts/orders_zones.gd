@@ -265,6 +265,19 @@ func _holds_bee_bread(cell: Node2D) -> bool:
 func _warn_bee_bread_stays() -> void:
 	main.hud.show_warning("That cell holds bee bread, which stays where it is. Reserve or empty another cell instead.", "bee_bread_stays", 2.0)
 
+## RR-14. A sour nectar cell (fermented, holding stock) that is given a new
+## designation is not emptied at once. It takes the designation and is marked
+## for discard with the same saved eviction fields as "Discard all sour
+## nectar", so a comb worker empties it. Returns true when it handled the cell.
+func mark_sour_for_comb(cell: Node2D, type: String) -> bool:
+	if not cell.is_fermented():
+		return false
+	cell.set_designation(type)
+	cell.evict_mode = "discard"
+	cell.evict_requested = true
+	cell.bump_display_epoch()
+	return true
+
 func _designate_one(cell: Node2D, type: String) -> void:
 	if not is_instance_valid(cell):
 		return
@@ -283,6 +296,8 @@ func _designate_one(cell: Node2D, type: String) -> void:
 	)
 	if not conflicting:
 		cell.set_designation(type)
+		return
+	if mark_sour_for_comb(cell, type):
 		return
 
 	if main.hive.has_room_elsewhere(cell.content_type, cell) 			or bool(main.Levels.get_level(Session.starting_level).get("designation_keeps_stores", false)):
