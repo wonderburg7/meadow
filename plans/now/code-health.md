@@ -488,31 +488,4 @@ Reasoning: **low**.
 
 CQ-R10 shipped 2026-10-27; its specification is `plans/archive/CQ-R10_2026-10-27.md`.
 
-## CQ-R14 -- split the mid-size visual builders
-
-**Now.** `main_menu.gd::_ready`, `challenge_complete.gd::_ready`,
-`flower.gd::setup` and `bee.gd::_build_visuals` each build several distinct
-pieces in one function. All four functions remain on master (verified
-26 Oct 2026). The D2 research record identifies the extraction seams and
-existing sprite and menu coverage. `tools/slice.ps1 owner` reports each of
-these files clear of the other lane on 26 Oct 2026.
-
-**When done.** Split flower setup into `_init_stats`,
-`_build_flower_visuals` and `_build_spider_visuals`; bee visuals into
-`_build_status_rings`, `_build_body` and `_build_heading_markers`; and the
-menu and challenge-complete builders by their existing sub-widgets. Keep
-construction order, node names, geometry, colours, RNG calls, display strings
-and simulation results unchanged. These remain one-time build calls, with no
-new per-frame work. Regenerate `FUNCTION_MAP.md` after mapped-script edits.
-Reasoning: **low**.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] CQ-R14 -- split the mid-size visual builders**
-- Plan: `plans/now/code-health.md` -- "CQ-R14 -- split the mid-size visual builders"
-- Files: `scripts/main_menu.gd`, `scripts/challenge_complete.gd`, `scripts/flower.gd`, `scripts/bee.gd`, `FUNCTION_MAP.md`
-- Check: `python -m unittest tests.test_sp1_pixel_sprite tests.test_ho15_menu_hex_fit` and `python tools/equivalence.py test_scenarios/sf1_founding_flower_mix_test.json master` pass with no differences; `python tools/prefinish.py` passes
-- Proof: `present: scripts/flower.gd :: func setup(index: int, starting_age: float = -1.0) -> void:`
-- Next after: CQ-R6 -- extract the HUD bee-command rows
-```
+CQ-R14 shipped 2026-10-27; its specification is `plans/archive/CQ-R14_2026-10-27.md`.
