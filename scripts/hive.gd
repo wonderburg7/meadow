@@ -362,11 +362,14 @@ func total_honey() -> float:
 func find_cell_for(resource_type: String, except: Node2D = null) -> Node2D:
 	var best_empty: Node2D = null
 	var almost_full: Node2D = null
+	var sense_sour: bool = resource_type == "nectar" and senses_fermentation()
 	for cell: Variant in cells:
 		if cell == except or not is_instance_valid(cell):
 			continue
 		if cell.space_for(resource_type) <= 0.0:
 			continue
+		if sense_sour and cell.content_type == resource_type and cell.is_fermented():
+			continue   # RR-15: fresh nectar is never poured into sour
 		if cell.content_type == resource_type:
 			if cell.amount < cell.capacity * GameConfig.cell_full_threshold:
 				return cell   # genuine room -- use it immediately, as before

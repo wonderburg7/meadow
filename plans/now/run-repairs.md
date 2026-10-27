@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-12, the last slice, waits for ED-3 (RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: RR-12, the last slice, waits for ED-3 (RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-24
 
 ## Objective
 
@@ -43,7 +43,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
-| RR-15 | Fermentation sense keeps fresh nectar out of sour cells for every depositing bee | `scripts/hive.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | medium |
 | RR-16 | the queen can resume building a part-built cell | `scripts/orders_zones.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | low |
 | RR-17 | a queen on comb work discards sour nectar on command | `scripts/bee.gd`, tests | yes -- CQ-S0b landed 25 Oct 2026 | medium |
 | RR-18 | skip saves for the long checks C-140 and C-142 | `test_scenarios/`, `checks/ready/C-140.md`, `checks/ready/C-142.md` | yes | low |
@@ -132,44 +131,7 @@ RR-13 shipped 2026-10-27; its specification is `plans/archive/RR-13_2026-10-27.m
 
 RR-14 shipped 2026-10-27; its specification is `plans/archive/RR-14_2026-10-27.md`.
 
-## RR-15 -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee
-
-Level: medium -- claude-sonnet-5-5 at medium effort (a gameplay outcome).
-
-**True now.** Dave: "Queen set to forager still adds nectar to sour nectar
-cells even with fermentation sense". NF-4's rule is that fresh nectar is never
-poured into sour. `hive.gd::find_cell_for` (near l.328), called from
-`bee_foraging.gd` (near l.948 and l.984), never calls `avoids_as_sour`, so any
-depositing bee, the queen included, can top up a fermented cell.
-
-**When done:**
-
-1. In `find_cell_for`, when `resource_type == "nectar"` and
-   `senses_fermentation()`, cells where `avoids_as_sour(cell)` is true are
-   skipped.
-2. `find_cell_for` is shared by haul and evict, so sour nectar can still be
-   moved: `bee_building.gd` (near l.161) already discards rather than moves, and
-   the slice proves that no haul path loses its destination.
-3. The closeout runs the reference arc before and after
-   (`python tools/run_scenario.py test_scenarios/alpha_arc_test.json`) and
-   reports the difference. Do not tune anything.
-
-**Invariants.** Without Fermentation sense nothing changes. Honey, pollen and
-bee bread deposits are untouched.
-
-**Stop and escalate** if the arc's outcome changes by more than a day on any
-gate.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] RR-15 -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee**
-- Plan: `plans/now/run-repairs.md` -- "RR-15 -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee"
-- Files: `scripts/hive.gd`, `tests/test_nf4_fermentation_sense.py`
-- Check: `python -m unittest tests.test_nf4_fermentation_sense` passes with a new case (a forager, and the queen set to forage, with Fermentation sense never deposit nectar into a sour cell; without the sense they still can); `python -m unittest tests.test_nf5_clear_fermented` passes; the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/hive.gd :: avoids_as_sour(cell)`
-- Next after: none -- the fermentation-sense deposit rule is complete
-```
+RR-15 shipped 2026-10-27; its specification is `plans/archive/RR-15_2026-10-27.md`.
 
 ## RR-16 -- the queen can resume building a part-built cell
 
