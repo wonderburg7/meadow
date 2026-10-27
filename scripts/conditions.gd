@@ -205,16 +205,63 @@ static func _skill_owned(skill_id: String) -> bool:
 	return Session.progression != null and Session.progression.is_owned(skill_id)
 
 
-## PP-9: the Buy button would accept this skill now -- the same pair
-## scenario_actions.gd::_do_buy_skill reads when it reports a refusal:
-## Progression.purchase_blocker over the skill tree's own stores (ripe honey,
-## ripe bee bread, unfermented nectar, unsealed cells). Headless routes use
-## it so a buy_skill fires when the purchase would go through; no Challenge
-## goal or Colony Run milestone reads it. Read only on a trigger check.
+## PP-9: the Buy button would accept this skill now. Progression owns the
+## rule (purchase_blocker); this leaf hands it the stores the skill tree's Buy
+## button counts -- skill_tree_panel.gd::_stores: what hive.take() would hand
+## over, so nothing sealed or filling towards a seal, honey and bee bread only
+## once ripe, nectar only while unfermented, plus the Pollinator Points
+## ledger. They are read from the comb and the ledger, not the panel, so a run
+## without the HUD still answers. Headless routes use it so a buy_skill fires
+## when the purchase would go through; no Challenge goal or Colony Run
+## milestone reads it.
 static func _skill_affordable(main: Node2D, skill_id: String) -> bool:
-	if Session.progression == null or main.hud == null or main.hud.skill_tree_panel == null:
+	if Session.progression == null or main.hive == null:
 		return false
-	return Session.progression.purchase_blocker(skill_id, main.hud.skill_tree_panel._stores()) == ""
+	return Session.progression.purchase_blocker(skill_id, _spendable_stores(main)) == ""
+
+## The comb scan is cached for one game hour, and rebuilt early when a skill
+## is bought (the purchase is what spends the stores), so a trigger checked
+## every tick scans the comb at most once an hour.
+static var _stores_cache: Dictionary = {}
+static var _stores_cache_key: Array = []
+
+static func _spendable_stores(main: Node2D) -> Dictionary:
+	var hour := int(Session.sim_time / maxf(0.001, GameConfig.seconds_per_day / 24.0))
+	var key: Array = [main.get_instance_id(), hour, Session.progression.owned_ids().size()]
+	if key == _stores_cache_key:
+		return _stores_cache
+	var stores: Dictionary = {}
+	for cell: Variant in main.hive.cells:
+		if not is_instance_valid(cell) or not cell.can_withdraw():
+			continue
+		var resource: String = SPENDABLE_CONTENT.get(cell.content_type, "")
+		if resource == "":
+			continue
+		if resource == "honey" and not cell.is_ripe_honey():
+			continue
+		if resource == "bee_bread" and not cell.is_ripe_bee_bread():
+			continue
+		if resource == "nectar" and cell.is_fermented():
+			continue
+		stores[resource] = float(stores.get(resource, 0.0)) + cell.amount
+	if main.pollination != null and main.pollination.points > 0:
+		stores["pollinator_points"] = float(main.pollination.points)
+	_stores_cache = stores
+	_stores_cache_key = key
+	return stores
+
+## Comb content type -> the skills.gd price key it pays (skills.gd's NECTAR,
+## POLLEN, HONEY, ROYAL_JELLY, BEE_BREAD and POLLINATOR_POINTS, written out:
+## only the resolver preloads the catalogue), as skill_tree_panel.gd's
+## STORE_CONTENT maps them the other way round. test_conditions.py holds the
+## two to the catalogue.
+const SPENDABLE_CONTENT := {
+	Resources.NECTAR: "nectar",
+	Resources.POLLEN: "pollen",
+	Resources.HONEY: "honey",
+	Resources.JELLY: "royal_jelly",
+	Resources.BEE_BREAD: "bee_bread",
+}
 
 
 static func _disease(main: Node2D) -> float:

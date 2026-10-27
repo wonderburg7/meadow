@@ -24,9 +24,12 @@ extends RefCounted
 ##
 ## PP-9: an action carrying "every_days": n fires again n game days after it
 ## last fired, whenever its "when" holds then -- the headless stand-in for a
-## player who keeps checking the colony. It stays unresolved for good (so a
-## "when_actions_resolved" stop never waits on it), and log_unresolved
-## reports it only if it never fired at all.
+## player who keeps checking the colony. It stays pending for good, so
+## is_outstanding() leaves it out and a "when_actions_resolved" stop never
+## waits on it. log_unresolved reports one that never fired, and one that came
+## due again and then never fired before the run ended. "settle", "wait" and
+## "assert" are sequence points and do not repeat: "every_days" on one of them
+## is rejected, logged, and the action is dropped.
 
 # --- preloads -----------------------------------------------------
 
@@ -75,6 +78,10 @@ static func run_pending(main: Node2D, actions: Array) -> void:
 	for action: Variant in actions:
 		if action.get("_resolved", false):
 			continue
+		if action.has("every_days") and NOT_REPEATABLE.has(str(action.get("do", ""))):
+			action["_resolved"] = true
+			_log(str(action.get("do", "")), str(action), "rejected", "every_days is not allowed on a sequence point")
+			continue
 		if action.get("do", "") == "settle":
 			if not _do_settle(action):
 				return
@@ -86,6 +93,8 @@ static func run_pending(main: Node2D, actions: Array) -> void:
 		if action.has("_next_day") and main.day < int(action["_next_day"]):
 			continue
 		if not _when_met(main, action.get("when", {})):
+			if action.get("_fired", false) and not action.has("_due_since"):
+				action["_due_since"] = main.day
 			continue
 		if action.get("do", "") == "assert":
 			# A polling assert is a sequence point, like "wait": what follows
@@ -101,6 +110,9 @@ static func run_pending(main: Node2D, actions: Array) -> void:
 			_rearm_if_repeating(main, action)
 
 
+## PP-9: the verbs that are sequence points; "every_days" is refused on them.
+const NOT_REPEATABLE := ["settle", "wait", "assert"]
+
 ## PP-9: puts an "every_days" action back in the pending list, due again
 ## that many game days on (at least one). Nothing else in it changes.
 static func _rearm_if_repeating(main: Node2D, action: Dictionary) -> void:
@@ -108,7 +120,13 @@ static func _rearm_if_repeating(main: Node2D, action: Dictionary) -> void:
 		return
 	action["_resolved"] = false
 	action["_fired"] = true
+	action.erase("_due_since")
 	action["_next_day"] = main.day + maxi(1, int(action["every_days"]))
+
+## PP-9: whether a "when_actions_resolved" stop still waits on this action.
+## A repeating action never finishes, so it never holds the stop up.
+static func is_outstanding(action: Dictionary) -> bool:
+	return not action.get("_resolved", false) and not action.has("every_days")
 
 
 # --- the comb build-site sampler ----------------------------------
@@ -169,7 +187,14 @@ static func sample_comb_build_sites(main: Node2D) -> void:
 ## (docs/headless-run-contract.md).
 static func log_unresolved(actions: Array) -> void:
 	for action: Variant in actions:
-		if action.get("_resolved", false) or action.get("_fired", false):
+		if action.get("_resolved", false):
+			continue
+		if action.get("_fired", false):
+			# A repeat that fired is reported only if it came due again
+			# and its "when" never held before the run ended.
+			if action.has("_due_since"):
+				_log(action.get("do", ""), str(action), "never_fired",
+					"repeat due since day %d; its 'when' never held again" % int(action["_due_since"]))
 			continue
 		_log(action.get("do", ""), str(action), "never_fired", "run ended before its 'when' was met")
 
@@ -533,29 +558,13 @@ static func _do_assign_role(main: Node2D, action: Dictionary) -> void:
 		_log("assign_role", str(action), "rejected", "no matching bees or no role given")
 		return
 
-	var role_id: int = main.Roles.id_for_key(role)
-	var base_key: String = role
-	var mode_key: String = ""
-	if role_id == -1:
-		for r: Dictionary in main.Roles.ROLES:
-			var prefix: String = r.key + "_"
-			if role.begins_with(prefix):
-				role_id = r.id
-				base_key = r.key
-				mode_key = role.substr(prefix.length())
-				break
-	if role_id == -1:
-		_log("assign_role", str(action), "rejected", "unknown role")
+	var parsed := _parse_role_key(main, role)
+	if parsed.has("error"):
+		_log("assign_role", str(action), "rejected", parsed.error)
 		return
-	if mode_key != "":
-		var mode_known := false
-		for mode: Variant in main.Roles.modes_for(role_id):
-			if mode.key == mode_key:
-				mode_known = true
-				break
-		if not mode_known:
-			_log("assign_role", str(action), "rejected", "unknown mode for role")
-			return
+	var role_id: int = parsed.id
+	var base_key: String = parsed.base
+	var mode_key: String = parsed.mode
 
 	var previous: Array = main.selected_bees
 	main.selected_bees = bees
@@ -589,62 +598,86 @@ static func _do_assign_role(main: Node2D, action: Dictionary) -> void:
 ## PP-9: {"do": "keep_role", "role": "forager_pollen", "count": 2,
 ## "share": 0.25, "from": "forager_nectar"} -- tops a role up to a head count,
 ## the way a player glances at the tallies and moves a few bees across. The
-## target is the larger of "count" and "share" times the non-queen adults.
-## Bees already switching to the role (pending_role) count towards it. The
-## shortfall comes from "from" (default "forager"), youngest first, since
-## they have the longest left to live, and each move goes through
-## _do_assign_role, the same command a click reaches. The queen, gynes and
-## drones are never moved. Pair it with "every_days" to keep a role staffed
-## as bees die. A target the colony already meets moves nobody.
+## target is the larger of "count" and "share" times the workers (adults that
+## are not the queen, a gyne or a drone -- the only bees it ever moves). A
+## worker counts towards it when she holds the role and, if "role" names a
+## mode, that mode (hud.gd::_mode_is_active, the check _do_assign_role makes);
+## one still finishing a task counts when her pending_role is the role and her
+## mode already matches, since a mode request is set on the bee at once. The
+## shortfall comes from "from" (default "forager"), youngest first, since they
+## have the longest left to live, through _do_assign_role, the command a click
+## reaches. Only bees that then hold or are switching to the role and mode
+## count as moved. Pair it with "every_days" to keep a role staffed.
 static func _do_keep_role(main: Node2D, action: Dictionary) -> void:
-	var wanted := _parse_role_key(main, str(action.get("role", "")))
+	var role_key := str(action.get("role", ""))
+	var wanted := _parse_role_key(main, role_key)
 	var source := _parse_role_key(main, str(action.get("from", "forager")))
-	if wanted.is_empty() or source.is_empty():
-		_log("keep_role", str(action), "rejected", "unknown role")
+	if wanted.has("error") or source.has("error"):
+		_log("keep_role", str(action), "rejected", str(wanted.get("error", source.get("error", ""))))
 		return
-	var target := int(action.get("count", 0))
-	if action.has("share"):
-		target = maxi(target, roundi(float(action["share"]) * Conditions._non_queen_adults(main)))
+	var workers := 0
 	var have := 0
 	var donors: Array = []
 	for b: Variant in main.get_tree().get_nodes_in_group("bees"):
 		if not is_instance_valid(b) or b.is_queen or b.is_gyne or b.is_drone:
 			continue
-		if b.pending_role == wanted.id or (b.pending_role == -1 and _bee_in_role(b, wanted)):
+		workers += 1
+		if _bee_holds(main, b, wanted):
 			have += 1
-		elif b.pending_role == -1 and _bee_in_role(b, source):
+		elif b.pending_role == -1 and _bee_holds(main, b, source):
 			donors.append(b)
+	var target := int(action.get("count", 0))
+	if action.has("share"):
+		target = maxi(target, roundi(float(action["share"]) * workers))
+	var tally := "%s %d/%d" % [role_key, have, target]
 	var short := target - have
 	if short <= 0:
-		_log("keep_role", "%s %d/%d" % [action.get("role", ""), have, target], "accepted", "already staffed")
+		_log("keep_role", tally, "accepted", "already staffed")
+		return
+	if donors.is_empty():
+		_log("keep_role", tally, "rejected", "no bee in %s to move" % action.get("from", "forager"))
 		return
 	donors.sort_custom(func(a: Variant, b: Variant) -> bool: return a.bee_id > b.bee_id)
+	var picked: Array = donors.slice(0, short)
 	var ids: Array = []
-	for b: Variant in donors.slice(0, short):
+	for b: Variant in picked:
 		ids.append(b.bee_id)
-	if ids.is_empty():
-		_log("keep_role", "%s %d/%d" % [action.get("role", ""), have, target], "accepted", "no bee to move")
+	_do_assign_role(main, {"target": {"bee_ids": ids}, "role": role_key})
+	var moved := 0
+	for b: Variant in picked:
+		if is_instance_valid(b) and _bee_holds(main, b, wanted):
+			moved += 1
+	if moved == 0:
+		_log("keep_role", tally, "rejected", "the assignment was refused for all %d bee(s)" % picked.size())
 		return
-	_do_assign_role(main, {"target": {"bee_ids": ids}, "role": action.get("role", "")})
-	_log("keep_role", "%s %d/%d" % [action.get("role", ""), have, target], "accepted", "moved %d" % ids.size())
+	_log("keep_role", tally, "accepted", "moved %d of %d" % [moved, picked.size()])
 
-## "forager_pollen" -> {id, mode: "pollen"}; "nurse" -> {id, mode: ""}; {} if
-## no role matches. The same key reading _do_assign_role does.
+## The one reading of a role key, shared by assign_role and keep_role:
+## "forager_pollen" -> {id, base: "forager", mode: "pollen"}, "nurse" ->
+## {id, base: "nurse", mode: ""}. {"error": ...} for an unknown role, or a
+## mode that Roles.modes_for does not list for that role.
 static func _parse_role_key(main: Node2D, key: String) -> Dictionary:
 	var role_id: int = main.Roles.id_for_key(key)
 	if role_id != -1:
-		return {"id": role_id, "mode": "", "forager": role_id == main.Roles.FORAGER}
+		return {"id": role_id, "base": key, "mode": ""}
 	for r: Dictionary in main.Roles.ROLES:
 		var prefix: String = r.key + "_"
-		if key.begins_with(prefix):
-			return {"id": r.id, "mode": key.substr(prefix.length()), "forager": r.id == main.Roles.FORAGER}
-	return {}
+		if not key.begins_with(prefix):
+			continue
+		var mode_key := key.substr(prefix.length())
+		for mode: Variant in main.Roles.modes_for(r.id):
+			if mode.key == mode_key:
+				return {"id": r.id, "base": r.key, "mode": mode_key}
+		return {"error": "unknown mode for role"}
+	return {"error": "unknown role"}
 
-## A forager's mode is her resource; other roles count by role alone.
-static func _bee_in_role(bee: Node2D, role: Dictionary) -> bool:
-	if bee.role != role.id:
+## The bee holds (or is switching to) the parsed role, and its mode if one is
+## named -- the same mode test _do_assign_role checks a result against.
+static func _bee_holds(main: Node2D, bee: Node2D, parsed: Dictionary) -> bool:
+	var role_id: int = bee.pending_role if bee.pending_role != -1 else bee.role
+	if role_id != int(parsed.id):
 		return false
-	return role.mode == "" or not role.forager or bee.resource_type == role.mode
+	return parsed.mode == "" or main.hud._mode_is_active(role_id, bee, parsed.mode)
 
 ## Calls orders_zones._designate_one directly -- the per-cell command
 ## function _on_cell_designation_requested itself calls once it's worked
