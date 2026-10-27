@@ -124,7 +124,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | gated -- waits for GP-5 to release `scripts/hud.gd` | medium |
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
-| CQ-R10 | `input_selection.gd` decomposed and sectioned | `input_selection.gd`, `FUNCTION_MAP.md` | yes -- specified 26 Oct 2026 | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
 | CQ-R14 | mid-size builders: `main_menu._ready`, `challenge_complete._ready`, `flower.setup`, `bee._build_visuals` | those four | yes -- specified 26 Oct 2026 | low |
 
@@ -415,35 +414,7 @@ Reasoning: **low**.
 - Next after: CQ-M7 -- name world draw order
 ```
 
-## CQ-R10 -- decompose input selection
-
-**Now.** `input_selection.gd` has no section headers. `_unhandled_input`,
-`_finish_drag` and `_issue_command` each mix several distinct input cases;
-their functions are still present on master (verified 26 Oct 2026). The D2
-research record identifies the cases and three existing click-world scenarios.
-`tools/slice.ps1 owner` found no Claude lane claim on the file on 26 Oct 2026;
-the Codex CQ-M6 overlap is resolved by gating CQ-M6 until after this slice.
-
-**When done.** Add accurate section headings. Extract `_handle_key`,
-`_handle_mouse_button` and `_handle_mouse_motion` from `_unhandled_input`;
-`_click_pick_in_hive(p, add)`, `_click_pick_in_meadow(p)`,
-`_box_pick_comb(box, add)` and `_apply_bee_pick(picked, additive)` from
-`_finish_drag`; and `_command_in_hive` and `_command_in_meadow` from
-`_issue_command`. Keep input order, selection and command effects, node names
-and displayed text unchanged. Regenerate `FUNCTION_MAP.md`. File a hands-on
-check for box selection, keys, wheel and right-click commands, which have no
-deterministic coverage. Reasoning: **medium**.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] CQ-R10 -- decompose input selection**
-- Plan: `plans/now/code-health.md` -- "CQ-R10 -- decompose input selection"
-- Files: `scripts/input_selection.gd`, `FUNCTION_MAP.md`, `checks/ready.md`
-- Check: `python tools/equivalence.py test_scenarios/e1_placement_exclusion_test.json master`, `python tools/equivalence.py test_scenarios/hr2_click_view_switch_test.json master` and `python tools/equivalence.py test_scenarios/rr1_queen_builds_test.json master` report no differences; `python tools/prefinish.py` passes; a hands-on check covers the untested inputs
-- Proof: `present: scripts/input_selection.gd :: func _unhandled_input(event: InputEvent) -> void:`
-- Next after: CQ-R14 -- split the mid-size visual builders
-```
+CQ-R10 shipped 2026-10-27; its specification is `plans/archive/CQ-R10_2026-10-27.md`.
 
 ## CQ-R14 -- split the mid-size visual builders
 

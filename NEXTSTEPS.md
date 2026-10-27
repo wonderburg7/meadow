@@ -63,14 +63,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] CQ-R10 -- decompose input selection**
-   - Plan: `plans/now/code-health.md` -- "CQ-R10 -- decompose input selection"
-   - Files: `scripts/input_selection.gd`, `FUNCTION_MAP.md`, `checks/ready.md`
-   - Check: `python tools/equivalence.py test_scenarios/e1_placement_exclusion_test.json master`, `python tools/equivalence.py test_scenarios/hr2_click_view_switch_test.json master` and `python tools/equivalence.py test_scenarios/rr1_queen_builds_test.json master` report no differences; `python tools/prefinish.py` passes; a hands-on check covers the untested inputs
-   - Proof: `present: scripts/input_selection.gd :: func _unhandled_input(event: InputEvent) -> void:`
-   - Next after: CQ-R14 -- split the mid-size visual builders
-
-2. **[Codex] CQ-R14 -- split the mid-size visual builders**
+1. **[Codex] CQ-R14 -- split the mid-size visual builders**
    - Plan: `plans/now/code-health.md` -- "CQ-R14 -- split the mid-size visual builders"
    - Files: `scripts/main_menu.gd`, `scripts/challenge_complete.gd`, `scripts/flower.gd`, `scripts/bee.gd`, `FUNCTION_MAP.md`
    - Check: `python -m unittest tests.test_sp1_pixel_sprite tests.test_ho15_menu_hex_fit` and `python tools/equivalence.py test_scenarios/sf1_founding_flower_mix_test.json master` pass with no differences; `python tools/prefinish.py` passes
