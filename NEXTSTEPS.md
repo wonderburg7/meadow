@@ -25,10 +25,10 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
 1. **[Claude] PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter**
    - Plan: `plans/now/pollination.md` -- "PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter"
-   - Files: `test_scenarios/alpha_arc_test.json`, `scripts/conditions.gd`, `tests/test_conditions.py`
-   - Check: `python -m unittest tests.test_conditions tests.test_pp6_gyne_rearing_affordable` passes (`skill_affordable` has its match arm and reads `Progression.purchase_blocker` with the Buy button's stores); over 3 seeds of the reference Colony Run (`python tools/pacing_gates.py`) the run owns Pollinator points (`skill.foraging.pollinator_points`), the Gyne-rearing row reports a day on each seed (any day, no band), and the first-worker row stays in band (median by day 17); the weak baseline's cause stays recorded in this section; no price, recipe or `config_overrides` entry that redefines what is measured moves; `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/conditions.gd :: skill_affordable`
-   - Next after: PP-10 -- the sweep prices the route so Gyne rearing is first affordable after the first winter
+   - Files: `scripts/conditions.gd`, `tests/test_conditions.py`, `scripts/scenario_actions.gd`, `tests/test_pp9_repeating_actions.py`
+   - Check: `python -m unittest tests.test_conditions tests.test_pp9_repeating_actions` passes (`skill_affordable` reads `Progression.purchase_blocker` with the Buy button's stores; `every_days` repeats any action; `keep_role` tops a role up to a count or a share of the adults); the weak baseline's cause and the route numbers stay recorded in this section; no price, recipe or `config_overrides` entry that redefines what is measured moves; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/scenario_actions.gd :: keep_role`
+   - Next after: PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed
 
 2. **[Claude] RR-19 -- comb workers seal and unseal cells over time**
    - Plan: `plans/now/run-repairs.md` -- "RR-19 -- comb workers seal and unseal cells over time"
@@ -51,12 +51,12 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/game_config.gd :: rain_free_days`
    - Next after: none -- the rain rule is complete
 
-5. **[Claude] RR-22 -- select a number of bees from a multi-selection**
-   - Plan: `plans/now/run-repairs.md` -- "RR-22 -- select a number of bees from a multi-selection"
-   - Files: `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, `tests/test_layout_regression.py`, `tests/rr22_select_n_test.gd`, `tests/test_rr22_select_n.py`
-   - Check: `python -m unittest tests.test_rr22_select_n` passes (n is clamped to 1..selection size, `>>` steps by 5, Select keeps n bees, youngest and oldest keep the one bee with the least or greatest age); `python -m unittest tests.test_layout_regression` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-   - Proof: `absent: scripts/hud.gd :: select_youngest`
-   - Next after: none -- multi-selection narrowing is complete
+5. **[Claude] SP-13 -- foragers come and go at the skep's door**
+   - Plan: `plans/now/sprites.md` -- "SP-13 -- foragers come and go at the skep's door"
+   - Files: `scripts/hive.gd`, `scripts/rival_hive.gd`, `scripts/sprite_catalogue.gd`
+   - Check: `python tools/prefinish.py` is green (boot check clean); the skep sprite's door lands on `hive.position` in a headless scene (the sprite's position plus the door offset equals zero); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
+   - Proof: `absent: scripts/sprite_catalogue.gd :: HIVE_SKEP_DOOR`
+   - Next after: none -- `plans/now/sprites.md` is complete once SP-6, SP-12 and SP-14 have landed
 
 ### Codex lane
 
@@ -89,7 +89,9 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for PP-10 (`plans/now/pollination.md`), the sweep that prices the gyne route (Dave split PP-9, 27 Oct 2026).
-- **PP-10** (`plans/now/pollination.md`) -- the sweep prices the route so Gyne rearing is first affordable after the first winter; waits for PP-9, whose reference route it sweeps against.
+- **PP-11** (`plans/now/pollination.md`) -- the reference route owns Pollinator points and reaches Gyne rearing on every seed; waits for PP-9, whose `skill_affordable`, `every_days` and `keep_role` it builds the route with (Dave narrowed PP-9 to its tools, 27 Oct 2026).
+- **PP-10** (`plans/now/pollination.md`) -- the sweep prices the route so Gyne rearing is first affordable after the first winter; waits for PP-11, whose reference route it sweeps against.
+- **RR-22** (`plans/now/run-repairs.md`) -- select a number of bees from a multi-selection; waits for the Codex lane's CQ-R6 to release `scripts/hud.gd`, which both name.
 - **CQ-M5b** (`plans/now/code-health.md`) -- the last CanvasLayer readers and the bare-layer source check; waits for RR-21 to release `scripts/main.gd` and the Jules J-14 branch to settle `scripts/game_panel.gd`.
 - **CQ-M4** (`plans/now/code-health.md`) -- name Challenge level ids; waits for the Claude lane to release `scripts/save_game.gd` and `scripts/saving.gd`.
 - **RR-12** (`plans/now/run-repairs.md`) -- a loaded run keeps its readout history (Dave, 16 Oct 2026); waits for ED-3, the last of the alpha chain, which shares `scripts/main.gd` and the save files.

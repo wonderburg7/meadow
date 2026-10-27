@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-9 -- the reference route reaches Gyne rearing, then PP-10 -- the sweep prices the route so Gyne rearing is first affordable after the first winter (Dave split PP-9, 27 Oct 2026: PP-9 builds the route, PP-10 the sweep) | Dependency: PP-6 followed FR-2 (Dave 14 Oct 2026; landed 25 Oct 2026); PP-9 follows PP-6; PP-10 follows PP-9; AR-4 (`plans/now/alpha-route-evidence.md`), T2-7b (through AR-4) and FR-3 wait for PP-10 | Verified: 2026-10-27
+Status: active | Owner: Dave / Claude Code | Next: PP-9 -- the headless route tools and the route numbers, then PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed, then PP-10 -- the sweep prices the route so Gyne rearing is first affordable after the first winter (Dave split PP-9, 27 Oct 2026: PP-9 builds the route, PP-10 the sweep; Dave narrowed PP-9 to its headless tools later that day and moved the route to PP-11) | Dependency: PP-6 followed FR-2 (Dave 14 Oct 2026; landed 25 Oct 2026); PP-9 follows PP-6; PP-11 follows PP-9; PP-10 follows PP-11; AR-4 (`plans/now/alpha-route-evidence.md`), T2-7b (through AR-4) and FR-3 wait for PP-10 | Verified: 2026-10-27
 
 ## Objective
 
@@ -49,8 +49,9 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-9 | the reference route reaches Gyne rearing (route only since Dave's split, 27 Oct 2026) | `test_scenarios/alpha_arc_test.json`, `scripts/conditions.gd`, tests | yes -- claimed 27 Oct 2026 | high |
-| PP-10 | the sweep prices the route so Gyne rearing is first affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, tests | no -- after PP-9 | high |
+| PP-9 | the headless route tools (`skill_affordable`, `every_days`, `keep_role`) and the route numbers (narrowed by Dave, 27 Oct 2026) | `scripts/conditions.gd`, `scripts/scenario_actions.gd`, tests | yes -- claimed 27 Oct 2026 | high |
+| PP-11 | snapshots log bee bread, royal jelly and Pollinator Points; the reference route owns Pollinator points and reaches Gyne rearing on every seed | `scripts/headless/diagnostic_probes.gd`, `tools/headless/profiles.py`, `test_scenarios/alpha_arc_test.json`, tests | no -- after PP-9 | high |
+| PP-10 | the sweep prices the route so Gyne rearing is first affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, tests | no -- after PP-11 | high |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
 once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
@@ -63,8 +64,9 @@ and `bee_nursery.gd` with BB-2 and NF-4, both landed 10 Oct 2026. PP-10 balances
 prices. AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-10, and T2-7b,
 the tier-2 price sweep on the same arc, waits for AR-4. PP-6 followed FR-2
 (`plans/now/forager-recruitment.md`, landed 25 Oct 2026), which added Auto
-scouting to the route. PP-9 follows PP-6, whose probe and pacing row its
-route must reach; PP-10 follows PP-9 and sweeps that route. FR-3 shares
+scouting to the route. PP-9 follows PP-6 and lands the headless tools a
+route needs; PP-11 builds the route with them, which must reach PP-6's probe
+and pacing row; PP-10 follows PP-11 and sweeps that route. FR-3 shares
 `skills.gd` with PP-10 and follows it.
 
 **Reads.** A slice reads its own section, product-scope §10's 10 Oct 2026
@@ -91,8 +93,11 @@ PP-6 shipped 2026-10-27; its specification is `plans/archive/PP-6_2026-10-27.md`
 <!-- LAYER: design -->
 
 Split by Dave, 27 Oct 2026: PP-9 builds the reference route only, and PP-10
-below runs the sweep this title names. PP-9 moves no price or recipe and
-adds no `config_overrides` that redefine what is measured.
+below runs the sweep this title names. Narrowed by Dave later the same day:
+PP-9 lands the headless tools and the route numbers below, and PP-11 builds
+the route itself. The title is kept so the queue still finds this section.
+PP-9 moves no price or recipe, adds no `config_overrides` that redefine what
+is measured, and leaves `test_scenarios/alpha_arc_test.json` unchanged.
 
 What was true before PP-9 (verified 26 Oct 2026 on PP-6's branch). A one-seed
 reference run (seed 20260923) reached its first worker on day 22.18 against
@@ -146,7 +151,7 @@ to day 30-34).**
 Escalated to Dave (rule 5), because the reference player is also AR-4's,
 T2-7b's and FR-3's arc; he split the slice on 27 Oct 2026 (above).
 
-**What PP-9 builds (Dave, 27 Oct 2026).** In `test_scenarios/alpha_arc_test.json`:
+**What the route needs (Dave, 27 Oct 2026; PP-11 now builds it).** In `test_scenarios/alpha_arc_test.json`:
 
 1. **The opening step 2 found**, which put the first worker on days 8.41,
    7.56 and 8.68 over the three seeds.
@@ -224,20 +229,93 @@ Per-seed numbers from four three-seed runs built on them (to day 60-70):
 First worker stays in band throughout (8.41, 7.56 and 8.68). No seed reports
 a `gyne_rearing_affordable` day, so `alpha_arc_test.json` stays unchanged.
 
-If the band PP-10 sweeps for still looks out of reach once the route owns
-Pollinator points, PP-9 records that here and lands anyway: pricing is
-PP-10's job.
+**What PP-9 lands (Dave, 27 Oct 2026).** The `skill_affordable` condition
+(`scripts/conditions.gd`, `tests/test_conditions.py`), the `every_days`
+repeat on any scenario action and the `keep_role` verb
+(`scripts/scenario_actions.gd`, `tests/test_pp9_repeating_actions.py`), and
+the weak baseline's cause and route numbers recorded above (commits 882d7f9,
+07ac94e and f284ef7). It has no route bar: PP-11 carries that.
 
-Reasoning level high: the route sets the arc AR-4, T2-7b and FR-3 measure.
+Reasoning level high: these tools set how the arc AR-4, T2-7b and FR-3
+measure is scripted.
 
 **Open decisions:** none
 
 ```queue
 **[Claude] PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter**
 - Plan: `plans/now/pollination.md` -- "PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter"
-- Files: `test_scenarios/alpha_arc_test.json`, `scripts/conditions.gd`, `tests/test_conditions.py`, `scripts/scenario_actions.gd`, `tests/test_pp9_repeating_actions.py`
-- Check: `python -m unittest tests.test_conditions tests.test_pp6_gyne_rearing_affordable` passes (`skill_affordable` has its match arm and reads `Progression.purchase_blocker` with the Buy button's stores); over 3 seeds of the reference Colony Run (`python tools/pacing_gates.py`) the run owns Pollinator points (`skill.foraging.pollinator_points`), the Gyne-rearing row reports a day on each seed (any day, no band), and the first-worker row stays in band (median by day 17); the weak baseline's cause stays recorded in this section; no price, recipe or `config_overrides` entry that redefines what is measured moves; `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/conditions.gd :: skill_affordable`
+- Files: `scripts/conditions.gd`, `tests/test_conditions.py`, `scripts/scenario_actions.gd`, `tests/test_pp9_repeating_actions.py`
+- Check: `python -m unittest tests.test_conditions tests.test_pp9_repeating_actions` passes (`skill_affordable` reads `Progression.purchase_blocker` with the Buy button's stores; `every_days` repeats any action; `keep_role` tops a role up to a count or a share of the adults); the weak baseline's cause and the route numbers stay recorded in this section; no price, recipe or `config_overrides` entry that redefines what is measured moves; `.\tools\verify.ps1` is green
+- Proof: `absent: scripts/scenario_actions.gd :: keep_role`
+- Next after: PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed
+```
+
+## PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed
+
+<!-- LAYER: design -->
+
+Queued by Dave, 27 Oct 2026, when he narrowed PP-9 to its headless tools.
+PP-11 builds the route PP-9 set out to build ("What the route needs" in
+PP-9's section above), with PP-9's `skill_affordable` trigger, `every_days`
+repeat and `keep_role` verb.
+
+**True now (27 Oct 2026, PP-9's runs).** Seed 20260923 holds 736-1197 honey,
+933-1200 nectar and 4229-4977 pollen on days 60-69, owns Pollinator points
+and Royal jelly from day 26.3, yet reports no `gyne_rearing_affordable` day.
+Its shortfall is among bee bread, royal jelly and Pollinator Points, which
+the snapshots do not log: `scripts/headless/diagnostic_probes.gd`
+`SNAPSHOT_FIELDS` and the matching whitelist in `tools/headless/profiles.py`
+hold neither store nor the points. Seeds 20260924 and 20260925 reach Auto
+scouting but never own Pollinator points. First worker is in band on all
+three (8.41, 7.56 and 8.68). `test_scenarios/alpha_arc_test.json` still holds
+the weak baseline PP-9 recorded.
+
+**The work.**
+
+1. **Snapshots first.** Add `resources.stored_bee_bread`,
+   `resources.stored_royal_jelly` and `resources.pollinator_points` to
+   `SNAPSHOT_FIELDS` in `scripts/headless/diagnostic_probes.gd` and to the
+   whitelist in `tools/headless/profiles.py`, reading the same values
+   `gyne_rearing_affordable` already passes (`hive.total("bee_bread")`,
+   `hive.total("jelly")` and `world.pollination.points`), so the strong seed's
+   shortfall shows in a run's snapshots. A new
+   `tests/test_pp11_route_snapshots.py` checks both whitelists carry the
+   three fields and a short run logs them.
+2. **Then the route.** Build the reference route in
+   `test_scenarios/alpha_arc_test.json` so all 3 seeds own Pollinator points
+   (`skill.foraging.pollinator_points`) and report a
+   `gyne_rearing_affordable` day (any day, no band), with the first-worker
+   row in band (median by day 17).
+
+Best candidate so far: PP-9's scratch file
+`C:\Users\dl13860\AppData\Local\Temp\claude\C--Users-dl13860-Documents-Meadow-meadow--claude-worktrees-run-queue-7-14dc3a\53357001-01b6-49bb-b43c-f18266536e2f\scratchpad\pp9_best_route_candidate_v23.json`.
+It is in a session scratchpad and may vanish; PP-9's route numbers above
+describe it if it does.
+
+**Known blockers.** Weak seeds starve when staffing moves foragers off nectar
+early (floors from four adults starved all three queens by day 27), and the
+winter bill kills late buyers (seed 20260924 lost 18 bees and its queen one
+purchase short of Pollinator points).
+
+**Limits (Dave, 27 Oct 2026).** No price changes (that is PP-10), no
+`config_overrides` entry that redefines what is measured, and no
+`grant_skill` of a Foraging node. The route uses PP-9's verbs: one that is
+missing is a scope change to raise with Dave, not an edit to
+`scripts/scenario_actions.gd`. If no route reaches all 3 seeds, stop and
+escalate with the per-seed numbers (`docs/agent-rules.md` rule 5). If the
+band PP-10 sweeps for still looks out of reach once the route owns
+Pollinator points, record that here and land anyway: pricing is PP-10's job.
+
+Reasoning level high: the route sets the arc AR-4, T2-7b and FR-3 measure.
+
+**Open decisions:** none
+
+```queue-gated
+**[Claude] PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed**
+- Plan: `plans/now/pollination.md` -- "PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed"
+- Files: `scripts/headless/diagnostic_probes.gd`, `tools/headless/profiles.py`, `test_scenarios/alpha_arc_test.json`, `tests/test_pp11_route_snapshots.py`
+- Check: `python -m unittest tests.test_pp11_route_snapshots tests.test_pp6_gyne_rearing_affordable` passes (both snapshot whitelists carry `resources.stored_bee_bread`, `resources.stored_royal_jelly` and `resources.pollinator_points`, and a run logs them); over 3 seeds of the reference Colony Run (`python tools/pacing_gates.py`) every seed owns Pollinator points (`skill.foraging.pollinator_points`), the Gyne-rearing row reports a day on each seed (any day, no band), and the first-worker row stays in band (median by day 17); no price, recipe, `config_overrides` entry that redefines what is measured, or `grant_skill` of a Foraging node; `.\tools\verify.ps1` is green
+- Proof: `absent: scripts/headless/diagnostic_probes.gd :: stored_bee_bread`
 - Next after: PP-10 -- the sweep prices the route so Gyne rearing is first affordable after the first winter
 ```
 
@@ -279,16 +357,16 @@ Decisions (Dave, 14 Oct 2026):
   route) is priced by FR-3's own sweep; PP-10 leaves its cost as it is.
 
 What is true now (27 Oct 2026): no reference run has bought Pollinator
-points, so no `gyne_rearing_affordable` day exists to sweep against; PP-9
-builds the route that produces one. `pacing_gates.py` already prints the
+points, so no `gyne_rearing_affordable` day exists to sweep against; PP-11
+builds the route that produces one, with PP-9's tools. `pacing_gates.py` already prints the
 Gyne-rearing row with its band (`GYNE_AFFORDABLE_AFTER_WINTER_DAYS`).
 
 **The work.** Sweep `scripts/skills.gd` (point awards, the tier-3/4
 recipes, Auto scouting) and `scripts/game_config.gd` (including
-`flower_regrow_seconds`, per PP-4's note above) over 3 seeds of PP-9's
+`flower_regrow_seconds`, per PP-4's note above) over 3 seeds of PP-11's
 route until the median `gyne_rearing_affordable` day falls in the band, and
 record the sweep's table (each trial's values and per-seed days) in this
-section. Change prices and balance values only: PP-9's route stays as it
+section. Change prices and balance values only: PP-11's route stays as it
 landed, and no `config_overrides` entry redefines what is measured. If no
 price in these files can reach the band, stop and escalate to Dave
 (`docs/agent-rules.md` rule 5) rather than redefine it.
@@ -301,11 +379,12 @@ Reasoning level high: a balance sweep that sets a gameplay outcome.
 **[Claude] PP-10 -- the sweep prices the route so Gyne rearing is first affordable after the first winter**
 - Plan: `plans/now/pollination.md` -- "PP-10 -- the sweep prices the route so Gyne rearing is first affordable after the first winter"
 - Files: `scripts/skills.gd`, `scripts/game_config.gd`, `tests/test_pacing_gates.py`
-- Check: over 3 seeds of PP-9's reference Colony Run, `python tools/pacing_gates.py`'s Gyne-rearing row reports a median day from the first winter's end to 11 days after it (days 42 to 52); the sweep's table is recorded in this section; a `PP-10` test in `tests/test_pacing_gates.py` pins the swept values, so a price moved without a fresh sweep fails it; `python -m unittest tests.test_pacing_gates tests.test_pp6_gyne_rearing_affordable` passes; `.\tools\verify.ps1` is green
+- Check: over 3 seeds of PP-11's reference Colony Run, `python tools/pacing_gates.py`'s Gyne-rearing row reports a median day from the first winter's end to 11 days after it (days 42 to 52); the sweep's table is recorded in this section; a `PP-10` test in `tests/test_pacing_gates.py` pins the swept values, so a price moved without a fresh sweep fails it; `python -m unittest tests.test_pacing_gates tests.test_pp6_gyne_rearing_affordable` passes; `.\tools\verify.ps1` is green
 - Proof: `absent: tests/test_pacing_gates.py :: PP-10`
 - Next after: none -- the pollination plan is complete; AR-4 in `plans/now/alpha-route-evidence.md` then starts in the Codex lane, and FR-3 in `plans/now/forager-recruitment.md` follows
 ```
 
 ## Not in the queue, and why
 
-- **PP-10** -- the sweep prices the route so Gyne rearing is first affordable after the first winter; waits for PP-9, whose reference route it sweeps against.
+- **PP-11** -- the reference route owns Pollinator points and reaches Gyne rearing on every seed; waits for PP-9, whose `skill_affordable`, `every_days` and `keep_role` it builds the route with.
+- **PP-10** -- the sweep prices the route so Gyne rearing is first affordable after the first winter; waits for PP-11, whose reference route it sweeps against.
