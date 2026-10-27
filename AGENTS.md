@@ -30,10 +30,12 @@ the Claude/Codex slice queue (Dave, 23 Oct 2026):
 - **Your work and method are in `plans/reference/jules.md`**: run
   `python tools/jules_preflight.py --next` (it prints your task in full) and
   `python tools/heading.py plans/reference/jules.md "How to work"`; read no
-  other part of that file. One task per Jules task: stop after one pull
-  request. Before you push, `python tools/jules_preflight.py --scope` must
-  print no `off` line (an old snapshot shows as reverts of files you never
-  touched). Never edit that file.
+  other part of that file. One task per pull request, each on its own branch
+  cut from a freshly fetched `origin/master`, never stacked. Dave's starting
+  prompt (in that file) says whether to stop after one pull request or work
+  through tasks in sequence; follow it. Before you push,
+  `python tools/jules_preflight.py --scope` must print no `off` line (an old
+  snapshot shows as reverts of files you never touched). Never edit that file.
 
 **Before reading or acting on any other project file, read
 `docs/agent-rules.md` (the rules Claude and Codex share) and `CHATGPT.md`,

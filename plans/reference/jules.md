@@ -20,20 +20,43 @@ blocks, so it also refills this list.
 ## Starting prompt (Dave pastes this into Jules)
 
 ```text
-Read the "If you are Google Jules" section of AGENTS.md. Run
-`python tools/jules_preflight.py --next` (it prints your task in full) and
-`python tools/heading.py plans/reference/jules.md "How to work"` (your method),
-and read nothing else in plans/reference/jules.md. If --next prints "none", read
-its "Standing tasks" the same way and take the first that fits. One task per
-pull request. Do not edit plans/reference/jules.md.
+Work through Meadow's Jules tasks one after another in this one session until a stop condition below is met. This prompt overrides two lines elsewhere: AGENTS.md's "stop after one pull request" and jules.md's "start every task as a new Jules task". Every other rule in those files stands.
+
+Once, at the start: read the "If you are Google Jules" section of AGENTS.md. Of plans/reference/jules.md, read only the parts named below.
+
+For each task:
+
+1. Run `git fetch origin`, then `git switch -c jules/<id>-<topic> origin/master`. Cut every branch from origin/master, never from local master or an earlier task's branch. A stale or stacked base is what made earlier PRs carry two tasks and revert files.
+2. Run `python tools/jules_preflight.py --next` and do the task it prints. It never prints a task that is taken, waiting on an unmerged task, or touching a file an open branch changes, so no task ever needs stacking. If it prints "none", run `python tools/heading.py plans/reference/jules.md "Standing tasks"` and take the first that fits. For S-1, S-2 and S-3, first run `git branch -r --list 'origin/jules/s-*'` and look at your own open PRs, then pick a tool, function or pitfall that none of them covers.
+3. Run `python tools/heading.py plans/reference/jules.md "How to work"` and follow it. Write its plan (task id, preflight output, files, proof) in your message and carry on without waiting for approval.
+4. Before opening the PR, check each clause of the task's `Do:` one by one against your change and say which test or edit meets it. Run `python tools/jules_preflight.py --scope`; it must print no `off` line. Title the PR `J-<n>: <task title>` (`S-<n>: ` for a standing task) and write the description in the order "How to work" step 8 gives.
+5. Open the PR, do not merge it, and start the next task at step 1 without waiting for review.
+
+Stop and report when any of these happens:
+- `--next` prints "none" and no standing task fits.
+- A task fails its checks and you cannot fix it within its scope.
+- `--scope` shows an `off` line you cannot clear.
+- Preflight returns a task touching a file an open PR of yours already changes.
+- A PR of yours shows a failing CI check you can see.
+- You have finished 5 tasks.
+- The next task is an audit ("Audit: ...") and you have already finished one in this session. Stop there; do not skip ahead to a later task.
+
+If you are unsure whether something is in scope, stop and say so rather than guessing. Do not edit plans/reference/jules.md or any file the task's `Files:` line does not name.
+
+Final report, one block: a table with one row per PR (task id, branch, PR link, `--scope` result, commands run, commands not run), then every Follow-up from every PR in one list with file and function, then for each audit the three findings you re-checked by hand. If you stopped early, say which condition.
 ```
 
-**Start every task as a new Jules task, never as a message in a finished one**
-(24 Oct 2026 review). A new task clones today's `master`; a follow-up in an
-old session builds on that session's snapshot. PR 4 carried J-2 and J-3 from
-one session, changed 19 files for two tasks, and its J-3 commit deleted J-2's
-files; PR 6 stacked J-5 and J-6 the same way. The prompt also keeps Jules from
-reading the other tasks, which is what tempts it to batch them.
+**One session may work several tasks in sequence, but never as a follow-up
+message in a finished session** (24 Oct 2026 review; sequence prompt 27 Oct).
+A follow-up in an old session builds on that session's snapshot: PR 4 carried
+J-2 and J-3 from one session, changed 19 files for two tasks, and its J-3
+commit deleted J-2's files; PR 6 stacked J-5 and J-6 the same way. The
+sequence prompt avoids that by cutting every branch from a freshly fetched
+`origin/master`, running `--scope` per task, and stopping on any `off` line.
+It reads "How to work" through `heading.py`, not this whole file, because the
+other tasks are what tempt Jules to batch them. Audits read the whole code
+base, so a session stops after one. For a single task, add "Stop after the
+first pull request." to the prompt.
 
 ## How to work
 
@@ -50,12 +73,14 @@ reading the other tasks, which is what tempts it to batch them.
    touch it. A test may *read* an owned file; it may not change it. If the
    fix for something you find is in an owned file, write it up under
    "Follow-ups" in the pull request instead.
-3. **Plan.** In the plan you show for approval, give the task id, the
-   preflight output, the files you will change and the proof (step 5).
-4. **Branch and title.** Branch from the latest `origin/master` as
+3. **Plan.** In the plan you show, give the task id, the preflight output,
+   the files you will change and the proof (step 5). In a sequence session
+   carry on without waiting for approval.
+4. **Branch and title.** Branch from the latest `origin/master` (`git fetch
+   origin` first; never local master or an earlier task's branch) as
    `jules/j-<n>-<topic>` (a standing task: `jules/s-<n>-<topic>`). The pull
-   request title starts `J-<n>: ` -- the preflight reads it to know the task
-   is done once merged.
+   request title starts `J-<n>: ` (`S-<n>: ` for a standing task) -- the
+   preflight reads it to know the task is done once merged.
 5. **Prove it.** A guard is proved by a mutation: say what you changed to
    reintroduce the bug, and that the guard then failed; it must pass on
    `origin/master` as it stands. A test of a tool covers its documented
@@ -518,7 +543,9 @@ For Claude, Codex and Dave, not Jules.
   Jules nothing; the old rule of pruning in every merge push was one extra
   edit of this file per Jules pull request.
 - A Jules finding that needs a slice goes to the plan that owns the file,
-  as any other review hand-off.
+  as any other review hand-off. A sequence session's final report lists every
+  PR's `--scope` result and all Follow-ups in one block: route those from
+  it, then run `--scope J-n --ref` per PR before merging.
 - **Merging an audit** (a report under `docs/audits/`): read its Summary and
   Candidate Jules tasks only. Spot-check two Findings rows against the
   source; if either is wrong, send the pull request back rather than
