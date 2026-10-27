@@ -2911,7 +2911,13 @@ function Invoke-SliceFinish {
             # the commit message as a leading invisible character -- write
             # the file directly instead.
             [System.IO.File]::WriteAllText($mergeMessageFile, $mergeMessage, (New-Object System.Text.UTF8Encoding $false))
-            git merge --no-ff $branch -F $mergeMessageFile
+            # The merge is staged, not committed, until the merged queue
+            # passes. A clean merge can still join two queues that were each
+            # valid: RR-16's refill queued RR-22 on scripts/hud.gd while
+            # master had just ungated CQ-R6 on the same file, c4aa221
+            # committed the collision unchecked, and every later finish then
+            # stopped at primary verification (CQ-R14, 27 Oct 2026).
+            git merge --no-ff --no-commit $branch
             if ($LASTEXITCODE -ne 0) {
                 # L-19: a conflict in NEXTSTEPS.md alone is a sibling's queue
                 # edit meeting this branch's, and finish redoes its own edit
@@ -2921,9 +2927,17 @@ function Invoke-SliceFinish {
                 Write-ClosingJournal -Root $root -Id $id -Branch $branch -Lane $lane -Phase "queue-reapplying"
                 Invoke-SliceQueueReapply -Root $root -Id $id -Lane $lane -PythonPath $PythonPath
                 Invoke-InjectedLifecycleFailure -Phase "queue-reapplying"
-                git -C $root commit -F $mergeMessageFile
-                if ($LASTEXITCODE -ne 0) { throw "git commit of the merge failed after re-applying the queue edit" }
             }
+            else {
+                $run = Invoke-SlicePythonTool -Root $root -PythonPath $PythonPath -Arguments @((Join-Path $root "tools\refill_lane.py"), "--check", "--root", $root)
+                if ($run.Exit -ne 0) {
+                    $run.Output | ForEach-Object { Write-Output $_ }
+                    git -C $root merge --abort | Out-Null
+                    Stop-Slice -Cause "$id -- the merge into master would leave NEXTSTEPS.md failing its queue checks; the errors are printed above" -Fix "master is unchanged and the merge is aborted. Merge master into this branch (git merge master in the worktree), fix the queue there (each file in one lane only), run python tools/check_docs.py, commit, and retry finish"
+                }
+            }
+            git -C $root commit -F $mergeMessageFile
+            if ($LASTEXITCODE -ne 0) { throw "git commit of the merge failed" }
         }
         finally {
             Remove-Item -LiteralPath $mergeMessageFile -ErrorAction SilentlyContinue

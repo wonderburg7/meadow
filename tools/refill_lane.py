@@ -631,19 +631,29 @@ def main() -> int:
     parser.add_argument("--json", action="store_true",
                         help="with --delete ID --top-up --lane L: print what closing ID would "
                              "leave as one JSON object (implies --dry-run)")
+    parser.add_argument("--check", action="store_true",
+                        help="run check_docs.py's queue checks on NEXTSTEPS.md as it stands, "
+                             "write nothing, and exit 1 on any error")
     parser.add_argument("--root", default=str(Path(__file__).resolve().parent.parent),
                         help="repository root (default: this checkout)")
     parser.add_argument("--lock-wait-seconds", type=int, default=LOCK_WAIT_DEFAULT,
                         help="how long a writing run waits for a running slice.ps1 "
                              "lifecycle command to release the lock (default 600)")
     args = parser.parse_args()
-    if not (args.delete or args.add or args.top_up):
-        parser.error("give at least one of --delete, --add or --top-up")
+    if not (args.delete or args.add or args.top_up or args.check):
+        parser.error("give at least one of --delete, --add, --top-up or --check")
     root = Path(args.root).resolve()
     # Plans carry em dashes and curly quotes; a Windows console defaults to
     # cp1252, so ask for UTF-8 the way tools/heading.py does.
     for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8", errors="replace")
+    if args.check:
+        # Read-only, so no lock: slice.ps1 finish calls it on a staged merge
+        # while it holds the lock itself.
+        errors = queue_errors((root / "NEXTSTEPS.md").read_text(encoding="utf-8"), root)
+        for error in errors:
+            print(f"ERROR: {error}")
+        return 1 if errors else 0
     if args.json:
         if not (args.delete and args.top_up and args.lane):
             parser.error("--json needs --delete ID, --top-up and --lane")
