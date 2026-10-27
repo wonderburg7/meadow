@@ -53,6 +53,11 @@ func _ready() -> void:
 	column.add_theme_constant_override("separation", 10)
 	panel.add_child(column)
 
+	_build_labels(column)
+	_build_buttons(column)
+
+
+func _build_labels(column: VBoxContainer) -> void:
 	headline_label = Label.new()
 	headline_label.theme_type_variation = "Heading"
 	UiTheme.bind_color(headline_label, "font_color", "success")
@@ -78,6 +83,9 @@ func _ready() -> void:
 	reward_label.visible = false
 	column.add_child(reward_label)
 
+
+
+func _build_buttons(column: VBoxContainer) -> void:
 	column.add_child(HSeparator.new())
 
 	continue_btn = Button.new()

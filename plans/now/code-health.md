@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R14 then CQ-R6 (hud.gd released by GP-5 and RR-14, 26-27 Oct 2026) then CQ-M5a in the Codex lane (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for RR-21 to release scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for RR-19 to release scripts/hive_cell.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R6 (hud.gd released by GP-5 and RR-14, 26-27 Oct 2026) then CQ-M5a in the Codex lane (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for RR-21 to release scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for RR-19 to release scripts/hive_cell.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -126,7 +126,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes -- GP-5 and RR-14 released `scripts/hud.gd`, 26-27 Oct 2026 | medium |
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
-| CQ-R14 | mid-size builders: `main_menu._ready`, `challenge_complete._ready`, `flower.setup`, `bee._build_visuals` | those four | yes -- specified 26 Oct 2026 | low |
 
 Only the first slice of each chain carries a full section and block. A row without one
 gets its block written by the session that claims its predecessor, from this table,
