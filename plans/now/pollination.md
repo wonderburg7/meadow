@@ -49,7 +49,6 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-6 | the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter -- now the probe only (Dave, 26 Oct 2026) | `scripts/progression.gd`, `scripts/headless/diagnostic_probes.gd`, `tools/analyze_session.py`, `tools/headless/profiles.py`, `tools/pacing_gates.py`, `test_scenarios/alpha_arc_test.json`, tests | yes -- in progress on `claude/PP-6` | medium |
 | PP-9 | the reference route reaches Gyne rearing, then the sweep prices it after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, tests | yes -- its block reaches master with PP-6's probe | high |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
@@ -83,29 +82,7 @@ PP-7 shipped 2026-10-15; its specification is `plans/archive/PP-7_2026-10-15.md`
 
 PP-8 shipped 2026-10-16; its specification is `plans/archive/PP-8_2026-10-16.md`.
 
-## PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter
-
-<!-- LAYER: design -->
-
-Split by Dave, 26 Oct 2026: PP-6 lands the probe only, and PP-9 below runs
-the sweep this title names. PP-6 adds `Progression.gyne_rearing_path_covered`
--- "affordable" is the whole path from zero (Honey worker, Bee bread, Royal
-jelly and Gyne rearing summed per resource by one `_path_cost`, Dave's
-meaning) -- the `resources.gyne_rearing_affordable` snapshot probe,
-`analyze_session.py`'s `gyne_rearing_affordable_day`, `pacing_gates.py`'s
-`gyne_rearing_affordable()` and its row, and
-`tests/test_pp6_gyne_rearing_affordable.py`. It moves no price.
-
-**Open decisions:** none
-
-```queue
-**[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
-- Plan: `plans/now/pollination.md` -- "PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter"
-- Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `scripts/progression.gd`, `scripts/headless/diagnostic_probes.gd`, `tools/analyze_session.py`, `tools/headless/profiles.py`, `tests/test_pp6_gyne_rearing_affordable.py` (widened by Dave, 26 Oct 2026, for the T2-7-style probe; "affordable" is the whole path from zero: Honey worker, Bee bread, Royal jelly and Gyne rearing summed as one `_path_cost`)
-- Check: `python -m unittest tests.test_pp6_gyne_rearing_affordable tests.test_pacing_gates` passes; the reference Colony Run's snapshots carry `resources.gyne_rearing_affordable` and `pacing_gates.py` prints its Gyne-rearing row (the first day the whole path is affordable, or that it never was) with no band requirement; no price moves (Dave split the sweep off as PP-9, 26 Oct 2026); `.\tools\verify.ps1` is green
-- Proof: `absent: tools/pacing_gates.py :: gyne_rearing_affordable`
-- Next after: PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter
-```
+PP-6 shipped 2026-10-27; its specification is `plans/archive/PP-6_2026-10-27.md`.
 
 ## PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter
 

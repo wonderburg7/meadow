@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter**
-   - Plan: `plans/now/pollination.md` -- "PP-6 -- the sweep prices points and tier-3/4 so Gyne rearing is affordable after the first winter"
-   - Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `scripts/progression.gd`, `scripts/headless/diagnostic_probes.gd`, `tools/analyze_session.py`, `tools/headless/profiles.py`, `tests/test_pp6_gyne_rearing_affordable.py` (widened by Dave, 26 Oct 2026, for the T2-7-style probe; "affordable" is the whole path from zero: Honey worker, Bee bread, Royal jelly and Gyne rearing summed as one `_path_cost`)
-   - Check: `python -m unittest tests.test_pp6_gyne_rearing_affordable tests.test_pacing_gates` passes; the reference Colony Run's snapshots carry `resources.gyne_rearing_affordable` and `pacing_gates.py` prints its Gyne-rearing row (the first day the whole path is affordable, or that it never was) with no band requirement; no price moves (Dave split the sweep off as PP-9, 26 Oct 2026); `.\tools\verify.ps1` is green
-   - Proof: `absent: tools/pacing_gates.py :: gyne_rearing_affordable`
-   - Next after: PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter
-
-2. **[Claude] RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out**
+1. **[Claude] RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out**
    - Plan: `plans/now/run-repairs.md` -- "RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out"
    - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `tests/rr11_pre_fermented_test.gd`
    - Check: `python -m unittest tests.test_rr11_pre_fermented` passes with the boundary at 36 h; `python -m unittest tests.test_display_text_golden` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
    - Proof: `absent: scripts/hive_cell.gd :: Color(0.78, 0.86, 0.35)`
    - Next after: none -- the pre-ferment warning is complete
 
-3. **[Claude] RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once**
+2. **[Claude] RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once**
    - Plan: `plans/now/run-repairs.md` -- "RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once"
    - Files: `scripts/orders_zones.gd`, `scripts/hud.gd`, `tests/test_nf5_clear_fermented.py`
    - Check: `python -m unittest tests.test_nf5_clear_fermented` passes with a new case (designating a sour nectar cell as honey leaves its stock and sets `evict_requested`, and a comb worker then empties it; a fresh nectar cell behaves as before); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/orders_zones.gd :: is_fermented() and`
    - Next after: none -- the sour-cell designation is complete
 
-4. **[Claude] RR-15 -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee**
+3. **[Claude] RR-15 -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee**
    - Plan: `plans/now/run-repairs.md` -- "RR-15 -- Fermentation sense keeps fresh nectar out of sour cells for every depositing bee"
    - Files: `scripts/hive.gd`, `tests/test_nf4_fermentation_sense.py`
    - Check: `python -m unittest tests.test_nf4_fermentation_sense` passes with a new case (a forager, and the queen set to forage, with Fermentation sense never deposit nectar into a sour cell; without the sense they still can); `python -m unittest tests.test_nf5_clear_fermented` passes; the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/hive.gd :: avoids_as_sour(cell)`
    - Next after: none -- the fermentation-sense deposit rule is complete
 
-5. **[Claude] RR-16 -- the queen can resume building a part-built cell**
+4. **[Claude] RR-16 -- the queen can resume building a part-built cell**
    - Plan: `plans/now/run-repairs.md` -- "RR-16 -- the queen can resume building a part-built cell"
    - Files: `scripts/orders_zones.gd`, `tests/test_rr1_queen_builds.py`
    - Check: `python -m unittest tests.test_rr1_queen_builds` passes with a new case (a part-built site is returned and the queen heads to it; a finished cell returns null; an empty tile still makes a site); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/orders_zones.gd :: cell_at_tile`
    - Next after: none -- the queen's build is complete
+
+5. **[Claude] PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter**
+   - Plan: `plans/now/pollination.md` -- "PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter"
+   - Files: `scripts/skills.gd`, `scripts/game_config.gd`, `test_scenarios/alpha_arc_test.json`, `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
+   - Check: the weak baseline's cause is recorded in this section; `python -m unittest tests.test_pacing_gates tests.test_pp6_gyne_rearing_affordable` passes; over 3 seeds of the reference Colony Run, `pacing_gates.py`'s Gyne-rearing row reports a median day from the first winter's end to 11 days after it (days 42 to 52); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
+   - Proof: `absent: test_scenarios/alpha_arc_test.json :: skill.foraging.pollinator_points`
+   - Next after: none -- the pollination plan is complete; AR-4 in `plans/now/alpha-route-evidence.md` then starts in the Codex lane, and FR-3 in `plans/now/forager-recruitment.md` follows
 
 ### Codex lane
 
