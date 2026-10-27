@@ -177,6 +177,23 @@ it by one leaf; `Progression` owns the check and the leaf only reads it. No
 Challenge stage goal or Colony Run milestone uses it. Runtime: it is
 evaluated where scenario triggers already are, and adds no tick of its own.
 
+**Route attempts after the split (27 Oct 2026, eight three-seed runs to day
+60, `skill_affordable` committed).** With the leaf, every `buy_skill` fires
+without a refusal. The best candidate keeps the opening, adds the queen's
+two comb batches, six locked brood cells (pollen x2, nurse, honey capped at
+300 stored honey, nectar x2), Shiver Cluster, Miner and Automation, and
+`clear_fermented` every three days from day 9. Seed 20260923 owns
+Pollinator points and Royal jelly by day 26.3 and comes out of winter with
+25 bees, growing to 55 by day 52. It still reports no Gyne-rearing day by
+day 60: stores reach 4000 nectar and 2145 pollen, but honey swings between
+0 and 671. Seed 20260924 stalls after Backup roles with no honey (12 bees).
+Seed 20260925 stalls after Comb worker on day 17.3, holding no nectar or
+pollen, and its queen is alone by day 56. Changes that rescue one seed sink
+another: removing the second comb batch, drawing less comb, or adding
+pollen cells each flipped seed 20260923 from owning Pollinator points to
+stalling. `alpha_arc_test.json` is unchanged; the candidate is in the
+worker's hand-off.
+
 If the band PP-10 sweeps for still looks out of reach once the route owns
 Pollinator points, PP-9 records that here and lands anyway: pricing is
 PP-10's job.

@@ -29,6 +29,7 @@ class ConditionsVocabularyTest(unittest.TestCase):
             "brood_cells_at_least": 1,
             "queen_alive": True,
             "skill_owned": "skill.brood.nurses",
+            "skill_affordable": "skill.brood.honey_worker",
             "event_count": {"type": "brood_feed", "at_least": 1},
             "disease": {"at_most": 0.5},
             "net_income": {"resource": "nectar", "days": 3, "at_least": 0.0},
@@ -53,6 +54,16 @@ class ConditionsVocabularyTest(unittest.TestCase):
         ):
             with self.subTest(key=key):
                 self.assertIn('"%s":' % key, SOURCE.split("static func _progress_key", 1)[1])
+
+    def test_skill_affordable_reads_the_buy_buttons_check(self):
+        # PP-9: the same pair buy_skill's refusal reports, not a second store count.
+        body = function_body(SOURCE, "_skill_affordable")
+        self.assertIn("Session.progression.purchase_blocker(skill_id, main.hud.skill_tree_panel._stores())", body)
+        self.assertIn('== ""', body)
+        self.assertIn('"skill_affordable":', SOURCE.split("static func _progress_key", 1)[1])
+        actions = (SCRIPTS / "scenario_actions.gd").read_text(encoding="utf-8")
+        self.assertIn("purchase_blocker(skill_id, main.hud.skill_tree_panel._stores())", actions)
+
 
     def test_evaluator_reads_cached_apis_instead_of_scene_groups(self):
         self.assertIn("main._role_counts()", SOURCE)

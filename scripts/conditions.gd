@@ -49,6 +49,8 @@ static func _met_key(main: Node2D, key: String, value: Variant) -> bool:
 			return alive == bool(value)
 		"skill_owned":
 			return _skill_owned(str(value))
+		"skill_affordable":
+			return _skill_affordable(main, str(value))
 		"event_count":
 			var event_spec: Dictionary = value
 			var count := DiagnosticLog.event_count(str(event_spec.get("type", "")), str(event_spec.get("subtype", "")))
@@ -114,6 +116,8 @@ static func _progress_key(main: Node2D, key: String, value: Variant) -> Dictiona
 			return {"current": main.hive.cells_holding("brood").size(), "target": int(value)}
 		"skill_owned":
 			return {"current": 1 if _skill_owned(str(value)) else 0, "target": 1}
+		"skill_affordable":
+			return {"current": 1 if _skill_affordable(main, str(value)) else 0, "target": 1}
 		"event_count":
 			var event_spec: Dictionary = value
 			if event_spec.has("at_least"):
@@ -199,6 +203,18 @@ static func income_window(main: Node2D, resource: String, days: int) -> Dictiona
 ## owned"; no resolver means nothing is.
 static func _skill_owned(skill_id: String) -> bool:
 	return Session.progression != null and Session.progression.is_owned(skill_id)
+
+
+## PP-9: the Buy button would accept this skill now -- the same pair
+## scenario_actions.gd::_do_buy_skill reads when it reports a refusal:
+## Progression.purchase_blocker over the skill tree's own stores (ripe honey,
+## ripe bee bread, unfermented nectar, unsealed cells). Headless routes use
+## it so a buy_skill fires when the purchase would go through; no Challenge
+## goal or Colony Run milestone reads it. Read only on a trigger check.
+static func _skill_affordable(main: Node2D, skill_id: String) -> bool:
+	if Session.progression == null or main.hud == null or main.hud.skill_tree_panel == null:
+		return false
+	return Session.progression.purchase_blocker(skill_id, main.hud.skill_tree_panel._stores()) == ""
 
 
 static func _disease(main: Node2D) -> float:
