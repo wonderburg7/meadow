@@ -1153,7 +1153,7 @@ Selection, drag and placement resolution.
 329  func _soil_at(point: Vector2) -> Node2D
 335  func _death_marker_at(point: Vector2) -> Node2D
 341  func _hex_at(global_point: Vector2) -> Vector2i
-356  # --- Click-to-place tools ---
+345  # --- Click-to-place tools ---
 385  func _placement_tool_def(tool_id: String) -> Dictionary
 395  func request_placement_tool(tool_id: String) -> void
 422  func clear_placement_tool() -> void
