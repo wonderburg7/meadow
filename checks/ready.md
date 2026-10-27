@@ -93,3 +93,4 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-151 -- SG-4 opening milestones: a new Colony Run shows the opening steps in order](ready/C-151.md)
 - [C-152 -- CT-1 cell tones: closed cells wear a faint tint of their contents](ready/C-152.md)
 - [C-153 -- Tick Raise a drone on an empty nursery cell and watch a drone hatch](ready/C-153.md)
+- [C-154 -- Selection keys, box and right-click orders](ready/C-154.md)
