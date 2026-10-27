@@ -48,4 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/RR-13` (`claude/RR-13`) | Claude | the pre-ferment warning shows 1.5 game days ahead and stands out | Claude | in progress | none | `plans/now/run-repairs.md` RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out |
+| `.worktrees/RR-14` (`claude/RR-14`) | Claude | a sour cell given a new designation is emptied by a comb worker, not at once | Claude | in progress | none | `plans/now/run-repairs.md` RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once |

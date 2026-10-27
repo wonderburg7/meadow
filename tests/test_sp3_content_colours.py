@@ -7,7 +7,8 @@ from pathlib import Path
 
 SRC = (Path(__file__).resolve().parent.parent / "scripts" / "hive_cell.gd").read_text(encoding="utf-8")
 NAMES = ["EMPTY", "NECTAR", "FERMENTED_NECTAR", "POLLEN", "HONEY_WET", "HONEY", "BROOD",
-         "JELLY", "GYNE_BROOD", "CORPSE", "SITE", "BEE_BREAD", "BEE_BREAD_SEALED", "BEE_BREAD_RIPE"]
+         "JELLY", "GYNE_BROOD", "CORPSE", "SITE", "BEE_BREAD", "BEE_BREAD_SEALED", "BEE_BREAD_RIPE",
+         "PRE_FERMENTED_NECTAR"]
 
 
 def colour(name):

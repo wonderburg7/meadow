@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-12, the last slice, waits for ED-3 (RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: RR-12, the last slice, waits for ED-3 (RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-24
 
 ## Objective
 
@@ -43,7 +43,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
-| RR-13 | the pre-ferment warning shows 1.5 game days ahead, in a stronger colour | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | low |
 | RR-14 | a sour cell given a new designation is emptied by a comb worker, not at once | `scripts/orders_zones.gd`, `scripts/hud.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | low |
 | RR-15 | Fermentation sense keeps fresh nectar out of sour cells for every depositing bee | `scripts/hive.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | medium |
 | RR-16 | the queen can resume building a part-built cell | `scripts/orders_zones.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | low |
@@ -130,44 +129,7 @@ test shows `day_store_totals` changing a condition's result across a load
 - Next after: none -- `plans/now/run-repairs.md` is complete once RR-8 and RR-11 have landed
 ```
 
-## RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out
-
-Level: low -- claude-sonnet-5-5 at low effort.
-
-**True now.** C-141 failed: "change not conspicuous enough, and warning tint
-should show 1.5 game days before fermentation". `GameConfig.nectar_pre_ferment_fraction`
-(`game_config.gd`, near l.681) is 0.75 of `nectar_ferment_hours` 96, so the
-warning shows 24 h ahead. `PRE_FERMENTED_ART_TINT` is Color(0.9, 0.92, 0.78)
-and `PRE_FERMENTED_NECTAR_COLOR` Color(0.64, 0.83, 0.27) in `hive_cell.gd`
-(near l.115): too close to fresh nectar. The stage is read by nothing but the
-colour (RR-11).
-
-**When done:**
-
-1. `nectar_pre_ferment_fraction` defaults to 0.625 (36 h, 1.5 game days of 24
-   game hours); its comment and the `settings_catalogue.gd` tip for "Pre-ferment
-   at x" (near l.601) say so.
-2. `PRE_FERMENTED_ART_TINT` is Color(0.78, 0.86, 0.35) and
-   `PRE_FERMENTED_NECTAR_COLOR` Color(0.72, 0.85, 0.15), still distinct from
-   `FERMENTED_NECTAR_COLOR` (0.55, 0.68, 0.39).
-3. `tests/rr11_pre_fermented_test.gd`'s boundary rows move to the new fraction.
-4. Dave's hands-on check is filed at closeout: the C-141 re-run, a nectar cell
-   turns visibly yellow-green about a day and a half before it sours.
-
-**Invariants.** Presentation only: no simulation reads the stage. No save
-changes. It shares `scripts/hive_cell.gd` with SP-12 and SP-14
-(`plans/now/sprites.md`): whichever is queued first runs first.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out**
-- Plan: `plans/now/run-repairs.md` -- "RR-13 -- the pre-ferment warning shows 1.5 game days ahead and stands out"
-- Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `tests/rr11_pre_fermented_test.gd`
-- Check: `python -m unittest tests.test_rr11_pre_fermented` passes with the boundary at 36 h; `python -m unittest tests.test_display_text_golden` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-- Proof: `absent: scripts/hive_cell.gd :: Color(0.78, 0.86, 0.35)`
-- Next after: none -- the pre-ferment warning is complete
-```
+RR-13 shipped 2026-10-27; its specification is `plans/archive/RR-13_2026-10-27.md`.
 
 ## RR-14 -- a sour cell given a new designation is emptied by a comb worker, not at once
 
