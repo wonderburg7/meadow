@@ -157,7 +157,50 @@ The work, in this order (Dave, 26 Oct 2026):
 Reasoning level high: an ambiguous baseline bug, then a balance sweep that
 sets a gameplay outcome.
 
-**Open decisions:** none
+**Step 1, the weak baseline's cause (PP-9 worker, 27 Oct 2026).** AR-5's
+early laying never reached the file: AR-5 tried that opening on 20-21 Oct,
+all three colonies died, and Dave revised the first-worker target instead,
+so `alpha_arc_test.json` kept its day-17 `laying` action
+(`plans/archive/AR-5_2026-10-21.md`, "Revised-target run"). On seed
+20260923 the queen forages and builds alone until day 17; by then her five
+cells (200 each) hold 459 nectar and 215 pollen, so she has no empty cell
+and lays her first egg on day 22 (first worker 22.18). Nothing ever makes
+honey (no Honey worker), the five cells cap the colony at 7 bees, and the
+winter bill (`season.gd::_resolve_winter`) leaves 4. The cause is the route,
+not the simulation.
+
+**Step 2, what a scripted route meets (27 Oct 2026, about 25 three-seed runs
+to day 30-34).**
+
+- An early-laying opening works on all three seeds: the queen builds
+  `[0,0]`, forages nectar, builds three more cells at 150 nectar, forages
+  nectar to 240 and pollen to 100, then lays. First worker on days 8.41,
+  7.56 and 8.68 (seeds 20260923-25). Smaller reserves fail: 180 nectar
+  spills into the egg cell, and 150 at laying starves the queen and larva.
+- Workers cannot build until Cell capacity and Comb worker are bought (20
+  ripe honey), so the queen draws two more batches of comb. Locked hatch
+  roles (`hatch_role` with `"locked": true`) keep nurses, honey makers and
+  pollen foragers coming as bees die at 15 days. The best variant reached
+  31-49 bees by day 30 on two seeds.
+- `buy_skill` fires once, and the only store trigger is `hive_total`. That
+  counts unripe honey and fermented nectar, and the skill tree's stores
+  count neither. So purchases were refused 1-4 times a run: Honey worker was
+  refused on seed 20260924 with 284-713 nectar held, and Comb worker with
+  140-228 honey held. A refusal costs days, the stores pile up, and the
+  piled nectar ferments after 96 hours. Only a comb worker (the queen,
+  until Comb worker is bought) can discard it.
+- Winter is a bill: 51 nectar-equivalent per bee at the scenario's 0.17
+  burn, doubled without Shiver Cluster. Pollen, bee bread and jelly are not
+  billed. In the 40-bee runs it took 20-44 bees on day 30.
+- No variant bought Pollinator points by day 30, so no `gyne_rearing_affordable`
+  day exists yet and step 3 has not started. `alpha_arc_test.json`,
+  `skills.gd` and `game_config.gd` are unchanged on this branch.
+
+Escalated to Dave (rule 5): the reference player is also AR-4's,
+T2-7b's and FR-3's arc, so how it buys and staffs changes more than this
+slice. The options are in the worker's hand-off.
+
+**Open decisions:** how the reference player buys and staffs (step 2 above) -- escalated 27 Oct 2026
 
 ```queue
 **[Claude] PP-9 -- the reference route reaches Gyne rearing, then the sweep prices it after the first winter**
