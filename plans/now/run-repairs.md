@@ -48,7 +48,7 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | RR-19 | comb workers seal and unseal cells over time (15 s to cap, 5 s to uncap) | `scripts/hive_cell.gd`, `scripts/orders_zones.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- DR-1 and CQ-M8 landed 25 Oct 2026 | high |
 | RR-20 | a comb worker carrying a body leaves, stays out one second, and comes back | `scripts/bee_building.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, tests | yes -- CQ-M8 landed 25 Oct 2026 | medium |
 | RR-21 | no ordinary rain in the first two days; rain warnings in plain words | `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | yes -- SG-4 landed 26 Oct 2026 | medium |
-| RR-22 | select a number of bees from a multi-selection, youngest and oldest | `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, tests | no -- after the Codex lane's CQ-R10 releases `scripts/input_selection.gd` (GP-5 and SG-4 landed 26 Oct 2026) | medium |
+| RR-22 | select a number of bees from a multi-selection, youngest and oldest | `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, tests | no -- after the Codex lane's CQ-R6 releases `scripts/hud.gd` (CQ-R10 landed 27 Oct 2026; GP-5 and SG-4 landed 26 Oct 2026) | medium |
 
 RR-9 and RR-10 are Codex-lane slices (Dave, 15 Oct 2026, plan review D3:
 the Claude lane was full and the Codex backlog dry); RR-7 and RR-11 stay in
@@ -400,7 +400,7 @@ simulation. Presentation and selection state only.
 **Open decisions:** which n bees `Select n` keeps (nearest the centre is
 provisional; Dave answers it at the hands-on check).
 
-```queue
+```queue-gated
 **[Claude] RR-22 -- select a number of bees from a multi-selection**
 - Plan: `plans/now/run-repairs.md` -- "RR-22 -- select a number of bees from a multi-selection"
 - Files: `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, `tests/test_layout_regression.py`, `tests/rr22_select_n_test.gd`, `tests/test_rr22_select_n.py`
@@ -411,4 +411,5 @@ provisional; Dave answers it at the hands-on check).
 
 ## Not in the queue, and why
 
+- **RR-22** -- select a number of bees from a multi-selection; waits for the Codex lane's CQ-R6 (`plans/now/code-health.md`) to release `scripts/hud.gd`, which both name (gated 27 Oct 2026 to clear check_docs' lane collision).
 - **RR-12** -- a loaded run keeps its readout history; waits for ED-3, the last of the alpha chain, because SG-2 to ED-3 share `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.
