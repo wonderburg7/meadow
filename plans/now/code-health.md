@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R14 in the Codex lane (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M6 waits for CT-1 to release scripts/hive_cell.gd, and CQ-R6 waits for GP-5 to release scripts/hud.gd (Dave's order, 25 Oct 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R14 then CQ-R6 (hud.gd released by GP-5 and RR-14, 26-27 Oct 2026) then CQ-M5a in the Codex lane (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for RR-21 to release scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for RR-19 to release scripts/hive_cell.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -97,7 +97,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | --- | --- | --- |
 | D1 | `docs/agent-rules.md` rule 2: add "a script splits by responsibility, never by size". `tools/update_function_map.py` header: "700 lines decides what is indexed, never what is split". Its `main.gd` description. `.claude/rules/gdscript.md` "Section headers" | CQ-R1 |
 | D2 | `docs/agent-rules.md` rule 2: "a balance value is a GameConfig field with a settings row; a structural constant is a named const in its owning file". No owner changes | CQ-M2 |
-| D2 | `plans/reference/ui-rules.md`: canvas layers live in scripts/canvas_layers.gd | CQ-M5 |
+| D2 | `plans/reference/ui-rules.md`: canvas layers live in scripts/canvas_layers.gd | CQ-M5a |
 | D3 | `.claude/rules/saving.md`: the round-trip harness | CQ-S0 |
 | D3 | `.claude/rules/saving.md`: "where a field goes" (the entity's `to_save`/`from_save`; the `.get()` default lives in `from_save`; migrations stay central) and the creation paragraph (nodes are still created in `saving.gd`). `docs/agent-rules.md` rule 2: each entity owns its save fields; `save_game.gd` writes, `saving.gd` restores, `save_migrations.gd` migrates | CQ-S1 |
 | D3 | Stale "field's line in save_game.gd and saving.gd" comments (`roles.gd`, `bee.gd`, `hive.gd`, `hive_cell.gd`, `save_migrations.gd`, `pollination.gd`, `fog_of_war.gd`) | each S slice for its own entity; CQ-S5 for the rest |
@@ -115,14 +115,15 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
-| CQ-M5 | CanvasLayer order in scripts/canvas_layers.gd | 10 UI scripts | yes -- FR-2 released `scripts/skill_tree_panel.gd` and `tests/source_checks.py` on 25 Oct 2026 | medium |
-| CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- CT-1 owns `hive_cell.gd` | low |
+| CQ-M5a | scripts/canvas_layers.gd names every CanvasLayer; 7 UI scripts read it | `canvas_layers.gd`, 7 UI scripts, `ui-rules.md` | yes -- after CQ-R14 releases `main_menu.gd`/`challenge_complete.gd` (specified 27 Oct 2026) | medium |
+| CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | gated -- RR-21 owns `main.gd`, Jules J-14 holds `game_panel.gd` | low |
+| CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- RR-19 owns `hive_cell.gd` | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once its section is written (CQ-R7 released `hud.gd` and WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
-| CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | gated -- waits for GP-5 to release `scripts/hud.gd` | medium |
+| CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes -- GP-5 and RR-14 released `scripts/hud.gd`, 26-27 Oct 2026 | medium |
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
 | CQ-R14 | mid-size builders: `main_menu._ready`, `challenge_complete._ready`, `flower.setup`, `bee._build_visuals` | those four | yes -- specified 26 Oct 2026 | low |
@@ -138,7 +139,8 @@ claim while `dry_after`).
   - CQ-L1 → L2 → L3
   - CQ-T1 → T2 → T3
   - CQ-S0 → S1 → S2 → S3 → S4 → S5; CQ-S0b (from CQ-S0's harness) any time before CQ-S4
-  - CQ-M2 → M3 → M8 (M8 by queue order: it shares no file with M3); CQ-M6 → M7
+  - CQ-M2 → M3 → M8 (M8 by queue order: it shares no file with M3); CQ-M6 → M7;
+    CQ-M5a → M5b
   - CQ-R0 → R3, R5 and R7
   - CQ-R1 and CQ-R2 → R13
 - **Shared files** (one after another, any order): `hud.gd` (M5, R3, R6, R7, R8);
@@ -239,7 +241,7 @@ balance. "Leave" is a deliberate decision.
 | `rival_hive` `_ready`/`restore`, `balance_tests.py` | nectar 120, pollen 40, share 0.7, min pop 4 | D | GameConfig `rival_starting_*` rows (CQ-M3) |
 | `rival_hive` `_rebalance` | step 0.05, 90 days, ×0.75 | D internal | named consts in place (CQ-M3) |
 | ~25 sites (`challenge_runner` 16) | `starting_level == 1`, `in [1, 2]` | B, saved | `levels.gd` CHALLENGE_1/2, `is_challenge()`; same ints (CQ-M4) |
-| 10 UI files | CanvasLayer 5-25 | B | scripts/canvas_layers.gd (CQ-M5) |
+| 10 UI files | CanvasLayer 5-25 | B | scripts/canvas_layers.gd (CQ-M5a, CQ-M5b) |
 | 8 world files | `Color(0.2, 1.0, 0.4, a)` ×11; queen 1.55 and caste colours | A | `world_draw.gd` SELECTION_COLOUR; caste names beside DRONE_* (CQ-M6) |
 | ~13 world files | z_index -10 to 100 | B | `world_draw.gd` names; report `hex_draw_depth` overlap, change nothing (CQ-M7) |
 | `bee_building`/`bee_foraging`/`bee_mining` | hive-exit block ×3; reach 2/6/8/10 | A | one helper + named per-module reaches (CQ-M8) |
@@ -292,9 +294,10 @@ wrapped chain as `. name(` on its own line.
 
 - **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`
   and `scripts/saving.gd`; its ownership overlaps that lane's current work.
-- **CQ-R6** -- waits for the Claude lane's GP-5 to release
-  `scripts/hud.gd`; keep its queue block gated until that ownership clears.
-- **CQ-M6** -- waits for the Claude lane's CT-1 to release
+- **CQ-M5b** -- waits for the Claude lane's RR-21 to release `scripts/main.gd`
+  and for the Jules J-14 branch (which deletes code in `scripts/game_panel.gd`)
+  to be merged or closed; keep its block gated until both clear.
+- **CQ-M6** -- waits for the Claude lane's RR-19 to release
   `scripts/hive_cell.gd`; keep its queue block gated until that ownership
   clears. CQ-R10 also uses `scripts/input_selection.gd`, so take it first.
 
@@ -354,7 +357,7 @@ checks. Stop if the replacement changes a save compatibility decision.
 - Files: `scripts/levels.gd`, `scripts/challenge_runner.gd`, `scripts/saving.gd`, `scripts/save_game.gd`, `scripts/main.gd`, `scripts/debug_panel.gd`, `scripts/challenge_complete.gd`, `scripts/world_building.gd`, `FUNCTION_MAP.md`
 - Check: `python tools/equivalence.py test_scenarios/h4_challenge1_stage_advance_test.json master` and `python tools/equivalence.py test_scenarios/bb4_challenge1_route.json master` report no difference; `python tests/source_checks.py`, `python tools/prefinish.py` and `./tools/verify.ps1` are green
 - Proof: `present: scripts/saving.gd :: if Session.starting_level in [1, 2]:`
-- Next after: CQ-M5 -- CanvasLayer order in scripts/canvas_layers.gd
+- Next after: CQ-M5b -- the last CanvasLayer readers and the bare-layer source check
 ```
 
 CQ-R11 shipped 2026-10-26; its specification is `plans/archive/CQ-R11_2026-10-26.md`.
@@ -364,7 +367,9 @@ CQ-R11 shipped 2026-10-26; its specification is `plans/archive/CQ-R11_2026-10-26
 **Now.** `hud.gd` still builds the bee-command rows in the selection-panel
 section. The D2 research record identifies the row builders and existing
 layout coverage; the section heading still groups commands with readouts and
-tray sizing.
+tray sizing. GP-5 (26 Oct) and RR-14 (27 Oct 2026) have landed, and
+`tools/slice.ps1 owner` reports `hud.gd` and `hud_command_rows.gd` clear on
+27 Oct 2026.
 
 **Target.** Move the command-row builders into the new leaf
 `scripts/hud_command_rows.gd` and give the surrounding HUD sections accurate
@@ -375,12 +380,80 @@ Reasoning: **medium**.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Codex] CQ-R6 -- extract the HUD bee-command rows**
 - Plan: `plans/now/code-health.md` -- "CQ-R6 -- extract the HUD bee-command rows"
 - Files: `scripts/hud.gd`, `scripts/hud_command_rows.gd`, `FUNCTION_MAP.md`
 - Check: `python -m unittest tests.test_layout_regression tests.test_hc8_tray_first_open tests.test_hc16_tray_reselect` and `python tools/prefinish.py` pass; a hands-on check covers the command buttons
 - Proof: `present: scripts/hud.gd :: func _rebuild_role_controls(`
+- Next after: CQ-M5a -- name every CanvasLayer in scripts/canvas_layers.gd
+```
+
+## CQ-M5a -- name every CanvasLayer in `canvas_layers.gd`
+
+**Now** (verified 27 Oct 2026). The UI's stacking order is eleven bare
+integers spread over ten scripts: weather 5 (`main.gd`, the weather layer in
+the world build), HUD 9 and marker arrows 16 (`hud.gd`, the second already
+`MARKER_ARROW_LAYER`), debug 10 (`debug_panel.gd::_ready`), the ordinary
+panel 11 (`game_panel.gd::setup_layer`'s default), skill tree 14
+(`skill_tree_panel.gd` `LAYER`), Gallerin 15 (`gallerin_panel.gd`'s
+`setup_layer` call), main menu 20, over-the-menu 21 (debug and saves windows
+while the menu shows: `debug_panel.gd::_apply_layer_for_context`,
+`saves_panel.gd::_apply_menu_context`), challenge complete 24 and game over
+25. `scripts/canvas_layers.gd` does not exist. `main.gd` is RR-21's,
+`game_panel.gd` sits on the unmerged Jules J-14 branch, and `hud.gd` goes
+to CQ-R6 first, so this slice builds the file and moves the seven readers
+that are free; CQ-M5b moves the other three.
+
+**When done.**
+
+1. New leaf `scripts/canvas_layers.gd` (`extends RefCounted`; not
+   `ui_layout.gd`, which preloads `gallerin_panel.gd` -- a cycle) holds one
+   named const per layer, in ascending order, each with a short comment on
+   what it must sit above: `WEATHER` 5, `HUD` 9, `DEBUG` 10, `PANEL` 11,
+   `SKILL_TREE` 14, `GALLERIN` 15, `MARKER_ARROWS` 16, `MAIN_MENU` 20,
+   `OVER_MENU` 21, `CHALLENGE_COMPLETE` 24, `GAME_OVER` 25. It includes the
+   three only CQ-M5b reads, so the file is built once.
+2. `main_menu.gd`, `challenge_complete.gd`, `game_over.gd`, `debug_panel.gd`,
+   `saves_panel.gd`, `gallerin_panel.gd` and `skill_tree_panel.gd` reach it
+   as `const CanvasLayers = preload("res://scripts/canvas_layers.gd")` (the
+   way `levels.gd` is reached) and use the names. `skill_tree_panel.gd`'s
+   `LAYER` const goes; `saves_panel.gd` passes `CanvasLayers.PANEL` to
+   `setup_layer`. Comments that quote a number ("the menu's CanvasLayer
+   (20)") name the const instead.
+3. Every layer keeps its integer, so nothing draws in a different order.
+   No display string, node name or simulation code changes.
+4. `plans/reference/ui-rules.md` gains decision D2's line: canvas layers
+   live in `scripts/canvas_layers.gd`, and a new layer is added there.
+5. `python tools/update_function_map.py` has run.
+
+Reasoning: **medium**. **Open decisions:** none.
+
+```queue
+**[Codex] CQ-M5a -- name every CanvasLayer in `canvas_layers.gd`**
+- Plan: `plans/now/code-health.md` -- "CQ-M5a -- name every CanvasLayer in `canvas_layers.gd`"
+- Files: `scripts/canvas_layers.gd`, `scripts/main_menu.gd`, `scripts/challenge_complete.gd`, `scripts/game_over.gd`, `scripts/debug_panel.gd`, `scripts/saves_panel.gd`, `scripts/gallerin_panel.gd`, `scripts/skill_tree_panel.gd`, `plans/reference/ui-rules.md`, `FUNCTION_MAP.md`
+- Check: `python -m unittest tests.test_ho15_menu_hex_fit tests.test_layout_regression` and `python tools/prefinish.py` pass; `git grep -nE "layer = [0-9]|:= 14$" -- scripts/main_menu.gd scripts/challenge_complete.gd scripts/game_over.gd scripts/debug_panel.gd scripts/saves_panel.gd scripts/gallerin_panel.gd scripts/skill_tree_panel.gd` finds nothing
+- Proof: `present: scripts/game_over.gd :: layer = 25`
+- Next after: CQ-M5b -- the last CanvasLayer readers and the bare-layer source check
+```
+
+## CQ-M5b -- the last CanvasLayer readers and the bare-layer source check
+
+**When CQ-M5a has landed and its gates clear.** `hud.gd` (HUD 9 and
+`MARKER_ARROW_LAYER`, which goes), `main.gd` (the weather layer) and
+`game_panel.gd::setup_layer`'s default read `scripts/canvas_layers.gd`, and
+`tests/source_checks.py` fails any `layer = <integer>` assignment in
+`scripts/` outside `canvas_layers.gd`. Integers unchanged; regenerate
+`FUNCTION_MAP.md`. Re-verify the line numbers and the J-14 outcome when
+claiming. Reasoning: **low**. **Open decisions:** none.
+
+```queue-gated
+**[Codex] CQ-M5b -- the last CanvasLayer readers and the bare-layer source check**
+- Plan: `plans/now/code-health.md` -- "CQ-M5b -- the last CanvasLayer readers and the bare-layer source check"
+- Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/game_panel.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
+- Check: `python tests/source_checks.py` passes and fails on a planted `layer = 3` in a scratch copy of `scripts/hud.gd`; `python -m unittest tests.test_layout_regression` and `python tools/prefinish.py` pass
+- Proof: `present: scripts/main.gd :: weather_layer.layer = 5`
 - Next after: CQ-M4 -- gated until the Claude lane releases the save files
 ```
 
@@ -442,5 +515,5 @@ Reasoning: **low**.
 - Files: `scripts/main_menu.gd`, `scripts/challenge_complete.gd`, `scripts/flower.gd`, `scripts/bee.gd`, `FUNCTION_MAP.md`
 - Check: `python -m unittest tests.test_sp1_pixel_sprite tests.test_ho15_menu_hex_fit` and `python tools/equivalence.py test_scenarios/sf1_founding_flower_mix_test.json master` pass with no differences; `python tools/prefinish.py` passes
 - Proof: `present: scripts/flower.gd :: func setup(index: int, starting_age: float = -1.0) -> void:`
-- Next after: CQ-M6 -- name selection green and caste appearance (gated on CT-1)
+- Next after: CQ-R6 -- extract the HUD bee-command rows
 ```
