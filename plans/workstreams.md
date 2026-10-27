@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/RR-16` (`claude/RR-16`) | Claude | the queen can resume building a part-built cell | Claude | in progress | none | `plans/now/run-repairs.md` RR-16 -- the queen can resume building a part-built cell |
