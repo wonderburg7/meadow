@@ -23,6 +23,12 @@ never touched, R gets nothing, and no bee is ever tipsy while E still holds
 fresh nectar. Without it, honey makers take the closest (Y) first, nurses
 empty fermented F1, the restock order fills R from fermented F2, and hungry
 bees eat fermented nectar and go tipsy.
+
+RR-15: DepositTest runs a second, generated fixture. One cell holds sour
+nectar with room left, the rest are empty; a comb worker is sent foraging
+and the queen is set to forage carrying nectar. With the skill the sour
+cell never gains nectar and the fresh deposits land elsewhere; without it
+the sour cell is topped up.
 """
 
 from __future__ import annotations
@@ -53,7 +59,7 @@ CONFIG = json.loads(FIXTURE.read_text(encoding="utf-8"))["config_overrides"]
 FERMENT_SECONDS = float(CONFIG["nectar_ferment_hours"]) * float(CONFIG["seconds_per_day"]) / 24.0
 
 
-def _run(fixture: dict) -> tuple[list, dict]:
+def _run(fixture: dict, names: list = SAVES, prefix: str = "nf4") -> tuple[list, dict]:
     with tempfile.TemporaryDirectory(prefix="nf4-fixture-", dir=ROOT) as folder:
         path = Path(folder) / "nf4_fixture.json"
         path.write_text(json.dumps(fixture), encoding="utf-8")
@@ -64,8 +70,8 @@ def _run(fixture: dict) -> tuple[list, dict]:
                     if e.get("type") == "action" and e.get("result") == "rejected"]
         scratch = scenario_saves_dir(session_file)
         saves = {}
-        for name in SAVES:
-            save = scratch / ("nf4-%s.json" % name)
+        for name in names:
+            save = scratch / ("%s-%s.json" % (prefix, name))
             if save.exists():
                 saves[name] = json.loads(save.read_text(encoding="utf-8"))
     return rejected, saves
@@ -78,11 +84,11 @@ def _nectar(save: dict, hex_: tuple) -> float:
     raise AssertionError("no cell at %s" % (hex_,))
 
 
-def _fermented(save: dict, hex_: tuple) -> bool:
+def _fermented(save: dict, hex_: tuple, after: float = FERMENT_SECONDS) -> bool:
     for cell in save["cells"]:
         if (int(cell["q"]), int(cell["r"])) == hex_ and cell.get("content") == "nectar":
             since = float(cell.get("nectar_since", -1.0))
-            return since >= 0.0 and float(save["clock"]["sim_time"]) - since > FERMENT_SECONDS
+            return since >= 0.0 and float(save["clock"]["sim_time"]) - since > after
     return False
 
 
@@ -215,6 +221,70 @@ class FermentationSenseTest(unittest.TestCase):
         self.assertTrue(any(_tipsy(self.plain[name]) for name in EAT), "no bee went tipsy")
         self.assertTrue(all(_nectar(self.plain[name], E) > 0.0 for name in EAT),
                         "the fresh nectar ran out, so the tipsiness proves nothing")
+
+
+DEP_SAVES = ["start"] + ["d-%d" % i for i in range(12)]
+SOUR = (0, -1)
+DEP_FERMENT_SECONDS = 10.0   # 12 ferment hours at 20 s a day
+
+
+def _deposit_fixture() -> dict:
+    actions = [
+        {"do": "set_cell_contents", "hex": list(SOUR), "resource": "nectar", "amount": 60},
+        {"do": "wait", "seconds": 12},
+        {"do": "save_run", "name": "NF4 dep start"},
+        {"do": "assign_role", "target": {"current_role": "comb_worker"}, "role": "forager_nectar"},
+        {"do": "assign_role", "target": {"queen": True}, "role": "forager_nectar"},
+        {"do": "set_queen_load", "resource": "nectar", "amount": 5, "state": "IN_HIVE_TO_CELL"},
+    ]
+    for i in range(12):
+        actions += [{"do": "wait", "seconds": 5}, {"do": "save_run", "name": "NF4 dep d %d" % i}]
+    return {
+        "cells": 7, "nectar_foragers": 0, "pollen_foragers": 0, "nurses": 0, "builders": 2,
+        "miners": 0, "honey_makers": 0, "weather": False, "disease": False, "rival_hive": False,
+        "winter": False, "random_seed": 5404,
+        "config_overrides": {"seconds_per_day": 20, "nectar_ferment_hours": 12,
+                             "hunger_threshold": 0.05, "energy_burn_rate": 0.02},
+        "actions": actions, "stop": {"when_actions_resolved": True, "max_days": 5},
+    }
+
+
+def _stored_elsewhere(save: dict) -> float:
+    return sum(float(c["amount"]) for c in save["cells"]
+               if c.get("content") == "nectar" and (int(c["q"]), int(c["r"])) != SOUR)
+
+
+class DepositTest(unittest.TestCase):
+    """RR-15: find_cell_for keeps fresh nectar out of a sour cell."""
+
+    @classmethod
+    def setUpClass(cls):
+        if not find_godot():
+            raise unittest.SkipTest("no Godot executable found -- this test needs a real headless boot")
+        fixture = _deposit_fixture()
+        cls.plain_rejected, cls.plain = _run(fixture, DEP_SAVES, "nf4-dep")
+        sensing = dict(fixture)
+        sensing["skill_grants"] = [SKILL]
+        cls.sense_rejected, cls.sense = _run(sensing, DEP_SAVES, "nf4-dep")
+
+    def setUp(self):
+        self.assertEqual(self.plain_rejected, [], "a scenario action was rejected without the skill")
+        self.assertEqual(self.sense_rejected, [], "a scenario action was rejected with the skill")
+        for saves in (self.plain, self.sense):
+            self.assertEqual([n for n in DEP_SAVES if n not in saves], [])
+            self.assertTrue(_fermented(saves["start"], SOUR, DEP_FERMENT_SECONDS), "the sour cell had not fermented")
+            self.assertEqual(_nectar(saves["start"], SOUR), 60.0)
+
+    def test_with_the_skill_no_depositing_bee_tops_up_a_sour_cell(self):
+        for name in DEP_SAVES:
+            self.assertLessEqual(_nectar(self.sense[name], SOUR), 60.0 + 1e-6,
+                                 "a bee poured fresh nectar into the sour cell at %s" % name)
+        self.assertGreater(_stored_elsewhere(self.sense[DEP_SAVES[-1]]), 0.0,
+                           "nobody deposited anywhere, so the run proves nothing")
+
+    def test_without_the_skill_a_depositing_bee_can_top_up_a_sour_cell(self):
+        self.assertTrue(any(_nectar(self.plain[name], SOUR) > 60.0 + 1e-6 for name in DEP_SAVES),
+                        "no bee topped up the sour cell")
 
 
 if __name__ == "__main__":
