@@ -127,7 +127,7 @@ const FERMENTED_NECTAR_COLOR := Color(0.55, 0.68, 0.39)
 ## RR-11. Nectar nearing its fermenting time shows a yellow-green warning,
 ## clearly apart from fresh nectar and from the fermented olive (RR-13).
 ## It is still ordinary nectar until it ferments.
-const PRE_FERMENTED_NECTAR_COLOR := Color(0.72, 0.85, 0.15)
+const PRE_FERMENTED_NECTAR_COLOR := Color(0.65, 0.8, 0.0)
 const PRE_FERMENTED_ART_TINT := Color(0.78, 0.86, 0.35)
 
 ## SP-3. Pollen is the sprite orange (255, 123, 0), exactly. Honey is a
