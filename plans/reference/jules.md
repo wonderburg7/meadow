@@ -1,7 +1,7 @@
 # Google Jules -- task list and how to work it
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: Jules every task; Claude/Codex only to add or prune a task -->
-Status: reference | Owner: Dave / Claude Code | Next: Jules works J-10 to J-17, then the standing tasks; merged task blocks are deleted at the next refill | Dependency: none | Verified: 2026-10-24
+Status: reference | Owner: Dave / Claude Code | Next: Jules works J-25 to J-28, then the standing tasks; merged task blocks are deleted at the next refill | Dependency: none | Verified: 2026-10-27
 
 Jules works from GitHub on a Linux VM, outside the Claude/Codex slice queue.
 Its work is behaviour-preserving tooling: guards that catch a known bug class
@@ -104,113 +104,85 @@ it, like `tools/heading.py`.
   for a failure, and `insert_entries` adding under the right heading and
   leaving the rest byte-identical. Tests only.
 
-### J-20 -- Unit tests for `tools/jules_preflight.py`'s git helpers
+### J-25 -- Unit tests for `tools/update_function_map.py`'s signature joining
 
-- Files: tests/test_jules_preflight_git.py (new)
+- Files: tests/test_update_function_map_helpers.py (new)
 - After: none
-- Why: `tests/test_jules_preflight.py` does not name `open_branches`,
-  `branch_files`, `is_done`, `is_taken` or `planned_mentions` (25 Oct
-  2026); they decide which task Jules is given next.
-- Do: in a temporary directory, make a bare repository and a clone of it
-  (they read `git branch -r`, so the branch must be on that clone's
-  `origin`). On `master`, commit once with a subject starting `J-2:`; push a
-  `jules/j-1-x` branch that adds one file; fetch. Pass the clone as `root`
-  and `origin/master` as `base`. Check `open_branches` and `branch_files` see
-  the branch and its file, `is_taken` is true for J-1 and false for J-2, and
-  `is_done` is true for J-2 and false for J-1. Build each `Task` with
-  `parse_tasks` from a two-task string. Never touch the real repository or
-  its remote. Tests only.
+- Why: no test names `_paren_balance` or `_joined_signature` (27 Oct
+  2026); a wrong fold writes a gdformat-wrapped signature into
+  `FUNCTION_MAP.md` broken or truncated.
+- Do: build every line list in the test. Check `_paren_balance` counts
+  `(`, `[` and `{` up and their closers down, ignores brackets inside a
+  `"..."` and a `'...'` string (including after a `\"` escape), and stops
+  at a `#` outside a string. Check `_joined_signature` returns a line that
+  does not end with an opening bracket unchanged; folds a signature wrapped
+  one parameter per line with trailing commas (`func f(` / `a: int,` /
+  `b: int,` / `) -> void:`) into `func f(a: int, b: int) -> void:`; folds a
+  wrapped `[` default the same way; and stops at the last line without
+  raising when the brackets never close. Tests only.
 
-### J-21 -- Unit tests for `tools/session_cost.py`'s outcome and row helpers
+### J-26 -- Unit tests for `tools/sprites.py`'s table and layout parsing
 
-- Files: tests/test_session_cost_helpers.py (new)
+- Files: tests/test_sprites_helpers.py (new)
 - After: none
-- Why: no test names `classify_outcome`, `_is_finish_call`,
-  `_is_worker_dispatch`, `_edit_paths` or `_level_allows` (26 Oct 2026);
-  `session_cost.py --events` reports the workflow's blockers through them.
-- Do: give `classify_outcome` one command/result/is_error triple that
-  reaches each of its seven return values (`expected_no_match`,
-  `partially_denied`, `diagnostic_in_success`, `test_failure`,
-  `environment_failure`, `lifecycle_failure`, `agent_mistake`), plus one
-  showing a failing `slice.ps1` run with `FAILED` in it is
-  `lifecycle_failure`, not `test_failure`; check `_is_finish_call` is true
-  for a Bash and a PowerShell `tools/slice.ps1 finish` block and false for
-  `slice.ps1 start` and for a Read block; check `_is_worker_dispatch` is
-  true for an Agent block with `subagent_type` `slice-worker-low` and false
-  for `Explore`; feed `_edit_paths` hand-built rows with an Edit, a Write, a
-  NotebookEdit (`notebook_path`), a Read and a user row, and check it returns
-  the three edited paths with forward slashes and the repository root
-  stripped case-insensitively; check `_level_allows` for one model each
-  level accepts and one it refuses. Build every row in the test; never read
-  a real transcript. Tests only.
+- Why: no test names `_hex_colour`, `parse_table`, `_parse_grid` or
+  `_state_name` (27 Oct 2026); they turn `SPRITES.md` into the rows the
+  sprite build cuts and recolours.
+- Do: build every table string in the test, never reading the real
+  `SPRITES.md`. Check `_hex_colour` reads `#ff8000` and `FF8000` as
+  `(255, 128, 0)` and raises `SpriteError` for a five-digit colour. Give
+  `parse_table` a table with the nine-column header, its `---` row and two
+  rows, one with `-` for levels, anchor and variants and one with levels
+  `2/5`, anchor `3,4` and variants `dark: ff0000>800000, 00ff00>008000;
+  pale: ff0000>ffcccc`; check both `Row`s field by field. Check it raises
+  `SpriteError` for a row with eight cells, a view not in `VIEWS`, frames
+  that are not a whole number, a variant with no `>` pair, and a text with
+  no header row; and that lines before the header are ignored. Check
+  `_parse_grid` reads `grid 16x24 rows=left,right` as
+  `(16, 24, ["left", "right"])` and raises for `grid 16 rows=a` and
+  `grid 16x16`. Check `_state_name` returns the part after the last dot,
+  and the whole name when there is none. Tests only.
 
-### J-22 -- Unit tests for `tools/archive_slice.py`'s text helpers
+### J-27 -- Unit tests for `tools/uncalled.py`'s scanning helpers
 
-- Files: tests/test_archive_slice_helpers.py (new)
+- Files: tests/test_uncalled_helpers.py (new)
 - After: none
-- Why: no test names `resolve_item`, `find_section`,
-  `_foreign_queue_blocks` or `_drop_routing_rows` (26 Oct 2026); closeout
-  archives the wrong section, or leaves a successor's queue block behind,
-  through them.
-- Do: build every string in the test, never reading the real
-  `NEXTSTEPS.md`, plans or `plans/README.md`. Give `resolve_item` a
-  `## Next up` text holding two items whose `- Plan:` lines have the form
-  ``- Plan: `plans/x.md` -- "Heading"``, one heading containing an escaped
-  `\"`; check it returns the plan path and the unescaped heading for each
-  id, and `None` for an id not queued and for an item with no Plan line.
-  Give `find_section` a list of lines with two headings that both contain
-  the wanted text, only the second naming the id; check it picks the
-  second, picks the first when neither names the id, matches case-
-  insensitively, does not treat `X-1` as naming `X-10`, and returns `None`
-  when nothing matches. Give `_foreign_queue_blocks` a section with one
-  ```` ```queue ```` block for the slice itself, one ```` ```queue-gated ````
-  block for another id, and one fence left unclosed, each block's first
-  line in the queue-item form `**[Claude] ID -- name**`; check only the
-  other id's block comes back, with its fence line numbers and its id. Give
-  `_drop_routing_rows` a three-row table where one row's Read cell is the
-  plan, one only mentions the plan in its first cell, and one names another
-  plan; check only the first row is removed. Tests only.
+- Why: no test names `find_gdscript_functions`, `preindex_file_contents`
+  or `is_function_referenced` (27 Oct 2026); S-2 dead-code removal
+  trusts what they report.
+- Do: in a temporary directory, never the real scripts folder, write a
+  file a.gd under its own scripts folder defining `func used()`, `func
+  unused()`, `static func helper()` and `func _ready()`, and b.gd beside it
+  calling `used()`. Check `find_gdscript_functions` returns a.gd entries,
+  with forward-slash paths starting `scripts/` and their line numbers, for
+  the three public functions, `helper` included, and none for `_ready`,
+  and `[]` for a missing directory. Check `preindex_file_contents` returns
+  repository-relative forward-slash paths with each file's lines and text.
+  Check `is_function_referenced` is true for `used`, false for `unused`
+  (its own definition line is skipped), true when the only other mention
+  is a second line of the defining file, and false for `use` (a
+  whole-word match, so `used` does not count). Tests only.
 
-### J-23 -- Unit tests for `tools/review_due.py`'s `status_of` and `check_backlog`
+### J-28 -- Unit tests for `tools/session_cost.py`'s transcript readers
 
-- Files: tests/test_review_due_status.py (new)
+- Files: tests/test_session_cost_readers.py (new)
 - After: none
-- Why: `tests/test_review_tools.py` covers the record and header helpers
-  but not `status_of` or `check_backlog` (26 Oct 2026); they decide which
-  reviews `review_due.py` reports as due.
-- Do: in a temporary directory, `git init` a repository and pass it as
-  `root`; never touch the real repository. Commit a watched file, then a
-  record docs/demo-2026-10-01.md (in the temporary repository) whose text
-  has a `Reviewed: <that commit's hash>` line, then two more commits
-  changing the watched file and one changing an unwatched file. Build a
-  `Prompt` with key `demo` and that one watched path, pass a one-item list
-  naming that record as `tracked`, and check `status_of` gives the record,
-  its date, the hash as `since`, `commits` 2 and `changed` naming only the
-  watched file. Add one case each for the three `problem` texts: no record
-  for the key, a record with no `Reviewed:` line, and a `Reviewed: deadbeef`
-  line git cannot resolve. For `check_backlog`, write three
-  `checks/ready/C-*.md` files under the temporary root (two with `Runner:
-  haiku`, one with no Runner line) and check the exact string, `hands-on
-  checks waiting: 3 (2 haiku, 1 unset)`; and with an empty folder, `hands-on
-  checks waiting: 0`. Tests only.
-
-### J-24 -- Unit tests for `tools/stop_causes.py`'s baseline helpers
-
-- Files: tests/test_stop_causes_baseline.py (new)
-- After: none
-- Why: `tests/test_stop_causes.py` reaches `failing_tests`, `live_ids` and
-  `unlisted` only through `classify`'s category (26 Oct 2026); they decide
-  whether a red verify stage is waved through as a known master failure.
-- Do: pass every baseline as a dict built in the test and a fixed `today`,
-  never reading `tests/baseline_failures.json`. Check `failing_tests` turns
-  a unittest log with one `FAIL:` line and one `ERROR:` line in the
-  `test_x (module.Class)` form into `module.Class.test_x`, keeps a class
-  part that already ends with the method name as it is, and ignores other
-  lines. Check `live_ids` keeps an entry expiring today and one expiring
-  later, drops one that expired yesterday, and skips without raising an
-  entry with no `expires` and one whose date is not `YYYY-MM-DD`. Check
-  `unlisted` returns, in order, the failing ids that are not live, and an
-  empty list when every one is. Tests only.
+- Why: no test names `_row_texts`, `_extract_text`, `_first_timestamp`,
+  `_is_slice_worker` or `_is_coordinator` (27 Oct 2026); they decide
+  which sessions and text `session_cost.py` counts.
+- Do: build every row in the test and write any file under a temporary
+  directory; never read a real transcript. Check `_row_texts` yields a
+  string `message.content`, each `text` of a list `content` (skipping a
+  block with no `text`), and each `rendered` block's `content`, in that
+  order, and nothing for a row with neither. Check `_extract_text` for a
+  string, a list of two text blocks joined by a newline, and `""` for
+  `None`. Check `_first_timestamp` returns the epoch seconds of the first
+  row carrying a `timestamp` after a blank line and a row without one, and
+  `None` for a file of bad JSON and for a missing file. Check
+  `_is_slice_worker` is true when `<stem>.meta.json` beside the file says
+  `agentType` `slice-worker-low`, false for `Explore`, and false with no
+  meta file. Check `_is_coordinator` is true when `<stem>/subagents/` holds
+  one such meta file, and false when it holds only `Explore`. Tests only.
 
 ### Not tasks yet
 
