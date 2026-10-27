@@ -875,7 +875,7 @@ func _process(delta: float) -> void:
 				_end_scenario_run("stop_condition_met")
 				return
 			if scenario_stop_when_actions_resolved and not scenario_actions.is_empty():
-				var unresolved: Array = scenario_actions.filter(func(a: Dictionary) -> bool: return not a.get("_resolved", false))
+				var unresolved: Array = scenario_actions.filter(func(a: Dictionary) -> bool: return ScenarioActions.is_outstanding(a))
 				if unresolved.is_empty():
 					_end_scenario_run("actions_resolved")
 					return

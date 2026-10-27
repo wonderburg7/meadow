@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-7b -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker); specified when AR-4 lands | Dependency: T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`), which waits for PP-9 (FR-2 landed 25 Oct 2026) | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: T2-7b -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker); specified when AR-4 lands | Dependency: T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`), which waits for PP-10 (`plans/now/pollination.md`, split from PP-9 27 Oct 2026) | Verified: 2026-10-27
 
 ## Objective
 
@@ -43,7 +43,7 @@ What the open slices build on:
 sweep's median cannot land in band before AR-4's arc buys a Honey worker
 (Dave, 11 Oct 2026); it prices NF-4's Colony tier-2 node and includes
 BB-2's 15-day unfed-worker rule. FR-2 adds Auto scouting as a third
-Foraging tier-2 node; PP-9 prices it, so T2-7b leaves it alone. Open when
+Foraging tier-2 node; PP-10 prices it, so T2-7b leaves it alone. Open when
 T2-7b is specified: whether BB-4's Challenge routes are re-checked at the
 new prices.
 
