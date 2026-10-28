@@ -390,6 +390,18 @@ const TUNABLES := [
 		"tip": "Extra energy a builder burns while building. Bees make wax from the sugar they have eaten, so comb is paid for in nectar rather than a separate wax store.",
 	},
 	{
+		"persist": "none",
+		"key": "cell_seal_seconds", "label": "Sealing s", "step": 1.0, "min": 1.0,
+		"category": "Hive & comb",
+		"tip": "Comb-worker seconds needed to cap a cell you have asked to be sealed. Its stores stay usable until the cap closes. Several working the same cell share it.",
+	},
+	{
+		"persist": "none",
+		"key": "cell_unseal_seconds", "label": "Unsealing s", "step": 1.0, "min": 1.0,
+		"category": "Hive & comb",
+		"tip": "Comb-worker seconds needed to take the cap off a sealed cell you have asked to be opened. It stays shut until the cap is off.",
+	},
+	{
 		"persist": "run",
 		"key": "hive_interior_rings", "label": "Interior rings", "step": 1.0, "min": 2.0,
 		"category": "Hive & comb",

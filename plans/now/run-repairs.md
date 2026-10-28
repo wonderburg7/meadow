@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-12, the last slice, waits for ED-3 (RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: RR-12, the last slice, waits for ED-3 (RR-19 on claude/RR-19, 28 Oct 2026; RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-28
 
 ## Objective
 
@@ -45,7 +45,7 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
 | RR-17 | a queen on comb work discards sour nectar on command | `scripts/bee.gd`, tests | yes -- CQ-S0b landed 25 Oct 2026 | medium |
 | RR-18 | skip saves for the long checks C-140 and C-142 | `test_scenarios/`, `checks/ready/C-140.md`, `checks/ready/C-142.md` | yes | low |
-| RR-19 | comb workers seal and unseal cells over time (15 s to cap, 5 s to uncap) | `scripts/hive_cell.gd`, `scripts/orders_zones.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- DR-1 and CQ-M8 landed 25 Oct 2026 | high |
+| RR-19 | comb workers seal and unseal cells over time (15 s to cap, 5 s to uncap) | `scripts/hive_cell.gd`, `scripts/orders_zones.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/bee_enums.gd`, `scripts/bee.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, tests | yes -- DR-1 and CQ-M8 landed 25 Oct 2026 | high |
 | RR-20 | a comb worker carrying a body leaves, stays out one second, and comes back | `scripts/bee_building.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, tests | yes -- CQ-M8 landed 25 Oct 2026 | medium |
 | RR-21 | no ordinary rain in the first two days; rain warnings in plain words | `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | yes -- SG-4 landed 26 Oct 2026 | medium |
 | RR-22 | select a number of bees from a multi-selection, youngest and oldest | `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, tests | no -- after the Codex lane's CQ-R6 releases `scripts/hud.gd` (CQ-R10 landed 27 Oct 2026; GP-5 and SG-4 landed 26 Oct 2026) | medium |
@@ -240,11 +240,18 @@ Dave, 24 Oct 2026):
    through a new finder in `bee_building.gd`, walks to it, and spends
    `GameConfig.cell_seal_seconds` (15.0) capping or
    `GameConfig.cell_unseal_seconds` (5.0) uncapping, both with settings rows.
-   The queen follows RR-17's finding about her reaching the dispatch.
+   The queen takes the row through `Roles.COMB_WORKER` like any comb worker;
+   RR-17's finding about her reaching the dispatch will apply to it when RR-17
+   lands (Dave, through the coordinator, 28 Oct 2026). The job needs two new
+   bee states, `TO_SEAL_CELL` and `SEALING`, appended to `bee_enums.gd` so old
+   saves still load, with their handling in `bee.gd`; both files joined the
+   slice once CQ-R14 had merged (same decision).
 3. While she works the cap art steps through its `WAX_CELL_SEALED` frames
    (`_refresh`, near l.1382; `_show_cap`, near l.1448), forwards to seal and
    backwards to open. Stores stay usable until the cap closes and become
-   usable once it is open.
+   usable once it is open. A "Fill then seal" cell keeps refusing withdrawals
+   while it is being capped, and a brood cell counts as full as soon as it
+   holds brood (Dave, through the coordinator, 28 Oct 2026).
 4. Saves: the two flags are new fields in `save_game.gd` and `saving.gd` (near
    l.200-207), defaulting to false for old saves. `tests/test_save_migrations.py`
    covers an old save.
@@ -264,10 +271,28 @@ a day on any gate.
 
 **Open decisions:** none.
 
+**Closeout (28 Oct 2026, on claude/RR-19).** The row is `comb_seal_cell`, band
+2, right after eviction rather than sharing band 1: `tests/source_checks.py`
+wants one band per row, so restocking and the two building rows moved down one.
+Both settings rows are `"persist": "none"`, as every balance value added since
+D1 is, so a save does not carry them. `tests/rr19_sealing_test.gd` (run by
+`tests/test_rr19_sealing.py`) counts the worker-seconds from the bees' own
+states: the cell sealed after 15.00 and opened after 5.02. The reference arc
+(`python tools/run_scenario.py test_scenarios/alpha_arc_test.json`, seed
+20260923) gave the same summary before (master `5d8fada`) and after, line for
+line: day 43, first worker day 23, winter entered day 30 and survived day 41,
+5 cells built, 8 hatches, 5 starvation deaths. No honey gate moved, as
+expected, since the arc never seals a cell. Hands-on: C-156. Not done here:
+the cell popup (`scripts/hud.gd`) still lights "Open" while a cell waits for
+its cap, and its "Sealed" and "Fill then seal" tips still describe an instant
+seal. That needs a slice owning `hud.gd` once CQ-R6 releases it. The CQ-S0
+round-trip goldens were not recaptured: the new fields are additive and both
+restore routes write them.
+
 ```queue
 **[Claude] RR-19 -- comb workers seal and unseal cells over time**
 - Plan: `plans/now/run-repairs.md` -- "RR-19 -- comb workers seal and unseal cells over time"
-- Files: `scripts/hive_cell.gd`, `scripts/orders_zones.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/rr19_sealing_stocked.json`, `tests/test_rr19_sealing.py`, `tests/test_save_migrations.py`
+- Files: `scripts/hive_cell.gd`, `scripts/orders_zones.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/bee_enums.gd`, `scripts/bee.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/rr19_sealing_stocked.json`, `tests/rr19_sealing_test.gd`, `tests/test_rr19_sealing.py`, `tests/test_save_migrations.py`
 - Check: `python -m unittest tests.test_rr19_sealing` passes (Seal on a full cell leaves it open until a comb worker has spent 15 s, then closed; Open takes 5 s; "Fill then seal" seals a cell filled by honey conversion, jelly and brood; winter's close is instant); `python -m unittest tests.test_save_migrations` passes with an old save; the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
 - Proof: `absent: scripts/game_config.gd :: cell_seal_seconds`
 - Next after: none -- cell sealing is complete

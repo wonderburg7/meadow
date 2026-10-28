@@ -519,6 +519,11 @@ var goal_few_waiting_bees: float = 4.0
 ## bee.
 var larva_death_seconds: float = 90.0
 var cell_clean_time: float = 20.0   # comb-worker seconds to clear a dead larva
+## RR-19. Comb-worker seconds to cap a cell the player has asked to be
+## sealed, and to take the cap off one they have asked to be opened (Dave,
+## 24 Oct 2026). Several working the same cell share it.
+var cell_seal_seconds: float = 15.0
+var cell_unseal_seconds: float = 5.0
 
 ## Nurses carry the food to the brood themselves. A nurse walks to a
 ## pollen cell and loads up, then to a honey or nectar cell, and only

@@ -535,5 +535,68 @@ class DroneFieldsTest(unittest.TestCase):
         self.assertNotIn("drone", migrations.split("func _migrate_6_to_7(", 1)[1])
 
 
+def restore_cell_seal_flags(entry, full):
+    """Mirrors scripts/saving.gd::_restore_cells's RR-19 read and
+    hive_cell.gd::restore_seal_flags: a waiting cap only on an open cell, a
+    waiting Open only on a closed one, and a "Fill then close" cell that is
+    already full asks for its cap (`full` stands for _is_full_for_seal)."""
+    closed = bool(entry.get("closed", False))
+    fill_close = bool(entry.get("fill_close", False))
+    seal = bool(entry.get("pending_seal", False)) and not closed
+    if fill_close and not closed:
+        seal = full
+    return {"pending_seal": seal, "pending_open": bool(entry.get("pending_open", False)) and closed}
+
+
+class SealFlagsTest(unittest.TestCase):
+    """RR-19 (plans/now/run-repairs.md): pending_seal and pending_open are
+    additive cell fields, with no FORMAT_VERSION bump."""
+
+    def test_both_flags_survive_a_save_and_load(self):
+        written = json.loads(json.dumps({
+            "version": FORMAT_VERSION,
+            "cells": [{"closed": False, "pending_seal": True, "pending_open": False},
+                      {"closed": True, "pending_seal": False, "pending_open": True}]}))
+        data = upgrade(written)
+        self.assertEqual({"pending_seal": True, "pending_open": False},
+                         restore_cell_seal_flags(data["cells"][0], full=False))
+        self.assertEqual({"pending_seal": False, "pending_open": True},
+                         restore_cell_seal_flags(data["cells"][1], full=False))
+
+    def test_an_old_save_loads_with_no_order_waiting(self):
+        for data in (upgrade({"version": FORMAT_VERSION, "cells": [{"closed": True}, {}]}),
+                     upgrade(load_fixture("save_v1.json")),
+                     upgrade(load_fixture("save_v2.json"))):
+            for cell in data.get("cells", []):
+                self.assertNotIn("pending_seal", cell)
+                self.assertEqual({"pending_seal": False, "pending_open": False},
+                                 restore_cell_seal_flags(cell, full=False))
+
+    def test_an_old_fill_then_close_cell_already_full_asks_for_its_cap(self):
+        old = {"closed": False, "fill_close": True}
+        self.assertTrue(restore_cell_seal_flags(old, full=True)["pending_seal"])
+        self.assertFalse(restore_cell_seal_flags(old, full=False)["pending_seal"])
+
+    def test_gdscript_writes_and_restores_the_flags(self):
+        save_game = (SCRIPTS / "save_game.gd").read_text(encoding="utf-8")
+        self.assertIn('"pending_seal": cell.pending_seal,', save_game)
+        self.assertIn('"pending_open": cell.pending_open,', save_game)
+        saving = (SCRIPTS / "saving.gd").read_text(encoding="utf-8")
+        restore = saving.split("cell.fill_then_close = bool(entry.get(\"fill_close\", false))", 1)[1]
+        self.assertTrue(restore.lstrip().startswith("#"), "the RR-19 read follows fill_close")
+        self.assertIn('cell.restore_seal_flags(bool(entry.get("pending_seal", false)), bool(entry.get("pending_open", false)))',
+                      restore.split("main.hive.cells.append(cell)", 1)[0])
+        cell = (SCRIPTS / "hive_cell.gd").read_text(encoding="utf-8")
+        body = cell.split("func restore_seal_flags(", 1)[1].split("\nfunc ", 1)[0]
+        self.assertIn("pending_seal = saved_seal and not is_closed", body)
+        self.assertIn("pending_open = saved_open and is_closed", body)
+        self.assertIn("_check_fill_seal()", body)
+
+    def test_no_migration_and_no_version_bump(self):
+        migrations = (SCRIPTS / "save_migrations.gd").read_text(encoding="utf-8")
+        self.assertNotIn("pending_seal", migrations)
+        self.assertNotIn("pending_open", migrations)
+
+
 if __name__ == "__main__":
     unittest.main()

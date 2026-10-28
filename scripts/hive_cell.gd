@@ -265,16 +265,32 @@ var nursery_priority: int = Priority.MEDIUM
 
 ## A closed cell is sealed: nothing can be put in and nothing taken out.
 ## This is how you set honey aside for winter rather than watching the
-## colony drink it the moment it ripens.
+## colony drink it the moment it ripens. The player's Seal and Open go
+## through a comb worker (request_seal, request_open, add_seal_work);
+## set_closed is the instant switch winter's bill and the scenarios use.
 var is_closed: bool = false
 ## CT-1. The tone strength `_refresh` last applied, 0 for no tint. The scenario
 ## assert `cell_tone_strength` (scenario_actions.gd) reads it.
 var tone_strength: float = 0.0
 ## Set from the honey popup's "Fill then close". The cell refuses
 ## withdrawals from the moment it is set, so it can actually reach the
-## top instead of being sipped from as fast as it fills, and closes
-## itself once full.
+## top instead of being sipped from as fast as it fills, and asks for its
+## cap (pending_seal) the moment it is full, however it got there.
 var fill_then_close: bool = false
+
+## RR-19. Capping and uncapping are a comb worker's job. Seal, and "Fill
+## then seal" once the cell is full (_check_fill_seal), set `pending_seal`;
+## a comb worker (bee_building.gd::find_cell_needing_sealing) closes the cell
+## once she has spent GameConfig.cell_seal_seconds on it. Open on a closed
+## cell sets `pending_open`, and the cap comes off after
+## GameConfig.cell_unseal_seconds. Until then the stores are as they were: a
+## plain Seal stays usable until the cap closes, a "Fill then seal" cell
+## keeps refusing withdrawals, and a closed cell stays shut. Both flags are
+## saved; `seal_work`, the worker-seconds spent so far, is not, so a load
+## starts the job again.
+var pending_seal: bool = false
+var pending_open: bool = false
+var seal_work: float = 0.0
 
 ## Set from the cell popup's "Empty cell" controls. While true the cell
 ## refuses every new deposit, so foragers stop cramming nectar into every
@@ -726,6 +742,7 @@ func _health_factor() -> float:
 func _larva_dies() -> void:
 	content_type = "corpse"
 	amount = 0.0
+	_check_fill_seal()
 	brood_progress = 0.0
 	brood_fed_seconds = 0.0
 	unfed_seconds = 0.0
@@ -946,11 +963,9 @@ func add_resource(resource_type: String, requested: float) -> float:
 	if resource_type != Resources.BEE_BREAD or was_content_type != Resources.BEE_BREAD:
 		capacity = capacity_for(resource_type)
 	amount += added
-	# "Fill then close" seals itself the moment it tops out, so you don't
+	# "Fill then close" asks for its cap the moment it tops out, so you don't
 	# have to be watching the cell at the right second to catch it.
-	if fill_then_close and amount >= capacity - 0.001:
-		fill_then_close = false
-		is_closed = true
+	_check_fill_seal()
 	# BB-1: bee bread seals itself once the cell is full, and ripens from
 	# that moment (is_ripe_bee_bread).
 	if resource_type == Resources.BEE_BREAD and bee_bread_sealed_at < 0.0 and amount >= capacity - 0.001:
@@ -1024,6 +1039,7 @@ func return_ripe_bee_bread(requested: float) -> float:
 		if added <= 0.0:
 			return 0.0
 		amount += added
+		_check_fill_seal()
 		_invalidate_stock()
 		return added
 	if content_type != "":
@@ -1037,6 +1053,7 @@ func return_ripe_bee_bread(requested: float) -> float:
 	amount = added
 	var hour: float = maxf(0.001, GameConfig.seconds_per_day / 24.0)
 	bee_bread_sealed_at = maxf(0.0, Session.sim_time - GameConfig.bee_bread_ripen_hours * hour - 0.001)
+	_check_fill_seal()
 	_invalidate_stock()
 	_invalidate_hive_index()
 	return added
@@ -1090,6 +1107,7 @@ func take_resource(resource_type: String, requested: float) -> float:
 		evict_requested = false
 		evict_mode = "move"
 		_invalidate_hive_index()
+	_check_fill_seal()
 	return taken
 
 ## Can anything actually be drawn out of here right now? The hive's
@@ -1099,21 +1117,147 @@ func take_resource(resource_type: String, requested: float) -> float:
 func can_withdraw() -> bool:
 	return not is_closed and not fill_then_close
 
-## Opens a sealed cell back up. Also cancels a pending fill-then-close,
-## so one button undoes either state.
+## The instant switch, with no comb worker: winter's bill (season.gd
+## opens a sealed cell, draws on it and closes it again at once) and the
+## scenarios' close_cell. Opening also cancels a pending fill-then-close.
+## A cap still waiting to go on is moot either way; an Open still waiting
+## is left alone, so winter's re-close keeps the player's order.
 func set_closed(value: bool) -> void:
 	is_closed = value
+	if pending_seal:
+		pending_seal = false
+		seal_work = 0.0
 	if not value:
 		fill_then_close = false
 	_invalidate_stock()
 	bump_display_epoch()
 
+## The instant counterpart of request_fill_then_seal, for winter's bill.
 func set_fill_then_close(value: bool) -> void:
 	fill_then_close = value
 	if value:
 		is_closed = false   # it has to be able to take deposits to fill
+	elif pending_seal:
+		pending_seal = false
+		seal_work = 0.0
+	_check_fill_seal()
 	_invalidate_stock()
 	bump_display_epoch()
+
+# --- sealing (RR-19) ----------------------------------------------
+
+## The cell popup's Seal: a comb worker caps the cell. A cell already
+## closed does nothing. Seal on a cell waiting to fill replaces that order,
+## so its stores stay usable until the cap closes.
+func request_seal() -> void:
+	if is_closed or (pending_seal and not fill_then_close):
+		return
+	if not pending_seal:
+		seal_work = 0.0
+	fill_then_close = false
+	pending_seal = true
+	_invalidate_stock()
+	bump_display_epoch()
+
+## The cell popup's Open: a comb worker takes the cap off a closed cell.
+## An open cell has no cap, so Open just cancels a Seal or a "Fill then
+## seal" still waiting.
+func request_open() -> void:
+	if is_closed:
+		if not pending_open:
+			pending_open = true
+			seal_work = 0.0
+			bump_display_epoch()
+		return
+	if not pending_seal and not fill_then_close:
+		return
+	pending_seal = false
+	fill_then_close = false
+	seal_work = 0.0
+	_invalidate_stock()
+	bump_display_epoch()
+
+## The cell popup's "Fill then seal": the cell refuses withdrawals from now
+## on and asks for its cap once full. A cell already closed does nothing.
+func request_fill_then_seal() -> void:
+	if is_closed or fill_then_close:
+		return
+	fill_then_close = true
+	pending_seal = false
+	_check_fill_seal()
+	if not pending_seal:
+		seal_work = 0.0
+	_invalidate_stock()
+	bump_display_epoch()
+
+## Full enough for "Fill then seal" to ask for its cap. A brood cell is full
+## as soon as it holds brood; a store is full at its capacity.
+func _is_full_for_seal() -> bool:
+	if content_type == "brood":
+		return true
+	if content_type == "" or content_type == "corpse":
+		return false
+	var full: float = capacity if content_type == Resources.BEE_BREAD else capacity_for(content_type)
+	return amount >= full - 0.001
+
+## Called wherever the contents change, not only after a deposit, so a cell
+## filled by honey conversion, jelly or brood asks for its cap too. A "Fill
+## then seal" cell that stops being full (emptied on the player's order, or
+## drawn on by winter) waits to fill again.
+func _check_fill_seal() -> void:
+	if not fill_then_close or is_closed:
+		return
+	var full: bool = _is_full_for_seal()
+	if full == pending_seal:
+		return
+	pending_seal = full
+	if not full:
+		seal_work = 0.0
+	bump_display_epoch()
+
+## For the restore path, which writes the flags directly: an older save's
+## "Fill then close" cell that is already full asks for its cap.
+func restore_seal_flags(saved_seal: bool, saved_open: bool) -> void:
+	pending_seal = saved_seal and not is_closed
+	pending_open = saved_open and is_closed
+	seal_work = 0.0
+	_check_fill_seal()
+
+## Is there capping or uncapping here waiting for a comb worker?
+func needs_seal_work() -> bool:
+	if not is_built:
+		return false
+	return (pending_seal and not is_closed) or (pending_open and is_closed)
+
+## Called each frame by every comb worker capping or uncapping this cell,
+## so several working it share the job, as cleaning does. Returns true once
+## the job is done (or there is none left).
+func add_seal_work(delta: float) -> bool:
+	if not needs_seal_work():
+		return true
+	seal_work += delta
+	if seal_work < _seal_work_needed():
+		return false
+	if is_closed:
+		is_closed = false
+		pending_open = false
+	else:
+		is_closed = true
+		pending_seal = false
+	fill_then_close = false
+	seal_work = 0.0
+	_invalidate_stock()
+	bump_display_epoch()
+	return true
+
+func _seal_work_needed() -> float:
+	return GameConfig.cell_unseal_seconds if is_closed else GameConfig.cell_seal_seconds
+
+## How far the capping or uncapping under way has got, 0 to 1.
+func seal_work_fraction() -> float:
+	if not needs_seal_work():
+		return 0.0
+	return clampf(seal_work / maxf(0.001, _seal_work_needed()), 0.0, 1.0)
 
 ## How full the cell is, 0 to 1, for the fill shading. Brood reports its
 ## development instead, which is the equivalent "how far along is this".
@@ -1169,6 +1313,7 @@ func start_brood(as_gyne: bool = false, as_drone: bool = false) -> void:
 	brood_food = Resources.POLLEN
 	brood_is_drone = as_drone
 	brood_is_gyne = as_gyne and not as_drone
+	_check_fill_seal()
 	_invalidate_hive_index()
 	_invalidate_stock()
 
@@ -1241,6 +1386,7 @@ func clear_cell() -> void:
 	bee_bread_sealed_at = -1.0
 	evict_requested = false
 	evict_mode = "move"
+	_check_fill_seal()
 	_invalidate_hive_index()
 	_invalidate_stock()
 
@@ -1420,8 +1566,15 @@ func _refresh() -> void:
 	if art_sheet != "" and art_frame < 0:
 		art_frame = fill_frame(CELL_ART[art_sheet][2], fill_fraction())
 	# A cell the player has closed wears the whole cap, whatever is in it.
+	# RR-19: a comb worker puts it on stage by stage, and takes it off the
+	# same way backwards.
+	var cap_stages: int = SpriteCatalogue.WAX_CELL_SEALED_HFRAMES
 	if is_closed:
-		cap_stage = SpriteCatalogue.WAX_CELL_SEALED_HFRAMES
+		cap_stage = cap_stages
+		if pending_open and seal_work > 0.0:
+			cap_stage = clampi(cap_stages - int(floor(seal_work_fraction() * cap_stages)), 1, cap_stages)
+	elif pending_seal and seal_work > 0.0:
+		cap_stage = maxi(cap_stage, clampi(int(ceil(seal_work_fraction() * cap_stages)), 1, cap_stages))
 	# CT-1. A cell holding food or bee bread tints its art and cap by how full
 	# it is; brood, corpses and empty cells stay white.
 	tone_strength = content_tone_strength(fill_fraction()) if content_type in ["nectar", "honey", "pollen", "jelly", "bee_bread"] else 0.0
@@ -1455,7 +1608,7 @@ func _refresh() -> void:
 		outline.visible = true
 		outline.default_color = Color(0.12, 0.12, 0.14, 0.8)
 		info_label.text = str(over[1])
-		closed_mark.visible = is_closed or fill_then_close
+		closed_mark.visible = is_closed or fill_then_close or pending_seal
 		return
 
 	if art_sheet != "" and Session.use_cell_sprites:
@@ -1469,8 +1622,8 @@ func _refresh() -> void:
 	cap_sprite.modulate = tone
 	_show_cap(cap_stage if empty_sprite.visible else 0)
 	# The cap says "closed" by itself; the bar stays for the flat look and
-	# for a cell still filling towards its close.
-	closed_mark.visible = (is_closed or fill_then_close) and not cap_sprite.visible
+	# for a cell still filling towards its close or waiting for its cap.
+	closed_mark.visible = (is_closed or fill_then_close or pending_seal) and not cap_sprite.visible
 	closed_mark.default_color = (
 		Color(0.1, 0.1, 0.12, 0.9) if is_closed else Color(0.95, 0.95, 0.4, 0.85)
 	)
@@ -1502,7 +1655,7 @@ func _show_cap(stage: int) -> void:
 func _designation_tag() -> String:
 	if is_closed:
 		return "[X]"
-	if fill_then_close:
+	if fill_then_close or pending_seal:
 		return "[>]"
 	if keep_empty:
 		return "[-]"

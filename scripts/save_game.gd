@@ -232,6 +232,9 @@ static func _cells_data(world: Node2D) -> Array:
 			"priority": cell.nursery_priority,
 			"closed": cell.is_closed,
 			"fill_close": cell.fill_then_close,
+			# RR-19, additive: a comb worker's capping or uncapping order.
+			"pending_seal": cell.pending_seal,
+			"pending_open": cell.pending_open,
 		})
 	return out
 

@@ -749,6 +749,15 @@ func find_cell_needing_eviction() -> Node2D:
 			return cell
 	return null
 
+## RR-19. A cell waiting for a comb worker to cap or uncap it, with a wall
+## free to work from. Asked on an idle comb worker's think tick, like
+## find_cell_needing_eviction above.
+func find_cell_needing_sealing() -> Node2D:
+	for cell: Variant in cells:
+		if is_instance_valid(cell) and cell.needs_seal_work() and cell.has_free_slot():
+			return cell
+	return null
+
 ## A gyne larva waiting on royal jelly, so nurses know whether it's worth
 ## anyone making any.
 func has_gyne_brood() -> bool:

@@ -74,20 +74,29 @@ const ACTIONS := [
 		"band": 1, "modes": ["maintain", "restock", "both"], "find": "find_cell_needing_eviction",
 		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
 	},
+	# RR-19: capping a cell the player asked to be sealed, or uncapping one
+	# they asked to be opened. Right after eviction: both carry out a cell
+	# order. Bands are one per row (tests/source_checks.py), so the rows
+	# below it moved down one.
+	{
+		"id": "comb_seal_cell", "label": "Seal or open cell", "roles": [Roles.COMB_WORKER],
+		"band": 2, "modes": ["maintain", "restock", "both"], "find": "find_cell_needing_sealing",
+		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
+	},
 	{
 		"id": "comb_restock", "label": "Restock cell", "roles": [Roles.COMB_WORKER],
-		"band": 2, "modes": ["restock", "both"], "find": "find_restock_job",
+		"band": 3, "modes": ["restock", "both"], "find": "find_restock_job",
 		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
 	},
 	{
 		"id": "comb_build", "label": "Build comb", "roles": [Roles.COMB_WORKER],
-		"band": 3, "modes": ["build", "both"], "find": "create_cell_site_at",
+		"band": 4, "modes": ["build", "both"], "find": "create_cell_site_at",
 		"feature": "", "skill": "", "gate_key": "", "config_flag": "", "season": "",
 	},
 	# T2-2: extending the outward spiral past the marked sites is Automation's.
 	{
 		"id": "comb_build_outward", "label": "Build comb outward", "roles": [Roles.COMB_WORKER],
-		"band": 4, "modes": ["build", "both"], "find": "create_next_cell_site_outward",
+		"band": 5, "modes": ["build", "both"], "find": "create_next_cell_site_outward",
 		"feature": "", "skill": "skill.hive_mind.automation", "gate_key": "", "config_flag": "", "season": "",
 	},
 

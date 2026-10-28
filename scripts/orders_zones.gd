@@ -105,13 +105,18 @@ func _on_cell_priority_requested(anchor: Node2D, tier: int) -> void:
 		if not cell.is_nursery_cell():
 			_designate_one(cell, "brood")
 
+## RR-19. Seal and Open are orders for a comb worker, who caps or uncaps
+## each cell over time (hive_cell.gd, "sealing").
 func _on_cell_close_requested(anchor: Node2D, closed: bool) -> void:
 	for cell: Variant in _cells_to_act_on(anchor):
-		cell.set_closed(closed)
+		if closed:
+			cell.request_seal()
+		else:
+			cell.request_open()
 
 func _on_cell_fill_close_requested(anchor: Node2D) -> void:
 	for cell: Variant in _cells_to_act_on(anchor):
-		cell.set_fill_then_close(true)
+		cell.request_fill_then_seal()
 
 func _restock_comb_workers() -> Array:
 	return main.selected_bees.filter(func(b: Variant) -> bool:
