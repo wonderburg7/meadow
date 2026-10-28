@@ -282,10 +282,30 @@ states: the cell sealed after 15.00 and opened after 5.02. The reference arc
 20260923) gave the same summary before (master `5d8fada`) and after, line for
 line: day 43, first worker day 23, winter entered day 30 and survived day 41,
 5 cells built, 8 hatches, 5 starvation deaths. No honey gate moved, as
-expected, since the arc never seals a cell. Hands-on: C-156. Not done here:
-the cell popup (`scripts/hud.gd`) still lights "Open" while a cell waits for
-its cap, and its "Sealed" and "Fill then seal" tips still describe an instant
-seal. That needs a slice owning `hud.gd` once CQ-R6 releases it. All five
+expected, since the arc never seals a cell. Hands-on: C-156.
+
+Changes made after the review (28 Oct 2026). Seal on a closed cell cancels an
+Open still waiting for its worker. A cell that is closed or opened, whether by a
+worker or by `set_closed`, keeps neither order, so winter's instant re-close now
+drops an Open that was still waiting. Unbuilt cells and corpses refuse Seal and
+"Fill then seal". A "Fill then seal" brood cell keeps its order once capped.
+When the brood leaves, the cap comes off at once: the new bee chews her way out
+at the hatch (`clear_cell`), or the larva dies under the cap (`_larva_dies`) and
+a comb worker then clears the body. The next larva then asks for its cap
+through the same full-cell test. `hive.gd` keeps the cells waiting for capping
+or uncapping (`note_seal_order`), so an idle comb worker looks at those cells
+rather than the whole comb. `tests/rr19_sealing_test.gd` covers each of these
+and puts an old save's cells through the real `saving.gd::_restore_cells`.
+The Python copy in `tests/test_save_migrations.py` is now a contract check only.
+
+Not done here, for slices that own the files: the cell popup
+(`scripts/hud.gd`) still lights "Open" while a cell waits for its cap, and its
+"Sealed" and "Fill then seal" tips still describe an instant seal. That needs a
+slice owning `hud.gd` once CQ-R6 releases it. Winter's bill
+(`season.gd::_pay_from_stores`, near l.300) opens a "Fill then seal" cell with
+`set_closed(false)` and sets the order again, which throws away a half-done cap.
+A cell closed with plain Seal, rather than "Fill then seal", still stays capped
+after its brood emerges. All five
 CQ-S0 goldens were re-captured from their `cq_s0_*_capture.json` scenarios, as
 the code-health note above asks of a slice that adds a save field. The early
 golden has no cells, so it came out the same. The other four gained the two

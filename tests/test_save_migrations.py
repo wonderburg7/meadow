@@ -550,7 +550,9 @@ def restore_cell_seal_flags(entry, full):
 
 class SealFlagsTest(unittest.TestCase):
     """RR-19 (plans/now/run-repairs.md): pending_seal and pending_open are
-    additive cell fields, with no FORMAT_VERSION bump."""
+    additive cell fields, with no FORMAT_VERSION bump. A contract check only:
+    tests/rr19_sealing_test.gd (run by tests/test_rr19_sealing.py) puts an
+    old save's cells through the real saving.gd::_restore_cells."""
 
     def test_both_flags_survive_a_save_and_load(self):
         written = json.loads(json.dumps({

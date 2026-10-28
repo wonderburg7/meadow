@@ -742,6 +742,7 @@ func _health_factor() -> float:
 func _larva_dies() -> void:
 	content_type = "corpse"
 	amount = 0.0
+	_brood_left(true)
 	_check_fill_seal()
 	brood_progress = 0.0
 	brood_fed_seconds = 0.0
@@ -1120,13 +1121,11 @@ func can_withdraw() -> bool:
 ## The instant switch, with no comb worker: winter's bill (season.gd
 ## opens a sealed cell, draws on it and closes it again at once) and the
 ## scenarios' close_cell. Opening also cancels a pending fill-then-close.
-## A cap still waiting to go on is moot either way; an Open still waiting
-## is left alone, so winter's re-close keeps the player's order.
+## Either way the cell has just changed state, so no capping or uncapping
+## order is left waiting on it.
 func set_closed(value: bool) -> void:
 	is_closed = value
-	if pending_seal:
-		pending_seal = false
-		seal_work = 0.0
+	_drop_seal_orders()
 	if not value:
 		fill_then_close = false
 	_invalidate_stock()
@@ -1137,20 +1136,37 @@ func set_fill_then_close(value: bool) -> void:
 	fill_then_close = value
 	if value:
 		is_closed = false   # it has to be able to take deposits to fill
+		pending_open = false
 	elif pending_seal:
 		pending_seal = false
 		seal_work = 0.0
 	_check_fill_seal()
 	_invalidate_stock()
 	bump_display_epoch()
+	_sync_seal_order()
 
 # --- sealing (RR-19) ----------------------------------------------
 
-## The cell popup's Seal: a comb worker caps the cell. A cell already
-## closed does nothing. Seal on a cell waiting to fill replaces that order,
-## so its stores stay usable until the cap closes.
+## Whether a player may order this cell sealed: a finished cell with no
+## body in it. An unbuilt cell or a corpse is refused, with no order set.
+func can_take_seal_order() -> bool:
+	return is_built and content_type != "corpse"
+
+## The cell popup's Seal: a comb worker caps the cell. On a closed cell it
+## cancels an Open still waiting and otherwise does nothing. Seal on a cell
+## waiting to fill replaces that order, so its stores stay usable until the
+## cap closes.
 func request_seal() -> void:
-	if is_closed or (pending_seal and not fill_then_close):
+	if not can_take_seal_order():
+		return
+	if is_closed:
+		if pending_open:
+			pending_open = false
+			seal_work = 0.0
+			bump_display_epoch()
+			_sync_seal_order()
+		return
+	if pending_seal and not fill_then_close:
 		return
 	if not pending_seal:
 		seal_work = 0.0
@@ -1158,6 +1174,7 @@ func request_seal() -> void:
 	pending_seal = true
 	_invalidate_stock()
 	bump_display_epoch()
+	_sync_seal_order()
 
 ## The cell popup's Open: a comb worker takes the cap off a closed cell.
 ## An open cell has no cap, so Open just cancels a Seal or a "Fill then
@@ -1168,6 +1185,7 @@ func request_open() -> void:
 			pending_open = true
 			seal_work = 0.0
 			bump_display_epoch()
+			_sync_seal_order()
 		return
 	if not pending_seal and not fill_then_close:
 		return
@@ -1176,11 +1194,13 @@ func request_open() -> void:
 	seal_work = 0.0
 	_invalidate_stock()
 	bump_display_epoch()
+	_sync_seal_order()
 
 ## The cell popup's "Fill then seal": the cell refuses withdrawals from now
-## on and asks for its cap once full. A cell already closed does nothing.
+## on and asks for its cap once full. A cell already closed does nothing,
+## and an unbuilt cell or a corpse is refused.
 func request_fill_then_seal() -> void:
-	if is_closed or fill_then_close:
+	if is_closed or fill_then_close or not can_take_seal_order():
 		return
 	fill_then_close = true
 	pending_seal = false
@@ -1189,6 +1209,7 @@ func request_fill_then_seal() -> void:
 		seal_work = 0.0
 	_invalidate_stock()
 	bump_display_epoch()
+	_sync_seal_order()
 
 ## Full enough for "Fill then seal" to ask for its cap. A brood cell is full
 ## as soon as it holds brood; a store is full at its capacity.
@@ -1214,6 +1235,35 @@ func _check_fill_seal() -> void:
 	if not full:
 		seal_work = 0.0
 	bump_display_epoch()
+	_sync_seal_order()
+
+## A "Fill then seal" brood cell keeps its order once capped (add_seal_work),
+## because a nursery cell holds one larva after another. When the brood
+## leaves -- the new bee chews her way out at the hatch (clear_cell), or the
+## larva dies under the cap (_larva_dies) -- the cap comes off at once, so the
+## queen can lay there again or a comb worker can clear the body, and the
+## next larva asks for its cap through _check_fill_seal.
+func _brood_left(was_brood: bool) -> void:
+	if not was_brood or not is_closed or not fill_then_close:
+		return
+	is_closed = false
+	_drop_seal_orders()
+	_invalidate_stock()
+	bump_display_epoch()
+
+## Clears both orders: the cell has just been closed or opened, so neither
+## is still owed.
+func _drop_seal_orders() -> void:
+	pending_seal = false
+	pending_open = false
+	seal_work = 0.0
+	_sync_seal_order()
+
+## Tells the hive whether this cell is waiting for a comb worker, so
+## hive.gd::find_cell_needing_sealing looks only at those cells.
+func _sync_seal_order() -> void:
+	if main != null and is_instance_valid(main) and main.hive != null:
+		main.hive.note_seal_order(self, needs_seal_work())
 
 ## For the restore path, which writes the flags directly: an older save's
 ## "Fill then close" cell that is already full asks for its cap.
@@ -1222,6 +1272,7 @@ func restore_seal_flags(saved_seal: bool, saved_open: bool) -> void:
 	pending_open = saved_open and is_closed
 	seal_work = 0.0
 	_check_fill_seal()
+	_sync_seal_order()
 
 ## Is there capping or uncapping here waiting for a comb worker?
 func needs_seal_work() -> bool:
@@ -1231,7 +1282,9 @@ func needs_seal_work() -> bool:
 
 ## Called each frame by every comb worker capping or uncapping this cell,
 ## so several working it share the job, as cleaning does. Returns true once
-## the job is done (or there is none left).
+## the job is done (or there is none left). Taking the cap off ends a "Fill
+## then seal" order; putting it on ends one too, except on a brood cell,
+## where it stands for the next larva (_brood_left).
 func add_seal_work(delta: float) -> bool:
 	if not needs_seal_work():
 		return true
@@ -1240,12 +1293,12 @@ func add_seal_work(delta: float) -> bool:
 		return false
 	if is_closed:
 		is_closed = false
-		pending_open = false
+		fill_then_close = false
 	else:
 		is_closed = true
-		pending_seal = false
-	fill_then_close = false
-	seal_work = 0.0
+		if content_type != "brood":
+			fill_then_close = false
+	_drop_seal_orders()
 	_invalidate_stock()
 	bump_display_epoch()
 	return true
@@ -1374,6 +1427,7 @@ func brood_ready() -> bool:
 	return content_type == "brood" and brood_progress >= develop_time()
 
 func clear_cell() -> void:
+	var was_brood: bool = content_type == "brood"
 	content_type = ""
 	amount = 0.0
 	brood_progress = 0.0
@@ -1386,6 +1440,7 @@ func clear_cell() -> void:
 	bee_bread_sealed_at = -1.0
 	evict_requested = false
 	evict_mode = "move"
+	_brood_left(was_brood)
 	_check_fill_seal()
 	_invalidate_hive_index()
 	_invalidate_stock()

@@ -6,7 +6,12 @@ spent GameConfig.cell_seal_seconds on it, then it is closed; Open takes
 cell_unseal_seconds; "Fill then seal" caps a cell filled with converted honey,
 one already full of jelly, and a brood cell, each refusing withdrawals while
 it waits; with no comb worker free nothing changes; winter's bill still opens
-and recloses a sealed cell at once; Seal on a closed cell changes nothing.
+and recloses a sealed cell at once. Seal on a closed cell cancels a waiting
+Open and otherwise changes nothing, and a cell that closes by any route keeps
+no Open order. Unbuilt cells and corpses refuse seal orders. A "Fill then seal"
+brood cell is uncapped when its bee emerges or its larva dies, and the next
+larva asks for its cap again. An old save's cells go through the real
+saving.gd::_restore_cells, and the hive's finder sees the restored orders.
 
 The static half checks the settings rows, the action row, the two appended
 bee states and the save fields, and that test_scenarios/rr19_sealing_stocked.json

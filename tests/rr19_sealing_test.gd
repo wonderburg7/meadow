@@ -5,7 +5,9 @@ extends SceneTree
 ## bee held fed. Every bee is put on Build, so none takes the sealing row,
 ## then:
 ##   1. winter's bill draws on a sealed cell and closes it again at once,
-##      and Seal on a closed cell changes nothing;
+##      Seal on a closed cell cancels a waiting Open and otherwise changes
+##      nothing, and a cell that closes by any route keeps no Open order;
+##      unbuilt cells and corpses refuse seal orders;
 ##   2. Seal on a full honey cell with no comb worker free leaves it open
 ##      (and usable) for 20 s;
 ##   3. one comb worker on Clearing caps it: the cell stays open, its stores
@@ -14,7 +16,12 @@ extends SceneTree
 ##   5. "Fill then seal" on a honey cell filled after the order by the
 ##      deposit honey makers use, a jelly cell already full, and a brood
 ##      cell: each asks for its cap, refuses withdrawals while it waits, and
-##      is capped.
+##      is capped. The brood cell keeps its order: when the bee emerges, or
+##      a larva dies under the cap, the cap comes off and the next larva asks
+##      for it again;
+##   6. a real cell restore (saving.gd::_restore_cells) of an old save's full
+##      "Fill then close" cell asks for its cap, and the hive's finder sees
+##      the restored orders.
 ## Worker-seconds are counted from the bees' own states, frame by frame,
 ## not read off the cell.
 ## Run by tests/test_rr19_sealing.py:
@@ -87,14 +94,13 @@ func _setup() -> void:
 		bee.age_seconds = 0.0
 		bee.architect_mode = "build"
 	var cells: Array = _main.hive.cells.filter(func(c: Variant) -> bool: return is_instance_valid(c) and c.is_built)
-	if cells.size() < 5:
-		_fail("level %d has %d built cells, fewer than five" % [LEVEL, cells.size()])
+	if cells.size() < 7:
+		_fail("level %d has %d built cells, fewer than seven" % [LEVEL, cells.size()])
 		_phase = "done"
 		return
 	for cell: Variant in cells:
 		cell.clear_cell()
 		cell.set_closed(false)
-		cell.pending_open = false
 		cell.keep_empty = false
 		cell.set_designation("", false)
 	_winter_cell = cells[0]
@@ -109,6 +115,8 @@ func _setup() -> void:
 	if paused:
 		paused = false
 	_check_winter_and_closed_seal()
+	_check_refused_and_stale_orders(cells[5], cells[6])
+	_check(_main.hive.seal_order_count() == 0, "the hive still lists %d sealing orders before any is set" % _main.hive.seal_order_count())
 	# 2. Seal with no comb worker free.
 	_seal_cell.set_designation("honey")
 	_seal_cell.add_resource("honey", _seal_cell.capacity_for("honey"))
@@ -131,6 +139,18 @@ func _check_winter_and_closed_seal() -> void:
 	_check(cell.amount < before - 0.001, "winter's bill did not draw on the sealed cell (%.2f before, %.2f after)" % [before, cell.amount])
 	_check(cell.is_closed, "winter's bill left the sealed cell open")
 	_check(not cell.pending_seal and not cell.pending_open, "winter's bill left a capping order on the cell")
+	# Seal cancels an Open still waiting for its worker.
+	_order_seal(cell, false)
+	_check(cell.pending_open and _main.hive.find_cell_needing_sealing() == cell, "Open on a closed cell did not wait for a comb worker")
+	_order_seal(cell, true)
+	_check(cell.is_closed and not cell.pending_open, "Seal on a closed cell did not cancel the waiting Open")
+	_check(_main.hive.find_cell_needing_sealing() == null, "the hive still lists the cancelled Open")
+	# A cell that closes by winter's route keeps no Open order.
+	_order_seal(cell, false)
+	cell.set_closed(false)
+	cell.set_closed(true)
+	_check(not cell.pending_open and not cell.pending_seal, "a cell closed by set_closed kept an order")
+	_check(_main.hive.find_cell_needing_sealing() == null, "the hive still lists an order on a cell closed by set_closed")
 	var epoch: int = cell.display_epoch
 	_order_seal(cell, true)
 	_check(cell.is_closed and not cell.pending_seal and not cell.pending_open and not cell.fill_then_close,
@@ -195,10 +215,13 @@ func _step() -> void:
 					if label != "brood":
 						_check(not cell.can_withdraw(), "the %s cell let stores out while it was being capped" % label)
 			if all_closed:
-				for label: String in _fill_cells:
+				for label: String in ["honey", "jelly"]:
 					var cell: Node2D = _fill_cells[label]
 					_check(not cell.fill_then_close and not cell.pending_seal, "the capped %s cell kept its order" % label)
+				_check(_main.hive.seal_order_count() == 0, "the hive still lists %d sealing orders after the work" % _main.hive.seal_order_count())
 				print("RR19 fill then seal capped honey, jelly and brood after %.1f s" % elapsed)
+				_check_brood_lifecycle()
+				_check_real_restore()
 				_phase = "done"
 				return
 	if _phase != "done" and elapsed > PHASE_TIMEOUT:
@@ -237,6 +260,92 @@ func _start_fill_then_seal() -> void:
 	brood.feed_brood(1000.0, false)   # so it cannot starve while it waits
 	_order_fill_then_seal(brood)
 	_check(brood.pending_seal, "Fill then seal on a brood cell did not ask for its cap")
+
+
+## 1. An unbuilt cell and a cell holding a body take no seal order. A stale
+## Open on a cell is cleared when a worker caps it.
+func _check_refused_and_stale_orders(site: Node2D, dead: Node2D) -> void:
+	site.start_as_site()
+	_order_seal(site, true)
+	_order_fill_then_seal(site)
+	_check(not site.pending_seal and not site.fill_then_close, "an unbuilt cell took a seal order")
+	site.add_build_progress(site.effective_build_time())
+	dead.start_brood()
+	dead._larva_dies()
+	_order_seal(dead, true)
+	_order_fill_then_seal(dead)
+	_check(not dead.pending_seal and not dead.fill_then_close, "a cell holding a body took a seal order")
+	dead.clear_cell()
+	dead.request_seal()
+	dead.pending_open = true   # a stale flag, as a cell could carry before the review fix
+	dead.add_seal_work(_config.cell_seal_seconds + 0.01)
+	_check(dead.is_closed and not dead.pending_open and not dead.pending_seal, "capping left an Open order on the cell")
+	dead.set_closed(false)
+
+
+## 5. The brood cell keeps "Fill then seal" for the next larva.
+func _check_brood_lifecycle() -> void:
+	var brood: Node2D = _fill_cells["brood"]
+	_check(brood.is_closed and brood.fill_then_close and not brood.pending_seal,
+		"the capped brood cell did not keep its Fill then seal order")
+	brood.clear_cell()   # what main.gd's hatch calls as the bee emerges
+	_check(not brood.is_closed, "the brood cell stayed capped after its bee emerged")
+	_check(brood.fill_then_close and not brood.pending_seal, "the emptied brood cell lost its order, or asks for a cap with nothing in it")
+	brood.start_brood()
+	brood.feed_brood(1000.0, false)
+	_check(brood.pending_seal and _main.hive.find_cell_needing_sealing() == brood, "the next larva did not ask for its cap")
+	brood.set_closed(true)   # capped at once, to test a death under the cap
+	brood._larva_dies()
+	_check(not brood.is_closed, "a larva that died under the cap left the cell capped")
+	_check(brood.content_type == "corpse" and not brood.pending_seal, "the body asks for a cap")
+	_check(_main.hive.find_cell_needing_sealing() == null, "the hive still lists the dead larva's cell")
+
+
+## 6. The real cell restore, given an old save's entries.
+func _check_real_restore() -> void:
+	_seal_cell.add_resource("honey", 999.0)   # full, whatever the bees drank
+	var save_game: GDScript = load("res://scripts/save_game.gd")
+	var entries: Array = save_game._cells_data(_main)
+	var full_hex: Vector2i = _seal_cell.axial
+	var closed_hex: Vector2i = _winter_cell.axial
+	var open_hex: Vector2i = _fill_cells["jelly"].axial
+	for entry: Dictionary in entries:
+		var hex := Vector2i(int(entry.q), int(entry.r))
+		if hex == full_hex:
+			# An old save's full "Fill then close" cell: no RR-19 keys.
+			entry.erase("pending_seal")
+			entry.erase("pending_open")
+			entry["closed"] = false
+			entry["fill_close"] = true
+		elif hex == closed_hex:
+			entry.erase("pending_seal")
+			entry.erase("pending_open")
+		elif hex == open_hex:
+			entry["closed"] = true
+			entry["pending_open"] = true
+			entry["pending_seal"] = true
+	_main.saving._restore_cells(entries)
+	var full: Node2D = _restored(full_hex)
+	var closed: Node2D = _restored(closed_hex)
+	var opening: Node2D = _restored(open_hex)
+	if full == null or closed == null or opening == null:
+		_fail("the restore lost a cell")
+		return
+	_check(full.pending_seal and full.fill_then_close and not full.is_closed,
+		"an old save's full Fill then close cell did not ask for its cap")
+	_check(closed.is_closed and not closed.pending_seal and not closed.pending_open,
+		"an old save's closed cell came back with an order")
+	_check(opening.is_closed and opening.pending_open and not opening.pending_seal,
+		"a saved Open did not come back alone")
+	_check(_main.hive.seal_order_count() >= 2 and _main.hive.find_cell_needing_sealing() in [full, opening],
+		"the hive's finder does not see the restored orders")
+
+
+func _restored(hex: Vector2i) -> Node2D:
+	for cell: Variant in _main.hive.cells:
+		if is_instance_valid(cell) and not cell.is_queued_for_deletion() and cell.axial == hex:
+			return cell
+	return null
 
 
 func _order_seal(cell: Node2D, closed: bool) -> void:
