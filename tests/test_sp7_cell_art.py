@@ -105,7 +105,14 @@ class CombDrawing(unittest.TestCase):
 
     def test_caps_follow_ripening_and_cover_closed_cells(self):
         self.assertIn("bee_bread_ripen_fraction() * stages", CELL)
-        self.assertRegex(CELL, r"if is_closed:\s+cap_stage = SpriteCatalogue\.WAX_CELL_SEALED_HFRAMES")
+        # A closed cell wears the whole cap. RR-19: while a comb worker takes
+        # it off, the frame steps backwards from full; while she puts one on
+        # an open cell, it steps forwards.
+        self.assertIn("var cap_stages: int = SpriteCatalogue.WAX_CELL_SEALED_HFRAMES", CELL)
+        self.assertRegex(CELL, r"if is_closed:\s+cap_stage = cap_stages\s+if pending_open and seal_work > 0\.0:\s+"
+                               r"cap_stage = clampi\(cap_stages - int\(floor\(seal_work_fraction\(\) \* cap_stages\)\)")
+        self.assertRegex(CELL, r"elif pending_seal and seal_work > 0\.0:\s+"
+                               r"cap_stage = maxi\(cap_stage, clampi\(int\(ceil\(seal_work_fraction\(\) \* cap_stages\)\)")
         self.assertIn("not cap_sprite.visible", CELL)
 
     def test_the_old_recolour_variant_is_gone(self):
