@@ -46,7 +46,7 @@ class StaticGateTest(unittest.TestCase):
         self.assertIn('{"key": "restock", "skill": "%s"' % SKILL, text)
 
     def test_keep_full_controls_and_mode_hidden_unowned(self):
-        hud = _read("scripts/hud.gd")
+        hud = _read("scripts/hud_command_rows.gd")
         self.assertIn('first.architect_mode == "restock" and Availability.mode_query(Roles.COMB_WORKER, "restock"', hud)
         self.assertIn("common_role == Roles.COMB_WORKER or common_role == Roles.MINER) and not Availability.mode_query(", hud)
 

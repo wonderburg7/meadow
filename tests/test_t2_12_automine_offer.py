@@ -33,7 +33,7 @@ class AutomineOfferStaticTest(unittest.TestCase):
         self.assertIn('{"key": "automine", "skill": "skill.hive_mind.automation"', roles)
 
     def test_job_panel_toggle_waits_for_the_skill(self):
-        hud = _read("scripts/hud.gd")
+        hud = _read("scripts/hud_command_rows.gd")
         self.assertIn(
             "common_role == Roles.COMB_WORKER or common_role == Roles.MINER) and not Availability.mode_query(",
             hud,

@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R6 (hud.gd released by GP-5 and RR-14, 26-27 Oct 2026) then CQ-M5a in the Codex lane (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for RR-21 to release scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for SP-14 to release scripts/hive_cell.gd and HS-2 to release scripts/bee.gd and scripts/soil_block.gd (RR-19 landed 28 Oct 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5a in the Codex lane (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for RR-21 to release scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for SP-14 to release scripts/hive_cell.gd and HS-2 to release scripts/bee.gd and scripts/soil_block.gd (RR-19 landed 28 Oct 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -123,7 +123,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once its section is written (CQ-R7 released `hud.gd` and WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
-| CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes -- GP-5 and RR-14 released `scripts/hud.gd`, 26-27 Oct 2026 | medium |
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
 
@@ -362,32 +361,7 @@ checks. Stop if the replacement changes a save compatibility decision.
 
 CQ-R11 shipped 2026-10-26; its specification is `plans/archive/CQ-R11_2026-10-26.md`.
 
-## CQ-R6 -- extract the HUD bee-command rows
-
-**Now.** `hud.gd` still builds the bee-command rows in the selection-panel
-section. The D2 research record identifies the row builders and existing
-layout coverage; the section heading still groups commands with readouts and
-tray sizing. GP-5 (26 Oct) and RR-14 (27 Oct 2026) have landed, and
-`tools/slice.ps1 owner` reports `hud.gd` and `hud_command_rows.gd` clear on
-27 Oct 2026.
-
-**Target.** Move the command-row builders into the new leaf
-`scripts/hud_command_rows.gd` and give the surrounding HUD sections accurate
-headings. Preserve every button, node name, display string and command
-behaviour. Regenerate `FUNCTION_MAP.md`; file one hands-on check for the
-command buttons with `python tools/new_check.py` as the check-loop requires.
-Reasoning: **medium**.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] CQ-R6 -- extract the HUD bee-command rows**
-- Plan: `plans/now/code-health.md` -- "CQ-R6 -- extract the HUD bee-command rows"
-- Files: `scripts/hud.gd`, `scripts/hud_command_rows.gd`, `FUNCTION_MAP.md`
-- Check: `python -m unittest tests.test_layout_regression tests.test_hc8_tray_first_open tests.test_hc16_tray_reselect` and `python tools/prefinish.py` pass; a hands-on check covers the command buttons
-- Proof: `present: scripts/hud.gd :: func _rebuild_role_controls(`
-- Next after: CQ-M5a -- name every CanvasLayer in scripts/canvas_layers.gd
-```
+CQ-R6 shipped 2026-10-28; its specification is `plans/archive/CQ-R6_2026-10-28.md`.
 
 ## CQ-M5a -- name every CanvasLayer in `canvas_layers.gd`
 
