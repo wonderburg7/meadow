@@ -95,3 +95,4 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-153 -- Tick Raise a drone on an empty nursery cell and watch a drone hatch](ready/C-153.md)
 - [C-154 -- Selection keys, box and right-click orders](ready/C-154.md)
 - [C-155 -- C-141 re-run: a nectar cell turns visibly yellow-green about a day and a half before it sours](ready/C-155.md)
+- [C-156 -- A comb worker caps a sealed cell over 15 seconds and uncaps it over 5](ready/C-156.md)
