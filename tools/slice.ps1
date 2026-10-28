@@ -2928,12 +2928,11 @@ function Invoke-SliceFinish {
                 Invoke-SliceQueueReapply -Root $root -Id $id -Lane $lane -PythonPath $PythonPath
                 Invoke-InjectedLifecycleFailure -Phase "queue-reapplying"
             }
-            else {
+            elseif (Test-Path -LiteralPath (Join-Path $root "tools\refill_lane.py") -PathType Leaf) {
                 $run = Invoke-SlicePythonTool -Root $root -PythonPath $PythonPath -Arguments @((Join-Path $root "tools\refill_lane.py"), "--check", "--root", $root)
                 if ($run.Exit -ne 0) {
-                    $run.Output | ForEach-Object { Write-Output $_ }
                     git -C $root merge --abort | Out-Null
-                    Stop-Slice -Cause "$id -- the merge into master would leave NEXTSTEPS.md failing its queue checks; the errors are printed above" -Fix "master is unchanged and the merge is aborted. Merge master into this branch (git merge master in the worktree), fix the queue there (each file in one lane only), run python tools/check_docs.py, commit, and retry finish"
+                    Stop-Slice -Cause "$id -- the merge into master would leave NEXTSTEPS.md failing its queue checks (tools/refill_lane.py --check, exit $($run.Exit)): $(@($run.Output) -join ' | ')" -Fix "master is unchanged and the merge is aborted. Merge master into this branch (git merge master in the worktree), fix the queue there (each file in one lane only), run python tools/check_docs.py, commit, and retry finish"
                 }
             }
             git -C $root commit -F $mergeMessageFile
