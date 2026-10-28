@@ -52,6 +52,17 @@ static func find_cell_needing_eviction(bee: Node2D) -> bool:
 	return true
 
 
+## RR-19. A cell the player asked to be sealed or opened. She walks to one
+## of its walls (TO_SEAL_CELL) and caps or uncaps it (SEALING).
+static func find_cell_needing_sealing(bee: Node2D) -> bool:
+	var cell: Variant = bee.hive.find_cell_needing_sealing()
+	if cell == null:
+		return false
+	bee.target_cell = cell
+	bee.state = State.TO_SEAL_CELL
+	return true
+
+
 static func create_cell_site_at(bee: Node2D) -> bool:
 	var site: Node2D = null
 	while site == null and bee._take_next_build_target():
@@ -409,6 +420,39 @@ static func architect_clean(bee: Node2D, delta: float) -> void:
 		# the body goes out of the hive rather than back into the comb
 		bee.carrying_corpse = true
 		bee.state = State.TO_WASTE_EXIT
+
+
+## RR-19. Walking to a cell to cap or uncap it. The order can be withdrawn
+## (Open on a cell waiting for its cap) or done by another worker on the
+## way, which ends the job.
+static func go_to_seal_cell(bee: Node2D, delta: float) -> void:
+	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or not bee.target_cell.needs_seal_work():
+		_drop_seal_job(bee)
+		return
+	var approach := BeeForaging.approach_cell(bee, bee.target_cell, delta)
+	if approach < 0:
+		bee.target_cell = null
+		bee.state = State.BUILD_IDLE
+		return
+	if approach == 1:
+		bee.state = State.SEALING
+
+
+## Capping or uncapping, one frame of it: every worker on the cell adds her
+## own `delta`, so two finish in half the time.
+static func seal_cell(bee: Node2D, delta: float) -> void:
+	if bee.target_cell == null or not is_instance_valid(bee.target_cell) or not bee.target_cell.needs_seal_work():
+		_drop_seal_job(bee)
+		return
+	if bee.target_cell.add_seal_work(delta):
+		bee.hive.announce()
+		_drop_seal_job(bee)
+
+
+static func _drop_seal_job(bee: Node2D) -> void:
+	BeeForaging.release_cell_slot(bee)
+	bee.target_cell = null
+	bee.state = State.BUILD_IDLE
 
 
 ## T2-4b: a body on the floor. Walk to it; lifting it takes as long as

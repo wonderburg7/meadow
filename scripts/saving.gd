@@ -263,6 +263,10 @@ func _restore_cells(cells: Array) -> void:
 		cell.nursery_priority = int(entry.get("priority", 1))
 		cell.is_closed = bool(entry.get("closed", false))
 		cell.fill_then_close = bool(entry.get("fill_close", false))
+		# RR-19, additive: a save from before RR-19 has no capping order
+		# waiting, except that a "Fill then close" cell already full asks
+		# for its cap, which it never got before.
+		cell.restore_seal_flags(bool(entry.get("pending_seal", false)), bool(entry.get("pending_open", false)))
 
 		main.hive.cells.append(cell)
 		main.hive.register_tile(hex, cell)

@@ -1587,6 +1587,10 @@ func _process(delta: float) -> void:
 			BeeBuilding.architect_go_to_clean(self, delta)
 		State.CLEANING:
 			BeeBuilding.architect_clean(self, delta)
+		State.TO_SEAL_CELL:
+			BeeBuilding.go_to_seal_cell(self, delta)
+		State.SEALING:
+			BeeBuilding.seal_cell(self, delta)
 
 		# --- miner ---
 		State.MINE_IDLE:
@@ -1688,6 +1692,7 @@ const TIPSY_WANDER_FROM := [
 	State.TO_BROOD, State.TENDING, State.TO_FOOD_CELL,
 	State.TO_JELLY_CELL, State.DEPOSITING_JELLY,
 	State.TO_BUILD_SITE, State.BUILDING, State.TO_CLEAN_CELL, State.CLEANING,
+	State.TO_SEAL_CELL, State.SEALING,
 	State.TO_RESTOCK_SOURCE, State.TO_RESTOCK_TARGET,
 	State.TO_HAUL_SOURCE, State.TO_HAUL_TARGET,
 	State.TO_MINE_SITE, State.MINING,
@@ -2009,6 +2014,7 @@ func is_travelling_for_work() -> bool:
 		State.TO_WASTE_EXIT, State.TO_CLEAN_CELL, State.TO_MINE_SITE,
 		State.TO_MINE_EXIT, State.TO_POLLEN_CELL, State.TO_CELL_TO_LAY,
 		State.TO_NECTAR_CELL, State.TO_HONEY_CELL, State.TO_BEE_BREAD_CELL,
+		State.TO_SEAL_CELL,
 	]
 
 ## Called on a think tick while working_secondary and "Finish the job
@@ -2859,6 +2865,17 @@ func _task_line() -> String:
 			if target_cell and is_instance_valid(target_cell):
 				cleaned = int(target_cell.clean_fraction() * 100.0)
 			return "clearing a dead larva out of a cell (%d%%)" % cleaned
+		State.TO_SEAL_CELL:
+			if target_cell and is_instance_valid(target_cell) and target_cell.is_closed:
+				return "going to take the wax cap off a cell"
+			return "going to cap a cell with wax"
+		State.SEALING:
+			var capped := 0
+			if target_cell and is_instance_valid(target_cell):
+				capped = int(target_cell.seal_work_fraction() * 100.0)
+				if target_cell.is_closed:
+					return "taking the wax cap off a cell (%d%%)" % capped
+			return "capping a cell with wax (%d%%)" % capped
 		State.TO_WASTE_EXIT:
 			if carrying_corpse:
 				return "carrying a dead %s out of the hive" % ("bee" if corpse_is_bee else "larva")

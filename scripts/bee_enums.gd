@@ -61,4 +61,7 @@ enum State {
 	# BB-1: a Fermenting honey maker carrying bee bread to its cell, and
 	# packing it in (bee_honey.gd). Appended, same reason.
 	TO_BEE_BREAD_CELL, DEPOSITING_BEE_BREAD,
+	# RR-19: a comb worker walking to a cell to cap or uncap it, and doing
+	# so (bee_building.gd). Appended, same reason.
+	TO_SEAL_CELL, SEALING,
 }

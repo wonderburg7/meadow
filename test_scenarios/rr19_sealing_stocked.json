@@ -1,0 +1,16 @@
+{
+  "cells": 8, "nectar_foragers": 2, "pollen_foragers": 1,
+  "nurses": 2, "builders": 2, "miners": 0, "honey_makers": 0,
+  "weather": false, "disease": false, "rival_hive": false, "winter": false,
+  "skill_grants": ["skill.colony.comb_worker"],
+  "random_seed": 1927,
+  "actions": [
+    {"do": "set_cell_contents", "cell": {"built_index": 0}, "resource": "honey", "amount": 999},
+    {"do": "set_cell_contents", "cell": {"built_index": 1}, "resource": "jelly", "amount": 999},
+    {"do": "set_cell_contents", "cell": {"built_index": 2}, "resource": "brood", "amount": 1},
+    {"do": "set_cell_contents", "cell": {"built_index": 3}, "resource": "honey", "amount": 999},
+    {"do": "wait", "seconds": 1},
+    {"do": "save_run", "name": "C127 stocked"}
+  ],
+  "stop": {"max_days": 3}
+}

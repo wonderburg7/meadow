@@ -749,6 +749,37 @@ func find_cell_needing_eviction() -> Node2D:
 			return cell
 	return null
 
+## RR-19. The cells waiting for a comb worker to cap or uncap them, in the
+## order they were asked. hive_cell.gd::_sync_seal_order keeps it, adding a
+## cell when an order is set and removing it when the work is done or the
+## order goes, so an idle comb worker's think tick looks at these few cells
+## rather than the whole comb. A cell freed with an order still on it (a
+## restore) is dropped the next time the finder passes it.
+var _seal_orders: Dictionary = {}
+
+func note_seal_order(cell: Node2D, waiting: bool) -> void:
+	if waiting:
+		_seal_orders[cell] = true
+	else:
+		_seal_orders.erase(cell)
+
+## How many cells are waiting for capping or uncapping.
+func seal_order_count() -> int:
+	return _seal_orders.size()
+
+## The first cell waiting for a comb worker to cap or uncap it, with a wall
+## free to work from.
+func find_cell_needing_sealing() -> Node2D:
+	if _seal_orders.is_empty():
+		return null
+	for cell: Variant in _seal_orders.keys():
+		if not is_instance_valid(cell) or cell.is_queued_for_deletion() or not cell.needs_seal_work():
+			_seal_orders.erase(cell)
+			continue
+		if cell.has_free_slot():
+			return cell
+	return null
+
 ## A gyne larva waiting on royal jelly, so nurses know whether it's worth
 ## anyone making any.
 func has_gyne_brood() -> bool:
