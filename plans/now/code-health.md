@@ -123,7 +123,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once its section is written (CQ-R7 released `hud.gd` and WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
-| CQ-R6 | hud bee command rows become scripts/hud_command_rows.gd | `hud.gd` | yes -- GP-5 and RR-14 released `scripts/hud.gd`, 26-27 Oct 2026 | medium |
 | CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
 
@@ -362,32 +361,7 @@ checks. Stop if the replacement changes a save compatibility decision.
 
 CQ-R11 shipped 2026-10-26; its specification is `plans/archive/CQ-R11_2026-10-26.md`.
 
-## CQ-R6 -- extract the HUD bee-command rows
-
-**Now.** `hud.gd` still builds the bee-command rows in the selection-panel
-section. The D2 research record identifies the row builders and existing
-layout coverage; the section heading still groups commands with readouts and
-tray sizing. GP-5 (26 Oct) and RR-14 (27 Oct 2026) have landed, and
-`tools/slice.ps1 owner` reports `hud.gd` and `hud_command_rows.gd` clear on
-27 Oct 2026.
-
-**Target.** Move the command-row builders into the new leaf
-`scripts/hud_command_rows.gd` and give the surrounding HUD sections accurate
-headings. Preserve every button, node name, display string and command
-behaviour. Regenerate `FUNCTION_MAP.md`; file one hands-on check for the
-command buttons with `python tools/new_check.py` as the check-loop requires.
-Reasoning: **medium**.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] CQ-R6 -- extract the HUD bee-command rows**
-- Plan: `plans/now/code-health.md` -- "CQ-R6 -- extract the HUD bee-command rows"
-- Files: `scripts/hud.gd`, `scripts/hud_command_rows.gd`, `FUNCTION_MAP.md`
-- Check: `python -m unittest tests.test_layout_regression tests.test_hc8_tray_first_open tests.test_hc16_tray_reselect` and `python tools/prefinish.py` pass; a hands-on check covers the command buttons
-- Proof: `present: scripts/hud.gd :: func _rebuild_role_controls(`
-- Next after: CQ-M5a -- name every CanvasLayer in scripts/canvas_layers.gd
-```
+CQ-R6 shipped 2026-10-28; its specification is `plans/archive/CQ-R6_2026-10-28.md`.
 
 ## CQ-M5a -- name every CanvasLayer in `canvas_layers.gd`
 

@@ -63,14 +63,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] CQ-R6 -- extract the HUD bee-command rows**
-   - Plan: `plans/now/code-health.md` -- "CQ-R6 -- extract the HUD bee-command rows"
-   - Files: `scripts/hud.gd`, `scripts/hud_command_rows.gd`, `FUNCTION_MAP.md`
-   - Check: `python -m unittest tests.test_layout_regression tests.test_hc8_tray_first_open tests.test_hc16_tray_reselect` and `python tools/prefinish.py` pass; a hands-on check covers the command buttons
-   - Proof: `present: scripts/hud.gd :: func _rebuild_role_controls(`
-   - Next after: CQ-M5a -- name every CanvasLayer in scripts/canvas_layers.gd
-
-2. **[Codex] CQ-M5a -- name every CanvasLayer in `canvas_layers.gd`**
+1. **[Codex] CQ-M5a -- name every CanvasLayer in `canvas_layers.gd`**
    - Plan: `plans/now/code-health.md` -- "CQ-M5a -- name every CanvasLayer in `canvas_layers.gd`"
    - Files: `scripts/canvas_layers.gd`, `scripts/main_menu.gd`, `scripts/challenge_complete.gd`, `scripts/game_over.gd`, `scripts/debug_panel.gd`, `scripts/saves_panel.gd`, `scripts/gallerin_panel.gd`, `scripts/skill_tree_panel.gd`, `plans/reference/ui-rules.md`, `FUNCTION_MAP.md`
    - Check: `python -m unittest tests.test_ho15_menu_hex_fit tests.test_layout_regression` and `python tools/prefinish.py` pass; `git grep -nE "layer = [0-9]|:= 14$" -- scripts/main_menu.gd scripts/challenge_complete.gd scripts/game_over.gd scripts/debug_panel.gd scripts/saves_panel.gd scripts/gallerin_panel.gd scripts/skill_tree_panel.gd` finds nothing
