@@ -25,7 +25,7 @@ recorded in this file.
 
 ---
 
-## hud.gd (3,540 lines)
+## hud.gd (3,544 lines)
 
 Corner readouts, panels, popups, warnings, the problem strip, the
 Challenge goal readout.
@@ -160,35 +160,36 @@ Challenge goal readout.
 3088 func _rebuild_role_controls(bees: Array) -> void
 3091 func _gyne_not_ready_reason(gyne) -> String
 3094 func _refresh_gyne_send_button(gyne) -> void
-3097 # --- selection readout and tray sizing -----------------------------
-3102 func _selection_identity_text(b) -> String
-3116 func _selection_energy_text(b) -> String
-3125 func _selection_activity_text(b, instruction_runner, stuck: String) -> String
-3153 func _selection_trait_text(b) -> String
-3167 func _refresh_selection_text() -> void
-3227 func _apply_selection_tray_width() -> void
-3278 func _match_summary_header_button_heights() -> void
-3296 func _tray_column_share(inner_width: float) -> float
-3305 func _apply_even_column_widths(wrappers: Array) -> void
-3333 func _update_command_tray_width() -> void
-3354 func _resize_command_tray() -> void
-3389 func _resettle_command_tray(generation: int, previous_content_min_y: float, stable_streak: int, pass_count: int) -> void
-3403 func _apply_command_tray_rect() -> void
-3421 func _on_command_content_minimum_size_changed() -> void
-3428 func set_winter_button_visible(value: bool) -> void
-3434 func set_view_label(in_hive: bool) -> void
-3443 func set_allowed_role_keys(keys: Array) -> void
-3451 func _role_offered(role_id: int, bee = null) -> bool
-3457 func refresh_role_gating() -> void
-3466 func set_command_locked_bees(bees: Array) -> void
-3471 func set_allowed_mode_keys(keys: Array) -> void
-3481 func set_allowed_designation_keys(keys: Array) -> void
-3491 func set_queen_build_button_visible(value: bool) -> void
-3496 # --- stage gates --------------------------------------------------
-3504 func apply_gates(stage_gate) -> void
-3522 func _register_gated_control(control_name: String, getter: Callable) -> void
-3530 func _apply_gate_to_control(control_name: String) -> void
-3539 func _is_gate_open(control_name: String) -> bool
+3098 func _mode_is_active(role_id: int, bee, mode_key: String) -> bool
+3101 # --- selection readout and tray sizing -----------------------------
+3106 func _selection_identity_text(b) -> String
+3120 func _selection_energy_text(b) -> String
+3129 func _selection_activity_text(b, instruction_runner, stuck: String) -> String
+3157 func _selection_trait_text(b) -> String
+3171 func _refresh_selection_text() -> void
+3231 func _apply_selection_tray_width() -> void
+3282 func _match_summary_header_button_heights() -> void
+3300 func _tray_column_share(inner_width: float) -> float
+3309 func _apply_even_column_widths(wrappers: Array) -> void
+3337 func _update_command_tray_width() -> void
+3358 func _resize_command_tray() -> void
+3393 func _resettle_command_tray(generation: int, previous_content_min_y: float, stable_streak: int, pass_count: int) -> void
+3407 func _apply_command_tray_rect() -> void
+3425 func _on_command_content_minimum_size_changed() -> void
+3432 func set_winter_button_visible(value: bool) -> void
+3438 func set_view_label(in_hive: bool) -> void
+3447 func set_allowed_role_keys(keys: Array) -> void
+3455 func _role_offered(role_id: int, bee = null) -> bool
+3461 func refresh_role_gating() -> void
+3470 func set_command_locked_bees(bees: Array) -> void
+3475 func set_allowed_mode_keys(keys: Array) -> void
+3485 func set_allowed_designation_keys(keys: Array) -> void
+3495 func set_queen_build_button_visible(value: bool) -> void
+3500 # --- stage gates --------------------------------------------------
+3508 func apply_gates(stage_gate) -> void
+3526 func _register_gated_control(control_name: String, getter: Callable) -> void
+3534 func _apply_gate_to_control(control_name: String) -> void
+3543 func _is_gate_open(control_name: String) -> bool
 ```
 
 ## bee.gd (3,211 lines)

@@ -3094,6 +3094,10 @@ func _gyne_not_ready_reason(gyne) -> String:
 func _refresh_gyne_send_button(gyne) -> void:
 	_command_rows._refresh_gyne_send_button(gyne)
 
+## scenario_actions.gd reads this through main.hud, so it stays a hud method.
+func _mode_is_active(role_id: int, bee, mode_key: String) -> bool:
+	return _command_rows._mode_is_active(role_id, bee, mode_key)
+
 # --- selection readout and tray sizing -----------------------------
 
 ## Identity block: name (starred if a favourite), role, age. Name first --

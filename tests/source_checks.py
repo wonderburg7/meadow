@@ -272,6 +272,33 @@ def check_script_uids_tracked(problems):
         )
 
 
+def check_hud_private_calls_resolve(problems):
+    """Every `hud._name(` called from another script or a test must be a
+    method hud.gd still defines.
+
+    CQ-R6 moved the command rows into hud_command_rows.gd and left
+    `_mode_is_active` behind it; scenario_actions.gd kept calling it through
+    main.hud, which the bare-call check cannot see and which only failed at
+    run time, inside a scenario."""
+    hud_source = _read(os.path.join(ROOT, "hud.gd"))
+    defined = set(re.findall(r"^\s*(?:static\s+)?func\s+(\w+)", hud_source, re.M))
+    call_re = re.compile(r"\bhud\.(_\w+)\(")
+    paths = glob.glob(os.path.join(ROOT, "**", "*.gd"), recursive=True)
+    paths += glob.glob(os.path.join(ROOT, "..", "tests", "*.gd"))
+    for path in sorted(paths):
+        name = os.path.basename(path)
+        if name in ("hud.gd", "hud_command_rows.gd"):
+            continue
+        for number, line in enumerate(_read(path).split("\n"), start=1):
+            for method in call_re.findall(strip_code(line)):
+                if method not in defined:
+                    problems.append(
+                        "%s:%d calls hud.%s(), but scripts/hud.gd defines no such "
+                        "method -- keep a delegate in hud.gd or call the extracted "
+                        "owner directly" % (name, number, method)
+                    )
+
+
 # Files allowed to assign into GameConfig -- see CLAUDE.md rule 2 and
 # AUDIT_PLAN.md bundle B. Everything else may read GameConfig freely, but
 # an assignment anywhere else is exactly the class of bug bundle A fixed
@@ -3542,6 +3569,7 @@ def main():
 
     check_autoloads(problems)
     check_script_uids_tracked(problems)
+    check_hud_private_calls_resolve(problems)
     check_goal_cadence_registry(problems)
     check_catalogue_alignment(problems)
     check_action_catalogue(problems)
