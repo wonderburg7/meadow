@@ -96,3 +96,4 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-154 -- Selection keys, box and right-click orders](ready/C-154.md)
 - [C-155 -- C-141 re-run: a nectar cell turns visibly yellow-green about a day and a half before it sours](ready/C-155.md)
 - [C-156 -- A comb worker caps a sealed cell over 15 seconds and uncaps it over 5](ready/C-156.md)
+- [C-157 -- Bee command buttons after row extraction](ready/C-157.md)
