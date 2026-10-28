@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/CQ-R6` (`codex/CQ-R6`) | Codex | extract the HUD bee-command rows | Codex | in progress | none | `plans/now/code-health.md` CQ-R6 -- extract the HUD bee-command rows |
