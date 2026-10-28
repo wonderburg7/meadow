@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-9 -- the headless route tools and the route numbers, then PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed, then PP-10 -- the sweep prices the route so Gyne rearing is first affordable after the first winter (Dave split PP-9, 27 Oct 2026: PP-9 builds the route, PP-10 the sweep; Dave narrowed PP-9 to its headless tools later that day and moved the route to PP-11) | Dependency: PP-6 followed FR-2 (Dave 14 Oct 2026; landed 25 Oct 2026); PP-9 follows PP-6; PP-11 follows PP-9; PP-10 follows PP-11; AR-4 (`plans/now/alpha-route-evidence.md`), T2-7b (through AR-4) and FR-3 wait for PP-10 | Verified: 2026-10-27
+Status: active | Owner: Dave / Claude Code | Next: PP-11 (PP-9 landed 27 Oct 2026, so its block is open) -- the reference route owns Pollinator points and reaches Gyne rearing on every seed, then PP-10 -- the sweep prices the route so Gyne rearing is first affordable after the first winter (Dave split PP-9, 27 Oct 2026: PP-9 builds the route, PP-10 the sweep; Dave narrowed PP-9 to its headless tools later that day and moved the route to PP-11) | Dependency: PP-6 followed FR-2 (Dave 14 Oct 2026; landed 25 Oct 2026); PP-9 follows PP-6; PP-11 follows PP-9; PP-10 follows PP-11; AR-4 (`plans/now/alpha-route-evidence.md`), T2-7b (through AR-4) and FR-3 wait for PP-10 | Verified: 2026-10-27
 
 ## Objective
 
@@ -49,7 +49,7 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-11 | snapshots log bee bread, royal jelly and Pollinator Points; the reference route owns Pollinator points and reaches Gyne rearing on every seed | `scripts/headless/diagnostic_probes.gd`, `tools/headless/profiles.py`, `test_scenarios/alpha_arc_test.json`, tests | no -- after PP-9 | high |
+| PP-11 | snapshots log bee bread, royal jelly and Pollinator Points; the reference route owns Pollinator points and reaches Gyne rearing on every seed | `scripts/headless/diagnostic_probes.gd`, `tools/headless/profiles.py`, `test_scenarios/alpha_arc_test.json`, tests | yes -- PP-9 landed 27 Oct 2026 | high |
 | PP-10 | the sweep prices the route so Gyne rearing is first affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, tests | no -- after PP-11 | high |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
@@ -149,7 +149,7 @@ Reasoning level high: the route sets the arc AR-4, T2-7b and FR-3 measure.
 
 **Open decisions:** none
 
-```queue-gated
+```queue
 **[Claude] PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed**
 - Plan: `plans/now/pollination.md` -- "PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed"
 - Files: `scripts/headless/diagnostic_probes.gd`, `tools/headless/profiles.py`, `test_scenarios/alpha_arc_test.json`, `tests/test_pp11_route_snapshots.py`
@@ -225,5 +225,4 @@ Reasoning level high: a balance sweep that sets a gameplay outcome.
 
 ## Not in the queue, and why
 
-- **PP-11** -- the reference route owns Pollinator points and reaches Gyne rearing on every seed; waits for PP-9, whose `skill_affordable`, `every_days` and `keep_role` it builds the route with.
 - **PP-10** -- the sweep prices the route so Gyne rearing is first affordable after the first winter; waits for PP-11, whose reference route it sweeps against.

@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R6 (hud.gd released by GP-5 and RR-14, 26-27 Oct 2026) then CQ-M5a in the Codex lane (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for RR-21 to release scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for RR-19 to release scripts/hive_cell.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R6 (hud.gd released by GP-5 and RR-14, 26-27 Oct 2026) then CQ-M5a in the Codex lane (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for RR-21 to release scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for SP-14 to release scripts/hive_cell.gd and HS-2 to release scripts/bee.gd and scripts/soil_block.gd (RR-19 landed 28 Oct 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -117,7 +117,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
 | CQ-M5a | scripts/canvas_layers.gd names every CanvasLayer; 7 UI scripts read it | `canvas_layers.gd`, 7 UI scripts, `ui-rules.md` | yes -- after CQ-R14 releases `main_menu.gd`/`challenge_complete.gd` (specified 27 Oct 2026) | medium |
 | CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | gated -- RR-21 owns `main.gd`, Jules J-14 holds `game_panel.gd` | low |
-| CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- RR-19 owns `hive_cell.gd` | low |
+| CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- SP-14 owns `hive_cell.gd`, HS-2 `bee.gd` and `soil_block.gd` | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once its section is written (CQ-R7 released `hud.gd` and WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
@@ -296,9 +296,10 @@ wrapped chain as `. name(` on its own line.
 - **CQ-M5b** -- waits for the Claude lane's RR-21 to release `scripts/main.gd`
   and for the Jules J-14 branch (which deletes code in `scripts/game_panel.gd`)
   to be merged or closed; keep its block gated until both clear.
-- **CQ-M6** -- waits for the Claude lane's RR-19 to release
-  `scripts/hive_cell.gd`; keep its queue block gated until that ownership
-  clears. CQ-R10 also uses `scripts/input_selection.gd`, so take it first.
+- **CQ-M6** -- waits for the Claude lane's SP-14 to release
+  `scripts/hive_cell.gd` and HS-2 to release `scripts/bee.gd` and
+  `scripts/soil_block.gd` (RR-19 landed 28 Oct 2026); keep its queue block
+  gated until that ownership clears. CQ-R10 also uses `scripts/input_selection.gd`, so take it first.
 
 CQ-S0b shipped 2026-10-25; its specification is `plans/archive/CQ-S0b_2026-10-25.md`.
 
