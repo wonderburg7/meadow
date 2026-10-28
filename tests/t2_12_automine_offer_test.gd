@@ -38,7 +38,7 @@ func _initialize() -> void:
 
 		var hud = hud_script.new()
 		hud.focus_column = VBoxContainer.new()
-		hud._build_doing_row(roles.MINER, FakeMiner.new())
+		hud._command_rows._build_doing_row(roles.MINER, FakeMiner.new())
 		var job_labels: Array = _button_texts(hud.focus_column, [])
 		_expect(failures, (DIG_TOGGLE in job_labels) == (label == "with"),
 			"%s Automation: Job panel toggle shown is %s (buttons: %s)" % [label, DIG_TOGGLE in job_labels, str(job_labels)])
