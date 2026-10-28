@@ -285,14 +285,17 @@ line: day 43, first worker day 23, winter entered day 30 and survived day 41,
 expected, since the arc never seals a cell. Hands-on: C-156. Not done here:
 the cell popup (`scripts/hud.gd`) still lights "Open" while a cell waits for
 its cap, and its "Sealed" and "Fill then seal" tips still describe an instant
-seal. That needs a slice owning `hud.gd` once CQ-R6 releases it. The CQ-S0
-round-trip goldens were not recaptured: the new fields are additive and both
-restore routes write them.
+seal. That needs a slice owning `hud.gd` once CQ-R6 releases it. All five
+CQ-S0 goldens were re-captured from their `cq_s0_*_capture.json` scenarios, as
+the code-health note above asks of a slice that adds a save field. The early
+golden has no cells, so it came out the same. The other four gained the two
+flags, and they also picked up what master had changed since DR-1's capture:
+Challenge 2's skill bans, the short-term goals and a mid run that has drifted.
 
 ```queue
 **[Claude] RR-19 -- comb workers seal and unseal cells over time**
 - Plan: `plans/now/run-repairs.md` -- "RR-19 -- comb workers seal and unseal cells over time"
-- Files: `scripts/hive_cell.gd`, `scripts/orders_zones.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/bee_enums.gd`, `scripts/bee.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/rr19_sealing_stocked.json`, `tests/rr19_sealing_test.gd`, `tests/test_rr19_sealing.py`, `tests/test_save_migrations.py`
+- Files: `scripts/hive_cell.gd`, `scripts/orders_zones.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/bee_enums.gd`, `scripts/bee.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/rr19_sealing_stocked.json`, `tests/rr19_sealing_test.gd`, `tests/test_rr19_sealing.py`, `tests/test_save_migrations.py`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json`
 - Check: `python -m unittest tests.test_rr19_sealing` passes (Seal on a full cell leaves it open until a comb worker has spent 15 s, then closed; Open takes 5 s; "Fill then seal" seals a cell filled by honey conversion, jelly and brood; winter's close is instant); `python -m unittest tests.test_save_migrations` passes with an old save; the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
 - Proof: `absent: scripts/game_config.gd :: cell_seal_seconds`
 - Next after: none -- cell sealing is complete
