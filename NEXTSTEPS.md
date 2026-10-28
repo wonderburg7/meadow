@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] RR-19 -- comb workers seal and unseal cells over time**
-   - Plan: `plans/now/run-repairs.md` -- "RR-19 -- comb workers seal and unseal cells over time"
-   - Files: `scripts/hive_cell.gd`, `scripts/orders_zones.gd`, `scripts/actions.gd`, `scripts/bee_building.gd`, `scripts/bee_enums.gd`, `scripts/bee.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/rr19_sealing_stocked.json`, `tests/rr19_sealing_test.gd`, `tests/test_rr19_sealing.py`, `tests/test_save_migrations.py`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json`
-   - Check: `python -m unittest tests.test_rr19_sealing` passes (Seal on a full cell leaves it open until a comb worker has spent 15 s, then closed; Open takes 5 s; "Fill then seal" seals a cell filled by honey conversion, jelly and brood; winter's close is instant); `python -m unittest tests.test_save_migrations` passes with an old save; the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-   - Proof: `absent: scripts/game_config.gd :: cell_seal_seconds`
-   - Next after: none -- cell sealing is complete
-
-2. **[Claude] RR-20 -- a comb worker carrying a body visibly leaves, stays out one second, and comes back**
+1. **[Claude] RR-20 -- a comb worker carrying a body visibly leaves, stays out one second, and comes back**
    - Plan: `plans/now/run-repairs.md` -- "RR-20 -- a comb worker carrying a body visibly leaves, stays out one second, and comes back"
    - Files: `scripts/bee_building.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/t2_4b_bodies_test.gd`, `tests/t2_13_carried_body_test.gd`
    - Check: `python -m unittest tests.test_t2_4b_bodies tests.test_t2_13_carried_body` pass (the body-carrying bee is outside the hive for 1 s then inside again); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
    - Proof: `absent: scripts/game_config.gd :: body_drop_seconds`
    - Next after: none -- the body drop is complete
 
-3. **[Claude] RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words**
+2. **[Claude] RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words**
    - Plan: `plans/now/run-repairs.md` -- "RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words"
    - Files: `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_fc2_first_crisis.py`, `tests/test_rr21_rain_free_days.py`
    - Check: `python -m unittest tests.test_rr21_rain_free_days tests.test_fc2_first_crisis tests.test_display_text_golden` pass (no random rain before day 2 even at a chance of 1.0; rain rolls again after; the first crisis still fires; warnings read "soon", "later today", "by the end of the day" or "tomorrow"); the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
    - Proof: `absent: scripts/game_config.gd :: rain_free_days`
    - Next after: none -- the rain rule is complete
 
-4. **[Claude] SP-13 -- foragers come and go at the skep's door**
+3. **[Claude] SP-13 -- foragers come and go at the skep's door**
    - Plan: `plans/now/sprites.md` -- "SP-13 -- foragers come and go at the skep's door"
    - Files: `scripts/hive.gd`, `scripts/rival_hive.gd`, `scripts/sprite_catalogue.gd`
    - Check: `python tools/prefinish.py` is green (boot check clean); the skep sprite's door lands on `hive.position` in a headless scene (the sprite's position plus the door offset equals zero); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
    - Proof: `absent: scripts/sprite_catalogue.gd :: HIVE_SKEP_DOOR`
    - Next after: none -- `plans/now/sprites.md` is complete once SP-6, SP-12 and SP-14 have landed
 
-5. **[Claude] SP-14 -- no outline on an unselected comb cell while the cell art is on**
+4. **[Claude] SP-14 -- no outline on an unselected comb cell while the cell art is on**
    - Plan: `plans/now/sprites.md` -- "SP-14 -- no outline on an unselected comb cell while the cell art is on"
    - Files: `scripts/hive_cell.gd`
    - Check: `python -m unittest tests.test_sp11_cell_rim` passes; with cell art on, a cell holding nectar has `outline.visible` false and a cell under an overlay has it true; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
    - Proof: `absent: scripts/hive_cell.gd :: outline.visible = content_type != "" and not`
    - Next after: none -- `plans/now/sprites.md` is complete once SP-6, SP-12 and SP-13 have landed
+
+5. **[Claude] HS-2 -- hard soil fills the outer half of the hive's soil**
+   - Plan: `plans/now/hard-soil.md` -- "HS-2 -- hard soil fills the outer half of the hive's soil"
+   - Files: `scripts/soil_block.gd`, `scripts/hive.gd`, `scripts/bee.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `test_scenarios/hs2_hard_soil.json`, `tests/test_hs2_hard_soil.py`
+   - Check: `python -m unittest tests.test_hs2_hard_soil` passes, asserting a hard block refuses a dig order before Mighty Mandible and accepts one after, the hard-soil colour distances, and the rough halfway edge; `.\tools\verify.ps1` is green. Hands-on: in the HS-2 scenario, the hard soil next to the cavity looks greyer than ordinary soil and different from the bedrock, and clicking it to dig does nothing until Mighty Mandible is bought.
+   - Proof: `absent: scripts/soil_block.gd :: func hard_soil_start_ring(`
+   - Next after: none -- `plans/now/hard-soil.md` is complete
 
 ### Codex lane
 
