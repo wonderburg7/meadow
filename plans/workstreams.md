@@ -49,4 +49,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/CQ-M5a` (`codex/CQ-M5a`) | Codex | name every CanvasLayer in `canvas_layers.gd` | Codex | in progress | none | `plans/now/code-health.md` CQ-M5a -- name every CanvasLayer in `canvas_layers.gd` |
-| `.worktrees/jules-review-20261029` (`codex/jules-review-20261029`) | Review | Dave-assigned Jules J-25 to J-39 and S-1 branch review; helper tests and review/follow-up records only | Codex | in progress | independent of CQ-M5a | `plans/reference/jules-integration-2026-10-29.md` |
