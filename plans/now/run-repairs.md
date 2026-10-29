@@ -162,7 +162,7 @@ stop and escalate with the options.
 **Open decisions:** none.
 
 ```queue
-**[Claude] RR-17 -- a queen on comb work discards sour nectar on command**
+**[Codex] RR-17 -- a queen on comb work discards sour nectar on command**
 - Plan: `plans/now/run-repairs.md` -- "RR-17 -- a queen on comb work discards sour nectar on command"
 - Files: `scripts/bee.gd`, `test_scenarios/rr17_queen_discards_sour.json`, `tests/test_nf5_clear_fermented.py`
 - Check: `python -m unittest tests.test_nf5_clear_fermented` (its new queen case) fails before the fix and passes after it (the queen, set to comb work, empties a sour cell after the command); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
