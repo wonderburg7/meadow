@@ -889,3 +889,23 @@ explicit request from Dave.
   `admission.lane_conflicts`, whose `shared_paths` skips `UNOWNED`
   (checked: a shared `FUNCTION_MAP.md` returns no conflict); only the
   optional `check_docs.py` warning remains and is not worth a slice.
+
+### 2026-10-29 — a clean Jules audit scope does not establish sound findings
+
+- Source: ad hoc Jules branch integration, J-29 to J-39.
+- Observed signal: all eleven reports pass file scope, but source spot-checks
+  expose incorrect ownership claims, overlooked guards, unsupported changes
+  and incomplete inventories.
+- Evidence: `plans/reference/jules-integration-2026-10-29.md` records each
+  source branch, revision, counterexample and correction criterion. J-32
+  omits hundreds of member declarations; J-37 overlooks assertions inside
+  helpers; J-30 names the wrong parent container.
+- Consequence: accepting these reports would create unnecessary runtime
+  changes and make later reviews trust incomplete evidence.
+- Hypothesis: mechanically reconcile inventory coverage and audit metadata
+  before review, then require semantic counterexamples for enforcement and
+  defect claims. Keep these separate from the existing file-scope check.
+- Disposition: untriaged. The reports remain unaccepted; four bounded
+  follow-ups were salvaged into the Jules task list without their false
+  conclusions.
+

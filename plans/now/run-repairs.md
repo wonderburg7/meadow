@@ -350,5 +350,18 @@ provisional; Dave answers it at the hands-on check).
 
 ## Not in the queue, and why
 
+- **Save audit observations, 29 Oct 2026** -- evidence and correction criteria:
+  `plans/reference/jules-integration-2026-10-29.md` (J-32). `bee.gd:125`
+  explicitly documents resetting nuptial flights on load; retain that
+  contract until Dave chooses whether a future save should resume the full
+  flight (including phase, timer, position and day) or return safely home.
+  `rival_hive.gd::save_data`/`restore` omit `tick_timer`; decide whether exact
+  cadence must survive reload before adding a save field. In
+  `saving.gd::_restore_bees`, a malformed entry with only `start_x` produces
+  an infinite y coordinate; reproduce it in an isolated save fixture and
+  agree whether to reject the record or fall back to an unset start point
+  before admitting a repair. No save schema or fallback changes are part
+  of the Jules integration, and its incomplete Inventory is not accepted.
+
 - **RR-22** -- select a number of bees from a multi-selection; waits for the Codex lane's CQ-R6 (`plans/now/code-health.md`) to release `scripts/hud.gd`, which both name (gated 27 Oct 2026 to clear check_docs' lane collision).
 - **RR-12** -- a loaded run keeps its readout history; waits for ED-3, the last of the alpha chain, because SG-2 to ED-3 share `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.

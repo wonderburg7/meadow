@@ -290,6 +290,21 @@ wrapped chain as `. name(` on its own line.
 
 ## Not in the queue, and why
 
+- **Jules audit observations, 29 Oct 2026** -- see
+  `plans/reference/jules-integration-2026-10-29.md` for the source branches
+  and rejected claims. The cell-action flow wrappers and toggle buttons in
+  `scripts/hud.gd`, and the fixed-width autowrap labels in that file and
+  `scripts/colony_panel.gd`, merit a focused layout scenario at narrow width
+  and increased text scale before a fix. Do not remove the required
+  `command_scroll` child expansion at hud.gd:1555. The remaining hidden
+  challenge-navigation query in `scripts/debug_panel.gd` needs a call-rate
+  profile before optimisation. The camera-local/global assignment in
+  `scripts/year_winter.gd::_select_bees_where` needs parent-transform
+  evidence before changing it. HUD discard and input Bee commands are
+  existing player-action paths, not proven violations of the visibility
+  rule; ownership changes need a separate reviewed design. None is admitted
+  without that evidence; the source audit reports remain unaccepted.
+
 - **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`
   and `scripts/saving.gd`; its ownership overlaps that lane's current work.
 - **CQ-M5b** -- waits for the Claude lane's RR-21 to release `scripts/main.gd`

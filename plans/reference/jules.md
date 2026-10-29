@@ -1,7 +1,7 @@
 # Google Jules -- task list and method
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: Jules every task; Claude/Codex only to add or prune a task -->
-Status: reference | Owner: Dave / Claude Code | Next: Jules works J-25 to J-28, then the audits J-29 to J-39, then the standing tasks; merged task blocks are deleted at the next refill | Dependency: none | Verified: 2026-10-27
+Status: reference | Owner: Dave / Claude Code / Codex | Next: J-40 to J-43 are the free follow-ups; J-29 to J-39 reports need correction before acceptance (review below); merged helper task blocks pruned | Dependency: none | Verified: 2026-10-29
 
 Jules works from GitHub on a Linux VM, outside the Claude/Codex slice queue.
 Its work is behaviour-preserving tooling: guards that catch a known bug class
@@ -16,6 +16,15 @@ nothing, so Jules does the sweep and the reading, and Claude reads only the
 report's Summary and the rows it acts on. Each audit targets a class in
 `docs/known-pitfalls.md` or a review's area, and ends in ready-to-paste task
 blocks, so it also refills this list.
+
+The 29 October integration review is
+`plans/reference/jules-integration-2026-10-29.md`. J-25 to J-28 and the
+heading/stage-reference helper tests are integrated; the presentation
+blanking tests were already on master with a stronger regression case.
+J-29 to J-39 are not accepted: their source branches remain available for
+correction against the review's evidence and reopening criteria. Do not use
+their proposed fixes as instructions. J-40 to J-43 below are reviewed,
+bounded follow-ups; they do not require those reports to be accepted.
 
 ## Starting prompt (Dave pastes this into Jules)
 
@@ -172,86 +181,6 @@ it, like `tools/heading.py`.
   next free id with gaps and with none used, the record text for a pass and
   for a failure, and `insert_entries` adding under the right heading and
   leaving the rest byte-identical. Tests only.
-
-### J-25 -- Unit tests for `tools/update_function_map.py`'s signature joining
-
-- Files: tests/test_update_function_map_helpers.py (new)
-- After: none
-- Why: no test names `_paren_balance` or `_joined_signature` (27 Oct
-  2026); a wrong fold writes a gdformat-wrapped signature into
-  `FUNCTION_MAP.md` broken or truncated.
-- Do: build every line list in the test. Check `_paren_balance` counts
-  `(`, `[` and `{` up and their closers down, ignores brackets inside a
-  `"..."` and a `'...'` string (including after a `\"` escape), and stops
-  at a `#` outside a string. Check `_joined_signature` returns a line that
-  does not end with an opening bracket unchanged; folds a signature wrapped
-  one parameter per line with trailing commas (`func f(` / `a: int,` /
-  `b: int,` / `) -> void:`) into `func f(a: int, b: int) -> void:`; folds a
-  wrapped `[` default the same way; and stops at the last line without
-  raising when the brackets never close. Tests only.
-
-### J-26 -- Unit tests for `tools/sprites.py`'s table and layout parsing
-
-- Files: tests/test_sprites_helpers.py (new)
-- After: none
-- Why: no test names `_hex_colour`, `parse_table`, `_parse_grid` or
-  `_state_name` (27 Oct 2026); they turn `SPRITES.md` into the rows the
-  sprite build cuts and recolours.
-- Do: build every table string in the test, never reading the real
-  `SPRITES.md`. Check `_hex_colour` reads `#ff8000` and `FF8000` as
-  `(255, 128, 0)` and raises `SpriteError` for a five-digit colour. Give
-  `parse_table` a table with the nine-column header, its `---` row and two
-  rows, one with `-` for levels, anchor and variants and one with levels
-  `2/5`, anchor `3,4` and variants `dark: ff0000>800000, 00ff00>008000;
-  pale: ff0000>ffcccc`; check both `Row`s field by field. Check it raises
-  `SpriteError` for a row with eight cells, a view not in `VIEWS`, frames
-  that are not a whole number, a variant with no `>` pair, and a text with
-  no header row; and that lines before the header are ignored. Check
-  `_parse_grid` reads `grid 16x24 rows=left,right` as
-  `(16, 24, ["left", "right"])` and raises for `grid 16 rows=a` and
-  `grid 16x16`. Check `_state_name` returns the part after the last dot,
-  and the whole name when there is none. Tests only.
-
-### J-27 -- Unit tests for `tools/uncalled.py`'s scanning helpers
-
-- Files: tests/test_uncalled_helpers.py (new)
-- After: none
-- Why: no test names `find_gdscript_functions`, `preindex_file_contents`
-  or `is_function_referenced` (27 Oct 2026); S-2 dead-code removal
-  trusts what they report.
-- Do: in a temporary directory, never the real scripts folder, write a
-  file a.gd under its own scripts folder defining `func used()`, `func
-  unused()`, `static func helper()` and `func _ready()`, and b.gd beside it
-  calling `used()`. Check `find_gdscript_functions` returns a.gd entries,
-  with forward-slash paths starting `scripts/` and their line numbers, for
-  the three public functions, `helper` included, and none for `_ready`,
-  and `[]` for a missing directory. Check `preindex_file_contents` returns
-  repository-relative forward-slash paths with each file's lines and text.
-  Check `is_function_referenced` is true for `used`, false for `unused`
-  (its own definition line is skipped), true when the only other mention
-  is a second line of the defining file, and false for `use` (a
-  whole-word match, so `used` does not count). Tests only.
-
-### J-28 -- Unit tests for `tools/session_cost.py`'s transcript readers
-
-- Files: tests/test_session_cost_readers.py (new)
-- After: none
-- Why: no test names `_row_texts`, `_extract_text`, `_first_timestamp`,
-  `_is_slice_worker` or `_is_coordinator` (27 Oct 2026); they decide
-  which sessions and text `session_cost.py` counts.
-- Do: build every row in the test and write any file under a temporary
-  directory; never read a real transcript. Check `_row_texts` yields a
-  string `message.content`, each `text` of a list `content` (skipping a
-  block with no `text`), and each `rendered` block's `content`, in that
-  order, and nothing for a row with neither. Check `_extract_text` for a
-  string, a list of two text blocks joined by a newline, and `""` for
-  `None`. Check `_first_timestamp` returns the epoch seconds of the first
-  row carrying a `timestamp` after a blank line and a row without one, and
-  `None` for a file of bad JSON and for a missing file. Check
-  `_is_slice_worker` is true when `<stem>.meta.json` beside the file says
-  `agentType` `slice-worker-low`, false for `Explore`, and false with no
-  meta file. Check `_is_coordinator` is true when `<stem>/subagents/` holds
-  one such meta file, and false when it holds only `Explore`. Tests only.
 
 ### J-29 -- Audit: pitfall guard coverage
 
@@ -471,6 +400,79 @@ it, like `tools/heading.py`.
   reader would run, and whether its tool and flags still exist. Report
   only; a fix edits an instruction file, which goes to "For Claude or
   Codex".
+
+### J-40 -- Guard persistent panel layout against size setters
+
+- Files: tools/layout_setter_check.py (new), tests/test_layout_setter_check.py (new)
+- After: none
+- Why: the offset-only contract in `scripts/ui_panel_layout.gd:12` is real,
+  although J-29 incorrectly classified other layout protections. A narrow
+  lexical guard can enforce this one file without guessing Control types
+  across the project.
+- Do: write a standalone checker for `scripts/ui_panel_layout.gd` only.
+  Ignore comments and quoted text using the existing presentation-gate
+  blanking helper; preserve line numbers. Reject assignment (including
+  compound assignment and x/y components) to `.size`, `.position` or
+  `.global_position`, and calls to `.set_size`, `.set_position` or
+  `.reset_size`. Allow reads and offset assignments. Expose a function
+  accepting source text and return actionable file/line diagnostics;
+  command-line execution checks the repository file and exits non-zero on
+  findings. Test positive and negative temporary fixtures, comment/string
+  exclusions and the actual repository file, so the normal full unit run
+  enforces the contract without a verify-script change. Mutation-prove
+  setters, component assignments and compound assignments. Do not edit
+  GDScript or infer a blanket ban on layout setters elsewhere.
+
+### J-41 -- Test the common queue-fence contract across Python readers
+
+- Files: tests/test_queue_fence_parity.py (new)
+- After: none
+- Why: J-38 correctly noticed multiple queue-fence consumers, but compared
+  a slice-specific gated-successor locator with general fence parsers.
+  The common contract can be tested without equating their different jobs.
+- Do: construct complete synthetic queue and queue-gated blocks and compare
+  `tools/archive_slice.py::_foreign_queue_blocks` with
+  `tools/backlog.py::parse_blocks` on their common domain: a foreign slice
+  with all required fields. Assert the same slice IDs are found for both
+  fence forms, LF and CRLF and trailing horizontal whitespace. Check that
+  unrelated fences are ignored and that backlog preserves the gated flag;
+  explicitly test archiving's intentional exclusion of the current slice.
+  Use valid fixtures with non-empty expected IDs, no repository plans,
+  subprocesses or source edits. Mutation-prove each reader dropping gated
+  blocks independently. Do not require identical malformed-input behaviour
+  or test PowerShell by executing the lifecycle script.
+
+### J-42 -- Prove Godot wrapper helpers propagate failure and skip
+
+- Files: tests/test_godot_helper_contracts.py (new)
+- After: none
+- Why: J-37 wrongly calls helpers with assertions vacuous. A small mocked
+  contract test can prove the failure path without adding redundant return
+  values or requiring an engine installation.
+- Do: import the HO10 and Challenge2 Python test modules as modules, not
+  exported TestCase aliases. Instantiate their test cases and invoke
+  `_boot_and_run` with the engine discovery, cache preparation and process
+  launch mocked. A well-formed PASS payload and exit 0 must succeed;
+  missing PASS, a script error, an explicit FAIL line and a non-zero exit
+  must each raise AssertionError. No executable must raise unittest.SkipTest,
+  and the subprocess must not be called in that case. Build all results in
+  memory; never launch Godot, read a player profile or change the wrappers.
+  Mutation-prove removing the helper's output/error checks is detected.
+
+### J-43 -- Test sprite table validation branches omitted by J-26
+
+- Files: tests/test_sprites_validation.py (new)
+- After: none
+- Why: J-26 covers the requested table examples; further malformed row
+  fields and the unnamed-variant branch still deserve isolated fixtures.
+- Do: build every table string in the test. Check `parse_table` rejects an
+  empty variant name with otherwise valid colour swaps and rejects invalid
+  hexadecimal digits; check malformed level numbers and anchor components
+  raise the existing ValueError rather than changing production behaviour.
+  Include a valid multi-level, signed-anchor row and assert its complete
+  fields so a validator rejecting every input cannot pass. Never read
+  `SPRITES.md`, image assets or generated catalogues. Mutation-prove the
+  empty-name validation and colour validation separately. Tests only.
 
 ### Not tasks yet
 
