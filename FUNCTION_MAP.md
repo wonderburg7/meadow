@@ -931,76 +931,76 @@ The stage machine, goal checks and stage effects.
 1253 func _custom_goal_progress(method: String) -> Dictionary
 ```
 
-## debug_panel.gd (1,206 lines)
+## debug_panel.gd (1,205 lines)
 
 The settings window (the cog icon): tuner rows, save/load buttons,
 restart.
 
 ```
 20   # --- preloads -----------------------------------------------------
-46   # --- fields -------------------------------------------------------
-94   # --- _ready and construction --------------------------------------
-97   func _style_button(button: BaseButton) -> BaseButton
-102  func _ready() -> void
-221  func _apply_panel_width() -> void
-226  func _report_settings_button_width() -> void
-231  # --- collections and sections -------------------------------------
-232  func _rows_in(category: String) -> Array
-254  func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
-285  func _set_open(header: Button, body: Control, label: String, open: bool) -> void
-293  func open_to_categories(categories: Array) -> void
-313  func collapse_all() -> void
-321  func _make_section(category: String, entries: Array, start_open: bool) -> Control
-382  # --- the Challenge stage navigator --------------------------------
-387  func _make_challenge_stage_navigation() -> Control
-444  func _process(_delta: float) -> void
-450  func _refresh_pollination_readout() -> void
-463  func _pollination_text(points: int, contribution: int) -> String
-466  func _refresh_challenge_stage_navigation() -> void
-486  # --- the controls help --------------------------------------------
-492  func _make_controls_help() -> Control
-539  # --- the action buttons -------------------------------------------
-551  func _build_actions(column: VBoxContainer) -> void
-598  func _rebuild_triggers() -> void
-633  func _on_end_run_pressed() -> void
-644  func _refresh_developer_row() -> void
-671  func _make_run_availability_button() -> Button
-680  func _on_run_availability_pressed() -> void
-693  func _add_action_row(parent: Control, button: Button, tip: String) -> void
-699  func _make_winter_action() -> Control
-711  func _on_winter_pressed() -> void
-717  func _on_challenge_advance_pressed() -> void
-724  func _on_challenge_retreat_pressed() -> void
-738  func _on_fire_test_warnings_pressed() -> void
-771  func _on_force_c2_collapse_pressed() -> void
-785  # --- save and load ------------------------------------------------
-791  func set_save_load_enabled(enabled: bool) -> void
-799  func set_toggle(key: String, value: bool) -> void
-804  func _on_save_pressed() -> void
-815  func _on_load_pressed() -> void
-853  # --- showing and hiding the panel ---------------------------------
-854  func _toggle_panel() -> void
-868  func _apply_layer_for_context() -> void
-873  # --- building a settings row --------------------------------------
-874  func _make_row(entry: Dictionary) -> Control
-917  func _make_control_slot() -> HBoxContainer
-926  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
-956  func _make_toggle_row(entry: Dictionary) -> Control
-1029 func _make_options_row(entry: Dictionary) -> Control
-1062 func _option_display(entry: Dictionary, value) -> String
-1066 func _cycle_option(entry: Dictionary, direction: int) -> void
-1077 # --- prerequisite cascades ----------------------------------------
-1081 func _cascade_prerequisites_on(key: String) -> void
-1095 func _cascade_dependents_off(key: String) -> void
-1103 func _cascade_mutual_exclusion(key: String) -> void
-1108 # --- star rows and value editing ----------------------------------
-1113 func _make_star_row(entry: Dictionary) -> Control
-1154 func _adjust(entry: Dictionary, delta: float) -> void
-1171 func _format_value(v) -> String
-1178 # --- restart and main menu ----------------------------------------
-1179 func _on_restart_pressed() -> void
-1184 func _on_main_menu_pressed() -> void
-1192 func _restart() -> void
+45   # --- fields -------------------------------------------------------
+93   # --- _ready and construction --------------------------------------
+96   func _style_button(button: BaseButton) -> BaseButton
+101  func _ready() -> void
+220  func _apply_panel_width() -> void
+225  func _report_settings_button_width() -> void
+230  # --- collections and sections -------------------------------------
+231  func _rows_in(category: String) -> Array
+253  func _make_collection(collection_name: String, categories: Array, start_open: bool) -> Control
+284  func _set_open(header: Button, body: Control, label: String, open: bool) -> void
+292  func open_to_categories(categories: Array) -> void
+312  func collapse_all() -> void
+320  func _make_section(category: String, entries: Array, start_open: bool) -> Control
+381  # --- the Challenge stage navigator --------------------------------
+386  func _make_challenge_stage_navigation() -> Control
+443  func _process(_delta: float) -> void
+449  func _refresh_pollination_readout() -> void
+462  func _pollination_text(points: int, contribution: int) -> String
+465  func _refresh_challenge_stage_navigation() -> void
+485  # --- the controls help --------------------------------------------
+491  func _make_controls_help() -> Control
+538  # --- the action buttons -------------------------------------------
+550  func _build_actions(column: VBoxContainer) -> void
+597  func _rebuild_triggers() -> void
+632  func _on_end_run_pressed() -> void
+643  func _refresh_developer_row() -> void
+670  func _make_run_availability_button() -> Button
+679  func _on_run_availability_pressed() -> void
+692  func _add_action_row(parent: Control, button: Button, tip: String) -> void
+698  func _make_winter_action() -> Control
+710  func _on_winter_pressed() -> void
+716  func _on_challenge_advance_pressed() -> void
+723  func _on_challenge_retreat_pressed() -> void
+737  func _on_fire_test_warnings_pressed() -> void
+770  func _on_force_c2_collapse_pressed() -> void
+784  # --- save and load ------------------------------------------------
+790  func set_save_load_enabled(enabled: bool) -> void
+798  func set_toggle(key: String, value: bool) -> void
+803  func _on_save_pressed() -> void
+814  func _on_load_pressed() -> void
+852  # --- showing and hiding the panel ---------------------------------
+853  func _toggle_panel() -> void
+867  func _apply_layer_for_context() -> void
+872  # --- building a settings row --------------------------------------
+873  func _make_row(entry: Dictionary) -> Control
+916  func _make_control_slot() -> HBoxContainer
+925  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
+955  func _make_toggle_row(entry: Dictionary) -> Control
+1028 func _make_options_row(entry: Dictionary) -> Control
+1061 func _option_display(entry: Dictionary, value) -> String
+1065 func _cycle_option(entry: Dictionary, direction: int) -> void
+1076 # --- prerequisite cascades ----------------------------------------
+1080 func _cascade_prerequisites_on(key: String) -> void
+1094 func _cascade_dependents_off(key: String) -> void
+1102 func _cascade_mutual_exclusion(key: String) -> void
+1107 # --- star rows and value editing ----------------------------------
+1112 func _make_star_row(entry: Dictionary) -> Control
+1153 func _adjust(entry: Dictionary, delta: float) -> void
+1170 func _format_value(v) -> String
+1177 # --- restart and main menu ----------------------------------------
+1178 func _on_restart_pressed() -> void
+1183 func _on_main_menu_pressed() -> void
+1191 func _restart() -> void
 ```
 
 ## diagnostic_log.gd (1,173 lines)
@@ -1195,49 +1195,49 @@ Selection, drag and placement resolution.
 745  func _draw_start_point_marker(point: Vector2) -> void
 ```
 
-## main_menu.gd (744 lines)
+## main_menu.gd (743 lines)
 
 The main menu overlay: the honeycomb of stage hexes, their name fitting,
 and the menu buttons.
 
 ```
-151  # --- lifecycle -------------------------------------------------------
-153  func _ready() -> void
-212  func _build_left_content(left_pane: VBoxContainer) -> void
-266  func _build_right_content(right_pane: VBoxContainer) -> void
-300  func open() -> void
-313  func close() -> void
-320  # --- settings ----------------------------------------------------------
-330  func _build_settings_button(right_pane: VBoxContainer) -> void
-351  func _on_settings_pressed() -> void
-358  # --- the honeycomb ------------------------------------------------------
-366  func _hex_row_offset() -> float
-373  func _hex_row_height() -> float
-376  func _make_honeycomb_strip(group_key: String) -> Control
-411  static func hex_fit_size(font: Font, text: String, avail: Vector2, base: int, line_spacing: int) -> int
-420  static func hex_text_fits(font: Font, text: String, avail: Vector2, size: int, line_spacing: int) -> bool
-430  func _fit_hex_label(label: Label) -> void
-453  func _make_hex_tile(stage: Dictionary) -> Control
-546  func _apply_hex_colors(level: int, state: String) -> void
-557  func _refresh_hex_state(level: int) -> void
-560  func _refresh_ticks() -> void
-567  func _stage_for_level(level: int) -> Dictionary
-573  # --- selection and the detail pane ---------------------------------------
-575  func _select_stage(stage: Dictionary) -> void
-585  func _rebuild_detail_pane(stage: Dictionary) -> void
-617  func _make_note_label(text: String) -> Label
-628  func _make_preset_row(stage: Dictionary) -> Control
-645  func _make_preset_description() -> Control
-655  func _make_custom_controls() -> Control
-663  func _make_custom_row(field: Dictionary) -> Control
-707  # --- choosing --------------------------------------------------------
-709  func _choose(stage: Dictionary) -> void
-716  # --- small shared helpers ---------------------------------------------
-721  func _uses_presets(stage: Dictionary) -> bool
-724  func _style_button(button: Button, selected: bool = false) -> void
-731  func _is_challenge_complete(level: int) -> bool
-734  func _is_scenario_played(level: int) -> bool
-741  func _is_completed(stage: Dictionary) -> bool
+150  # --- lifecycle -------------------------------------------------------
+152  func _ready() -> void
+211  func _build_left_content(left_pane: VBoxContainer) -> void
+265  func _build_right_content(right_pane: VBoxContainer) -> void
+299  func open() -> void
+312  func close() -> void
+319  # --- settings ----------------------------------------------------------
+329  func _build_settings_button(right_pane: VBoxContainer) -> void
+350  func _on_settings_pressed() -> void
+357  # --- the honeycomb ------------------------------------------------------
+365  func _hex_row_offset() -> float
+372  func _hex_row_height() -> float
+375  func _make_honeycomb_strip(group_key: String) -> Control
+410  static func hex_fit_size(font: Font, text: String, avail: Vector2, base: int, line_spacing: int) -> int
+419  static func hex_text_fits(font: Font, text: String, avail: Vector2, size: int, line_spacing: int) -> bool
+429  func _fit_hex_label(label: Label) -> void
+452  func _make_hex_tile(stage: Dictionary) -> Control
+545  func _apply_hex_colors(level: int, state: String) -> void
+556  func _refresh_hex_state(level: int) -> void
+559  func _refresh_ticks() -> void
+566  func _stage_for_level(level: int) -> Dictionary
+572  # --- selection and the detail pane ---------------------------------------
+574  func _select_stage(stage: Dictionary) -> void
+584  func _rebuild_detail_pane(stage: Dictionary) -> void
+616  func _make_note_label(text: String) -> Label
+627  func _make_preset_row(stage: Dictionary) -> Control
+644  func _make_preset_description() -> Control
+654  func _make_custom_controls() -> Control
+662  func _make_custom_row(field: Dictionary) -> Control
+706  # --- choosing --------------------------------------------------------
+708  func _choose(stage: Dictionary) -> void
+715  # --- small shared helpers ---------------------------------------------
+720  func _uses_presets(stage: Dictionary) -> bool
+723  func _style_button(button: Button, selected: bool = false) -> void
+730  func _is_challenge_complete(level: int) -> bool
+733  func _is_scenario_played(level: int) -> bool
+740  func _is_completed(stage: Dictionary) -> bool
 ```
 
 ## world_building.gd (718 lines)
