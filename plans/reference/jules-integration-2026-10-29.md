@@ -4,7 +4,7 @@ Status: reference | Owner: Dave / Codex | Next: correction criteria and follow-u
 
 ## Result
 
-Reviewed the 18 branches Dave listed. Import six helper test files in six
+Reviewed the 18 branches Dave listed. Integrated six helper test files in six
 attributed commits. The presentation blanking tests already exist on master
 with an additional regression case, so retain master's version. All eleven
 audit reports need correction before acceptance. None is an approved source
@@ -105,6 +105,9 @@ extraction, unchanged comments/strings, ignored cross-file references, empty
 heading discovery, or returning the entire input instead of an array body.
 No production file was modified for these probes.
 
-The complete validation outcome is recorded by the integration commit and
-session closeout. The required full unit command excludes only
+Branch verification passes: Godot boot, GDScript lint (154 files), source
+checks (107 scripts), all 15 balance checks, 85 selected unit-test IDs and
+generated-reference checks. Documentation checks pass with existing
+warnings. All four new briefs classify as free. The broader full unit run
+and post-integration outcome are recorded in the final validation commit. The required full unit command excludes only
 `tests.test_slice_lifecycle` and `tests.test_two_lane_closeout`.

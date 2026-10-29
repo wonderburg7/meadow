@@ -908,4 +908,3 @@ explicit request from Dave.
 - Disposition: untriaged. The reports remain unaccepted; four bounded
   follow-ups were salvaged into the Jules task list without their false
   conclusions.
-
