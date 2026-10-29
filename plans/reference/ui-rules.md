@@ -10,6 +10,8 @@ route leads to a file a session can read. The rule text is unchanged. The pointe
 
 ## Durable rules
 
+- Canvas layers live in `scripts/canvas_layers.gd`; add every new layer there.
+
 - Presentation may be skipped; simulation and player commands may not.
 - `UiTheme` owns palette/type variation rules. Do not add hard-coded
   dark-palette text colours to HUD panels.

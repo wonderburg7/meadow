@@ -8,6 +8,7 @@ extends CanvasLayer
 ## on its own, because watching a doomed colony starve for ten minutes
 ## isn't a game state worth sitting in.
 
+const CanvasLayers = preload("res://scripts/canvas_layers.gd")
 const UI = preload("res://scripts/ui.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 const SaveSlots = preload("res://scripts/save_slots.gd")
@@ -24,7 +25,7 @@ var _checkpoint_name: String = ""
 
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS   # still works while the run is paused
-	layer = 25                           # above the main menu
+	layer = CanvasLayers.GAME_OVER                           # above the main menu
 	visible = false
 	add_to_group("game_over")
 

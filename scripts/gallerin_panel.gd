@@ -18,6 +18,7 @@ extends GamePanel
 ## plain Polygon2D scenery) -- two wing shapes and a body built from
 ## shapes.gd's circle_points, not a sprite.
 
+const CanvasLayers = preload("res://scripts/canvas_layers.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 const GuidancePolicy = preload("res://scripts/guidance_policy.gd")
 const GuidanceCatalogue = preload("res://scripts/guidance_catalogue.gd")
@@ -85,10 +86,10 @@ var _shown_ids: Dictionary = {}
 var _stage_elapsed: float = 0.0
 
 func _ready() -> void:
-	# layer 15: above the HUD, below the settings window and main menu.
+	# CanvasLayers.GALLERIN: above the HUD, below the main menu.
 	# The "gallerin" group is how debug_panel.gd's toggle finds this node live.
 	# Not a left window: the bubble anchors bottom-left and is never closed by them.
-	setup_layer("gallerin", "gallerin", 15)
+	setup_layer("gallerin", "gallerin", CanvasLayers.GALLERIN)
 
 	_build_icon()
 	_build_bubble()

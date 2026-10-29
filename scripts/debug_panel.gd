@@ -18,6 +18,7 @@ extends CanvasLayer
 ## the Accessibility section.
 
 # --- preloads -----------------------------------------------------
+const CanvasLayers = preload("res://scripts/canvas_layers.gd")
 const UI = preload("res://scripts/ui.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
@@ -100,7 +101,7 @@ func _style_button(button: BaseButton) -> BaseButton:
 
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
-	layer = 10   # draw on top of the world
+	layer = CanvasLayers.DEBUG
 	# so main_menu.gd's Settings button (UI-M) can reach open_to_categories()
 	# without the two needing to know about each other directly -- same
 	# pattern as "main_menu" group used the other way by _on_main_menu_pressed().
@@ -857,17 +858,17 @@ func _toggle_panel() -> void:
 	# is feedback enough, the way it wasn't when this button was just a
 	# label reading "Tuning".
 
-## Normally draws just above the HUD (layer 10, below gallerin/main_menu/
+## Normally draws just above the HUD (CanvasLayers.DEBUG, below gallerin/main_menu/
 ## game_over) -- but main_menu.gd's own Settings button (UI-M) opens this
 ## same panel while the menu itself is visible, and the menu's CanvasLayer
-## (20) sits above this one, so the panel used to open invisibly behind
+## (CanvasLayers.MAIN_MENU) sits above this one, so the panel used to open invisibly behind
 ## the menu's own background (Dave's 29 Aug report). Raised above the menu
 ## only while it is actually visible, so the normal in-run ordering is
 ## unaffected.
 func _apply_layer_for_context() -> void:
 	var menus := get_tree().get_nodes_in_group("main_menu")
 	var menu_visible: bool = not menus.is_empty() and menus[0].visible
-	layer = 21 if menu_visible else 10
+	layer = CanvasLayers.OVER_MENU if menu_visible else CanvasLayers.DEBUG
 
 # --- building a settings row --------------------------------------
 func _make_row(entry: Dictionary) -> Control:

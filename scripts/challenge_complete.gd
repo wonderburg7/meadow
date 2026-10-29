@@ -9,6 +9,7 @@ extends CanvasLayer
 ## the secondary one -- the same two-button shape as game_over.gd, minus
 ## its "the run is over" framing.
 
+const CanvasLayers = preload("res://scripts/canvas_layers.gd")
 const UI = preload("res://scripts/ui.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 
@@ -30,7 +31,7 @@ var restart_row: HBoxContainer
 
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS   # still works while the run is paused
-	layer = 24                           # below game_over's 25, above everything else
+	layer = CanvasLayers.CHALLENGE_COMPLETE
 	visible = false
 	add_to_group("challenge_complete")
 

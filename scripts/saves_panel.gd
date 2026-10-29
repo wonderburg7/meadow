@@ -10,6 +10,7 @@ extends GamePanel
 ## Created by main.gd (RR-2, before the menu returns early); opened only from the settings window's "Saves…"
 ## (debug_panel.gd::_on_load_pressed), in a run or on the main menu (SA-1).
 
+const CanvasLayers = preload("res://scripts/canvas_layers.gd")
 const UI = preload("res://scripts/ui.gd")
 const SaveSlots = preload("res://scripts/save_slots.gd")
 const SaveGame = preload("res://scripts/save_game.gd")
@@ -26,7 +27,7 @@ var name_edit: LineEdit
 var save_run_btn: Button
 
 func _ready() -> void:
-	setup_layer("saves", "saves_panel")
+	setup_layer("saves", "saves_panel", CanvasLayers.PANEL)
 	build_left_window(360)
 	build_scroll_body()
 
@@ -128,7 +129,7 @@ func _confirm(title: String, text: String, ok_text: String, cancel_text: String,
 
 ## Over the main menu the window takes the settings window's own
 ## over-the-menu layer (debug_panel.gd::_apply_layer_for_context), since the
-## menu's CanvasLayer (20) would otherwise hide it; in a run it sits at the
+## menu's CanvasLayer (CanvasLayers.MAIN_MENU) would otherwise hide it; in a run it sits at the
 ## ordinary GamePanel layer.
 func open() -> void:
 	name_row.visible = false
@@ -141,7 +142,7 @@ func open() -> void:
 func _apply_menu_context() -> void:
 	var menus := get_tree().get_nodes_in_group("main_menu")
 	var menu_visible: bool = not menus.is_empty() and menus[0].visible
-	layer = 21 if menu_visible else 11
+	layer = CanvasLayers.OVER_MENU if menu_visible else CanvasLayers.PANEL
 	save_run_btn.visible = not menu_visible
 	if menu_visible:
 		name_row.visible = false

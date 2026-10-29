@@ -11,6 +11,7 @@ extends CanvasLayer
 ## reloads the scene, so every stage is built by the same world-building
 ## code rather than a separate path that could drift out of step.
 
+const CanvasLayers = preload("res://scripts/canvas_layers.gd")
 const UI = preload("res://scripts/ui.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 const Shapes = preload("res://scripts/shapes.gd")
@@ -151,7 +152,7 @@ var _profile_data: Dictionary = {}
 
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS   # the menu still works while paused
-	layer = 20                           # above the HUD and the settings window
+	layer = CanvasLayers.MAIN_MENU                           # above the HUD and the settings window
 	visible = false
 	# so the settings window's "Return to Main Menu" button can find us
 	# without main.gd having to wire the two together
