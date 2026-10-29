@@ -115,7 +115,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
-| CQ-M5a | scripts/canvas_layers.gd names every CanvasLayer; 7 UI scripts read it | `canvas_layers.gd`, 7 UI scripts, `ui-rules.md` | yes -- after CQ-R14 releases `main_menu.gd`/`challenge_complete.gd` (specified 27 Oct 2026) | medium |
 | CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | gated -- RR-21 owns `main.gd`, Jules J-14 holds `game_panel.gd` | low |
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- SP-14 owns `hive_cell.gd`, HS-2 `bee.gd` and `soil_block.gd` | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
@@ -363,54 +362,7 @@ CQ-R11 shipped 2026-10-26; its specification is `plans/archive/CQ-R11_2026-10-26
 
 CQ-R6 shipped 2026-10-28; its specification is `plans/archive/CQ-R6_2026-10-28.md`.
 
-## CQ-M5a -- name every CanvasLayer in `canvas_layers.gd`
-
-**Now** (verified 27 Oct 2026). The UI's stacking order is eleven bare
-integers spread over ten scripts: weather 5 (`main.gd`, the weather layer in
-the world build), HUD 9 and marker arrows 16 (`hud.gd`, the second already
-`MARKER_ARROW_LAYER`), debug 10 (`debug_panel.gd::_ready`), the ordinary
-panel 11 (`game_panel.gd::setup_layer`'s default), skill tree 14
-(`skill_tree_panel.gd` `LAYER`), Gallerin 15 (`gallerin_panel.gd`'s
-`setup_layer` call), main menu 20, over-the-menu 21 (debug and saves windows
-while the menu shows: `debug_panel.gd::_apply_layer_for_context`,
-`saves_panel.gd::_apply_menu_context`), challenge complete 24 and game over
-25. `scripts/canvas_layers.gd` does not exist. `main.gd` is RR-21's,
-`game_panel.gd` sits on the unmerged Jules J-14 branch, and `hud.gd` goes
-to CQ-R6 first, so this slice builds the file and moves the seven readers
-that are free; CQ-M5b moves the other three.
-
-**When done.**
-
-1. New leaf `scripts/canvas_layers.gd` (`extends RefCounted`; not
-   `ui_layout.gd`, which preloads `gallerin_panel.gd` -- a cycle) holds one
-   named const per layer, in ascending order, each with a short comment on
-   what it must sit above: `WEATHER` 5, `HUD` 9, `DEBUG` 10, `PANEL` 11,
-   `SKILL_TREE` 14, `GALLERIN` 15, `MARKER_ARROWS` 16, `MAIN_MENU` 20,
-   `OVER_MENU` 21, `CHALLENGE_COMPLETE` 24, `GAME_OVER` 25. It includes the
-   three only CQ-M5b reads, so the file is built once.
-2. `main_menu.gd`, `challenge_complete.gd`, `game_over.gd`, `debug_panel.gd`,
-   `saves_panel.gd`, `gallerin_panel.gd` and `skill_tree_panel.gd` reach it
-   as `const CanvasLayers = preload("res://scripts/canvas_layers.gd")` (the
-   way `levels.gd` is reached) and use the names. `skill_tree_panel.gd`'s
-   `LAYER` const goes; `saves_panel.gd` passes `CanvasLayers.PANEL` to
-   `setup_layer`. Comments that quote a number ("the menu's CanvasLayer
-   (20)") name the const instead.
-3. Every layer keeps its integer, so nothing draws in a different order.
-   No display string, node name or simulation code changes.
-4. `plans/reference/ui-rules.md` gains decision D2's line: canvas layers
-   live in `scripts/canvas_layers.gd`, and a new layer is added there.
-5. `python tools/update_function_map.py` has run.
-
-Reasoning: **medium**. **Open decisions:** none.
-
-```queue
-**[Codex] CQ-M5a -- name every CanvasLayer in `canvas_layers.gd`**
-- Plan: `plans/now/code-health.md` -- "CQ-M5a -- name every CanvasLayer in `canvas_layers.gd`"
-- Files: `scripts/canvas_layers.gd`, `scripts/main_menu.gd`, `scripts/challenge_complete.gd`, `scripts/game_over.gd`, `scripts/debug_panel.gd`, `scripts/saves_panel.gd`, `scripts/gallerin_panel.gd`, `scripts/skill_tree_panel.gd`, `plans/reference/ui-rules.md`, `FUNCTION_MAP.md`
-- Check: `python -m unittest tests.test_ho15_menu_hex_fit tests.test_layout_regression` and `python tools/prefinish.py` pass; `git grep -nE "layer = [0-9]|:= 14$" -- scripts/main_menu.gd scripts/challenge_complete.gd scripts/game_over.gd scripts/debug_panel.gd scripts/saves_panel.gd scripts/gallerin_panel.gd scripts/skill_tree_panel.gd` finds nothing
-- Proof: `present: scripts/game_over.gd :: layer = 25`
-- Next after: CQ-M5b -- the last CanvasLayer readers and the bare-layer source check
-```
+CQ-M5a shipped 2026-10-29; its specification is `plans/archive/CQ-M5a_2026-10-29.md`.
 
 ## CQ-M5b -- the last CanvasLayer readers and the bare-layer source check
 

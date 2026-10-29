@@ -63,13 +63,6 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] CQ-M5a -- name every CanvasLayer in `canvas_layers.gd`**
-   - Plan: `plans/now/code-health.md` -- "CQ-M5a -- name every CanvasLayer in `canvas_layers.gd`"
-   - Files: `scripts/canvas_layers.gd`, `scripts/main_menu.gd`, `scripts/challenge_complete.gd`, `scripts/game_over.gd`, `scripts/debug_panel.gd`, `scripts/saves_panel.gd`, `scripts/gallerin_panel.gd`, `scripts/skill_tree_panel.gd`, `plans/reference/ui-rules.md`, `FUNCTION_MAP.md`
-   - Check: `python -m unittest tests.test_ho15_menu_hex_fit tests.test_layout_regression` and `python tools/prefinish.py` pass; `git grep -nE "layer = [0-9]|:= 14$" -- scripts/main_menu.gd scripts/challenge_complete.gd scripts/game_over.gd scripts/debug_panel.gd scripts/saves_panel.gd scripts/gallerin_panel.gd scripts/skill_tree_panel.gd` finds nothing
-   - Proof: `present: scripts/game_over.gd :: layer = 25`
-   - Next after: CQ-M5b -- the last CanvasLayer readers and the bare-layer source check
-
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
