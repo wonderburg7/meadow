@@ -20,6 +20,7 @@ extends GamePanel
 ##
 ## Created by hud.gd, which owns the Skills button that opens it.
 
+const CanvasLayers = preload("res://scripts/canvas_layers.gd")
 const Skills = preload("res://scripts/skills.gd")
 const UiInfoBadge = preload("res://scripts/ui_info_badge.gd")
 const Progression = preload("res://scripts/progression.gd")
@@ -65,7 +66,6 @@ const BLOCK_TEXT := {
 	Progression.BLOCK_COST: "the colony cannot pay for it yet",
 }
 
-const LAYER := 14
 
 var grid: SkillGrid
 ## The detail strip: the selected skill's name, tier, state and cost, and Buy.
@@ -78,7 +78,7 @@ var _selected_hex = null
 var _was_paused: bool = false
 
 func _ready() -> void:
-	setup_layer("skills", "skill_tree_panel", LAYER)
+	setup_layer("skills", "skill_tree_panel", CanvasLayers.SKILL_TREE)
 	_build_panel(0)
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	# The grid fills whatever height is left; the scroll body only scrolls
