@@ -1,0 +1,19 @@
+{
+  "cells": 3, "nectar_foragers": 0, "pollen_foragers": 0,
+  "nurses": 0, "builders": 0, "miners": 0, "honey_makers": 0,
+  "weather": false, "disease": false, "rival_hive": false, "winter": false,
+  "random_seed": 5217,
+  "config_overrides": {"seconds_per_day": 20, "nectar_ferment_hours": 12},
+  "actions": [
+    {"do": "set_cell_contents", "cell": {"hex": [0, 0]}, "resource": "nectar", "amount": 60},
+    {"do": "wait", "seconds": 15},
+    {"do": "set_queen_load", "resource": "pollen", "amount": 5, "state": "IN_HIVE_TO_CELL", "target_cell": {"built_index": 1}},
+    {"do": "assign_role", "target": {"queen": true}, "role": "comb_worker"},
+    {"do": "save_run", "name": "RR17 before"},
+    {"do": "clear_fermented"},
+    {"do": "save_run", "name": "RR17 marked"},
+    {"do": "wait", "seconds": 40},
+    {"do": "save_run", "name": "RR17 done"}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 10}
+}
