@@ -181,5 +181,45 @@ class DesignateSourCellTest(unittest.TestCase):
         self.assertNotEqual(cell.get("content"), "nectar", "no comb worker emptied the sour cell")
 
 
+class QueenDiscardsSourTest(unittest.TestCase):
+    """RR-17: leftover foraging cargo must not block a queen's comb work."""
+
+    def test_queen_on_comb_work_empties_sour_cell_within_40_seconds(self):
+        godot_path = find_godot()
+        if not godot_path:
+            self.skipTest("no Godot executable found -- this test needs a real headless boot")
+        fixture = ROOT / "test_scenarios" / "rr17_queen_discards_sour.json"
+        session_file = run_once(fixture, godot_path, timeout=300, fixed_fps=30)
+        self.assertIsNotNone(session_file, "scenario run produced no session log")
+        entries = load_entries(session_file)
+        rejected = [e for e in entries if e.get("type") == "action" and e.get("result") == "rejected"]
+        self.assertEqual(rejected, [], "a scenario action was rejected")
+        scratch = scenario_saves_dir(session_file)
+        saves = {}
+        for name in ("before", "marked", "done"):
+            path = scratch / ("rr17-%s.json" % name)
+            self.assertTrue(path.exists(), "the run did not write " + name)
+            saves[name] = json.loads(path.read_text(encoding="utf-8"))
+        source = (0, 0)
+        for name in saves:
+            bees = saves[name]["bees"]
+            self.assertEqual(len(bees), 1, "another bee could have cleared the cell")
+            self.assertTrue(bees[0]["queen"])
+            self.assertEqual(bees[0]["role"], 2, "the queen was not on comb work")
+            self.assertEqual(bees[0]["architect_mode"], "both")
+        self.assertEqual(saves["before"]["bees"][0]["load_type"], "pollen")
+        self.assertEqual(saves["before"]["bees"][0]["load"], 5)
+        self.assertEqual(_cell(saves["before"], source)["content"], "nectar")
+        marked = _cell(saves["marked"], source)
+        self.assertTrue(marked.get("evict"), "the sour cell was not marked")
+        self.assertEqual(marked.get("evict_mode"), "discard")
+        self.assertNotEqual(_cell(saves["done"], source)["content"], "nectar",
+                            "the lone queen did not empty the sour cell within 40 seconds")
+        self.assertEqual(_nectar(saves["done"]), {}, "sour nectar was moved into another cell")
+        pollen = sum(float(c.get("amount", 0)) for c in saves["done"]["cells"]
+                     if c.get("content") == "pollen")
+        self.assertAlmostEqual(pollen, 5, places=3, msg="the queen lost her leftover pollen")
+
+
 if __name__ == "__main__":
     unittest.main()
