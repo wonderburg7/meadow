@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/RR-17` (`codex/RR-17`) | Codex | a queen on comb work discards sour nectar on command | Codex | in progress | none | `plans/now/run-repairs.md` RR-17 -- a queen on comb work discards sour nectar on command |
