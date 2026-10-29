@@ -43,7 +43,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
-| RR-17 | a queen on comb work discards sour nectar on command | `scripts/bee.gd`, tests | yes -- CQ-S0b landed 25 Oct 2026 | medium |
 | RR-18 | skip saves for the long checks C-140 and C-142 | `test_scenarios/`, `checks/ready/C-140.md`, `checks/ready/C-142.md` | yes | low |
 | RR-20 | a comb worker carrying a body leaves, stays out one second, and comes back | `scripts/bee_building.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, tests | yes -- CQ-M8 landed 25 Oct 2026 | medium |
 | RR-21 | no ordinary rain in the first two days; rain warnings in plain words | `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | yes -- SG-4 landed 26 Oct 2026 | medium |
@@ -133,50 +132,7 @@ RR-15 shipped 2026-10-27; its specification is `plans/archive/RR-15_2026-10-27.m
 
 RR-16 shipped 2026-10-27; its specification is `plans/archive/RR-16_2026-10-27.md`.
 
-## RR-17 -- a queen on comb work discards sour nectar on command
-
-Level: medium -- claude-sonnet-5-5 at medium effort (cause unconfirmed).
-
-**Implemented, 29 Oct 2026.** An empty-handed queen already clears the
-order. A queen switched to comb work while carrying pollen cannot take
-eviction work: the finder refuses to lift over a load, and
-`bee.gd::_deliver_held_load` excluded every queen. It now allows a queen
-whose primary role is Comb worker to store that load first. Laying and
-nursing retain the existing exception and priorities.
-
-The queen-only scenario failed before the fix with the sour cell still full
-after 40 seconds. It now passes, checking the cell is emptied, sour nectar
-is not moved into another cell, the original five pollen are stored, and
-the final waste trip completes. `python tools/prefinish.py` passes (boot,
-source checks and all nine NF-5/RR-14/RR-17 cases). Hands-on: C-158 uses
-`test_scenarios/rr17_queen_discards_sour_watch.json` to set up the same
-condition at real time without issuing the discard command for the player.
-
-**When done:**
-
-1. First a failing repro: `test_scenarios/rr17_queen_discards_sour.json`, a
-   headless scenario with the queen in the comb-worker role, one sour cell and
-   the command issued, asserting the cell is emptied by her within a stated
-   number of seconds. `tests/test_nf5_clear_fermented.py` gains a case that runs it and fails
-   before the fix.
-2. The smallest fix in `scripts/bee.gd` that makes it pass.
-3. Dave's hands-on check is filed at closeout: queen on comb work, press
-   "Discard all sour nectar", she empties a sour cell.
-
-**Invariants.** Her laying and feeding priorities are unchanged. If the cause
-turns out to be a design question (should the queen ever leave egg-laying?),
-stop and escalate with the options.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] RR-17 -- a queen on comb work discards sour nectar on command**
-- Plan: `plans/now/run-repairs.md` -- "RR-17 -- a queen on comb work discards sour nectar on command"
-- Files: `scripts/bee.gd`, `test_scenarios/rr17_queen_discards_sour.json`, `tests/test_nf5_clear_fermented.py`
-- Check: `python -m unittest tests.test_nf5_clear_fermented` (its new queen case) fails before the fix and passes after it (the queen, set to comb work, empties a sour cell after the command); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-- Proof: `absent: tests/test_nf5_clear_fermented.py :: queen`
-- Next after: none -- the sour-nectar repairs are complete
-```
+RR-17 shipped 2026-10-29; its specification is `plans/archive/RR-17_2026-10-29.md`.
 
 ## RR-18 -- skip saves for the long checks C-140 and C-142
 

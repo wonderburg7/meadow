@@ -56,13 +56,6 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] RR-17 -- a queen on comb work discards sour nectar on command**
-   - Plan: `plans/now/run-repairs.md` -- "RR-17 -- a queen on comb work discards sour nectar on command"
-   - Files: `scripts/bee.gd`, `test_scenarios/rr17_queen_discards_sour.json`, `tests/test_nf5_clear_fermented.py`
-   - Check: `python -m unittest tests.test_nf5_clear_fermented` (its new queen case) fails before the fix and passes after it (the queen, set to comb work, empties a sour cell after the command); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-   - Proof: `absent: tests/test_nf5_clear_fermented.py :: queen`
-   - Next after: none -- the sour-nectar repairs are complete
-
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
