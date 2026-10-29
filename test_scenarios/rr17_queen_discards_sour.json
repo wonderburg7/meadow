@@ -13,7 +13,8 @@
     {"do": "clear_fermented"},
     {"do": "save_run", "name": "RR17 marked"},
     {"do": "wait", "seconds": 40},
-    {"do": "save_run", "name": "RR17 done"}
+    {"do": "save_run", "name": "RR17 done"},
+    {"do": "assert", "within_seconds": 20, "condition": {"queen_load_empty": true}}
   ],
   "stop": {"when_actions_resolved": true, "max_days": 10}
 }

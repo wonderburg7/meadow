@@ -1817,7 +1817,10 @@ func _apply_pending_role() -> bool:
 ## rather than a guard per job (docs/known-pitfalls.md). When no cell had
 ## room and none has changed since, she gets on with her job instead.
 func _deliver_held_load() -> bool:
-	if is_queen:
+	# A queen switched to comb work can still carry a foraging load. Put it
+	# away before looking for eviction work, which cannot lift over it.
+	# Her laying and nursing paths keep their existing priorities.
+	if is_queen and role != Role.BUILDER:
 		return false
 	if current_load <= 0.0 or current_load_type == "":
 		return false

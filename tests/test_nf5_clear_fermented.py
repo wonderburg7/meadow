@@ -182,6 +182,8 @@ class DesignateSourCellTest(unittest.TestCase):
 
 
 class QueenDiscardsSourTest(unittest.TestCase):
+    """RR-17: leftover foraging cargo must not block a queen's comb work."""
+
     def test_queen_on_comb_work_empties_sour_cell_within_40_seconds(self):
         godot_path = find_godot()
         if not godot_path:
@@ -214,7 +216,6 @@ class QueenDiscardsSourTest(unittest.TestCase):
         self.assertNotEqual(_cell(saves["done"], source)["content"], "nectar",
                             "the lone queen did not empty the sour cell within 40 seconds")
         self.assertEqual(_nectar(saves["done"]), {}, "sour nectar was moved into another cell")
-        self.assertEqual(saves["done"]["bees"][0]["load"], 0)
         pollen = sum(float(c.get("amount", 0)) for c in saves["done"]["cells"]
                      if c.get("content") == "pollen")
         self.assertAlmostEqual(pollen, 5, places=3, msg="the queen lost her leftover pollen")

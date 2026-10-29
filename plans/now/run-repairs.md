@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-12, the last slice, waits for ED-3 (RR-19 on claude/RR-19, 28 Oct 2026; RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-28
+Status: active | Owner: Dave / Claude Code | Next: RR-18 remains startable; RR-12 waits for ED-3 (RR-17 verified on codex/RR-17, 29 Oct 2026; RR-19 on claude/RR-19, 28 Oct 2026; RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-29
 
 ## Objective
 
@@ -137,12 +137,20 @@ RR-16 shipped 2026-10-27; its specification is `plans/archive/RR-16_2026-10-27.m
 
 Level: medium -- claude-sonnet-5-5 at medium effort (cause unconfirmed).
 
-**True now.** Dave: "The queen doesn't respond appropriately when set to comb
-worker and selecting 'Discard all sour nectar'". The command marks cells
-`evict_requested`; comb workers take `comb_evict_cell` (`actions.gd`, near l.74,
-via `bee_building.gd::find_cell_needing_eviction`, near l.38). No queen
-exclusion was found. Suspects: the queen never reaches `bee.gd::_idle_dispatch`
-while laying or feeding, or her `architect_mode` skips the evict row.
+**Implemented, 29 Oct 2026.** An empty-handed queen already clears the
+order. A queen switched to comb work while carrying pollen cannot take
+eviction work: the finder refuses to lift over a load, and
+`bee.gd::_deliver_held_load` excluded every queen. It now allows a queen
+whose primary role is Comb worker to store that load first. Laying and
+nursing retain the existing exception and priorities.
+
+The queen-only scenario failed before the fix with the sour cell still full
+after 40 seconds. It now passes, checking the cell is emptied, sour nectar
+is not moved into another cell, the original five pollen are stored, and
+the final waste trip completes. `python tools/prefinish.py` passes (boot,
+source checks and all nine NF-5/RR-14/RR-17 cases). Hands-on: C-158 uses
+`test_scenarios/rr17_queen_discards_sour_watch.json` to set up the same
+condition at real time without issuing the discard command for the player.
 
 **When done:**
 
