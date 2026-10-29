@@ -51,6 +51,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/hive_cell.gd :: outline.visible = content_type != "" and not`
    - Next after: none -- `plans/now/sprites.md` is complete once SP-6, SP-12 and SP-13 have landed
 
+5. **[Claude] HS-2 -- hard soil fills the outer half of the hive's soil**
+   - Plan: `plans/now/hard-soil.md` -- "HS-2 -- hard soil fills the outer half of the hive's soil"
+   - Files: `scripts/soil_block.gd`, `scripts/hive.gd`, `scripts/bee.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `test_scenarios/hs2_hard_soil.json`, `tests/test_hs2_hard_soil.py`
+   - Check: `python -m unittest tests.test_hs2_hard_soil` passes, asserting a hard block refuses a dig order before Mighty Mandible and accepts one after, the hard-soil colour distances, and the rough halfway edge; `.\tools\verify.ps1` is green. Hands-on: in the HS-2 scenario, the hard soil next to the cavity looks greyer than ordinary soil and different from the bedrock, and clicking it to dig does nothing until Mighty Mandible is bought.
+   - Proof: `absent: scripts/soil_block.gd :: func hard_soil_start_ring(`
+   - Next after: none -- `plans/now/hard-soil.md` is complete
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -60,7 +67,6 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **HS-2** (`plans/now/hard-soil.md`) -- temporarily deferred at Dave's request (29 Oct 2026); waits for RR-17 to release `scripts/bee.gd`.
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
 - **CQ-M5b** (`plans/now/code-health.md`) -- the last CanvasLayer readers and the bare-layer source check; waits for RR-21 to release `scripts/main.gd` and the Jules J-14 branch to settle `scripts/game_panel.gd`.
 - **CQ-M4** (`plans/now/code-health.md`) -- name Challenge level ids; waits for the Claude lane to release `scripts/save_game.gd` and `scripts/saving.gd`.
