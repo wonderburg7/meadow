@@ -712,8 +712,18 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- when the primary fails on an
   unresolved resource, `ensure_cache` runs `--import` on the primary once
   before refusing.
-- Disposition: superseded: ca6f34c (12 Oct) seeds a worktree's cache
-  whether or not the primary boots; no cache stop since (read by the agent-workflow review, 16 Oct 2026).
+- Reopened evidence, 29 Oct 2026 (Jules integration): the worktree boot and
+  all 191 unit IDs passed, but the primary's existing cache missed
+  `ScenarioBoot` and `foragers_meadow_view_sheet.png`. Two manual import
+  passes restored its boot. A full primary unit run started first can leave
+  scenario tests waiting for their 600/900-second timeouts. Evidence:
+  `plans/reference/jules-integration-2026-10-29.md`. Hypothesis: require the
+  primary boot check before that full run; recognise a known global class
+  missing from the cache without changing game code.
+- Disposition: untriaged (reopened 29 Oct 2026). ca6f34c (12 Oct) fixed
+  worktree seeding independently of primary boot; the primary cache still
+  needs a clean boot check before full engine tests. The earlier
+  superseded disposition covered the worktree-blocking failure only.
 
 ### 2026-10-15 — `plans/now/sprites.md` is over its soft limit (from the verification review)
 

@@ -6,7 +6,7 @@ Status: reference | Owner: Dave / Codex | Next: correction criteria and follow-u
 
 Reviewed the 18 branches Dave listed. Integrated six helper test files in six
 attributed commits. The presentation blanking tests already exist on master
-with an additional regression case, so retain master's version. All eleven
+with an additional regression case (`b6fef62`), so retain master's version. All eleven
 audit reports need correction before acceptance. None is an approved source
 of fixes or a complete inventory.
 
@@ -25,26 +25,26 @@ remove that sixth method. No content from this branch is needed.
 
 ## Branch decisions
 
-| Task | Source branch | Source commit | Decision |
+| Task | Source branch / PR | Source commit | Decision |
 | --- | --- | --- | --- |
-| S-1 | `jules/j-1-presentation-gate-check-helpers-17077111025322038277` | `294055c63701` | Already integrated; retain stronger master file |
-| J-25 | `jules/j-25-update-function-map-helpers-10995396425508192344` | `10a0acdbda61` | Integrate reviewed test file |
-| J-26 | `jules/j-26-test-sprites-helpers-17536314072276135209` | `732c88e7c71d` | Integrate reviewed test file |
-| J-27 | `jules/j-27-uncalled-helpers-567611545303875321` | `6a79df68623f` | Integrate reviewed test file |
-| J-28 | `jules/j-28-session-cost-readers-4584486073568887068` | `e0a6f6417190` | Integrate reviewed test file |
-| J-29 | `jules/j-29-pitfall-guard-coverage-17758229234258061777` | `af3ac816b8f6` | Needs correction; leave report unmerged |
-| J-30 | `jules/j-30-ui-rectangles-6379343624088707089` | `88d86080aa84` | Needs correction; leave report unmerged |
-| J-31 | `jules/j-31-coordinate-spaces-7902036955716962807` | `5576527300b4` | Needs correction; leave report unmerged |
-| J-32 | `jules/j-32-save-coverage-9194610013395303275` | `ebae57472900` | Needs correction; leave report unmerged |
-| J-33 | `jules/j-33-signal-wiring-10069084102049606120` | `7635f61b6eeb` | Needs correction; leave report unmerged |
-| J-34 | `jules/j-34-per-frame-paths-875237027435561307` | `0ba2ea8beaba` | Needs correction; leave report unmerged |
-| J-35 | `jules/j-35-balance-literals-5386586949733054081` | `019c83216757` | Needs correction; leave report unmerged |
-| J-36 | `jules/j-36-role-runstate-ownership-5879758852814510240` | `0c570309b363` | Needs correction; leave report unmerged |
-| J-37 | `jules/j-37-vacuous-tests-9463619649162809978` | `594f8a8ac9f3` | Needs correction; leave report unmerged |
-| J-38 | `jules/j-38-duplicate-rules-16003263335438632552` | `a5dc9d17a8f4` | Needs correction; leave report unmerged |
-| J-39 | `jules/j-39-instruction-drift-16519072405257210859` | `784efc45ae9a` | Needs correction; leave report unmerged |
-| S-1 | `jules/s-1-heading-helpers-12730515454291603165` | `17e2d55a582c` | Integrate reviewed test file |
-| S-1 | `jules/s-1-stage-reference-helpers-14091259932105731355` | `d976ba1a84fb` | Integrate reviewed test file |
+| S-1 | [#28](https://github.com/wonderburg7/meadow/pull/28) `jules/j-1-presentation-gate-check-helpers-17077111025322038277` | `294055c63701` | Already integrated; retain stronger master file |
+| J-25 | [#29](https://github.com/wonderburg7/meadow/pull/29) `jules/j-25-update-function-map-helpers-10995396425508192344` | `10a0acdbda61` | Integrate reviewed test file |
+| J-26 | [#30](https://github.com/wonderburg7/meadow/pull/30) `jules/j-26-test-sprites-helpers-17536314072276135209` | `732c88e7c71d` | Integrate reviewed test file |
+| J-27 | [#31](https://github.com/wonderburg7/meadow/pull/31) `jules/j-27-uncalled-helpers-567611545303875321` | `6a79df68623f` | Integrate reviewed test file |
+| J-28 | [#32](https://github.com/wonderburg7/meadow/pull/32) `jules/j-28-session-cost-readers-4584486073568887068` | `e0a6f6417190` | Integrate reviewed test file |
+| J-29 | [#33](https://github.com/wonderburg7/meadow/pull/33) `jules/j-29-pitfall-guard-coverage-17758229234258061777` | `af3ac816b8f6` | Needs correction; leave report unmerged |
+| J-30 | [#34](https://github.com/wonderburg7/meadow/pull/34) `jules/j-30-ui-rectangles-6379343624088707089` | `88d86080aa84` | Needs correction; leave report unmerged |
+| J-31 | [#35](https://github.com/wonderburg7/meadow/pull/35) `jules/j-31-coordinate-spaces-7902036955716962807` | `5576527300b4` | Needs correction; leave report unmerged |
+| J-32 | [#36](https://github.com/wonderburg7/meadow/pull/36) `jules/j-32-save-coverage-9194610013395303275` | `ebae57472900` | Needs correction; leave report unmerged |
+| J-33 | [#37](https://github.com/wonderburg7/meadow/pull/37) `jules/j-33-signal-wiring-10069084102049606120` | `7635f61b6eeb` | Needs correction; leave report unmerged |
+| J-34 | [#38](https://github.com/wonderburg7/meadow/pull/38) `jules/j-34-per-frame-paths-875237027435561307` | `0ba2ea8beaba` | Needs correction; leave report unmerged |
+| J-35 | [#39](https://github.com/wonderburg7/meadow/pull/39) `jules/j-35-balance-literals-5386586949733054081` | `019c83216757` | Needs correction; leave report unmerged |
+| J-36 | [#40](https://github.com/wonderburg7/meadow/pull/40) `jules/j-36-role-runstate-ownership-5879758852814510240` | `0c570309b363` | Needs correction; leave report unmerged |
+| J-37 | [#41](https://github.com/wonderburg7/meadow/pull/41) `jules/j-37-vacuous-tests-9463619649162809978` | `594f8a8ac9f3` | Needs correction; leave report unmerged |
+| J-38 | [#42](https://github.com/wonderburg7/meadow/pull/42) `jules/j-38-duplicate-rules-16003263335438632552` | `a5dc9d17a8f4` | Needs correction; leave report unmerged |
+| J-39 | [#43](https://github.com/wonderburg7/meadow/pull/43) `jules/j-39-instruction-drift-16519072405257210859` | `784efc45ae9a` | Needs correction; leave report unmerged |
+| S-1 | [#45](https://github.com/wonderburg7/meadow/pull/45) `jules/s-1-heading-helpers-12730515454291603165` | `17e2d55a582c` | Integrate reviewed test file |
+| S-1 | [#44](https://github.com/wonderburg7/meadow/pull/44) `jules/s-1-stage-reference-helpers-14091259932105731355` | `d976ba1a84fb` | Integrate reviewed test file |
 
 ## Why the audits need correction
 
@@ -108,6 +108,47 @@ No production file was modified for these probes.
 Branch verification passes: Godot boot, GDScript lint (154 files), source
 checks (107 scripts), all 15 balance checks, 85 selected unit-test IDs and
 generated-reference checks. Documentation checks pass with existing
-warnings. All four new briefs classify as free. The broader full unit run
-and post-integration outcome are recorded in the final validation commit. The required full unit command excludes only
+warnings. All four new briefs classify as free. The full isolated-worktree
+run passed all 191 IDs in 895 seconds, including engine tests. The primary checkout required the cache repair below before
+its post-integration engine tests could pass. The required full unit
+command excludes only
 `tests.test_slice_lifecycle` and `tests.test_two_lane_closeout`.
+
+## Primary checkout cache repair
+
+The post-integration source and balance checks passed. Its first engine
+tests failed because the primary cache did not register the existing
+`ScenarioBoot` class, then identified a missing imported sprite resource.
+The same tracked source had passed the complete worktree run. No game
+source was changed. Two invocations of Godot's documented
+`--headless --import --path .` restored the primary checkout's clean boot.
+Godot 4.7 documents `--import` as waiting for imports before quitting:
+[Godot 4.7 command-line reference](https://github.com/godotengine/godot-docs/blob/4.7/tutorials/editor/command_line_tutorial.rst)
+
+Before a future full unit run in the primary checkout, run
+`python tools/godot_compile_check.py` there and resolve any import-cache
+fault first. The primary cache is intentionally not refreshed by
+`godot_cache.py --force`; use the Godot import command its `fix_command`
+names. A new-class lookup failure can also be a stale cache, even though
+the current classifier reports it as a code failure: compare the tracked
+declaration and a clean worktree boot before editing source.
+
+All four affected primary test IDs passed after repair:
+
+- `tests.test_t2_11_comb_cadence`: 177 seconds.
+- `tests.test_nf3_tipsy`: 84 seconds.
+- `tests.test_fc2_first_crisis.PreparedCrisisTest`: 135 seconds.
+- `tests.test_bb4_challenge_pacing.ChallengeTwoRouteTest`: 147 seconds.
+
+The original stale-cache scenario launches ended at their built-in timeouts;
+no processes were stopped manually. The full post-integration primary run completed 191 IDs in 1558 seconds:
+186 passed and five initially failed. Four were the stale-cache IDs above,
+all passing on rerun. The fifth, `tests.test_sp2_sprites`, reports the
+pre-existing untracked `assets/sprites/bees/foragers.meadow.view.animated.png`
+without a `SPRITES.md` entry. That file was present before this session and
+is preserved. The sprite suite passes on the clean integration worktree,
+as did the complete 191-ID run. The primary working-directory sprite check
+therefore remains red until the asset's owner registers or relocates it;
+this integration does not change its catalogue or remove the asset. The original presentation helper
+file remains identical to the integration baseline; the six new files add
+29 test methods.
