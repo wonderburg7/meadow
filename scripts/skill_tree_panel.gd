@@ -73,6 +73,8 @@ var detail_label: Label
 var buy_button: Button
 ## The skill tile the strip shows; null until one is clicked.
 var _selected_hex = null
+## Per resource, held in the comb but not spendable; set by _rebuild.
+var _unspendable: Dictionary = {}
 ## Whether the game was already paused when the view opened, so closing it
 ## leaves a player's own pause in place.
 var _was_paused: bool = false
@@ -173,6 +175,7 @@ func _input(event: InputEvent) -> void:
 func _rebuild() -> void:
 	var progression = Session.progression
 	var stores := _stores()
+	_unspendable = _held_not_spendable(stores)
 	var tiles: Dictionary = {}   # Vector2i -> tile dictionary
 	tiles[Vector2i(0, 0)] = {"kind": "centre", "tip": "The colony's stores:\n" + _stores_text(stores)}
 	for i in range(Skills.SECTORS.size()):
@@ -235,6 +238,8 @@ func _refresh_detail() -> void:
 	var skill: Dictionary = Skills.entry(tile.id)
 	detail_label.text = "%s (tier %d) — %s. Cost: %s." % [tile.name, int(tile.tier),
 		_state_text(tile.state, tile.reason), _cost_text(skill)]
+	if tile.state == STATE_BLOCKED:
+		detail_label.text += _unspendable_note(skill).strip_edges().replace("\n", " ")
 	if not Skills.is_built(tile.id):
 		detail_label.text += " Not built yet: buying it changes nothing yet."
 	detail_label.add_theme_color_override("font_color", _state_colour(tile.state))
@@ -330,7 +335,8 @@ func _state_colour(state: String) -> Color:
 
 func _skill_tip(skill: Dictionary, state: String, reason: String) -> String:
 	return "%s\n%s\nCost: %s\n%s%s" % [skill.name, skill.get("description", ""),
-		_cost_text(skill), _sentence(_state_text(state, reason)), _not_built_note(skill) + _replaced_note(skill)]
+		_cost_text(skill) + (_unspendable_note(skill) if state == STATE_BLOCKED else ""),
+		_sentence(_state_text(state, reason)), _not_built_note(skill) + _replaced_note(skill)]
 
 ## FBB-1: a node whose effect is not built says so rather than sell nothing.
 func _not_built_note(skill: Dictionary) -> String:
@@ -357,12 +363,44 @@ func _sentence(text: String) -> String:
 	return text.substr(0, 1).to_upper() + text.substr(1) + "."
 
 func _stores_text(stores: Dictionary) -> String:
-	if stores.is_empty():
-		return "none yet"
 	var lines: Array = []
 	for resource in stores:
-		lines.append("%s: %d" % [str(resource).replace("_", " ").capitalize(), int(stores[resource])])
-	return "\n".join(lines)
+		var line := "%s: %d" % [str(resource).replace("_", " ").capitalize(), int(stores[resource])]
+		var extra: float = float(_unspendable.get(resource, 0.0))
+		if extra >= 1.0:
+			line += " (+%d sealed or unripe)" % int(extra)
+		lines.append(line)
+	# a resource held only in sealed or unripe form has no spendable entry
+	for resource in _unspendable:
+		if not stores.has(resource):
+			lines.append("%s: 0 (+%d sealed or unripe)" % [
+				str(resource).replace("_", " ").capitalize(), int(_unspendable[resource])])
+	return "none yet" if lines.is_empty() else "\n".join(lines)
+
+## Held in the comb (what the HUD's stores line counts) minus what is
+## spendable, per resource: sealed or filling cells, unripe honey or bee
+## bread, fermented nectar. Shown beside the spendable figure so "not enough"
+## never sits next to a stores line that looks like plenty.
+func _held_not_spendable(stores: Dictionary) -> Dictionary:
+	var extra: Dictionary = {}
+	if main == null or main.hive == null:
+		return extra
+	for key in STORE_CONTENT:
+		var held: float = main.hive.total_honey() if key == Skills.HONEY else main.hive.total(STORE_CONTENT[key])
+		var gap: float = held - float(stores.get(key, 0.0))
+		if gap >= 1.0:
+			extra[key] = gap
+	return extra
+
+## For a skill that cannot be bought: any of its cost resources the colony
+## holds but cannot spend. "" when there is nothing to add.
+func _unspendable_note(skill: Dictionary) -> String:
+	var parts: Array = []
+	for resource in skill.get("cost", {}):
+		var extra: float = float(_unspendable.get(resource, 0.0))
+		if extra >= 1.0:
+			parts.append("%s +%d" % [str(resource).replace("_", " "), int(extra)])
+	return "" if parts.is_empty() else "\nHeld but not spendable (sealed or unripe): " + ", ".join(parts)
 
 func _label(text: String, variation: String) -> Label:
 	var label := Label.new()
