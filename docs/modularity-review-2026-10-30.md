@@ -47,8 +47,8 @@ None (first run).
 
 - Jules's D1 ("decompose `hud.gd`?") is answered under Dave's D1 of
   18 Oct 2026 (split by responsibility): yes for the goal shelf, no for a
-  wholesale split. Recorded in `plans/now/code-health.md`; Dave may
-  overrule.
+  wholesale split. Dave confirmed the goal shelf moves after SG-3
+  (30 Oct 2026). Recorded in `plans/now/code-health.md`.
 - Candidate tasks J-101 (hud `get_parent()`) and J-102 (settings helper):
   not filed. J-101 is folded into CQ-R15; J-102 falls with MOD-06.
 - Streamlining 1, a script-size and `get_parent` lint: rejected, it would
