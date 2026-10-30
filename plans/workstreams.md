@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/FX-1` (`codex/FX-1`) | Codex | guard hook ignores exclusion filters | Codex | in progress | none | `plans/now/workflow-friction.md` FX-1 -- guard hook ignores exclusion filters |
