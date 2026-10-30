@@ -936,3 +936,12 @@ explicit request from Dave.
 - Consequence: an apparently green review can introduce a failing module into full verification.
 - Hypothesis: rerun an imported test module through the verifier’s normal import path before accepting it. Jules must correct `tests/test_godot_helper_contracts.py` imports and demonstrate that invocation before resubmission.
 - Disposition: untriaged; J-42 remains in `plans/reference/jules.md`. No workflow change is included.
+
+### 2026-10-30 — a reverted Jules task still appears completed
+
+- Source: ad hoc Jules batch final queue check.
+- Area and signal: `tools/jules_preflight.py::is_done` still suppresses J-42 after its implementation commit `544e18e` was reverted by `db64a09`.
+- Evidence: the task block remains in `plans/reference/jules.md`, while `python tools/jules_preflight.py --queue` reports only the eleven audit tasks and zero free tasks. The current J-42 SEND BACK decision is in `plans/reference/jules-integration-2026-10-30.md`.
+- Consequence: a later reviewer or Jules session may skip work that was removed from master.
+- Hypothesis: completion detection should distinguish retained task work from reverted history, with a temporary-repository fixture proving both states.
+- Disposition: untriaged; no completion-detector change is included.

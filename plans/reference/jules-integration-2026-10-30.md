@@ -45,3 +45,7 @@ Decision and Reason are copied verbatim from the final reviewer reports. Existin
 - **J-42**: tests/test_godot_helper_contracts.py imports — Jules J-42 remit; support verifier invocation before resubmission.
 
 Report corrections are linked from `plans/observations/system-improvement-signals.md`. The rival tick timer persistence question is already recorded in `plans/now/run-repairs.md`, “Not in the queue, and why”; this review adds no save change or new decision. The J-31 honey finding establishes no code defect, so it does not admit a code-health task. J-42 must pass `python -m unittest tests.test_godot_helper_contracts` without an added tests-directory import path before resubmission.
+
+## Final task availability
+
+After integration, `python tools/jules_preflight.py --queue` reports `free 0 of 11 open tasks` and exits 1 for the low-water warning. J-42 remains in `plans/reference/jules.md`, but the helper treats its original task-title commit as done despite the later revert. Its current decision is **SEND BACK**, as recorded above; the historical commit is not evidence that this test remains integrated. Correct `tools/jules_preflight.py::is_done` to recognise reverted completion before relying on it for this case; no tooling change is part of this batch.
