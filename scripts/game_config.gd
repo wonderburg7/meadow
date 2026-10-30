@@ -641,6 +641,9 @@ var pollen_raised_stat_factor: float = 0.95
 ## weather. Switch it on once the foraging loop makes sense.
 var weather_on: bool = false
 var rain_chance_per_day: float = 0.45
+## RR-21: ordinary random rain is not rolled before this many game days. The
+## first crisis and any scenario that starts rain itself are unaffected.
+var rain_free_days: float = 2.0
 var rain_min_seconds: float = 40.0
 var rain_max_seconds: float = 130.0
 var rain_nectar_dilution: float = 0.6   # share of nectar value lost at full intensity
