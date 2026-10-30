@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/FX-2` (`codex/FX-2`) | Codex | finish checks the primary is on master before verifying | Codex | in progress | none | `plans/now/workflow-friction.md` FX-2 -- finish checks the primary is on master before verifying |
