@@ -500,7 +500,9 @@ static func builder_go_to_waste_exit(bee: Node2D, delta: float) -> void:
 	if BeeMovement.walk_to_hive_exit(bee, delta):
 		if bee.world:
 			bee.world.move_bee_out_of_hive(bee)
-		bee.timer = GameConfig.dirt_dump_time
+		# RR-20: a dead bee is dropped after body_drop_seconds; spoil and
+		# stores keep dirt_dump_time.
+		bee.timer = GameConfig.body_drop_seconds if bee.carrying_corpse and bee.corpse_is_bee else GameConfig.dirt_dump_time
 		bee.state = State.DUMPING_WASTE
 
 

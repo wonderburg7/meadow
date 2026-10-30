@@ -733,6 +733,9 @@ var starting_miners: float = 0.0
 var miner_dirt_capacity: float = 40.0
 var dirt_fill_rate: float = 0.5     # dirt per second while digging
 var dirt_dump_time: float = 2.0     # seconds spent outside emptying out
+## RR-20: a Comb worker carrying a dead bee stays outside this long, then
+## comes back in. Spoil and stores still use dirt_dump_time.
+var body_drop_seconds: float = 1.0
 
 ## Builder-seconds needed to finish one cell. Two builders working the
 ## same cell halve the wall-clock time, three thirds it, and so on.

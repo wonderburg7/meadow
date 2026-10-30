@@ -1137,6 +1137,12 @@ const TUNABLES := [
 		"category": "Mining",
 		"tip": "Seconds a miner spends outside the hive emptying a load of spoil.",
 	},
+	{
+		"persist": "run",
+		"key": "body_drop_seconds", "label": "Body drop s", "step": 0.5, "min": 0.0,
+		"category": "Mining",
+		"tip": "Seconds a Comb worker stays outside the hive after carrying a dead bee out, before she comes back in.",
+	},
 
 	# --- Bee life ---
 	{

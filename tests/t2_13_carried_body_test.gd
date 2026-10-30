@@ -59,6 +59,41 @@ func _run() -> void:
 	BeeBuilding = load("res://scripts/bee_building.gd")
 	_lifted_bee()
 	_dead_larva()
+	_body_drop_time()
+
+
+## RR-20: a Comb worker carrying a dead bee is outside for body_drop_seconds
+## and then inside again; one carrying stores is outside for dirt_dump_time.
+func _body_drop_time() -> void:
+	var worker: Node2D = _main.world_building._spawn_indoor_bee(_main.Bee.Role.BUILDER)
+	worker.carrying_corpse = true
+	worker.corpse_is_bee = true
+	worker.state = _main.Bee.State.TO_WASTE_EXIT
+	var steps := 0
+	while worker.state == _main.Bee.State.TO_WASTE_EXIT and steps < 6000:
+		steps += 1
+		BeeBuilding.builder_go_to_waste_exit(worker, 0.1)
+	_check(not worker._is_inside_hive(), "the body-carrying Comb worker did not step outside")
+	_check(worker.state == _main.Bee.State.DUMPING_WASTE, "the body-carrying Comb worker did not reach DUMPING_WASTE")
+	_check(absf(worker.timer - _config.body_drop_seconds) < 0.001,
+		"the body drop timer is %.2f, expected body_drop_seconds %.2f" % [worker.timer, _config.body_drop_seconds])
+	var outside := 0.0
+	while worker.state == _main.Bee.State.DUMPING_WASTE and steps < 12000:
+		steps += 1
+		if not worker._is_inside_hive():
+			outside += 0.1
+		BeeBuilding.builder_dump_waste(worker, 0.1)
+	_check(absf(outside - _config.body_drop_seconds) <= 0.101, "outside %.2f s, expected %.2f s" % [outside, _config.body_drop_seconds])
+	_check(worker._is_inside_hive(), "the Comb worker is not back inside after the drop")
+
+	var hauler: Node2D = _main.world_building._spawn_indoor_bee(_main.Bee.Role.BUILDER)
+	hauler.carrying_corpse = false
+	hauler.current_load_type = "honey"
+	hauler.state = _main.Bee.State.TO_WASTE_EXIT
+	while hauler.state == _main.Bee.State.TO_WASTE_EXIT and steps < 18000:
+		steps += 1
+		BeeBuilding.builder_go_to_waste_exit(hauler, 0.1)
+	_check(absf(hauler.timer - _config.dirt_dump_time) < 0.001, "stores no longer use dirt_dump_time: %.2f" % hauler.timer)
 
 
 ## A Comb worker lifts a dead bee out of the comb, then is made a Forager.
