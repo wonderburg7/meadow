@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-6 -- meadow foragers drawn from the sheet, in the Claude backlog (Dave's sheet landed and CQ-L1 released `scripts/bee.gd`, 22 Oct 2026); the meadow floor in blocks (SP-8, SP-8a) moved to `plans/now/meadow-terrain.md` on 15 Oct 2026, and the hive and menu art is `plans/now/hive-and-menu-art.md` | Dependency: none left | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: SP-6 -- meadow foragers drawn from the sheet, in the Claude backlog (Dave's sheet landed and CQ-L1 released `scripts/bee.gd`, 22 Oct 2026); the meadow floor in blocks (SP-8, SP-8a) moved to `plans/now/meadow-terrain.md` on 15 Oct 2026, and the hive and menu art is `plans/now/hive-and-menu-art.md`; SP-13 (the skep door on `hive.position`) landed 30 Oct 2026, hands-on check C-161 filed | Dependency: none left | Verified: 2026-10-30
 
 ## Objective
 
@@ -67,7 +67,6 @@ from the art in front-over-back order. What the open slices build on:
 | --- | --- | --- | --- | --- |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, tests | yes (CQ-L1 landed 22 Oct 2026) | high (per-bee hot path) |
 | SP-12 | every outline on a comb cell sits on the cup's rim, proved by a new pixel assertion | `scripts/input_selection.gd`, `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | medium |
-| SP-13 | foragers come and go at the skep's door | `scripts/hive.gd`, `scripts/rival_hive.gd`, `scripts/sprite_catalogue.gd` | yes -- DR-1 landed 25 Oct 2026 | low |
 | SP-14 | no outline on an unselected comb cell while cell art is on | `scripts/hive_cell.gd` | yes -- DR-1 landed 25 Oct 2026 | low |
 
 **Dependencies.** RR-11 (`plans/now/run-repairs.md`) waits for SP-11 to
@@ -112,7 +111,8 @@ its sprite-table row and catalogue entry (`FORAGERS_MEADOW_VIEW_*`).
 **[Claude] SP-6 -- meadow foragers drawn from the sheet**
 - Plan: `plans/now/sprites.md` -- "SP-6 -- meadow foragers drawn from the sheet"
 - Files: `scripts/bee.gd`, `tests/sp6_forager_sprite_test.gd`, `tests/test_sp6_forager_sprite.py`
-- Check: `python -m unittest tests.test_sp6_forager_sprite` passes: an outdoor worker heading into each of the eight octants shows that direction's row, its frame advances with the wing clock, and its body circles are hidden outdoors and shown indoors; a before/after profile of the display update is recorded in the plan; `.	oolserify.ps1` is green
+- Check: `python -m unittest tests.test_sp6_forager_sprite` passes: an outdoor worker heading into each of the eight octants shows that direction's row, its frame advances with the wing clock, and its body circles are hidden outdoors and shown indoors; a before/after profile of the display update is recorded in the plan; `.	ools
+erify.ps1` is green
 - Proof: `absent: scripts/bee.gd :: FORAGERS_MEADOW_VIEW`
 - Next after: None -- plan complete
 ```
@@ -170,43 +170,7 @@ cost is added: the rim points are built once and cached.
 - Next after: none -- SP-13 and SP-14 in `plans/now/sprites.md` do not depend on it
 ```
 
-## SP-13 -- foragers come and go at the skep's door
-
-Level: low -- claude-sonnet-5-5 at low effort.
-
-**True now.** C-128 failed: "foragers do not appear or disappear where the
-sprite's entrance is (bottom part of the skep)". The skep sprite is centred on
-`hive.position` (`hive.gd`, offset from `HIVE_SKEP_ANCHOR` (27, 20.5) in
-`sprite_catalogue.gd`), but its entrance is at the bottom of the art. The
-simulation uses `hive.position` for spawn (`world_building.gd`, near l.548),
-`move_bee_out_of_hive` (near l.635) and arrival (`bee.gd`, near l.1488).
-`rival_hive.gd` positions its skep the same way.
-
-**When done:**
-
-1. A named constant `HIVE_SKEP_DOOR` in `sprite_catalogue.gd` (the door's
-   offset in art px from `HIVE_SKEP_ANCHOR`, read from the art).
-2. `hive.gd` and `rival_hive.gd` shift the skep sprite up by that offset times
-   `PixelSprite.MEADOW_SCALE`, and `hive.gd` shifts its hit shape with it, so
-   the door sits on `hive.position`.
-3. The simulation is not touched: no position, spawn point or arrival test
-   changes.
-4. Dave's hands-on check is filed at closeout: the C-128 re-run, foragers
-   leaving and arriving at the door.
-
-**Invariants.** Presentation only; `hive.position` keeps its meaning. A click
-on the skep still selects it.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] SP-13 -- foragers come and go at the skep's door**
-- Plan: `plans/now/sprites.md` -- "SP-13 -- foragers come and go at the skep's door"
-- Files: `scripts/hive.gd`, `scripts/rival_hive.gd`, `scripts/sprite_catalogue.gd`
-- Check: `python tools/prefinish.py` is green (boot check clean); the skep sprite's door lands on `hive.position` in a headless scene (the sprite's position plus the door offset equals zero); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-- Proof: `absent: scripts/sprite_catalogue.gd :: HIVE_SKEP_DOOR`
-- Next after: none -- `plans/now/sprites.md` is complete once SP-6, SP-12 and SP-14 have landed
-```
+SP-13 shipped 2026-10-30; its specification is `plans/archive/SP-13_2026-10-30.md`.
 
 ## SP-14 -- no outline on an unselected comb cell while the cell art is on
 
