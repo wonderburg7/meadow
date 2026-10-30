@@ -67,7 +67,6 @@ from the art in front-over-back order. What the open slices build on:
 | --- | --- | --- | --- | --- |
 | SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, tests | yes (CQ-L1 landed 22 Oct 2026) | high (per-bee hot path) |
 | SP-12 | every outline on a comb cell sits on the cup's rim, proved by a new pixel assertion | `scripts/input_selection.gd`, `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | medium |
-| SP-14 | no outline on an unselected comb cell while cell art is on | `scripts/hive_cell.gd` | yes -- DR-1 landed 25 Oct 2026 | low |
 
 **Dependencies.** RR-11 (`plans/now/run-repairs.md`) waits for SP-11 to
 release `scripts/hive_cell.gd`. SP-6's last gate, CQ-L1
@@ -172,40 +171,7 @@ cost is added: the rim points are built once and cached.
 
 SP-13 shipped 2026-10-30; its specification is `plans/archive/SP-13_2026-10-30.md`.
 
-## SP-14 -- no outline on an unselected comb cell while the cell art is on
-
-Level: low -- claude-haiku-5-5.
-
-**True now.** Dave: "remove the hexes which sit on each cell even when not
-selected". `hive_cell.gd` creates an `outline` Line2D (near l.419) and
-`_refresh` makes it visible whenever the cell holds something (near l.1277),
-on an unfinished build site (near l.1261) and under an overlay (near l.1410),
-even with `Session.use_cell_sprites` on, where the cup art already draws the
-cell.
-
-**When done:**
-
-1. With `Session.use_cell_sprites` on, `outline` is hidden unless an overlay is
-   showing; with it off, nothing changes.
-2. Dave's hands-on check is filed at closeout and asks whether the thin rim
-   that remains is the cup art's own baked edge. If it is and he means that, it
-   is an art change and goes to `plans/now/hive-and-menu-art.md`.
-
-**Invariants.** Selection, designation and zone rings are untouched.
-`python -m unittest tests.test_sp11_cell_rim` still passes. It shares
-`scripts/hive_cell.gd` with SP-12 and RR-13 (`plans/now/run-repairs.md`):
-whichever is queued first runs first.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] SP-14 -- no outline on an unselected comb cell while the cell art is on**
-- Plan: `plans/now/sprites.md` -- "SP-14 -- no outline on an unselected comb cell while the cell art is on"
-- Files: `scripts/hive_cell.gd`
-- Check: `python -m unittest tests.test_sp11_cell_rim` passes; with cell art on, a cell holding nectar has `outline.visible` false and a cell under an overlay has it true; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-- Proof: `absent: scripts/hive_cell.gd :: outline.visible = content_type != "" and not`
-- Next after: none -- `plans/now/sprites.md` is complete once SP-6, SP-12 and SP-13 have landed
-```
+SP-14 shipped 2026-10-30; its specification is `plans/archive/SP-14_2026-10-30.md`.
 
 ## Read on demand
 
