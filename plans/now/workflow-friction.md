@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Codex (moved to the Codex lane by Dave, 30 Oct 2026) | Next: FX-3, Jules merges happen in a worktree | Dependency: none; FX-1 to FX-6 share no file and run in id order | Verified: 2026-10-30
+Status: active | Owner: Dave / Codex (moved to the Codex lane by Dave, 30 Oct 2026) | Next: FX-4, headless job tests ignore temp cleanup errors | Dependency: none; FX-1 to FX-6 share no file and run in id order | Verified: 2026-10-30
 
 ## Objective
 
@@ -56,7 +56,6 @@ What the 26 Oct 2026 re-verification found, cluster by cluster:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FX-3 | Jules merges happen in a worktree | `plans/reference/jules.md` | yes | low |
 | FX-4 | headless job tests ignore temp cleanup errors | `tests/test_headless_jobs.py` | yes | low |
 | FX-5 | Claude skills derive `ROOT` | `.claude/skills/run-queue/SKILL.md`, `.claude/skills/run-reviews/SKILL.md`, `.claude/skills/plan-ahead/SKILL.md` | yes | low |
 | FX-6 | Codex skills derive `ROOT`; Codex run-queue probes `.git` | `.agents/skills/run-queue/SKILL.md`, `.agents/skills/plan-ahead/SKILL.md` | yes | low |
@@ -71,41 +70,7 @@ FX-1 shipped 2026-10-30; its specification is `plans/archive/FX-1_2026-10-30.md`
 
 FX-2 shipped 2026-10-30; its specification is `plans/archive/FX-2_2026-10-30.md`.
 
-## FX-3 -- Jules merges happen in a worktree
-
-**Now.** `plans/reference/jules.md` § "Keeping this list", bullet
-"**Before merging a Jules pull request**", says to run
-`git checkout origin/jules/<branch> -- <those files>` but not where. Done in
-the primary checkout it stages them on master; J-12's files staged that way
-stopped L-37's finish on 25 Oct 2026 (`1595a8b`).
-
-**Edit `plans/reference/jules.md`.** At the end of that bullet (after "as J-3,
-J-8 and J-9 each needed."), append this text as part of the same bullet:
-
-> Do all of it in a worktree of its own, never in the primary checkout:
-> `git worktree add .claude/worktrees/jules-J-<n> -b claude/jules-J-<n> origin/master`,
-> check out the files and commit there, then merge that branch into master.
-> A `git checkout <ref> -- <files>` in the primary checkout stages them on
-> master, and the next `tools/slice.ps1 finish` stops on "staged changes"
-> (L-37, 25 Oct 2026).
-
-Wrap at about 76 columns like the lines around it. **Do not** edit the
-"How to work" steps: they are Jules's, and Jules never merges.
-
-**Acceptance.** `python tools/check_docs.py` passes;
-`git grep -n "never in the primary checkout" -- plans/reference/jules.md`
-prints one line.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] FX-3 -- Jules merges happen in a worktree**
-- Plan: `plans/now/workflow-friction.md` -- "FX-3 -- Jules merges happen in a worktree"
-- Files: `plans/reference/jules.md`
-- Check: `python tools/check_docs.py` passes; `git grep -n "never in the primary checkout" -- plans/reference/jules.md` prints one line in the "Before merging a Jules pull request" bullet
-- Proof: `absent: plans/reference/jules.md :: never in the primary checkout`
-- Next after: FX-4 -- headless job tests ignore temp cleanup errors
-```
+FX-3 shipped 2026-10-30; its specification is `plans/archive/FX-3_2026-10-30.md`.
 
 ## FX-4 -- headless job tests ignore temp cleanup errors
 
