@@ -59,8 +59,8 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 1. **[Codex] RR-18 -- skip saves for the long checks C-140 and C-142**
    - Plan: `plans/now/run-repairs.md` -- "RR-18 -- skip saves for the long checks C-140 and C-142"
-   - Files: `test_scenarios/c140_first_crisis_warned.json`, `test_scenarios/c142_work_priorities.json`, `checks/ready/C-140.md`, `checks/ready/C-142.md`
-   - Check: `python tools/run_scenario.py test_scenarios/c140_first_crisis_warned.json` and `python tools/run_scenario.py test_scenarios/c142_work_priorities.json` each finish and leave their named save in the saves list; `python tools/check_docs.py` passes; `.\tools\verify.ps1` is green
+   - Files: `tools/run_scenario.py`, `tests/test_scenario_save_install.py`, `test_scenarios/c140_first_crisis_warned.json`, `test_scenarios/c142_work_priorities.json`, `checks/ready/C-140.md`, `checks/ready/C-142.md`
+   - Check: `python tests/test_scenario_save_install.py`; `python tools/run_scenario.py test_scenarios/c140_first_crisis_warned.json --install-save "C140 warned"` and `python tools/run_scenario.py test_scenarios/c142_work_priorities.json --install-save "C142 work priorities"` each finish and leave their named save in the saves list; `python tools/check_docs.py` passes; `.\tools\verify.ps1` is green
    - Proof: `absent: checks/ready/C-140.md :: run_scenario`
    - Next after: none -- the long-check skip saves are complete
 
