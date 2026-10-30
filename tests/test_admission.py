@@ -95,6 +95,13 @@ class AdmissionTests(unittest.TestCase):
         self.assertIn("waits for L-9", line)
         self.assertNotIn("L-0", line)
 
+    def test_hands_on_check_id_is_not_a_dependency(self) -> None:
+        self.plan("**Open decisions:** none.\n\n**Gate.** C-143 is replaced by this slice; L-9 too.\n")
+        text = nextsteps(item(1, "Claude", "L-1", "`tools/a.py`"), item(1, "Codex", "C-1", "`tools/b.py`"))
+        line = self.verdict(text, "L-1").line()
+        self.assertIn("waits for L-9", line)
+        self.assertNotIn("C-143", line)
+
     def test_merged_branch_counts_as_landed(self) -> None:
         self.plan("**Open decisions:** none.\n\n**Gate.** L-9 must land first.\n")
         text = nextsteps(item(1, "Claude", "L-1", "`tools/a.py`"), item(1, "Codex", "C-1", "`tools/b.py`"))

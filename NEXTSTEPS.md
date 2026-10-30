@@ -52,6 +52,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `absent: scripts/bee.gd :: FORAGERS_MEADOW_VIEW`
    - Next after: None -- plan complete
 
+5. **[Claude] FR-4 -- a headless assertion replaces the C-143 hands-on check**
+   - Plan: `plans/now/forager-recruitment.md` -- "FR-4 -- a headless assertion replaces the C-143 hands-on check"
+   - Files: `scripts/scenario_actions.gd`, `test_scenarios/fr4_scout_entrance.json`, `tests/test_fr4_scout_entrance.py`, `checks/ready/C-143.md`
+   - Check: `python -m unittest tests.test_fr4_scout_entrance` passes (an unmatched scout is not in `AT_ENTRANCE_SEEKING` after its walk and leaves the hive; an established forager below the lower threshold waits there); C-143 is archived; `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/scenario_actions.gd :: "bee_states"`
+   - Next after: FR-3 -- owning Auto-recruitment switches it on, passing species with Adaptive constancy (it does not depend on FR-4)
+
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
@@ -99,7 +106,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **CQ-M6** (`plans/now/code-health.md`) -- selection green and caste appearance named; waits for the Claude lane's HS-2 to release `scripts/bee.gd` and `scripts/soil_block.gd` and SP-6 to release `scripts/bee.gd`.
 - **CQ-M7** (`plans/now/code-health.md`) -- world draw order named; waits for CQ-M6 and then needs its section and block.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
-- **FR-4** (`plans/now/forager-recruitment.md`) -- a headless assertion replaces the C-143 hands-on check; `scripts/scenario_actions.gd` was released 25 Oct 2026, but `tools/admission.py` reads C-143, the check it retires, as an unlanded slice, so its block stays `queue-gated` until admission ignores check ids.
 
 ## Copy-paste prompts
 

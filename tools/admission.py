@@ -49,6 +49,7 @@ import check_docs  # noqa: E402
 
 UNOWNED = ("FUNCTION_MAP.md", "checks/ready.md", "plans/workstreams.md")
 SLICE_ID = re.compile(r"\b[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-\d+[a-z]?\b")
+CHECK_ID = re.compile(r"C-\d+")
 NOT_IN_QUEUE = re.compile(
     r"^## Not in the queue, and why\s*$([\s\S]*?)(?=^## |\Z)", re.MULTILINE
 )
@@ -166,6 +167,10 @@ def dependency_ids(text: str, item: Item, section: str) -> list[str]:
         for match in SLICE_ID.finditer(clause):
             tail = re.split(r"[.;]", clause[match.end():], maxsplit=1)[0]
             dep = match.group(0)
+            # A hands-on check id (C-143) is never a slice to wait for: FR-4
+            # names the check it retires and sat gated on it (30 Oct 2026).
+            if CHECK_ID.fullmatch(dep):
+                continue
             if dep != item.slice_id and not LANDED.search(tail) and dep not in found:
                 found.append(dep)
     return found
