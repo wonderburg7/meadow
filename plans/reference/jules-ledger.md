@@ -49,3 +49,6 @@ file but never edits it. Prune a row once its branch is deleted from
 | J-39 | jules/j-39-instruction-drift-16519072405257210859 | closed | 2026-10-30 | Claude | Sent back 29 and 30 Oct; superseded by R-context step 3 |
 | J-42 | jules/j-42-godot-helper-contracts-16251171298534805398 | returned | 2026-10-30 | Codex | Merged then reverted (db64a09): the test failed its own module import, masked by a standalone PYTHONPATH=tests. It must pass `python -m unittest tests.test_godot_helper_contracts` with no added tests-directory import path |
 | token audit | jules/audit-workflow-token-savings-6565171343466416243 | closed | 2026-10-30 | Codex | Sent back: Findings 1 and 6 misread verify.ps1's existing test filtering and prefinish's test selection, so no candidate is safe. No task asks for a redo; `plans/reference/jules-integration-2026-10-30.md` holds the reasons |
+| S-1 | jules/s-1-diagnostics-helpers-4600050507060882082 | merged | 2026-10-30 | Codex | Taken with edits as 592573b; `plans/reference/jules-integration-2026-10-30.md` |
+| S-1 | jules/s-1-hook-log-helpers-3127326564944141059 | merged | 2026-10-30 | Codex | Taken with edits as b991c00; same review |
+| report | jules/architecture-context-report-2353694383991347374 | merged | 2026-10-30 | Codex | Kept as a historical assessment, c9adfb9 (`docs/system-architecture-and-context-report-2026-10-24.md`) |
