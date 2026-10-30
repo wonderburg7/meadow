@@ -363,10 +363,15 @@ def _entry_level(entry: backlog.Entry, root: Path) -> str:
 
 def borrowable_blocks(text: str, lane: str, root: Path,
                       entries: list[backlog.Entry]) -> list[dict[str, str]]:
-    """Ready blocks in the other lane whose files do not touch this lane."""
+    """Ready blocks in the other lane whose files touch neither lane's queue.
+
+    The other lane's queued files matter most: a block moved across must not
+    share one with it. Checking only this lane offered SG-3, SP-12 and T2-15
+    to a dry Codex lane on 30 Oct 2026 while RR-21, SP-14 and SP-13 held
+    their files."""
     queued = {slice_id for _, slice_id in queued_ids(text)}
     deferred = deferred_ids(text)
-    owned = lane_files(text, lane)
+    owned = set().union(*(lane_files(text, each) for each in check_docs.LANES))
     found: list[dict[str, str]] = []
     for entry in entries:
         if entry.lane == lane or entry.gated or entry.slice_id in queued | deferred:

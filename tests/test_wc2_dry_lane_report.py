@@ -39,6 +39,9 @@ class DryLaneReportTest(unittest.TestCase):
                 ("D-1", "low", "deferred.py", "absent", False),
                 ("P-1", "low", "present.py", "absent", False),
                 ("C-1", "low", "queued.py", "absent", False),
+                # Shares a file with the Claude lane's queue: moving it to
+                # Codex would put one file in both lanes.
+                ("S-1", "low", "queued.py", "absent", False),
             ]
             plans = []
             for slice_id, level, path, proof, gated in specs:

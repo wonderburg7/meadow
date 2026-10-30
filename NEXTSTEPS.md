@@ -63,6 +63,41 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
+1. **[Codex] FX-1 -- guard hook ignores exclusion filters**
+   - Plan: `plans/now/workflow-friction.md` -- "FX-1 -- guard hook ignores exclusion filters"
+   - Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`
+   - Check: `python -m unittest tests.test_guard_hook` passes, allowing `| grep -v`, `-g '!..'`, `--exclude-dir` filters of a denied path and still denying `rg foo _backups -g '!x'` and `cat _backups/x | grep -v y`; `python tools/prefinish.py` passes
+   - Proof: `absent: tools/guard_hook.py :: EXCLUSION_ARGUMENT`
+   - Next after: FX-2 -- finish checks the primary is on master before verifying
+
+2. **[Codex] FX-2 -- finish checks the primary is on master before verifying**
+   - Plan: `plans/now/workflow-friction.md` -- "FX-2 -- finish checks the primary is on master before verifying"
+   - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
+   - Check: `python -m unittest tests.test_slice_lifecycle.SliceDoctorTest.test_finish_stops_before_verifying_when_the_primary_checkout_is_off_master tests.test_slice_lifecycle.SliceDoctorTest.test_finish_stops_before_verifying_on_a_staged_file_in_the_primary_checkout` passes; `python tools/prefinish.py` passes
+   - Proof: `absent: tools/slice.ps1 :: function Assert-PrimaryOnMaster`
+   - Next after: FX-3 -- Jules merges happen in a worktree
+
+3. **[Codex] FX-3 -- Jules merges happen in a worktree**
+   - Plan: `plans/now/workflow-friction.md` -- "FX-3 -- Jules merges happen in a worktree"
+   - Files: `plans/reference/jules.md`
+   - Check: `python tools/check_docs.py` passes; `git grep -n "never in the primary checkout" -- plans/reference/jules.md` prints one line in the "Before merging a Jules pull request" bullet
+   - Proof: `absent: plans/reference/jules.md :: never in the primary checkout`
+   - Next after: FX-4 -- headless job tests ignore temp cleanup errors
+
+4. **[Codex] FX-4 -- headless job tests ignore temp cleanup errors**
+   - Plan: `plans/now/workflow-friction.md` -- "FX-4 -- headless job tests ignore temp cleanup errors"
+   - Files: `tests/test_headless_jobs.py`
+   - Check: `python -m unittest tests.test_headless_jobs` passes five runs in a row with all six temp directories created with `ignore_cleanup_errors=True`; no assertion changed
+   - Proof: `absent: tests/test_headless_jobs.py :: ignore_cleanup_errors`
+   - Next after: FX-5 -- Claude skills derive `ROOT`
+
+5. **[Codex] FX-5 -- Claude skills derive `ROOT`**
+   - Plan: `plans/now/workflow-friction.md` -- "FX-5 -- Claude skills derive `ROOT`"
+   - Files: `.claude/skills/run-queue/SKILL.md`, `.claude/skills/run-reviews/SKILL.md`, `.claude/skills/plan-ahead/SKILL.md`
+   - Check: `git grep -n dl13860 -- .claude/skills` prints nothing; `python -m unittest tests.test_cx2_queue_steward` passes; `python tools/check_docs.py` passes
+   - Proof: `present: .claude/skills/run-queue/SKILL.md :: dl13860`
+   - Next after: FX-6 -- Codex skills derive `ROOT`; Codex run-queue probes `.git`
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
