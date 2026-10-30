@@ -98,3 +98,4 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-156 -- A comb worker caps a sealed cell over 15 seconds and uncaps it over 5](ready/C-156.md)
 - [C-157 -- Bee command buttons after row extraction](ready/C-157.md)
 - [C-158 -- Queen on comb work discards sour nectar](ready/C-158.md)
+- [C-159 -- A Comb worker carries a dead bee out, waits one second outside, and comes back](ready/C-159.md)

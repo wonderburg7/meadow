@@ -48,5 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/RR-20` (`claude/RR-20`) | Claude | a comb worker carrying a body visibly leaves, stays out one second, and comes back | Claude | in progress | none | `plans/now/run-repairs.md` RR-20 -- a comb worker carrying a body visibly leaves, stays out one second, and comes back |
 | `.worktrees/FX-5` (`codex/FX-5`) | Codex | Claude skills derive `ROOT` | Codex | in progress | none | `plans/now/workflow-friction.md` FX-5 -- Claude skills derive `ROOT` |
