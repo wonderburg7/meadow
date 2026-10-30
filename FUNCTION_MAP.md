@@ -556,26 +556,26 @@ One cell: contents, brood, honey ripening, how it draws.
 1758 func development_percent() -> float
 ```
 
-## settings_catalogue.gd (1,687 lines)
+## settings_catalogue.gd (1,693 lines)
 
 Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
 
 ```
 22   # --- preloads and collection order --------------------------------
 48   # --- the tunables table -------------------------------------------
-1562 # --- settings owned by Session ------------------------------------
-1576 # --- reading and writing a setting --------------------------------
-1577 static func setting_get(key: String) -> Variant
-1580 static func setting_set(key: String, value: Variant) -> void
-1587 # --- resetting ----------------------------------------------------
-1604 static func reset_config_to_defaults() -> void
-1616 static func reset_config_keys(keys: Array) -> void
-1622 # --- applying a setting with its cascades -------------------------
-1631 static func apply_setting(key: String, value: Variant) -> void
-1642 # --- the cascade helpers ------------------------------------------
-1647 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1665 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1679 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+1568 # --- settings owned by Session ------------------------------------
+1582 # --- reading and writing a setting --------------------------------
+1583 static func setting_get(key: String) -> Variant
+1586 static func setting_set(key: String, value: Variant) -> void
+1593 # --- resetting ----------------------------------------------------
+1610 static func reset_config_to_defaults() -> void
+1622 static func reset_config_keys(keys: Array) -> void
+1628 # --- applying a setting with its cascades -------------------------
+1637 static func apply_setting(key: String, value: Variant) -> void
+1648 # --- the cascade helpers ------------------------------------------
+1653 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1671 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1685 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
 ## bee_foraging.gd (1,539 lines)
@@ -1095,7 +1095,7 @@ The session JSONL writer, counters and capture profiles.
 1153 func _capture_entry(entry: Dictionary) -> bool
 ```
 
-## game_config.gd (1,039 lines)
+## game_config.gd (1,042 lines)
 
 The balance fields.
 
@@ -1115,15 +1115,15 @@ The balance fields.
 665  # --- warnings ---
 676  # --- honey ---
 725  # --- comb building ---
-745  # --- hive geometry ---
-774  # --- bee life ---
-779  # --- bee individuality ---
-858  # --- the rival colony ---
-911  # --- seasons ---
-943  # --- disease ---
-982  # --- gynes leaving ---
-994  # --- nuptial flights ---
-1002 # --- winter ---
+748  # --- hive geometry ---
+777  # --- bee life ---
+782  # --- bee individuality ---
+861  # --- the rival colony ---
+914  # --- seasons ---
+946  # --- disease ---
+985  # --- gynes leaving ---
+997  # --- nuptial flights ---
+1005 # --- winter ---
 ```
 
 ## input_selection.gd (750 lines)
