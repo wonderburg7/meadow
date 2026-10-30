@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-20 built on claude/RR-20, 30 Oct 2026, awaiting Dave's hands-on check; RR-18 remains startable in the Codex lane (Dave, 30 Oct 2026); RR-12 waits for ED-3 (RR-17 verified on codex/RR-17, 29 Oct 2026; RR-19 on claude/RR-19, 28 Oct 2026; RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-29
+Status: active | Owner: Dave / Claude Code | Next: RR-20 built on claude/RR-20, 30 Oct 2026, awaiting Dave's hands-on check; RR-18 implemented on codex/RR-18, awaiting high-risk review and integration (Dave, 30 Oct 2026); RR-12 waits for ED-3 (RR-17 verified on codex/RR-17, 29 Oct 2026; RR-19 on claude/RR-19, 28 Oct 2026; RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-30
 
 ## Objective
 
@@ -43,7 +43,7 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
-| RR-18 | skip saves for the long checks C-140 and C-142 | `test_scenarios/`, `checks/ready/C-140.md`, `checks/ready/C-142.md` | yes | low |
+| RR-18 | skip saves for the long checks C-140 and C-142 | `tools/run_scenario.py`, `tests/test_scenario_save_install.py`, `test_scenarios/`, `checks/ready/C-140.md`, `checks/ready/C-142.md` | yes | high |
 | RR-21 | no ordinary rain in the first two days; rain warnings in plain words | `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | yes -- SG-4 landed 26 Oct 2026 | medium |
 | RR-22 | select a number of bees from a multi-selection, youngest and oldest | `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, tests | no -- after the Codex lane's CQ-R6 releases `scripts/hud.gd` (CQ-R10 landed 27 Oct 2026; GP-5 and SG-4 landed 26 Oct 2026) | medium |
 
@@ -135,13 +135,29 @@ RR-17 shipped 2026-10-29; its specification is `plans/archive/RR-17_2026-10-29.m
 
 ## RR-18 -- skip saves for the long checks C-140 and C-142
 
-Level: low -- claude-haiku-5-5 (run each scenario and confirm the save appears).
+Level: high -- player save ownership and atomic catalogue installation; high-risk review/integration required.
 
 **True now.** Checks C-140 (the first crisis, warned) and C-142 (work
 priorities) take more than five minutes of play to reach, so they break the
 five-minute rule (`plans/reference/check-loop.md` rule 3). Templates:
 `test_scenarios/fc2_first_crisis_prepared.json` and
 `test_scenarios/wp3_backup_order_ui.json`.
+
+**Decision (Dave, 30 Oct 2026).** The specified commands initially produced
+only isolated scratch saves: verified against tools/run_scenario.py's
+private_user_env and scripts/save_slots.gd's ROOT/SCRATCH_ROOT.
+Dave authorised an explicit opt-in runner installation mechanism followed by
+the original checks. tools/run_scenario.py owns headless orchestration and
+is extended here; the runtime save owner and schema remain unchanged.
+Ordinary runs stay isolated. Installation runs once after a successful
+single headless verdict, with the game closed. Validate the source named
+slot and current-format payload, preserve existing player catalogue entries,
+refuse name/slug/file collisions, and expose the copied payload through an
+atomic index replacement. Serialise installers and refuse catalogue changes
+detected during copying. Keep this mechanism in a separate commit from the
+fixtures and check instructions. This expands the original no-script scope;
+the player catalogue write makes closeout high risk despite no schema change.
+The coordinator verified ownership of the runner is clear.
 
 **When done:**
 
@@ -155,20 +171,24 @@ five-minute rule (`plans/reference/check-loop.md` rule 3). Templates:
    rewritten to: run the scenario once headless from the repo root (home: `cd
    C:\Users\david\Documents\Meadow\meadow`; work: `cd
    C:\Users\dl13860\Documents\Meadow\meadow`; in PowerShell, the exact
-   `python tools/run_scenario.py test_scenarios/<file>.json` line), then open the
+   `python tools/run_scenario.py test_scenarios/<file>.json` line with --install-save and the named save), with the game closed, then open the
    named save from the cog menu > Saves and carry on from there.
-4. Each scenario is run and the save is seen to appear.
+4. Each scenario is run with its explicit --install-save name and the
+   save is seen in the player's save catalogue. Focused temporary-directory
+   tests cover preservation, collisions, malformed source/index/payload,
+   failed index replacement, concurrent installers/catalogue changes, and
+   isolation for ordinary or unsuccessful runs.
 
 **Invariants.** The checks' pass conditions are unchanged; only the way to
-reach them. No script changes.
+reach them. No runtime saving-code, save-schema or simulation changes.
 
 **Open decisions:** none.
 
 ```queue
 **[Codex] RR-18 -- skip saves for the long checks C-140 and C-142**
 - Plan: `plans/now/run-repairs.md` -- "RR-18 -- skip saves for the long checks C-140 and C-142"
-- Files: `test_scenarios/c140_first_crisis_warned.json`, `test_scenarios/c142_work_priorities.json`, `checks/ready/C-140.md`, `checks/ready/C-142.md`
-- Check: `python tools/run_scenario.py test_scenarios/c140_first_crisis_warned.json` and `python tools/run_scenario.py test_scenarios/c142_work_priorities.json` each finish and leave their named save in the saves list; `python tools/check_docs.py` passes; `.\tools\verify.ps1` is green
+- Files: `tools/run_scenario.py`, `tests/test_scenario_save_install.py`, `test_scenarios/c140_first_crisis_warned.json`, `test_scenarios/c142_work_priorities.json`, `checks/ready/C-140.md`, `checks/ready/C-142.md`
+- Check: `python tests/test_scenario_save_install.py`; `python tools/run_scenario.py test_scenarios/c140_first_crisis_warned.json --install-save "C140 warned"` and `python tools/run_scenario.py test_scenarios/c142_work_priorities.json --install-save "C142 work priorities"` each finish and leave their named save in the saves list; `python tools/check_docs.py` passes; `.\tools\verify.ps1` is green
 - Proof: `absent: checks/ready/C-140.md :: run_scenario`
 - Next after: none -- the long-check skip saves are complete
 ```
