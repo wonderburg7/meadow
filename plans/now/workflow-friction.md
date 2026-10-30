@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude | Next: FX-1, guard hook ignores exclusion filters | Dependency: none; FX-1 to FX-6 share no file and run in id order | Verified: 2026-10-26
+Status: active | Owner: Dave / Codex (moved to the Codex lane by Dave, 30 Oct 2026) | Next: FX-1, guard hook ignores exclusion filters | Dependency: none; FX-1 to FX-6 share no file and run in id order | Verified: 2026-10-26
 
 ## Objective
 
@@ -134,7 +134,7 @@ for denied), each looping with `self.subTest(command=command)`:
 **Open decisions:** none.
 
 ```queue
-**[Claude] FX-1 -- guard hook ignores exclusion filters**
+**[Codex] FX-1 -- guard hook ignores exclusion filters**
 - Plan: `plans/now/workflow-friction.md` -- "FX-1 -- guard hook ignores exclusion filters"
 - Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`
 - Check: `python -m unittest tests.test_guard_hook` passes, allowing `| grep -v`, `-g '!..'`, `--exclude-dir` filters of a denied path and still denying `rg foo _backups -g '!x'` and `cat _backups/x | grep -v y`; `python tools/prefinish.py` passes
@@ -202,7 +202,7 @@ the whole lifecycle suite).
 **Open decisions:** none.
 
 ```queue
-**[Claude] FX-2 -- finish checks the primary is on master before verifying**
+**[Codex] FX-2 -- finish checks the primary is on master before verifying**
 - Plan: `plans/now/workflow-friction.md` -- "FX-2 -- finish checks the primary is on master before verifying"
 - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
 - Check: `python -m unittest tests.test_slice_lifecycle.SliceDoctorTest.test_finish_stops_before_verifying_when_the_primary_checkout_is_off_master tests.test_slice_lifecycle.SliceDoctorTest.test_finish_stops_before_verifying_on_a_staged_file_in_the_primary_checkout` passes; `python tools/prefinish.py` passes
@@ -238,7 +238,7 @@ prints one line.
 **Open decisions:** none.
 
 ```queue
-**[Claude] FX-3 -- Jules merges happen in a worktree**
+**[Codex] FX-3 -- Jules merges happen in a worktree**
 - Plan: `plans/now/workflow-friction.md` -- "FX-3 -- Jules merges happen in a worktree"
 - Files: `plans/reference/jules.md`
 - Check: `python tools/check_docs.py` passes; `git grep -n "never in the primary checkout" -- plans/reference/jules.md` prints one line in the "Before merging a Jules pull request" bullet
@@ -273,7 +273,7 @@ If it errors after this change, the cause is not cleanup: report it as
 **Open decisions:** none.
 
 ```queue
-**[Claude] FX-4 -- headless job tests ignore temp cleanup errors**
+**[Codex] FX-4 -- headless job tests ignore temp cleanup errors**
 - Plan: `plans/now/workflow-friction.md` -- "FX-4 -- headless job tests ignore temp cleanup errors"
 - Files: `tests/test_headless_jobs.py`
 - Check: `python -m unittest tests.test_headless_jobs` passes five runs in a row with all six temp directories created with `ignore_cleanup_errors=True`; no assertion changed
@@ -306,7 +306,7 @@ Rewrap the changed paragraph at about 76 columns. **Do not** touch
 **Open decisions:** none.
 
 ```queue
-**[Claude] FX-5 -- Claude skills derive `ROOT`**
+**[Codex] FX-5 -- Claude skills derive `ROOT`**
 - Plan: `plans/now/workflow-friction.md` -- "FX-5 -- Claude skills derive `ROOT`"
 - Files: `.claude/skills/run-queue/SKILL.md`, `.claude/skills/run-reviews/SKILL.md`, `.claude/skills/plan-ahead/SKILL.md`
 - Check: `git grep -n dl13860 -- .claude/skills` prints nothing; `python -m unittest tests.test_cx2_queue_steward` passes; `python tools/check_docs.py` passes
@@ -353,7 +353,7 @@ prints one line; `python tools/check_docs.py` passes.
 **Open decisions:** none.
 
 ```queue
-**[Claude] FX-6 -- Codex skills derive `ROOT`; Codex run-queue probes `.git`**
+**[Codex] FX-6 -- Codex skills derive `ROOT`; Codex run-queue probes `.git`**
 - Plan: `plans/now/workflow-friction.md` -- "FX-6 -- Codex skills derive `ROOT`; Codex run-queue probes `.git`"
 - Files: `.agents/skills/run-queue/SKILL.md`, `.agents/skills/plan-ahead/SKILL.md`
 - Check: `git grep -n dl13860 -- .agents/skills` prints nothing; `git grep -n "refs/meadow/write-probe" -- .agents/skills/run-queue/SKILL.md` prints one line; `python tools/check_docs.py` passes
