@@ -56,7 +56,6 @@ What the 26 Oct 2026 re-verification found, cluster by cluster:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FX-5 | Claude skills derive `ROOT` | `.claude/skills/run-queue/SKILL.md`, `.claude/skills/run-reviews/SKILL.md`, `.claude/skills/plan-ahead/SKILL.md` | yes | low |
 | FX-6 | Codex skills derive `ROOT`; Codex run-queue probes `.git` | `.agents/skills/run-queue/SKILL.md`, `.agents/skills/plan-ahead/SKILL.md` | yes | low |
 
 No slice depends on another. They are chained by `Next after:` in id order
@@ -73,38 +72,7 @@ FX-3 shipped 2026-10-30; its specification is `plans/archive/FX-3_2026-10-30.md`
 
 FX-4 shipped 2026-10-30; its specification is `plans/archive/FX-4_2026-10-30.md`.
 
-## FX-5 -- Claude skills derive `ROOT`
-
-**Now.** Three Claude skills hard-code the primary checkout as
-`C:\Users\dl13860\Documents\Meadow\meadow`.
-
-**Edit, replacing only the quoted text:**
-
-1. `.claude/skills/run-queue/SKILL.md` and `.claude/skills/run-reviews/SKILL.md`,
-   the line beginning `` `ROOT` is the primary checkout: ``: replace
-   `` `C:\Users\dl13860\Documents\Meadow\meadow`. `` with
-   `` the parent of `git rev-parse --path-format=absolute --git-common-dir`, the same from the primary checkout and any worktree (PowerShell: `Split-Path -Parent (git rev-parse --path-format=absolute --git-common-dir)`). Work it out once, at the start of the run. ``
-2. `.claude/skills/plan-ahead/SKILL.md`: replace
-   `` (`C:\Users\dl13860\Documents\Meadow\meadow`). `` with
-   `` (the parent of `git rev-parse --path-format=absolute --git-common-dir`). ``
-
-Rewrap the changed paragraph at about 76 columns. **Do not** touch
-`.agents/skills/` (FX-6) or any other line.
-
-**Acceptance.** `git grep -n dl13860 -- .claude/skills` prints nothing;
-`python -m unittest tests.test_cx2_queue_steward` passes;
-`python tools/check_docs.py` passes.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] FX-5 -- Claude skills derive `ROOT`**
-- Plan: `plans/now/workflow-friction.md` -- "FX-5 -- Claude skills derive `ROOT`"
-- Files: `.claude/skills/run-queue/SKILL.md`, `.claude/skills/run-reviews/SKILL.md`, `.claude/skills/plan-ahead/SKILL.md`
-- Check: `git grep -n dl13860 -- .claude/skills` prints nothing; `python -m unittest tests.test_cx2_queue_steward` passes; `python tools/check_docs.py` passes
-- Proof: `present: .claude/skills/run-queue/SKILL.md :: dl13860`
-- Next after: FX-6 -- Codex skills derive `ROOT`; Codex run-queue probes `.git`
-```
+FX-5 shipped 2026-10-30; its specification is `plans/archive/FX-5_2026-10-30.md`.
 
 ## FX-6 -- Codex skills derive `ROOT`; Codex run-queue probes `.git`
 
