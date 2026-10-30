@@ -16,6 +16,11 @@ const Roles = preload("res://scripts/roles.gd")
 const HiveBody = preload("res://scripts/hive_body.gd")
 const SpriteCatalogue = preload("res://scripts/sprite_catalogue.gd")
 
+## The skep's entrance (the dark hole at the bottom of the art), as an offset
+## from SpriteCatalogue.HIVE_SKEP_ANCHOR in art px. The skep is drawn up by
+## this much so the door sits on hive.position (SP-13).
+const HIVE_SKEP_DOOR := Vector2(0.0, 11.5)
+
 var cells: Array = []            # populated by main.gd once the comb is built
 var comb_parent: Node2D = null   # the hive-view root new cells get added to
 var comb_centre: Vector2 = Vector2.ZERO
@@ -249,14 +254,20 @@ func cell_at_tile(hex: Vector2i) -> Node2D:
 func _ready() -> void:
 	# The 60x60 square stays as the hit shape, drawn transparent; the skep
 	# sprite sits over it, its footprint centred on the hive (SP-5).
-	polygon = Shapes.square_points(Vector2(60, 60))
+	# The door (SP-13) sits on hive.position: the skep and its hit square both
+	# move up by the door's offset from the anchor.
+	var door_shift := HIVE_SKEP_DOOR * PixelSprite.MEADOW_SCALE
+	var hit_square := Shapes.square_points(Vector2(60, 60))
+	for i: int in range(hit_square.size()):
+		hit_square[i] -= door_shift
+	polygon = hit_square
 	color = Color(0.55, 0.35, 0.15, 0.0)
 	var skep := Sprite2D.new()
 	skep.name = "SkepSprite"
 	skep.texture = SpriteCatalogue.HIVE_SKEP_SHEET
 	skep.centered = false
 	PixelSprite.apply(skep, PixelSprite.MEADOW_SCALE)
-	skep.position = -SpriteCatalogue.HIVE_SKEP_ANCHOR * PixelSprite.MEADOW_SCALE - Vector2(SpriteCatalogue.HIVE_SKEP_CELL_GUTTER, SpriteCatalogue.HIVE_SKEP_CELL_GUTTER) * PixelSprite.MEADOW_SCALE
+	skep.position = -SpriteCatalogue.HIVE_SKEP_ANCHOR * PixelSprite.MEADOW_SCALE - door_shift - Vector2(SpriteCatalogue.HIVE_SKEP_CELL_GUTTER, SpriteCatalogue.HIVE_SKEP_CELL_GUTTER) * PixelSprite.MEADOW_SCALE
 	add_child(skep)
 
 ## Spreads `amount` across any cells that will take it. Returns how

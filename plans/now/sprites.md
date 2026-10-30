@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-6 -- meadow foragers drawn from the sheet, in the Claude backlog (Dave's sheet landed and CQ-L1 released `scripts/bee.gd`, 22 Oct 2026); the meadow floor in blocks (SP-8, SP-8a) moved to `plans/now/meadow-terrain.md` on 15 Oct 2026, and the hive and menu art is `plans/now/hive-and-menu-art.md` | Dependency: none left | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude Code | Next: SP-6 -- meadow foragers drawn from the sheet, in the Claude backlog (Dave's sheet landed and CQ-L1 released `scripts/bee.gd`, 22 Oct 2026); the meadow floor in blocks (SP-8, SP-8a) moved to `plans/now/meadow-terrain.md` on 15 Oct 2026, and the hive and menu art is `plans/now/hive-and-menu-art.md`; SP-13 (the skep door on `hive.position`) landed 30 Oct 2026, hands-on check C-161 filed | Dependency: none left | Verified: 2026-10-30
 
 ## Objective
 
@@ -184,8 +184,11 @@ simulation uses `hive.position` for spawn (`world_building.gd`, near l.548),
 
 **When done:**
 
-1. A named constant `HIVE_SKEP_DOOR` in `sprite_catalogue.gd` (the door's
-   offset in art px from `HIVE_SKEP_ANCHOR`, read from the art).
+1. A named constant `HIVE_SKEP_DOOR` in `hive.gd` (the door's offset in art
+   px from `HIVE_SKEP_ANCHOR`, read from the art). `sprite_catalogue.gd` is
+   generated and stays untouched; `rival_hive.gd` reads the constant through
+   a preload of `hive.gd`. Dave chose this (option B, 30 Oct 2026) over a
+   generator change.
 2. `hive.gd` and `rival_hive.gd` shift the skep sprite up by that offset times
    `PixelSprite.MEADOW_SCALE`, and `hive.gd` shifts its hit shape with it, so
    the door sits on `hive.position`.
@@ -202,9 +205,9 @@ on the skep still selects it.
 ```queue
 **[Claude] SP-13 -- foragers come and go at the skep's door**
 - Plan: `plans/now/sprites.md` -- "SP-13 -- foragers come and go at the skep's door"
-- Files: `scripts/hive.gd`, `scripts/rival_hive.gd`, `scripts/sprite_catalogue.gd`
+- Files: `scripts/hive.gd`, `scripts/rival_hive.gd`
 - Check: `python tools/prefinish.py` is green (boot check clean); the skep sprite's door lands on `hive.position` in a headless scene (the sprite's position plus the door offset equals zero); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-- Proof: `absent: scripts/sprite_catalogue.gd :: HIVE_SKEP_DOOR`
+- Proof: `absent: scripts/hive.gd :: HIVE_SKEP_DOOR`
 - Next after: none -- `plans/now/sprites.md` is complete once SP-6, SP-12 and SP-14 have landed
 ```
 

@@ -22,6 +22,7 @@ extends Node2D
 
 const Shapes = preload("res://scripts/shapes.gd")
 const SpriteCatalogue = preload("res://scripts/sprite_catalogue.gd")
+const HiveScript = preload("res://scripts/hive.gd")
 
 ## The ruin's tint: the darker skep goes grey when the colony dies out.
 const RUIN_TINT := Color(0.55, 0.55, 0.55)
@@ -76,12 +77,12 @@ func _ready() -> void:
 	body.color = Color(0.42, 0.24, 0.30, 0.0)   # hit shape only; the skep below is drawn
 	add_child(body)
 
-	# The darker recolour of the player's skep (SP-5), footprint centred.
+	# The darker recolour of the player's skep (SP-5), door on the hive position (SP-13).
 	skep = Sprite2D.new()
 	skep.texture = SpriteCatalogue.HIVE_SKEP_RIVAL_SHEET
 	skep.centered = false
 	PixelSprite.apply(skep, PixelSprite.MEADOW_SCALE)
-	skep.position = -(SpriteCatalogue.HIVE_SKEP_ANCHOR + Vector2(SpriteCatalogue.HIVE_SKEP_CELL_GUTTER, SpriteCatalogue.HIVE_SKEP_CELL_GUTTER)) * PixelSprite.MEADOW_SCALE
+	skep.position = -(SpriteCatalogue.HIVE_SKEP_ANCHOR + HiveScript.HIVE_SKEP_DOOR + Vector2(SpriteCatalogue.HIVE_SKEP_CELL_GUTTER, SpriteCatalogue.HIVE_SKEP_CELL_GUTTER)) * PixelSprite.MEADOW_SCALE
 	add_child(skep)
 
 	label = Label.new()
