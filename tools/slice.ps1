@@ -2675,6 +2675,18 @@ function Assert-PrimaryIndexMatchesHead {
     }
 }
 
+function Assert-PrimaryOnMaster {
+    # finish merges into master from the primary checkout. Checked before
+    # the branch verify as well as under the lock, so a primary left on
+    # another branch stops finish in seconds, not after verify.ps1
+    # (7 Oct 2026: 'codex/refill-ar3').
+    param([object]$Target)
+    $primaryBranch = (Invoke-GitText -C $Target.Root rev-parse --abbrev-ref HEAD).Text.Trim()
+    if ($primaryBranch -ne "master") {
+        Stop-Slice -Cause "primary checkout is on '$primaryBranch', not master" -Fix "in the primary checkout run git switch master (commit or stash-by-WIP-commit anything there first), then retry"
+    }
+}
+
 function Invoke-SliceFinishVerify {
     # finish's half before the lock. A stop here never reaches
     # Invoke-WithLifecycleLock's outcome record, so it writes its own and
@@ -2683,6 +2695,7 @@ function Invoke-SliceFinishVerify {
     $started = Get-Date
     try {
         $target = Get-SliceFinishTarget
+        Assert-PrimaryOnMaster -Target $target
         Assert-PrimaryIndexMatchesHead -Target $target
         Invoke-SliceBranchVerify -Target $target -PythonPath $PythonPath
     }
@@ -2823,10 +2836,7 @@ function Invoke-SliceFinish {
     # propagating, so a failed ledger commit surfaced as a path error.
     Set-Location -LiteralPath $root
     Set-SliceStep "primary checkout checks"
-    $primaryBranch = (git rev-parse --abbrev-ref HEAD).Trim()
-    if ($primaryBranch -ne "master") {
-        Stop-Slice -Cause "primary checkout is on '$primaryBranch', not master" -Fix "in the primary checkout run git switch master (commit or stash-by-WIP-commit anything there first), then retry"
-    }
+    Assert-PrimaryOnMaster -Target $target
 
     # L-19: an earlier run stopped part-way through re-applying its queue
     # edit, leaving its own merge half done. The journal says the merge is
