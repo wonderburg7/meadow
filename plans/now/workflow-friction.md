@@ -56,7 +56,6 @@ What the 26 Oct 2026 re-verification found, cluster by cluster:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FX-1 | guard hook ignores exclusion filters | `tools/guard_hook.py`, `tests/test_guard_hook.py` | yes | low |
 | FX-2 | finish checks the primary is on master before verifying | `tools/slice.ps1`, `tests/test_slice_lifecycle.py` | yes | low |
 | FX-3 | Jules merges happen in a worktree | `plans/reference/jules.md` | yes | low |
 | FX-4 | headless job tests ignore temp cleanup errors | `tests/test_headless_jobs.py` | yes | low |
@@ -69,78 +68,7 @@ does not name: each slice's "Do not" line says what a past fix relied on.
 
 **Read for any slice here:** its own section below and nothing else.
 
-## FX-1 -- guard hook ignores exclusion filters
-
-**Now.** `_reads_tree()` in `tools/guard_hook.py` refuses any reader whose
-arguments contain a denied path, including a filter that removes it:
-`git ls-files | grep -v _backups`, `rg foo -g '!_backups'`,
-`grep -rn foo --exclude-dir=_backups .`.
-
-**Edit `tools/guard_hook.py`.**
-
-1. Below `TREE_READERS`, add exactly:
-
-   ```python
-   # A filter that removes a denied path reads nothing from it: an inverted
-   # match on piped input, or an exclude/glob-negation argument.
-   STDIN_FILTERS = frozenset({"grep", "rg", "select-string"})
-   INVERT_FLAG = re.compile(r"(?<!\S)(?:-[a-z]*v[a-z]*|--invert-match|-notmatch)(?!\S)")
-   EXCLUSION_ARGUMENT = re.compile(
-       r"""(?<!\S)(?:--exclude(?:-dir)?(?:=|\s+)|(?:-g|--glob)(?:=|\s+)['"]?!|['"]?:(?:!|\(exclude\)))\S*"""
-   )
-   ```
-
-2. Replace the whole body of `_reads_tree` (keep its docstring) with:
-
-   ```python
-       for line in command.splitlines():
-           pieces = re.split(r"(&&|\|\||[;|])", line)
-           for index in range(0, len(pieces), 2):
-               words = pieces[index].strip().split(None, 1)
-               if not words or words[0].lower() not in TREE_READERS:
-                   continue
-               reader = words[0].lower()
-               arguments = words[1].lower().replace("\\", "/") if len(words) > 1 else ""
-               piped = index > 0 and pieces[index - 1] == "|"
-               if piped and reader in STDIN_FILTERS and INVERT_FLAG.search(arguments):
-                   continue
-               arguments = EXCLUSION_ARGUMENT.sub(" ", arguments)
-               if any(path in arguments for path in DENIED_READ_PATHS):
-                   return True
-       return False
-   ```
-
-**Edit `tests/test_guard_hook.py`.** After `test_allows_ordinary_commands_and_cd_setup`,
-add two methods in the style of `test_allows_history_and_path_mentions`
-(`returncode, output = self.run_hook(command)`, then `assertEqual(returncode, 0)`
-and `assertEqual(output, {})` for allowed; `self.assert_denied(command, "denied path")`
-for denied), each looping with `self.subTest(command=command)`:
-
-- `test_allows_filters_that_exclude_denied_paths`:
-  `'git grep -n x -- "*.md" | grep -v "^plans/archive"'`,
-  `"git ls-files | grep -iv _backups"`, `"rg foo -g '!_backups'"`,
-  `"rg foo --glob=!plans/archive/**"`, `"grep -rn foo --exclude-dir=_backups ."`,
-  `"grep -rn foo --exclude-dir _backups ."`,
-  `"Get-ChildItem -Recurse | Select-String -NotMatch _backups"`.
-- `test_still_denies_reads_beside_an_exclusion`:
-  `"grep -v foo _backups/x.txt"`, `"rg foo _backups -g '!x'"`,
-  `"grep -rn foo --exclude-dir=x _backups"`, `"cat _backups/x | grep -v y"`.
-
-**Do not** touch `_reason`, `_is_worktree` or `DENIED_READ_PATHS`.
-
-**Acceptance.** `python -m unittest tests.test_guard_hook` passes;
-`python tools/prefinish.py` passes.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] FX-1 -- guard hook ignores exclusion filters**
-- Plan: `plans/now/workflow-friction.md` -- "FX-1 -- guard hook ignores exclusion filters"
-- Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`
-- Check: `python -m unittest tests.test_guard_hook` passes, allowing `| grep -v`, `-g '!..'`, `--exclude-dir` filters of a denied path and still denying `rg foo _backups -g '!x'` and `cat _backups/x | grep -v y`; `python tools/prefinish.py` passes
-- Proof: `absent: tools/guard_hook.py :: EXCLUSION_ARGUMENT`
-- Next after: FX-2 -- finish checks the primary is on master before verifying
-```
+FX-1 shipped 2026-10-30; its specification is `plans/archive/FX-1_2026-10-30.md`.
 
 ## FX-2 -- finish checks the primary is on master before verifying
 
