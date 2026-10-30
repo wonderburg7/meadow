@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/RR-21` (`claude/RR-21`) | Claude | no ordinary rain in a run's first two days, and rain warnings say when in plain words | Claude | in progress | none | `plans/now/run-repairs.md` RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words |
+| `.worktrees/RR-18` (`codex/RR-18`) | Codex | skip saves for the long checks C-140 and C-142 | Codex | in progress | none | `plans/now/run-repairs.md` RR-18 -- skip saves for the long checks C-140 and C-142 |
