@@ -1,7 +1,7 @@
 # Google Jules -- task list and method
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: Jules every task; Claude/Codex only to add or prune a task -->
-Status: reference | Owner: Dave / Claude Code / Codex | Next: J-40 to J-43 are the free follow-ups; J-29 to J-39 reports need correction before acceptance (review below); merged helper task blocks pruned | Dependency: none | Verified: 2026-10-29
+Status: reference | Owner: Dave / Claude Code / Codex | Next: J-40 to J-43 are the free follow-ups; J-29 to J-39 reports need correction before acceptance (review below); merged helper task blocks pruned; sessions now run up to 20 tasks, so merge a session's pull requests in one pass | Dependency: none | Verified: 2026-10-30
 
 Jules works from GitHub on a Linux VM, outside the Claude/Codex slice queue.
 Its work is behaviour-preserving tooling: guards that catch a known bug class
@@ -29,7 +29,7 @@ bounded follow-ups; they do not require those reports to be accepted.
 ## Starting prompt (Dave pastes this into Jules)
 
 ```text
-Work through Meadow's Jules tasks one after another in this one session until a stop condition below is met. This prompt overrides two lines elsewhere: AGENTS.md's "stop after one pull request" and jules.md's "start every task as a new Jules task". Every other rule in those files stands.
+Work through Meadow's Jules tasks one after another in this one session, as many as you can, until a stop condition below is met. Opening a pull request is not a stop condition. Every rule in AGENTS.md's Jules section and in jules.md's "How to work" stands.
 
 Once, at the start: read the "If you are Google Jules" section of AGENTS.md. Of plans/reference/jules.md, read only the parts named below.
 
@@ -38,34 +38,41 @@ For each task:
 1. Run `git fetch origin`, then `git switch -c jules/<id>-<topic> origin/master`. Cut every branch from origin/master, never from local master or an earlier task's branch. A stale or stacked base is what made earlier PRs carry two tasks and revert files.
 2. Run `python tools/jules_preflight.py --next` and do the task it prints. It never prints a task that is taken, waiting on an unmerged task, or touching a file an open branch changes, so no task ever needs stacking. If it prints "none", run `python tools/heading.py plans/reference/jules.md "Standing tasks"` and take the first that fits. For S-1, S-2 and S-3, first run `git branch -r --list 'origin/jules/s-*'` and look at your own open PRs, then pick a tool, function or pitfall that none of them covers.
 3. Run `python tools/heading.py plans/reference/jules.md "How to work"` and follow it. Write its plan (task id, preflight output, files, proof) in your message and carry on without waiting for approval.
-4. Before opening the PR, check each clause of the task's `Do:` one by one against your change and say which test or edit meets it. Run `python tools/jules_preflight.py --scope`; it must print no `off` line. Title the PR `J-<n>: <task title>` (`S-<n>: ` for a standing task) and write the description in the order "How to work" step 8 gives.
-5. Open the PR, do not merge it, and start the next task at step 1 without waiting for review.
+4. Before opening the PR, read your own diff once (`git diff origin/master...HEAD`) and remove anything the task's `Do:` does not ask for. Check each clause of `Do:` one by one against your change and say which test or edit meets it. Run `python tools/jules_preflight.py --scope`; it must print no `off` line. Title the PR `J-<n>: <task title>` (`S-<n>: ` for a standing task) and write the description in the order "How to work" step 8 gives, short enough that the reviewer need not open the diff to understand it.
+5. Open the PR, do not merge it, and start the next task at step 1 without waiting for review. Before each new task, look at the CI result of your earlier PRs: fix a failing one on its own branch if the fix is inside its task's files, once; if it still fails, mark that PR draft with the failure in its first line and carry on.
+
+A task you cannot finish does not end the session. If one fails its checks and you cannot fix it within its scope, push what you have, open it as a draft PR whose first line is `Blocked: <the one reason>`, and take the next task.
 
 Stop and report when any of these happens:
 - `--next` prints "none" and no standing task fits.
-- A task fails its checks and you cannot fix it within its scope.
-- `--scope` shows an `off` line you cannot clear.
-- Preflight returns a task touching a file an open PR of yours already changes.
-- A PR of yours shows a failing CI check you can see.
-- You have finished 5 tasks.
-- The next task is an audit ("Audit: ...") and you have already finished one in this session. Stop there; do not skip ahead to a later task.
+- `--scope` shows an `off` line you cannot clear (your tree is stale or stacked; clearing it is the only safe move, so say so).
+- Two tasks in a row end as draft `Blocked:` PRs for the same reason (the cause is probably shared, not the tasks).
+- You have finished 20 tasks.
+- You have finished 3 audits ("Audit: ..."). Audits read the whole code base; after the third, take only non-audit tasks, and stop if none are free.
 
-If you are unsure whether something is in scope, stop and say so rather than guessing. Do not edit plans/reference/jules.md or any file the task's `Files:` line does not name.
+If you are unsure whether something is in scope, do not guess: skip that task as a draft `Blocked:` PR naming the question, and take the next. Do not edit plans/reference/jules.md or any file the task's `Files:` line does not name.
 
-Final report, one block: a table with one row per PR (task id, branch, PR link, `--scope` result, commands run, commands not run), then every Follow-up from every PR in one list with file and function, then for each audit the three findings you re-checked by hand. If you stopped early, say which condition.
+Final report, one block, written so a reviewer can act on it without opening any PR: a table with one row per PR (task id, branch, PR link, ready or draft, files changed and lines changed from `git diff --shortstat origin/master...HEAD`, `--scope` result, the one command that reruns its proof); then every Follow-up from every PR in one list with file and function and, where one plainly owns it, the plan under `plans/`; then for each audit the three findings you re-checked by hand. List draft PRs first with their `Blocked:` reason. If you stopped early, say which condition.
 ```
 
-**One session may work several tasks in sequence, but never as a follow-up
-message in a finished session** (24 Oct 2026 review; sequence prompt 27 Oct).
-A follow-up in an old session builds on that session's snapshot: PR 4 carried
-J-2 and J-3 from one session, changed 19 files for two tasks, and its J-3
-commit deleted J-2's files; PR 6 stacked J-5 and J-6 the same way. The
-sequence prompt avoids that by cutting every branch from a freshly fetched
-`origin/master`, running `--scope` per task, and stopping on any `off` line.
-It reads "How to work" through `heading.py`, not this whole file, because the
-other tasks are what tempt Jules to batch them. Audits read the whole code
-base, so a session stops after one. For a single task, add "Stop after the
-first pull request." to the prompt.
+**A session works as many tasks as it can in sequence** (sequence prompt 27
+Oct; session limits lifted 30 Oct 2026, so the free allowance is spent on
+work rather than on session starts). What stays one-to-one is task, branch
+and pull request, because that is what keeps a review cheap: `--scope` and CI
+check each pull request alone, and a pull request can be merged, corrected or
+sent back without touching its neighbours. The thing to avoid is a follow-up
+message in a session that has already finished its tasks: that builds on the
+session's old snapshot (24 Oct 2026 review). PR 4 carried J-2 and J-3, changed
+19 files for two tasks, and its J-3 commit deleted J-2's files; PR 6 stacked
+J-5 and J-6 the same way. The sequence prompt avoids that by cutting every
+branch from a freshly fetched `origin/master`, running `--scope` per task, and
+stopping on any `off` line. It reads "How to work" through `heading.py`, not
+this whole file, because the other tasks are what tempt Jules to batch them.
+Limits are 20 tasks and 3 audits a session (audits read the whole code
+base). A session that ends on `--next` printing "none" with every task taken
+is waiting on review, not on Jules: merge its pull requests in one pass
+("Keeping this list") and paste the prompt again. For a single task, add
+"Stop after the first pull request." to the prompt.
 
 ## How to work
 
@@ -119,14 +126,31 @@ first pull request." to the prompt.
    files you never touched. For each `off` line run the command it prints,
    commit, and run `--scope` again. Never push with an `off` line standing: CI
    runs the same check on every `jules/j-*` pull request and fails on one.
-8. **Pull request description**, in this order: `Task:` id and title;
-   `Preflight:` the output of step 2; `Scope:` the output of step 7; `Ran:`
-   each command and its result; `Not run:` Godot locally, `tools/verify.ps1`
+8. **Pull request description**, in this order: `Verdict:` one line, `ready`
+   or `draft: <reason>`; `Task:` id and title; `Diff:` the output of `git
+   diff --shortstat origin/master...HEAD`; `Preflight:` the output of step 2;
+   `Scope:` the output of step 7; `Ran:` each command and its result, with
+   the summary line only (`OK (N tests)`), never the whole log, and the
+   failing lines if one failed; `Not run:` Godot locally, `tools/verify.ps1`
    (Windows only) and hands-on play, unless you did run one; `Covers:` each
    line of the task's `Do:` against the test (or change) that meets it, or
-   "not covered" and why; `Proof:` step 5; `Follow-ups:` anything found
-   outside the task's files, with file and function. Then stop: never merge
-   your own pull request.
+   "not covered" and why; `Proof:` step 5; `Rerun:` the one command or two
+   that let a reviewer see the proof in under a minute (the guard, then the
+   mutation to apply and the command that then fails); `Follow-ups:` anything
+   found outside the task's files, with file and function. Do not restate the
+   task's `Why:` or `Do:` text. Then open the pull request and take the next
+   task: never merge your own pull request.
+
+   **Cheap to review.** The reviewer is Claude or Codex, paying by the token,
+   and reads the description and `--scope`, then the diff of the one or two
+   files that matter. So: one commit per pull request (squash your own
+   fixes), no merge commits, no whitespace or formatting churn, no file the
+   task does not name. A test asserts a value, not merely that nothing
+   raised; it covers every public function the task names and each error
+   exit, since thin tests were the correction needed on J-3, J-8 and J-9. A
+   report states each finding once, with `path:line`, and its Summary stands
+   alone. Put anything that needs a decision in `Follow-ups:`, never in the
+   diff.
 
 **An audit task** (title "Audit: ...") changes exactly one file, the new
 report its `Files:` names under `docs/audits/`, and no code, test or other
@@ -530,14 +554,31 @@ For Claude, Codex and Dave, not Jules.
 - **Keep at least four tasks free.** `python tools/jules_preflight.py
   --queue` lists each task's state and exits 1 below four. Jules finished
   seven tasks in the 3.5 hours after 19:41 on 23 Oct and Dave's paste is the
-  only pace limit, so a list of three is empty within a sitting. Refill when
-  you merge a Jules pull request or when `--queue` says short, whichever
-  comes first.
+  only pace limit, so a list of three is empty within a sitting. With
+  sessions now allowed 20 tasks, aim for ten free after a merge pass, not
+  four (raise `LOW_WATER` in `tools/jules_preflight.py` to match when you
+  next edit it). Refill when you merge a session's pull requests or when
+  `--queue` says short, whichever comes first. Today (30 Oct) every task is
+  taken by an unmerged branch, so the list is dry because review is behind,
+  not because Jules is slow: merge before adding.
 - **Before merging a Jules pull request**, run `python tools/jules_preflight.py
   --scope J-n --ref origin/jules/<branch>` and take only the `ok` files
   (`git checkout origin/jules/<branch> -- <those files>`), as `cd0b5a0e` did:
   a Jules branch can revert master's queue, plans and hooks (PR 4, PR 5). Fix
   a thin or inaccurate test in the same merge, as J-3, J-8 and J-9 each needed.
+- **Merge a session in one pass, not pull request by pull request** (30 Oct
+  2026): a long session leaves a dozen branches, and each review that
+  re-reads the task list, the queue and the context costs more than the
+  review itself. Start from the session's final report (Dave pastes it), not
+  from GitHub. Skip every `draft` row and carry its `Blocked:` reason to the
+  next refill. For each `ready` row read `Verdict:`, `Covers:` and `Rerun:`
+  from its description, run `Rerun:` once, then read only the diff of the
+  file(s) that hold the logic; a row whose `Rerun:` fails or whose `Covers:`
+  has a "not covered" without a good reason goes back, unmerged. Take every
+  sound branch's `ok` files in **one** commit on one work branch, with one
+  message line `J-<n>: <title>` per task (the preflight reads each line, so
+  all of them count as done), run `tools/verify.ps1` once, and merge once.
+  Route the report's Follow-ups in one edit, then do the refill below once.
 - Number new tasks after the highest id ever used (`git log -E
   --grep="^J-[0-9]+:"` shows used ones); never reuse an id.
 - Delete merged task blocks at the next refill, not per merge. `--next`

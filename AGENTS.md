@@ -11,9 +11,10 @@ the Claude/Codex slice queue (Dave, 23 Oct 2026):
   `NEXTSTEPS.md`, `plans/workstreams.md`, `plans/now/`, `checks/` or
   `FUNCTION_MAP.md`.
 - Meadow targets Godot **4.7** (`project.godot`), not 4.3.
-- Branch from the latest `origin/master` as `jules/<topic>`; one finding per
-  pull request, touching only the files the task names. Never merge your
-  own pull request.
+- Branch from the latest `origin/master` as `jules/<topic>`; one task per
+  pull request, touching only the files the task names. One pull request
+  is not the end of the session: open it and go straight on to the next
+  task. Never merge your own pull request.
 - Behaviour-preserving only: no change to simulation results, `GameConfig`
   balance values, or save/restore fields (`scripts/saving.gd` and any
   `to_dict`/`from_dict`).
@@ -30,12 +31,13 @@ the Claude/Codex slice queue (Dave, 23 Oct 2026):
 - **Your work and method are in `plans/reference/jules.md`**: run
   `python tools/jules_preflight.py --next` (it prints your task in full) and
   `python tools/heading.py plans/reference/jules.md "How to work"`; read no
-  other part of that file. One task per pull request, each on its own branch
-  cut from a freshly fetched `origin/master`, never stacked. Dave's starting
-  prompt (in that file) says whether to stop after one pull request or work
-  through tasks in sequence; follow it. Before you push,
-  `python tools/jules_preflight.py --scope` must print no `off` line (an old
-  snapshot shows as reverts of files you never touched). Never edit that file.
+  other part of that file. Work through tasks in sequence in one session,
+  as many as its stop conditions allow: one task per pull request, each on
+  its own branch cut from a freshly fetched `origin/master`, never stacked.
+  Stop after one pull request only if Dave's prompt says so. Before you
+  push, `python tools/jules_preflight.py --scope` must print no `off` line
+  (an old snapshot shows as reverts of files you never touched). Never edit
+  that file.
 
 **Before reading or acting on any other project file, read
 `docs/agent-rules.md` (the rules Claude and Codex share) and `CHATGPT.md`,
