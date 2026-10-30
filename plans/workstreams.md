@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/FX-5` (`codex/FX-5`) | Codex | Claude skills derive `ROOT` | Codex | in progress | none | `plans/now/workflow-friction.md` FX-5 -- Claude skills derive `ROOT` |
+| `.worktrees/RR-21` (`claude/RR-21`) | Claude | no ordinary rain in a run's first two days, and rain warnings say when in plain words | Claude | in progress | none | `plans/now/run-repairs.md` RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words |
