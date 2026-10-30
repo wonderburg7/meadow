@@ -92,7 +92,8 @@ Recorded once here; a slice may restate one in a sentence and point back.
     (`docs/agent-rules.md` rule 3).
   - Jules's modularity review (30 Oct 2026; record
     `docs/modularity-review-2026-10-30.md`) is applied under D1, not as a
-    new rule. `hud.gd` loses its goal shelf (CQ-R15) and nothing else
+    new rule. `hud.gd` loses its goal shelf (CQ-R15, after SG-3 -- Dave
+    confirmed the order, 30 Oct 2026) and nothing else
     wholesale: the cell popup stays (D1), the command rows already moved
     (CQ-R6), and the selection panel and tray sizing stay together because
     they share HC-8/HC-16's settle logic. A split-out HUD part is a
