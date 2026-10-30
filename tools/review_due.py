@@ -13,6 +13,12 @@ which reviews were due without opening a session for each.
     python tools/review_due.py <key>    one review's starting point: its last
                                         record, the SINCE commit, and the watched
                                         files changed since
+
+A review file's `Jules:` line says whether Google Jules runs it on its rota
+(`plans/reference/jules-reviews.md`): `Jules: R-<name> | priority <n> | every
+<d> days | min <c> commits`, or `Jules: no -- <reason>`. Both outputs say when
+a Jules report for a review is waiting to be processed, because processing it
+replaces the review's own sweep.
 """
 
 from __future__ import annotations
@@ -28,6 +34,17 @@ PROMPTS_DIR = Path("plans/reference/reviews")
 RECORD_NAME = re.compile(r"^(?:docs/(?P<a>.+)-|plans/archive/(?P<b>.+)_)(?P<date>\d{4}-\d{2}-\d{2})\.md$")
 REVIEWED = re.compile(r"^Reviewed:\s*([0-9a-f]{7,40})\b", re.MULTILINE)
 DETAIL_FILE_LIMIT = 60
+JULES_ROTA = re.compile(
+    r"^(R-[a-z]+)\s*\|\s*priority\s+(\d+)\s*\|\s*every\s+(\d+)\s+days?\s*\|\s*min\s+(\d+)\s+commits?\s*$"
+)
+
+
+@dataclass
+class JulesRota:
+    id: str
+    priority: int
+    every_days: int
+    min_commits: int
 
 
 @dataclass
@@ -36,12 +53,25 @@ class Prompt:
     key: str | None
     watches: list[str]
     reasoning: str = "unstated"
+    jules: JulesRota | None = None
+    jules_note: str = "no Jules line"  # the line's text when Jules does not run it
+
+
+def parse_jules(value: str) -> tuple[JulesRota | None, str]:
+    """A `Jules:` line's value: the rota entry, or None and the reason it is not on the rota."""
+    match = JULES_ROTA.match(value.strip())
+    if match:
+        return JulesRota(match.group(1), int(match.group(2)), int(match.group(3)), int(match.group(4))), ""
+    if value.strip().lower().startswith("no"):
+        return None, value.strip()
+    return None, f"unreadable Jules line: {value.strip()}"
 
 
 def parse_prompt(path: Path, text: str) -> Prompt:
     key = None
     watches: list[str] = []
     reasoning = "unstated"
+    jules, jules_note = None, "no Jules line"
     for line in text.splitlines()[:8]:
         if line.startswith("Record key:"):
             value = line.split(":", 1)[1].strip().split()[0] if line.split(":", 1)[1].strip() else ""
@@ -50,7 +80,21 @@ def parse_prompt(path: Path, text: str) -> Prompt:
             watches = line.split(":", 1)[1].split()
         elif line.startswith("Reasoning:"):
             reasoning = line.split(":", 1)[1].strip() or "unstated"
-    return Prompt(path, key, watches, reasoning)
+        elif line.startswith("Jules:"):
+            jules, jules_note = parse_jules(line.split(":", 1)[1])
+    return Prompt(path, key, watches, reasoning, jules, jules_note)
+
+
+def waiting_jules_reports(root: Path = ROOT) -> dict[str, str]:
+    """Rota id -> the unprocessed Jules review branch for it, from the remote refs as last fetched.
+    Empty when the refs or the tool are unavailable: this is a hint, never a gate."""
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import jules_preflight  # imported here: it imports this module
+
+        return jules_preflight.waiting_reports(root)
+    except Exception:  # noqa: BLE001 -- a missing remote must not stop the review list
+        return {}
 
 
 def load_prompts(root: Path = ROOT) -> list[Prompt]:
@@ -142,6 +186,7 @@ def check_backlog(root: Path = ROOT) -> str:
 def summary(root: Path = ROOT) -> int:
     prompts = load_prompts(root)
     tracked = git("ls-files", "docs", "plans/archive", root=root).split()
+    waiting = waiting_jules_reports(root)
     rows = []
     for prompt in prompts:
         if not prompt.watches:
@@ -153,6 +198,8 @@ def summary(root: Path = ROOT) -> int:
             verdict = "moved" if status.changed else "quiet"
             last = status.date or "-"
             since = f"{status.commits} commits, {len(status.changed or [])} files since {status.since}"
+        if prompt.jules and prompt.jules.id in waiting:
+            since += f"  [Jules report waiting: {waiting[prompt.jules.id]}]"
         rows.append((prompt.key or prompt.path.stem, prompt.reasoning, verdict, last, since))
     width = max(len(row[0]) for row in rows)
     for key, reasoning, verdict, last, since in rows:
@@ -160,6 +207,11 @@ def summary(root: Path = ROOT) -> int:
     print(check_backlog(root))
     for problem in missing_watches(prompts, root):
         print(f"warning: {problem}")
+    for prompt in prompts:
+        if prompt.jules_note.startswith("unreadable"):
+            print(f"warning: {prompt.path.as_posix()}: {prompt.jules_note}")
+    if waiting:
+        print('a waiting Jules report replaces that review\'s sweep: plans/reference/jules-reviews.md "Processing a Jules review"')
     print("one review's starting point: python tools/review_due.py <key>")
     return 0
 
@@ -173,6 +225,16 @@ def detail(key: str, root: Path = ROOT) -> int:
     status = status_of(prompt, git("ls-files", "docs", "plans/archive", root=root).split(), root)
     print(f"prompt:   {prompt.path.as_posix()} (reasoning: {prompt.reasoning})")
     print(f"record:   {status.record or 'none'}")
+    if prompt.jules:
+        branch = waiting_jules_reports(root).get(prompt.jules.id)
+        print(
+            f"jules:    {prompt.jules.id} report waiting on {branch} -- process it instead of sweeping"
+            ' (plans/reference/jules-reviews.md "Processing a Jules review")'
+            if branch
+            else f"jules:    {prompt.jules.id} on the rota (priority {prompt.jules.priority}); no report waiting"
+        )
+    else:
+        print(f"jules:    not on the Jules rota ({prompt.jules_note})")
     if status.problem:
         print(f"SINCE:    unknown -- {status.problem}")
         return 0

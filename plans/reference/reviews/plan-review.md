@@ -4,6 +4,7 @@
 Record key: plan-review
 Reasoning: high
 Watches: plans/now plans/design plans/reference plans/README.md NEXTSTEPS.md checks
+Jules: no -- its work is editing NEXTSTEPS.md and plans/, which Jules may not touch, and plans change faster than a report is processed
 
 **Owns:** every live file in `plans/now/`, `plans/design/` and
 `plans/reference/`; the routing and guardrails in `plans/README.md`;

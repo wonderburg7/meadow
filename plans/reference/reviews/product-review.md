@@ -4,6 +4,7 @@
 Record key: product-review
 Reasoning: high
 Watches: ROADMAP.md DESIGN_BACKLOG.md plans/design docs/challenge-stages.md scripts/game_config.gd scripts/settings_catalogue.gd tools/pacing_gates.py
+Jules: no -- milestone fit, design decisions, balance values and pacing experiments are Dave's or barred to Jules
 
 **Owns:** whether the work being done is the right work: `ROADMAP.md` (the
 next milestone and its exit criteria), `DESIGN_BACKLOG.md` (decisions),

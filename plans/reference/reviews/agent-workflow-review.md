@@ -4,6 +4,7 @@
 Record key: agent-workflow-review
 Reasoning: high
 Watches: tools/slice.ps1 tools/refill_lane.py tools/archive_slice.py tools/prefinish.py tools/session_cost.py plans/now/agent-lifecycle.md plans/observations/system-improvement-signals.md plans/workstreams.md plans/reference/closeout.md .claude/agents .claude/skills .agents .claude/settings.json .codex
+Jules: no -- it reads Claude session transcripts on Dave's machine
 
 **Owns:** how sessions actually run: the lifecycle tooling
 (`tools/slice.ps1`, `tools/refill_lane.py`, `tools/prefinish.py`, worktrees,

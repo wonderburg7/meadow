@@ -38,6 +38,12 @@ the Claude/Codex slice queue (Dave, 23 Oct 2026):
   push, `python tools/jules_preflight.py --scope` must print no `off` line
   (an old snapshot shows as reverts of files you never touched). Never edit
   that file.
+- **When no numbered task is free, `--next` prints a due review**
+  (`next  R-<name>`): run it as `python tools/heading.py
+  plans/reference/jules-reviews.md "Running a review"` says; the report is
+  the only file you add. `plans/reference/jules-ledger.md` records what
+  happened to earlier Jules branches, and a `- Correct:` line `--next` prints
+  under a task is what an earlier attempt must fix. Read both; edit neither.
 
 **Before reading or acting on any other project file, read
 `docs/agent-rules.md` (the rules Claude and Codex share) and `CHATGPT.md`,
