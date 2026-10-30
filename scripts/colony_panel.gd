@@ -63,6 +63,9 @@ const PLOT_SERIES := [
 const PLOT_CONTENT_MIN_WIDTH := 300.0
 
 var count_labels: Dictionary = {}   # count key -> Button
+## One line for the queen, above the role tallies, saying what she is doing.
+## Hidden while there is no queen (before she is built, or after she dies).
+var queen_label: Label
 var stat_labels: Dictionary = {}    # stat key -> Label
 var star_buttons: Dictionary = {}   # stat key -> Button
 
@@ -129,6 +132,12 @@ func _ready() -> void:
 	needing_attention_column.add_child(needing_attention_ok_label)
 
 	var jobs := _section(column, "Who is doing what", false)
+	queen_label = Label.new()
+	queen_label.theme_type_variation = "Small"
+	queen_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	queen_label.custom_minimum_size = Vector2(PLOT_CONTENT_MIN_WIDTH, 0)
+	queen_label.visible = false
+	jobs.add_child(queen_label)
 	for key in Roles.count_keys():
 		jobs.add_child(_make_role_row(key))
 
@@ -241,6 +250,12 @@ func _make_stat_row(entry: Dictionary) -> Control:
 	label.theme_type_variation = "Small"
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size = Vector2(270, 0)
+	# The readout itself carries the explanation on hover, because the info
+	# badge is off by default. A Label ignores the mouse unless told not to,
+	# and it takes the row's spare width so the text can never collapse.
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.mouse_filter = Control.MOUSE_FILTER_PASS
+	label.tooltip_text = entry.tip
 	row.add_child(label)
 	stat_labels[key] = label
 
@@ -397,6 +412,12 @@ func refresh(counts: Dictionary, texts: Dictionary, samples: Array, signals: Arr
 		count_labels[key].add_theme_color_override(
 			"font_color", UiTheme.readable_accent(Roles.colour_for_key(key))
 		)
+
+	# untyped: a dead queen's reference is a freed object, which a typed var refuses
+	var queen: Variant = main.queen if main != null else null
+	queen_label.visible = is_instance_valid(queen)
+	if queen_label.visible:
+		queen_label.text = "Queen: %s" % queen.role_name_text()
 
 	for stat_key in stat_labels.keys():
 		stat_labels[stat_key].text = str(texts.get(stat_key, ""))
