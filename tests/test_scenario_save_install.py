@@ -68,6 +68,17 @@ class ScenarioSaveInstallTest(unittest.TestCase):
             self.install()
         self.assertEqual(before, self.snapshot())
 
+    def test_godot_rewritten_catalogue_version_accepts_integral_float(self):
+        # Godot JSON.parse_string reads numbers as floats; its next index
+        # write can therefore spell the existing catalogue version as 1.0.
+        self.write(self.source / "index.json", {"version": 1.0, "slots": {"check": self.entry}})
+        self.existing["version"] = 1.0
+        self.write(self.destination / "index.json", self.existing)
+        self.install()
+        index = json.loads((self.destination / "index.json").read_text())
+        self.assertEqual(self.existing["slots"]["my-run"], index["slots"]["my-run"])
+        self.assertEqual("Check", index["slots"]["check"]["name"])
+
     def test_new_catalogue_keeps_legacy_adoption_available(self):
         (self.destination / "index.json").unlink()
         self.install()

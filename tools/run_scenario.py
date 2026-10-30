@@ -160,7 +160,8 @@ def install_scenario_save(source: Path, destination: Path, name: str) -> Path:
 
     def catalogue(path: Path) -> dict:
         value = read_object(path)
-        if type(value.get("version")) is not int or value["version"] != 1 or not isinstance(value.get("slots"), dict):
+        if (type(value.get("version")) not in (int, float) or value["version"] != 1
+                or not isinstance(value.get("slots"), dict)):
             raise ValueError("invalid save catalogue: %s" % path)
         for slug, entry in value["slots"].items():
             if (not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug)
