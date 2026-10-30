@@ -556,26 +556,26 @@ One cell: contents, brood, honey ripening, how it draws.
 1758 func development_percent() -> float
 ```
 
-## settings_catalogue.gd (1,693 lines)
+## settings_catalogue.gd (1,699 lines)
 
 Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
 
 ```
 22   # --- preloads and collection order --------------------------------
 48   # --- the tunables table -------------------------------------------
-1568 # --- settings owned by Session ------------------------------------
-1582 # --- reading and writing a setting --------------------------------
-1583 static func setting_get(key: String) -> Variant
-1586 static func setting_set(key: String, value: Variant) -> void
-1593 # --- resetting ----------------------------------------------------
-1610 static func reset_config_to_defaults() -> void
-1622 static func reset_config_keys(keys: Array) -> void
-1628 # --- applying a setting with its cascades -------------------------
-1637 static func apply_setting(key: String, value: Variant) -> void
-1648 # --- the cascade helpers ------------------------------------------
-1653 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1671 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1685 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+1574 # --- settings owned by Session ------------------------------------
+1588 # --- reading and writing a setting --------------------------------
+1589 static func setting_get(key: String) -> Variant
+1592 static func setting_set(key: String, value: Variant) -> void
+1599 # --- resetting ----------------------------------------------------
+1616 static func reset_config_to_defaults() -> void
+1628 static func reset_config_keys(keys: Array) -> void
+1634 # --- applying a setting with its cascades -------------------------
+1643 static func apply_setting(key: String, value: Variant) -> void
+1654 # --- the cascade helpers ------------------------------------------
+1659 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1677 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1691 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
 ## bee_foraging.gd (1,539 lines)
@@ -668,7 +668,7 @@ behaviour.
 1534 static func deposit_everything_remotely(bee: Node2D) -> void
 ```
 
-## main.gd (1,501 lines)
+## main.gd (1,516 lines)
 
 Per-frame entry point and run wiring; headless scenario boot lives in headless/scenario_boot.gd.
 
@@ -713,22 +713,23 @@ Per-frame entry point and run wiring; headless scenario boot lives in headless/s
 1173 func _first_crisis_warning_text(readiness: Dictionary, lead: float) -> String
 1187 func _start_first_crisis() -> void
 1204 func _show_first_crisis_note() -> void
-1231 static func _minutes_text(seconds: float) -> String
-1238 func _trace_first_crisis(phase: String, readiness: Dictionary = {}, extra: Dictionary = {}) -> void
-1277 func restore_first_crisis(saved: Variant) -> void
-1314 func _check_for_loss() -> void
-1342 func _promote_gyne_to_queen() -> bool
-1363 func _check_colony_energy(delta: float) -> void
-1394 func invalidate_population() -> void
-1405 func _role_counts(bees: Variant = null) -> Dictionary
-1422 func _update_population_readout(bees: Variant = null) -> void
-1436 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-1442 func _prune_selection() -> void
-1455 func _on_restart_after_loss() -> void
-1461 func _on_level_chosen(level: int) -> void
-1475 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-1489 func _apply_scenario_boot_arg() -> void
-1494 func _end_scenario_run(outcome: String) -> void
+1236 static func rain_when_text(lead: float, now: float, day_seconds: float) -> String
+1246 static func _minutes_text(seconds: float) -> String
+1253 func _trace_first_crisis(phase: String, readiness: Dictionary = {}, extra: Dictionary = {}) -> void
+1292 func restore_first_crisis(saved: Variant) -> void
+1329 func _check_for_loss() -> void
+1357 func _promote_gyne_to_queen() -> bool
+1378 func _check_colony_energy(delta: float) -> void
+1409 func invalidate_population() -> void
+1420 func _role_counts(bees: Variant = null) -> Dictionary
+1437 func _update_population_readout(bees: Variant = null) -> void
+1451 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+1457 func _prune_selection() -> void
+1470 func _on_restart_after_loss() -> void
+1476 func _on_level_chosen(level: int) -> void
+1490 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+1504 func _apply_scenario_boot_arg() -> void
+1509 func _end_scenario_run(outcome: String) -> void
 ```
 
 ## hive.gd (1,296 lines)
@@ -1095,7 +1096,7 @@ The session JSONL writer, counters and capture profiles.
 1153 func _capture_entry(entry: Dictionary) -> bool
 ```
 
-## game_config.gd (1,042 lines)
+## game_config.gd (1,045 lines)
 
 The balance fields.
 
@@ -1112,18 +1113,18 @@ The balance fields.
 600  # --- bee bread (BB-1) ---
 614  # --- bee bread nursing and a worker's outcome (BB-2) ---
 633  # --- weather ---
-665  # --- warnings ---
-676  # --- honey ---
-725  # --- comb building ---
-748  # --- hive geometry ---
-777  # --- bee life ---
-782  # --- bee individuality ---
-861  # --- the rival colony ---
-914  # --- seasons ---
-946  # --- disease ---
-985  # --- gynes leaving ---
-997  # --- nuptial flights ---
-1005 # --- winter ---
+668  # --- warnings ---
+679  # --- honey ---
+728  # --- comb building ---
+751  # --- hive geometry ---
+780  # --- bee life ---
+785  # --- bee individuality ---
+864  # --- the rival colony ---
+917  # --- seasons ---
+949  # --- disease ---
+988  # --- gynes leaving ---
+1000 # --- nuptial flights ---
+1008 # --- winter ---
 ```
 
 ## input_selection.gd (750 lines)
