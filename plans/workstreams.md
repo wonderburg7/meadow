@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/RR-18` (`codex/RR-18`) | Codex | skip saves for the long checks C-140 and C-142 | Codex | in progress | none | `plans/now/run-repairs.md` RR-18 -- skip saves for the long checks C-140 and C-142 |
+| `.worktrees/SP-13` (`claude/SP-13`) | Claude | foragers come and go at the skep's door | Claude | in progress | none | `plans/now/sprites.md` SP-13 -- foragers come and go at the skep's door |
