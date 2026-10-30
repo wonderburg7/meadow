@@ -49,4 +49,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/RR-18` (`codex/RR-18`) | Codex | skip saves for the long checks C-140 and C-142 | Codex | in progress | none | `plans/now/run-repairs.md` RR-18 -- skip saves for the long checks C-140 and C-142 |
-| `.worktrees/SP-14` (`claude/SP-14`) | Claude | no outline on an unselected comb cell while the cell art is on | Claude | in progress | none | `plans/now/sprites.md` SP-14 -- no outline on an unselected comb cell while the cell art is on |

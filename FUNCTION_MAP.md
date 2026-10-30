@@ -441,7 +441,7 @@ The headless verbs, `when` clauses and layout assertions.
 1875 static func _log(do: String, target_desc: String, result: String, reason: String) -> void
 ```
 
-## hive_cell.gd (1,761 lines)
+## hive_cell.gd (1,762 lines)
 
 One cell: contents, brood, honey ripening, how it draws.
 
@@ -548,12 +548,12 @@ One cell: contents, brood, honey ripening, how it draws.
 1448 # --- display ------------------------------------------------------
 1453 func _resource_outline_colour(resource_type: String) -> Color
 1469 func _refresh() -> void
-1689 func _show_fill_art(sheet: String, frame: int) -> void
-1702 func _show_cap(stage: int) -> void
-1710 func _designation_tag() -> String
-1734 func _priority_mark() -> String
-1747 func _apply_fill_shading() -> void
-1758 func development_percent() -> float
+1690 func _show_fill_art(sheet: String, frame: int) -> void
+1703 func _show_cap(stage: int) -> void
+1711 func _designation_tag() -> String
+1735 func _priority_mark() -> String
+1748 func _apply_fill_shading() -> void
+1759 func development_percent() -> float
 ```
 
 ## settings_catalogue.gd (1,699 lines)
