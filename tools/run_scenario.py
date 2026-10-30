@@ -134,6 +134,96 @@ def scenario_saves_dir(session_file: Path) -> Path:
     return session_file.parent.parent / "scenario_saves"
 
 
+def install_scenario_save(source: Path, destination: Path, name: str) -> Path:
+    """Install one named scratch save with the game closed; never replace a slot.
+
+    Isolation remains the default. An exclusive lock serialises installers;
+    the index exposes the copied payload only after it is complete.
+    """
+    def read_object(path: Path) -> dict:
+        def unique(pairs):
+            value = {}
+            for key, item in pairs:
+                if key in value:
+                    raise ValueError("duplicate JSON key: " + key)
+                value[key] = item
+            return value
+
+        def invalid_constant(value):
+            raise ValueError("non-finite JSON number: " + value)
+
+        value = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=unique,
+                           parse_constant=invalid_constant)
+        if not isinstance(value, dict):
+            raise ValueError("expected JSON object: %s" % path)
+        return value
+
+    def catalogue(path: Path) -> dict:
+        value = read_object(path)
+        if type(value.get("version")) is not int or value["version"] != 1 or not isinstance(value.get("slots"), dict):
+            raise ValueError("invalid save catalogue: %s" % path)
+        for slug, entry in value["slots"].items():
+            if (not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug)
+                    or not isinstance(entry, dict)
+                    or not isinstance(entry.get("name"), str)):
+                raise ValueError("invalid save slot: %s" % slug)
+        return value
+
+    source_index = catalogue(source / "index.json")
+    matches = [(slug, entry) for slug, entry in source_index["slots"].items()
+               if entry["name"] == name]
+    if len(matches) != 1:
+        raise ValueError("expected exactly one named scenario save: %s" % name)
+    slug, entry = matches[0]
+    if (type(entry.get("day")) not in (int, float)
+            or type(entry.get("saved_at")) not in (int, float)
+            or entry["saved_at"] <= 0):
+        raise ValueError("scenario slot has no valid named save metadata")
+    payload_path = source / (slug + ".json")
+    if payload_path.is_symlink():
+        raise ValueError("scenario payload must not be a symbolic link")
+    payload = read_object(payload_path)
+    version_match = re.search(r"const FORMAT_VERSION\s*:?=\s*(\d+)",
+                             (ROOT / "scripts/save_game.gd").read_text(encoding="utf-8"))
+    if (version_match is None or type(payload.get("version")) is not int
+            or payload["version"] != int(version_match.group(1))
+            or not isinstance(payload.get("bees"), list)
+            or not isinstance(payload.get("cells"), list)):
+        raise ValueError("scenario payload is not a current-format colony save")
+    # Checkpoints belong to the scratch run and are deliberately not installed.
+    installed_entry = dict(entry, checkpoints={}, next_checkpoint=1)
+    destination.mkdir(parents=True, exist_ok=True)
+    lock = destination / ".scenario-install.lock"
+    lock.mkdir()  # Refuse concurrent installers or a stale lock after a crash.
+    target = destination / (slug + ".json")
+    temporary = destination / (".index-%s.tmp" % uuid.uuid4().hex)
+    created = False
+    try:
+        index_path = destination / "index.json"
+        before = index_path.read_bytes() if index_path.exists() else None
+        index = catalogue(index_path) if before is not None else {
+            "version": 1, "legacy_adopted": False, "slots": {}}
+        if (slug in index["slots"] or any(item["name"] == name for item in index["slots"].values())
+                or any(destination.glob(slug + ".*"))):
+            raise ValueError("save already exists; remove it in Saves before installing: %s" % name)
+        with target.open("xb") as output:
+            created = True
+            output.write(json.dumps(payload, ensure_ascii=False, allow_nan=False).encode("utf-8"))
+        index["slots"][slug] = installed_entry
+        temporary.write_text(json.dumps(index, ensure_ascii=False, allow_nan=False), encoding="utf-8")
+        after = index_path.read_bytes() if index_path.exists() else None
+        if before != after:
+            raise ValueError("save catalogue changed during installation; close the game and retry")
+        os.replace(temporary, index_path)
+        created = False
+        return target
+    finally:
+        temporary.unlink(missing_ok=True)
+        if created:
+            target.unlink(missing_ok=True)
+        lock.rmdir()
+
+
 def private_user_env(run_id: str) -> dict[str, str]:
     """A launch environment whose user:// belongs to this run alone.
 
@@ -483,7 +573,8 @@ def _report_compile_failure(error_line: str, script: str | None, process_log: Pa
 def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
                          fixed_fps: int | None, result_root: Path,
                          seed_override: int | None = None, emit: bool = True,
-                         windowed: bool = False) -> int:
+                         windowed: bool = False, install_save: str | None = None,
+                         install_destination: Path | None = None) -> int:
     """Launch one scenario into its own artefact directory and print one verdict."""
     run_id = uuid.uuid4().hex[:12]
     run_dir = result_root / ("run-%d-%s" % (int(time.time() * 1000), run_id))
@@ -656,6 +747,15 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
             reason = {"kind": "expectation", "id": item.identifier,
                       "expected": item.expected, "actual": item.actual}
 
+    installed_save = None
+    if status == "passed" and install_save is not None:
+        try:
+            installed_save = install_scenario_save(user_dir(env) / "scenario_saves",
+                                                   (install_destination if install_destination is not None else user_dir() / "saves"),
+                                                   install_save)
+        except (OSError, ValueError) as error:
+            status = "failed"
+            reason = {"kind": "save_install", "message": str(error)}
     summary = analysis["summary"] if analysis is not None else None
     actions = analysis["actions"] if analysis is not None else {"problems": []}
     action_counts = {"rejected": 0, "failed": 0, "unresolved": 0}
@@ -685,6 +785,8 @@ def run_verdict_scenario(scenario_path: Path, godot_path: str, timeout: int,
                     "execution": process_outcome.kind if process_outcome else "environment_failure",
                     "wall_seconds": round(time.monotonic() - started_at, 6)}, "artefacts": artefacts,
     }
+    if installed_save is not None:
+        result["installed_save"] = str(installed_save)
     if status != "passed":
         failure_path = _write_failure(run_dir, status=status, run_id=run_id,
                                       reason=reason or {"kind": "crash"}, entries=entries,
@@ -967,6 +1069,9 @@ def main() -> int:
                               "same-seed reruns diverge (CHATGPT_INSIGHTS_PLAN.md's A2/A3). "
                               "Pass 0 to fall back to ordinary wall-clock timing "
                               "(default: %(default)s)")
+    parser.add_argument("--install-save", metavar="NAME",
+                        help="after a successful single headless verdict run, install this named scenario "
+                             "save in the player's Saves menu; close the game first; never replaces saves")
     args = parser.parse_args()
 
     if args.route_help:
@@ -983,12 +1088,19 @@ def main() -> int:
     if args.seeds is not None and args.repeat != 1:
         print("error: --seeds cannot be combined with --repeat", file=sys.stderr)
         return 1
+    if args.install_save is not None and (not args.install_save.strip() or args.experiment is not None
+            or args.repeat != 1 or args.seeds is not None or args.full
+            or args.report not in (None, "verdict") or args.windowed):
+        parser.error("--install-save requires a non-empty name and one headless verdict scenario")
     if args.background:
         if args.result_root != DEFAULT_RESULT_ROOT:
             print("error: --background owns its result root; do not combine it with --result-root", file=sys.stderr)
             return 1
         return submit_background_job(sys.argv[1:], args.job_root)
 
+    # Capture the player's real catalogue before prepare_launch can redirect
+    # APPDATA to a writable temporary launch directory.
+    install_destination = user_dir() / "saves" if args.install_save is not None else None
     # A writable user:// and a current .godot before any launch below (see
     # prepare_launch); without them every run fails as a compile error, a
     # timeout or a fake collapse.
@@ -1013,7 +1125,9 @@ def main() -> int:
             print("error: verdict accepts one run; use --report brief for repeats", file=sys.stderr)
             return 1
         return run_verdict_scenario(args.scenario, args.godot_path, args.timeout,
-                                    fixed_fps, args.result_root, windowed=args.windowed)
+                                    fixed_fps, args.result_root, windowed=args.windowed,
+                                    install_save=args.install_save,
+                                    install_destination=install_destination)
     return run_scenario(args.scenario, args.godot_path, args.timeout, args.repeat, profile,
                          fixed_fps, args.seeds, args.windowed)
 
