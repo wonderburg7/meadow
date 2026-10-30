@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/FX-3` (`codex/FX-3`) | Codex | Jules merges happen in a worktree | Codex | in progress | none | `plans/now/workflow-friction.md` FX-3 -- Jules merges happen in a worktree |
