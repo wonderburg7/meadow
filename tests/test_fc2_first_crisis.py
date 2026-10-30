@@ -135,8 +135,10 @@ class CrisisRunChecks:
         self.assertEqual(warning["rain_target"], 0.0)
         self.assertLessEqual(warning["rain_seconds_left"], 0.0)
         self.assertIn("Heavy rain is coming", warning["text"])
+        self.assertRegex(warning["text"], r"Heavy rain is coming (soon|later today|by the end of the day|tomorrow)\.")
+        self.assertNotRegex(warning["text"], r"in about \d+:\d\d")
         self.assertIn("Your stores feed the colony for about", warning["text"])
-        self.assertTrue(warning["note"].startswith("Heavy rain due in"), warning["note"])
+        self.assertTrue(warning["note"].startswith("Heavy rain due "), warning["note"])
         # Every onset, the first and the one replayed after the restore, is
         # the one the warning scheduled: nothing moved or repeated it.
         onsets = _phase(trace, "onset")
@@ -204,7 +206,7 @@ class CrisisRunChecks:
         self.assertAlmostEqual(warned["starts_at"], warning["starts_at"], delta=1e-3)
         self.assertAlmostEqual(warned["warned_at"], warning["t"], delta=1e-3)
         self.assertLess(warned["t"], warned["starts_at"])
-        self.assertTrue(warned["note"].startswith("Heavy rain due in"), warned["note"])
+        self.assertTrue(warned["note"].startswith("Heavy rain due "), warned["note"])
         # The active save, restored after the rain ended, put the rain back.
         onsets = _phase(trace, "onset")
         self.assertEqual(len(onsets), 2, "the warned restore did not replay the onset once")

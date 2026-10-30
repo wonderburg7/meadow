@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words**
-   - Plan: `plans/now/run-repairs.md` -- "RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words"
-   - Files: `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_fc2_first_crisis.py`, `tests/test_rr21_rain_free_days.py`
-   - Check: `python -m unittest tests.test_rr21_rain_free_days tests.test_fc2_first_crisis tests.test_display_text_golden` pass (no random rain before day 2 even at a chance of 1.0; rain rolls again after; the first crisis still fires; warnings read "soon", "later today", "by the end of the day" or "tomorrow"); the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-   - Proof: `absent: scripts/game_config.gd :: rain_free_days`
-   - Next after: none -- the rain rule is complete
-
-2. **[Claude] SP-13 -- foragers come and go at the skep's door**
+1. **[Claude] SP-13 -- foragers come and go at the skep's door**
    - Plan: `plans/now/sprites.md` -- "SP-13 -- foragers come and go at the skep's door"
    - Files: `scripts/hive.gd`, `scripts/rival_hive.gd`, `scripts/sprite_catalogue.gd`
    - Check: `python tools/prefinish.py` is green (boot check clean); the skep sprite's door lands on `hive.position` in a headless scene (the sprite's position plus the door offset equals zero); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
    - Proof: `absent: scripts/sprite_catalogue.gd :: HIVE_SKEP_DOOR`
    - Next after: none -- `plans/now/sprites.md` is complete once SP-6, SP-12 and SP-14 have landed
 
-3. **[Claude] SP-14 -- no outline on an unselected comb cell while the cell art is on**
+2. **[Claude] SP-14 -- no outline on an unselected comb cell while the cell art is on**
    - Plan: `plans/now/sprites.md` -- "SP-14 -- no outline on an unselected comb cell while the cell art is on"
    - Files: `scripts/hive_cell.gd`
    - Check: `python -m unittest tests.test_sp11_cell_rim` passes; with cell art on, a cell holding nectar has `outline.visible` false and a cell under an overlay has it true; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
    - Proof: `absent: scripts/hive_cell.gd :: outline.visible = content_type != "" and not`
    - Next after: none -- `plans/now/sprites.md` is complete once SP-6, SP-12 and SP-13 have landed
 
-4. **[Claude] HS-2 -- hard soil fills the outer half of the hive's soil**
+3. **[Claude] HS-2 -- hard soil fills the outer half of the hive's soil**
    - Plan: `plans/now/hard-soil.md` -- "HS-2 -- hard soil fills the outer half of the hive's soil"
    - Files: `scripts/soil_block.gd`, `scripts/hive.gd`, `scripts/bee.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `test_scenarios/hs2_hard_soil.json`, `tests/test_hs2_hard_soil.py`
    - Check: `python -m unittest tests.test_hs2_hard_soil` passes, asserting a hard block refuses a dig order before Mighty Mandible and accepts one after, the hard-soil colour distances, and the rough halfway edge; `.\tools\verify.ps1` is green. Hands-on: in the HS-2 scenario, the hard soil next to the cavity looks greyer than ordinary soil and different from the bedrock, and clicking it to dig does nothing until Mighty Mandible is bought.
    - Proof: `absent: scripts/soil_block.gd :: func hard_soil_start_ring(`
    - Next after: none -- `plans/now/hard-soil.md` is complete
 
-5. **[Claude] PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed**
+4. **[Claude] PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed**
    - Plan: `plans/now/pollination.md` -- "PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed"
    - Files: `scripts/headless/diagnostic_probes.gd`, `tools/headless/profiles.py`, `test_scenarios/alpha_arc_test.json`, `tests/test_pp11_route_snapshots.py`
    - Check: `python -m unittest tests.test_pp11_route_snapshots tests.test_pp6_gyne_rearing_affordable` passes (both snapshot whitelists carry `resources.stored_bee_bread`, `resources.stored_royal_jelly` and `resources.pollinator_points`, and a run logs them); over 3 seeds of the reference Colony Run (`python tools/pacing_gates.py`) every seed owns Pollinator points (`skill.foraging.pollinator_points`), the Gyne-rearing row reports a day on each seed (any day, no band), and the first-worker row stays in band (median by day 17); no price, recipe, `config_overrides` entry that redefines what is measured, or `grant_skill` of a Foraging node; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/headless/diagnostic_probes.gd :: stored_bee_bread`
    - Next after: PP-10 -- the sweep prices the route so Gyne rearing is first affordable after the first winter
+
+5. **[Claude] SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss**
+   - Plan: `plans/now/short-term-goals.md` -- "SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss"
+   - Files: `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/guidance_catalogue.gd`, `test_scenarios/sg3_goal_shelf.json`, `tests/test_sg3_goal_shelf.py`
+   - Check: `python -m unittest tests.test_sg3_goal_shelf` passes (an offered goal appears in the Goals drop-down under the milestone with its progress and reward, in a Colony Run and in a Scenario; a starred goal stays when the drop-down is collapsed; Dismiss removes it and nothing replaces it until the next day; finishing one shows the completion note and the Dr line once); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/hud.gd :: short_term`
+   - Next after: none -- the short-term goals plan is complete; ED-1 in `plans/now/difficulty.md` follows in Dave's order
 
 ### Codex lane
 
