@@ -70,9 +70,9 @@ static func content_tone_strength(fraction: float) -> float:
 
 ## CT-1. The tint for a cell's art and cap: white at zero strength. At full
 ## strength it keeps the content colour's hue, with saturation held between
-## 0.35 and 0.8 and full value, so multiplying the art by it never dims it.
+## 0.5 and 0.8 and full value, so multiplying the art by it never dims it.
 static func content_tone(base: Color, strength: float) -> Color:
-	return Color.WHITE.lerp(Color.from_hsv(base.h, clampf(base.s, 0.35, 0.8), 1.0), strength)
+	return Color.WHITE.lerp(Color.from_hsv(base.h, clampf(base.s, 0.5, 0.8), 1.0), strength)
 
 ## SP-4. Which sheet and frame a nectar or pollen cell shows at `fraction`
 ## full, from the catalogue's level bounds (percent, rising): the first level
@@ -127,8 +127,8 @@ const FERMENTED_NECTAR_COLOR := Color(0.55, 0.68, 0.39)
 ## RR-11. Nectar nearing its fermenting time shows a yellow-green warning,
 ## clearly apart from fresh nectar and from the fermented olive (RR-13).
 ## It is still ordinary nectar until it ferments.
-const PRE_FERMENTED_NECTAR_COLOR := Color(0.65, 0.8, 0.0)
-const PRE_FERMENTED_ART_TINT := Color(0.78, 0.86, 0.35)
+const PRE_FERMENTED_NECTAR_COLOR := Color(0.85, 0.65, 0.0)
+const PRE_FERMENTED_ART_TINT := Color(1.0, 0.72, 0.25)
 
 ## SP-3. Pollen is the sprite orange (255, 123, 0), exactly. Honey is a
 ## darker amber so every cell content stays 0.10 apart in OKLab
@@ -156,8 +156,16 @@ const BEE_BREAD_RIPE_COLOR := Color(0.74, 0.24, 0.56)
 ## CT-1. How strongly a cell's contents tint its art and cap: a nearly empty
 ## cell takes the faintest tone, a full one the strongest, in eight steps (as
 ## many as the cap sheet has stages). Presentation only, so no GameConfig field.
-const CONTENT_TONE_MIN := 0.06
-const CONTENT_TONE_MAX := 0.28
+## Base font size of the cell's text label, before text scale and typeface.
+## Small enough to sit inside the cell without covering its neighbours.
+const LABEL_BASE_FONT_SIZE := 7
+
+## z_index of the selection ring, above every cell's own depth (see
+## Shapes.hex_draw_depth) so the ring's lower half is not painted over by
+## the cells in front. Below the rain wash (50) and the overlays (90+).
+const SELECTION_RING_Z := 40
+const CONTENT_TONE_MIN := 0.15
+const CONTENT_TONE_MAX := 0.55
 
 # --- cell state ---------------------------------------------------
 
@@ -359,7 +367,7 @@ var squashed: bool = false
 var info_label: Label
 ## The last size applied to `info_label`. `_refresh` runs frequently, so a
 ## live text-scale change only updates the label when its capped size differs.
-var _label_font_size: int = 9
+var _label_font_size: int = LABEL_BASE_FONT_SIZE
 var outline: Line2D
 var designation_ring: Line2D
 var selection_ring: Line2D
@@ -375,6 +383,9 @@ var zone_halo: Line2D
 ## The role tag that stands in for the zone glow's colour when
 ## Session.colour_blind_mode is on -- see set_zone_glow.
 var zone_glow_tag: String = ""
+## Whether set_zone_glow last asked for the glow; with cell art on, a
+## designation ring takes its place so a cell shows at most one colour ring.
+var _zone_glow_on: bool = false
 ## Which silhouette the constant-size rings were last built with. A live
 ## `Session.use_cell_sprites` toggle re-points them once, in `_refresh`,
 ## rather than four rings being rebuilt six times a second forever.
@@ -478,7 +489,7 @@ func _ready() -> void:
 	# a second, brighter ring drawn only when the player has pinned this
 	# cell to one resource
 	designation_ring = Line2D.new()
-	_apply_outline_points(designation_ring, cell_size - 3.0)
+	_apply_outline_points(designation_ring, _designation_ring_size())
 	designation_ring.width = 2.0
 	designation_ring.default_color = Color(1.0, 1.0, 1.0, 0.9)
 	designation_ring.visible = false
@@ -491,6 +502,8 @@ func _ready() -> void:
 	selection_ring.width = 2.5
 	selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)
 	selection_ring.visible = false
+	selection_ring.z_as_relative = false
+	selection_ring.z_index = SELECTION_RING_Z
 	add_child(selection_ring)
 
 	# Marks this cell as part of the nursery zone while that window is
@@ -499,14 +512,14 @@ func _ready() -> void:
 	# a drawn outline, and stays legible over any cell contents. Sits
 	# outside the selection ring so the two never overlap.
 	zone_halo = Line2D.new()
-	_apply_outline_points(zone_halo, cell_size + 6.0)
+	_apply_outline_points(zone_halo, _zone_halo_size())
 	zone_halo.width = 7.0
 	zone_halo.default_color = Color(1.0, 1.0, 1.0, 0.22)
 	zone_halo.visible = false
 	add_child(zone_halo)
 
 	zone_glow = Line2D.new()
-	_apply_outline_points(zone_glow, cell_size + 4.0)
+	_apply_outline_points(zone_glow, _zone_glow_size())
 	zone_glow.width = 2.5
 	zone_glow.default_color = Color(1.0, 1.0, 1.0, 0.95)
 	zone_glow.visible = false
@@ -527,7 +540,7 @@ func _ready() -> void:
 
 	info_label = Label.new()
 	info_label.position = Vector2(-cell_size, -8)
-	info_label.add_theme_font_size_override("font_size", 9)
+	info_label.add_theme_font_size_override("font_size", LABEL_BASE_FONT_SIZE)
 	add_child(info_label)
 
 # --- overlay, selection and rings ---------------------------------
@@ -603,6 +616,7 @@ func set_selected(value: bool) -> void:
 func set_zone_glow(value: bool, glow_colour: Color = Color.WHITE, tag: String = "") -> void:
 	if zone_glow == null or zone_halo == null:
 		return
+	_zone_glow_on = value
 	zone_glow.visible = value
 	zone_halo.visible = value
 	zone_glow.default_color = Color(glow_colour.r, glow_colour.g, glow_colour.b, 0.95)
@@ -662,6 +676,18 @@ func _apply_outline_points(line: Line2D, size: float) -> void:
 		_set_outline_points_cup(line, size)
 	else:
 		_set_outline_points(line, size)
+
+## With cell art on every colour ring traces the rim at the selection
+## ring's size (one ring per cell, not a large and a small one); without
+## art the original offsets keep the rings apart.
+func _designation_ring_size() -> float:
+	return cell_size + 2.0 if Session.use_cell_sprites else cell_size - 3.0
+
+func _zone_halo_size() -> float:
+	return cell_size + 2.0 if Session.use_cell_sprites else cell_size + 6.0
+
+func _zone_glow_size() -> float:
+	return cell_size + 2.0 if Session.use_cell_sprites else cell_size + 4.0
 
 func _set_selection_ring_points() -> void:
 	_apply_outline_points(selection_ring, cell_size + 2.0)
@@ -1467,7 +1493,7 @@ func _resource_outline_colour(resource_type: String) -> Color:
 	return Color(0.35, 0.28, 0.12)
 
 func _refresh() -> void:
-	var scaled_label_font_size: int = int(round(9.0 * minf(Session.text_scale, 1.5) * UiTheme.typeface_size_factor(Session.ui_typeface)))
+	var scaled_label_font_size: int = int(round(float(LABEL_BASE_FONT_SIZE) * minf(Session.text_scale, 1.5) * UiTheme.typeface_size_factor(Session.ui_typeface)))
 	if scaled_label_font_size != _label_font_size:
 		_label_font_size = scaled_label_font_size
 		info_label.add_theme_font_size_override("font_size", _label_font_size)
@@ -1475,7 +1501,7 @@ func _refresh() -> void:
 	# The text is always computed regardless (cheap, and other logic below
 	# doesn't need to know or care whether it's actually shown), only its
 	# visibility is gated.
-	info_label.visible = Session.show_cell_contents_text
+	info_label.visible = Session.show_cell_contents_text or Session.colour_blind_mode
 	# `use_cell_sprites` can switch live, so keep every ring in the matching
 	# shape alongside the empty-sprite visibility below. Only the toggle
 	# itself changes a constant-size ring's points, so they are rebuilt when
@@ -1485,9 +1511,9 @@ func _refresh() -> void:
 	if Session.use_cell_sprites != _rings_follow_cup:
 		_rings_follow_cup = Session.use_cell_sprites
 		_set_selection_ring_points()
-		_apply_outline_points(designation_ring, cell_size - 3.0)
-		_apply_outline_points(zone_halo, cell_size + 6.0)
-		_apply_outline_points(zone_glow, cell_size + 4.0)
+		_apply_outline_points(designation_ring, _designation_ring_size())
+		_apply_outline_points(zone_halo, _zone_halo_size())
+		_apply_outline_points(zone_glow, _zone_glow_size())
 	if not is_built:
 		# an unfinished cell grows outwards from a stub as it's drawn, so
 		# you can see at a glance how far along it is
@@ -1519,6 +1545,10 @@ func _refresh() -> void:
 	# the rim is hidden here; an overlay still shows it (see the overlay branch).
 	outline.visible = content_type != "" and not Session.use_cell_sprites
 	designation_ring.visible = designated_type != "" or keep_empty
+	if Session.use_cell_sprites:
+		var show_zone: bool = _zone_glow_on and not designation_ring.visible
+		zone_glow.visible = show_zone
+		zone_halo.visible = show_zone
 	if keep_empty:
 		designation_ring.default_color = Color(0.85, 0.85, 0.9, 0.9)
 	else:
@@ -1535,6 +1565,9 @@ func _refresh() -> void:
 	# SP-7. 0 for no cap, otherwise the cap stage, 1 to the sheet's last.
 	var cap_stage: int = 0
 	var art_tint: Color = Color.WHITE
+	# Colour-blind state word ("sour", "turning"), kept apart from the counts
+	# so it can show alone when the contents text is off.
+	var cb_state: String = ""
 	match content_type:
 		"nectar":
 			color = NECTAR_COLOR
@@ -1545,11 +1578,13 @@ func _refresh() -> void:
 				art_sheet = "fermented"
 				if Session.colour_blind_mode:
 					info_label.text = "sour " + info_label.text
+					cb_state = "sour"
 			elif is_pre_fermented():
 				color = PRE_FERMENTED_NECTAR_COLOR
 				art_tint = PRE_FERMENTED_ART_TINT
 				if Session.colour_blind_mode:
 					info_label.text = "turning " + info_label.text
+					cb_state = "turning"
 		"pollen":
 			color = POLLEN_COLOR
 			art_sheet = "pollen"
@@ -1641,6 +1676,8 @@ func _refresh() -> void:
 	# everything but hue. With colour-blind labels on, the reservation is
 	# spelled out on the cell instead.
 	if Session.colour_blind_mode and info_label != null:
+		if not Session.show_cell_contents_text:
+			info_label.text = cb_state
 		var tag := _designation_tag()
 		if tag != "":
 			info_label.text = ("%s %s" % [tag, info_label.text]).strip_edges()
