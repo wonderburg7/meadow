@@ -34,7 +34,10 @@ header.
    `SINCE`, plus anything the last record did not cover. Do not reopen a
    recorded "deliberately not applied" decision unless new evidence
    contradicts its reason. If nothing the review owns has changed and nothing is orphaned,
-   stop, report that, and write no record.
+   stop, report that, and write no record. If `review_due.py` reports a
+   Jules report waiting, process it instead
+   (`plans/reference/jules-reviews.md` "Processing a Jules review"): its
+   sweep is this review's sweep.
 3. **Evidence and materiality.** Every finding cites file and symbol plus the
    command that shows it; line numbers are hints only. Label inference as
    inference. Report a finding only if acting on it changes what the player

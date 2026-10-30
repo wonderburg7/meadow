@@ -4,6 +4,7 @@
 Record key: verification-review
 Reasoning: medium
 Watches: tools/verify.ps1 tools/run_tests.py tools/prefinish.py tools/check_docs.py tools/run_scenario.py tools/run_headless.ps1 tools/pacing_gates.py tools/equivalence.py tools/build_alpha.ps1 tests test_scenarios export_presets.cfg plans/reference/check-runner.md .claude/agents
+Jules: R-verification | priority 3 | every 10 days | min 20 commits
 
 **Owns:** the instruments that prove the game works: `tools/verify.ps1` and
 `tools/run_tests.py` (stages, parallel workers, which tests a change reaches);
@@ -46,3 +47,25 @@ Background: `docs/headless-run-contract.md`.
    were raised or that sent a `dave` check a subagent could have run.
 6. **Build readiness.** Does the alpha build still build and boot headless?
    Is any part of the export path untested?
+
+## If Jules runs this
+
+Method and report: `plans/reference/jules-reviews.md` "Running a review".
+
+- **Step 1:** you cannot run `tools/verify.ps1` or read session events. Run
+  the unit command from `plans/reference/jules.md` "How to work" step 6 and
+  report its slowest modules and anything that failed or skipped; list
+  verify-stage timings and flaky-test events under "Not reviewed".
+- **Steps 2 to 4:** in full; they are what Jules is for. A guard is
+  `enforced` only when reintroducing the bug makes a command exit non-zero
+  (the J-29 audit counted a reporting scanner as a guard). Follow a test
+  through its helpers before calling it vacuous, and count an explicit
+  `SkipTest` as a skip (J-37). Spot-check by mutation in your working tree:
+  break the guarded line, run the one test, record the result in "Method",
+  and restore the file before committing; only Python-run tests can be
+  checked this way. Each unguarded pitfall that can be caught from source
+  alone becomes a candidate S-3 guard task.
+- **Step 5:** read `checks/` as data. Propose `Runner:` changes and
+  automations as recommendations; you cannot edit checks.
+- **Step 6:** under "Not reviewed", unless a static check (a path
+  `export_presets.cfg` names that does not exist) shows a fault.

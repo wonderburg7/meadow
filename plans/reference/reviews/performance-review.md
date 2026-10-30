@@ -4,6 +4,7 @@
 Record key: performance-review
 Reasoning: high
 Watches: scripts docs/PERFORMANCE_BASELINE.md docs/performance.md .claude/rules/performance.md test_scenarios
+Jules: no -- it starts by profiling in Godot (agent rule 3), which Jules cannot run
 
 **Owns:** how often things run and what they cost as the colony grows:
 `_process` and `_physics_process`, timers and ticks, full-set scans,
