@@ -76,7 +76,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
-- **CQ-M5b** (`plans/now/code-health.md`) -- the last CanvasLayer readers and the bare-layer source check; waits for SG-3 to release `scripts/main.gd` (RR-21 landed 30 Oct 2026) and the Jules J-14 branch to settle `scripts/game_panel.gd`.
+- **CQ-M5b** (`plans/now/code-health.md`) -- the last CanvasLayer readers and the bare-layer source check; waits for SG-3 to release `scripts/main.gd` and the Jules J-14 branch to settle `scripts/game_panel.gd`.
 - **CQ-M4** (`plans/now/code-health.md`) -- name Challenge level ids; waits for the Claude lane to release `scripts/save_game.gd` and `scripts/saving.gd`.
 - **RR-22** (`plans/now/run-repairs.md`) -- select a number of bees from a multi-selection; waits for the Codex lane's CQ-R6 to release `scripts/hud.gd`, which both name.
 - **RR-12** (`plans/now/run-repairs.md`) -- a loaded run keeps its readout history (Dave, 16 Oct 2026); waits for ED-3, the last of the alpha chain, which shares `scripts/main.gd` and the save files.
@@ -96,7 +96,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **CQ-R3** (`plans/now/code-health.md`) -- bee display text moves into a new bee_readout.gd; waits for HS-2 and SP-6 to release `scripts/bee.gd`.
 - **CQ-R16** (`plans/now/code-health.md`) -- drag and pan state moves from `scripts/main.gd` to `scripts/input_selection.gd`; waits for SG-3 to release `scripts/main.gd`.
 - **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; needs its section and block after CQ-R8 (CQ-L2 released `tests/source_checks.py` 24 Oct 2026).
-- **CQ-M6** (`plans/now/code-health.md`) -- selection green and caste appearance named; waits for the Claude lane's SP-14 to release `scripts/hive_cell.gd` and HS-2 to release `scripts/bee.gd` and `scripts/soil_block.gd` (CT-1, RR-13 and RR-19 landed 26-28 Oct 2026).
+- **CQ-M6** (`plans/now/code-health.md`) -- selection green and caste appearance named; waits for the Claude lane's HS-2 to release `scripts/bee.gd` and `scripts/soil_block.gd` and SP-6 to release `scripts/bee.gd`.
 - **CQ-M7** (`plans/now/code-health.md`) -- world draw order named; waits for CQ-M6 and then needs its section and block.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
 - **FR-4** (`plans/now/forager-recruitment.md`) -- a headless assertion replaces the C-143 hands-on check; `scripts/scenario_actions.gd` was released 25 Oct 2026, but `tools/admission.py` reads C-143, the check it retires, as an unlanded slice, so its block stays `queue-gated` until admission ignores check ids.

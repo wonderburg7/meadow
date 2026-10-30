@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for SG-3 to release scripts/main.gd (RR-21 landed 30 Oct 2026) and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for SP-14 to release scripts/hive_cell.gd and HS-2 to release scripts/bee.gd and scripts/soil_block.gd (RR-19 landed 28 Oct 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16, all gated on the queued slices that own their files | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-R15 and CQ-R16 follow SG-3; CQ-R3 follows HS-2 and SP-6; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for SG-3 to release scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for HS-2 to release scripts/bee.gd and scripts/soil_block.gd and SP-6 to release scripts/bee.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16, all gated on the queued slices that own their files | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-R15 and CQ-R16 follow SG-3; CQ-R3 follows HS-2 and SP-6; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -129,7 +129,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
 | CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | gated -- SG-3 owns `main.gd`, Jules J-14 holds `game_panel.gd` | low |
-| CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- SP-14 owns `hive_cell.gd`, HS-2 `bee.gd` and `soil_block.gd` | low |
+| CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- HS-2 owns `bee.gd` and `soil_block.gd`, SP-6 `bee.gd` | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `bee_readout.gd` (new), `FUNCTION_MAP.md` | gated -- HS-2 and SP-6 own `bee.gd` | medium |
@@ -323,13 +323,12 @@ wrapped chain as `. name(` on its own line.
 
 - **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`
   and `scripts/saving.gd`; its ownership overlaps that lane's current work.
-- **CQ-M5b** -- waits for the Claude lane's SG-3 to release `scripts/main.gd` (RR-21 landed 30 Oct 2026)
+- **CQ-M5b** -- waits for the Claude lane's SG-3 to release `scripts/main.gd`
   and for the Jules J-14 branch (which deletes code in `scripts/game_panel.gd`)
   to be merged or closed; keep its block gated until both clear.
-- **CQ-M6** -- waits for the Claude lane's SP-14 to release
-  `scripts/hive_cell.gd` and HS-2 to release `scripts/bee.gd` and
-  `scripts/soil_block.gd` (RR-19 landed 28 Oct 2026); keep its queue block
-  gated until that ownership clears. CQ-R10 also uses `scripts/input_selection.gd`, so take it first.
+- **CQ-M6** -- waits for the Claude lane's HS-2 to release `scripts/bee.gd`
+  and `scripts/soil_block.gd`, and SP-6 to release `scripts/bee.gd`;
+  keep its queue block gated until that ownership clears. CQ-R10 also uses `scripts/input_selection.gd`, so take it first.
 
 CQ-S0b shipped 2026-10-25; its specification is `plans/archive/CQ-S0b_2026-10-25.md`.
 
