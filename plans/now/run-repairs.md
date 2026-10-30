@@ -44,7 +44,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | --- | --- | --- | --- | --- |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
 | RR-18 | skip saves for the long checks C-140 and C-142 | `test_scenarios/`, `checks/ready/C-140.md`, `checks/ready/C-142.md` | yes | low |
-| RR-20 | a comb worker carrying a body leaves, stays out one second, and comes back | `scripts/bee_building.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, tests | yes -- CQ-M8 landed 25 Oct 2026 | medium |
 | RR-21 | no ordinary rain in the first two days; rain warnings in plain words | `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | yes -- SG-4 landed 26 Oct 2026 | medium |
 | RR-22 | select a number of bees from a multi-selection, youngest and oldest | `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, tests | no -- after the Codex lane's CQ-R6 releases `scripts/hud.gd` (CQ-R10 landed 27 Oct 2026; GP-5 and SG-4 landed 26 Oct 2026) | medium |
 
@@ -176,53 +175,7 @@ reach them. No script changes.
 
 RR-19 shipped 2026-10-28; its specification is `plans/archive/RR-19_2026-10-28.md`.
 
-## RR-20 -- a comb worker carrying a body visibly leaves, stays out one second, and comes back
-
-Level: medium -- claude-sonnet-5-5 at medium effort.
-
-**True now.** Dave: "make it a 1 second pause, where the bee actually leaves
-the nest, stays out for one second, then comes back in". Today
-`bee_building.gd::builder_go_to_waste_exit` (near l.449) walks to
-`world.hive_entrance_inside()`, and within 8 px calls
-`world.move_bee_out_of_hive` and sets `timer = GameConfig.dirt_dump_time`
-(2.0) in `DUMPING_WASTE`. Dave saw her "wait at the inside entrance", so she
-reads as waiting inside, not outside. Suspects: an empty path returning early
-in `bee_movement.gd` (near l.387-389) so she never reaches the 8 px test, or
-the hive view still drawing her.
-
-**When done:**
-
-1. The slice first finds why she reads as waiting inside and says in the
-   closeout what it was.
-2. For a body, a new `GameConfig.body_drop_seconds` (1.0, settings row) is the
-   time outside; `dirt_dump_time` still governs spoil and stores. The bee is
-   visibly outside the skep for that second, then re-enters.
-3. `tests/t2_4b_bodies_test.gd` and `tests/t2_13_carried_body_test.gd` assert
-   she is outside for the second and inside again after it.
-4. Dave's hands-on check is filed at closeout: watch a comb worker carry a body
-   out, wait one second outside and return.
-
-**Found (RR-20, 30 Oct 2026).** The code already put her outside: the
-headless run shows `move_bee_out_of_hive` reparents her to the meadow for the
-whole dump. The hive view hides `meadow_root` (`camera_view.gd`), so on
-stepping out she vanishes from the screen she was watched on, and the two
-seconds read as her waiting at the door. The fix is the time: a body now drops
-after `body_drop_seconds` (1.0) instead of `dirt_dump_time`. Whether the
-vanishing needs a visible exit in the hive view is for Dave's check.
-
-**Invariants.** Stores and spoil dumps keep `dirt_dump_time`. If the cause is
-in `bee.gd` (CQ-S0b's file) stop and escalate with the options.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] RR-20 -- a comb worker carrying a body visibly leaves, stays out one second, and comes back**
-- Plan: `plans/now/run-repairs.md` -- "RR-20 -- a comb worker carrying a body visibly leaves, stays out one second, and comes back"
-- Files: `scripts/bee_building.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/t2_4b_bodies_test.gd`, `tests/t2_13_carried_body_test.gd`
-- Check: `python -m unittest tests.test_t2_4b_bodies tests.test_t2_13_carried_body` pass (the body-carrying bee is outside the hive for 1 s then inside again); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-- Proof: `absent: scripts/game_config.gd :: body_drop_seconds`
-- Next after: none -- the body drop is complete
-```
+RR-20 shipped 2026-10-30; its specification is `plans/archive/RR-20_2026-10-30.md`.
 
 ## RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words
 
