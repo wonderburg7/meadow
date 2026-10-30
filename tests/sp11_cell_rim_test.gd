@@ -72,7 +72,30 @@ func _run() -> void:
 				if not line.points[i].is_equal_approx(hex[i]):
 					_fail("Cell art off: %s point %d is not the hexagon corner" % [ring_name, i])
 	flat.queue_free()
+	_check_outline_visibility()
 	_session.use_cell_sprites = true
+
+
+## SP-14: with the cup art on, a comb cell draws no rim of its own unless an
+## overlay is showing; with it off the rim is as before.
+func _check_outline_visibility() -> void:
+	_session.use_cell_sprites = true
+	var cell: Polygon2D = _make_cell(true)
+	cell.content_type = "nectar"
+	cell.amount = 50.0
+	cell._refresh()
+	_check(not cell.outline.visible, "Cell art on: a nectar cell shows its outline")
+	cell.set_overlay("contents")
+	cell._refresh()
+	_check(cell.outline.visible, "Cell art on: a nectar cell under the contents overlay has no outline")
+	cell.queue_free()
+
+	var flat: Polygon2D = _make_cell(false)
+	flat.content_type = "nectar"
+	flat.amount = 50.0
+	flat._refresh()
+	_check(flat.outline.visible, "Cell art off: a nectar cell has no outline")
+	flat.queue_free()
 
 
 func _make_cell(cell_art: bool) -> Polygon2D:

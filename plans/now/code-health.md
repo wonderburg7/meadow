@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for RR-21 to release scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for SP-14 to release scripts/hive_cell.gd and HS-2 to release scripts/bee.gd and scripts/soil_block.gd (RR-19 landed 28 Oct 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-26
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for SG-3 to release scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for HS-2 to release scripts/bee.gd and scripts/soil_block.gd and SP-6 to release scripts/bee.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16, all gated on the queued slices that own their files | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-R15 and CQ-R16 follow SG-3; CQ-R3 follows HS-2 and SP-6; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -90,6 +90,20 @@ Recorded once here; a slice may restate one in a sentence and point back.
     getters/setters around the fields the bee helpers read (call overhead
     per bee per frame). A profile showing one of those costs reopens it
     (`docs/agent-rules.md` rule 3).
+  - Jules's modularity review (30 Oct 2026; record
+    `docs/modularity-review-2026-10-30.md`) is applied under D1, not as a
+    new rule. `hud.gd` loses its goal shelf (CQ-R15, after SG-3 -- Dave
+    confirmed the order, 30 Oct 2026) and nothing else
+    wholesale: the cell popup stays (D1), the command rows already moved
+    (CQ-R6), and the selection panel and tray sizing stay together because
+    they share HC-8/HC-16's settle logic. A split-out HUD part is a
+    `RefCounted` builder like `hud_command_rows.gd`, not a child `Control`,
+    so node names and parents (the LAY-6 assertions) do not move. `main.gd`
+    keeps the Controller-with-`main`-back-reference pattern
+    (`docs/codebase-review-2026-09-18.md` D-1); state only one controller
+    uses moves to that controller (CQ-R16), and no signal layer replaces
+    the `main.<sibling>` reads. No script-size lint and no data-format
+    mandate (D1, D2).
 
 **Rule texts each decision changes, and the slice that edits them:**
 
@@ -115,15 +129,17 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
-| CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | gated -- RR-21 owns `main.gd`, Jules J-14 holds `game_panel.gd` | low |
-| CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- SP-14 owns `hive_cell.gd`, HS-2 `bee.gd` and `soil_block.gd` | low |
+| CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | gated -- SG-3 owns `main.gd`, Jules J-14 holds `game_panel.gd` | low |
+| CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- HS-2 owns `bee.gd` and `soil_block.gd`, SP-6 `bee.gd` | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
-| CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `hud.gd`, `world_building.gd` | once its section is written (CQ-R7 released `hud.gd` and WP-3 landed 22 Oct 2026; T2-14 and CQ-R0 21 Oct 2026) | medium |
+| CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `bee_readout.gd` (new), `FUNCTION_MAP.md` | gated -- HS-2 and SP-6 own `bee.gd` | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
-| CQ-R8 | hud builders shortened (designation button table) | `hud.gd`, `FUNCTION_MAP.md` | section needed | medium |
+| CQ-R8 | hud builders shortened (designation button table); hud sections re-headed | `hud.gd`, `FUNCTION_MAP.md` | gated -- after CQ-R15 | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
+| CQ-R15 | the Goals drop-down becomes scripts/hud_goal_shelf.gd | `hud.gd`, `hud_goal_shelf.gd` (new), 3 goal tests, `FUNCTION_MAP.md` | gated -- SG-3 owns `hud.gd` | medium |
+| CQ-R16 | drag and pan state moves from `main.gd` to `input_selection.gd` | `main.gd`, `input_selection.gd`, `scenario_actions.gd` | gated -- SG-3 owns `main.gd` | low |
 
 Only the first slice of each chain carries a full section and block. A row without one
 gets its block written by the session that claims its predecessor, from this table,
@@ -140,8 +156,10 @@ claim while `dry_after`).
     CQ-M5a → M5b
   - CQ-R0 → R3, R5 and R7
   - CQ-R1 and CQ-R2 → R13
-- **Shared files** (one after another, any order): `hud.gd` (M5, R3, R6, R7, R8);
-  `bee.gd` (T1, M6, M7, R3, R4, S4); `main.gd` (T2, M4, M10, R1, R2, R13);
+  - SG-3 → CQ-R15 → R8 → T3 (`hud.gd`; R15 first so R8 does not shorten a
+    builder that is about to move)
+- **Shared files** (one after another, any order): `hud.gd` (M5b, R8, R15, T3);
+  `bee.gd` (T1, M6, M7, R3, R4, S4); `main.gd` (T2, M4, M10, R1, R2, R13, R16);
   `tests/source_checks.py` (T1, M1, L2). CQ-S4 comes after CQ-R3 and CQ-R4 have
   settled `bee.gd`.
 - **Other plans:**
@@ -306,13 +324,12 @@ wrapped chain as `. name(` on its own line.
 
 - **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`
   and `scripts/saving.gd`; its ownership overlaps that lane's current work.
-- **CQ-M5b** -- waits for the Claude lane's RR-21 to release `scripts/main.gd`
+- **CQ-M5b** -- waits for the Claude lane's SG-3 to release `scripts/main.gd`
   and for the Jules J-14 branch (which deletes code in `scripts/game_panel.gd`)
   to be merged or closed; keep its block gated until both clear.
-- **CQ-M6** -- waits for the Claude lane's SP-14 to release
-  `scripts/hive_cell.gd` and HS-2 to release `scripts/bee.gd` and
-  `scripts/soil_block.gd` (RR-19 landed 28 Oct 2026); keep its queue block
-  gated until that ownership clears. CQ-R10 also uses `scripts/input_selection.gd`, so take it first.
+- **CQ-M6** -- waits for the Claude lane's HS-2 to release `scripts/bee.gd`
+  and `scripts/soil_block.gd`, and SP-6 to release `scripts/bee.gd`;
+  keep its queue block gated until that ownership clears. CQ-R10 also uses `scripts/input_selection.gd`, so take it first.
 
 CQ-S0b shipped 2026-10-25; its specification is `plans/archive/CQ-S0b_2026-10-25.md`.
 
@@ -431,3 +448,237 @@ Reasoning: **low**.
 CQ-R10 shipped 2026-10-27; its specification is `plans/archive/CQ-R10_2026-10-27.md`.
 
 CQ-R14 shipped 2026-10-27; its specification is `plans/archive/CQ-R14_2026-10-27.md`.
+
+## CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd
+
+Level: medium -- a bounded move with a clean boundary and three headless tests,
+but node order and signal wiring must survive it. Gated: SG-3 owns `hud.gd`
+and adds this drop-down's short-term rows and Dismiss; move the finished
+shelf once, after it lands. From the modularity review (MOD-01, 30 Oct 2026).
+
+**Problem and benefit.** `hud.gd` (3,544 lines) holds unrelated HUD jobs, and
+because ownership is per file, every goals change holds the whole HUD: SG-3
+now blocks CQ-R8, CQ-M5b and CQ-T3 and anything else that touches the HUD.
+The Goals drop-down is the one part with a clean seam: at `f09ad39` no
+function outside its section reads any of its eleven fields, and outside
+callers use two methods only (`challenge_runner.gd` -> `set_challenge_goal`,
+`colony_milestones.gd` -> `set_colony_goals`). Moving it makes goal work
+own one small file.
+
+**True now (re-list after SG-3; a line number is never the address).** The
+"Challenge goal readout" section of `hud.gd` holds `_build_goal_shelf`,
+`set_challenge_goal`, `set_colony_goals`, `_apply_goals_collapsed`,
+`_add_goal_star`, `_set_goal_star`, `_on_goal_star_pressed`,
+`_rebuild_favourites`, `_on_goals_button_pressed`, plus whatever SG-3 adds
+for short-term goals and Dismiss. Its fields are `goal_shelf`,
+`completed_goal_label`, `current_goal_label`, `goal_progress_row`,
+`goal_progress_bar`, `goal_progress_label`, `long_term_goal_label`,
+`colony_goal_entries`, `goal_stars`, `goal_star_ids`, `favourites_box` (and
+SG-3's). `goals_button` is built by `_build_top_right_bar` in the second row
+and stays there. `set_settings_button_width` and `set_speed_display` sit in
+the same section but are not goals: they stay in `hud.gd`.
+
+**Boundary (decided).**
+- `scripts/hud_goal_shelf.gd`: `extends RefCounted`, the `hud_command_rows.gd`
+  shape, but it holds **no** `hud` or `main` reference. It reads only
+  `Session`, `UiTheme` and `UI`. Dependency direction: `hud.gd` -> shelf.
+- It owns every field and function listed above, renamed without the leading
+  underscore where `hud.gd` or a test calls it: `build(parent: Container,
+  goals_button: Button)`, `set_challenge_goal(...)` (same parameters),
+  `set_colony_goals(entries)`, `apply_collapsed()`, `toggle_collapsed()` (the
+  old `_on_goals_button_pressed` body), `rebuild_favourites(entries)`.
+- It declares `signal star_toggled(id: String)`; `hud.gd` connects it to its
+  existing `goal_star_toggled.emit`, so `main.gd`'s connection is unchanged.
+- `hud.gd` keeps `var goals := HudGoalShelf.new()` and one-line forwarders
+  `set_challenge_goal` and `set_colony_goals` (callers unchanged), and
+  `_on_goals_button_pressed` becomes `goals.toggle_collapsed()`.
+- `build` creates the same nodes with the same names, in the same order,
+  under the same parent `_build_goal_shelf` uses now. Nothing becomes a
+  child `Control` of its own.
+- While moving `_set_goal_star`, replace its `get_parent()` scan with a
+  `label -> star` Dictionary filled in `_add_goal_star` (MOD-05's one valid
+  point). No other change of logic.
+
+**Must not change.** Every display string, node name, node order and theme
+variation; `goal_star_toggled` and every other hud signal; `Session` keys;
+the "Rules for every slice" list above.
+
+**Steps.** 1. Re-list the section's functions and fields on current master;
+grep `scripts/`, `tests/` and `test_scenarios/` for each field name.
+2. Create the shelf script and move the code verbatim apart from the renames.
+3. Point `hud.gd` at it as above. 4. Change the tests' reads from
+`hud.<field>` / `hud._rebuild_favourites` / `hud._apply_goals_collapsed` to
+`hud.goals.<name>` (`tests/gp1_goals_dropdown_test.gd`,
+`tests/gp2_goal_favourites_test.gd`, `tests/ts2_hud_typeface_size_test.gd`);
+change no assertion. SG-3's tests read a scenario result, not hud fields; if
+one reads a moved field, stop. 5. Update the comments that name
+"hud.gd's goal shelf" (`challenge_feedback.gd`, `challenge_runner.gd`,
+`challenge_stages.gd`) only if they would now mislead. 6.
+`python tools/update_function_map.py`.
+
+**Stop and escalate if** a function outside the moved set reads a moved field
+(the seam is not clean any more); a test needs an assertion changed; or SG-3
+put goal logic (not display) in the section.
+
+**Hands-on check** (click-driven): file with `python tools/new_check.py --name
+"Goals drop-down after the move" --owner plans/now/code-health.md --runner
+haiku`. Condition, from the player's seat: in a Colony Run press Goals; the
+list opens and closes; star a goal, close the list, and the starred line
+stays on screen; Dismiss on a short-term goal removes it.
+
+```queue-gated
+**[Claude] CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd**
+- Plan: `plans/now/code-health.md` -- "CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd"
+- Files: `scripts/hud.gd`, `scripts/hud_goal_shelf.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/ts2_hud_typeface_size_test.gd`, `FUNCTION_MAP.md`
+- Check: `python -m unittest tests.test_gp1_goals_dropdown tests.test_gp2_goal_favourites tests.test_ts2_hud_typeface_size tests.test_sg3_goal_shelf tests.test_layout_regression` passes with no assertion changed; `scripts/hud.gd` no longer defines `_rebuild_favourites`; `.\tools\verify.ps1` is green
+- Proof: `present: scripts/hud.gd :: func _rebuild_favourites(`
+- Next after: CQ-R8
+```
+
+## CQ-R8 -- hud builders shortened; hud sections re-headed
+
+Level: medium. Gated: after CQ-R15 (same file). Research:
+`docs/code-health-research-2026-10-18.md`, "Decompositions", CQ-R8 bullet.
+
+**True now.** `_build_cell_group` copies one designation-button block seven
+times (`var nectar_btn := Button.new()` and siblings). `_build_top_right_bar`,
+`_build_selection_panel` and `_build_raises_controls` are each 80-130 lines
+of sub-rows. Section headers mislead (the modularity review's MOD-01 point
+that holds): the "cell popup" section also holds the warning banner
+(`_build_warning_banner` to `set_warnings_muted`), the object summaries
+(`show_object_summary` to `_show_death_summary`) and the per-frame stage
+marker (`_process` to `_marker_arrow_obscured`). After CQ-R15,
+`set_settings_button_width` and `set_speed_display` are left under a goals
+header.
+
+**When done.** A `DESIGNATION_BUTTONS` const table plus
+`_add_designation_button(row, key, label, tip)` builds the seven buttons in
+the old order; `_build_top_right_bar` calls `_build_speed_row` and
+`_build_window_buttons_row`; `_build_selection_panel` and
+`_build_raises_controls` call one helper per sub-row. New headers:
+`# --- warning banner ---`, `# --- object summaries ---`,
+`# --- stage marker (per frame) ---`, and the two width/speed setters move
+under `# --- speed controls ---`. Moving a function between sections is a
+cut-and-paste with no edit. `hud.gd` gets no new responsibility and loses
+none.
+
+**Must not change.** Node names, node order, tooltips, connections (each
+button still calls the same `_request_*` with the same argument), and the
+"Rules for every slice".
+
+**Stop and escalate if** the table cannot reproduce one button exactly (an
+extra property or a different connection): leave that button written out
+and say why in a comment, but stop if more than two need it.
+
+**Hands-on check:** `python tools/new_check.py --name "Cell designation
+buttons after the builder table" --owner plans/now/code-health.md --runner
+haiku`. Condition: select an empty comb cell; each of the seven designation
+buttons is present in the old order, shows its tooltip, and pressing it
+designates the cell.
+
+```queue-gated
+**[Claude] CQ-R8 -- hud builders shortened; hud sections re-headed**
+- Plan: `plans/now/code-health.md` -- "CQ-R8 -- hud builders shortened; hud sections re-headed"
+- Files: `scripts/hud.gd`, `FUNCTION_MAP.md`
+- Check: `python -m unittest tests.test_layout_regression tests.test_gp1_goals_dropdown tests.test_gp2_goal_favourites tests.test_rr4_min_window tests.test_display_text_golden` passes; `scripts/hud.gd` has a `# --- warning banner` header; `.\tools\verify.ps1` is green
+- Proof: `present: scripts/hud.gd :: var nectar_btn := Button.new()`
+- Next after: CQ-T3
+```
+
+## CQ-R3 -- bee display text becomes scripts/bee_readout.gd
+
+Level: medium. Gated: HS-2 and SP-6 own `bee.gd`. D1 (Dave chose this split,
+18 Oct 2026); the modularity review's MOD-03 lands here instead of a
+`BeeView` child node, which D1's settled list rejects.
+
+**Problem and benefit.** `bee.gd` is held by most bee work (HS-2, SP-6,
+CQ-M6, M7, R4, S4). About 330 lines of it are the selected bee's readout
+text, read only on a HUD refresh, never per frame. Copy changes to that text
+should not hold the simulation file, and simulation work should not have to
+scroll past it.
+
+**Boundary (decided).** New `scripts/bee_readout.gd`, `extends RefCounted`,
+static functions taking `bee: Node2D` first, in the `bee_*.gd` helper
+pattern (no state, no node). It takes `idle_reason`, `task_description`,
+`_task_line`, `_idle_backup_note`, `role_name_text`, `architect_mode_name`
+and `carrying_text` (all in `bee.gd`'s "display" section). `bee.gd` keeps a
+one-line public wrapper for each one called from outside it
+(`idle_reason`, `task_description`, `role_name_text`, `carrying_text`,
+`_task_line`, `_idle_backup_note` -- the last two because
+`tests/display_text_golden_test.gd` and `tests/wp2_backup_order_test.gd`
+call them), so `hud.gd`, `world_building.gd` and every test are unchanged.
+`role_letter`, `challenge_vocabulary_limited` and everything from
+`age_days` down stay in `bee.gd`: `role_letter` is on the per-frame label
+path (`_update_label`). Enums come from `bee_enums.gd` as the other helpers
+do. A pure move: the research note's `TASK_LINE_FIXED` table and per-role
+`idle_reason` split are dropped, because they change shape without moving
+any responsibility.
+
+**Must not change.** Every string, byte for byte (CQ-R0's harness proves
+it); the order of checks inside each function; the "Rules for every slice".
+
+**Steps.** 1. Confirm on current master that no per-frame path calls a moved
+function (`grep -n` each name in `bee.gd`; only the wrappers and HUD callers
+may remain). 2. Create the helper; move the bodies, replacing `self` reads
+with `bee.`. 3. Leave the wrappers. 4. Re-header: the "display" section's
+simulation functions (`leave_to_found_colony`, `_terrain_speed_factor`,
+`_is_inside_hive`, `_on_tree_entered`) are CQ-R4's re-header, not this
+slice's. 5. `python tools/update_function_map.py`.
+
+**Stop and escalate if** a moved function turns out to run per frame, needs
+an enum not in `bee_enums.gd`, or any golden string changes.
+
+```queue-gated
+**[Claude] CQ-R3 -- bee display text becomes scripts/bee_readout.gd**
+- Plan: `plans/now/code-health.md` -- "CQ-R3 -- bee display text becomes scripts/bee_readout.gd"
+- Files: `scripts/bee.gd`, `scripts/bee_readout.gd`, `FUNCTION_MAP.md`
+- Check: `python -m unittest tests.test_display_text_golden tests.test_t2_14_idle_reason_pure tests.test_t2_11_comb_cadence` passes with no expected string changed; `.\tools\verify.ps1` is green
+- Proof: `present: scripts/bee.gd :: func _task_line(`
+- Next after: CQ-R4
+```
+
+## CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd
+
+Level: low -- a mechanical rename of five fields with every use listed.
+Gated: SG-3 owns `main.gd`; take it when no queued slice names `main.gd`.
+From the modularity review (MOD-02, 30 Oct 2026), narrowed.
+
+**Problem and benefit.** `main.gd` declares `dragging`, `drag_start`,
+`drag_current`, `panning` and `pan_anchor`, but they are the pointer
+gesture of `input_selection.gd`, which reads or writes them about 25 times;
+the only other uses are `main.gd::_process` (`if dragging:
+selection_layer.queue_redraw()`) and the headless `click_world` verb in
+`scenario_actions.gd`. `input_selection.gd` already owns its other pointer
+state (`selected_world_object`, `selected_keep_clear_hex`). Moving them puts
+the state with its only writer and is the pattern for any later move of
+single-controller state out of `main.gd`.
+
+**When done.** The five fields are declared in `input_selection.gd` (same
+names, types and defaults, with `main.gd`'s comment on `panning`).
+`input_selection.gd` uses them bare; `main.gd::_process` reads
+`input_selection.dragging`; `scenario_actions.gd`'s `click_world` sets
+`main.input_selection.dragging`, `.drag_start` and `.drag_current`. No
+string-keyed access to these names exists (checked 30 Oct 2026: none).
+
+**Not in scope.** The `selected_*` arrays (read by eight scripts) and the
+`pending_*_bees` captures (`main.set(def["captures"], ...)`) stay on
+`main.gd`: they are shared state, and moving them is an ownership decision
+for a high-reasoning pass with a design note first.
+
+**Stop and escalate if** any other script, test or scenario reads one of the
+five names through `main`.
+
+**Hands-on check:** `python tools/new_check.py --name "Box select and
+middle-drag pan after the input move" --owner plans/now/code-health.md
+--runner sonnet`. Condition: drag a box over several bees in the meadow and
+in the hive (the box draws and selects them); hold the middle button and
+drag (the view pans).
+
+```queue-gated
+**[Claude] CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd**
+- Plan: `plans/now/code-health.md` -- "CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd"
+- Files: `scripts/main.gd`, `scripts/input_selection.gd`, `scripts/scenario_actions.gd`
+- Check: `python tools/equivalence.py test_scenarios/hr2_click_view_switch_test.json master` and `python tools/equivalence.py test_scenarios/e1_placement_exclusion_test.json master` report no difference; `python -m unittest tests.test_rr1_queen_builds` passes; `.\tools\verify.ps1` is green
+- Proof: `present: scripts/main.gd :: var pan_anchor`
+- Next after: CQ-R13
+```

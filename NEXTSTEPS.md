@@ -23,40 +23,34 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words**
-   - Plan: `plans/now/run-repairs.md` -- "RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words"
-   - Files: `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_fc2_first_crisis.py`, `tests/test_rr21_rain_free_days.py`
-   - Check: `python -m unittest tests.test_rr21_rain_free_days tests.test_fc2_first_crisis tests.test_display_text_golden` pass (no random rain before day 2 even at a chance of 1.0; rain rolls again after; the first crisis still fires; warnings read "soon", "later today", "by the end of the day" or "tomorrow"); the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-   - Proof: `absent: scripts/game_config.gd :: rain_free_days`
-   - Next after: none -- the rain rule is complete
-
-2. **[Claude] SP-13 -- foragers come and go at the skep's door**
-   - Plan: `plans/now/sprites.md` -- "SP-13 -- foragers come and go at the skep's door"
-   - Files: `scripts/hive.gd`, `scripts/rival_hive.gd`, `scripts/sprite_catalogue.gd`
-   - Check: `python tools/prefinish.py` is green (boot check clean); the skep sprite's door lands on `hive.position` in a headless scene (the sprite's position plus the door offset equals zero); `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-   - Proof: `absent: scripts/sprite_catalogue.gd :: HIVE_SKEP_DOOR`
-   - Next after: none -- `plans/now/sprites.md` is complete once SP-6, SP-12 and SP-14 have landed
-
-3. **[Claude] SP-14 -- no outline on an unselected comb cell while the cell art is on**
-   - Plan: `plans/now/sprites.md` -- "SP-14 -- no outline on an unselected comb cell while the cell art is on"
-   - Files: `scripts/hive_cell.gd`
-   - Check: `python -m unittest tests.test_sp11_cell_rim` passes; with cell art on, a cell holding nectar has `outline.visible` false and a cell under an overlay has it true; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-   - Proof: `absent: scripts/hive_cell.gd :: outline.visible = content_type != "" and not`
-   - Next after: none -- `plans/now/sprites.md` is complete once SP-6, SP-12 and SP-13 have landed
-
-4. **[Claude] HS-2 -- hard soil fills the outer half of the hive's soil**
+1. **[Claude] HS-2 -- hard soil fills the outer half of the hive's soil**
    - Plan: `plans/now/hard-soil.md` -- "HS-2 -- hard soil fills the outer half of the hive's soil"
    - Files: `scripts/soil_block.gd`, `scripts/hive.gd`, `scripts/bee.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `test_scenarios/hs2_hard_soil.json`, `tests/test_hs2_hard_soil.py`
    - Check: `python -m unittest tests.test_hs2_hard_soil` passes, asserting a hard block refuses a dig order before Mighty Mandible and accepts one after, the hard-soil colour distances, and the rough halfway edge; `.\tools\verify.ps1` is green. Hands-on: in the HS-2 scenario, the hard soil next to the cavity looks greyer than ordinary soil and different from the bedrock, and clicking it to dig does nothing until Mighty Mandible is bought.
    - Proof: `absent: scripts/soil_block.gd :: func hard_soil_start_ring(`
    - Next after: none -- `plans/now/hard-soil.md` is complete
 
-5. **[Claude] PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed**
+2. **[Claude] PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed**
    - Plan: `plans/now/pollination.md` -- "PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed"
    - Files: `scripts/headless/diagnostic_probes.gd`, `tools/headless/profiles.py`, `test_scenarios/alpha_arc_test.json`, `tests/test_pp11_route_snapshots.py`
    - Check: `python -m unittest tests.test_pp11_route_snapshots tests.test_pp6_gyne_rearing_affordable` passes (both snapshot whitelists carry `resources.stored_bee_bread`, `resources.stored_royal_jelly` and `resources.pollinator_points`, and a run logs them); over 3 seeds of the reference Colony Run (`python tools/pacing_gates.py`) every seed owns Pollinator points (`skill.foraging.pollinator_points`), the Gyne-rearing row reports a day on each seed (any day, no band), and the first-worker row stays in band (median by day 17); no price, recipe, `config_overrides` entry that redefines what is measured, or `grant_skill` of a Foraging node; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/headless/diagnostic_probes.gd :: stored_bee_bread`
    - Next after: PP-10 -- the sweep prices the route so Gyne rearing is first affordable after the first winter
+
+3. **[Claude] SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss**
+   - Plan: `plans/now/short-term-goals.md` -- "SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss"
+   - Files: `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/guidance_catalogue.gd`, `test_scenarios/sg3_goal_shelf.json`, `tests/test_sg3_goal_shelf.py`
+   - Check: `python -m unittest tests.test_sg3_goal_shelf` passes (an offered goal appears in the Goals drop-down under the milestone with its progress and reward, in a Colony Run and in a Scenario; a starred goal stays when the drop-down is collapsed; Dismiss removes it and nothing replaces it until the next day; finishing one shows the completion note and the Dr line once); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/hud.gd :: short_term`
+   - Next after: none -- the short-term goals plan is complete; ED-1 in `plans/now/difficulty.md` follows in Dave's order
+
+4. **[Claude] SP-6 -- meadow foragers drawn from the sheet**
+   - Plan: `plans/now/sprites.md` -- "SP-6 -- meadow foragers drawn from the sheet"
+   - Files: `scripts/bee.gd`, `tests/sp6_forager_sprite_test.gd`, `tests/test_sp6_forager_sprite.py`
+   - Check: `python -m unittest tests.test_sp6_forager_sprite` passes: an outdoor worker heading into each of the eight octants shows that direction's row, its frame advances with the wing clock, and its body circles are hidden outdoors and shown indoors; a before/after profile of the display update is recorded in the plan; `.	ools
+   erify.ps1` is green
+   - Proof: `absent: scripts/bee.gd :: FORAGERS_MEADOW_VIEW`
+   - Next after: None -- plan complete
 
 ### Codex lane
 
@@ -82,7 +76,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
-- **CQ-M5b** (`plans/now/code-health.md`) -- the last CanvasLayer readers and the bare-layer source check; waits for RR-21 to release `scripts/main.gd` and the Jules J-14 branch to settle `scripts/game_panel.gd`.
+- **CQ-M5b** (`plans/now/code-health.md`) -- the last CanvasLayer readers and the bare-layer source check; waits for SG-3 to release `scripts/main.gd` and the Jules J-14 branch to settle `scripts/game_panel.gd`.
 - **CQ-M4** (`plans/now/code-health.md`) -- name Challenge level ids; waits for the Claude lane to release `scripts/save_game.gd` and `scripts/saving.gd`.
 - **RR-22** (`plans/now/run-repairs.md`) -- select a number of bees from a multi-selection; waits for the Codex lane's CQ-R6 to release `scripts/hud.gd`, which both name.
 - **RR-12** (`plans/now/run-repairs.md`) -- a loaded run keeps its readout history (Dave, 16 Oct 2026); waits for ED-3, the last of the alpha chain, which shares `scripts/main.gd` and the save files.
@@ -97,9 +91,12 @@ One line each: the id, its plan, and the single thing it waits for.
 - **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-10 (`plans/now/pollination.md`, after PP-11; PP-9 landed 27 Oct 2026), which shares `scripts/skills.gd`.
 - **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices of the alpha chain (ED-1, ED-2, RR-12, SP-8a in `plans/now/drones.md`; WP-2 landed 21 Oct 2026 and WP-3 landed 22 Oct 2026) and ED-3 (Dave, 18 Oct 2026); CQ-S0's round-trip harness landed 22 Oct 2026.
 - **CQ-R2** (`plans/now/code-health.md`) -- the first crisis moves out of `scripts/main.gd` into a new first_crisis.gd, touching the save files; waits, gated with CQ-S1, for the save slices of the alpha chain (ED-1, ED-2, RR-12, SP-8a in `plans/now/drones.md`; WP-2 landed 21 Oct 2026) and ED-3 (Dave, 18 Oct 2026); its plan section is written when that gate clears.
-- **CQ-R8** (`plans/now/code-health.md`) -- hud builders shortened (the designation button table); needs its section and block; prepare before CQ-T3.
+- **CQ-R15** (`plans/now/code-health.md`) -- the Goals drop-down moves out of `scripts/hud.gd` into a new hud_goal_shelf.gd; waits for SG-3 to release `scripts/hud.gd` (modularity review, 30 Oct 2026).
+- **CQ-R8** (`plans/now/code-health.md`) -- hud builders shortened and hud sections re-headed; waits for CQ-R15, which shares `scripts/hud.gd`.
+- **CQ-R3** (`plans/now/code-health.md`) -- bee display text moves into a new bee_readout.gd; waits for HS-2 and SP-6 to release `scripts/bee.gd`.
+- **CQ-R16** (`plans/now/code-health.md`) -- drag and pan state moves from `scripts/main.gd` to `scripts/input_selection.gd`; waits for SG-3 to release `scripts/main.gd`.
 - **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; needs its section and block after CQ-R8 (CQ-L2 released `tests/source_checks.py` 24 Oct 2026).
-- **CQ-M6** (`plans/now/code-health.md`) -- selection green and caste appearance named; waits for the Claude lane's SP-14 to release `scripts/hive_cell.gd` and HS-2 to release `scripts/bee.gd` and `scripts/soil_block.gd` (CT-1, RR-13 and RR-19 landed 26-28 Oct 2026).
+- **CQ-M6** (`plans/now/code-health.md`) -- selection green and caste appearance named; waits for the Claude lane's HS-2 to release `scripts/bee.gd` and `scripts/soil_block.gd` and SP-6 to release `scripts/bee.gd`.
 - **CQ-M7** (`plans/now/code-health.md`) -- world draw order named; waits for CQ-M6 and then needs its section and block.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
 - **FR-4** (`plans/now/forager-recruitment.md`) -- a headless assertion replaces the C-143 hands-on check; `scripts/scenario_actions.gd` was released 25 Oct 2026, but `tools/admission.py` reads C-143, the check it retires, as an unlanded slice, so its block stays `queue-gated` until admission ignores check ids.

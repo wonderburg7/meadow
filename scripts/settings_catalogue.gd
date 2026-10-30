@@ -802,6 +802,12 @@ const TUNABLES := [
 		"tip": "Roughly how often a day brings rain.",
 	},
 	{
+		"persist": "none",
+		"key": "rain_free_days", "label": "Rain-free days", "step": 0.5, "min": 0.0,
+		"category": "Weather",
+		"tip": "Game days at the start of a run before ordinary rain can fall.",
+	},
+	{
 		"persist": "run",
 		"key": "rain_min_seconds", "label": "Rain min s", "step": 10.0, "min": 5.0,
 		"category": "Weather",

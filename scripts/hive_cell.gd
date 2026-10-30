@@ -1515,8 +1515,9 @@ func _refresh() -> void:
 	outline.default_color = _resource_outline_colour(content_type)
 	# An empty cell is drawn as flat colour with no rim, so open comb and
 	# open floor read as one continuous surface instead of a grid of
-	# outlined tiles. Cells with something in them keep their outline.
-	outline.visible = content_type != ""
+	# outlined tiles. With the cup art on, the art already draws the cell, so
+	# the rim is hidden here; an overlay still shows it (see the overlay branch).
+	outline.visible = content_type != "" and not Session.use_cell_sprites
 	designation_ring.visible = designated_type != "" or keep_empty
 	if keep_empty:
 		designation_ring.default_color = Color(0.85, 0.85, 0.9, 0.9)

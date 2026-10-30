@@ -1017,7 +1017,7 @@ func _advance_weather(delta: float) -> void:
 		if rain_seconds_left <= 0.0:
 			rain_target = 0.0
 			rain_changed.emit(false)
-	elif not _first_crisis_holds_weather():
+	elif not _first_crisis_holds_weather() and Session.sim_time >= GameConfig.rain_free_days * GameConfig.seconds_per_day:
 		# six attempts per in-game day, spread evenly over it (with a ten-second floor)
 		weather_timer -= delta
 		if weather_timer <= 0.0:
@@ -1180,8 +1180,8 @@ func _first_crisis_warning_text(readiness: Dictionary, lead: float) -> String:
 		foragers += " 1 assigned forager is too low on energy to fly."
 	elif int(readiness.unable_foragers) > 1:
 		foragers += " %d assigned foragers are too low on energy to fly." % int(readiness.unable_foragers)
-	return "Heavy rain is coming in about %s. While it falls your foragers stay at the hive and nectar in the flowers is watered down, so forage income stops. Your stores feed the colony for about %s at its current rate. %s Build up stores, or put a worker on foraging now so a trip comes home before the rain." % [
-		_minutes_text(lead), _minutes_text(float(readiness.food_cover_seconds)), foragers,
+	return "Heavy rain is coming %s. While it falls your foragers stay at the hive and nectar in the flowers is watered down, so forage income stops. Your stores feed the colony for about %s at its current rate. %s Build up stores, or put a worker on foraging now so a trip comes home before the rain." % [
+		rain_when_text(lead, Session.sim_time, GameConfig.seconds_per_day), _minutes_text(float(readiness.food_cover_seconds)), foragers,
 	]
 
 func _start_first_crisis() -> void:
@@ -1216,7 +1216,7 @@ func _show_first_crisis_note() -> void:
 	var note := ""
 	match state:
 		"warned":
-			note = "Heavy rain due in %s" % _minutes_text(step * 10.0)
+			note = "Heavy rain due %s" % rain_when_text(step * 10.0, Session.sim_time, GameConfig.seconds_per_day)
 		"active":
 			note = "Heavy rain: foragers kept in"
 		"spent":
@@ -1227,6 +1227,21 @@ func _show_first_crisis_note() -> void:
 	_first_crisis_note = note
 	if hud != null:
 		hud.set_weather_note(note)
+
+## RR-21: when rain is due, in plain words rather than a clock. `lead` is the
+## seconds until it starts, `now` the run time, `day_seconds` one game day.
+## "soon" is within about a game hour; otherwise by where the start falls in
+## the day: "later today", "by the end of the day" (the last quarter) or
+## "tomorrow" (any later day).
+static func rain_when_text(lead: float, now: float, day_seconds: float) -> String:
+	if lead <= day_seconds / 24.0:
+		return "soon"
+	var due: float = now + lead
+	if floori(due / day_seconds) > floori(now / day_seconds):
+		return "tomorrow"
+	if fposmod(due, day_seconds) >= day_seconds * 0.75:
+		return "by the end of the day"
+	return "later today"
 
 static func _minutes_text(seconds: float) -> String:
 	var whole: int = maxi(0, int(round(seconds)))

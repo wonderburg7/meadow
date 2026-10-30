@@ -99,3 +99,6 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-157 -- Bee command buttons after row extraction](ready/C-157.md)
 - [C-158 -- Queen on comb work discards sour nectar](ready/C-158.md)
 - [C-159 -- A Comb worker carries a dead bee out, waits one second outside, and comes back](ready/C-159.md)
+- [C-160 -- Rain stays away for the first two days, and its warning says when in plain words](ready/C-160.md)
+- [C-161 -- foragers come and go at the skep's entrance](ready/C-161.md)
+- [C-162 -- SP-14: a nectar cell with cell art on has no outline ring](ready/C-162.md)

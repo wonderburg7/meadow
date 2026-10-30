@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-20 built on claude/RR-20, 30 Oct 2026, awaiting Dave's hands-on check; RR-18 implemented on codex/RR-18, awaiting high-risk review and integration (Dave, 30 Oct 2026); RR-12 waits for ED-3 (RR-17 verified on codex/RR-17, 29 Oct 2026; RR-19 on claude/RR-19, 28 Oct 2026; RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-30
+Status: active | Owner: Dave / Claude Code | Next: RR-21 built on claude/RR-21, 30 Oct 2026, awaiting Dave's hands-on check; RR-20 built on claude/RR-20, 30 Oct 2026, awaiting Dave's hands-on check; RR-18 implemented on codex/RR-18, awaiting high-risk review and integration (Dave, 30 Oct 2026); RR-12 waits for ED-3 (RR-17 verified on codex/RR-17, 29 Oct 2026; RR-19 on claude/RR-19, 28 Oct 2026; RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-30
 
 ## Objective
 
@@ -44,7 +44,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | --- | --- | --- | --- | --- |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
 | RR-18 | skip saves for the long checks C-140 and C-142 | `tools/run_scenario.py`, `tests/test_scenario_save_install.py`, `test_scenarios/`, `checks/ready/C-140.md`, `checks/ready/C-142.md` | yes | high |
-| RR-21 | no ordinary rain in the first two days; rain warnings in plain words | `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, tests | yes -- SG-4 landed 26 Oct 2026 | medium |
 | RR-22 | select a number of bees from a multi-selection, youngest and oldest | `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, tests | no -- after the Codex lane's CQ-R6 releases `scripts/hud.gd` (CQ-R10 landed 27 Oct 2026; GP-5 and SG-4 landed 26 Oct 2026) | medium |
 
 RR-9 and RR-10 are Codex-lane slices (Dave, 15 Oct 2026, plan review D3:
@@ -197,56 +196,7 @@ RR-19 shipped 2026-10-28; its specification is `plans/archive/RR-19_2026-10-28.m
 
 RR-20 shipped 2026-10-30; its specification is `plans/archive/RR-20_2026-10-30.md`.
 
-## RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words
-
-Level: medium -- claude-sonnet-5-5 at medium effort (a gameplay outcome).
-
-**True now.** Dave: rain must not "happen at the very start of a game, or in
-the first 2 days, unless rain coming sooner is a part of a scenario or
-challenge", and warnings should "use more general terms, like soon or 'by the
-end of the day'". `main.gd::_advance_weather` (near l.981-1012) rolls six
-times a day at `rain_chance_per_day / 6` while `_first_crisis_holds_weather()`
-is false, from time zero. The first crisis schedules and starts its own rain
-(`_advance_first_crisis`), outside the roll. Warnings give clock times:
-`_first_crisis_warning_text` (near l.1148, "coming in about %s"),
-`_show_first_crisis_note` (near l.1179, "Heavy rain due in %s") through
-`_minutes_text`, and the generic "Rain is coming in" warning (near l.1008) has
-no time at all.
-
-**When done:**
-
-1. `GameConfig.rain_free_days` (2.0, settings row): the random roll is skipped
-   while `Session.sim_time < rain_free_days * seconds_per_day`. The first crisis
-   and any scenario or Challenge that starts rain itself are unaffected, and
-   a scenario that wants an early random roll sets `rain_free_days` to 0 with
-   `set_config` (Dave, 24 Oct 2026).
-2. One helper turns the time left and the time of day into a plain phrase:
-   "soon" (within about a game hour), "later today", "by the end of the day",
-   "tomorrow". The first-crisis warning and corner note use it instead of
-   minutes and seconds, and the generic rain warning says when it is due only
-   if a time is known.
-3. `tests/test_fc2_first_crisis.py` and the display-text golden
-   (`python -m unittest tests.test_display_text_golden`) are updated for the
-   new wording.
-4. The closeout runs the reference arc before and after and reports the
-   difference in rain timing. Do not tune anything.
-5. Dave's hands-on check is filed at closeout; C-140 (the first crisis)
-   re-runs after it from its skip save (RR-18).
-
-**Invariants.** The first crisis keeps its schedule and bounds. No save change.
-Shares `scripts/main.gd` with SG-4 and the Select-n slice RR-22: whichever is
-queued first runs first.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words**
-- Plan: `plans/now/run-repairs.md` -- "RR-21 -- no ordinary rain in a run's first two days, and rain warnings say when in plain words"
-- Files: `scripts/main.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_fc2_first_crisis.py`, `tests/test_rr21_rain_free_days.py`
-- Check: `python -m unittest tests.test_rr21_rain_free_days tests.test_fc2_first_crisis tests.test_display_text_golden` pass (no random rain before day 2 even at a chance of 1.0; rain rolls again after; the first crisis still fires; warnings read "soon", "later today", "by the end of the day" or "tomorrow"); the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-- Proof: `absent: scripts/game_config.gd :: rain_free_days`
-- Next after: none -- the rain rule is complete
-```
+RR-21 shipped 2026-10-30; its specification is `plans/archive/RR-21_2026-10-30.md`.
 
 ## RR-22 -- select a number of bees from a multi-selection
 
