@@ -16,7 +16,11 @@ whole instruction: the stop rules, refills and report below need no extra
 prompt. Run the slices **one at a time**. The lane allows one open branch (`plans/workstreams.md`
 § Lanes), and Godot runs from two sessions at once kill each other.
 
-`ROOT` is the primary checkout: `C:\Users\dl13860\Documents\Meadow\meadow`.
+`ROOT` is the primary checkout: the parent of
+`git rev-parse --path-format=absolute --git-common-dir`, the same from the
+primary checkout and any worktree (PowerShell:
+`Split-Path -Parent (git rev-parse --path-format=absolute --git-common-dir)`).
+Work it out once, at the start of the run.
 Run every lifecycle command in a subshell, so that no tool's shell is left
 sitting in a `.worktrees/` directory:
 `(cd <ROOT> && powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 <cmd> -Lane Claude)`.
