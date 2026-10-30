@@ -52,3 +52,4 @@ file but never edits it. Prune a row once its branch is deleted from
 | S-1 | jules/s-1-diagnostics-helpers-4600050507060882082 | merged | 2026-10-30 | Codex | Taken with edits as 592573b; `plans/reference/jules-integration-2026-10-30.md` |
 | S-1 | jules/s-1-hook-log-helpers-3127326564944141059 | merged | 2026-10-30 | Codex | Taken with edits as b991c00; same review |
 | report | jules/architecture-context-report-2353694383991347374 | merged | 2026-10-30 | Codex | Kept as a historical assessment, c9adfb9 (`docs/system-architecture-and-context-report-2026-10-24.md`) |
+| R-modularity | jules/modularity-review-2026-10-30-962141701101776885 | merged | 2026-10-30 | Claude | record docs/modularity-review-2026-10-30.md; 0 queued, 3 gated (MOD-01 to MOD-03 as CQ-R15, CQ-R8, CQ-R3, CQ-R16 in plans/now/code-health.md), 0 decided, 5 rejected (MOD-04 to MOD-08) |
