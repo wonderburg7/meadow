@@ -83,7 +83,7 @@ static func _matches(state: Dictionary, condition: Dictionary) -> bool:
 		"low_food": return float(state.nectar) < GameConfig.nectar_warning_total and float(state.honey) < GameConfig.honey_warning_total
 		"no_nurses": return int(state.nurses) == 0 and int(state.brood_cells) > 0
 		"winter_unclustered": return Season.unclustered_warning_due(float(state.day))
-		"no_free_cells": return int(state.free_cells) == 0
+		"no_free_cells": return _no_free_cells_due(state)
 		"hungry": return int(state.hungry) > 0
 		"no_foragers": return int(state.foragers) == 0
 		"no_comb_workers": return int(state.comb_workers) == 0 and int(state.dead_cells) > 0
@@ -124,7 +124,7 @@ static func signal_winter_unclustered(state: Dictionary) -> String:
 
 
 static func signal_no_free_cells(state: Dictionary) -> String:
-	return no_free_cells(state.bees, state.queen)
+	return no_free_cells(state.bees, state.queen, state)
 
 
 static func signal_hungry(state: Dictionary) -> String:
@@ -163,10 +163,26 @@ static func hungry(bees: Array, count: int) -> String:
 		return "%s is running low on energy — she is trying to work, but the pantry is not helping." % bee.bee_name
 	return "%d bees are running low on energy" % count
 
-static func no_free_cells(bees: Array, queen) -> String:
-	var loaded := _first_bee(bees, func(candidate):
-		return candidate.current_load > 0.0 and candidate.current_load_type in ["nectar", "pollen"]
+## No wholly empty cell, and either no loaded bee (the queen's eggs have
+## nowhere to go) or a loaded bee whose load fits no part-filled cell.
+static func _no_free_cells_due(state: Dictionary) -> bool:
+	if int(state.free_cells) != 0:
+		return false
+	return _first_bee(state.bees, _is_loaded_forager) == null or _loaded_bee_without_room(state) != null
+
+static func _is_loaded_forager(candidate) -> bool:
+	return candidate.current_load > 0.0 and candidate.current_load_type in ["nectar", "pollen"]
+
+## A bee carrying nectar or pollen that no cell can take: wholly empty cells
+## are gone (the caller checks free_cells) and no part-filled cell of her
+## load's type has room. A half-full nectar cell is somewhere to put nectar.
+static func _loaded_bee_without_room(state: Dictionary):
+	return _first_bee(state.bees, func(candidate):
+		return _is_loaded_forager(candidate) and int(state.get(str(candidate.current_load_type) + "_room", 0)) == 0
 	)
+
+static func no_free_cells(bees: Array, queen, room: Dictionary = {}) -> String:
+	var loaded = _loaded_bee_without_room({"bees": bees, "nectar_room": room.get("nectar_room", 0), "pollen_room": room.get("pollen_room", 0)})
 	if loaded != null:
 		return "%s is annoyed that there is nowhere to put the %s she gathered — how can she work under these conditions?" % [loaded.bee_name, loaded.current_load_type]
 	if is_instance_valid(queen):

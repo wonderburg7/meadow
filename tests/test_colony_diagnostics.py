@@ -19,6 +19,9 @@ class Cell:
 	extends RefCounted
 	var brood_fed_seconds: float = 0.0
 	var keep_empty: bool = false
+	var space: float = 0.0
+	func space_for(_resource_type: String) -> float:
+		return space
 
 class Hive:
 	extends Node
@@ -31,7 +34,11 @@ class Colony:
 	var hive: Hive = Hive.new()
 
 class Bee:
-	extends RefCounted
+	extends Node2D
+	var bee_id: int = 1
+	var bee_name: String = "Fern"
+	var current_load: float = 0.0
+	var current_load_type: String = ""
 	var energy: float = 100.0
 	var waiting: bool = false
 	var travelling: bool = false
@@ -74,6 +81,32 @@ func _process(_delta: float) -> bool:
 		bee.no_work = item.get("no_work", false)
 		var facts: Dictionary = diagnostics.compute(colony, [bee], counts)
 		print("DIAGNOSTIC " + JSON.stringify({"name": item.name, "facts": facts}))
+		bee.free()
+		colony.free()
+	# A half-full nectar cell is somewhere to put nectar; a full comb is not.
+	var messages: GDScript = load("res://scripts/problem_messages.gd")
+	var room_cases: Array = [
+		{"name": "half_nectar_cell", "space": 5.0, "load": "nectar"},
+		{"name": "full_comb", "space": 0.0, "load": "nectar"},
+		{"name": "half_nectar_pollen_bee", "space": 5.0, "load": "pollen"},
+		{"name": "no_loaded_bee", "space": 5.0, "load": ""},
+	]
+	for item in room_cases:
+		var colony := Colony.new()
+		var nectar_cell := Cell.new()
+		nectar_cell.space = item.space
+		colony.hive.buckets = {"nectar": [nectar_cell], "": []}
+		var bee := Bee.new()
+		if item.load != "":
+			bee.current_load = 1.0
+			bee.current_load_type = item.load
+		var facts: Dictionary = diagnostics.compute(colony, [bee], {})
+		var state: Dictionary = facts.duplicate()
+		state["bees"] = [bee]
+		state["queen"] = null
+		var due: bool = messages._matches(state, {"custom": "no_free_cells"})
+		print("ROOM " + JSON.stringify({"name": item.name, "due": due}))
+		bee.free()
 		colony.free()
 	return true
 '''
@@ -121,6 +154,17 @@ class ColonyDiagnosticsTest(unittest.TestCase):
                 self.assertEqual(tuple(facts[name][key] for key in keys), values)
                 self.assertTrue(all(facts[name][key] >= 0 for key in keys))
 
+        room = {
+            row["name"]: row["due"]
+            for line in output.splitlines() if line.startswith("ROOM ")
+            for row in [json.loads(line.removeprefix("ROOM "))]
+        }
+        self.assertEqual(room, {
+            "half_nectar_cell": False,
+            "full_comb": True,
+            "half_nectar_pollen_bee": True,
+            "no_loaded_bee": True,
+        })
         self.assertEqual(
             tuple(facts["waiting_with_work"][key] for key in ("waiting_for_work", "travelling_for_work", "no_available_work")),
             (1, 0, 0),

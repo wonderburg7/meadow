@@ -44,6 +44,11 @@ static func compute(main: Node2D, bees: Array, counts: Dictionary) -> Dictionary
 	for cell: Variant in main.hive.cells_holding(""):
 		if not cell.keep_empty:
 			free_cells += 1
+	# free_cells counts wholly empty cells only. A part-filled cell of the
+	# type a loaded bee carries still takes her load, so the "nowhere to put
+	# it" signal reads these room counts as well (problem_messages.gd).
+	var nectar_room: int = _cells_with_room(main.hive.cells_holding("nectar"), "nectar")
+	var pollen_room: int = _cells_with_room(main.hive.cells_holding("pollen"), "pollen")
 
 	# A missing workforce is one required role with demand but no assigned
 	# worker. Blocked work counts affected cells, not bees: every brood cell
@@ -88,12 +93,23 @@ static func compute(main: Node2D, bees: Array, counts: Dictionary) -> Dictionary
 		"hungry_brood": hungry_brood,
 		"brood_cells": brood_cells.size(),
 		"free_cells": free_cells,
+		"nectar_room": nectar_room,
+		"pollen_room": pollen_room,
 		"blocked_cells": blocked_cells,
 		"missing_nurse_workforce": missing_nurse_workforce,
 		"missing_comb_workforce": missing_comb_workforce,
 		"missing_required_workforce": missing_nurse_workforce + missing_comb_workforce,
 		"blocked_work": blocked_work,
 	}
+
+
+## How many of these cells can still take some of `resource_type`.
+static func _cells_with_room(cells: Array, resource_type: String) -> int:
+	var n: int = 0
+	for cell: Variant in cells:
+		if cell.space_for(resource_type) > 0.0:
+			n += 1
+	return n
 
 
 ## FC-2 (plans/now/crisis-readiness.md): the first crisis's readiness inputs,
