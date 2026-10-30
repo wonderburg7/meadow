@@ -75,6 +75,8 @@ func _ready() -> void:
 	body = Polygon2D.new()
 	body.polygon = Shapes.square_points(Vector2(52, 52))
 	body.color = Color(0.42, 0.24, 0.30, 0.0)   # hit shape only; the skep below is drawn
+	# The hit shape follows the skep's door (SP-13), as the player's hive's does.
+	body.position = -HiveScript.HIVE_SKEP_DOOR * PixelSprite.MEADOW_SCALE
 	add_child(body)
 
 	# The darker recolour of the player's skep (SP-5), door on the hive position (SP-13).
