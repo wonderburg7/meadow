@@ -1,7 +1,7 @@
 # Google Jules -- task list and method
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: Jules every task; Claude/Codex only to add or prune a task -->
-Status: reference | Owner: Dave / Claude Code / Codex | Next: process the branches `--ledger` lists as unreviewed (J-16, J-40 to J-43 and four others), then refill; J-31 is returned for correction; when no task is free Jules runs the review rota (`plans/reference/jules-reviews.md`) | Dependency: none | Verified: 2026-10-30
+Status: reference | Owner: Dave / Claude Code / Codex | Next: refill -- every open task (J-31, J-42) is returned for correction, see `--ledger`; when no task is free Jules runs the review rota (`plans/reference/jules-reviews.md`) | Dependency: none | Verified: 2026-10-30
 
 Jules works from GitHub on a Linux VM, outside the Claude/Codex slice queue.
 Its work is behaviour-preserving tooling: guards that catch a known bug class
@@ -19,10 +19,11 @@ blocks, so it also refills this list.
 
 The 29 October integration review is
 `plans/reference/jules-integration-2026-10-29.md`. It sent back all eleven
-audits J-29 to J-39; on 30 Oct J-31 was returned for a corrected redo and
-the other ten closed, their areas now covered by the review rota, whose
-method carries the review's corrections. Do not use their proposed fixes as
-instructions.
+audits J-29 to J-39, and the 30 October one
+(`plans/reference/jules-integration-2026-10-30.md`) sent their redos back
+again. On 30 Oct (Dave) J-31 stayed open for a corrected redo and the other
+ten closed, their areas now covered by the review rota, whose method carries
+both reviews' corrections. Do not use their proposed fixes as instructions.
 
 **When no numbered task is free, Jules runs the review rota**
 (`plans/reference/jules-reviews.md`): the sweep half of Dave's reviews in
@@ -201,18 +202,6 @@ it, like `tools/heading.py`.
 
 ## Tasks
 
-### J-16 -- Unit tests for `tools/new_check.py`'s id and text helpers
-
-- Files: tests/test_new_check_helpers.py (new)
-- After: none
-- Why: `tests/test_review_tools.py` does not name `used_ids`, `next_free_id`,
-  `record_text`, `day_label`, `pass_heading` or `insert_entries` (24 Oct
-  2026); a wrong id there files a hands-on check under another check's name.
-- Do: run each in a temporary directory, never over the real `checks/`: the
-  next free id with gaps and with none used, the record text for a pass and
-  for a failure, and `insert_entries` adding under the right heading and
-  leaving the rest byte-identical. Tests only.
-
 ### J-31 -- Audit: hive and meadow coordinate spaces
 
 - Files: docs/audits/coordinate-spaces.md (new)
@@ -234,47 +223,6 @@ it, like `tools/heading.py`.
   converted at the move. Candidate Jules tasks are source checks for any
   mixed shape a regex can catch; if none can, say so.
 
-### J-40 -- Guard persistent panel layout against size setters
-
-- Files: tools/layout_setter_check.py (new), tests/test_layout_setter_check.py (new)
-- After: none
-- Why: the offset-only contract in `scripts/ui_panel_layout.gd:12` is real,
-  although J-29 incorrectly classified other layout protections. A narrow
-  lexical guard can enforce this one file without guessing Control types
-  across the project.
-- Do: write a standalone checker for `scripts/ui_panel_layout.gd` only.
-  Ignore comments and quoted text using the existing presentation-gate
-  blanking helper; preserve line numbers. Reject assignment (including
-  compound assignment and x/y components) to `.size`, `.position` or
-  `.global_position`, and calls to `.set_size`, `.set_position` or
-  `.reset_size`. Allow reads and offset assignments. Expose a function
-  accepting source text and return actionable file/line diagnostics;
-  command-line execution checks the repository file and exits non-zero on
-  findings. Test positive and negative temporary fixtures, comment/string
-  exclusions and the actual repository file, so the normal full unit run
-  enforces the contract without a verify-script change. Mutation-prove
-  setters, component assignments and compound assignments. Do not edit
-  GDScript or infer a blanket ban on layout setters elsewhere.
-
-### J-41 -- Test the common queue-fence contract across Python readers
-
-- Files: tests/test_queue_fence_parity.py (new)
-- After: none
-- Why: J-38 correctly noticed multiple queue-fence consumers, but compared
-  a slice-specific gated-successor locator with general fence parsers.
-  The common contract can be tested without equating their different jobs.
-- Do: construct complete synthetic queue and queue-gated blocks and compare
-  `tools/archive_slice.py::_foreign_queue_blocks` with
-  `tools/backlog.py::parse_blocks` on their common domain: a foreign slice
-  with all required fields. Assert the same slice IDs are found for both
-  fence forms, LF and CRLF and trailing horizontal whitespace. Check that
-  unrelated fences are ignored and that backlog preserves the gated flag;
-  explicitly test archiving's intentional exclusion of the current slice.
-  Use valid fixtures with non-empty expected IDs, no repository plans,
-  subprocesses or source edits. Mutation-prove each reader dropping gated
-  blocks independently. Do not require identical malformed-input behaviour
-  or test PowerShell by executing the lifecycle script.
-
 ### J-42 -- Prove Godot wrapper helpers propagate failure and skip
 
 - Files: tests/test_godot_helper_contracts.py (new)
@@ -291,21 +239,6 @@ it, like `tools/heading.py`.
   and the subprocess must not be called in that case. Build all results in
   memory; never launch Godot, read a player profile or change the wrappers.
   Mutation-prove removing the helper's output/error checks is detected.
-
-### J-43 -- Test sprite table validation branches omitted by J-26
-
-- Files: tests/test_sprites_validation.py (new)
-- After: none
-- Why: J-26 covers the requested table examples; further malformed row
-  fields and the unnamed-variant branch still deserve isolated fixtures.
-- Do: build every table string in the test. Check `parse_table` rejects an
-  empty variant name with otherwise valid colour swaps and rejects invalid
-  hexadecimal digits; check malformed level numbers and anchor components
-  raise the existing ValueError rather than changing production behaviour.
-  Include a valid multi-level, signed-anchor row and assert its complete
-  fields so a validator rejecting every input cannot pass. Never read
-  `SPRITES.md`, image assets or generated catalogues. Mutation-prove the
-  empty-name validation and colour validation separately. Tests only.
 
 ### Not tasks yet
 

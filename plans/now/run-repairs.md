@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-18 remains startable; RR-12 waits for ED-3 (RR-17 verified on codex/RR-17, 29 Oct 2026; RR-19 on claude/RR-19, 28 Oct 2026; RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-29
+Status: active | Owner: Dave / Claude Code | Next: RR-18 remains startable in the Codex lane (Dave, 30 Oct 2026); RR-12 waits for ED-3 (RR-17 verified on codex/RR-17, 29 Oct 2026; RR-19 on claude/RR-19, 28 Oct 2026; RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-29
 
 ## Objective
 
@@ -166,12 +166,12 @@ reach them. No script changes.
 **Open decisions:** none.
 
 ```queue
-**[Claude] RR-18 -- skip saves for the long checks C-140 and C-142**
+**[Codex] RR-18 -- skip saves for the long checks C-140 and C-142**
 - Plan: `plans/now/run-repairs.md` -- "RR-18 -- skip saves for the long checks C-140 and C-142"
 - Files: `test_scenarios/c140_first_crisis_warned.json`, `test_scenarios/c142_work_priorities.json`, `checks/ready/C-140.md`, `checks/ready/C-142.md`
 - Check: `python tools/run_scenario.py test_scenarios/c140_first_crisis_warned.json` and `python tools/run_scenario.py test_scenarios/c142_work_priorities.json` each finish and leave their named save in the saves list; `python tools/check_docs.py` passes; `.\tools\verify.ps1` is green
 - Proof: `absent: checks/ready/C-140.md :: run_scenario`
-- Next after: none -- the long checks have skip saves
+- Next after: none -- the long-check skip saves are complete
 ```
 
 RR-19 shipped 2026-10-28; its specification is `plans/archive/RR-19_2026-10-28.md`.

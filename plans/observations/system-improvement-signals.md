@@ -918,3 +918,30 @@ explicit request from Dave.
 - Disposition: untriaged. The reports remain unaccepted; four bounded
   follow-ups were salvaged into the Jules task list without their false
   conclusions.
+
+### 2026-10-30 — Jules audit corrections remain unresolved on origin
+
+- Source: ad hoc Jules integration batch, `codex/jules-batch-20261030`.
+- Area and signal: all eleven J-29–J-39 reports still fail their documented correction criteria; the token-savings audit also makes unsupported test-selection claims.
+- Evidence: `plans/reference/jules-integration-2026-10-30.md` records the reviewer’s exact reasons and file/section follow-ups for every report; `plans/reference/jules-integration-2026-10-29.md` supplies the earlier source-based correction criteria.
+- Consequence: importing the reports or their candidates would preserve false claims and admit unsupported implementation work. No candidate was admitted.
+- Hypothesis: require corrected reports to demonstrate each disputed predicate or contract against their named source revision before resubmission. This grants no authority to change runtime code or workflow policy.
+- Disposition: untriaged; Jules must correct J-29–J-39 and `docs/audits/workflow-token-savings.md`. Existing save-persistence decisions remain in `plans/now/run-repairs.md`, “Not in the queue, and why”.
+
+### 2026-10-30 — standalone test imports hid a verifier failure
+
+- Source: ad hoc Jules integration batch, J-42.
+- Area and signal: `PYTHONPATH=tests` made the reviewer’s standalone tests pass while the verifier’s normal module invocation failed.
+- Evidence: `python -m unittest tests.test_godot_helper_contracts` raises `ModuleNotFoundError: test_challenge2_checks`; named-test bisect found `544e18e`, reverted by `db64a09`.
+- Consequence: an apparently green review can introduce a failing module into full verification.
+- Hypothesis: rerun an imported test module through the verifier’s normal import path before accepting it. Jules must correct `tests/test_godot_helper_contracts.py` imports and demonstrate that invocation before resubmission.
+- Disposition: untriaged; J-42 remains in `plans/reference/jules.md`. No workflow change is included.
+
+### 2026-10-30 — a reverted Jules task still appears completed
+
+- Source: ad hoc Jules batch final queue check.
+- Area and signal: `tools/jules_preflight.py::is_done` still suppresses J-42 after its implementation commit `544e18e` was reverted by `db64a09`.
+- Evidence: the task block remains in `plans/reference/jules.md`, while `python tools/jules_preflight.py --queue` reports only the eleven audit tasks and zero free tasks. The current J-42 SEND BACK decision is in `plans/reference/jules-integration-2026-10-30.md`.
+- Consequence: a later reviewer or Jules session may skip work that was removed from master.
+- Hypothesis: completion detection should distinguish retained task work from reverted history, with a temporary-repository fixture proving both states.
+- Disposition: untriaged; no completion-detector change is included.

@@ -216,6 +216,21 @@ class RepositoryTest(unittest.TestCase):
         task, _ = preflight.next_task(self.root, tasks, "origin/master")
         self.assertEqual(task.id, "J-1")
 
+    def test_a_reverted_task_is_not_done_until_merged_again(self):
+        task = preflight.parse_tasks(TASKS)[0]
+        self.write("tools/one.py", "# j-1\n")
+        self.commit("J-1: first")
+        self.push_master()
+        self.assertTrue(preflight.is_done(self.root, task, "origin/master"))
+        self.git("revert", "--no-edit", "HEAD")
+        self.push_master()
+        self.assertFalse(preflight.is_done(self.root, task, "origin/master"))
+        self.assertEqual(preflight.classify(self.root, [task], "origin/master")[0][1], "free")
+        self.git("revert", "--no-edit", "HEAD")  # 'Reapply ...': a fresh merge carries the J-1 line again
+        self.git("commit", "-q", "--amend", "-m", "J-1: first, corrected")
+        self.push_master()
+        self.assertTrue(preflight.is_done(self.root, task, "origin/master"))
+
     def test_jules_branches_sorts_unreviewed_from_merged(self):
         self.push_branch("jules/j-1-first-5", "tools/one.py")
         self.push_branch("jules/s-1-helpers-7", "tests/test_helpers.py", "# helpers\n")

@@ -63,6 +63,41 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
+1. **[Codex] FX-2 -- finish checks the primary is on master before verifying**
+   - Plan: `plans/now/workflow-friction.md` -- "FX-2 -- finish checks the primary is on master before verifying"
+   - Files: `tools/slice.ps1`, `tests/test_slice_lifecycle.py`
+   - Check: `python -m unittest tests.test_slice_lifecycle.SliceDoctorTest.test_finish_stops_before_verifying_when_the_primary_checkout_is_off_master tests.test_slice_lifecycle.SliceDoctorTest.test_finish_stops_before_verifying_on_a_staged_file_in_the_primary_checkout` passes; `python tools/prefinish.py` passes
+   - Proof: `absent: tools/slice.ps1 :: function Assert-PrimaryOnMaster`
+   - Next after: FX-3 -- Jules merges happen in a worktree
+
+2. **[Codex] FX-3 -- Jules merges happen in a worktree**
+   - Plan: `plans/now/workflow-friction.md` -- "FX-3 -- Jules merges happen in a worktree"
+   - Files: `plans/reference/jules.md`
+   - Check: `python tools/check_docs.py` passes; `git grep -n "never in the primary checkout" -- plans/reference/jules.md` prints one line in the "Before merging a Jules pull request" bullet
+   - Proof: `absent: plans/reference/jules.md :: never in the primary checkout`
+   - Next after: FX-4 -- headless job tests ignore temp cleanup errors
+
+3. **[Codex] FX-4 -- headless job tests ignore temp cleanup errors**
+   - Plan: `plans/now/workflow-friction.md` -- "FX-4 -- headless job tests ignore temp cleanup errors"
+   - Files: `tests/test_headless_jobs.py`
+   - Check: `python -m unittest tests.test_headless_jobs` passes five runs in a row with all six temp directories created with `ignore_cleanup_errors=True`; no assertion changed
+   - Proof: `absent: tests/test_headless_jobs.py :: ignore_cleanup_errors`
+   - Next after: FX-5 -- Claude skills derive `ROOT`
+
+4. **[Codex] FX-5 -- Claude skills derive `ROOT`**
+   - Plan: `plans/now/workflow-friction.md` -- "FX-5 -- Claude skills derive `ROOT`"
+   - Files: `.claude/skills/run-queue/SKILL.md`, `.claude/skills/run-reviews/SKILL.md`, `.claude/skills/plan-ahead/SKILL.md`
+   - Check: `git grep -n dl13860 -- .claude/skills` prints nothing; `python -m unittest tests.test_cx2_queue_steward` passes; `python tools/check_docs.py` passes
+   - Proof: `present: .claude/skills/run-queue/SKILL.md :: dl13860`
+   - Next after: FX-6 -- Codex skills derive `ROOT`; Codex run-queue probes `.git`
+
+5. **[Codex] RR-18 -- skip saves for the long checks C-140 and C-142**
+   - Plan: `plans/now/run-repairs.md` -- "RR-18 -- skip saves for the long checks C-140 and C-142"
+   - Files: `test_scenarios/c140_first_crisis_warned.json`, `test_scenarios/c142_work_priorities.json`, `checks/ready/C-140.md`, `checks/ready/C-142.md`
+   - Check: `python tools/run_scenario.py test_scenarios/c140_first_crisis_warned.json` and `python tools/run_scenario.py test_scenarios/c142_work_priorities.json` each finish and leave their named save in the saves list; `python tools/check_docs.py` passes; `.\tools\verify.ps1` is green
+   - Proof: `absent: checks/ready/C-140.md :: run_scenario`
+   - Next after: none -- the long-check skip saves are complete
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.

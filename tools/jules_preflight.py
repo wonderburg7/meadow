@@ -248,8 +248,16 @@ def owners(
 
 
 def has_done_line(root: Path, item: str, base: str = BASE) -> bool:
-    pattern = f"(^{item}:|jules/{item.lower()}-)"
-    return bool(git(root, "log", base, "-E", "-i", f"--grep={pattern}", "--format=%h", "-1").strip())
+    """A `J-<n>:` line (or the branch name) on `base` that no later `Revert "J-<n>: ..."` commit undoes:
+    J-42 was merged and reverted on 30 Oct 2026, and counting it done hid it from `--next`."""
+    done = git(root, "log", base, "-E", "-i", f"--grep=(^{item}:|jules/{item.lower()}-)", "--format=%H", "-1").strip()
+    if not done:
+        return False
+    undone = git(root, "log", base, "-E", "-i", f'--grep=^Revert "{item}:', "--format=%H", "-1").strip()
+    if not undone:
+        return True
+    later = subprocess.run(["git", "-C", str(root), "merge-base", "--is-ancestor", undone, done], capture_output=True)
+    return later.returncode == 0 and undone != done
 
 
 def is_done(root: Path, task: Task, base: str = BASE) -> bool:
