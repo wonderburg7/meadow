@@ -195,7 +195,7 @@ Key Architectural Boundaries & Ownership:
 
 ---
 
-## Recommendations (Proposed Implementation Slices)
+## Recommendations (Proposed Implementation Slices & Downstream Impact Analysis)
 
 ### R1 -- Decompose `hud.gd` into domain-specific UI components (MOD-01)
 - Plan: `plans/now/code-health.md`
@@ -212,6 +212,11 @@ Key Architectural Boundaries & Ownership:
 - Check: `python -m unittest tests.test_ts2_hud_typeface_size tests.test_layout_regression`
 - Proof: `present: scripts/ui/hud_goal_shelf.gd :: extends Control`
 - Stop and escalate if: UI layout breaks or signal connections fail during headless initialization.
+- Downstream Impacts & Context Updates:
+  - Affected Consumers: `main.gd` signal routing, `input_selection.gd` selection callbacks.
+  - Affected Tests: `tests/test_ts2_hud_typeface_size.py`, `tests/test_layout_regression.py`, `tests/ts2_hud_typeface_size_test.gd`.
+  - Documentation & Agent Context: Update `FUNCTION_MAP.md` mapping for HUD helper extractions; update `plans/now/code-health.md` line bounds.
+  - Persistence/Saves: None (UI controls hold no persisted save fields).
 - Open decisions: D1 (Dave approval of HUD decomposition).
 
 ### R2 -- Decouple `main.gd` direct sub-property access (MOD-02)
@@ -228,6 +233,11 @@ Key Architectural Boundaries & Ownership:
 - Check: `python -m unittest tests.test_rr2_boot_saves tests.test_save_roundtrip`
 - Proof: `absent: scripts/hud.gd :: main.saves_panel`
 - Stop and escalate if: Boot order or signal race conditions occur.
+- Downstream Impacts & Context Updates:
+  - Affected Consumers: Boot initialization order in `main.gd::_ready()`, `saving.gd` references.
+  - Affected Tests: `tests/test_rr2_boot_saves.py`, `tests/test_save_roundtrip.py`, `tests/test_si1_run_state.py`.
+  - Documentation & Agent Context: Update `FUNCTION_MAP.md` entries for `Main` public signals; update `AGENTS.md` notes on subsystem coupling.
+  - Persistence/Saves: Must preserve `saving.gd` run state serialization dictionaries and version numbers.
 - Open decisions: none.
 
 ### R3 -- Separate bee presentation rendering from `bee.gd` simulation (MOD-03)
@@ -244,6 +254,11 @@ Key Architectural Boundaries & Ownership:
 - Check: `python tests/balance_tests.py && python -m unittest tests.test_forager_behaviour`
 - Proof: `present: scripts/bee_view.gd :: extends Node2D`
 - Stop and escalate if: Balance tests fail or bee movement simulation behaves differently.
+- Downstream Impacts & Context Updates:
+  - Affected Consumers: `hive.gd`, `world_building.gd` bee spawning loops, `input_selection.gd` selection drawing.
+  - Affected Tests: `tests/test_forager_behaviour.py`, `tests/test_sp2_sprites.py`, `tests/balance_tests.py`.
+  - Documentation & Agent Context: Update `FUNCTION_MAP.md` mapping for `bee_view.gd`; update `plans/now/sprites.md`.
+  - Persistence/Saves: Must preserve `bee.gd` `to_dict()` and `from_dict()` fields (`bee_id`, `role`, `energy`, `age_days`).
 - Open decisions: none.
 
 ### R4 -- Convert `scenario_actions.gd` into data-driven scenario schemas (MOD-04)
@@ -260,6 +275,11 @@ Key Architectural Boundaries & Ownership:
 - Check: `python -m unittest tests.test_run_scenario_launch`
 - Proof: `present: scripts/scenario_runner.gd :: class_name ScenarioRunner`
 - Stop and escalate if: Existing challenge scenarios fail to trigger.
+- Downstream Impacts & Context Updates:
+  - Affected Consumers: `challenge_runner.gd`, `colony_milestones.gd`.
+  - Affected Tests: `tests/test_run_scenario_launch.py`, `tests/test_fc2_first_crisis.py`.
+  - Documentation & Agent Context: Update `docs/challenge-stages.md` schema references; update `FUNCTION_MAP.md`.
+  - Persistence/Saves: Must preserve scenario progress flags saved in `Session` and `saving.gd`.
 - Open decisions: none.
 
 ### R5 -- Eliminate `get_parent()` node walking in UI and simulation (MOD-05)
@@ -275,6 +295,10 @@ Key Architectural Boundaries & Ownership:
 - Check: `python tests/source_checks.py`
 - Proof: `absent: scripts/hud.gd :: candidate.get_parent()`
 - Stop and escalate if: Hierarchy checks fail.
+- Downstream Impacts & Context Updates:
+  - Affected Consumers: Goal star positioning in `hud.gd`, hive entry checks in `bee.gd`.
+  - Affected Tests: `python tests/source_checks.py`, `tests/test_forager_behaviour.py`.
+  - Documentation & Agent Context: Update `FUNCTION_MAP.md`.
 - Open decisions: none.
 
 ### R6 -- Refactor `settings_catalogue.gd` metadata definitions (MOD-06)
@@ -290,7 +314,30 @@ Key Architectural Boundaries & Ownership:
 - Check: `python -m unittest tests.test_settings_catalogue`
 - Proof: `present: scripts/settings_catalogue.gd :: func _create_setting_item`
 - Stop and escalate if: Any setting key or default value drifts.
+- Downstream Impacts & Context Updates:
+  - Affected Consumers: `settings_panel.gd`, `saving.gd` user preferences serialization.
+  - Affected Tests: `tests/test_settings_catalogue.py`.
+  - Documentation & Agent Context: Update `FUNCTION_MAP.md` entries for `settings_catalogue.gd`.
 - Open decisions: none.
+
+---
+
+## Streamlining Future Modularity & Architectural Evolution
+
+To make future modularisation less expensive and more streamlined, Meadow should adopt the following operational and structural strategies:
+
+1. **Automated File Size & Coupling Linting (`tools/source_checks.py`)**:
+   - Add automated preflight checks in `tests/source_checks.py` that flag scripts exceeding 2,000 lines or containing more than 10 direct `get_node` / `get_parent` calls.
+   - Proactively catch monolith growth before scripts reach 3.5k lines.
+
+2. **Explicit Subsystem Interface Contracts**:
+   - Establish formal signal-based or interface contracts between `Main` and child managers. Child managers should register callbacks or connect to explicit signals rather than reaching into sibling properties (`main.other_subsystem`).
+
+3. **Data-Driven Declarative Specs for Content**:
+   - Mandate that new scenarios, goal milestones, and settings catalogue entries use declarative JSON/Resource schemas rather than expanding GDScript match trees.
+
+4. **Automated `FUNCTION_MAP.md` Updates**:
+   - Expand `python tools/update_function_map.py` to automatically update symbol mappings whenever a script is decomposed into sub-controls or helper modules, avoiding manual documentation drift.
 
 ---
 
