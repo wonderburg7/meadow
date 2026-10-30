@@ -307,6 +307,12 @@ For Claude, Codex and Dave, not Jules.
   (`git checkout origin/jules/<branch> -- <those files>`), as `cd0b5a0e` did:
   a Jules branch can revert master's queue, plans and hooks (PR 4, PR 5). Fix
   a thin or inaccurate test in the same merge, as J-3, J-8 and J-9 each needed.
+  Do all of it in a worktree of its own, never in the primary checkout:
+  `git worktree add .claude/worktrees/jules-J-<n> -b claude/jules-J-<n> origin/master`,
+  check out the files and commit there, then merge that branch into master.
+  A `git checkout <ref> -- <files>` in the primary checkout stages them on
+  master, and the next `tools/slice.ps1 finish` stops on "staged changes"
+  (L-37, 25 Oct 2026).
 - **Merge a session in one pass, not pull request by pull request** (30 Oct
   2026): a long session leaves a dozen branches, and each review that
   re-reads the task list, the queue and the context costs more than the

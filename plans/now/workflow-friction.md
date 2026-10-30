@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Codex (moved to the Codex lane by Dave, 30 Oct 2026) | Next: FX-3, Jules merges happen in a worktree | Dependency: none; FX-1 to FX-6 share no file and run in id order | Verified: 2026-10-30
+Status: active | Owner: Dave / Codex (moved to the Codex lane by Dave, 30 Oct 2026) | Next: FX-4, headless job tests ignore temp cleanup errors | Dependency: none; FX-1 to FX-6 share no file and run in id order | Verified: 2026-10-30
 
 ## Objective
 
