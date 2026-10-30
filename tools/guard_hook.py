@@ -22,6 +22,14 @@ TREE_READERS = frozenset({
     "get-content", "type", "ls", "dir", "get-childitem",
 })
 
+# A filter that removes a denied path reads nothing from it: an inverted
+# match on piped input, or an exclude/glob-negation argument.
+STDIN_FILTERS = frozenset({"grep", "rg", "select-string"})
+INVERT_FLAG = re.compile(r"(?<!\S)(?:-[a-z]*v[a-z]*|--invert-match|-notmatch)(?!\S)")
+EXCLUSION_ARGUMENT = re.compile(
+    r"""(?<!\S)(?:--exclude(?:-dir)?(?:=|\s+)|(?:-g|--glob)(?:=|\s+)['"]?!|['"]?:(?:!|\(exclude\)))\S*"""
+)
+
 
 def _is_worktree(cwd: str) -> bool:
     normalised_cwd = cwd.replace("\\", "/")
@@ -31,11 +39,17 @@ def _is_worktree(cwd: str) -> bool:
 def _reads_tree(command: str) -> bool:
     """Recognise a direct file reader with a denied path as an argument."""
     for line in command.splitlines():
-        for segment in re.split(r"&&|\|\||[;|]", line):
-            words = segment.strip().split(None, 1)
+        pieces = re.split(r"(&&|\|\||[;|])", line)
+        for index in range(0, len(pieces), 2):
+            words = pieces[index].strip().split(None, 1)
             if not words or words[0].lower() not in TREE_READERS:
                 continue
+            reader = words[0].lower()
             arguments = words[1].lower().replace("\\", "/") if len(words) > 1 else ""
+            piped = index > 0 and pieces[index - 1] == "|"
+            if piped and reader in STDIN_FILTERS and INVERT_FLAG.search(arguments):
+                continue
+            arguments = EXCLUSION_ARGUMENT.sub(" ", arguments)
             if any(path in arguments for path in DENIED_READ_PATHS):
                 return True
     return False

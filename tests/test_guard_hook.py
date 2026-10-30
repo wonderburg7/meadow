@@ -95,6 +95,31 @@ class GuardHookTest(unittest.TestCase):
                 self.assertEqual(returncode, 0)
                 self.assertEqual(output, {})
 
+    def test_allows_filters_that_exclude_denied_paths(self) -> None:
+        for command in (
+            'git grep -n x -- "*.md" | grep -v "^plans/archive"',
+            "git ls-files | grep -iv _backups",
+            "rg foo -g '!_backups'",
+            "rg foo --glob=!plans/archive/**",
+            "grep -rn foo --exclude-dir=_backups .",
+            "grep -rn foo --exclude-dir _backups .",
+            "Get-ChildItem -Recurse | Select-String -NotMatch _backups",
+        ):
+            with self.subTest(command=command):
+                returncode, output = self.run_hook(command)
+                self.assertEqual(returncode, 0)
+                self.assertEqual(output, {})
+
+    def test_still_denies_reads_beside_an_exclusion(self) -> None:
+        for command in (
+            "grep -v foo _backups/x.txt",
+            "rg foo _backups -g '!x'",
+            "grep -rn foo --exclude-dir=x _backups",
+            "cat _backups/x | grep -v y",
+        ):
+            with self.subTest(command=command):
+                self.assert_denied(command, "denied path")
+
 
 if __name__ == "__main__":
     unittest.main()
