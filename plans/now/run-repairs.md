@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-18 remains startable in the Codex lane (Dave, 30 Oct 2026); RR-12 waits for ED-3 (RR-17 verified on codex/RR-17, 29 Oct 2026; RR-19 on claude/RR-19, 28 Oct 2026; RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-29
+Status: active | Owner: Dave / Claude Code | Next: RR-20 built on claude/RR-20, 30 Oct 2026, awaiting Dave's hands-on check; RR-18 remains startable in the Codex lane (Dave, 30 Oct 2026); RR-12 waits for ED-3 (RR-17 verified on codex/RR-17, 29 Oct 2026; RR-19 on claude/RR-19, 28 Oct 2026; RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-29
 
 ## Objective
 
@@ -201,6 +201,14 @@ the hive view still drawing her.
    she is outside for the second and inside again after it.
 4. Dave's hands-on check is filed at closeout: watch a comb worker carry a body
    out, wait one second outside and return.
+
+**Found (RR-20, 30 Oct 2026).** The code already put her outside: the
+headless run shows `move_bee_out_of_hive` reparents her to the meadow for the
+whole dump. The hive view hides `meadow_root` (`camera_view.gd`), so on
+stepping out she vanishes from the screen she was watched on, and the two
+seconds read as her waiting at the door. The fix is the time: a body now drops
+after `body_drop_seconds` (1.0) instead of `dirt_dump_time`. Whether the
+vanishing needs a visible exit in the hive view is for Dave's check.
 
 **Invariants.** Stores and spoil dumps keep `dirt_dump_time`. If the cause is
 in `bee.gd` (CQ-S0b's file) stop and escalate with the options.

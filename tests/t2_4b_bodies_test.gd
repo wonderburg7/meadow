@@ -241,6 +241,7 @@ func _cleaning(hive: Polygon2D) -> void:
 	_check(worker.target_body == body, "the Comb worker did not take the body")
 	_check(body.is_claimed(), "the body is not claimed by the Comb worker")
 	var saw_outside_with_body := false
+	var outside_seconds := 0.0
 	var steps := 0
 	while steps < MAX_STEPS:
 		steps += 1
@@ -254,10 +255,14 @@ func _cleaning(hive: Polygon2D) -> void:
 		elif state == _main.Bee.State.DUMPING_WASTE:
 			if worker.carrying_corpse and worker.corpse_is_bee and not worker._is_inside_hive():
 				saw_outside_with_body = true
+				outside_seconds += STEP
 			BeeBuilding.builder_dump_waste(worker, STEP)
 		else:
 			break
 	_check(saw_outside_with_body, "the Comb worker never carried the body outside (stopped in state %d after %d steps)" % [worker.state, steps])
+	# RR-20: outside for body_drop_seconds (to one step), not dirt_dump_time.
+	_check(absf(outside_seconds - _config.body_drop_seconds) <= STEP + 0.001,
+		"the Comb worker was outside %.2f s with the body, expected %.2f s" % [outside_seconds, _config.body_drop_seconds])
 	_check(hive.bodies.is_empty(), "the carried body is still on the floor")
 	_check(worker._is_inside_hive() and worker.state == _main.Bee.State.BUILD_IDLE, "the Comb worker did not come back in to idle")
 	_check(not worker.carrying_corpse and not worker.corpse_is_bee, "the Comb worker still carries a body")
