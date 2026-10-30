@@ -90,7 +90,9 @@ class HeadlessJobsTest(unittest.TestCase):
         self.fail("background job did not reach a terminal status")
 
     def test_submitted_job_returns_promptly_and_persists_normal_verdict(self):
-        with tempfile.TemporaryDirectory() as directory:
+        # A runner that has just exited can still hold process.log open on Windows;
+        # deleting the temp tree is not what these tests assert.
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as directory:
             temp = Path(directory)
             root = temp / "jobs"
             runner = self.write_runner(temp, "passed", 0)
@@ -107,7 +109,7 @@ class HeadlessJobsTest(unittest.TestCase):
             self.assertTrue((job_dir / "process.log").is_file())
 
     def test_foreground_timeout_or_crash_status_remains_terminal_without_log_polling(self):
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as directory:
             temp = Path(directory)
             root = temp / "jobs"
             runner = self.write_runner(temp, "timed_out", 1)
@@ -117,7 +119,7 @@ class HeadlessJobsTest(unittest.TestCase):
             self.assertEqual("timed_out", json.loads((job_dir / "result.json").read_text(encoding="utf-8"))["status"])
 
     def test_runner_crash_without_a_verdict_is_a_terminal_crash(self):
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as directory:
             temp = Path(directory)
             root = temp / "jobs"
             runner = temp / "crashing_runner.py"
@@ -129,7 +131,7 @@ class HeadlessJobsTest(unittest.TestCase):
             self.assertEqual("runner_exit", result["reason"]["kind"])
 
     def test_missing_worker_is_stale_and_cleanup_stays_inside_marked_temp_root(self):
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as directory:
             temp = Path(directory)
             root = ensure_job_root(temp / "jobs")
             stale = root / "job-1-aaaaaaaaaaaa"
@@ -148,7 +150,7 @@ class HeadlessJobsTest(unittest.TestCase):
                 validate_job_root(Path(__file__).resolve().parent.parent)
 
     def test_only_one_queued_or_running_job_can_be_submitted(self):
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as directory:
             root = ensure_job_root(Path(directory) / "jobs")
             active = root / "job-1-bbbbbbbbbbbb"
             active.mkdir()
@@ -160,7 +162,7 @@ class HeadlessJobsTest(unittest.TestCase):
                 submit_job([sys.executable, "fake_runner.py"], root)
 
     def test_runner_background_strips_job_only_flags_and_rejects_external_result_root(self):
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as directory:
             root = Path(directory) / "jobs"
             command = _background_command([
                 "scenario.json", "--background", "--job-root", str(root),

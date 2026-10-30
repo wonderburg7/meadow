@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Codex (moved to the Codex lane by Dave, 30 Oct 2026) | Next: FX-4, headless job tests ignore temp cleanup errors | Dependency: none; FX-1 to FX-6 share no file and run in id order | Verified: 2026-10-30
+Status: active | Owner: Dave / Codex (moved to the Codex lane by Dave, 30 Oct 2026) | Next: FX-5, Claude skills derive `ROOT` | Dependency: none; FX-1 to FX-6 share no file and run in id order | Verified: 2026-10-30
 
 ## Objective
 
@@ -56,7 +56,6 @@ What the 26 Oct 2026 re-verification found, cluster by cluster:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FX-4 | headless job tests ignore temp cleanup errors | `tests/test_headless_jobs.py` | yes | low |
 | FX-5 | Claude skills derive `ROOT` | `.claude/skills/run-queue/SKILL.md`, `.claude/skills/run-reviews/SKILL.md`, `.claude/skills/plan-ahead/SKILL.md` | yes | low |
 | FX-6 | Codex skills derive `ROOT`; Codex run-queue probes `.git` | `.agents/skills/run-queue/SKILL.md`, `.agents/skills/plan-ahead/SKILL.md` | yes | low |
 
@@ -72,40 +71,7 @@ FX-2 shipped 2026-10-30; its specification is `plans/archive/FX-2_2026-10-30.md`
 
 FX-3 shipped 2026-10-30; its specification is `plans/archive/FX-3_2026-10-30.md`.
 
-## FX-4 -- headless job tests ignore temp cleanup errors
-
-**Now.** All six `with tempfile.TemporaryDirectory() as directory:` blocks
-in `tests/test_headless_jobs.py` delete the job directory as the test ends.
-On Windows a just-finished runner can still hold `process.log` open, and the
-deletion error fails the test as an ERROR (recorded twice in verify runs).
-The cause is not proved; this removes the one candidate a test should not
-fail on, since cleanup is not what the tests assert.
-
-**Edit `tests/test_headless_jobs.py`.** Replace every
-`tempfile.TemporaryDirectory()` with
-`tempfile.TemporaryDirectory(ignore_cleanup_errors=True)` (six places; CI
-runs Python 3.12, local 3.14, both have it). Above the first one add:
-`# A runner that has just exited can still hold process.log open on Windows;`
-`# deleting the temp tree is not what these tests assert.` (two comment lines).
-
-**Do not** change any assertion, timeout or `tools/headless/jobs.py`.
-
-**Acceptance.** `python -m unittest tests.test_headless_jobs` passes five
-times running. Git Bash, from the slice worktree:
-`for i in 1 2 3 4 5; do python -m unittest tests.test_headless_jobs || break; done`.
-If it errors after this change, the cause is not cleanup: report it as
-`failed` with the traceback rather than editing further.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] FX-4 -- headless job tests ignore temp cleanup errors**
-- Plan: `plans/now/workflow-friction.md` -- "FX-4 -- headless job tests ignore temp cleanup errors"
-- Files: `tests/test_headless_jobs.py`
-- Check: `python -m unittest tests.test_headless_jobs` passes five runs in a row with all six temp directories created with `ignore_cleanup_errors=True`; no assertion changed
-- Proof: `absent: tests/test_headless_jobs.py :: ignore_cleanup_errors`
-- Next after: FX-5 -- Claude skills derive `ROOT`
-```
+FX-4 shipped 2026-10-30; its specification is `plans/archive/FX-4_2026-10-30.md`.
 
 ## FX-5 -- Claude skills derive `ROOT`
 
