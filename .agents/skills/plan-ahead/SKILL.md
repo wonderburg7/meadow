@@ -17,7 +17,7 @@ first (`python tools/heading.py <file> "<heading>"`), then only the sections
 you need. Never read `plans/archive/` whole; grep it for an id only to check
 something already shipped. `ROADMAP.md` and `DESIGN_BACKLOG.md` deny the file
 tools: read them with `cat`/`grep` in Bash from the primary checkout
-(`C:\Users\dl13860\Documents\Meadow\meadow`).
+(the parent of `git rev-parse --path-format=absolute --git-common-dir`).
 
 Rules that govern everything below, not restated here: `plans/README.md`
 "Plan schema" and "Writing or editing a plan" (rules 1-10),

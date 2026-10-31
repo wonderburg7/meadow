@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Codex (moved to the Codex lane by Dave, 30 Oct 2026) | Next: FX-6, Codex skills derive `ROOT` and probe `.git` | Dependency: none; FX-1 to FX-6 share no file and run in id order | Verified: 2026-10-30
+Status: complete | Owner: Dave / Codex (moved to the Codex lane by Dave, 30 Oct 2026) | Next: none -- workflow-friction plan complete | Dependency: none | Verified: 2026-10-31
 
 ## Objective
 
@@ -56,7 +56,6 @@ What the 26 Oct 2026 re-verification found, cluster by cluster:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| FX-6 | Codex skills derive `ROOT`; Codex run-queue probes `.git` | `.agents/skills/run-queue/SKILL.md`, `.agents/skills/plan-ahead/SKILL.md` | yes | low |
 
 No slice depends on another. They are chained by `Next after:` in id order
 only so the lane refills itself. **Do not change** any behaviour this plan
@@ -74,49 +73,4 @@ FX-4 shipped 2026-10-30; its specification is `plans/archive/FX-4_2026-10-30.md`
 
 FX-5 shipped 2026-10-30; its specification is `plans/archive/FX-5_2026-10-30.md`.
 
-## FX-6 -- Codex skills derive `ROOT`; Codex run-queue probes `.git`
-
-**Now.** `.agents/skills/run-queue/SKILL.md` hard-codes `ROOT` (the
-`` `ROOT` is the primary checkout: `` line, and the `ROOT=` and `WORKTREE=`
-lines of the worker prompt in step 3), as does
-`.agents/skills/plan-ahead/SKILL.md`. A Codex session started under the
-`:workspace` profile overrides `.codex/config.toml`'s
-`default_permissions = "meadow"` and cannot write `.git`, which surfaces
-only when `start` fails.
-
-**Edit `.agents/skills/run-queue/SKILL.md`.**
-
-1. The `ROOT` line: same replacement as FX-5 step 1.
-2. In the step 3 worker prompt, replace
-   `ROOT=C:\Users\dl13860\Documents\Meadow\meadow` with `ROOT=<ROOT>` and
-   `WORKTREE=C:\Users\dl13860\Documents\Meadow\meadow\.worktrees\<id>` with
-   `WORKTREE=<ROOT>\.worktrees\<id>`.
-3. Directly after the paragraph that ends
-   `` `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 <cmd> -Lane Codex`. ``,
-   add a new paragraph:
-
-   > **Before the first `doctor`, prove `.git` is writable.** From `ROOT`,
-   > run `git update-ref refs/meadow/write-probe HEAD; git update-ref -d refs/meadow/write-probe`.
-   > If either fails, claim nothing and tell Dave: "This session cannot
-   > write `.git`: choose `meadow` in this session's Permissions dropdown,
-   > then rerun `$run-queue`." A `:workspace` profile overrides
-   > `.codex/config.toml`'s `default_permissions = "meadow"`.
-
-**Edit `.agents/skills/plan-ahead/SKILL.md`:** same replacement as FX-5 step 2.
-
-**Do not** touch `.claude/skills/` or `.codex/config.toml`.
-
-**Acceptance.** `git grep -n dl13860 -- .agents/skills` prints nothing;
-`git grep -n "refs/meadow/write-probe" -- .agents/skills/run-queue/SKILL.md`
-prints one line; `python tools/check_docs.py` passes.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] FX-6 -- Codex skills derive `ROOT`; Codex run-queue probes `.git`**
-- Plan: `plans/now/workflow-friction.md` -- "FX-6 -- Codex skills derive `ROOT`; Codex run-queue probes `.git`"
-- Files: `.agents/skills/run-queue/SKILL.md`, `.agents/skills/plan-ahead/SKILL.md`
-- Check: `git grep -n dl13860 -- .agents/skills` prints nothing; `git grep -n "refs/meadow/write-probe" -- .agents/skills/run-queue/SKILL.md` prints one line; `python tools/check_docs.py` passes
-- Proof: `absent: .agents/skills/run-queue/SKILL.md :: refs/meadow/write-probe`
-- Next after: none -- workflow-friction plan complete
-```
+FX-6 shipped 2026-10-31; its specification is `plans/archive/FX-6_2026-10-31.md`.
