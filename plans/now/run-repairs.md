@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-21 built on claude/RR-21, 30 Oct 2026, awaiting Dave's hands-on check; RR-20 built on claude/RR-20, 30 Oct 2026, awaiting Dave's hands-on check; RR-18 remains startable in the Codex lane (Dave, 30 Oct 2026); RR-12 waits for ED-3 (RR-17 verified on codex/RR-17, 29 Oct 2026; RR-19 on claude/RR-19, 28 Oct 2026; RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-29
+Status: active | Owner: Dave / Claude Code | Next: RR-21 built on claude/RR-21, 30 Oct 2026, awaiting Dave's hands-on check; RR-20 built on claude/RR-20, 30 Oct 2026, awaiting Dave's hands-on check; RR-18 implemented on codex/RR-18, awaiting high-risk review and integration (Dave, 30 Oct 2026); RR-12 waits for ED-3 (RR-17 verified on codex/RR-17, 29 Oct 2026; RR-19 on claude/RR-19, 28 Oct 2026; RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-30
 
 ## Objective
 
@@ -43,7 +43,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
-| RR-18 | skip saves for the long checks C-140 and C-142 | `test_scenarios/`, `checks/ready/C-140.md`, `checks/ready/C-142.md` | yes | low |
 | RR-22 | select a number of bees from a multi-selection, youngest and oldest | `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, tests | no -- after the Codex lane's CQ-R6 releases `scripts/hud.gd` (CQ-R10 landed 27 Oct 2026; GP-5 and SG-4 landed 26 Oct 2026) | medium |
 
 RR-9 and RR-10 are Codex-lane slices (Dave, 15 Oct 2026, plan review D3:
@@ -132,51 +131,7 @@ RR-16 shipped 2026-10-27; its specification is `plans/archive/RR-16_2026-10-27.m
 
 RR-17 shipped 2026-10-29; its specification is `plans/archive/RR-17_2026-10-29.md`.
 
-## RR-18 -- skip saves for the long checks C-140 and C-142
-
-Level: low -- claude-haiku-5-5 (run each scenario and confirm the save appears).
-
-**True now.** Checks C-140 (the first crisis, warned) and C-142 (work
-priorities) take more than five minutes of play to reach, so they break the
-five-minute rule (`plans/reference/check-loop.md` rule 3). Templates:
-`test_scenarios/fc2_first_crisis_prepared.json` and
-`test_scenarios/wp3_backup_order_ui.json`.
-
-**When done:**
-
-1. `test_scenarios/c140_first_crisis_warned.json` copies the first, with a
-   `when: {first_crisis_state: "warned"}` action `save_run` named "C140 warned".
-2. `test_scenarios/c142_work_priorities.json` grants
-   `skill.hive_mind.work_priorities`, hatches three or more bees in mixed
-   roles (as the second template does), then runs `save_run` named
-   "C142 work priorities".
-3. `checks/ready/C-140.md` and `checks/ready/C-142.md` have "What this checks"
-   rewritten to: run the scenario once headless from the repo root (home: `cd
-   C:\Users\david\Documents\Meadow\meadow`; work: `cd
-   C:\Users\dl13860\Documents\Meadow\meadow`; in PowerShell, the exact
-   `python tools/run_scenario.py test_scenarios/<file>.json` line), then open the
-   named save from the cog menu > Saves and carry on from there.
-4. Each scenario is run and the save is seen to appear.
-
-**Invariants.** The checks' pass conditions are unchanged; only the way to
-reach them. No script changes.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] RR-18 -- skip saves for the long checks C-140 and C-142**
-- Plan: `plans/now/run-repairs.md` -- "RR-18 -- skip saves for the long checks C-140 and C-142"
-- Files: `test_scenarios/c140_first_crisis_warned.json`, `test_scenarios/c142_work_priorities.json`, `checks/ready/C-140.md`, `checks/ready/C-142.md`
-- Check: `python tools/run_scenario.py test_scenarios/c140_first_crisis_warned.json` and `python tools/run_scenario.py test_scenarios/c142_work_priorities.json` each finish and leave their named save in the saves list; `python tools/check_docs.py` passes; `.\tools\verify.ps1` is green
-- Proof: `absent: checks/ready/C-140.md :: run_scenario`
-- Next after: none -- the long-check skip saves are complete
-```
-
-RR-19 shipped 2026-10-28; its specification is `plans/archive/RR-19_2026-10-28.md`.
-
-RR-20 shipped 2026-10-30; its specification is `plans/archive/RR-20_2026-10-30.md`.
-
-RR-21 shipped 2026-10-30; its specification is `plans/archive/RR-21_2026-10-30.md`.
+RR-18 shipped 2026-10-31; its specification is `plans/archive/RR-18_2026-10-31.md`.
 
 ## RR-22 -- select a number of bees from a multi-selection
 

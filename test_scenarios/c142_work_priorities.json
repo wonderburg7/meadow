@@ -1,0 +1,27 @@
+{
+  "cells": 15,
+  "nectar_foragers": 3,
+  "pollen_foragers": 2,
+  "nurses": 3,
+  "builders": 1,
+  "miners": 1,
+  "random_seed": 404,
+  "actions": [
+    {
+      "do": "grant_skill",
+      "skill": "skill.hive_mind.work_priorities"
+    },
+    {
+      "do": "settle",
+      "ticks": 5
+    },
+    {
+      "do": "save_run",
+      "name": "C142 work priorities"
+    }
+  ],
+  "stop": {
+    "when_actions_resolved": true,
+    "max_days": 2
+  }
+}
