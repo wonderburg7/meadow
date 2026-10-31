@@ -1,0 +1,32 @@
+{
+  "seed_set": true,
+  "forager_species": "Clover",
+  "random_seed": 12345,
+  "winter": false,
+  "weather": false,
+  "disease": false,
+  "rival_hive": false,
+  "cells": 12,
+  "nectar_foragers": 24,
+  "pollen_foragers": 6,
+  "nurses": 0,
+  "builders": 0,
+  "miners": 0,
+  "honey_makers": 0,
+  "snapshot_seconds": 60,
+  "pollination_log": true,
+  "config_overrides": {
+    "seconds_per_day": 20.0,
+    "season_length_days": 10.0,
+    "flower_regrow_seconds": 0.1,
+    "disease_on": false,
+    "predators_on": false
+  },
+  "actions": [
+    {"do": "set_cell_contents", "cell": {"built_index": 0}, "resource": "honey", "amount": 200},
+    {"do": "set_cell_contents", "cell": {"built_index": 1}, "resource": "honey", "amount": 200},
+    {"do": "set_cell_contents", "cell": {"built_index": 2}, "resource": "honey", "amount": 200},
+    {"do": "save_run", "name": "EE1 end", "when": {"day_at_least": 10}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 11}
+}

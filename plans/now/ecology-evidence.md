@@ -1,7 +1,7 @@
 # Ecology evidence -- what pollination changes in the meadow
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: EE-1 -- a paired summer seed-set comparison, then EE-2 -- carryover into spring | Dependency: EE-2 follows EE-1; no simulation or balance changes | Verified: 2026-10-31
+Status: active | Owner: Dave / Codex | Next: EE-2 -- carryover into spring; EE-1 summer measurements complete | Dependency: EE-2 follows EE-1; no simulation or balance changes | Verified: 2026-10-31
 
 ## Objective
 
@@ -47,6 +47,12 @@ Offspring quality and stewardship mechanics remain deferred.
 | EE-2 | Extend the comparison through winter into spring | `tools/seed_set_evidence.py`, `test_scenarios/ee2_seed_set_spring.json`, `tests/test_seed_set_evidence.py`, `plans/reference/seed-set-evidence.md` | medium |
 
 ## EE-1 -- measure summer seed-set replacement across five seeds
+
+**Complete, 31 Oct 2026.** Ten serial runs passed at fixed 30 fps with
+complete actions, logs and day-10 end saves. The measured Clover-share
+effect is mixed (four positive pairs, one negative); median +4.94 percentage
+points, range -1.62 to +6.33. Full provenance, coverage and compact tables
+are in `plans/reference/seed-set-evidence.md`, "Summer measurements".
 
 Level: medium -- bounded offline evidence work with deterministic parser checks.
 
