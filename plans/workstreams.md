@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/FX-6` (`codex/FX-6`) | Codex | Codex skills derive `ROOT`; Codex run-queue probes `.git` | Codex | in progress | none | `plans/now/workflow-friction.md` FX-6 -- Codex skills derive `ROOT`; Codex run-queue probes `.git` |
