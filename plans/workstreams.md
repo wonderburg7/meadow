@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/EE-1` (`codex/EE-1`) | Codex | measure summer seed-set replacement across five seeds | Codex | in progress | none | `plans/now/ecology-evidence.md` EE-1 -- measure summer seed-set replacement across five seeds |
