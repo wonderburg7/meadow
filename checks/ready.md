@@ -72,7 +72,10 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 
 ## Ready to run
 
+- [C-117 -- Rain skills in the Colony Run](ready/C-117.md)
+- [C-118 -- Shiver Cluster in a Colony Run: the Winter note and doubled figure, gone once the node is bought](ready/C-118.md)
 - [C-122 -- Dr Gallerin explains a missing nurse and a missing comb worker, and Why keeps both](ready/C-122.md)
+- [C-130 -- Hive soil blocks show Dave's art and crumble as they are dug](ready/C-130.md)
 - [C-134 -- Every ring on a comb cell traces the cup's rim](ready/C-134.md)
 - [C-137 -- OpenDyslexic text is no wider than Standard at the same text scale](ready/C-137.md)
 - [C-138 -- Problem strip stays out of the way, keeps red warnings and lets you remove one](ready/C-138.md)
@@ -85,3 +88,7 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-151 -- SG-4 opening milestones: a new Colony Run shows the opening steps in order](ready/C-151.md)
 - [C-159 -- A Comb worker carries a dead bee out, waits one second outside, and comes back](ready/C-159.md)
 - [C-162 -- SP-14: a nectar cell with cell art on has no outline ring](ready/C-162.md)
+- [C-163 -- A new Colony Run: Problems star on, Goals shown, Colony window readouts filled and a Queen row](ready/C-163.md)
+- [C-164 -- The skill tree says how much of a store is sealed or unripe](ready/C-164.md)
+- [C-165 -- A selected drone has no Change to menu, and a job change leaves drones idle](ready/C-165.md)
+- [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)
