@@ -106,6 +106,22 @@ One line each: the id, its plan, and the single thing it waits for.
 - **CQ-M6** (`plans/now/code-health.md`) -- selection green and caste appearance named; waits for the Claude lane's HS-2 to release `scripts/bee.gd` and `scripts/soil_block.gd` and SP-6 to release `scripts/bee.gd`.
 - **CQ-M7** (`plans/now/code-health.md`) -- world draw order named; waits for CQ-M6 and then needs its section and block.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
+- **PN-7** (`plans/now/play-notes-hud.md`) -- cell popup wording, Empty controls and a warning box that stays 18 real seconds; waits for SG-3 to release `scripts/hud.gd`.
+- **PN-8** (`plans/now/play-notes-hud.md`) -- Warning history in the Colony window; waits for PN-7, which shares `scripts/hud.gd`.
+- **PN-9** (`plans/now/play-notes-config.md`) -- early spring: the queen builds three times faster for 10 days and nectar does not sour before day 15 and the turning warning comes a day before it sours; waits for HS-2 to release `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, and needs its alpha_arc simulation first.
+- **PN-10** (`plans/now/play-notes-hud.md`) -- opening goal text a new player can act on; waits for SG-3 to release `scripts/colony_milestones.gd`.
+- **PN-11** (`plans/now/play-notes-config.md`) -- rain from day 10 and the first crisis on days 12-15; waits for HS-2 to release `scripts/game_config.gd` and for the Codex lane's RR-18 (C-140 skip save).
+- **PN-12** (`plans/now/play-notes-config.md`) -- developer mode buys any skill; waits for HS-2 to release `scripts/settings_catalogue.gd`.
+- **PN-13** (`plans/now/play-notes-config.md`) -- a Show bee labels switch and a calmer queen flight; waits for HS-2 and SP-6 to release `scripts/bee.gd`, `scripts/game_config.gd` and `scripts/settings_catalogue.gd`.
+- **PN-14** (`plans/now/play-notes-hud.md`) -- text no longer shrinks when unpausing; waits for SG-3 to release `scripts/hud.gd`.
+- **PN-15** (`plans/now/play-notes-hud.md`) -- a day dial beside Day N; waits for SG-3 to release `scripts/hud.gd`.
+- **PN-16** (`plans/now/play-notes-hud.md`) -- double-click a cell selects every cell of that type; waits for SG-3 to release `scripts/hud.gd` and PN-6, which shares `scripts/input_selection.gd`.
+- **PN-17** (`plans/now/play-notes-hud.md`) -- Shift queues build and dig orders; waits for SG-3 to release `scripts/hud.gd` and `scripts/main.gd`.
+- **PN-18** (`plans/now/play-notes-config.md`) -- the queen discards sour nectar when told to empty a cell; waits for HS-2 and SP-6 to release `scripts/bee.gd`.
+- **PN-19** (`plans/now/play-notes-config.md`) -- the soil block selection ring closes; waits for HS-2 to release `scripts/soil_block.gd`.
+- **Lay an egg order** (`plans/now/play-notes-config.md`) -- click a cell and the queen gathers what an egg needs; needs a design pass first (resources up front or as she goes, cancelling, Laying job, saved reservations).
+- **Colony window tabs** (`plans/now/play-notes-config.md`) -- Colony, Nursing and Foraging tabs; needs a design pass first, and waits for SG-3 and HM-2.
+- **Work priorities by role** (`plans/now/play-notes-config.md`) -- reorderable comb-worker priorities and sub-roles in the fallback list, both changing the save format; needs a plan-ahead pass first.
 
 ## Copy-paste prompts
 
