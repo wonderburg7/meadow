@@ -43,72 +43,9 @@ Offspring quality and stewardship mechanics remain deferred.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| EE-1 | Paired summer comparison and a tested offline reporter | `tools/seed_set_evidence.py`, `test_scenarios/ee1_seed_set_summer.json`, `tests/test_seed_set_evidence.py`, `plans/reference/seed-set-evidence.md` | medium |
 | EE-2 | Extend the comparison through winter into spring | `tools/seed_set_evidence.py`, `test_scenarios/ee2_seed_set_spring.json`, `tests/test_seed_set_evidence.py`, `plans/reference/seed-set-evidence.md` | medium |
 
-## EE-1 -- measure summer seed-set replacement across five seeds
-
-**Complete, 31 Oct 2026.** Ten serial runs passed at fixed 30 fps with
-complete actions, logs and day-10 end saves. The measured Clover-share
-effect is mixed (four positive pairs, one negative); median +4.94 percentage
-points, range -1.62 to +6.33. Full provenance, coverage and compact tables
-are in `plans/reference/seed-set-evidence.md`, "Summer measurements".
-
-Level: medium -- bounded offline evidence work with deterministic parser checks.
-
-**When done.** `python tools/seed_set_evidence.py summer` runs five paired
-seeds (12345, 7, 2026, 90210, 555), serially, at fixed 30 fps. For each
-seed, use identical initial conditions and actions, changing only the
-scenario's `seed_set` flag. Start from PP-4's specialist Clover setup,
-keep weather, disease and predators off, disable winter, and stop at day
-10 with an end save. Use isolated scenario user directories through the
-existing runner. Do not overwrite player saves or modify the PP-4 fixture.
-
-Create `test_scenarios/ee1_seed_set_summer.json` for these controls. The
-tool may create temporary case variants from it. Record all scenario
-overrides: this is an accelerated diagnostic setup, not ordinary Colony
-Run pacing. Both arms must finish their actions and produce complete logs
-and the end save. Missing data, launch errors, malformed log payloads or
-unresolved actions are failures, never zero-valued measurements.
-
-Produce a JSON report and a readable table with one row per seed and arm:
-elapsed simulated time, eligible flower deaths, all flower deaths, seed
-and seasonal replacements, final live-flower counts by species and total,
-and Clover's final share. Give paired differences for seed replacements
-and Clover share, plus median and range across seeds. Count a replacement
-from its logged event, not from the expected rule. Record species names,
-denominators and the handling of an empty meadow explicitly. Do not claim
-a causal per-flower or per-bee match after the arms' random streams diverge.
-
-Retain full run artefacts outside tracked files. Reports identify baseline
-commit, engine version, fixture hash, seeds, fixed fps, controls and source
-artefact paths. Commit a compact evidence table and its interpretation to
-`plans/reference/seed-set-evidence.md`, with the reproduction command and
-limitations. Raw logs and generated bulk data are not committed.
-
-**Checks.** `python tests/test_seed_set_evidence.py` tests aggregation using
-small synthetic logs/saves, including failed/missing arms, malformed events,
-zero denominators and known paired differences. The real five-seed command
-must complete successfully. Check causal coverage (both eligible and
-ineligible deaths; actual seed and seasonal replacements), not an invented
-minimum improvement. If coverage is missing, report it and adjust only the
-fixture within these controls; do not tune gameplay to manufacture a result.
-
-**Invariants.** No game scripts, balance defaults, saves, production logging
-or processing cadence change. All added work is offline or an explicitly
-invoked scenario run. Unexpected gameplay behaviour is reported as evidence;
-any proposed fix needs its own owning plan and normal admission.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] EE-1 -- measure summer seed-set replacement across five seeds**
-- Plan: `plans/now/ecology-evidence.md` -- "EE-1 -- measure summer seed-set replacement across five seeds"
-- Files: `tools/seed_set_evidence.py`, `test_scenarios/ee1_seed_set_summer.json`, `tests/test_seed_set_evidence.py`, `plans/reference/seed-set-evidence.md`
-- Check: `python tests/test_seed_set_evidence.py` passes; `python tools/seed_set_evidence.py summer` completes ten serial runs and writes the paired report; `python tools/check_docs.py` passes
-- Proof: `absent: plans/reference/seed-set-evidence.md :: ## Summer measurements`
-- Next after: EE-2
-```
+EE-1 shipped 2026-10-31; its specification is `plans/archive/EE-1_2026-10-31.md`.
 
 ## EE-2 -- measure seed-set carryover into spring
 
