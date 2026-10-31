@@ -64,6 +64,20 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `absent: .agents/skills/run-queue/SKILL.md :: refs/meadow/write-probe`
    - Next after: none -- workflow-friction plan complete
 
+2. **[Codex] EE-1 -- measure summer seed-set replacement across five seeds**
+   - Plan: `plans/now/ecology-evidence.md` -- "EE-1 -- measure summer seed-set replacement across five seeds"
+   - Files: `tools/seed_set_evidence.py`, `test_scenarios/ee1_seed_set_summer.json`, `tests/test_seed_set_evidence.py`, `plans/reference/seed-set-evidence.md`
+   - Check: `python tests/test_seed_set_evidence.py` passes; `python tools/seed_set_evidence.py summer` completes ten serial runs and writes the paired report; `python tools/check_docs.py` passes
+   - Proof: `absent: plans/reference/seed-set-evidence.md :: ## Summer measurements`
+   - Next after: EE-2
+
+3. **[Codex] EE-2 -- measure seed-set carryover into spring**
+   - Plan: `plans/now/ecology-evidence.md` -- "EE-2 -- measure seed-set carryover into spring"
+   - Files: `tools/seed_set_evidence.py`, `test_scenarios/ee2_seed_set_spring.json`, `tests/test_seed_set_evidence.py`, `plans/reference/seed-set-evidence.md`
+   - Check: `python tests/test_seed_set_evidence.py` passes; `python tools/seed_set_evidence.py spring` completes ten serial runs and writes the paired spring report; `python tools/check_docs.py` passes
+   - Proof: `absent: plans/reference/seed-set-evidence.md :: ## Spring measurements`
+   - Next after: none -- seed-set evidence complete; further ecology needs an evidence-backed design decision
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
