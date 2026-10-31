@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `C:/Users/dl13860/Documents/Meadow/meadow` (codex/refill-ecology-evidence) | Codex (docs only) | Specify summer and spring seed-set evidence; refill Codex lane | Codex | active | none | `plans/now/ecology-evidence.md` |
