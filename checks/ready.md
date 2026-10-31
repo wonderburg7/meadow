@@ -78,7 +78,7 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-138 -- Problem strip stays out of the way, keeps red warnings and lets you remove one](ready/C-138.md)
 - [C-139 -- A new Colony Run's first worker: what to do is readable, and it comes in about five minutes](ready/C-139.md)
 - [C-140 -- First crisis: can you see the heavy rain coming, tell why it hurts and answer it?](ready/C-140.md)
-- [C-141 -- Nectar shows an olive warning tint in its last game-hour before it ferments, and reads turning in colour-blind mode](ready/C-141.md)
+- [C-141 -- Turning nectar is clearly amber, the colour-blind label shows on its own, and closed cells' tints differ](ready/C-141.md)
 - [C-142 -- Reorder a bee's backup jobs and the colony default](ready/C-142.md)
 - [C-143 -- An unmatched scout resumes; an established seeker keeps waiting](ready/C-143.md)
 - [C-150 -- GP-5: press Goals in the second HUD row, the list opens and closes; restart the game and it remembers](ready/C-150.md)
