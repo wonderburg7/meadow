@@ -30,6 +30,12 @@ class DroneRowsStaticTest(unittest.TestCase):
         self.assertIn("\t\t_build_fallback_row(", body)
 
 
+    def test_assigning_a_job_skips_drones_in_a_mixed_selection(self):
+        text = (ROOT / "scripts" / "orders_zones.gd").read_text(encoding="utf-8")
+        body = text.split("func _assign_role(", 1)[1].split("\nfunc ", 1)[0]
+        self.assertIn("_role_permitted(role_id, b) and not b.is_drone", body)
+
+
 class DroneRowsRunTest(unittest.TestCase):
     def test_all_drones_rule(self):
         godot = gcc.find_godot()
