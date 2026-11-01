@@ -34,12 +34,12 @@ weights. Extend the reporter; add no second simulation or diagnostic mechanism.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SE-1 | Species-aware specialist comparison and validation | `tools/seed_set_evidence.py`, `tests/test_seed_set_evidence.py` | yes, after CF-2 in the Codex lane | medium |
+| SE-1 | Species-aware specialist comparison and validation | `tools/seed_set_evidence.py`, `tests/test_seed_set_evidence.py` | yes -- CF-2 landed | medium |
 | SE-2 | Twenty serial arms and a bounded interpretation of specialist steering | `test_scenarios/se2_specialist_spring.json`, `plans/reference/specialist-ecology-evidence.md` | after SE-1, in the same lane | medium |
 
-**Dependencies:** SE-2 uses SE-1's command and report contract. CF-2 is the current
-Codex leader; this plan follows it to refill the lane and shares no implementation
-file with feedback work. The feedback plan points here for that queue succession.
+**Dependencies:** SE-2 uses SE-1's command and report contract. CF-2 landed and released the Codex lane; this plan now leads it and shares no
+implementation file with feedback work. The archived feedback plan records that
+queue succession.
 Both evidence slices use existing simulation behaviour independently of the
 Claude lane's route and pricing work.
 
