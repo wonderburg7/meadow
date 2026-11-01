@@ -31,7 +31,7 @@
   "stop": {
     "when": {
       "winter_over": true,
-      "day_at_least": 43
+      "day_at_least": 70
     },
     "max_days": 70
   },
@@ -74,7 +74,10 @@
     },
     {
       "when": {
-        "day_at_least": 5
+        "hive_total": {
+          "resource": "nectar",
+          "at_least": 150
+        }
       },
       "do": "assign_role",
       "target": {
@@ -84,7 +87,10 @@
     },
     {
       "when": {
-        "day_at_least": 5
+        "hive_total": {
+          "resource": "nectar",
+          "at_least": 150
+        }
       },
       "do": "queue_build",
       "target": {
@@ -97,7 +103,10 @@
     },
     {
       "when": {
-        "day_at_least": 5
+        "hive_total": {
+          "resource": "nectar",
+          "at_least": 150
+        }
       },
       "do": "queue_build",
       "target": {
@@ -111,7 +120,24 @@
     },
     {
       "when": {
-        "cells_completed_at_least": 3
+        "hive_total": {
+          "resource": "nectar",
+          "at_least": 150
+        }
+      },
+      "do": "queue_build",
+      "target": {
+        "queen": true
+      },
+      "hex": [
+        -1,
+        1
+      ],
+      "append": true
+    },
+    {
+      "when": {
+        "cells_completed_at_least": 4
       },
       "do": "assign_role",
       "target": {
@@ -121,17 +147,83 @@
     },
     {
       "when": {
-        "day_at_least": 10
+        "all_of": [
+          {
+            "built_cells_at_least": 4
+          },
+          {
+            "hive_total": {
+              "resource": "nectar",
+              "at_least": 240
+            }
+          }
+        ]
       },
       "do": "assign_role",
       "target": {
         "queen": true
       },
-      "role": "comb_worker"
+      "role": "forager_pollen"
     },
     {
       "when": {
-        "day_at_least": 10
+        "all_of": [
+          {
+            "built_cells_at_least": 4
+          },
+          {
+            "hive_total": {
+              "resource": "pollen",
+              "at_least": 100
+            }
+          }
+        ]
+      },
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "laying"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "non_queen_adults_at_least": 2
+          },
+          {
+            "hive_total": {
+              "resource": "nectar",
+              "at_least": 150
+            }
+          },
+          {
+            "winter_over": false
+          }
+        ]
+      },
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "comb_worker_both"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "non_queen_adults_at_least": 2
+          },
+          {
+            "hive_total": {
+              "resource": "nectar",
+              "at_least": 150
+            }
+          },
+          {
+            "winter_over": false
+          }
+        ]
       },
       "do": "queue_build",
       "target": {
@@ -139,12 +231,25 @@
       },
       "hex": [
         -1,
-        1
+        0
       ]
     },
     {
       "when": {
-        "day_at_least": 10
+        "all_of": [
+          {
+            "non_queen_adults_at_least": 2
+          },
+          {
+            "hive_total": {
+              "resource": "nectar",
+              "at_least": 150
+            }
+          },
+          {
+            "winter_over": false
+          }
+        ]
       },
       "do": "queue_build",
       "target": {
@@ -158,27 +263,68 @@
     },
     {
       "when": {
-        "cells_completed_at_least": 5
+        "all_of": [
+          {
+            "non_queen_adults_at_least": 2
+          },
+          {
+            "hive_total": {
+              "resource": "nectar",
+              "at_least": 150
+            }
+          },
+          {
+            "winter_over": false
+          }
+        ]
       },
-      "do": "assign_role",
+      "do": "queue_build",
       "target": {
         "queen": true
       },
-      "role": "forager_nectar"
+      "hex": [
+        1,
+        -1
+      ],
+      "append": true
     },
     {
       "when": {
-        "day_at_least": 13
+        "all_of": [
+          {
+            "non_queen_adults_at_least": 2
+          },
+          {
+            "hive_total": {
+              "resource": "nectar",
+              "at_least": 150
+            }
+          },
+          {
+            "winter_over": false
+          }
+        ]
       },
-      "do": "assign_role",
+      "do": "queue_build",
       "target": {
         "queen": true
       },
-      "role": "forager_pollen"
+      "hex": [
+        2,
+        0
+      ],
+      "append": true
     },
     {
       "when": {
-        "day_at_least": 17
+        "any_of": [
+          {
+            "built_cells_at_least": 8
+          },
+          {
+            "day_at_least": 18
+          }
+        ]
       },
       "do": "assign_role",
       "target": {
@@ -188,42 +334,1031 @@
     },
     {
       "when": {
-        "population_at_least": {
-          "count": 2
-        }
+        "all_of": [
+          {
+            "non_queen_adults_at_least": 5
+          },
+          {
+            "built_cells_at_least": 8
+          },
+          {
+            "hive_total": {
+              "resource": "nectar",
+              "at_least": 400
+            }
+          },
+          {
+            "winter_over": false
+          }
+        ]
       },
       "do": "assign_role",
       "target": {
-        "current_role": "forager",
+        "queen": true
+      },
+      "role": "comb_worker_build"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "non_queen_adults_at_least": 5
+          },
+          {
+            "built_cells_at_least": 8
+          },
+          {
+            "hive_total": {
+              "resource": "nectar",
+              "at_least": 400
+            }
+          },
+          {
+            "winter_over": false
+          }
+        ]
+      },
+      "do": "queue_build",
+      "target": {
+        "queen": true
+      },
+      "hex": [
+        1,
+        1
+      ]
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "non_queen_adults_at_least": 5
+          },
+          {
+            "built_cells_at_least": 8
+          },
+          {
+            "hive_total": {
+              "resource": "nectar",
+              "at_least": 400
+            }
+          },
+          {
+            "winter_over": false
+          }
+        ]
+      },
+      "do": "queue_build",
+      "target": {
+        "queen": true
+      },
+      "hex": [
+        0,
+        2
+      ],
+      "append": true
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "non_queen_adults_at_least": 5
+          },
+          {
+            "built_cells_at_least": 8
+          },
+          {
+            "hive_total": {
+              "resource": "nectar",
+              "at_least": 400
+            }
+          },
+          {
+            "winter_over": false
+          }
+        ]
+      },
+      "do": "queue_build",
+      "target": {
+        "queen": true
+      },
+      "hex": [
+        -1,
+        2
+      ],
+      "append": true
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "non_queen_adults_at_least": 5
+          },
+          {
+            "built_cells_at_least": 8
+          },
+          {
+            "hive_total": {
+              "resource": "nectar",
+              "at_least": 400
+            }
+          },
+          {
+            "winter_over": false
+          }
+        ]
+      },
+      "do": "queue_build",
+      "target": {
+        "queen": true
+      },
+      "hex": [
+        -2,
+        2
+      ],
+      "append": true
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "non_queen_adults_at_least": 5
+          },
+          {
+            "built_cells_at_least": 8
+          },
+          {
+            "hive_total": {
+              "resource": "nectar",
+              "at_least": 400
+            }
+          },
+          {
+            "winter_over": false
+          }
+        ]
+      },
+      "do": "queue_build",
+      "target": {
+        "queen": true
+      },
+      "hex": [
+        -2,
+        1
+      ],
+      "append": true
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "non_queen_adults_at_least": 5
+          },
+          {
+            "built_cells_at_least": 8
+          },
+          {
+            "hive_total": {
+              "resource": "nectar",
+              "at_least": 400
+            }
+          },
+          {
+            "winter_over": false
+          }
+        ]
+      },
+      "do": "queue_build",
+      "target": {
+        "queen": true
+      },
+      "hex": [
+        -2,
+        0
+      ],
+      "append": true
+    },
+    {
+      "when": {
+        "any_of": [
+          {
+            "built_cells_at_least": 14
+          },
+          {
+            "day_at_least": 24
+          }
+        ]
+      },
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "laying"
+    },
+    {
+      "when": {
+        "day_at_least": 21
+      },
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "laying"
+    },
+    {
+      "when": {
+        "day_at_least": 27
+      },
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "laying"
+    },
+    {
+      "when": {
+        "day_at_least": 42
+      },
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "laying"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "non_queen_adults_at_least": 1
+          },
+          {
+            "winter_over": false
+          }
+        ]
+      },
+      "do": "keep_role",
+      "role": "forager_pollen",
+      "count": 1,
+      "share": 0.2,
+      "every_days": 1,
+      "from": "forager_nectar"
+    },
+    {
+      "when": {
+        "winter_over": true
+      },
+      "do": "keep_role",
+      "role": "forager_pollen",
+      "count": 1,
+      "share": 0.25,
+      "every_days": 1,
+      "from": "forager_nectar"
+    },
+    {
+      "when": {
+        "non_queen_adults_at_least": 3
+      },
+      "do": "keep_role",
+      "role": "nurse_feed",
+      "count": 1,
+      "share": 0.15,
+      "every_days": 1,
+      "from": "forager_nectar"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "non_queen_adults_at_least": 3
+          },
+          {
+            "skill_owned": "skill.brood.honey_worker"
+          },
+          {
+            "winter_over": false
+          }
+        ]
+      },
+      "do": "keep_role",
+      "role": "honey",
+      "count": 1,
+      "share": 0.25,
+      "every_days": 1,
+      "from": "forager_nectar"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.brood.honey_worker"
+          },
+          {
+            "winter_over": true
+          }
+        ]
+      },
+      "do": "keep_role",
+      "role": "honey",
+      "count": 1,
+      "share": 0.08,
+      "every_days": 1,
+      "from": "forager_nectar"
+    },
+    {
+      "when": {
+        "skill_owned": "skill.foraging.pollinator_points"
+      },
+      "do": "keep_role",
+      "role": "honey",
+      "count": 1,
+      "share": 0.2,
+      "every_days": 1,
+      "from": "forager_nectar"
+    },
+    {
+      "when": {
+        "skill_owned": "skill.foraging.pollinator_points"
+      },
+      "do": "keep_role",
+      "role": "forager_pollen",
+      "count": 1,
+      "share": 0.3,
+      "every_days": 1,
+      "from": "forager_nectar"
+    },
+    {
+      "when": {
+        "skill_owned": "skill.colony.comb_worker"
+      },
+      "do": "keep_role",
+      "role": "comb_worker_both",
+      "count": 1,
+      "every_days": 1,
+      "from": "forager_nectar"
+    },
+    {
+      "when": {
+        "skill_owned": "skill.colony.comb_worker"
+      },
+      "do": "keep_role",
+      "role": "comb_worker_build",
+      "count": 1,
+      "every_days": 1,
+      "from": "forager_nectar"
+    },
+    {
+      "when": {
+        "hive_total": {
+          "resource": "honey",
+          "at_least": 700.0
+        }
+      },
+      "do": "keep_role",
+      "role": "forager_nectar",
+      "count": 1000,
+      "every_days": 1,
+      "from": "honey"
+    },
+    {
+      "when": {
+        "skill_owned": "skill.foraging.auto_scouting"
+      },
+      "do": "keep_role",
+      "role": "honey_ferment",
+      "count": 1,
+      "every_days": 1,
+      "from": "forager_nectar"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.brood.bee_bread"
+          },
+          {
+            "role_count": {
+              "role": "honey",
+              "at_least": 1
+            }
+          }
+        ]
+      },
+      "do": "assign_role",
+      "target": {
+        "current_role": "honey",
         "count": 1
       },
-      "role": "forager_pollen"
+      "role": "honey_ferment"
     },
     {
       "when": {
-        "population_at_least": {
-          "count": 4
-        }
+        "all_of": [
+          {
+            "skill_owned": "skill.foraging.pollinator_points"
+          },
+          {
+            "role_count": {
+              "role": "honey",
+              "at_least": 1
+            }
+          }
+        ]
       },
       "do": "assign_role",
       "target": {
-        "current_role": "forager",
-        "count": 2
+        "current_role": "honey",
+        "count": 1
       },
-      "role": "forager_pollen"
+      "role": "honey_ferment"
     },
     {
       "when": {
-        "population_at_least": {
-          "count": 6
+        "day_at_least": 9
+      },
+      "do": "clear_fermented",
+      "every_days": 3
+    },
+    {
+      "when": {
+        "hive_total": {
+          "resource": "bee_bread",
+          "at_least": 200.0
         }
+      },
+      "do": "keep_role",
+      "role": "forager_nectar",
+      "count": 1000,
+      "every_days": 1,
+      "from": "honey_ferment"
+    },
+    {
+      "when": {
+        "hive_total": {
+          "resource": "pollen",
+          "at_least": 500.0
+        }
+      },
+      "do": "keep_role",
+      "role": "forager_nectar",
+      "count": 1000,
+      "every_days": 1,
+      "from": "forager_pollen"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.brood.honey_worker"
+          },
+          {
+            "hive_total": {
+              "resource": "nectar",
+              "at_least": 1500.0
+            }
+          }
+        ]
+      },
+      "do": "keep_role",
+      "role": "honey",
+      "count": 1,
+      "share": 0.3,
+      "every_days": 1,
+      "from": "forager_nectar"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "non_queen_adults_at_least": 3
+          },
+          {
+            "hive_total": {
+              "resource": "nectar",
+              "at_least": 300
+            }
+          },
+          {
+            "skill_affordable": "skill.brood.honey_worker"
+          }
+        ]
+      },
+      "do": "buy_skill",
+      "skill": "skill.brood.honey_worker"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.brood.honey_worker"
+          },
+          {
+            "skill_affordable": "skill.brood.bee_bread"
+          }
+        ]
+      },
+      "do": "buy_skill",
+      "skill": "skill.brood.bee_bread"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.brood.bee_bread"
+          },
+          {
+            "non_queen_adults_at_least": 5
+          },
+          {
+            "skill_affordable": "skill.colony.cell_capacity"
+          }
+        ]
+      },
+      "do": "buy_skill",
+      "skill": "skill.colony.cell_capacity"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.colony.cell_capacity"
+          },
+          {
+            "skill_affordable": "skill.colony.comb_worker"
+          }
+        ]
+      },
+      "do": "buy_skill",
+      "skill": "skill.colony.comb_worker"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.colony.comb_worker"
+          },
+          {
+            "skill_affordable": "skill.hive_mind.backup_roles"
+          }
+        ]
+      },
+      "do": "buy_skill",
+      "skill": "skill.hive_mind.backup_roles"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.hive_mind.backup_roles"
+          },
+          {
+            "skill_affordable": "skill.hive_mind.shiver_cluster"
+          }
+        ]
+      },
+      "do": "buy_skill",
+      "skill": "skill.hive_mind.shiver_cluster"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.hive_mind.shiver_cluster"
+          },
+          {
+            "any_of": [
+              {
+                "all_of": [
+                  {
+                    "winter_over": true
+                  },
+                  {
+                    "day_at_least": 44
+                  }
+                ]
+              },
+              {
+                "all_of": [
+                  {
+                    "winter_on_track": true
+                  },
+                  {
+                    "hive_total": {
+                      "resource": "honey",
+                      "at_least": 700.0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "skill_affordable": "skill.colony.miner"
+          }
+        ]
+      },
+      "do": "buy_skill",
+      "skill": "skill.colony.miner"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.colony.miner"
+          },
+          {
+            "any_of": [
+              {
+                "all_of": [
+                  {
+                    "winter_over": true
+                  },
+                  {
+                    "day_at_least": 44
+                  }
+                ]
+              },
+              {
+                "all_of": [
+                  {
+                    "winter_on_track": true
+                  },
+                  {
+                    "hive_total": {
+                      "resource": "honey",
+                      "at_least": 700.0
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "skill_affordable": "skill.hive_mind.automation"
+          }
+        ]
+      },
+      "do": "buy_skill",
+      "skill": "skill.hive_mind.automation"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.hive_mind.automation"
+          },
+          {
+            "skill_affordable": "skill.foraging.tarsal_secretions"
+          },
+          {
+            "any_of": [
+              {
+                "all_of": [
+                  {
+                    "winter_over": true
+                  },
+                  {
+                    "day_at_least": 44
+                  }
+                ]
+              },
+              {
+                "all_of": [
+                  {
+                    "winter_on_track": true
+                  },
+                  {
+                    "hive_total": {
+                      "resource": "nectar",
+                      "at_least": 600
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "do": "buy_skill",
+      "skill": "skill.foraging.tarsal_secretions"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.foraging.tarsal_secretions"
+          },
+          {
+            "skill_affordable": "skill.foraging.orientation_flight"
+          },
+          {
+            "any_of": [
+              {
+                "all_of": [
+                  {
+                    "winter_over": true
+                  },
+                  {
+                    "day_at_least": 44
+                  }
+                ]
+              },
+              {
+                "all_of": [
+                  {
+                    "winter_on_track": true
+                  },
+                  {
+                    "hive_total": {
+                      "resource": "nectar",
+                      "at_least": 600
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "do": "buy_skill",
+      "skill": "skill.foraging.orientation_flight"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.foraging.orientation_flight"
+          },
+          {
+            "skill_affordable": "skill.foraging.associative_learning"
+          },
+          {
+            "any_of": [
+              {
+                "all_of": [
+                  {
+                    "winter_over": true
+                  },
+                  {
+                    "day_at_least": 44
+                  }
+                ]
+              },
+              {
+                "all_of": [
+                  {
+                    "winter_on_track": true
+                  },
+                  {
+                    "hive_total": {
+                      "resource": "nectar",
+                      "at_least": 600
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "do": "buy_skill",
+      "skill": "skill.foraging.associative_learning"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.foraging.associative_learning"
+          },
+          {
+            "skill_affordable": "skill.foraging.adaptive_constancy"
+          },
+          {
+            "any_of": [
+              {
+                "all_of": [
+                  {
+                    "winter_over": true
+                  },
+                  {
+                    "day_at_least": 44
+                  }
+                ]
+              },
+              {
+                "all_of": [
+                  {
+                    "winter_on_track": true
+                  },
+                  {
+                    "hive_total": {
+                      "resource": "nectar",
+                      "at_least": 600
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "do": "buy_skill",
+      "skill": "skill.foraging.adaptive_constancy"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.foraging.adaptive_constancy"
+          },
+          {
+            "skill_affordable": "skill.foraging.auto_scouting"
+          },
+          {
+            "any_of": [
+              {
+                "all_of": [
+                  {
+                    "winter_over": true
+                  },
+                  {
+                    "day_at_least": 44
+                  }
+                ]
+              },
+              {
+                "all_of": [
+                  {
+                    "winter_on_track": true
+                  },
+                  {
+                    "hive_total": {
+                      "resource": "nectar",
+                      "at_least": 600
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "do": "buy_skill",
+      "skill": "skill.foraging.auto_scouting"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.foraging.auto_scouting"
+          },
+          {
+            "skill_affordable": "skill.foraging.pollinator_points"
+          },
+          {
+            "any_of": [
+              {
+                "all_of": [
+                  {
+                    "winter_over": true
+                  },
+                  {
+                    "day_at_least": 44
+                  }
+                ]
+              },
+              {
+                "all_of": [
+                  {
+                    "winter_on_track": true
+                  },
+                  {
+                    "hive_total": {
+                      "resource": "nectar",
+                      "at_least": 600
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "do": "buy_skill",
+      "skill": "skill.foraging.pollinator_points"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.foraging.pollinator_points"
+          },
+          {
+            "skill_affordable": "skill.brood.royal_jelly"
+          },
+          {
+            "any_of": [
+              {
+                "all_of": [
+                  {
+                    "winter_over": true
+                  },
+                  {
+                    "day_at_least": 44
+                  }
+                ]
+              },
+              {
+                "all_of": [
+                  {
+                    "winter_on_track": true
+                  },
+                  {
+                    "hive_total": {
+                      "resource": "nectar",
+                      "at_least": 600
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "do": "buy_skill",
+      "skill": "skill.brood.royal_jelly"
+    },
+    {
+      "when": {
+        "skill_owned": "skill.brood.royal_jelly"
+      },
+      "do": "designate_cell",
+      "hex": [
+        0,
+        0
+      ],
+      "content": "jelly",
+      "every_days": 1
+    },
+    {
+      "when": {
+        "skill_owned": "skill.brood.royal_jelly"
+      },
+      "do": "keep_role",
+      "role": "nurse_jelly",
+      "count": 1,
+      "every_days": 1,
+      "from": "nurse_feed"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.brood.royal_jelly"
+          },
+          {
+            "hive_total": {
+              "resource": "jelly",
+              "at_least": 10
+            }
+          }
+        ]
       },
       "do": "assign_role",
       "target": {
-        "current_role": "forager",
-        "count": 3
+        "queen": true
       },
-      "role": "forager_pollen"
+      "role": "comb_worker_both"
+    },
+    {
+      "when": {
+        "all_of": [
+          {
+            "skill_owned": "skill.brood.royal_jelly"
+          },
+          {
+            "hive_total": {
+              "resource": "jelly",
+              "at_least": 10
+            }
+          },
+          {
+            "hive_total": {
+              "resource": "pollen",
+              "at_least": 450.0
+            }
+          },
+          {
+            "hive_total": {
+              "resource": "bee_bread",
+              "at_least": 60
+            }
+          }
+        ]
+      },
+      "do": "assign_role",
+      "target": {
+        "queen": true
+      },
+      "role": "laying"
     }
   ]
 }

@@ -10,6 +10,12 @@ reads the values gyne_rearing_affordable passes, and that the reference arc
 asks for them. The run half boots a short fixture written to a temporary
 file: it stocks one cell each of bee bread and royal jelly, and every
 snapshot must report those amounts and a numeric Pollinator Points total.
+
+The route half is static: the reference arc earns Pollinator points by
+buying it, grants no skill, sets no store or setting mid-run, and keeps the
+config_overrides it had before PP-11 (the limits in the PP-11 section of
+plans/now/pollination.md). Whether the route reaches Gyne rearing is
+measured by `python tools/pacing_gates.py`, not here.
 """
 
 from __future__ import annotations
@@ -106,6 +112,32 @@ class ARunLogsTheFields(unittest.TestCase):
             self.assertAlmostEqual(JELLY, float(resources["stored_royal_jelly"]), places=3)
             self.assertIsInstance(resources["pollinator_points"], (int, float))
             self.assertGreaterEqual(float(resources["pollinator_points"]), 0.0)
+
+
+# The overrides alpha_arc_test.json carried before PP-11. A new entry, or a
+# changed value, would redefine what the pacing rows measure.
+ARC_OVERRIDES = {"energy_burn_rate": 0.17, "nectar_recharge_rate": 0.5,
+                 "pollen_recharge_rate": 0.1, "winter_burn_factor": 0.15}
+
+
+class RouteStaysInItsLimits(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.arc = json.loads(ARC.read_text(encoding="utf-8"))
+        cls.verbs = [action["do"] for action in cls.arc["actions"]]
+
+    def test_it_buys_pollinator_points(self):
+        bought = {a.get("skill") for a in self.arc["actions"] if a["do"] == "buy_skill"}
+        self.assertIn("skill.foraging.pollinator_points", bought)
+        self.assertIn("skill.brood.royal_jelly", bought)
+
+    def test_it_grants_nothing_and_injects_nothing(self):
+        for verb in ("grant_skill", "set_config", "set_cell_contents"):
+            self.assertNotIn(verb, self.verbs)
+        self.assertNotIn("skill_grants", self.arc)
+
+    def test_its_overrides_are_unchanged(self):
+        self.assertEqual(ARC_OVERRIDES, self.arc["config_overrides"])
 
 
 if __name__ == "__main__":
