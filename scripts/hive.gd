@@ -1241,7 +1241,7 @@ func find_nearest_edge_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D:
 	return best
 
 func _is_markable_block(node: Variant) -> bool:
-	return node != null and is_instance_valid(node) and node.is_in_group("soil_blocks")
+	return node != null and is_instance_valid(node) and node.is_in_group("soil_blocks") and node.can_be_dug()
 
 ## The open tile a miner should stand on to dig `block`. Soil is solid,
 ## so routing a bee at the block's own centre finds no path at all and it

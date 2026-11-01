@@ -729,6 +729,10 @@ var tipsy_wander_seconds: float = 6.0
 ## Miner-seconds to break down one soil block. Like building, several
 ## miners on the same block share the work.
 var block_mine_time: float = 120.0
+## HS-2. How far into the soil band hard soil begins (0 = at the cavity,
+## 1 = only the outermost ring), and how much longer a hard block takes.
+var hard_soil_start_fraction: float = 0.5
+var hard_soil_mine_time_multiplier: float = 2.5
 var starting_miners: float = 0.0
 
 ## A miner fills up with spoil as it digs and has to carry it outside
