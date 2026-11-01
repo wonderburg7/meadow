@@ -29,10 +29,6 @@
     }
   },
   "stop": {
-    "when": {
-      "winter_over": true,
-      "day_at_least": 70
-    },
     "max_days": 70
   },
   "cells": 0,
@@ -539,12 +535,12 @@
     },
     {
       "when": {
-        "any_of": [
+        "all_of": [
           {
             "built_cells_at_least": 14
           },
           {
-            "day_at_least": 24
+            "winter_over": false
           }
         ]
       },
@@ -552,21 +548,12 @@
       "target": {
         "queen": true
       },
-      "role": "laying"
+      "role": "laying",
+      "every_days": 1
     },
     {
       "when": {
-        "day_at_least": 21
-      },
-      "do": "assign_role",
-      "target": {
-        "queen": true
-      },
-      "role": "laying"
-    },
-    {
-      "when": {
-        "day_at_least": 27
+        "day_at_least": 29
       },
       "do": "assign_role",
       "target": {
@@ -720,7 +707,7 @@
     },
     {
       "when": {
-        "skill_owned": "skill.foraging.auto_scouting"
+        "skill_owned": "skill.brood.bee_bread"
       },
       "do": "keep_role",
       "role": "honey_ferment",
@@ -781,7 +768,7 @@
       "when": {
         "hive_total": {
           "resource": "bee_bread",
-          "at_least": 200.0
+          "at_least": 120.0
         }
       },
       "do": "keep_role",
@@ -1307,58 +1294,6 @@
       "count": 1,
       "every_days": 1,
       "from": "nurse_feed"
-    },
-    {
-      "when": {
-        "all_of": [
-          {
-            "skill_owned": "skill.brood.royal_jelly"
-          },
-          {
-            "hive_total": {
-              "resource": "jelly",
-              "at_least": 10
-            }
-          }
-        ]
-      },
-      "do": "assign_role",
-      "target": {
-        "queen": true
-      },
-      "role": "comb_worker_both"
-    },
-    {
-      "when": {
-        "all_of": [
-          {
-            "skill_owned": "skill.brood.royal_jelly"
-          },
-          {
-            "hive_total": {
-              "resource": "jelly",
-              "at_least": 10
-            }
-          },
-          {
-            "hive_total": {
-              "resource": "pollen",
-              "at_least": 450.0
-            }
-          },
-          {
-            "hive_total": {
-              "resource": "bee_bread",
-              "at_least": 60
-            }
-          }
-        ]
-      },
-      "do": "assign_role",
-      "target": {
-        "queen": true
-      },
-      "role": "laying"
     }
   ]
 }

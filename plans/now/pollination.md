@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-10 (PP-11 landed 1 Nov 2026: the reference route owns Pollinator points on every seed and first affords Gyne rearing on days 54.95, 58.96 and 66.20) -- the sweep prices the route so Gyne rearing is first affordable after the first winter (Dave split PP-9, 27 Oct 2026: PP-9 builds the route, PP-10 the sweep; Dave narrowed PP-9 to its headless tools later that day and moved the route to PP-11) | Dependency: PP-6 followed FR-2 (Dave 14 Oct 2026; landed 25 Oct 2026); PP-9 follows PP-6; PP-11 follows PP-9; PP-10 follows PP-11; AR-4 (`plans/now/alpha-route-evidence.md`), T2-7b (through AR-4) and FR-3 wait for PP-10 | Verified: 2026-11-01
+Status: active | Owner: Dave / Claude Code | Next: PP-10 (PP-11 landed 1 Nov 2026: the reference route owns Pollinator points on every seed and first affords Gyne rearing on days 60.31, 58.10 and 63.01) -- the sweep prices the route so Gyne rearing is first affordable after the first winter (Dave split PP-9, 27 Oct 2026: PP-9 builds the route, PP-10 the sweep; Dave narrowed PP-9 to its headless tools later that day and moved the route to PP-11) | Dependency: PP-6 followed FR-2 (Dave 14 Oct 2026; landed 25 Oct 2026); PP-9 follows PP-6; PP-11 follows PP-9; PP-10 follows PP-11; AR-4 (`plans/now/alpha-route-evidence.md`), T2-7b (through AR-4) and FR-3 wait for PP-10 | Verified: 2026-11-01
 
 ## Objective
 
@@ -155,20 +155,25 @@ nowhere to put it) and of bee bread (45, one partly spent cell, against the
 path's 46), with 2107 Pollinator Points held. The route that replaced PP-9's
 candidate, in `test_scenarios/alpha_arc_test.json` (63 actions, PP-9's verbs
 only, `config_overrides` unchanged, no `grant_skill`, no `set_config` or
-`set_cell_contents`), runs to day 70, the end of the second summer:
+`set_cell_contents`), runs to `max_days` 70, the end of the second summer:
 
 - PP-9's opening, then the queen's second and third batches of comb, both
   held to the first summer (a late third batch had taken the laying queen
-  off laying after winter).
+  off laying after winter). After the third batch she lays again once its
+  14 cells stand (checked daily before winter), or on day 29 at the latest,
+  rather than on fixed days that cut a batch short.
 - Staffing by daily `keep_role` top-ups from the nectar foragers: pollen
   foragers 20% (25% after winter, 30% once Pollinator points is owned),
   nurses 15%, honey makers 25% before winter (8% after, 20% with Pollinator
   points), a builder and a clearer once Comb worker is owned (the clearer
-  empties a re-designated cell, which a builder does not).
+  empties a re-designated cell, which a builder does not). The honey shares
+  count fermenters too: Honey's only mode key is `ferment` (`roles.gd`), so
+  no key names a plain honey maker, and a fermenter makes honey whenever it
+  cannot ferment.
 - Three thermostats, each a `keep_role` that moves a role's bees back to
   nectar foraging while a store is full: honey makers at 700 honey (the
   skill tree's costs are mostly nectar, and honey makers left none), pollen
-  foragers at 500 pollen, fermenters at 200 bee bread (bee bread had filled
+  foragers at 500 pollen, fermenters at 120 bee bread (bee bread had filled
   20 cells on one seed and starved it). Above 1500 nectar, honey makers rise
   to 30%.
 - Purchases in order, each when `skill_affordable`: Honey worker (at 300
@@ -180,21 +185,22 @@ only, `config_overrides` unchanged, no `grant_skill`, no `set_config` or
   and winter on track. After winter nothing is bought before day 44: the
   meadow regrows over 3 days, and a colony that spent its stores on day 40
   starved before it did.
-- Bee bread from one fermenter set when Bee bread is bought and when
-  Pollinator points is, kept topped up from Auto scouting on. Hex (0, 0) is
-  pinned to jelly from Royal jelly on, retried daily until the comb has room
-  for what it holds, with one nurse kept making jelly. Once 10 jelly is in,
-  the queen stops laying until 450 pollen and 60 bee bread are back.
+- Bee bread from one fermenter, kept topped up from Bee bread on and placed
+  after the honey thermostat, so a fermenter it moves to nectar is replaced
+  the same day; a second is set when Pollinator points is bought. Hex (0, 0)
+  is pinned to jelly from Royal jelly on, retried daily until the comb has
+  room for what it holds, with one nurse kept making jelly.
 
 `python tools/pacing_gates.py` over seeds 20260923-25 (1 Nov 2026): first
 worker 8.41, 7.56, 8.68 (median 8.41, in band); Pollinator points bought on
-days 53.33, 56.42, 63.79; Gyne rearing first affordable on days 54.95, 58.96
-and 66.20 (median 58.96, out of PP-10's 42-52 band); all three colonies live
-to day 70 (46, 35 and 30 bees); first automation now has a day (median 45.0)
-where it had none. About 70 three-seed trials found the route chaotic: one
+days 55.50, 52.71, 60.08; Gyne rearing first affordable on days 60.31, 58.10
+and 63.01 (median 60.31, out of PP-10's 42-52 band); all three colonies live
+to day 70 (57, 32 and 42 bees); first automation now has a day (median 52.0)
+where it had none. Each 70-day run took 197-208 s of wall time against
+`pacing_gates.py`'s 300 s `DEFAULT_TIMEOUT`. About 80 three-seed trials found the route chaotic: one
 change of threshold could kill a seed that had passed, which PP-10's price
 sweep will meet too. PP-10's band looks reachable only by cheaper prices,
-since no seed owns Pollinator points before day 53: that is PP-10's job.
+since no seed owns Pollinator points before day 52: that is PP-10's job.
 
 **Open decisions:** none
 
@@ -245,8 +251,8 @@ Decisions (Dave, 14 Oct 2026):
   route) is priced by FR-3's own sweep; PP-10 leaves its cost as it is.
 
 What is true now (1 Nov 2026): PP-11's route buys Pollinator points on
-every seed (days 53.33, 56.42, 63.79) and first affords Gyne rearing on days
-54.95, 58.96 and 66.20 (median 58.96); see PP-11's result above. `pacing_gates.py` already prints the
+every seed (days 55.50, 52.71, 60.08) and first affords Gyne rearing on days
+60.31, 58.10 and 63.01 (median 60.31); see PP-11's result above. `pacing_gates.py` already prints the
 Gyne-rearing row with its band (`GYNE_AFFORDABLE_AFTER_WINTER_DAYS`).
 
 **The work.** Sweep `scripts/skills.gd` (point awards, the tier-3/4
