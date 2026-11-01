@@ -1,7 +1,7 @@
 # Closed-alpha feedback -- a build testers can start alone, and a form they fill in after
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: CF-2 -- the Feedback button opens Dave's supplied form; C-164 checks the menu build id at larger text scales | Dependency: CF-2 follows CF-1 (both edit `scripts/main_menu.gd`); Dave supplied the form link on 1 Nov 2026 | Verified: 2026-11-01
+Status: active | Owner: Dave / Codex | Next: CF-2 -- the Feedback button opens Dave's supplied form; C-164 checks the menu build id at larger text scales | Dependency: none left for CF-2 -- CF-1 landed 1 Nov 2026; Dave supplied the form link on 1 Nov 2026 | Verified: 2026-11-01
 
 ## Objective
 
@@ -34,9 +34,9 @@ into the main menu.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CF-2 | a Feedback button on the main menu opens Dave's form | `scripts/main_menu.gd`, tests | after CF-1, in the same lane | low |
+| CF-2 | a Feedback button on the main menu opens Dave's form | `scripts/main_menu.gd`, tests | yes -- CF-1 landed and the form link is supplied | low |
 
-**Dependencies.** CF-2 follows CF-1 (`scripts/main_menu.gd`). ED-3
+**Dependencies.** CF-1 has landed and released `scripts/main_menu.gd`. ED-3
 (`plans/now/difficulty.md`) also edits `scripts/main_menu.gd`; whichever is
 queued first runs first. Neither slice touches the simulation or saves.
 
@@ -48,7 +48,7 @@ CF-1 shipped 2026-11-01; its specification is `plans/archive/CF-1_2026-11-01.md`
 
 Level: low -- Codex default model at low reasoning.
 
-**Follows** CF-1 in the same lane. Dave supplied the form link on 1 Nov 2026.
+**Ready:** CF-1 landed and Dave supplied the form link on 1 Nov 2026.
 
 Form link: https://docs.google.com/forms/d/e/1FAIpQLSc-hoJZiHj84m2NdPYJRveF6PZ11WqvRyP0xRJeoYySFg7vEw/viewform?usp=publish-editor
 
