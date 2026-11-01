@@ -3080,7 +3080,9 @@ func _update_heading_marker() -> void:
 		heading_marker.rotation = heading.angle()
 
 ## SP-6: an outdoor worker is drawn as one sprite from Dave's forager sheet
-## instead of the outline, ring and body circles. Row = heading octant, column
+## instead of the black outline disc and the body disc. The thin role ring
+## (outline_ring: miner, nurse, builder) stays on purpose -- it is role
+## information, not body art. Row = heading octant, column
 ## = a wing clock shared by every bee and offset by wander_phase. The load dot
 ## and the selection, alarm and attack rings stay as they were. Indoors, and
 ## for drones, gynes and queens, the circles stay until their art exists.
@@ -3093,7 +3095,11 @@ static func _octant_row(octant: int) -> int:
 	if _octant_rows.is_empty():
 		_octant_rows.resize(OCTANT_NAMES.size())
 		for k: int in range(OCTANT_NAMES.size()):
-			_octant_rows[k] = SpriteCatalogue.FORAGERS_MEADOW_VIEW_FRAMES.find(OCTANT_NAMES[k] + ".0") / SpriteCatalogue.FORAGERS_MEADOW_VIEW_HFRAMES
+			var first_frame: int = SpriteCatalogue.FORAGERS_MEADOW_VIEW_FRAMES.find(OCTANT_NAMES[k] + ".0")
+			if first_frame < 0:
+				push_error("SP-6: forager sheet has no frame for '%s'" % OCTANT_NAMES[k])
+				first_frame = 0
+			_octant_rows[k] = first_frame / SpriteCatalogue.FORAGERS_MEADOW_VIEW_HFRAMES
 	return _octant_rows[octant]
 
 func _build_meadow_sprite() -> void:

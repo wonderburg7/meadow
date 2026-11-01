@@ -63,6 +63,10 @@ func _run() -> void:
 		_failures.append("the bee has no meadow sprite")
 		return
 
+	for name: String in OCTANTS:
+		if SpriteCatalogue.FORAGERS_MEADOW_VIEW_FRAMES.find(name + ".0") < 0:
+			_failures.append("the sheet has no frame named %s.0" % name)
+
 	# Rows: each octant shows the row named for that direction.
 	bee.wander_phase = 0.0
 	for k: int in range(8):
