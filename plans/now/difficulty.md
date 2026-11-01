@@ -162,5 +162,8 @@ they stay visible preset rules (product-scope §11).
 ## Open questions
 
 - Easy's "event timing follows player readiness more strongly than calendar
-  day" needs the event director (`NEXTSTEPS.md`, "Not in the queue"), which
-  has no design yet. It is out of this plan until that pass exists.
+  day" is answered by `plans/design/event-director.md` decision 6 (Dave,
+  1 Nov 2026): on Easy each director pressure waits for readiness up to a
+  later fallback day. It is built by the director's slices
+  (`plans/now/event-director.md`), not this plan; ED-2 records the run's
+  difficulty they read.

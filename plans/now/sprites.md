@@ -120,6 +120,12 @@ erify.ps1` is green
 
 Level: medium -- claude-sonnet-5-5 at medium effort.
 
+**Lane (Dave, 1 Nov 2026).** SP-12 and FR-4 (`plans/now/forager-recruitment.md`)
+both edit `scripts/scenario_actions.gd`, so they go to the Codex lane
+together, SP-12 first, once `claude/dave-hands-on-checks-784f2a` (which owns
+`NEXTSTEPS.md` and FR-4's plan) has merged. The move rewrites both blocks'
+`[Claude]` tag and level line.
+
 **True now.** C-125 and then C-134 failed on the same misfit: the keep-clear,
 build-hover and order-chain outlines sit about 10 px below the cup's rim.
 `input_selection.gd::_draw_tile_outline` draws a flat
@@ -160,13 +166,13 @@ cost is added: the rim points are built once and cached.
 
 **Open decisions:** none.
 
-```queue
+```queue-gated
 **[Claude] SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels**
 - Plan: `plans/now/sprites.md` -- "SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels"
 - Files: `scripts/input_selection.gd`, `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, `test_scenarios/sp_outline_rim.json`, `tests/test_sp_outline_rim.py`, `tests/sp11_cell_rim_test.gd`, `tests/test_sp11_cell_rim.py`
 - Check: `python -m unittest tests.test_sp_outline_rim` passes (the `cell_outline_matches_sprite` assertion holds for the selection ring and the tile outline within 1.5 px, and fails when the outline is moved 10 px); `python -m unittest tests.test_sp11_cell_rim` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
 - Proof: `absent: scripts/scenario_actions.gd :: cell_outline_matches_sprite`
-- Next after: none -- SP-13 and SP-14 in `plans/now/sprites.md` do not depend on it
+- Next after: FR-4 -- a headless assertion replaces the C-143 hands-on check (it shares `scripts/scenario_actions.gd`)
 ```
 
 SP-13 shipped 2026-10-30; its specification is `plans/archive/SP-13_2026-10-30.md`.
