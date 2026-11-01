@@ -243,4 +243,5 @@ func _tint() -> void:
 	if Session.use_cell_sprites:
 		color = Color(0, 0, 0, 0)
 	else:
-		color = (HARD_SOIL_COLOR if is_hard else SOIL_COLOR).lerp(Color(0.55, 0.45, 0.28), mine_fraction())
+		var dug := Color(0.55, 0.45, 0.28)
+		color = HARD_SOIL_COLOR.lerp(dug, mine_fraction()) if is_hard else SOIL_COLOR.lerp(dug, mine_fraction())
