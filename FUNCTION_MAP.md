@@ -668,7 +668,7 @@ behaviour.
 1534 static func deposit_everything_remotely(bee: Node2D) -> void
 ```
 
-## main.gd (1,516 lines)
+## main.gd (1,522 lines)
 
 Per-frame entry point and run wiring; headless scenario boot lives in headless/scenario_boot.gd.
 
@@ -717,19 +717,19 @@ Per-frame entry point and run wiring; headless scenario boot lives in headless/s
 1246 static func _minutes_text(seconds: float) -> String
 1253 func _trace_first_crisis(phase: String, readiness: Dictionary = {}, extra: Dictionary = {}) -> void
 1292 func restore_first_crisis(saved: Variant) -> void
-1329 func _check_for_loss() -> void
-1357 func _promote_gyne_to_queen() -> bool
-1378 func _check_colony_energy(delta: float) -> void
-1409 func invalidate_population() -> void
-1420 func _role_counts(bees: Variant = null) -> Dictionary
-1437 func _update_population_readout(bees: Variant = null) -> void
-1451 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-1457 func _prune_selection() -> void
-1470 func _on_restart_after_loss() -> void
-1476 func _on_level_chosen(level: int) -> void
-1490 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-1504 func _apply_scenario_boot_arg() -> void
-1509 func _end_scenario_run(outcome: String) -> void
+1335 func _check_for_loss() -> void
+1363 func _promote_gyne_to_queen() -> bool
+1384 func _check_colony_energy(delta: float) -> void
+1415 func invalidate_population() -> void
+1426 func _role_counts(bees: Variant = null) -> Dictionary
+1443 func _update_population_readout(bees: Variant = null) -> void
+1457 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+1463 func _prune_selection() -> void
+1476 func _on_restart_after_loss() -> void
+1482 func _on_level_chosen(level: int) -> void
+1496 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+1510 func _apply_scenario_boot_arg() -> void
+1515 func _end_scenario_run(outcome: String) -> void
 ```
 
 ## hive.gd (1,307 lines)

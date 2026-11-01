@@ -1305,6 +1305,12 @@ func restore_first_crisis(saved: Variant) -> void:
 	first_crisis_check_timer = 0.0
 	_first_crisis_traced.clear()
 	_show_first_crisis_note()
+	# C-140: a save made during the lead brings the warning back, not just the
+	# corner line, with the lead that is left and the readiness it was given.
+	if _first_crisis_applies() and str(first_crisis.state) == "warned" and hud != null \
+			and typeof(first_crisis.get("readiness")) == TYPE_DICTIONARY and not first_crisis.readiness.is_empty():
+		var lead: float = maxf(0.0, float(first_crisis.starts_at) - Session.sim_time)
+		hud.show_warning(_first_crisis_warning_text(first_crisis.readiness, lead), "", 0.0, hud.SEVERITY_DANGER)
 	if _first_crisis_applies():
 		# No readiness walk here: until the frame ends, the bees group still
 		# holds the bees the restore is retiring (saving.gd's _retire_node).

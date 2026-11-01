@@ -82,7 +82,6 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-139 -- A new Colony Run's first worker: what to do is readable, and it comes in about five minutes](ready/C-139.md)
 - [C-140 -- First crisis: can you see the heavy rain coming, tell why it hurts and answer it?](ready/C-140.md)
 - [C-141 -- Nectar shows an olive warning tint in its last game-hour before it ferments, and reads turning in colour-blind mode](ready/C-141.md)
-- [C-142 -- Reorder a bee's backup jobs and the colony default](ready/C-142.md)
 - [C-143 -- An unmatched scout resumes; an established seeker keeps waiting](ready/C-143.md)
 - [C-145 -- Dr Gallerin's note appears a word at a time and closes from an x at its top right](ready/C-145.md)
 - [C-146 -- An open Colony window keeps its size while warning lines come and go above it](ready/C-146.md)
