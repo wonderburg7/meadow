@@ -65,7 +65,6 @@ from the art in front-over-back order. What the open slices build on:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-6 | meadow foragers drawn from the sheet: eight directions, flapping wings | `scripts/bee.gd`, tests | yes (CQ-L1 landed 22 Oct 2026) | high (per-bee hot path) |
 | SP-12 | every outline on a comb cell sits on the cup's rim, proved by a new pixel assertion | `scripts/input_selection.gd`, `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | medium |
 
 **Dependencies.** RR-11 (`plans/now/run-repairs.md`) waits for SP-11 to
@@ -82,39 +81,7 @@ and date.
 
 SP-11 shipped 2026-10-15; its specification is `plans/archive/SP-11_2026-10-15.md`.
 
-## SP-6 -- meadow foragers drawn from the sheet
-
-**Gate:** none left: CQ-L1 landed 22 Oct 2026, releasing `scripts/bee.gd`. The sheet gate cleared on
-22 Oct 2026: Dave's sheet is committed on a 16x16 grid and exported, with
-its sprite-table row and catalogue entry (`FORAGERS_MEADOW_VIEW_*`).
-
-**True afterwards.**
-
-- An outdoor worker draws as one sprite.
-- Row: direction from `heading`, eight ways. Octant
-  `k = round(angle / 45) mod 8` gives E, SE, S, SW, W, NW, N, NE, mapped
-  to rows by name from the catalogue's frame names (`right`, `down_right`,
-  `down`, `down_left`, `left`, `up_left`, `up`, `up_right`).
-- Wing frame: a shared 6-frame clock offset by `wander_phase`. The frames
-  bob the body as well as the wings, so the clock reads as flight.
-- Body and outline circles are hidden outdoors. The load dot stays at
-  about 2 art px. Selection, alarm and attack rings are unchanged.
-- Indoors, drones, gynes and queens keep circles until their art exists.
-- Runtime: the frame is computed in the existing display update and
-  assigned only when it changes. Profile before and after (rule 3); one
-  sprite replaces three or four polygons per bee.
-- Profile (1 Nov 2026, headless, 300 bees x 200 frames, `tests/sp6_forager_sprite_test.gd`): the display step (heading marker, search ring) cost 2.0-2.1 us per bee per frame before and 3.4-3.9 us with `_update_meadow_sprite` added, so about 1.5 us per bee per frame more; this is script time only and a headless run cannot show the draw saving of one sprite for three or four polygons.
-- Hands-on (Dave): foragers in the meadow face the way they fly in all
-  eight directions and flap without flicker at every zoom.
-
-```queue
-**[Claude] SP-6 -- meadow foragers drawn from the sheet**
-- Plan: `plans/now/sprites.md` -- "SP-6 -- meadow foragers drawn from the sheet"
-- Files: `scripts/bee.gd`, `tests/sp6_forager_sprite_test.gd`, `tests/test_sp6_forager_sprite.py`
-- Check: `python -m unittest tests.test_sp6_forager_sprite` passes: an outdoor worker heading into each of the eight octants shows that direction's row, its frame advances with the wing clock, and its body circles are hidden outdoors and shown indoors; a before/after profile of the display update is recorded in the plan; `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/bee.gd :: FORAGERS_MEADOW_VIEW`
-- Next after: None -- plan complete
-```
+SP-6 shipped 2026-11-01; its specification is `plans/archive/SP-6_2026-11-01.md`.
 
 ## SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels
 
