@@ -82,6 +82,21 @@ const ENTRIES := {
 	},
 }
 
+## SG-3: Dr Gallerin's line when a short-term goal is finished, keyed by the
+## goal's id (short_term_goals.gd's CATALOGUE). Its own table, not ENTRIES:
+## those rows are diagnostic explanations keyed by ColonyDiagnostics fact ids.
+const GOAL_COMPLETIONS := {
+	"pollen_surplus": "Pollen is coming in faster than it goes out now. A surplus like that is what feeds the next brood.",
+	"clear_blocked_work": "The blocked work is cleared. Free comb and free hands keep every other job moving.",
+	"make_room": "More comb is built, so the queen and the foragers have room to work again.",
+	"feed_every_larva": "Every larva has been fed. Well-fed brood grows into strong workers.",
+	"put_waiting_bees_to_work": "The waiting bees have work to do. Idle hands are the cheapest hands you will ever find.",
+	"honey_for_winter": "There is enough honey laid by to see the colony through winter. Well done.",
+}
+
+static func goal_completion_line(goal_id: String) -> String:
+	return str(GOAL_COMPLETIONS.get(goal_id, ""))
+
 static func supported_ids() -> Array[String]:
 	return ["first_crisis_rain", "missing_nurse_workforce", "missing_comb_workforce", "hungry_brood", "starving"]
 

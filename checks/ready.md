@@ -104,3 +104,4 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-163 -- Hard soil needs Mighty Mandible to dig](ready/C-163.md)
 - [C-164 -- Main menu build id stays readable at larger text sizes](ready/C-164.md)
 - [C-165 -- Main-menu Feedback opens the form beside a readable build id](ready/C-165.md)
+- [C-166 -- Short-term goals in the Goals drop-down: star, Dismiss and completion](ready/C-166.md)
