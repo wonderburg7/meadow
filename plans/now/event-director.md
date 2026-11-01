@@ -1,7 +1,7 @@
 # Event director -- the run's calendar in one place, then the alpha's pressures
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: EV-0 -- the Calendar and events settings group, and winter a week later, gated on SG-3, HS-2, PP-11 and PN-11 | Dependency: EV-0 runs before PP-10 (`plans/now/pollination.md`, Dave 1 Nov 2026); the director's events (EV-1 onward, not yet written) wait for CQ-R2 (`plans/now/code-health.md`) and the alpha chain's save slices ending with ED-3 (`plans/now/difficulty.md`) | Verified: 2026-11-01
+Status: active | Owner: Dave / Claude Code | Next: EV-0 -- the Calendar and events settings group, and winter a week later, gated on PN-11 (SG-3, HS-2 and PP-11 landed 1 Nov 2026) | Dependency: EV-0 runs before PP-10 (`plans/now/pollination.md`, Dave 1 Nov 2026); the director's events (EV-1 onward, not yet written) wait for CQ-R2 (`plans/now/code-health.md`) and the alpha chain's save slices ending with ED-3 (`plans/now/difficulty.md`) | Verified: 2026-11-01
 
 ## Objective
 
@@ -26,9 +26,10 @@ FC-2's first crisis lives in `scripts/main.gd`, "the first crisis".
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| EV-0 | one Calendar and events settings group in days, a read-only timeline row, and winter about a week later set by simulation | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/main.gd`, `scripts/season.gd`, tests | no -- after SG-3 (`scripts/main.gd`), HS-2 (`scripts/game_config.gd`, `scripts/settings_catalogue.gd`), PP-11 (the reference route the pacing check runs) and PN-11 (re-pins the first crisis to days 12-15, on `claude/dave-hands-on-checks-784f2a`) | medium |
+| EV-0 | one Calendar and events settings group in days, a read-only timeline row, and winter about a week later set by simulation | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/main.gd`, `scripts/season.gd`, tests | no -- after PN-11 (re-pins the first crisis to days 12-15, on `claude/dave-hands-on-checks-784f2a`); SG-3, HS-2 and PP-11 landed 1 Nov 2026 | medium |
 
-**Dependencies.** EV-0 follows SG-3, HS-2, PP-11 and PN-11, and precedes
+**Dependencies.** EV-0 follows PN-11 (SG-3, HS-2 and PP-11 landed 1 Nov
+2026), and precedes
 PP-10, so PP-10 prices the route once, on the new calendar (Dave, 1 Nov
 2026). The director's event slices follow CQ-R2, which creates
 `event_director.gd` (new, in `scripts/`) (design decision 2), and ED-3.
