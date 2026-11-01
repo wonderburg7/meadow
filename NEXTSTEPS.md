@@ -50,6 +50,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `absent: tools/build_alpha.ps1 :: START-HERE`
    - Next after: CF-2 -- a Feedback button on the main menu opens Dave's form
 
+2. **[Codex] CF-2 -- a Feedback button on the main menu opens Dave's form**
+   - Plan: `plans/now/closed-alpha-feedback.md` -- "CF-2 -- a Feedback button on the main menu opens Dave's form"
+   - Files: `scripts/main_menu.gd`, `tests/test_cf2_feedback_link.py`
+   - Check: `python -m unittest tests.test_cf2_feedback_link` passes (the main menu has a Feedback button whose press opens the form link, and the build id shows beside it); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/main_menu.gd :: FEEDBACK_FORM_URL`
+   - Next after: none -- `plans/now/closed-alpha-feedback.md` is complete
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
