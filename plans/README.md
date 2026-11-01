@@ -169,6 +169,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | If the queue names | Read |
 | --- | --- |
 | AR-4 -- alpha-route evidence: a scripted Colony Run records all five gates | `plans/now/alpha-route-evidence.md` |
+| EE-1, EE-2 -- paired seed-set evidence within summer and after winter | `plans/now/ecology-evidence.md` |
 | ED-1 to ED-3 -- difficulty: health for every bee, Easy's rules, choosing Easy at run start | `plans/now/difficulty.md` |
 | FR-2, FR-3 -- forager recruitment: Auto scouting bought at Foraging tier 2, then Auto-recruitment switched on by ownership | `plans/now/forager-recruitment.md` |
 | HM-1, HM-2 -- Dave's meadow hives and top-bar menu icons | `plans/now/hive-and-menu-art.md` |
