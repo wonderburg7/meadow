@@ -18,6 +18,9 @@
         "resources.stored_pollen",
         "resources.first_tier2_affordable",
         "resources.gyne_rearing_affordable",
+        "resources.stored_bee_bread",
+        "resources.stored_royal_jelly",
+        "resources.pollinator_points",
         "role_outcomes.cells_completed_total",
         "environment.winter_here",
         "colony.milestone_days"
