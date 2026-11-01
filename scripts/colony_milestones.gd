@@ -360,6 +360,9 @@ func show_goals() -> void:
 
 ## SG-3: show_next's branch for a run that is not a Colony Run.
 func _show_short_term_alone() -> void:
+	# A Challenge keeps its own goal shelf, whatever the goal state holds.
+	if Session.starting_level in [1, 2] or main.challenge_runner.active:
+		return
 	var entries: Array = short_term_entries()
 	if entries.is_empty() and main.hud.colony_goal_entries.is_empty():
 		return

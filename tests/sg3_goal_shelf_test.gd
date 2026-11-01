@@ -169,6 +169,8 @@ func _run_case() -> void:
 	dismiss.pressed.emit()
 	_check(not _offered().has("pollen_surplus") and _row("pollen_surplus") == null,
 		"%s: Dismiss removes the goal and its line" % _case)
+	if _offered().is_empty() and not colony:
+		_check(not hud.goal_shelf.visible, "scenario: dismissing the last goal clears the shelf")
 	_check(not ms.favourites.has("pollen_surplus"), "%s: a dismissed goal is unstarred" % _case)
 	_refresh()
 	_check(not _offered().has("pollen_surplus") and _offered().size() == before - 1,
@@ -206,6 +208,12 @@ func _challenge_case() -> void:
 	_refresh()
 	_check(not _main.hud.short_term_box.visible and _main.hud.short_term_box.get_child_count() == 0,
 		"a Challenge's shelf shows no short-term line")
+	# Even with a goal in the state, a Challenge's own shelf is left alone.
+	_main.short_term_goals = {"offered": {"pollen_surplus": {"id": "pollen_surplus", "label": "Build a pollen surplus",
+		"resource": "pollen", "reward": 10.0}}}
+	_main.colony_milestones.show_next()
+	_check(not _main.hud.goals_button.visible and _main.hud.short_term_box.get_child_count() == 0,
+		"a Challenge's shelf is not overwritten by a short-term goal")
 
 
 func _check(ok: bool, label: String) -> void:
