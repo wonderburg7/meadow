@@ -63,13 +63,6 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] SE-2 -- measure specialist steering in the matched spring campaign**
-   - Plan: `plans/now/specialist-ecology-evidence.md` -- "SE-2 -- measure specialist steering in the matched spring campaign"
-   - Files: `test_scenarios/se2_specialist_spring.json`, `plans/reference/specialist-ecology-evidence.md`
-   - Check: `python tools/seed_set_evidence.py specialists --fixture test_scenarios/se2_specialist_spring.json` completes twenty serial arms and writes both reports; `python tests/test_seed_set_evidence.py` passes; `python tools/check_docs.py` passes
-   - Proof: `absent: plans/reference/specialist-ecology-evidence.md :: ## Measurements`
-   - Next after: none -- specialist evidence complete; any later ecology question is outside this plan
-
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
