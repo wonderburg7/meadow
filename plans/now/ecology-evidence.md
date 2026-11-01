@@ -1,7 +1,7 @@
 # Ecology evidence -- what pollination changes in the meadow
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: EE-2 -- carryover into spring; EE-1 summer measurements complete | Dependency: EE-2 follows EE-1; no simulation or balance changes | Verified: 2026-10-31
+Status: complete | Owner: Dave / Codex | Next: None — plan complete | Dependency: none; no simulation or balance changes | Verified: 2026-11-01
 
 ## Objective
 
@@ -40,6 +40,10 @@ set, owns no game files, and can close independently of that route.
 Offspring quality and stewardship mechanics remain deferred.
 
 ## Open slices
+
+Measurements are complete. Summer and spring evidence, limitations and the
+reopening criterion are recorded in `plans/reference/seed-set-evidence.md`.
+No further slice or mechanic is proposed by these findings.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |

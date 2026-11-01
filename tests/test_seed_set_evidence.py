@@ -7,7 +7,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
-from seed_set_evidence import aggregate_arm, paired_report, readable, SPECIES
+from seed_set_evidence import aggregate_arm, aggregate_spring, spring_report, paired_report, readable, SPECIES
 
 
 class EvidenceTest(unittest.TestCase):
@@ -93,6 +93,73 @@ class EvidenceTest(unittest.TestCase):
         report = paired_report(rows, (1, 2))
         self.assertIsNone(report["on_minus_off"][0]["clover_share"])
         self.assertEqual(report["paired_summary"]["clover_share"]["n"], 1)
+
+
+class SpringEvidenceTest(unittest.TestCase):
+    event = EvidenceTest.event
+
+    def setUp(self):
+        EvidenceTest.setUp(self)
+        self.scenario = json.loads((ROOT / "test_scenarios/ee2_seed_set_spring.json").read_text())
+        self.entries = [{"type": "action", "do": a["do"], "result": "accepted", "game_time": t}
+                        for a, t in zip(self.scenario["actions"], (0, 0, 0, 180, 480))]
+        self.entries.insert(4, dict(self.event("pollination_spring", "21", {"spring_counts": {"Clover": 3}}), game_time=400))
+        self.entries.insert(5, dict(self.event("pollination_replant", "seasonal", {
+            "species_index": 0, "species": "Clover", "weights": [2, 1, 0, 0, 0, 0]}), game_time=400))
+        self.entries.append({"type": "summary", "game_time": 480, "day": 25, "outcome": "actions_resolved"})
+        bank = {"seed_counts": {"Clover": 3}, "spring_counts": {}}
+        self.summer = dict(copy.deepcopy(self.save), seed_bank=bank)
+        self.spring = {"clock": {"day": 25, "sim_time": 480}, "flowers": [{"species": 0}],
+                       "seed_bank": {"seed_counts": {}, "spring_counts": {"Clover": 3}}}
+
+    def aggregate(self):
+        return aggregate_spring(self.entries, self.summer, self.spring, self.result, self.scenario)
+
+    def test_phase_boundaries_and_missing_coverage(self):
+        self.assertEqual(self.aggregate()["spring_replacements"]["Clover"], 1)
+        self.entries[5]["game_time"] = 460
+        with self.assertRaisesRegex(ValueError, "coverage"):
+            self.aggregate()
+        self.entries[5]["game_time"] = 400
+        for day, t in ((11, 200), (9, 160)):
+            self.summer["clock"] = {"day": day, "sim_time": t}
+            with self.assertRaises(ValueError):
+                self.aggregate()
+
+    def test_incomplete_spring_and_reverse_timeline(self):
+        self.entries[4]["game_time"] = 399
+        with self.assertRaises(ValueError):
+            self.aggregate()
+        self.entries[4]["game_time"] = 400
+        self.entries[-2]["game_time"] = 399
+        with self.assertRaises(ValueError):
+            self.aggregate()
+        self.entries[-2]["game_time"] = 480
+        self.scenario["config_overrides"]["spring_regrowth_days"] = 5
+        with self.assertRaisesRegex(ValueError, "incomplete spring"):
+            self.aggregate()
+
+    def test_known_spring_pairs_and_absent_species(self):
+        on = dict(self.aggregate(), seed=1, arm="on")
+        self.spring["flowers"] = [{"species": 1}, {"species": 1}]
+        off = dict(self.aggregate(), seed=1, arm="off")
+        report = spring_report([on, off], (1,))
+        self.assertIn("Observed spring replacements", readable(report))
+        self.assertIn("spring minus summer", readable(report))
+        diff = report["spring_on_minus_off"][0]["spring"]
+        self.assertEqual(diff["live_by_species"], dict(zip(SPECIES, (1, -2, 0, 0, 0, 0))))
+        self.assertEqual(diff["clover_share"], 1)
+        self.assertEqual(report["spring_paired_summary"]["spring"]["live_by_species"]["Borage"]["median"], -2)
+        self.assertEqual(on["summer_to_spring"]["live_by_species"]["Borage"], -1)
+
+    def test_disabled_arm_has_no_rollover_and_zero_bank(self):
+        self.scenario["seed_set"] = False
+        self.entries.pop(4)
+        self.summer["seed_bank"]["seed_counts"] = {}
+        self.spring["seed_bank"]["spring_counts"] = {}
+        row = self.aggregate()
+        self.assertEqual(row["spring_rollover_counts"], dict.fromkeys(SPECIES, 0))
+        self.assertEqual(row["spring_replacements"]["Clover"], 1)
 
 
 if __name__ == "__main__":
