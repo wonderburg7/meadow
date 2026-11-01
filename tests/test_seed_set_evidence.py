@@ -1,13 +1,18 @@
 """Offline evidence failures and arithmetic, without an engine launch."""
 import copy
 import json
+import contextlib
+import io
+import tempfile
+from unittest import mock
 from pathlib import Path
 import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
-from seed_set_evidence import aggregate_arm, aggregate_spring, spring_report, paired_report, readable, SPECIES
+import seed_set_evidence as evidence
+from seed_set_evidence import specialist_report, aggregate_arm, aggregate_spring, spring_report, paired_report, readable, SPECIES
 
 
 class EvidenceTest(unittest.TestCase):
@@ -160,6 +165,158 @@ class SpringEvidenceTest(unittest.TestCase):
         row = self.aggregate()
         self.assertEqual(row["spring_rollover_counts"], dict.fromkeys(SPECIES, 0))
         self.assertEqual(row["spring_replacements"]["Clover"], 1)
+
+
+
+class SpecialistEvidenceTest(unittest.TestCase):
+    def setUp(self):
+        fixture = SpringEvidenceTest()
+        fixture.setUp()
+        self.row = fixture.aggregate()
+        self.provenance = dict(baseline_commit="baseline", reporter_sha256="reporter",
+                               fixture_sha256="fixture", engine_version="Godot 4.7",
+                               fixed_fps=30, controls=fixture.scenario)
+        self.rows = []
+        for seed in (1, 2):
+            for specialist in evidence.SPECIALISTS:
+                for arm in ("off", "on"):
+                    row = copy.deepcopy(self.row)
+                    # Distinct effects for all six species, not just Clover.
+                    effect = 3 if specialist == "Borage" else 1
+                    counts = {s: (i + 1) * (effect if arm == "on" else 1)
+                              for i, s in enumerate(SPECIES)}
+                    row["spring"] = {"live_by_species": counts, "clover_share": 99,
+                                     "seed_counts": counts, "spring_counts": counts}
+                    row["spring_replacements"] = counts
+                    row.update(seed=seed, arm=arm, specialist=specialist,
+                               treatment={"specialist": specialist, "seed_set": arm == "on"},
+                               scenario=dict(fixture.scenario, random_seed=seed,
+                                             forager_species=specialist, seed_set=arm == "on"),
+                               provenance=copy.deepcopy(self.provenance),
+                               seed_events_by_species=dict.fromkeys(SPECIES, 0))
+                    self.rows.append(row)
+
+    def report(self):
+        return specialist_report(self.rows, self.provenance, (1, 2))
+
+    def test_four_treatment_arithmetic_and_all_species(self):
+        report = self.report()
+        contrast = report["borage_minus_clover_effect"][0]
+        for i, species in enumerate(SPECIES):
+            for metric in ("live_by_species", "seed_counts", "spring_counts"):
+                self.assertEqual(contrast["spring"][metric][species], 2 * (i + 1))
+            self.assertEqual(contrast["spring_replacements"][species], 2 * (i + 1))
+            self.assertEqual(report["contrast_summary"]["spring"]["live_by_species"][species],
+                             {"n": 2, "median": 2 * (i + 1), "min": 2 * (i + 1), "max": 2 * (i + 1)})
+            self.assertAlmostEqual(contrast["spring"]["shares"][species], 0)
+        self.assertIn("No Borage seed events observed.", report["limitations"])
+        rendered = readable(report)
+        for phrase in ("Raw arm data", "draw-weight ranges", "Within-arm", "n, median, min, max",
+                       "not confidence intervals"):
+            self.assertIn(phrase, rendered)
+
+    def test_share_contrast_uses_every_live_species_and_actual_pair_ranges(self):
+        # Clover on/off: Borage share 1/2 - 1/4. Borage on/off: 3/4 - 1/4.
+        counts = ({"Borage": 1, "Poppy": 3}, {"Borage": 2, "Foxglove": 2},
+                  {"Borage": 1, "Poppy": 3}, {"Borage": 3, "Dandelion": 1})
+        for row, flowers in zip(self.rows[:4], counts):
+            row["spring"]["live_by_species"] = flowers
+        report = self.report()
+        self.assertEqual(report["borage_minus_clover_effect"][0]["spring"]["shares"]["Borage"], .25)
+        summary = report["contrast_summary"]["spring"]["shares"]["Borage"]
+        self.assertEqual(summary, {"n": 2, "median": .125, "min": 0, "max": .25})
+        # Other species enter the denominator and have their own contrasts.
+        self.assertEqual(report["borage_minus_clover_effect"][0]["spring"]["shares"]["Dandelion"], .25)
+        self.assertEqual(report["rows"][0]["spring"]["shares"]["Clover"], 0)
+
+    def test_missing_duplicate_unexpected_and_mislabeled_arms(self):
+        original = self.rows
+        bad = [original[:-1], original + [original[0]], [original[0], original[0], *original[2:]]]
+        for field, value in (("seed", 99), ("specialist", "Poppy"), ("arm", "enabled"),
+                             ("treatment", {"specialist": "Clover", "seed_set": False})):
+            rows = copy.deepcopy(original)
+            rows[1][field] = value
+            bad.append(rows)
+        for rows in bad:
+            with self.subTest(rows=rows), self.assertRaises(ValueError):
+                specialist_report(rows, self.provenance, (1, 2))
+
+    def test_controls_and_provenance_must_match(self):
+        for field, value in (("weather", True), ("forager_species", "Borage"),
+                             ("random_seed", 99), ("seed_set", 1)):
+            rows = copy.deepcopy(self.rows)
+            rows[0]["scenario"][field] = value
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                specialist_report(rows, self.provenance, (1, 2))
+        for field in evidence.PROVENANCE_KEYS:
+            rows = copy.deepcopy(self.rows)
+            rows[0]["provenance"][field] = "different"
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                specialist_report(rows, self.provenance, (1, 2))
+        provenance = dict(self.provenance, fixed_fps=60)
+        with self.assertRaises(ValueError):
+            specialist_report(self.rows, provenance, (1, 2))
+
+    def test_empty_meadows_absent_species_and_defined_denominators(self):
+        self.rows[3]["spring"]["live_by_species"] = {}
+        report = self.report()
+        self.assertIsNone(report["borage_minus_clover_effect"][0]["spring"]["shares"]["Borage"])
+        self.assertEqual(report["contrast_summary"]["spring"]["shares"]["Borage"]["n"], 1)
+        for row in self.rows:
+            row["spring"]["live_by_species"] = {}
+        report = self.report()
+        self.assertEqual(report["contrast_summary"]["spring"]["shares"]["Poppy"],
+                         {"n": 0, "median": None, "min": None, "max": None})
+        for row in self.rows:
+            row["spring"]["live_by_species"] = {"Clover": 1}
+        report = self.report()
+        self.assertEqual(report["borage_minus_clover_effect"][0]["spring"]["shares"]["Borage"], 0)
+        self.assertEqual(report["contrast_summary"]["spring"]["shares"]["Borage"]["n"], 2)
+
+    def test_command_runs_twenty_unique_serial_arms_and_retains_scenarios(self):
+        with tempfile.TemporaryDirectory(prefix="meadow-specialist-test-") as temporary:
+            root = Path(temporary)
+            calls = []
+            def run(case, godot, timeout, fps, case_dir):
+                scenario = json.loads(case.read_text())
+                calls.append((scenario["random_seed"], scenario["forager_species"], scenario["seed_set"]))
+                self.assertEqual(fps, 30)
+                run_dir = case_dir / "run-test"
+                run_dir.mkdir()
+                run_id = str(len(calls))
+                (run_dir / "result.json").write_text(json.dumps({"run_id": run_id}))
+                private = root / "private" / run_id
+                private.mkdir(parents=True)
+                for name in ("ee2-summer.json", "ee2-spring.json"):
+                    (private / name).write_text("{}")
+                return 0
+            output = root / "output"
+            fixture = ROOT / "test_scenarios/ee2_seed_set_spring.json"
+            with mock.patch.object(sys, "argv", ["seed_set_evidence.py", "specialists",
+                                                "--fixture", str(fixture), "--output", str(output)]), \
+                 mock.patch.object(evidence, "find_godot", return_value="godot"), \
+                 mock.patch.object(evidence.runner, "prepare_launch", return_value=None), \
+                 mock.patch.object(evidence.runner, "run_verdict_scenario", side_effect=run), \
+                 mock.patch.object(evidence.runner, "PRIVATE_USER_ROOT", root / "private"), \
+                 mock.patch.object(evidence.subprocess, "check_output", return_value="baseline"), \
+                 mock.patch.object(evidence, "load_entries", return_value=[]), \
+                 mock.patch.object(evidence, "aggregate_spring", side_effect=lambda *args: copy.deepcopy(self.row)), \
+                 contextlib.redirect_stdout(io.StringIO()):
+                evidence.main()
+            self.assertEqual(len(calls), 20)
+            self.assertEqual(len(set(calls)), 20)
+            self.assertEqual(calls[:4], [(12345, "Clover", False), (12345, "Clover", True),
+                                        (12345, "Borage", False), (12345, "Borage", True)])
+            report = json.loads((output / "report.json").read_text())
+            self.assertEqual(len(report["rows"]), 20)
+            self.assertEqual(report["provenance"]["fixture"], str(fixture.resolve()))
+            self.assertTrue((output / "report.md").exists())
+            for row in report["rows"]:
+                self.assertEqual(row["scenario"]["forager_species"], row["specialist"])
+                self.assertEqual(row["scenario"]["seed_set"], row["arm"] == "on")
+                self.assertIn("spring_weights", row)
+                case = output / f'{row["seed"]}-{row["specialist"]}-{row["arm"]}' / "scenario.json"
+                self.assertEqual(json.loads(case.read_text()), row["scenario"])
 
 
 if __name__ == "__main__":

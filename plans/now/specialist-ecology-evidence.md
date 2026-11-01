@@ -1,7 +1,7 @@
 # Specialist ecology evidence -- does specialist choice steer the spring meadow?
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: SE-1 -- distinguish specialist treatments in the offline reporter; then SE-2 -- measure the matched spring campaign | Dependency: existing PP-4 seed-set behaviour and EE-2 measurements; no game-code changes | Verified: 2026-11-01
+Status: active | Owner: Dave / Codex | Next: SE-2 -- measure specialist steering in the matched spring campaign (SE-1 reporter implemented) | Dependency: existing PP-4 seed-set behaviour and EE-2 measurements; no game-code changes | Verified: 2026-11-01
 
 ## Objective and decision
 
