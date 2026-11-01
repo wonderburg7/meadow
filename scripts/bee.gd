@@ -3118,8 +3118,6 @@ func _build_meadow_sprite() -> void:
 func _update_meadow_sprite() -> void:
 	if meadow_sprite == null:
 		return
-	if world != null and is_instance_valid(world) and not world.is_on_screen(self):
-		return
 	var wants_art: bool = not is_queen and not is_drone and not is_gyne and not _is_inside_hive()
 	if wants_art != _meadow_art_showing:
 		_meadow_art_showing = wants_art
