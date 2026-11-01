@@ -176,7 +176,6 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | DR-1, DR-2 -- drones: a mated queen lays drones in cells the player marks, then the cell popup's drone box | `plans/now/drones.md` |
 | PP-6 -- pollination: pricing the route to Gyne rearing | `plans/now/pollination.md` |
 | RR-12 -- run repairs: a loaded run keeps its readout history | `plans/now/run-repairs.md` |
-| CF-1, CF-2 -- closed-alpha feedback: a start-here note and build id in the zip, a Feedback button opening Dave's form | `plans/now/closed-alpha-feedback.md` |
 | SE-1, SE-2 -- ecology evidence: Clover versus Borage specialists and the spring meadow | `plans/now/specialist-ecology-evidence.md` |
 | EV-0 onward -- the event director: one Calendar and events settings group, winter a week later, then the alpha's pressures | `plans/now/event-director.md` (design: `plans/design/event-director.md`) |
 | SG-2, SG-3 -- short-term goals offered, paid and saved in runs, then shown in the Goals drop-down | `plans/now/short-term-goals.md` |

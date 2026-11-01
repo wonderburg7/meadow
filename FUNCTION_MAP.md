@@ -1127,51 +1127,53 @@ The balance fields.
 1012 # --- winter ---
 ```
 
-## main_menu.gd (763 lines)
+## main_menu.gd (786 lines)
 
 The main menu overlay: the honeycomb of stage hexes, their name fitting,
 and the menu buttons.
 
 ```
-151  # --- lifecycle -------------------------------------------------------
-153  func _ready() -> void
-212  func _build_left_content(left_pane: VBoxContainer) -> void
-266  func _build_right_content(right_pane: VBoxContainer) -> void
-302  func _build_build_id(right_pane: VBoxContainer) -> void
-313  static func _build_id_text() -> String
-319  func open() -> void
-332  func close() -> void
-339  # --- settings ----------------------------------------------------------
-349  func _build_settings_button(right_pane: VBoxContainer) -> void
-370  func _on_settings_pressed() -> void
-377  # --- the honeycomb ------------------------------------------------------
-385  func _hex_row_offset() -> float
-392  func _hex_row_height() -> float
-395  func _make_honeycomb_strip(group_key: String) -> Control
-430  static func hex_fit_size(font: Font, text: String, avail: Vector2, base: int, line_spacing: int) -> int
-439  static func hex_text_fits(font: Font, text: String, avail: Vector2, size: int, line_spacing: int) -> bool
-449  func _fit_hex_label(label: Label) -> void
-472  func _make_hex_tile(stage: Dictionary) -> Control
-565  func _apply_hex_colors(level: int, state: String) -> void
-576  func _refresh_hex_state(level: int) -> void
-579  func _refresh_ticks() -> void
-586  func _stage_for_level(level: int) -> Dictionary
-592  # --- selection and the detail pane ---------------------------------------
-594  func _select_stage(stage: Dictionary) -> void
-604  func _rebuild_detail_pane(stage: Dictionary) -> void
-636  func _make_note_label(text: String) -> Label
-647  func _make_preset_row(stage: Dictionary) -> Control
-664  func _make_preset_description() -> Control
-674  func _make_custom_controls() -> Control
-682  func _make_custom_row(field: Dictionary) -> Control
-726  # --- choosing --------------------------------------------------------
-728  func _choose(stage: Dictionary) -> void
-735  # --- small shared helpers ---------------------------------------------
-740  func _uses_presets(stage: Dictionary) -> bool
-743  func _style_button(button: Button, selected: bool = false) -> void
-750  func _is_challenge_complete(level: int) -> bool
-753  func _is_scenario_played(level: int) -> bool
-760  func _is_completed(stage: Dictionary) -> bool
+152  # --- lifecycle -------------------------------------------------------
+154  func _ready() -> void
+213  func _build_left_content(left_pane: VBoxContainer) -> void
+267  func _build_right_content(right_pane: VBoxContainer) -> void
+303  func _build_feedback_row(container: VBoxContainer) -> void
+321  func _on_feedback_pressed() -> void
+325  func _build_build_id(right_pane: VBoxContainer) -> void
+336  static func _build_id_text() -> String
+342  func open() -> void
+355  func close() -> void
+362  # --- settings ----------------------------------------------------------
+372  func _build_settings_button(right_pane: VBoxContainer) -> void
+393  func _on_settings_pressed() -> void
+400  # --- the honeycomb ------------------------------------------------------
+408  func _hex_row_offset() -> float
+415  func _hex_row_height() -> float
+418  func _make_honeycomb_strip(group_key: String) -> Control
+453  static func hex_fit_size(font: Font, text: String, avail: Vector2, base: int, line_spacing: int) -> int
+462  static func hex_text_fits(font: Font, text: String, avail: Vector2, size: int, line_spacing: int) -> bool
+472  func _fit_hex_label(label: Label) -> void
+495  func _make_hex_tile(stage: Dictionary) -> Control
+588  func _apply_hex_colors(level: int, state: String) -> void
+599  func _refresh_hex_state(level: int) -> void
+602  func _refresh_ticks() -> void
+609  func _stage_for_level(level: int) -> Dictionary
+615  # --- selection and the detail pane ---------------------------------------
+617  func _select_stage(stage: Dictionary) -> void
+627  func _rebuild_detail_pane(stage: Dictionary) -> void
+659  func _make_note_label(text: String) -> Label
+670  func _make_preset_row(stage: Dictionary) -> Control
+687  func _make_preset_description() -> Control
+697  func _make_custom_controls() -> Control
+705  func _make_custom_row(field: Dictionary) -> Control
+749  # --- choosing --------------------------------------------------------
+751  func _choose(stage: Dictionary) -> void
+758  # --- small shared helpers ---------------------------------------------
+763  func _uses_presets(stage: Dictionary) -> bool
+766  func _style_button(button: Button, selected: bool = false) -> void
+773  func _is_challenge_complete(level: int) -> bool
+776  func _is_scenario_played(level: int) -> bool
+783  func _is_completed(stage: Dictionary) -> bool
 ```
 
 ## input_selection.gd (750 lines)

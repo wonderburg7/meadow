@@ -103,3 +103,4 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-162 -- SP-14: a nectar cell with cell art on has no outline ring](ready/C-162.md)
 - [C-163 -- Hard soil needs Mighty Mandible to dig](ready/C-163.md)
 - [C-164 -- Main menu build id stays readable at larger text sizes](ready/C-164.md)
+- [C-165 -- Main-menu Feedback opens the form beside a readable build id](ready/C-165.md)

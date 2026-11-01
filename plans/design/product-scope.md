@@ -782,7 +782,7 @@ the procedural fallback means it must not block playability.
 - internal milestone play at 5/10/20/60/90 minutes;
 - friends/family observation before broad distribution
   (`docs/feedback-session-runbook.md`); remote testers get a zip and an
-  external end-of-play form (`plans/now/closed-alpha-feedback.md`, Dave,
+  external end-of-play form (`plans/archive/closed-alpha-feedback_2026-11-01.md`, Dave,
   1 Nov 2026);
 - feedback separated into defect, confusion, pacing, decision quality and
   desired expansion;
