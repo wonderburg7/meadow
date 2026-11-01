@@ -1,7 +1,7 @@
 # Closed-alpha feedback -- a build testers can start alone, and a form they fill in after
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: CF-1 -- the build carries a start-here note and a build id the main menu shows; CF-2 waits for Dave's form link | Dependency: none for CF-1; CF-2 follows CF-1 (both edit `scripts/main_menu.gd`) and waits for Dave to make the form | Verified: 2026-11-01
+Status: active | Owner: Dave / Codex | Next: CF-1 -- the build carries a start-here note and a build id the main menu shows; then CF-2 -- the Feedback button opens Dave's supplied form | Dependency: none for CF-1; CF-2 follows CF-1 (both edit `scripts/main_menu.gd`); Dave supplied the form link on 1 Nov 2026 | Verified: 2026-11-01
 
 ## Objective
 
@@ -26,14 +26,14 @@ useful feedback without Dave there. In-person sessions already have
 
 `tools/build_alpha.ps1` exports and zips the build. Nothing in the zip
 tells a tester how to start, nothing in the game names which build it is,
-and no form exists.
+and the form link Dave supplied on 1 Nov 2026 is recorded below.
 
 ## Open slices
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | CF-1 | the zip carries a start-here note; the main menu shows the build id | `tools/build_alpha.ps1`, `scripts/main_menu.gd`, `docs/alpha-start-here.md`, tests | yes | medium |
-| CF-2 | a Feedback button on the main menu opens Dave's form | `scripts/main_menu.gd`, tests | no -- after CF-1, and Dave's form link | low |
+| CF-2 | a Feedback button on the main menu opens Dave's form | `scripts/main_menu.gd`, tests | after CF-1, in the same lane | low |
 
 **Dependencies.** CF-2 follows CF-1 (`scripts/main_menu.gd`). ED-3
 (`plans/now/difficulty.md`) also edits `scripts/main_menu.gd`; whichever is
@@ -83,10 +83,9 @@ about.
 
 Level: low -- Codex default model at low reasoning.
 
-**Waits for** CF-1, and for Dave to make the form and paste its link on
-the `Form link:` line below.
+**Follows** CF-1 in the same lane. Dave supplied the form link on 1 Nov 2026.
 
-Form link: (Dave pastes the form's share link here)
+Form link: https://docs.google.com/forms/d/e/1FAIpQLSc-hoJZiHj84m2NdPYJRveF6PZ11WqvRyP0xRJeoYySFg7vEw/viewform?usp=publish-editor
 
 **When done:** a "Feedback" button on the main menu opens the form link in
 the tester's browser (`OS.shell_open`), with the build id from CF-1 shown
@@ -112,7 +111,7 @@ Dave writes them into his form):
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Codex] CF-2 -- a Feedback button on the main menu opens Dave's form**
 - Plan: `plans/now/closed-alpha-feedback.md` -- "CF-2 -- a Feedback button on the main menu opens Dave's form"
 - Files: `scripts/main_menu.gd`, `tests/test_cf2_feedback_link.py`
