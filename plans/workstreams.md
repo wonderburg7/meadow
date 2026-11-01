@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/SP-6` (`claude/SP-6`) | Claude | meadow foragers drawn from the sheet | Claude | in progress | none | `plans/now/sprites.md` SP-6 -- meadow foragers drawn from the sheet |
