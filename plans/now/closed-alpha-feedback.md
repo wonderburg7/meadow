@@ -32,7 +32,7 @@ and no form exists.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CF-1 | the zip carries a start-here note; the main menu shows the build id | `tools/build_alpha.ps1`, `scripts/main_menu.gd`, `.gitignore`, `docs/alpha-start-here.md`, tests | yes | medium |
+| CF-1 | the zip carries a start-here note; the main menu shows the build id | `tools/build_alpha.ps1`, `scripts/main_menu.gd`, `docs/alpha-start-here.md`, tests | yes | medium |
 | CF-2 | a Feedback button on the main menu opens Dave's form | `scripts/main_menu.gd`, tests | no -- after CF-1, and Dave's form link | low |
 
 **Dependencies.** CF-2 follows CF-1 (`scripts/main_menu.gd`). ED-3
@@ -57,9 +57,10 @@ about.
    link is on the main menu. `build_alpha.ps1` copies it into the zip as
    `START-HERE.txt`.
 2. `build_alpha.ps1` stamps a build id -- the project version, the short
-   commit hash and the date -- into the zip's name and into an untracked,
-   gitignored `build_info.gd` (in `scripts/`) (`const BUILD_ID := "..."`) written
-   before the export, so the exported game carries it.
+   commit hash and the date -- into the zip's name and into a temporary
+   `build_info.gd` (in `scripts/`) (`const BUILD_ID := "..."`) written
+   before the export and deleted after it, so the exported game carries it
+   and the checkout never does.
 3. The main menu shows the build id in small text in a corner, loaded with
    `load("res://scripts/build_info.gd")` when that file exists and
    "development build" otherwise. Accessibility text scale applies.
@@ -72,7 +73,7 @@ about.
 ```queue
 **[Codex] CF-1 -- the zip carries a start-here note, and the main menu shows the build id**
 - Plan: `plans/now/closed-alpha-feedback.md` -- "CF-1 -- the zip carries a start-here note, and the main menu shows the build id"
-- Files: `tools/build_alpha.ps1`, `scripts/main_menu.gd`, `.gitignore`, `docs/alpha-start-here.md`, `tests/test_cf1_build_id.py`
+- Files: `tools/build_alpha.ps1`, `scripts/main_menu.gd`, `docs/alpha-start-here.md`, `tests/test_cf1_build_id.py`
 - Check: `python -m unittest tests.test_cf1_build_id` passes (the build-id stamp has version, short hash and date; `build_alpha.ps1` copies `docs/alpha-start-here.md` into the zip as `START-HERE.txt`; the main menu shows "development build" when `build_info.gd` (in `scripts/`) is absent and the stamped id when present); `.\tools\verify.ps1` is green
 - Proof: `absent: tools/build_alpha.ps1 :: START-HERE`
 - Next after: CF-2 -- a Feedback button on the main menu opens Dave's form
