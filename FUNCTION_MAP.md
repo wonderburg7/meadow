@@ -1127,6 +1127,55 @@ The balance fields.
 1012 # --- winter ---
 ```
 
+## main_menu.gd (786 lines)
+
+The main menu overlay: the honeycomb of stage hexes, their name fitting,
+and the menu buttons.
+
+```
+152  # --- lifecycle -------------------------------------------------------
+154  func _ready() -> void
+213  func _build_left_content(left_pane: VBoxContainer) -> void
+267  func _build_right_content(right_pane: VBoxContainer) -> void
+303  func _build_feedback_row(container: VBoxContainer) -> void
+321  func _on_feedback_pressed() -> void
+325  func _build_build_id(right_pane: VBoxContainer) -> void
+336  static func _build_id_text() -> String
+342  func open() -> void
+355  func close() -> void
+362  # --- settings ----------------------------------------------------------
+372  func _build_settings_button(right_pane: VBoxContainer) -> void
+393  func _on_settings_pressed() -> void
+400  # --- the honeycomb ------------------------------------------------------
+408  func _hex_row_offset() -> float
+415  func _hex_row_height() -> float
+418  func _make_honeycomb_strip(group_key: String) -> Control
+453  static func hex_fit_size(font: Font, text: String, avail: Vector2, base: int, line_spacing: int) -> int
+462  static func hex_text_fits(font: Font, text: String, avail: Vector2, size: int, line_spacing: int) -> bool
+472  func _fit_hex_label(label: Label) -> void
+495  func _make_hex_tile(stage: Dictionary) -> Control
+588  func _apply_hex_colors(level: int, state: String) -> void
+599  func _refresh_hex_state(level: int) -> void
+602  func _refresh_ticks() -> void
+609  func _stage_for_level(level: int) -> Dictionary
+615  # --- selection and the detail pane ---------------------------------------
+617  func _select_stage(stage: Dictionary) -> void
+627  func _rebuild_detail_pane(stage: Dictionary) -> void
+659  func _make_note_label(text: String) -> Label
+670  func _make_preset_row(stage: Dictionary) -> Control
+687  func _make_preset_description() -> Control
+697  func _make_custom_controls() -> Control
+705  func _make_custom_row(field: Dictionary) -> Control
+749  # --- choosing --------------------------------------------------------
+751  func _choose(stage: Dictionary) -> void
+758  # --- small shared helpers ---------------------------------------------
+763  func _uses_presets(stage: Dictionary) -> bool
+766  func _style_button(button: Button, selected: bool = false) -> void
+773  func _is_challenge_complete(level: int) -> bool
+776  func _is_scenario_played(level: int) -> bool
+783  func _is_completed(stage: Dictionary) -> bool
+```
+
 ## input_selection.gd (750 lines)
 
 Selection, drag and placement resolution.
@@ -1194,51 +1243,6 @@ Selection, drag and placement resolution.
 731  func _draw_tile_outline(centre: Vector2, colour: Color, width: float, dashed: bool) -> void
 740  func _tile_centre(hex: Vector2i) -> Vector2
 745  func _draw_start_point_marker(point: Vector2) -> void
-```
-
-## main_menu.gd (744 lines)
-
-The main menu overlay: the honeycomb of stage hexes, their name fitting,
-and the menu buttons.
-
-```
-151  # --- lifecycle -------------------------------------------------------
-153  func _ready() -> void
-212  func _build_left_content(left_pane: VBoxContainer) -> void
-266  func _build_right_content(right_pane: VBoxContainer) -> void
-300  func open() -> void
-313  func close() -> void
-320  # --- settings ----------------------------------------------------------
-330  func _build_settings_button(right_pane: VBoxContainer) -> void
-351  func _on_settings_pressed() -> void
-358  # --- the honeycomb ------------------------------------------------------
-366  func _hex_row_offset() -> float
-373  func _hex_row_height() -> float
-376  func _make_honeycomb_strip(group_key: String) -> Control
-411  static func hex_fit_size(font: Font, text: String, avail: Vector2, base: int, line_spacing: int) -> int
-420  static func hex_text_fits(font: Font, text: String, avail: Vector2, size: int, line_spacing: int) -> bool
-430  func _fit_hex_label(label: Label) -> void
-453  func _make_hex_tile(stage: Dictionary) -> Control
-546  func _apply_hex_colors(level: int, state: String) -> void
-557  func _refresh_hex_state(level: int) -> void
-560  func _refresh_ticks() -> void
-567  func _stage_for_level(level: int) -> Dictionary
-573  # --- selection and the detail pane ---------------------------------------
-575  func _select_stage(stage: Dictionary) -> void
-585  func _rebuild_detail_pane(stage: Dictionary) -> void
-617  func _make_note_label(text: String) -> Label
-628  func _make_preset_row(stage: Dictionary) -> Control
-645  func _make_preset_description() -> Control
-655  func _make_custom_controls() -> Control
-663  func _make_custom_row(field: Dictionary) -> Control
-707  # --- choosing --------------------------------------------------------
-709  func _choose(stage: Dictionary) -> void
-716  # --- small shared helpers ---------------------------------------------
-721  func _uses_presets(stage: Dictionary) -> bool
-724  func _style_button(button: Button, selected: bool = false) -> void
-731  func _is_challenge_complete(level: int) -> bool
-734  func _is_scenario_played(level: int) -> bool
-741  func _is_completed(stage: Dictionary) -> bool
 ```
 
 ## world_building.gd (718 lines)
