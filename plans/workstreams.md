@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/SG-3` (`claude/SG-3`) | Claude | the goals in the Goals drop-down, with progress, reward, star and Dismiss | Claude | in progress | none | `plans/now/short-term-goals.md` SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss |

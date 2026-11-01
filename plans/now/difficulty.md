@@ -1,7 +1,7 @@
 # Difficulty -- Easy rules, a Standard baseline, and the choice at run start
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: ED-1 -- every bee has health, queued 1 Nov 2026; then ED-2 and ED-3, gated (specified 13 Oct 2026) | Dependency: ED-1 follows SG-3 (`plans/now/short-term-goals.md`, landed 1 Nov 2026) in Dave's order (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`, released the save files 17 Oct 2026) | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: ED-1 -- every bee has health, queued 1 Nov 2026; then ED-2 and ED-3, gated (specified 13 Oct 2026) | Dependency: ED-1 follows SG-3 (`plans/archive/short-term-goals_2026-11-01.md`, landed 1 Nov 2026) in Dave's order (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`, released the save files 17 Oct 2026) | Verified: 2026-10-12
 
 ## Objective
 
@@ -75,7 +75,7 @@ Verified 12 Oct 2026 against master `06bd26c`:
 
 ED-1, then ED-2, then ED-3: each needs the one before. Dave's order (13 Oct
 2026) puts this plan last: tier 3 (`plans/archive/tier-three_2026-10-14.md`,
-`plans/archive/work-priorities_2026-10-22.md`), then `plans/now/short-term-goals.md`, then
+`plans/archive/work-priorities_2026-10-22.md`), then `plans/archive/short-term-goals_2026-11-01.md`, then
 Easy. ED-1 changes Standard in one way only, exhaustion (decision 5);
 nothing else Standard does may change. Challenges stay Standard.
 
