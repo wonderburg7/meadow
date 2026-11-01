@@ -48,4 +48,5 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `C:/Users/dl13860/Documents/Meadow/meadow` (`codex/specify-specialist-evidence`) | Codex (docs only) | Record specialist question and specify SE-1 and SE-2 | Codex | in progress | none | `plans/now/specialist-ecology-evidence.md` |
 | `.worktrees/SG-3` (`claude/SG-3`) | Claude | the goals in the Goals drop-down, with progress, reward, star and Dismiss | Claude | in progress | none | `plans/now/short-term-goals.md` SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss |
