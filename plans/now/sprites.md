@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: SP-6 -- meadow foragers drawn from the sheet, in the Claude backlog (Dave's sheet landed and CQ-L1 released `scripts/bee.gd`, 22 Oct 2026); the meadow floor in blocks (SP-8, SP-8a) moved to `plans/now/meadow-terrain.md` on 15 Oct 2026, and the hive and menu art is `plans/now/hive-and-menu-art.md`; SP-13 (the skep door on `hive.position`) landed 30 Oct 2026, hands-on check C-161 filed; SP-14 (no outline on an unselected comb cell with cell art on) done on its branch, hands-on check C-162 filed | Dependency: none left | Verified: 2026-10-30
+Status: active | Owner: Dave / Claude Code | Next: nothing further in this plan -- SP-6 (meadow foragers drawn from the sheet) is done on its branch, awaiting Dave's hands-on check; the meadow floor in blocks (SP-8, SP-8a) moved to `plans/now/meadow-terrain.md` on 15 Oct 2026, and the hive and menu art is `plans/now/hive-and-menu-art.md`; SP-13 (the skep door on `hive.position`) landed 30 Oct 2026, hands-on check C-161 filed; SP-14 (no outline on an unselected comb cell with cell art on) done on its branch, hands-on check C-162 filed | Dependency: none left | Verified: 2026-10-30
 
 ## Objective
 
@@ -103,6 +103,7 @@ its sprite-table row and catalogue entry (`FORAGERS_MEADOW_VIEW_*`).
 - Runtime: the frame is computed in the existing display update and
   assigned only when it changes. Profile before and after (rule 3); one
   sprite replaces three or four polygons per bee.
+- Profile (1 Nov 2026, headless, 300 bees x 200 frames, `tests/sp6_forager_sprite_test.gd`): the display step (heading marker, search ring) cost 2.0-2.1 us per bee per frame before and 3.4-3.9 us with `_update_meadow_sprite` added, so about 1.5 us per bee per frame more; this is script time only and a headless run cannot show the draw saving of one sprite for three or four polygons.
 - Hands-on (Dave): foragers in the meadow face the way they fly in all
   eight directions and flap without flicker at every zoom.
 
