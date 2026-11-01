@@ -34,9 +34,9 @@ weights. Extend the reporter; add no second simulation or diagnostic mechanism.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SE-2 | Twenty serial arms and a bounded interpretation of specialist steering | `test_scenarios/se2_specialist_spring.json`, `plans/reference/specialist-ecology-evidence.md` | after SE-1, in the same lane | medium |
+| SE-2 | Twenty serial arms and a bounded interpretation of specialist steering | `test_scenarios/se2_specialist_spring.json`, `plans/reference/specialist-ecology-evidence.md` | yes -- SE-1 landed | medium |
 
-**Dependencies:** SE-2 uses SE-1's command and report contract. CF-2 landed and released the Codex lane; this plan now leads it and shares no
+**Dependencies:** SE-1 landed and provides the command and report contract for SE-2. CF-2 landed and released the Codex lane; this plan now leads it and shares no
 implementation file with feedback work. The archived feedback plan records that
 queue succession.
 Both evidence slices use existing simulation behaviour independently of the
