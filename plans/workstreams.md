@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/SG-3` (`claude/SG-3`) | Claude | the goals in the Goals drop-down, with progress, reward, star and Dismiss | Claude | in progress | none | `plans/now/short-term-goals.md` SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss |
+| `.worktrees/CF-2` (`codex/CF-2`) | Codex | a Feedback button on the main menu opens Dave's form | Codex | in progress | none | `plans/now/closed-alpha-feedback.md` CF-2 -- a Feedback button on the main menu opens Dave's form |
