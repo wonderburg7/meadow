@@ -50,14 +50,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] EE-2 -- measure seed-set carryover into spring**
-   - Plan: `plans/now/ecology-evidence.md` -- "EE-2 -- measure seed-set carryover into spring"
-   - Files: `tools/seed_set_evidence.py`, `test_scenarios/ee2_seed_set_spring.json`, `tests/test_seed_set_evidence.py`, `plans/reference/seed-set-evidence.md`
-   - Check: `python tests/test_seed_set_evidence.py` passes; `python tools/seed_set_evidence.py spring` completes ten serial runs and writes the paired spring report; `python tools/check_docs.py` passes
-   - Proof: `absent: plans/reference/seed-set-evidence.md :: ## Spring measurements`
-   - Next after: none -- seed-set evidence complete; further ecology needs an evidence-backed design decision
-
-2. **[Codex] CF-1 -- the zip carries a start-here note, and the main menu shows the build id**
+1. **[Codex] CF-1 -- the zip carries a start-here note, and the main menu shows the build id**
    - Plan: `plans/now/closed-alpha-feedback.md` -- "CF-1 -- the zip carries a start-here note, and the main menu shows the build id"
    - Files: `tools/build_alpha.ps1`, `scripts/main_menu.gd`, `docs/alpha-start-here.md`, `tests/test_cf1_build_id.py`
    - Check: `python -m unittest tests.test_cf1_build_id` passes (the build-id stamp has version, short hash and date; `build_alpha.ps1` copies `docs/alpha-start-here.md` into the zip as `START-HERE.txt`; the main menu shows "development build" when `build_info.gd` (in `scripts/`) is absent and the stamped id when present); `.\tools\verify.ps1` is green
