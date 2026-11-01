@@ -2272,14 +2272,16 @@ func _take_next_build_target() -> bool:
 
 ## Same idea for miners: an ordered list of blocks this bee will dig.
 func set_mine_target(block: Node2D) -> void:
-	mine_queue = [block] if is_instance_valid(block) else []
-	if is_instance_valid(block):
+	# HS-2: a hard block that cannot be dug yet counts as no block at all
+	var diggable: bool = is_instance_valid(block) and block.can_be_dug()
+	mine_queue = [block] if diggable else []
+	if diggable:
 		block.set_marked(true)
 	if hive != null:
 		hive.invalidate_mining_work()
 
 func queue_mine_target(block: Node2D) -> void:
-	if not is_instance_valid(block) or mine_queue.has(block):
+	if not is_instance_valid(block) or not block.can_be_dug() or mine_queue.has(block):
 		return
 	mine_queue.append(block)
 	block.set_marked(true)

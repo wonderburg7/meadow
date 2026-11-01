@@ -15,6 +15,16 @@ const SpriteCatalogue = preload("res://scripts/sprite_catalogue.gd")
 
 const SOIL_COLOR := Color(0.30, 0.22, 0.12)
 
+## HS-2. Hard soil: greyer than ordinary soil (OKLab 0.083 away) yet apart from
+## the bedrock (0.054 away). The sprite tint greys the art the same way, and
+## the wobble is the edge's swing as a fraction of the soil depth.
+const HARD_SOIL_COLOR := Color(0.355, 0.314, 0.258)
+const HARD_SOIL_SPRITE_TINT := Color(0.86, 0.88, 0.95)
+const HARD_SOIL_WOBBLE := 0.15
+## Skills.MIGHTY_MANDIBLE's id, spelt out: source_checks keeps skills.gd
+## preloaded by the progression resolver's readers only.
+const MIGHTY_MANDIBLE_ID := "skill.colony.mighty_mandible"
+
 ## SP-9. The art's side height in art px: the catalogue anchor is the top
 ## face's middle, so the block's footprint on its hex is this much lower.
 const SIDE_HEIGHT_PX := 14.0
@@ -37,6 +47,10 @@ var miners: Array = []
 ## opening gives only its temporary tunnel blocks a shorter time, so the
 ## tutorial pace cannot leak into ordinary mining or another run.
 var mine_time_override: float = -1.0
+
+## HS-2. Set once in setup: hard soil cannot be marked or dug until Mighty
+## Mandible is owned.
+var is_hard := false
 
 ## True only for blocks touching open space -- you can't mark a block
 ## buried behind other soil, because nothing could reach it.
@@ -117,6 +131,31 @@ func setup(hex: Vector2i) -> void:
 	# Set here, not in _ready: the block is added before setup, and axial is
 	# still zero in _ready. The side wall must paint over the block behind it.
 	z_index = Shapes.hex_draw_depth(hex)
+	is_hard = is_hard_at(hex)
+	if is_hard:
+		soil_sprite.modulate = HARD_SOIL_SPRITE_TINT
+		_tint()
+
+## HS-2. The ring at which hard soil starts along this hex's bearing: about
+## halfway through the soil band, wobbling smoothly with the angle so the
+## edge is a rough hexagon, with odd tiles notched out.
+static func hard_soil_start_ring(hex: Vector2i) -> int:
+	var interior: int = GameConfig.hive_interior_rings
+	var depth: int = GameConfig.hive_soil_depth
+	var base: int = interior + roundi(depth * GameConfig.hard_soil_start_fraction)
+	var bearing: float = atan2(hex.y * 0.866, hex.x + hex.y * 0.5)
+	var wobble: float = depth * HARD_SOIL_WOBBLE * (0.6 * sin(5.0 * bearing + 1.3) + 0.4 * sin(11.0 * bearing + 0.4))
+	var notch: int = 1 if absf(sin(float(hex.x) * 12.9898 + float(hex.y) * 78.233)) > 0.85 else 0
+	return clampi(base + roundi(wobble) + notch, interior + 2, interior + depth)
+
+static func is_hard_at(hex: Vector2i) -> bool:
+	return Shapes.hex_ring_index(hex) >= hard_soil_start_ring(hex)
+
+static func hard_soil_unlocked() -> bool:
+	return Session.progression == null or Session.progression.is_owned(MIGHTY_MANDIBLE_ID)
+
+func can_be_dug() -> bool:
+	return not is_hard or hard_soil_unlocked()
 
 ## Marking and unmarking is just a change of intent, so the digging
 ## already done is kept. It used to be thrown away on unmark, which meant
@@ -125,6 +164,8 @@ func setup(hex: Vector2i) -> void:
 ## spent on it.
 func set_marked(value: bool) -> void:
 	if marked_for_mining == value:
+		return
+	if value and not can_be_dug():
 		return
 	marked_for_mining = value
 	marker.visible = value
@@ -151,7 +192,8 @@ func add_mine_progress(delta: float) -> bool:
 	return mine_progress >= effective_mine_time()
 
 func effective_mine_time() -> float:
-	return mine_time_override if mine_time_override > 0.0 else GameConfig.block_mine_time
+	var base_time: float = mine_time_override if mine_time_override > 0.0 else GameConfig.block_mine_time
+	return base_time * GameConfig.hard_soil_mine_time_multiplier if is_hard else base_time
 
 func mine_fraction() -> float:
 	return clamp(mine_progress / max(0.001, effective_mine_time()), 0.0, 1.0)
@@ -201,4 +243,5 @@ func _tint() -> void:
 	if Session.use_cell_sprites:
 		color = Color(0, 0, 0, 0)
 	else:
-		color = SOIL_COLOR.lerp(Color(0.55, 0.45, 0.28), mine_fraction())
+		var dug := Color(0.55, 0.45, 0.28)
+		color = HARD_SOIL_COLOR.lerp(dug, mine_fraction()) if is_hard else SOIL_COLOR.lerp(dug, mine_fraction())

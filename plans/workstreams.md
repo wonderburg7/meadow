@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/HS-2` (`claude/HS-2`) | Claude | hard soil fills the outer half of the hive's soil | Claude | in progress | none | `plans/now/hard-soil.md` HS-2 -- hard soil fills the outer half of the hive's soil |
