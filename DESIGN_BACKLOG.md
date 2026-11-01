@@ -48,7 +48,7 @@ starts a fresh `plans/now/` or `plans/design/` file.
 - **Future ecology:** per-cell flower preference, weather, rivals, disease and
   other specialist systems need evidence/design before they become slices.
   Dave selected a bounded evidence pass on 31 Oct 2026:
-  `plans/now/ecology-evidence.md` measures existing seed-set replacement
+  `plans/archive/ecology-evidence_2026-11-01.md` measures existing seed-set replacement
   within summer and after winter. It changes no ecology mechanic or balance.
 
 ## Creating a slice
