@@ -101,7 +101,7 @@ gate.
 - Files: `scripts/hive.gd`, `scripts/bee_building.gd`, `tests/test_nf5_clear_fermented.py`
 - Check: `python -m unittest tests.test_nf5_clear_fermented` passes with new cases (with both skills a cleaning comb worker empties a sour cell unasked; with only one skill it does not; corpses still come first); the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green
 - Proof: `absent: scripts/bee_building.gd :: senses_fermentation`
-- Next after: none -- `plans/now/tier-two.md` has only T2-7b left
+- Next after: T2-7b -- the deferred tier-2 price sweep
 ```
 
 ## Not in the queue, and why

@@ -50,7 +50,7 @@ Verified 10 Oct 2026 against master:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | PP-11 | snapshots log bee bread, royal jelly and Pollinator Points; the reference route owns Pollinator points and reaches Gyne rearing on every seed | `scripts/headless/diagnostic_probes.gd`, `tools/headless/profiles.py`, `test_scenarios/alpha_arc_test.json`, tests | yes -- PP-9 landed 27 Oct 2026 | high |
-| PP-10 | the sweep prices the route so Gyne rearing is first affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, tests | no -- after PP-11 | high |
+| PP-10 | the sweep prices the route so Gyne rearing is first affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, tests | no -- after PP-11 and EV-0 (`plans/now/event-director.md`) | high |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
 once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
@@ -65,7 +65,10 @@ the tier-2 price sweep on the same arc, waits for AR-4. PP-6 followed FR-2
 (`plans/now/forager-recruitment.md`, landed 25 Oct 2026), which added Auto
 scouting to the route. PP-9 follows PP-6 and lands the headless tools a
 route needs; PP-11 builds the route with them, which must reach PP-6's probe
-and pacing row; PP-10 follows PP-11 and sweeps that route. FR-3 shares
+and pacing row; PP-10 follows PP-11 and sweeps that route. PP-10 also
+follows EV-0 (`plans/now/event-director.md`), which moves winter about a
+week later first, so the route is priced once, on the new calendar (Dave,
+1 Nov 2026). FR-3 shares
 `skills.gd` with PP-10 and follows it.
 
 **Reads.** A slice reads its own section, product-scope §10's 10 Oct 2026
@@ -176,8 +179,9 @@ Decisions (Dave, 14 Oct 2026):
 
 - **The band is the first 11 days after winter.** The reference run's
   median day Gyne rearing first becomes affordable falls from the day the
-  first winter ends to 11 days after it -- days 42 to 52 on today's
-  calendar (30-day season, 10-day winter, so winter ends on day 41). That
+  first winter ends to 11 days after it -- days 42 to 52 on the
+  calendar before EV-0, which moves winter about a week later; read the
+  new days from EV-0's timeline row (30-day season, 10-day winter, so winter ends on day 41). That
   leaves room to raise a gyne (about 2.4 days) and send her inside the
   second summer's mating window (about days 47 to 65); a late buyer may
   send after its midsummer peak and earn fewer genetic points. The band
