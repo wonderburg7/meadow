@@ -1,7 +1,7 @@
 # Closed-alpha feedback -- a build testers can start alone, and a form they fill in after
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: CF-1 -- the build carries a start-here note and a build id the main menu shows; then CF-2 -- the Feedback button opens Dave's supplied form | Dependency: none for CF-1; CF-2 follows CF-1 (both edit `scripts/main_menu.gd`); Dave supplied the form link on 1 Nov 2026 | Verified: 2026-11-01
+Status: active | Owner: Dave / Codex | Next: CF-2 -- the Feedback button opens Dave's supplied form; C-164 checks the menu build id at larger text scales | Dependency: CF-2 follows CF-1 (both edit `scripts/main_menu.gd`); Dave supplied the form link on 1 Nov 2026 | Verified: 2026-11-01
 
 ## Objective
 
@@ -14,7 +14,7 @@ useful feedback without Dave there. In-person sessions already have
 
 1. **Distribution is a zip shared by Dave's own link** (Drive or
    OneDrive). `tools/build_alpha.ps1` already exports the Windows build and
-   zips it as `build/Meadow-<version>-windows.zip`; no store, itch.io or
+   zips it as `build/Meadow-<version>-<hash>-<date>-windows.zip`; no store, itch.io or
    Steam page in the closed alpha.
 2. **Feedback is an external form only.** No in-game feedback bundle, no
    saves or logs sent from the game; the game links to the form.
@@ -24,15 +24,16 @@ useful feedback without Dave there. In-person sessions already have
 
 ## Current state
 
-`tools/build_alpha.ps1` exports and zips the build. Nothing in the zip
-tells a tester how to start, nothing in the game names which build it is,
-and the form link Dave supplied on 1 Nov 2026 is recorded below.
+`tools/build_alpha.ps1` exports and zips the build with `START-HERE.txt`
+and a version/hash/date id in its filename and the main menu. A checkout
+shows "development build"; C-164 checks readability at larger text scales.
+The form link Dave supplied on 1 Nov 2026 is recorded below; CF-2 wires it
+into the main menu.
 
 ## Open slices
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| CF-1 | the zip carries a start-here note; the main menu shows the build id | `tools/build_alpha.ps1`, `scripts/main_menu.gd`, `docs/alpha-start-here.md`, tests | yes | medium |
 | CF-2 | a Feedback button on the main menu opens Dave's form | `scripts/main_menu.gd`, tests | after CF-1, in the same lane | low |
 
 **Dependencies.** CF-2 follows CF-1 (`scripts/main_menu.gd`). ED-3
@@ -41,43 +42,7 @@ queued first runs first. Neither slice touches the simulation or saves.
 
 **Read:** the slice's own section below.
 
-## CF-1 -- the zip carries a start-here note, and the main menu shows the build id
-
-Level: medium -- Codex default model at medium reasoning.
-
-**True now.** A tester unzipping `Meadow-<version>-windows.zip` finds only
-the executable and its pack; a form answer cannot say which build it was
-about.
-
-**When done:**
-
-1. `docs/alpha-start-here.md` is the tester's one page: unzip anywhere, run
-   `Meadow.exe`, Windows' "unknown publisher" prompt (More info, Run
-   anyway), where saves live, how fast-forward works, and that the form
-   link is on the main menu. `build_alpha.ps1` copies it into the zip as
-   `START-HERE.txt`.
-2. `build_alpha.ps1` stamps a build id -- the project version, the short
-   commit hash and the date -- into the zip's name and into a temporary
-   `build_info.gd` (in `scripts/`) (`const BUILD_ID := "..."`) written
-   before the export and deleted after it, so the exported game carries it
-   and the checkout never does.
-3. The main menu shows the build id in small text in a corner, loaded with
-   `load("res://scripts/build_info.gd")` when that file exists and
-   "development build" otherwise. Accessibility text scale applies.
-
-**Invariants.** No simulation, save or settings change. A checkout without
-`build_info.gd` boots and passes `verify.ps1` exactly as now.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] CF-1 -- the zip carries a start-here note, and the main menu shows the build id**
-- Plan: `plans/now/closed-alpha-feedback.md` -- "CF-1 -- the zip carries a start-here note, and the main menu shows the build id"
-- Files: `tools/build_alpha.ps1`, `scripts/main_menu.gd`, `docs/alpha-start-here.md`, `tests/test_cf1_build_id.py`
-- Check: `python -m unittest tests.test_cf1_build_id` passes (the build-id stamp has version, short hash and date; `build_alpha.ps1` copies `docs/alpha-start-here.md` into the zip as `START-HERE.txt`; the main menu shows "development build" when `build_info.gd` (in `scripts/`) is absent and the stamped id when present); `.\tools\verify.ps1` is green
-- Proof: `absent: tools/build_alpha.ps1 :: START-HERE`
-- Next after: CF-2 -- a Feedback button on the main menu opens Dave's form
-```
+CF-1 shipped 2026-11-01; its specification is `plans/archive/CF-1_2026-11-01.md`.
 
 ## CF-2 -- a Feedback button on the main menu opens Dave's form
 

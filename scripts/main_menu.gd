@@ -296,6 +296,25 @@ func _build_right_content(right_pane: VBoxContainer) -> void:
 	close_btn.pressed.connect(close)
 	_back_row = UI.with_info(close_btn, "Close the menu and carry on with the colony you already have. Nothing is restarted.")
 	right_pane.add_child(_back_row)
+	_build_build_id(right_pane)
+
+
+func _build_build_id(right_pane: VBoxContainer) -> void:
+	var build_label := Label.new()
+	build_label.name = "BuildId"
+	build_label.text = _build_id_text()
+	build_label.theme_type_variation = "Small"
+	build_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	build_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	UiTheme.bind_color(build_label, "font_color", "text_secondary")
+	right_pane.add_child(build_label)
+
+
+static func _build_id_text() -> String:
+	if ResourceLoader.exists("res://scripts/build_info.gd"):
+		var build_info = load("res://scripts/build_info.gd")
+		return str(build_info.BUILD_ID)
+	return "development build"
 
 func open() -> void:
 	# Re-read rather than trust whatever was loaded at _ready() -- a
