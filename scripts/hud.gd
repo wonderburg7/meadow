@@ -29,6 +29,8 @@ const ColonyPanel = preload("res://scripts/colony_panel.gd")
 signal role_requested(role_name: String)
 ## GP-2: a star on a Goals line was pressed; colony_milestones.gd listens.
 signal goal_star_toggled(id: String)
+## SG-3: Dismiss on a short-term goal's line; colony_milestones.gd listens.
+signal goal_dismiss_requested(id: String)
 signal view_toggle_requested()
 signal colony_panel_requested()
 signal foraging_panel_requested()
@@ -324,6 +326,10 @@ var goal_progress_label: Label
 var goals_button: Button
 var long_term_goal_label: Label
 var colony_goal_entries: Array = []
+## SG-3: the short-term goals' lines, under the milestone. Rebuilt only when
+## their entries change, so a focused Dismiss button is not dropped every second.
+var short_term_box: VBoxContainer
+var _short_term_sig: String = ""
 ## GP-2: a star on each line (child of the label) and the box that holds the
 ## starred lines while the drop-down is collapsed. `goal_star_ids` maps a
 ## label's star to the goal id its line currently shows.
@@ -1021,6 +1027,13 @@ func _build_goal_shelf() -> void:
 	goal_progress_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	goal_progress_row.add_child(goal_progress_label)
 
+	# SG-3: short-term goals, under the milestone.
+	short_term_box = VBoxContainer.new()
+	short_term_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	short_term_box.add_theme_constant_override("separation", 2)
+	short_term_box.visible = false
+	goal_shelf.add_child(short_term_box)
+
 ## Called by debug_panel.gd whenever its settings cog's actual width
 ## changes (including the first layout pass), so this bar sits exactly
 ## as far from the corner as the cog needs and no further -- see the
@@ -1045,6 +1058,8 @@ func set_challenge_goal(text: String, completed_text: String = "", progress_curr
 	goals_button.visible = false
 	long_term_goal_label.visible = false
 	favourites_box.visible = false
+	short_term_box.visible = false
+	_short_term_sig = ""
 	for star in goal_stars:
 		star.visible = false
 	current_goal_label.visible = true
@@ -1076,7 +1091,7 @@ func set_colony_goals(entries: Array) -> void:
 	var next_id := ""
 	var done_id := ""
 	for entry in entries:
-		if bool(entry.get("extra", false)):
+		if bool(entry.get("extra", false)) or bool(entry.get("short_term", false)):
 			continue
 		if str(entry.id) == "long_term":
 			long_text = str(entry.text)
@@ -1095,8 +1110,10 @@ func set_colony_goals(entries: Array) -> void:
 	current_goal_label.text = next_text
 	completed_goal_label.text = "[s]%s[/s]" % done_text if not done_text.is_empty() else ""
 	goal_progress_row.visible = false
-	goals_button.visible = true
-	goal_shelf.visible = true
+	_rebuild_short_term(entries)
+	# No entries (a Scenario with no short-term goal on offer): no shelf.
+	goals_button.visible = not entries.is_empty()
+	goal_shelf.visible = not entries.is_empty()
 	_apply_goals_collapsed()
 
 func _apply_goals_collapsed() -> void:
@@ -1108,6 +1125,60 @@ func _apply_goals_collapsed() -> void:
 	current_goal_label.visible = open and not current_goal_label.text.is_empty()
 	completed_goal_label.visible = open and not completed_goal_label.text.is_empty()
 	favourites_box.visible = not open and favourites_box.get_child_count() > 0
+	short_term_box.visible = open and short_term_box.get_child_count() > 0
+
+## SG-3: one row for each short-term entry -- the outcome with its progress
+## and reward, a Dismiss button (an open goal only) and a star. Focusable
+## buttons, so the keyboard reaches Dismiss.
+func _rebuild_short_term(entries: Array) -> void:
+	var lines: Array = []
+	for entry in entries:
+		if bool(entry.get("short_term", false)):
+			lines.append(entry)
+	var sig: String = JSON.stringify(lines)
+	if sig == _short_term_sig:
+		return
+	_short_term_sig = sig
+	for child in short_term_box.get_children():
+		short_term_box.remove_child(child)
+		child.queue_free()
+	for entry in lines:
+		var id: String = str(entry.id)
+		var done: bool = bool(entry.get("done", false))
+		var row := HBoxContainer.new()
+		row.name = "short_term_" + id
+		row.alignment = BoxContainer.ALIGNMENT_END
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_theme_constant_override("separation", 4)
+		var line := Label.new()
+		line.name = "text"
+		line.text = str(entry.text)
+		line.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		line.custom_minimum_size = Vector2(190, 0)
+		line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		line.theme_type_variation = "Body"
+		UiTheme.bind_color(line, "font_color", "text_secondary" if done else "warning")
+		row.add_child(line)
+		if not done:
+			var dismiss := Button.new()
+			dismiss.name = "dismiss"
+			dismiss.text = "Dismiss"
+			dismiss.theme_type_variation = "Small"
+			dismiss.tooltip_text = "Drop this goal. No other is offered until tomorrow."
+			dismiss.pressed.connect(func(): goal_dismiss_requested.emit(id))
+			row.add_child(dismiss)
+		var star := Button.new()
+		star.name = "star"
+		star.flat = true
+		star.text = "★" if bool(entry.get("starred", false)) else "☆"
+		star.theme_type_variation = "Small"
+		star.custom_minimum_size = Vector2(26, 20)
+		star.tooltip_text = "Keep this goal on screen when the Goals list is collapsed."
+		star.pressed.connect(func(): goal_star_toggled.emit(id))
+		row.add_child(star)
+		short_term_box.add_child(row)
 
 ## GP-2: a small star as a child of a goal line. Its look and its goal id are
 ## set by set_colony_goals; pressing it only reports the id.

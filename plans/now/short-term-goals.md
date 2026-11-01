@@ -1,7 +1,7 @@
 # Short-term goals -- optional outcomes the colony's state suggests
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss (startable now SG-2 has landed; it should follow straight on, since SG-2 alone pays rewards the player cannot see) | Dependency: SG-2 landed 26 Oct 2026; GP-2 landed 13 Oct 2026; GP-5 landed 26 Oct 2026 | Verified: 2026-10-26
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete (SG-3 landed 1 Nov 2026; ED-1 in `plans/now/difficulty.md` follows in Dave's order) | Dependency: SG-2 landed 26 Oct 2026; GP-2 landed 13 Oct 2026; GP-5 landed 26 Oct 2026 | Verified: 2026-11-01
 
 ## Objective
 
@@ -80,7 +80,7 @@ Verified 13 Oct 2026 against master `06bd26c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SG-3 | The goals in the Goals drop-down, with progress, reward, star and Dismiss | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/guidance_catalogue.gd`, `test_scenarios/sg3_goal_shelf.json`, `tests/test_sg3_goal_shelf.py` | yes -- SG-2 landed 26 Oct 2026 | medium |
+| SG-3 | The goals in the Goals drop-down, with progress, reward, star and Dismiss | `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/guidance_catalogue.gd`, `scripts/year_winter.gd`, `test_scenarios/sg3_goal_shelf.json`, `tests/sg3_goal_shelf_test.gd`, `tests/test_sg3_goal_shelf.py` | yes -- SG-2 landed 26 Oct 2026 | medium |
 
 SG-1 supplies the standalone catalogue and rules. SG-2 and SG-3 are Claude lane, after Work
 Priorities (Dave's order, 13 Oct 2026: tier 3, then short-term goals, then
@@ -124,7 +124,7 @@ holds diagnostic explanations keyed by `ColonyDiagnostics` fact ids, and
 ```queue
 **[Claude] SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss**
 - Plan: `plans/now/short-term-goals.md` -- "SG-3 -- the goals in the Goals drop-down, with progress, reward, star and Dismiss"
-- Files: `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/guidance_catalogue.gd`, `test_scenarios/sg3_goal_shelf.json`, `tests/test_sg3_goal_shelf.py`
+- Files: `scripts/hud.gd`, `scripts/colony_milestones.gd`, `scripts/main.gd`, `scripts/guidance_catalogue.gd`, `scripts/year_winter.gd`, `test_scenarios/sg3_goal_shelf.json`, `tests/sg3_goal_shelf_test.gd`, `tests/test_sg3_goal_shelf.py`
 - Check: `python -m unittest tests.test_sg3_goal_shelf` passes (an offered goal appears in the Goals drop-down under the milestone with its progress and reward, in a Colony Run and in a Scenario; a starred goal stays when the drop-down is collapsed; Dismiss removes it and nothing replaces it until the next day; finishing one shows the completion note and the Dr line once); `.\tools\verify.ps1` is green
 - Proof: `absent: scripts/hud.gd :: short_term`
 - Next after: none -- the short-term goals plan is complete; ED-1 in `plans/now/difficulty.md` follows in Dave's order
