@@ -192,7 +192,7 @@ Challenge goal readout.
 3543 func _is_gate_open(control_name: String) -> bool
 ```
 
-## bee.gd (3,214 lines)
+## bee.gd (3,216 lines)
 
 A bee's dispatch loop, player commands, display text, vars.
 
@@ -304,55 +304,55 @@ A bee's dispatch loop, player commands, display text, vars.
 2255 func clear_build_queue() -> void
 2261 func _take_next_build_target() -> bool
 2274 func set_mine_target(block: Node2D) -> void
-2281 func queue_mine_target(block: Node2D) -> void
-2289 func clear_mine_queue() -> void
-2296 func _next_queued_block() -> Node2D
-2304 func set_home_hex(hex: Vector2i) -> void
-2313 func set_mine_home_hex(hex: Vector2i) -> void
-2319 func _mine_reference_point() -> Vector2
-2334 func command_collect_from(flower: Node2D) -> void
-2350 func command_collect_from_after_exit(flower: Node2D) -> void
-2363 func command_return_and_deposit() -> void
-2373 func command_return_only() -> void
-2379 func command_deposit_at(cell: Node2D) -> void
-2392 func command_empty_cell(cell: Node2D) -> void
-2407 func command_deposit_at_after_enter(cell: Node2D) -> void
-2415 func resume_pending_zone_command() -> bool
-2434 func _clear_pending_zone_command() -> void
-2439 func set_focus(type: String) -> void
-2496 func _has_deliverable_target() -> bool
-2502 func set_secondary_role(new_role: int) -> void
-2521 func can_take_role(new_role: int) -> bool
-2533 func set_role(new_role: int) -> void
-2550 func _apply_role(new_role: int) -> void
-2594 func _release_everything() -> void
-2611 func release_flower_reference(flower: Node2D) -> void
-2617 func set_selected(value: bool) -> void
-2621 # --- display ------------------------------------------------------
-2623 func role_letter() -> String
-2652 func challenge_vocabulary_limited() -> bool
-2666 func idle_reason() -> String
-2724 func task_description() -> String
-2734 func _task_line() -> String
-2909 func _idle_backup_note() -> String
-2923 func role_name_text() -> String
-2961 func architect_mode_name() -> String
-2967 func carrying_text() -> String
-2993 func age_days() -> float
-3001 func leave_to_found_colony() -> void
-3014 func days_remaining() -> float
-3026 func _update_label() -> void
-3046 func _update_alarm_ring() -> void
-3057 func _update_heading_marker() -> void
-3071 func _update_search_ring() -> void
-3094 func _update_dance_ring() -> void
-3127 func _update_wander_flight(delta: float) -> void
-3158 func _update_dance_circle(delta: float) -> void
-3172 func _terrain_speed_factor() -> float
-3181 func _is_inside_hive() -> bool
-3189 func _on_tree_entered() -> void
-3193 # --- getting round things in the meadow ---------------------------
-3213 func clear_navigation_state() -> void
+2283 func queue_mine_target(block: Node2D) -> void
+2291 func clear_mine_queue() -> void
+2298 func _next_queued_block() -> Node2D
+2306 func set_home_hex(hex: Vector2i) -> void
+2315 func set_mine_home_hex(hex: Vector2i) -> void
+2321 func _mine_reference_point() -> Vector2
+2336 func command_collect_from(flower: Node2D) -> void
+2352 func command_collect_from_after_exit(flower: Node2D) -> void
+2365 func command_return_and_deposit() -> void
+2375 func command_return_only() -> void
+2381 func command_deposit_at(cell: Node2D) -> void
+2394 func command_empty_cell(cell: Node2D) -> void
+2409 func command_deposit_at_after_enter(cell: Node2D) -> void
+2417 func resume_pending_zone_command() -> bool
+2436 func _clear_pending_zone_command() -> void
+2441 func set_focus(type: String) -> void
+2498 func _has_deliverable_target() -> bool
+2504 func set_secondary_role(new_role: int) -> void
+2523 func can_take_role(new_role: int) -> bool
+2535 func set_role(new_role: int) -> void
+2552 func _apply_role(new_role: int) -> void
+2596 func _release_everything() -> void
+2613 func release_flower_reference(flower: Node2D) -> void
+2619 func set_selected(value: bool) -> void
+2623 # --- display ------------------------------------------------------
+2625 func role_letter() -> String
+2654 func challenge_vocabulary_limited() -> bool
+2668 func idle_reason() -> String
+2726 func task_description() -> String
+2736 func _task_line() -> String
+2911 func _idle_backup_note() -> String
+2925 func role_name_text() -> String
+2963 func architect_mode_name() -> String
+2969 func carrying_text() -> String
+2995 func age_days() -> float
+3003 func leave_to_found_colony() -> void
+3016 func days_remaining() -> float
+3028 func _update_label() -> void
+3048 func _update_alarm_ring() -> void
+3059 func _update_heading_marker() -> void
+3073 func _update_search_ring() -> void
+3096 func _update_dance_ring() -> void
+3129 func _update_wander_flight(delta: float) -> void
+3160 func _update_dance_circle(delta: float) -> void
+3174 func _terrain_speed_factor() -> float
+3183 func _is_inside_hive() -> bool
+3191 func _on_tree_entered() -> void
+3195 # --- getting round things in the meadow ---------------------------
+3215 func clear_navigation_state() -> void
 ```
 
 ## scenario_actions.gd (1,876 lines)
@@ -556,26 +556,26 @@ One cell: contents, brood, honey ripening, how it draws.
 1759 func development_percent() -> float
 ```
 
-## settings_catalogue.gd (1,699 lines)
+## settings_catalogue.gd (1,711 lines)
 
 Every setting's key, label, range and tip, plus the read/write and Prerequisites-cascade functions the window is a view of.
 
 ```
 22   # --- preloads and collection order --------------------------------
 48   # --- the tunables table -------------------------------------------
-1574 # --- settings owned by Session ------------------------------------
-1588 # --- reading and writing a setting --------------------------------
-1589 static func setting_get(key: String) -> Variant
-1592 static func setting_set(key: String, value: Variant) -> void
-1599 # --- resetting ----------------------------------------------------
-1616 static func reset_config_to_defaults() -> void
-1628 static func reset_config_keys(keys: Array) -> void
-1634 # --- applying a setting with its cascades -------------------------
-1643 static func apply_setting(key: String, value: Variant) -> void
-1654 # --- the cascade helpers ------------------------------------------
-1659 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
-1677 static func _cascade_dependents_off_static(key: String) -> Array[String]
-1691 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
+1586 # --- settings owned by Session ------------------------------------
+1600 # --- reading and writing a setting --------------------------------
+1601 static func setting_get(key: String) -> Variant
+1604 static func setting_set(key: String, value: Variant) -> void
+1611 # --- resetting ----------------------------------------------------
+1628 static func reset_config_to_defaults() -> void
+1640 static func reset_config_keys(keys: Array) -> void
+1646 # --- applying a setting with its cascades -------------------------
+1655 static func apply_setting(key: String, value: Variant) -> void
+1666 # --- the cascade helpers ------------------------------------------
+1671 static func _cascade_prerequisites_on_static(key: String) -> Array[String]
+1689 static func _cascade_dependents_off_static(key: String) -> Array[String]
+1703 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
 ## bee_foraging.gd (1,539 lines)
@@ -1096,7 +1096,7 @@ The session JSONL writer, counters and capture profiles.
 1153 func _capture_entry(entry: Dictionary) -> bool
 ```
 
-## game_config.gd (1,045 lines)
+## game_config.gd (1,049 lines)
 
 The balance fields.
 
@@ -1116,15 +1116,15 @@ The balance fields.
 668  # --- warnings ---
 679  # --- honey ---
 728  # --- comb building ---
-751  # --- hive geometry ---
-780  # --- bee life ---
-785  # --- bee individuality ---
-864  # --- the rival colony ---
-917  # --- seasons ---
-949  # --- disease ---
-988  # --- gynes leaving ---
-1000 # --- nuptial flights ---
-1008 # --- winter ---
+755  # --- hive geometry ---
+784  # --- bee life ---
+789  # --- bee individuality ---
+868  # --- the rival colony ---
+921  # --- seasons ---
+953  # --- disease ---
+992  # --- gynes leaving ---
+1004 # --- nuptial flights ---
+1012 # --- winter ---
 ```
 
 ## input_selection.gd (750 lines)
