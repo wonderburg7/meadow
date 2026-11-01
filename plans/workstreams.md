@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/PP-11` (`claude/PP-11`) | Claude | the reference route owns Pollinator points and reaches Gyne rearing on every seed | Claude | in progress | none | `plans/now/pollination.md` PP-11 -- the reference route owns Pollinator points and reaches Gyne rearing on every seed |
