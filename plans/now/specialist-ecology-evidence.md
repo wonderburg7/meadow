@@ -1,75 +1,137 @@
-# Next ecology evidence -- select a specific player-facing question
+# Specialist ecology evidence -- does specialist choice steer the spring meadow?
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: proposed | Owner: Dave / Codex | Next: Dave selects the evidence question below before any slice is admitted | Dependency: the completed seed-set evidence in `plans/reference/seed-set-evidence.md`; no game-code changes authorised | Verified: 2026-11-01
+Status: active | Owner: Dave / Codex | Next: SE-1 -- distinguish specialist treatments in the offline reporter; then SE-2 -- measure the matched spring campaign | Dependency: existing PP-4 seed-set behaviour and EE-2 measurements; no game-code changes | Verified: 2026-11-01
 
-## Objective
+## Objective and decision
 
-Answer a specific ecology design question using existing mechanics and bounded,
-reproducible measurements. Dave chose a new bounded ecology evidence plan rather
-than reassigning T2-15 from Claude's backlog (Dave, 1 Nov 2026). The question
-itself remains to be selected; this draft schedules no implementation.
+**Decision (Dave, 1 Nov 2026):** answer whether assigning Borage rather than
+Clover specialists can steer next spring's flower mix. Extend the existing
+paired method; preserve game mechanics, balance and saves. This supersedes the
+draft's pending question selection. Ordinary pacing is outside this campaign.
+
+The evidence informs the existing cultivation intent in
+`plans/design/product-scope.md`, "10. Pollination and ecology": the meadow the
+colony pollinated comes back. It does not authorise a new UI claim or balance
+change. Null and mixed results are valid outcomes, not failures to tune away.
 
 ## Current state
 
 `plans/reference/seed-set-evidence.md`, "Spring measurements", reports five
-matched seed-set on/off pairs with Clover specialists in a deliberately supported,
-accelerated colony. Spring Clover share was higher with seed set enabled in all
-five pairs, with a median difference of 20.2538 percentage points. That study
-establishes neither ordinary-run survival nor ordinary-run effect size.
+seed-set on/off pairs with Clover specialists in a supported, accelerated colony.
+Spring Clover share was higher on in all five pairs (median +20.2538 percentage
+points). The report establishes neither ordinary-run survival nor ordinary-run
+effect size; its reopening rule requires a specific design question, now selected.
 
-Its reopening rule requires a specific proposed ecology design question before
-more measurement. `plans/design/product-scope.md`, "10. Pollination and ecology",
-already intends worked patches to thicken and carry into spring. The current
-fixture `test_scenarios/ee2_seed_set_spring.json` selects `forager_species` and
-uses the existing specialist workforce; no new foraging or pollination mechanism
-is needed to ask whether the choice of species affects that result.
-
-## Question selection
-
-| Rank | Candidate question | Stage | Why now | Cost and what it informs |
-| --- | --- | --- | --- | --- |
-| 1 | Can choosing Borage rather than Clover specialists steer next spring's flower mix? | Design decision pending | The previous campaign only worked Clover; tests the existing cultivation intent across a second species | Extend the offline reporter and matched fixture controls; informs whether specialist assignment can be explained as cultivation; no game or save changes |
-| 2 | Is seed-set carryover still measurable at ordinary day and season lengths? | Design decision pending | Addresses the earlier study's pacing limitation | Longer serial runs and survival constraints; informs ordinary-run expectations without changing balance |
-| 3 | Defer another ecology campaign | Available | The completed study found no defect requiring a follow-up | No new evidence slice; leaves the Codex lane without a successor after CF-2 |
-
-**Recommendation:** candidate 1. Keep the existing supported-colony controls so
-specialist species is the changed treatment; compare each species' seed-set
-on/off effect before comparing treatments. A positive Clover result does not
-predict a positive Borage result. Null and mixed findings are valid outcomes.
-Do not use raw Clover-versus-Borage shares as a seed-set causal estimate.
+`tools/seed_set_evidence.py` owns offline capture and aggregation, but its command
+runs only summer/spring phases with one specialist fixture; share summaries are
+Clover-specific. `test_scenarios/ee2_seed_set_spring.json` already sets
+`forager_species` and supplies the required forward summer/spring saves. Existing
+`scripts/pollination.gd` owns seed ledgers/rollover and `FlowerSpecies` owns draw
+weights. Extend the reporter; add no second simulation or diagnostic mechanism.
 
 ## Open slices
 
-| Slice | Outcome | Files owned | Startable | Minimum reasoning |
+| Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| None admitted | Define only after Dave chooses the question | None | no | high for planning; bounded reporter/fixture work is expected to be medium |
+| SE-1 | Species-aware specialist comparison and validation | `tools/seed_set_evidence.py`, `tests/test_seed_set_evidence.py` | yes, after CF-2 in the Codex lane | medium |
+| SE-2 | Twenty serial arms and a bounded interpretation of specialist steering | `test_scenarios/se2_specialist_spring.json`, `plans/reference/specialist-ecology-evidence.md` | after SE-1, in the same lane | medium |
 
-## Scope and ownership
+**Dependencies:** SE-2 uses SE-1's command and report contract. CF-2 is the current
+Codex leader; this plan follows it to refill the lane and shares no implementation
+file with feedback work. The feedback plan points here for that queue succession.
+Both evidence slices use existing simulation behaviour independently of the
+Claude lane's route and pricing work.
 
-Existing `scripts/pollination.gd` owns seed ledgers and rollover;
-`FlowerSpecies` owns seasonal draw weights. This work would observe their
-current behaviour, using `tools/seed_set_evidence.py` and existing saved-run
-and diagnostic output, rather than add a parallel game mechanism.
+**Required reading:** the assigned slice below; the existing seed-set reference's
+"Spring measurements". SE-2 also reads SE-1's command help, not its archived plan.
 
-Any eventual slice is offline tooling, synthetic validation, scenario fixtures
-and an evidence reference only. Preserve simulation, shipped GameConfig balance,
-save fields, Challenges and player-facing UI. Retain provenance and run Godot
-arms serially. Claims must distinguish supported fixtures from ordinary runs,
-logged weights from actual replacements, and descriptive pairs from confidence
-intervals. No threshold or balance change follows automatically.
+## Campaign contract
 
-## Dependencies and required reading
+Run seeds 12345, 7, 2026, 90210 and 555 for all four treatments: Clover/off,
+Clover/on, Borage/off, Borage/on. All 20 arms run serially, on one recorded game
+baseline at fixed 30 fps. Re-run Clover arms on that baseline rather than splice
+in EE-2's historical results. Specialist species and seed-set flag are the only
+treatment changes; seed varies by pair. Retain EE-2's workforce, food support,
+weather/disease/predator/rival controls, accelerated calendar, winter and regrowth
+settings, and forward day-10/day-25 saves. The new fixture may retain the existing
+EE2 summer/spring save action names for reporter compatibility.
 
-The selected question must become a deterministic acceptance contract and a
-bounded campaign size before a queue block is written. Confirm file ownership
-again at admission. CF-2 remains the leading Codex slice; this plan is its
-proposed successor, not a new prerequisite for feedback functionality.
+For each seed, specialist and species, report seed-set on-minus-off differences
+in spring live counts/shares, both seed ledgers and realised spring replacements.
+Then report the per-species difference of those paired effects:
+`(Borage specialist on - Borage specialist off) - (Clover specialist on - Clover specialist off)`.
+Show raw arm data and each defined-pair denominator, median and range across five
+seeds. Shares use all live flowers; absent species is zero and an empty meadow's
+share is undefined, never silently zero. Include within-arm summer-to-spring
+changes and logged draw-weight ranges separately from realised replacements.
 
-Required reading for specification: this file; `plans/reference/seed-set-evidence.md`
-"Spring measurements"; `plans/design/product-scope.md` "10. Pollination and ecology".
+Same seeds do not guarantee identical random draws after treatments diverge.
+These are descriptive controlled comparisons, not confidence intervals. Report
+missing biological coverage (including no Borage seed events) as a limitation;
+do not vary controls to force a positive effect or invent an effect threshold.
+Execution must still capture the complete treatment matrix, successful verdicts,
+forward saves, expected spring interval and correct rollover behaviour. Reject
+missing/duplicate/mislabeled arms or incompatible provenance before summarising.
 
-## Open decisions
+## SE-1 -- distinguish specialist treatments in the offline reporter
 
-**Open decisions:** Dave selects specialist choice, ordinary pacing, or deferral.
-This blocks slice specification and admission, not any already-implemented work.
+Level: medium -- bounded offline aggregation/command work with synthetic checks.
+
+**When done:** extend `tools/seed_set_evidence.py` with a `specialists` phase,
+optional `--fixture` path (default EE-2 spring fixture), and a `specialist_report`
+aggregation function implementing the campaign contract. Existing summer/spring
+commands and their historical report meanings remain valid. Specialist phase
+runs 20 uniquely identified arms, records each actual scenario and treatment,
+validates the matrix and writes both readable and machine-readable reports.
+Retain baseline, reporter/fixture hashes, engine, fps and controls with outputs.
+Bulk logs, saves and reports remain outside Git. Reuse existing runner and spring
+validation; this slice adds no new runner, engine instrumentation or fixture.
+
+Synthetic tests cover known four-treatment arithmetic for more than Clover,
+missing/duplicate arms, species/treatment labels, denominator/null handling,
+control/provenance mismatch and the existing summer/spring behaviour. Mock runner
+boundaries where appropriate; no full simulation campaign is required here.
+
+**Invariants:** offline tool/tests only; no GameConfig balance, game, save,
+settings or UI changes. Runtime policy: command invocation only.
+**Open decisions:** none.
+
+```queue
+**[Codex] SE-1 -- distinguish specialist treatments in the offline reporter**
+- Plan: `plans/now/specialist-ecology-evidence.md` -- "SE-1 -- distinguish specialist treatments in the offline reporter"
+- Files: `tools/seed_set_evidence.py`, `tests/test_seed_set_evidence.py`
+- Check: `python tests/test_seed_set_evidence.py` passes with four-treatment arithmetic and matrix-validation cases; `python tools/seed_set_evidence.py specialists --help` accepts the phase and documents `--fixture`; `python tools/check_docs.py` passes
+- Proof: `absent: tools/seed_set_evidence.py :: def specialist_report(`
+- Next after: SE-2 -- measure specialist steering in the matched spring campaign
+```
+
+## SE-2 -- measure specialist steering in the matched spring campaign
+
+Level: medium -- bounded serial evidence campaign and interpretation.
+
+**When done:** add `test_scenarios/se2_specialist_spring.json` using the contract's
+unchanged EE-2 controls. Run `python tools/seed_set_evidence.py specialists --fixture
+test_scenarios/se2_specialist_spring.json` to a retained output directory outside
+the checkout. Record the complete 20-arm results, paired summaries, contrasts,
+coverage, provenance, reproduction command and artefact location in
+`plans/reference/specialist-ecology-evidence.md` under `## Measurements`.
+State what the evidence says about specialist steering within this fixture;
+separate measured outcomes from proposed future UI or balance decisions. The
+reference's continuing Next instruction must retain it as a durable reference.
+Do not extend the reporter in this slice: if its contract is broken, report the
+specific failing evidence and stop for a scoped correction.
+
+**Invariants:** fixture/reference only plus owning-plan closeout; no mechanical
+or balance changes. Every Godot arm is serial. No follow-up slice is automatic;
+a future design question requires a new explicit decision.
+**Open decisions:** none.
+
+```queue
+**[Codex] SE-2 -- measure specialist steering in the matched spring campaign**
+- Plan: `plans/now/specialist-ecology-evidence.md` -- "SE-2 -- measure specialist steering in the matched spring campaign"
+- Files: `test_scenarios/se2_specialist_spring.json`, `plans/reference/specialist-ecology-evidence.md`
+- Check: `python tools/seed_set_evidence.py specialists --fixture test_scenarios/se2_specialist_spring.json` completes twenty serial arms and writes both reports; `python tests/test_seed_set_evidence.py` passes; `python tools/check_docs.py` passes
+- Proof: `absent: plans/reference/specialist-ecology-evidence.md :: ## Measurements`
+- Next after: none -- specialist evidence complete; any later ecology question is outside this plan
+```

@@ -50,6 +50,20 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `absent: scripts/main_menu.gd :: FEEDBACK_FORM_URL`
    - Next after: none -- `plans/now/closed-alpha-feedback.md` is complete
 
+2. **[Codex] SE-1 -- distinguish specialist treatments in the offline reporter**
+   - Plan: `plans/now/specialist-ecology-evidence.md` -- "SE-1 -- distinguish specialist treatments in the offline reporter"
+   - Files: `tools/seed_set_evidence.py`, `tests/test_seed_set_evidence.py`
+   - Check: `python tests/test_seed_set_evidence.py` passes with four-treatment arithmetic and matrix-validation cases; `python tools/seed_set_evidence.py specialists --help` accepts the phase and documents `--fixture`; `python tools/check_docs.py` passes
+   - Proof: `absent: tools/seed_set_evidence.py :: def specialist_report(`
+   - Next after: SE-2 -- measure specialist steering in the matched spring campaign
+
+3. **[Codex] SE-2 -- measure specialist steering in the matched spring campaign**
+   - Plan: `plans/now/specialist-ecology-evidence.md` -- "SE-2 -- measure specialist steering in the matched spring campaign"
+   - Files: `test_scenarios/se2_specialist_spring.json`, `plans/reference/specialist-ecology-evidence.md`
+   - Check: `python tools/seed_set_evidence.py specialists --fixture test_scenarios/se2_specialist_spring.json` completes twenty serial arms and writes both reports; `python tests/test_seed_set_evidence.py` passes; `python tools/check_docs.py` passes
+   - Proof: `absent: plans/reference/specialist-ecology-evidence.md :: ## Measurements`
+   - Next after: none -- specialist evidence complete; any later ecology question is outside this plan
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.

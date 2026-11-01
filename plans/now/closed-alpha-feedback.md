@@ -40,6 +40,9 @@ into the main menu.
 (`plans/now/difficulty.md`) also edits `scripts/main_menu.gd`; whichever is
 queued first runs first. Neither slice touches the simulation or saves.
 
+**Queue succession:** SE-1 and SE-2 in `plans/now/specialist-ecology-evidence.md`
+follow CF-2 in the Codex lane; they are independent of feedback functionality.
+
 **Read:** the slice's own section below.
 
 CF-1 shipped 2026-11-01; its specification is `plans/archive/CF-1_2026-11-01.md`.
