@@ -2,7 +2,7 @@
 class_name HeadlessDiagnosticProbes
 extends RefCounted
 
-const SNAPSHOT_FIELDS := ["population.total", "resources.food_stores", "resources.stored_nectar", "resources.stored_pollen", "environment.winter_here", "environment.flowers_by_species", "environment.flowers_in_season", "environment.flowers_out_of_season", "role_outcomes.cells_completed_total", "performance.fps", "performance.top_sections_ms", "colony.milestone_days", "resources.first_tier2_affordable", "resources.gyne_rearing_affordable"]
+const SNAPSHOT_FIELDS := ["population.total", "resources.food_stores", "resources.stored_nectar", "resources.stored_pollen", "environment.winter_here", "environment.flowers_by_species", "environment.flowers_in_season", "environment.flowers_out_of_season", "role_outcomes.cells_completed_total", "performance.fps", "performance.top_sections_ms", "colony.milestone_days", "resources.first_tier2_affordable", "resources.gyne_rearing_affordable", "resources.stored_bee_bread", "resources.stored_royal_jelly", "resources.pollinator_points"]
 
 static func selected_snapshot(world: Node2D, fields: Array, counters: Dictionary) -> Dictionary:
 	var snapshot := {"type": "snapshot", "game_time": Session.sim_time, "day": world.day}
@@ -15,6 +15,9 @@ static func selected_snapshot(world: Node2D, fields: Array, counters: Dictionary
 			"resources.stored_pollen": _merge_field(snapshot, "resources", "stored_pollen", world.hive.total("pollen"))
 			"resources.first_tier2_affordable": _merge_field(snapshot, "resources", "first_tier2_affordable", first_tier2_affordable(world.hive))
 			"resources.gyne_rearing_affordable": _merge_field(snapshot, "resources", "gyne_rearing_affordable", gyne_rearing_affordable(world))
+			"resources.stored_bee_bread": _merge_field(snapshot, "resources", "stored_bee_bread", world.hive.total("bee_bread"))
+			"resources.stored_royal_jelly": _merge_field(snapshot, "resources", "stored_royal_jelly", world.hive.total("jelly"))
+			"resources.pollinator_points": _merge_field(snapshot, "resources", "pollinator_points", pollinator_points(world))
 			"environment.winter_here": _merge_field(snapshot, "environment", "winter_here", Session.winter_here)
 			"environment.flowers_by_species": _merge_field(snapshot, "environment", "flowers_by_species", flower_season_counts(world).by_species)
 			"environment.flowers_in_season": _merge_field(snapshot, "environment", "flowers_in_season", flower_season_counts(world).in_season)
@@ -64,14 +67,20 @@ static func first_tier2_affordable(hive: Object) -> bool:
 	return Session.progression.first_tier2_path_covered(stores)
 
 
+## PP-11: the colony's Pollinator Points, the value gyne_rearing_affordable
+## passes, so a run's snapshots show which store holds Gyne rearing back.
+static func pollinator_points(world: Node2D) -> float:
+	if world.pollination == null:
+		return 0.0
+	return float(world.pollination.points)
+
+
 ## PP-6: the stores, bee bread, jelly and Pollinator points cover Gyne rearing's
 ## whole path from zero (progression.gd::gyne_rearing_path_covered).
 static func gyne_rearing_affordable(world: Node2D) -> bool:
 	if Session.progression == null:
 		return false
-	var points := 0.0
-	if world.pollination != null:
-		points = float(world.pollination.points)
+	var points := pollinator_points(world)
 	var stores := {"honey": world.hive.total_honey(), "nectar": world.hive.total("nectar"),
 		"pollen": world.hive.total("pollen"), "bee_bread": world.hive.total("bee_bread"),
 		"royal_jelly": world.hive.total("jelly"), "pollinator_points": points}
