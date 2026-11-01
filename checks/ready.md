@@ -102,3 +102,4 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-161 -- foragers come and go at the skep's entrance](ready/C-161.md)
 - [C-162 -- SP-14: a nectar cell with cell art on has no outline ring](ready/C-162.md)
 - [C-163 -- Hard soil needs Mighty Mandible to dig](ready/C-163.md)
+- [C-164 -- Main menu build id stays readable at larger text sizes](ready/C-164.md)
