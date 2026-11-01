@@ -57,6 +57,13 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `absent: plans/reference/seed-set-evidence.md :: ## Spring measurements`
    - Next after: none -- seed-set evidence complete; further ecology needs an evidence-backed design decision
 
+2. **[Codex] CF-1 -- the zip carries a start-here note, and the main menu shows the build id**
+   - Plan: `plans/now/closed-alpha-feedback.md` -- "CF-1 -- the zip carries a start-here note, and the main menu shows the build id"
+   - Files: `tools/build_alpha.ps1`, `scripts/main_menu.gd`, `docs/alpha-start-here.md`, `tests/test_cf1_build_id.py`
+   - Check: `python -m unittest tests.test_cf1_build_id` passes (the build-id stamp has version, short hash and date; `build_alpha.ps1` copies `docs/alpha-start-here.md` into the zip as `START-HERE.txt`; the main menu shows "development build" when `build_info.gd` (in `scripts/`) is absent and the stamped id when present); `.\tools\verify.ps1` is green
+   - Proof: `absent: tools/build_alpha.ps1 :: START-HERE`
+   - Next after: CF-2 -- a Feedback button on the main menu opens Dave's form
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
