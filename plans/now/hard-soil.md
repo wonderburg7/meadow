@@ -1,7 +1,7 @@
 # Hard soil -- the hive's outer soil needs Mighty Mandible to dig
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HS-2 -- its temporary deferral is over; RR-17 landed 29 Oct 2026, releasing `scripts/bee.gd` | Dependency: none left; HS-1, DR-1 and CQ-S0b landed 25 Oct 2026; PP-6 and FR-3 also edit `scripts/skills.gd` later | Verified: 2026-10-29
+Status: active | Owner: Dave / Claude Code | Next: nothing further -- HS-2 built 1 Nov 2026, awaiting closeout | Dependency: none left; HS-1, DR-1 and CQ-S0b landed 25 Oct 2026; PP-6 and FR-3 also edit `scripts/skills.gd` later | Verified: 2026-10-29
 
 ## Objective
 

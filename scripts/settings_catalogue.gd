@@ -1126,6 +1126,18 @@ const TUNABLES := [
 		"tip": "Miner-seconds needed to break down one soil block. Several miners on one block share the work, exactly like builders on a cell.",
 	},
 	{
+		"persist": "none",
+		"key": "hard_soil_start_fraction", "label": "Hard soil starts", "step": 0.1, "min": 0.0, "max": 1.0,
+		"category": "Mining",
+		"tip": "How far into the soil band hard soil begins, from 0 (right at the hollow) to 1 (only the outermost ring). The edge is deliberately rough. Hard soil needs Mighty Mandible to dig. Takes effect on Restart Run.",
+	},
+	{
+		"persist": "none",
+		"key": "hard_soil_mine_time_multiplier", "label": "Hard soil dig x", "step": 0.5, "min": 1.0,
+		"category": "Mining",
+		"tip": "How many times longer a hard soil block takes to dig than ordinary soil, once Mighty Mandible is owned.",
+	},
+	{
 		"persist": "run",
 		"key": "miner_dirt_capacity", "label": "Dirt capacity", "step": 5.0, "min": 1.0,
 		"category": "Mining",
