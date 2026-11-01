@@ -23,35 +23,28 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] SP-6 -- meadow foragers drawn from the sheet**
-   - Plan: `plans/now/sprites.md` -- "SP-6 -- meadow foragers drawn from the sheet"
-   - Files: `scripts/bee.gd`, `tests/sp6_forager_sprite_test.gd`, `tests/test_sp6_forager_sprite.py`
-   - Check: `python -m unittest tests.test_sp6_forager_sprite` passes: an outdoor worker heading into each of the eight octants shows that direction's row, its frame advances with the wing clock, and its body circles are hidden outdoors and shown indoors; a before/after profile of the display update is recorded in the plan; `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/bee.gd :: FORAGERS_MEADOW_VIEW`
-   - Next after: None -- plan complete
-
-2. **[Claude] T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked**
+1. **[Claude] T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked**
    - Plan: `plans/now/tier-two.md` -- "T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked"
    - Files: `scripts/hive.gd`, `scripts/bee_building.gd`, `tests/test_nf5_clear_fermented.py`
    - Check: `python -m unittest tests.test_nf5_clear_fermented` passes with new cases (with both skills a cleaning comb worker empties a sour cell unasked; with only one skill it does not; corpses still come first); the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/bee_building.gd :: senses_fermentation`
    - Next after: T2-7b -- the deferred tier-2 price sweep
 
-3. **[Claude] ED-1 -- every bee has health**
+2. **[Claude] ED-1 -- every bee has health**
    - Plan: `plans/now/difficulty.md` -- "ED-1 -- every bee has health"
    - Files: `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/crab_spider.gd`, `scripts/game_config.gd`, `scripts/hud.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/ed1_exhaustion.json`, `tests/ed1_health_test.gd`, `tests/test_ed1_health.py`
    - Check: `python -m unittest tests.test_ed1_health` passes (a bee out of energy crawls at 25% speed, loses health and dies after about half a game-day unless it eats first; resting restores health and it leaves only past the thresholds; an ambush still kills; health survives save and restore and an old save loads at full health); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/bee.gd :: var health`
    - Next after: ED-2 -- a run's difficulty, and Easy's rules
 
-4. **[Claude] CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd**
+3. **[Claude] CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd**
    - Plan: `plans/now/code-health.md` -- "CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd"
    - Files: `scripts/hud.gd`, `scripts/hud_goal_shelf.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/ts2_hud_typeface_size_test.gd`, `FUNCTION_MAP.md`
    - Check: `python -m unittest tests.test_gp1_goals_dropdown tests.test_gp2_goal_favourites tests.test_ts2_hud_typeface_size tests.test_sg3_goal_shelf tests.test_layout_regression` passes with no assertion changed; `scripts/hud.gd` no longer defines `_rebuild_favourites`; `.\tools\verify.ps1` is green
    - Proof: `present: scripts/hud.gd :: func _rebuild_favourites(`
    - Next after: CQ-R8
 
-5. **[Claude] CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd**
+4. **[Claude] CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd**
    - Plan: `plans/now/code-health.md` -- "CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd"
    - Files: `scripts/main.gd`, `scripts/input_selection.gd`, `scripts/scenario_actions.gd`
    - Check: `python tools/equivalence.py test_scenarios/hr2_click_view_switch_test.json master` and `python tools/equivalence.py test_scenarios/e1_placement_exclusion_test.json master` report no difference; `python -m unittest tests.test_rr1_queen_builds` passes; `.\tools\verify.ps1` is green
