@@ -34,7 +34,6 @@ weights. Extend the reporter; add no second simulation or diagnostic mechanism.
 
 | Slice | Outcome | Files owned | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SE-1 | Species-aware specialist comparison and validation | `tools/seed_set_evidence.py`, `tests/test_seed_set_evidence.py` | yes -- CF-2 landed | medium |
 | SE-2 | Twenty serial arms and a bounded interpretation of specialist steering | `test_scenarios/se2_specialist_spring.json`, `plans/reference/specialist-ecology-evidence.md` | after SE-1, in the same lane | medium |
 
 **Dependencies:** SE-2 uses SE-1's command and report contract. CF-2 landed and released the Codex lane; this plan now leads it and shares no
@@ -74,37 +73,7 @@ Execution must still capture the complete treatment matrix, successful verdicts,
 forward saves, expected spring interval and correct rollover behaviour. Reject
 missing/duplicate/mislabeled arms or incompatible provenance before summarising.
 
-## SE-1 -- distinguish specialist treatments in the offline reporter
-
-Level: medium -- bounded offline aggregation/command work with synthetic checks.
-
-**When done:** extend `tools/seed_set_evidence.py` with a `specialists` phase,
-optional `--fixture` path (default EE-2 spring fixture), and a `specialist_report`
-aggregation function implementing the campaign contract. Existing summer/spring
-commands and their historical report meanings remain valid. Specialist phase
-runs 20 uniquely identified arms, records each actual scenario and treatment,
-validates the matrix and writes both readable and machine-readable reports.
-Retain baseline, reporter/fixture hashes, engine, fps and controls with outputs.
-Bulk logs, saves and reports remain outside Git. Reuse existing runner and spring
-validation; this slice adds no new runner, engine instrumentation or fixture.
-
-Synthetic tests cover known four-treatment arithmetic for more than Clover,
-missing/duplicate arms, species/treatment labels, denominator/null handling,
-control/provenance mismatch and the existing summer/spring behaviour. Mock runner
-boundaries where appropriate; no full simulation campaign is required here.
-
-**Invariants:** offline tool/tests only; no GameConfig balance, game, save,
-settings or UI changes. Runtime policy: command invocation only.
-**Open decisions:** none.
-
-```queue
-**[Codex] SE-1 -- distinguish specialist treatments in the offline reporter**
-- Plan: `plans/now/specialist-ecology-evidence.md` -- "SE-1 -- distinguish specialist treatments in the offline reporter"
-- Files: `tools/seed_set_evidence.py`, `tests/test_seed_set_evidence.py`
-- Check: `python tests/test_seed_set_evidence.py` passes with four-treatment arithmetic and matrix-validation cases; `python tools/seed_set_evidence.py specialists --help` accepts the phase and documents `--fixture`; `python tools/check_docs.py` passes
-- Proof: `absent: tools/seed_set_evidence.py :: def specialist_report(`
-- Next after: SE-2 -- measure specialist steering in the matched spring campaign
-```
+SE-1 shipped 2026-11-01; its specification is `plans/archive/SE-1_2026-11-01.md`.
 
 ## SE-2 -- measure specialist steering in the matched spring campaign
 
