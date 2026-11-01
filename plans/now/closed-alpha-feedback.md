@@ -1,7 +1,7 @@
 # Closed-alpha feedback -- a build testers can start alone, and a form they fill in after
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: CF-2 -- the Feedback button opens Dave's supplied form; C-164 checks the menu build id at larger text scales | Dependency: none left for CF-2 -- CF-1 landed 1 Nov 2026; Dave supplied the form link on 1 Nov 2026 | Verified: 2026-11-01
+Status: complete | Owner: Dave / Codex | Next: None — plan complete | Dependency: none | Verified: 2026-11-01
 
 ## Objective
 
@@ -27,8 +27,11 @@ useful feedback without Dave there. In-person sessions already have
 `tools/build_alpha.ps1` exports and zips the build with `START-HERE.txt`
 and a version/hash/date id in its filename and the main menu. A checkout
 shows "development build"; C-164 checks readability at larger text scales.
-The form link Dave supplied on 1 Nov 2026 is recorded below; CF-2 wires it
-into the main menu.
+The main-menu Feedback button opens Dave's supplied form in the browser,
+with the build id beside it. Follow-up hands-on checks are filed in
+`checks/ready/C-164.md` (build-id readability) and `checks/ready/C-165.md`
+(form opening and footer readability at larger text scales); no further
+implementation slices remain.
 
 ## Open slices
 

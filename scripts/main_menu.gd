@@ -18,6 +18,7 @@ const Shapes = preload("res://scripts/shapes.gd")
 const PlayerProfile = preload("res://scripts/player_profile.gd")
 const ScenarioPresets = preload("res://scripts/scenario_presets.gd")
 const HexHitArea = preload("res://scripts/hex_hit_area.gd")
+const FEEDBACK_FORM_URL := "https://docs.google.com/forms/d/e/1FAIpQLSc-hoJZiHj84m2NdPYJRveF6PZ11WqvRyP0xRJeoYySFg7vEw/viewform?usp=publish-editor"
 
 ## Challenges carry no preset -- main.gd's existing wiring stays as it was.
 signal level_chosen(level: int)
@@ -296,7 +297,29 @@ func _build_right_content(right_pane: VBoxContainer) -> void:
 	close_btn.pressed.connect(close)
 	_back_row = UI.with_info(close_btn, "Close the menu and carry on with the colony you already have. Nothing is restarted.")
 	right_pane.add_child(_back_row)
+	_build_feedback_row(right_pane)
+
+
+func _build_feedback_row(container: VBoxContainer) -> void:
+	var row := HBoxContainer.new()
+	row.name = "FeedbackRow"
+	container.add_child(row)
+
+	var feedback_button := Button.new()
+	feedback_button.name = "Feedback"
+	feedback_button.text = "Feedback"
+	_style_button(feedback_button)
+	feedback_button.pressed.connect(_on_feedback_pressed)
+	row.add_child(feedback_button)
+
+	var right_pane := VBoxContainer.new()
+	right_pane.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(right_pane)
 	_build_build_id(right_pane)
+
+
+func _on_feedback_pressed() -> void:
+	OS.shell_open(FEEDBACK_FORM_URL)
 
 
 func _build_build_id(right_pane: VBoxContainer) -> void:
