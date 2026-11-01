@@ -43,14 +43,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] CF-1 -- the zip carries a start-here note, and the main menu shows the build id**
-   - Plan: `plans/now/closed-alpha-feedback.md` -- "CF-1 -- the zip carries a start-here note, and the main menu shows the build id"
-   - Files: `tools/build_alpha.ps1`, `scripts/main_menu.gd`, `docs/alpha-start-here.md`, `tests/test_cf1_build_id.py`
-   - Check: `python -m unittest tests.test_cf1_build_id` passes (the build-id stamp has version, short hash and date; `build_alpha.ps1` copies `docs/alpha-start-here.md` into the zip as `START-HERE.txt`; the main menu shows "development build" when `build_info.gd` (in `scripts/`) is absent and the stamped id when present); `.\tools\verify.ps1` is green
-   - Proof: `absent: tools/build_alpha.ps1 :: START-HERE`
-   - Next after: CF-2 -- a Feedback button on the main menu opens Dave's form
-
-2. **[Codex] CF-2 -- a Feedback button on the main menu opens Dave's form**
+1. **[Codex] CF-2 -- a Feedback button on the main menu opens Dave's form**
    - Plan: `plans/now/closed-alpha-feedback.md` -- "CF-2 -- a Feedback button on the main menu opens Dave's form"
    - Files: `scripts/main_menu.gd`, `tests/test_cf2_feedback_link.py`
    - Check: `python -m unittest tests.test_cf2_feedback_link` passes (the main menu has a Feedback button whose press opens the form link, and the build id shows beside it); `.\tools\verify.ps1` is green
