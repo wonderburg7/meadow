@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/CQ-R16` (`codex/CQ-R16`) | Codex | drag and pan state moves from main.gd to input_selection.gd | Codex | in progress | none | `plans/now/code-health.md` CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd |
+| `.worktrees/ED-1` (`claude/ED-1`) | Claude | every bee has health | Claude | in progress | none | `plans/now/difficulty.md` ED-1 -- every bee has health |
