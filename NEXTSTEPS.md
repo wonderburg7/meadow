@@ -25,7 +25,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
 1. **[Claude] ED-1 -- every bee has health**
    - Plan: `plans/now/difficulty.md` -- "ED-1 -- every bee has health"
-   - Files: `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, `test_scenarios/ed1_exhaustion.json`, `tests/ed1_health_test.gd`, `tests/test_ed1_health.py`
+   - Files: `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `test_scenarios/ed1_exhaustion.json`, `tests/ed1_health_test.gd`, `tests/test_ed1_health.py`
    - Check: `python -m unittest tests.test_ed1_health` passes (a bee out of energy crawls at 25% speed, loses health and dies after about half a game-day unless it eats first; resting restores health and it leaves only past the thresholds; an ambush still kills); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/bee.gd :: var health`
    - Next after: ED-1b -- an ambush takes health and the panel shows it
