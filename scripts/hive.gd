@@ -754,6 +754,15 @@ func find_cell_needing_cleaning() -> Node2D:
 	var corpses := cells_holding("corpse")
 	return corpses[0] if not corpses.is_empty() else null
 
+## One sour cell for a cleaning worker to mark for disposal.
+func find_sour_cell_for_cleaning() -> Node2D:
+	if not senses_fermentation():
+		return null
+	for cell: Variant in cells_holding("nectar"):
+		if cell.amount > 0.0 and not cell.evict_requested and cell.is_fermented():
+			return cell
+	return null
+
 func find_cell_needing_eviction() -> Node2D:
 	for cell: Variant in cells:
 		if is_instance_valid(cell) and cell.needs_eviction():

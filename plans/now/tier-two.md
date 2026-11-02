@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-7b -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker); specified when AR-4 lands | Dependency: T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`), which waits for PP-10 (`plans/now/pollination.md`, split from PP-9 27 Oct 2026) | Verified: 2026-10-27
+Status: active | Owner: Dave / Claude Code | Next: T2-7b -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker); specified when AR-4 lands | Dependency: T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`), which waits for PP-10 (`plans/now/pollination.md`, split from PP-9 27 Oct 2026) | Verified: 2026-11-02
 
 ## Objective
 
@@ -95,6 +95,13 @@ eviction fields are saved already).
 gate.
 
 **Open decisions:** none.
+
+**Closeout evidence (2 Nov 2026):** The baseline and changed
+`alpha_arc_test.json` runs both reached day 70 with identical 575 action
+records and identical summaries, so no gate moved. Both exited 1 for the
+same 17 existing action problems (14 rejected, three never fired), including
+refused honey-ferment assignments; these are present before the change.
+Prefinish passed the Godot boot, source checks and 31 affected tests.
 
 ```queue
 **[Codex] T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked**
