@@ -48,8 +48,5 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/jules-integrate-20261102` (`codex/jules-integrate-20261102`) | Review | Integrate the selected 2 Nov Jules files, qualified reports, correction briefs and verified check transitions | Codex | verifying | none | `plans/reference/jules.md` |
 | `.worktrees/CQ-R16` (`codex/CQ-R16`) | Codex | drag and pan state moves from main.gd to input_selection.gd | Codex | in progress | none | `plans/now/code-health.md` CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd |
-| `.worktrees/jules-review-20261102` (`codex/jules-review-20261102`) | Review | Existing Jules review worktree; detailed scope to be registered by its owner | Codex | scope pending | none | `plans/reference/jules.md` |
-| `.worktrees/jules-review-checks-20261102` (detached HEAD) | Review | Existing detached Jules review verification checkout; detailed scope to be registered by its owner | Codex | scope pending | none | `plans/reference/jules.md` |
 | `.worktrees/ED-1` (`claude/ED-1`) | Claude | every bee has health | Claude | in progress | none | `plans/now/difficulty.md` ED-1 -- every bee has health |
