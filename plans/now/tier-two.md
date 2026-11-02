@@ -61,7 +61,8 @@ T2-14 shipped 2026-10-21; its specification is `plans/archive/T2-14_2026-10-21.m
 
 ## T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked
 
-Level: medium -- claude-sonnet-5-5 at medium effort (a gameplay outcome).
+Level: medium (a gameplay outcome). Moved to the Codex lane, which had no
+admissible work and shares no file with it (Dave, 2 Nov 2026).
 
 **True now.** Dave: "when fermentation sense and cleaning are both active,
 cleaning comb workers should automatically clear fermented nectar".
@@ -96,7 +97,7 @@ gate.
 **Open decisions:** none.
 
 ```queue
-**[Claude] T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked**
+**[Codex] T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked**
 - Plan: `plans/now/tier-two.md` -- "T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked"
 - Files: `scripts/hive.gd`, `scripts/bee_building.gd`, `tests/test_nf5_clear_fermented.py`
 - Check: `python -m unittest tests.test_nf5_clear_fermented` passes with new cases (with both skills a cleaning comb worker empties a sour cell unasked; with only one skill it does not; corpses still come first); the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green

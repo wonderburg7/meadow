@@ -51,7 +51,7 @@ starts a fresh `plans/now/` or `plans/design/` file.
   `plans/archive/ecology-evidence_2026-11-01.md` measures existing seed-set replacement
   within summer and after winter. It changes no ecology mechanic or balance.
   Dave selected a new bounded evidence plan on 1 Nov 2026:
-  `plans/now/specialist-ecology-evidence.md` owns the selected Clover-versus-Borage
+  `plans/archive/specialist-ecology-evidence_2026-11-01.md` owns the selected Clover-versus-Borage
   specialist question and its bounded comparison (Dave, 1 Nov 2026).
 
 ## Creating a slice

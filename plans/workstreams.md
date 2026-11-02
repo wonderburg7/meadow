@@ -48,4 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/SP-6` (`claude/SP-6`) | Claude | meadow foragers drawn from the sheet | Claude | in progress | none | `plans/now/sprites.md` SP-6 -- meadow foragers drawn from the sheet |
+| `.worktrees/CQ-R16` (`codex/CQ-R16`) | Codex | drag and pan state moves from main.gd to input_selection.gd | Codex | in progress | none | `plans/now/code-health.md` CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd |
