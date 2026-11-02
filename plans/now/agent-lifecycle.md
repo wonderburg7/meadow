@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude / Codex | Next: L-38 (Codex lane) to count worker edits made from a worktree-relative shell command | Dependency: L-38 follows L-37 in the Codex lane | Verified: 2026-10-24
+Status: active | Owner: Dave / Claude / Codex | Next: L-39 to reconcile the guard with worktree closeout; L-40 to delegate Codex queue housekeeping | Dependency: L-39 and L-40 have separate files; preserve current worker model and turn-cap policy | Verified: 2026-11-02
 
 ## Objective
 
@@ -50,6 +50,13 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
+| L-39 | Allow the documented worktree closeout through the command guard | `tools/guard_hook.py`, `tests/test_guard_hook.py`, `tests/test_guard_hook_helpers.py` | medium |
+| L-40 | Delegate Codex gate/refill work to its existing queue steward | `.agents/skills/run-queue/SKILL.md` | medium |
+
+Both are startable backlog entries, not new lane claims. L-39's `Next after:`
+is L-40; L-40 is the final currently specified slice. Read only the assigned
+section and its named evidence. These follow the 2 Nov Jules review
+(`plans/reference/jules-review-2026-11-02.md`, F11 and the R-context triage).
 
 L-31 to L-36 come from the 22 Oct 2026 workflow comparison (Dave asked
 whether a hooks, state-machine and multi-agent-review setup would help;
@@ -92,6 +99,82 @@ L-36 shipped 2026-10-24; its specification is `plans/archive/L-36_2026-10-24.md`
 L-37 shipped 2026-10-25; its specification is `plans/archive/L-37_2026-10-25.md`.
 
 L-38 shipped 2026-10-26; its specification is `plans/archive/L-38_2026-10-26.md`.
+
+## L-39 -- command guard permits worktree closeout
+
+<!-- LAYER: immediate-task -->
+
+**True now:** `tools/guard_hook.py::_reason` rejects every worktree command
+containing `slice.ps1 finish`, contradicting `CHATGPT.md` and `AGENTS.md`.
+The older `tests/test_guard_hook.py` assertion preserves that obsolete rule;
+the newly integrated helper suite deliberately omits its duplicate.
+
+**Do:** Remove only the primary-checkout-only finish restriction. Replace the
+old denial test with a positive assertion for a worktree-local,
+lane-qualified finish, and add the same positive helper case. Keep denials
+for piped finish, process killing, denied-tree reads and relative tools
+paths. Do not change lifecycle execution or weaken any other guard.
+
+**Acceptance:** Both guard suites pass; `_reason` returns an empty reason for
+`powershell.exe -NoProfile -File tools/slice.ps1 finish -Lane Codex` from a
+worktree, while existing forbidden-command cases still fail closed.
+This is command-time only, with no simulation or per-frame work.
+
+**Check:** `python -m unittest tests.test_guard_hook tests.test_guard_hook_helpers`.
+**Reasoning:** medium -- reconcile an executable guard with its durable rule.
+**Stop and escalate:** if the current lifecycle requires different routing,
+or the change needs another command-permission boundary.
+
+**Open decisions:** none.
+
+```queue
+**[Codex] L-39 -- command guard permits worktree closeout**
+- Plan: `plans/now/agent-lifecycle.md` -- "L-39 -- command guard permits worktree closeout"
+- Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`, `tests/test_guard_hook_helpers.py`
+- Check: `python -m unittest tests.test_guard_hook tests.test_guard_hook_helpers`
+- Proof: `present: tools/guard_hook.py :: Run slice.ps1 finish from the primary checkout, not this worktree.`
+- Next after: L-40
+```
+
+## L-40 -- Codex coordinator delegates queue housekeeping
+
+<!-- LAYER: immediate-task -->
+
+**True now:** `.agents/skills/run-queue/SKILL.md` still makes its coordinator
+read and manually refill plans/gates. `.claude/skills/run-queue/SKILL.md`
+already uses the queue steward, and Codex has an existing queue-steward
+agent definition. The current worker model, turn caps and size checks are
+the newer policy and must survive this reconciliation.
+
+**Do:** Delegate the existing gate/refill/finish-stop jobs to Codex's
+queue-steward, using the same job/result contract already implemented by
+the Claude coordinator and `plans/reference/queue-steward.md`. Keep Codex
+lane names, worktree-local finish, supported Codex dispatch syntax, worker
+reasoning/model policy, review handling and all stop conditions. Replace
+the obsolete coordinator-owned refill instructions; do not add a second
+mechanism. The sole output file is the Codex skill.
+
+**Acceptance:** Each empty/dry lane, batched gate update and finish refill
+stop has one explicit steward dispatch with the required context and a
+clear resume/blocked branch. A textual walkthrough of those three cases
+shows no coordinator plan sweep or manual refill. Documentation checks
+pass; no live slice is claimed to test this instruction change.
+
+**Check:** `python tools/check_docs.py`, plus the three walkthroughs above.
+**Reasoning:** medium -- preserve two environments' distinct dispatch syntax.
+**Stop and escalate:** if the existing Codex steward cannot satisfy that job
+contract or a new agent/ownership boundary is required.
+
+**Open decisions:** none.
+
+```queue
+**[Codex] L-40 -- Codex coordinator delegates queue housekeeping**
+- Plan: `plans/now/agent-lifecycle.md` -- "L-40 -- Codex coordinator delegates queue housekeeping"
+- Files: `.agents/skills/run-queue/SKILL.md`
+- Check: `python tools/check_docs.py`
+- Proof: `present: .agents/skills/run-queue/SKILL.md :: ## Refilling the lane`
+- Next after: none -- plans/now/agent-lifecycle.md is complete
+```
 
 ## Standing rules
 

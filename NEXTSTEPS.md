@@ -56,6 +56,20 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `absent: scripts/bee_building.gd :: senses_fermentation`
    - Next after: T2-7b -- the deferred tier-2 price sweep
 
+3. **[Codex] L-39 -- command guard permits worktree closeout**
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-39 -- command guard permits worktree closeout"
+   - Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`, `tests/test_guard_hook_helpers.py`
+   - Check: `python -m unittest tests.test_guard_hook tests.test_guard_hook_helpers`
+   - Proof: `present: tools/guard_hook.py :: Run slice.ps1 finish from the primary checkout, not this worktree.`
+   - Next after: L-40
+
+4. **[Codex] L-40 -- Codex coordinator delegates queue housekeeping**
+   - Plan: `plans/now/agent-lifecycle.md` -- "L-40 -- Codex coordinator delegates queue housekeeping"
+   - Files: `.agents/skills/run-queue/SKILL.md`
+   - Check: `python tools/check_docs.py`
+   - Proof: `present: .agents/skills/run-queue/SKILL.md :: ## Refilling the lane`
+   - Next after: none -- plans/now/agent-lifecycle.md is complete
+
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.

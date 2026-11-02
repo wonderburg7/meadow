@@ -72,10 +72,19 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 
 ## Ready to run
 
+- [C-109 -- Colony Run's goal shelf shows the next milestone](ready/C-109.md)
+- [C-110 -- Colony Run victory screen](ready/C-110.md)
+- [C-111 -- A lost Colony Run offers its latest checkpoint](ready/C-111.md)
+- [C-114 -- An unmated queen's nuptial flights: the succession window's button and the Mating row switch](ready/C-114.md)
+- [C-115 -- Sending a gyne in mid summer wins; in early spring she is lost](ready/C-115.md)
+- [C-116 -- Meadow dies back over winter and regrows](ready/C-116.md)
+- [C-117 -- Rain skills in the Colony Run](ready/C-117.md)
+- [C-118 -- Shiver Cluster in a Colony Run: the Winter note and doubled figure, gone once the node is bought](ready/C-118.md)
 - [C-122 -- Dr Gallerin explains a missing nurse and a missing comb worker, and Why keeps both](ready/C-122.md)
 - [C-127 -- The comb draws honey, jelly, brood, bee bread and wax caps from Dave's art](ready/C-127.md)
 - [C-128 -- The skep sits where the hive square was, and the rival hive is a darker skep](ready/C-128.md)
 - [C-129 -- A +1 rises over a flower that earns a Pollinator Point, and the stores line counts points](ready/C-129.md)
+- [C-130 -- Hive soil blocks show Dave's art and crumble as they are dug](ready/C-130.md)
 - [C-134 -- Every ring on a comb cell traces the cup's rim](ready/C-134.md)
 - [C-137 -- OpenDyslexic text is no wider than Standard at the same text scale](ready/C-137.md)
 - [C-138 -- Problem strip stays out of the way, keeps red warnings and lets you remove one](ready/C-138.md)
@@ -106,3 +115,4 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-165 -- Main-menu Feedback opens the form beside a readable build id](ready/C-165.md)
 - [C-166 -- Short-term goals in the Goals drop-down: star, Dismiss and completion](ready/C-166.md)
 - [C-167 -- Meadow foragers face their flight direction and flap](ready/C-167.md)
+- [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)
