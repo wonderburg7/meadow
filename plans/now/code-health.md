@@ -307,6 +307,9 @@ wrapped chain as `. name(` on its own line.
 
 ## Not in the queue, and why
 
+- **CQ-R13** -- waits for CQ-R2 and a startable slice specification for
+  the `main.gd::_ready` build steps.
+
 - **Jules audit observations, 29 Oct 2026** -- see
   `plans/reference/jules-integration-2026-10-29.md` for the source branches
   and rejected claims. The cell-action flow wrappers and toggle buttons in
@@ -640,16 +643,9 @@ an enum not in `bee_enums.gd`, or any golden string changes.
 
 ## CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd
 
-Implementation prepared on `codex/CQ-R16`, 2 Nov 2026; verification is
-blocked. Godot 4.7.2 boots to a parser error at `main.gd:64`: it cannot
-resolve `res://scripts/saves_panel.gd`, outside this slice's file scope.
-Both equivalence commands initially failed writing to the sandbox temporary
-directory. A retry with a writable temporary directory and the queen-build
-test lost their tool sessions to a blocked `dc.services.visualstudio.com`
-request, so neither has a passing verdict. Next: restore executable checks,
-rerun the slice's acceptance and source checks, then close out. C-168 covers
-box selection and middle-drag panning; CQ-R13 still needs its successor
-specification before closeout.
+Status: implemented and acceptance checks passed, 2 Nov 2026. C-168 covers
+box selection and middle-drag panning. Next: close out; CQ-R13 awaits CQ-R2
+and a startable specification.
 
 Level: low -- a mechanical rename of five fields with every use listed.
 SG-3 landed 1 Nov 2026; queued while no other queued slice names `main.gd`.
