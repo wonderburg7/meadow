@@ -931,20 +931,50 @@ function Get-SliceLevel {
     $planPath = Join-Path $Root $Candidate.Plan
     if (-not (Test-Path -LiteralPath $planPath -PathType Leaf)) { return "unstated" }
     $text = Get-Content -Raw -Encoding UTF8 -LiteralPath $planPath
-    if ($Candidate.Heading) {
-        $start = [regex]::Match($text, '(?im)^(?<hashes>#{1,6})\s+.*' + [regex]::Escape($Candidate.Heading) + '.*$')
-        if ($start.Success) {
-            $depth = $start.Groups['hashes'].Value.Length
-            $rest = $text.Substring($start.Index + $start.Length)
-            $end = [regex]::Match($rest, "(?m)^#{1,$depth}\s")
-            $section = if ($end.Success) { $rest.Substring(0, $end.Index) } else { $rest }
-            $levelMatch = [regex]::Match($section, '(?i)Level:(?:\*\*)?\s*(low|medium|high)\b')
-            if ($levelMatch.Success) { return $levelMatch.Groups[1].Value.ToLower() }
-        }
+    $section = Get-SliceSectionText -Root $Root -Candidate $Candidate
+    if ($section) {
+        $levelMatch = [regex]::Match($section, '(?i)Level:(?:\*\*)?\s*(low|medium|high)\b')
+        if ($levelMatch.Success) { return $levelMatch.Groups[1].Value.ToLower() }
     }
     $row = [regex]::Match($text, '(?im)^\|\s*' + [regex]::Escape($Candidate.Id) + '\s*\|.*\|\s*(low|medium|high)\s*\|\s*$')
     if ($row.Success) { return $row.Groups[1].Value.ToLower() }
     return "unstated"
+}
+
+function Get-SliceSectionText {
+    # The owning plan's section for this slice (its heading down to the next
+    # heading of the same or a shallower depth), or "" when the plan or the
+    # heading is missing.
+    param([string]$Root, [object]$Candidate)
+    if (-not $Candidate.Plan -or -not $Candidate.Heading) { return "" }
+    $planPath = Join-Path $Root $Candidate.Plan
+    if (-not (Test-Path -LiteralPath $planPath -PathType Leaf)) { return "" }
+    $text = Get-Content -Raw -Encoding UTF8 -LiteralPath $planPath
+    $start = [regex]::Match($text, '(?im)^(?<hashes>#{1,6})\s+.*' + [regex]::Escape($Candidate.Heading) + '.*$')
+    if (-not $start.Success) { return "" }
+    $depth = $start.Groups['hashes'].Value.Length
+    $rest = $text.Substring($start.Index + $start.Length)
+    $end = [regex]::Match($rest, "(?m)^#{1,$depth}\s")
+    if ($end.Success) { return $rest.Substring(0, $end.Index) }
+    return $rest
+}
+
+function Get-SliceWorker {
+    # Which /run-queue worker subagent implements a Claude-lane slice. Normally
+    # slice-worker-<level>; a `high` slice whose section carries a `Worker:
+    # sonnet` line goes to slice-worker-high-sonnet (Sonnet at high effort),
+    # for work that is hard to measure or probe but touches no save, ownership
+    # boundary or hot path. Opus costs several times Sonnet on a long slice
+    # (26 Oct-1 Nov 2026: three high slices were 74% of worker cost), so the
+    # plan, not the coordinator, says when Opus is worth it. "unstated" runs
+    # as medium, as the coordinator always has.
+    param([string]$Root, [object]$Candidate, [string]$Level)
+    if ($Level -eq "unstated") { return "slice-worker-medium" }
+    if ($Level -eq "high") {
+        $section = Get-SliceSectionText -Root $Root -Candidate $Candidate
+        if ($section -match '(?im)^\W*Worker:(?:\*\*)?\s*sonnet\b') { return "slice-worker-high-sonnet" }
+    }
+    return "slice-worker-$Level"
 }
 
 function Get-SliceDryAfter {
@@ -983,6 +1013,8 @@ function Get-SliceAdvice {
     # slice edits scenes or on-screen UI, where a live boot shows the result.
     param([string]$Root, [object]$Candidate, [string]$Lane, [string]$PythonPath = $script:PythonPath, [switch]$NoDry)
     $level = Get-SliceLevel -Root $Root -Candidate $Candidate
+    # The /run-queue subagent that implements a Claude-lane slice; Codex has none.
+    $worker = if ($Lane -eq "Codex") { "" } else { Get-SliceWorker -Root $Root -Candidate $Candidate -Level $level }
     if ($Lane -eq "Codex") {
         $model = if ($level -eq "unstated") { "Codex default model; the plan states no level -- use medium reasoning" } else { "Codex default model at $level reasoning" }
     }
@@ -993,6 +1025,7 @@ function Get-SliceAdvice {
             "low"    { "claude-sonnet-5-5 at low effort (a /run-queue worker uses claude-haiku-5-5)" }
             default  { "claude-sonnet-5-5; the plan states no level -- say so in the report" }
         }
+        if ($worker -eq "slice-worker-high-sonnet") { $model = "claude-sonnet-5-5 at high effort (the plan says Worker: sonnet)" }
     }
     $uiFile = @($Candidate.Files | Where-Object { $_ -match '\.(tscn|tres)$' -or $_ -match '^scripts/(hud|ui_[a-z_]+|[a-z_]+_panel|debug_panel|main)\.gd$' })
     $connectorsOn = if ($uiFile.Count -gt 0) { @("godot") } else { @() }
@@ -1000,6 +1033,7 @@ function Get-SliceAdvice {
     return [ordered]@{
         level          = $level
         model          = $model
+        worker         = $worker
         connectors_on  = @($connectorsOn)
         dry_after      = $dry.dry_after
         gated_waiting  = @($dry.gated_waiting)

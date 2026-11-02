@@ -443,6 +443,37 @@ class SliceDoctorTest(unittest.TestCase):
         self.write_one_item_lane(self.BACKLOG_BLOCK.format(fence="queue"))
         self.assertFalse(self.doctor_advice()["dry_after"])
 
+    def worker_for_a1_section(self, section_body: str) -> str:
+        """The advice's worker when A-1's plan section reads `section_body`."""
+        self.write_one_item_lane("")
+        plan = self.root / "plans" / "now" / "fixture.md"
+        plan.write_text(
+            plan.read_text(encoding="utf-8").replace(
+                "## A-1 -- fixture\n\nLevel: low\n", f"## A-1 -- fixture\n\n{section_body}\n"
+            ),
+            encoding="utf-8",
+        )
+        return self.doctor_advice()["worker"]
+
+    def test_the_worker_follows_the_plan_level(self):
+        self.assertEqual("slice-worker-low", self.worker_for_a1_section("Level: low"))
+        self.assertEqual("slice-worker-medium", self.worker_for_a1_section("Level: medium"))
+        self.assertEqual("slice-worker-high", self.worker_for_a1_section("Level: high (save field)"))
+
+    def test_an_unstated_level_runs_as_medium(self):
+        self.assertEqual("slice-worker-medium", self.worker_for_a1_section("No level here."))
+
+    def test_a_high_slice_marked_worker_sonnet_gets_the_sonnet_worker(self):
+        self.assertEqual(
+            "slice-worker-high-sonnet",
+            self.worker_for_a1_section("Level: high (event ordering)\nWorker: sonnet"),
+        )
+
+    def test_worker_sonnet_does_not_change_a_medium_slice(self):
+        self.assertEqual(
+            "slice-worker-medium", self.worker_for_a1_section("Level: medium\nWorker: sonnet")
+        )
+
     def test_doctor_advises_model_and_connectors_from_the_plan_level(self):
         self.write_queue("`absent: scripts/sample.gd :: new_function`")
         (self.root / "plans" / "fixture.md").write_text(

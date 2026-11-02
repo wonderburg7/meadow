@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the Claude lane's ED-1 and CQ-R15 to release scripts/hud.gd and CQ-R16 to release scripts/main.gd, and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for SP-6 and ED-1 to release scripts/bee.gd and CQ-R16 to release scripts/input_selection.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R15 and CQ-R16 are queued (SG-3 landed 1 Nov 2026), CQ-R8 and CQ-R3 stay gated on the queued slices that own their files | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-R15 and CQ-R16 are queued; CQ-R3 follows SP-6 and ED-1; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the Claude lane's ED-1b and CQ-R15 to release scripts/hud.gd and CQ-R16 to release scripts/main.gd, and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for SP-6 and ED-1 to release scripts/bee.gd and CQ-R16 to release scripts/input_selection.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R15 and CQ-R16 are queued (SG-3 landed 1 Nov 2026), CQ-R8 and CQ-R3 stay gated on the queued slices that own their files | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-R15 and CQ-R16 are queued; CQ-R3 follows SP-6 and ED-1; CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -129,7 +129,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
-| CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | gated -- ED-1 and CQ-R15 own `hud.gd`, CQ-R16 `main.gd`, Jules J-14 holds `game_panel.gd` | low |
+| CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | gated -- ED-1b and CQ-R15 own `hud.gd`, CQ-R16 `main.gd`, Jules J-14 holds `game_panel.gd` | low |
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- SP-6 and ED-1 own `bee.gd`, CQ-R16 `input_selection.gd` | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
@@ -183,7 +183,7 @@ claim while `dry_after`).
     function-map threshold and no Claude queue item owns it. CQ-M10's
     Codex block stays `queue-gated` until it is opened by hand.
   - The save moves (CQ-S1 to S5 and CQ-R2) wait for every specified slice that edits
-    `save_game.gd`/`saving.gd`: WP-2, SG-2, ED-1, ED-2 (difficulty, ending at ED-3),
+    `save_game.gd`/`saving.gd`: WP-2, SG-2, ED-1c, ED-2 (difficulty, ending at ED-3),
     RR-12, SP-8a and DR-1 (`plans/now/drones.md`). Each of those plans carries the reverse pointer.
   - CQ-L3 needs both lanes empty, per `plans/workstreams.md`.
 
@@ -324,7 +324,7 @@ wrapped chain as `. name(` on its own line.
 
 - **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`
   and `scripts/saving.gd`; its ownership overlaps that lane's current work.
-- **CQ-M5b** -- waits for the Claude lane's ED-1 and CQ-R15 to release
+- **CQ-M5b** -- waits for the Claude lane's ED-1b and CQ-R15 to release
   `scripts/hud.gd` and CQ-R16 to release `scripts/main.gd`
   and for the Jules J-14 branch (which deletes code in `scripts/game_panel.gd`)
   to be merged or closed; keep its block gated until both clear.
