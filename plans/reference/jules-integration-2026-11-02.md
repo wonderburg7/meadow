@@ -88,12 +88,18 @@ trailer; no trailer is invented or renumbered. No remote branch is deleted.
 
 ## Product and save decisions
 
-The adaptation/skill API reservation, queen/death cargo policy and exact
-flight/rival-tick persistence questions were presented to Dave in this
-session. Until answered, existing behaviour and the documented reservation
-remain; silence is not a decision. No implementation slice changes those
-outcomes. The owning places are plans/design/progression.md and
-plans/now/run-repairs.md, as the full review names.
+Dave answered all three questions on 2 Nov 2026:
+
+- D1: retain the reserved adaptation and skill-query APIs until progression
+  work resumes, recorded in plans/design/progression.md, section 3.
+- D2: retain current queen backup-nursing and death cargo outcomes; require
+  a causal loss/overwrite reproduction before changing backup dispatch.
+- D3: retain current nuptial reset and rival tick reconstruction; exact
+  mid-flight/tick continuation is not required.
+
+D2 and D3 are recorded in plans/now/run-repairs.md, "Not in the queue, and
+why". These decisions are resolved; none requires an implementation change
+or a new slice. Other review findings and correction tasks remain as recorded.
 
 ## Verification and integration
 

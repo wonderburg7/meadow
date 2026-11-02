@@ -186,7 +186,7 @@ Return F1 as unsupported. F2 is a possible More-panel layout coverage gap, not a
 
 [The architecture report's candidate](https://github.com/wonderburg7/meadow/blob/eda1bfd507c5939c93aa047226ec428e43639619/docs/jules-reviews/architecture-review-2026-10-30.md#L61) folds adaptation and skill APIs into an allegedly free cleanup, despite plans/reference/jules.md's 'Not tasks yet' reservation and plans/design/progression.md's adaptation/save direction. Its own D1 says a decision is needed, but its candidate says to remove them now and reuses the already delivered J-43 ID.
 
-Treat no-current-caller observations as verified, not removal authority. The exact-name is_mastered helper is separable and eligible under #63; it has no exact-name design reference. For the remaining adaptation/for_sector family, retain the reservation pending D1. The three bee/hive queue/tile helpers in F3 are uncalled observations only and must go through their owning code-health work and source ownership checks. F5 is a positive architecture observation, not a defect or implementation task.
+Treat no-current-caller observations as verified, not removal authority. The exact-name is_mastered helper is separable and eligible under #63; it has no exact-name design reference. For the remaining adaptation/for_sector family, retain the reservation as Dave confirmed in D1 below. The three bee/hive queue/tile helpers in F3 are uncalled observations only and must go through their owning code-health work and source ownership checks. F5 is a positive architecture observation, not a defect or implementation task.
 
 ### F11 — P2: #65 adds a test that endorses a stale closeout restriction
 
@@ -207,7 +207,7 @@ Every actionable finding and follow-through claim has a disposition below. Earli
 | #55 follow-through | Prior winter fermentation, fermented-store restrictions and primary role-change corpse cleanup remain delivered. | Retain historical shipped status; do not reopen them. |
 | #56 inventory / clean conclusion | Writers/readers for tipsy, bee bread/nurse food, backup order, flower visits, guidance and short-term goals are present; v1–v7 Python migration suite passes 43 tests. | Select those historical facts; replace 'Unverified: none' / comprehensive safety with the actual static/mirror-test scope. This run does not prove every runtime round trip. |
 | #56 prior F1–F7/F9 | Historical disease/spider/rival state, dug-soil and atomic-write follow-through remains supported by source/records. | Retain historical resolution; do not broaden it to new fields introduced after Reviewed: 251a1e0c. |
-| #56 prior F8 / old #36 save observations | Fast winter resolution and deliberate nuptial reset remain contracts. Rival tick_timer omission is already recorded in run-repairs. | Keep existing dispositions. D3 remains unresolved; no new save-field change. |
+| #56 prior F8 / old #36 save observations | Fast winter resolution and deliberate nuptial reset remain contracts. Rival tick_timer omission is already recorded in run-repairs. | Keep existing dispositions. Dave resolved D3 below by retaining current policy; no new save-field change. |
 | #57 F1 | All ten exact IDs C-109,110,111,114,115,116,117,118,84,130 still produce shipped-blocker warnings. RR-1=35799c7/d53d171; T2-9=392663f/dd19b0a; SP-10=f5c1ead. | Confirmed administrative defect. Select for the check processor; do not make it a Jules task (AGENTS.md forbids Jules editing checks). No check was moved here. |
 | #57 F2/F4 and prior timing closures | A historical VM run/CI success is not a current engine-inclusive timing proof; local engine tests and lifecycle suites are not equivalent to Jules's 44-second run. | Retain only as historical measurements; current throughput/performance closure remains unverified. No optimisation admitted. |
 | #57 F3 | code-health.md is now 686 lines, not 433. Length alone does not identify a delivered section safe to delete; the proposed proof searches a prose count absent from the plan. | Reject blind <=260 trimming. Any archival must name delivered sections and preserve active slices. |
@@ -224,15 +224,16 @@ Every actionable finding and follow-through claim has a disposition below. Earli
 | #61 F4 | AGENTS.md repeats instructions intentionally addressed to Jules, which skips Codex routing. | Reject blanket deduplication; do not remove the instructions Jules actually receives. |
 | #61 F5 / prior follow-through | Historical routed rules and function-map check are status observations, not new defects. Machine-local memory was not audited. | Retain historical status only; no claim about inaccessible local memory or current visual/engine execution. |
 
-## Decisions still belonging to Dave
+## Decisions resolved by Dave
 
-These are recorded questions, not permissions requested to finish this review. No decision has been inferred.
+Dave answered these questions on 2 Nov 2026 after the integration batch.
+They retain the existing contracts and require no new implementation slice.
 
-| Decision | Options and recommendation | Where the eventual answer belongs |
+| Decision | Dave's answer | Owning record |
 | --- | --- | --- |
-| D1 — planned adaptation/skill APIs (#60) | Retain the reserved APIs until the owning progression design resumes (recommended), or explicitly authorise a separately scoped removal that updates the design and future consumers. Removal reduces dead surface but changes the planned interface. #63's unrelated is_mastered deletion need not wait. | plans/design/progression.md, adaptations/save direction; then the owning code-health slice. Suggested decision text: 'Retain the reserved adaptation and skill-query APIs until the progression design resumes; no broad removal from the Jules architecture report.' |
-| D2 — resource recovery proposed by #55 | Preserve current queen-backup and death cargo outcomes (recommended unless a gameplay change is wanted), or design which resources are recovered, when, where, and when no comb space exists. The second option changes colony stores and needs simulation evidence before balance-sensitive implementation. | plans/now/run-repairs.md, 'Not in the queue, and why', with the relevant gameplay contract. Suggested text: 'Retain current queen backup-nursing and death cargo outcomes; require a causal loss/overwrite reproduction before changing backup dispatch.' |
-| D3 — existing rival tick / mid-flight persistence question | Keep the documented reconstruction/reset policy, or require exact timer/flight continuation and commission the corresponding save/schema and restore tests. #56's clean summary does not settle this existing question. | plans/now/run-repairs.md, 'Not in the queue, and why' (currently :183–194). Suggested text if retaining: 'Keep the current nuptial reset and rival tick reconstruction policy; exact mid-flight/tick continuation is not required.' |
+| D1 — planned adaptation/skill APIs (#60) | Retain the reserved APIs until progression work resumes; no broad removal from the Jules architecture report. | plans/design/progression.md, section 3 |
+| D2 — resource recovery proposed by #55 | Preserve current queen backup-nursing and death cargo outcomes; require a causal loss/overwrite reproduction before changing backup dispatch. | plans/now/run-repairs.md, 'Not in the queue, and why' |
+| D3 — existing rival tick / mid-flight persistence question | Retain current nuptial reset and rival tick reconstruction; exact mid-flight/tick continuation is not required. | plans/now/run-repairs.md, 'Not in the queue, and why' |
 
 ## Recommended integration order
 

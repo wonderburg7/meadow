@@ -18,11 +18,11 @@ Reviewed: 251a1e0c | Since: b9854e5 | Scope: qualified processing of Jules PR #5
 | --- | --- | --- | --- | --- |
 | S1 | Additive writer/reader facts are supported, including tipsy, bee bread, nurse food, backup order, flower visits, guidance and short-term goals | save_game.gd / saving.gd; tests.test_save_migrations: 43 passed during review | info | Rejected -- these are existing supported fields, not new defects requiring implementation. |
 | S2 | The source report overstates comprehensive runtime safety and says nothing is unverified | PR #56 Summary / Method; only Python mirror/static evidence is available | medium | Fixed -- retain only the qualified facts in this record; the unqualified report is not imported. |
-| S3 | Exact rival-tick and flight continuation remains a product/save question | plans/now/run-repairs.md, Not in the queue, and why | low | Rejected -- no save change is admitted without Dave's answer in the owning plan; preserve current behaviour meanwhile. |
+| S3 | Exact rival-tick and flight continuation was a product/save question | plans/now/run-repairs.md, Not in the queue, and why | low | Rejected -- Dave retained current nuptial reset and rival tick reconstruction on 2 Nov 2026 (D3); exact continuation is not required. No save change follows. |
 
 ## Hand-offs
 
-None. The existing run-repairs persistence question stays in its owning plan.
+None. Dave's persistence decision is recorded in the owning run-repairs plan.
 
 ## Noted, not pursued
 
