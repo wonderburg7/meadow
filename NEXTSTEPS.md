@@ -49,14 +49,14 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `absent: scripts/bee_building.gd :: senses_fermentation`
    - Next after: T2-7b -- the deferred tier-2 price sweep
 
-3. **[Codex] L-39 -- command guard permits worktree closeout**
+2. **[Codex] L-39 -- command guard permits worktree closeout**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-39 -- command guard permits worktree closeout"
    - Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`, `tests/test_guard_hook_helpers.py`
    - Check: `python -m unittest tests.test_guard_hook tests.test_guard_hook_helpers`
    - Proof: `present: tools/guard_hook.py :: Run slice.ps1 finish from the primary checkout, not this worktree.`
    - Next after: L-40
 
-4. **[Codex] L-40 -- Codex coordinator delegates queue housekeeping**
+3. **[Codex] L-40 -- Codex coordinator delegates queue housekeeping**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-40 -- Codex coordinator delegates queue housekeeping"
    - Files: `.agents/skills/run-queue/SKILL.md`
    - Check: `python tools/check_docs.py`
@@ -86,6 +86,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **PP-10** (`plans/now/pollination.md`) -- the sweep prices the route so Gyne rearing is first affordable after the first winter; waits for EV-0, so it prices the route once, on the new calendar (Dave, 1 Nov 2026).
 - **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices of the alpha chain (ED-1c, ED-2, RR-12, SP-8a in `plans/now/drones.md`; WP-2 landed 21 Oct 2026 and WP-3 landed 22 Oct 2026) and ED-3 (Dave, 18 Oct 2026); CQ-S0's round-trip harness landed 22 Oct 2026.
 - **CQ-R2** (`plans/now/code-health.md`) -- the first crisis moves out of `scripts/main.gd` into a new first_crisis.gd, touching the save files; waits, gated with CQ-S1, for the save slices of the alpha chain (ED-1c, ED-2, RR-12, SP-8a in `plans/now/drones.md`; WP-2 landed 21 Oct 2026) and ED-3 (Dave, 18 Oct 2026); its plan section is written when that gate clears.
+- **CQ-R13** (`plans/now/code-health.md`) -- `main.gd::_ready` into build steps; waits for CQ-R2, which shares `scripts/main.gd`, and then needs its slice specification.
 - **CQ-R8** (`plans/now/code-health.md`) -- hud builders shortened and hud sections re-headed; waits for CQ-R15, which shares `scripts/hud.gd`.
 - **CQ-R3** (`plans/now/code-health.md`) -- bee display text moves into a new bee_readout.gd; waits for ED-1 to release `scripts/bee.gd` (SP-6 landed 1 Nov 2026).
 - **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; needs its section and block after CQ-R8 (CQ-L2 released `tests/source_checks.py` 24 Oct 2026).
