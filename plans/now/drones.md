@@ -58,7 +58,7 @@ Verified 22 Oct 2026 against master `7398865`.
 | --- | --- | --- | --- | --- |
 
 **Dependencies.** DR-1 edits `scripts/save_game.gd` and `scripts/saving.gd`.
-SG-2 (`plans/archive/short-term-goals_2026-11-01.md`), ED-1 and ED-2 (`plans/now/difficulty.md`)
+SG-2 (`plans/archive/short-term-goals_2026-11-01.md`), ED-1c and ED-2 (`plans/now/difficulty.md`)
 and CQ-S0b (`plans/now/code-health.md`) edit them too. All are Claude lane, so
 they run one at a time in queue order, and each re-captures the CQ-S0 goldens
 it changes. The save moves CQ-S1 to CQ-S5 and CQ-R2 (`plans/now/code-health.md`)

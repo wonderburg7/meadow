@@ -180,13 +180,19 @@ provisional; Dave answers it at the hands-on check).
 
 ## Not in the queue, and why
 
+- **Queen nursing and death cargo (Dave, 2 Nov 2026; Jules review D2).**
+  Retain current queen backup-nursing and death cargo outcomes. Require a
+  causal reproduction of loss or overwrite before changing backup dispatch;
+  the gameplay report's proposed cleanup alone is not defect evidence.
+  Resource recovery is not scheduled by this decision.
+
 - **Save audit observations, 29 Oct 2026** -- evidence and correction criteria:
   `plans/reference/jules-integration-2026-10-29.md` (J-32). `bee.gd:125`
-  explicitly documents resetting nuptial flights on load; retain that
-  contract until Dave chooses whether a future save should resume the full
-  flight (including phase, timer, position and day) or return safely home.
-  `rival_hive.gd::save_data`/`restore` omit `tick_timer`; decide whether exact
-  cadence must survive reload before adding a save field. In
+  explicitly documents resetting nuptial flights on load.
+  **Decision (Dave, 2 Nov 2026; Jules review D3):** retain the current
+  nuptial reset and rival tick reconstruction policy; exact mid-flight/tick
+  continuation is not required. `rival_hive.gd::save_data`/`restore` omit
+  `tick_timer`; no new timer or flight save fields follow from this audit. In
   `saving.gd::_restore_bees`, a malformed entry with only `start_x` produces
   an infinite y coordinate; reproduce it in an isolated save fixture and
   agree whether to reject the record or fall back to an unset start point

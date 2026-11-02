@@ -560,21 +560,24 @@ def run_coordinator(files):
     )
 
 
-def _subagent_models(session, slice_id, home=None):
-    """Models of the session's subagent transcripts dispatched for `slice_id`.
+def _subagent_usage(session, slice_id, home=None):
+    """Requests, tokens and models of the session's subagent transcripts
+    dispatched for `slice_id`, summed.
 
     A subagent's first user message is the coordinator's dispatch prompt, which
     carries the claim JSON, so it is matched on `"id": "<slice id>"`.
     """
     home = Path(home) if home else Path.home() / ".claude" / "projects"
     pattern = re.compile(r'"id"\s*:\s*"' + re.escape(slice_id) + '"')
-    models = Counter()
+    usage_sum = {"requests": 0, "cache_read": 0, "cache_write": 0, "output": 0,
+                 "peak_context": 0, "models": Counter()}
     if not home.exists():
-        return models
+        return usage_sum
     for project_dir in home.glob(PROJECT_SLUG + "*"):
         for f in (project_dir / session / "subagents").glob("agent-*.jsonl"):
             first_user = ""
-            file_models = Counter()
+            file_sum = {"requests": 0, "cache_read": 0, "cache_write": 0, "output": 0,
+                        "peak_context": 0, "models": Counter()}
             try:
                 with f.open("r", encoding="utf-8") as fh:
                     for line in fh:
@@ -587,14 +590,79 @@ def _subagent_models(session, slice_id, home=None):
                         if row.get("type") == "user" and not first_user:
                             first_user = _extract_text(row.get("message", {}).get("content"))
                         elif row.get("type") == "assistant":
-                            model = row.get("message", {}).get("model")
-                            if model:
-                                file_models[model] += 1
+                            message = row.get("message", {})
+                            if message.get("model"):
+                                file_sum["models"][message["model"]] += 1
+                            usage = message.get("usage")
+                            if usage:
+                                file_sum["requests"] += 1
+                                file_sum["cache_read"] += usage.get("cache_read_input_tokens", 0)
+                                file_sum["cache_write"] += usage.get("cache_creation_input_tokens", 0)
+                                file_sum["output"] += usage.get("output_tokens", 0)
+                                file_sum["peak_context"] = max(
+                                    file_sum["peak_context"],
+                                    usage.get("input_tokens", 0)
+                                    + usage.get("cache_read_input_tokens", 0)
+                                    + usage.get("cache_creation_input_tokens", 0),
+                                )
             except Exception:
                 continue
             if pattern.search(first_user):
-                models.update(file_models)
-    return models
+                for key in ("requests", "cache_read", "cache_write", "output"):
+                    usage_sum[key] += file_sum[key]
+                usage_sum["peak_context"] = max(usage_sum["peak_context"], file_sum["peak_context"])
+                usage_sum["models"].update(file_sum["models"])
+    return usage_sum
+
+
+def _subagent_models(session, slice_id, home=None):
+    """Models of the session's subagent transcripts dispatched for `slice_id`."""
+    return _subagent_usage(session, slice_id, home)["models"]
+
+
+# Price relative to one fresh input token (cache writes cost more, cache reads
+# far less, output about five times). Token-weighted only: it ignores that
+# Opus costs more per token than Sonnet, so it understates a high slice.
+COST_WEIGHTS = {"cache_write": 1.25, "cache_read": 0.1, "output": 5}
+# A worker past this many requests should have been two slices (26 Oct-1 Nov
+# 2026: the three over it ran 327-365 against 30-100 for the rest).
+SLICE_REQUEST_BUDGET = 150
+
+
+def run_slice_cost(days: int, home=None):
+    """One row per Claude-lane slice claimed in the window: its plan level,
+    the worker's model, requests, peak context, output and token-weighted cost,
+    with those over SLICE_REQUEST_BUDGET marked, then the totals by level.
+    Reads the claim events and the coordinator's worker transcripts, so a slice
+    implemented in a single session has no row (counted at the end)."""
+    cutoff = _cutoff_iso(days)
+    claimed = [e for e in read_events()
+               if e.get("kind") == "slice_claimed" and e.get("lane") == "Claude"
+               and e.get("ts", "") >= cutoff and e.get("session") and e.get("id")]
+    print(f"slice cost, last {days} days: {len(claimed)} Claude-lane claims")
+    print(f"  {'id':10s}{'level':9s}{'worker model':14s}{'reqs':>5s}{'peak ctx':>10s}{'out K':>7s}{'cost M':>8s}")
+    by_level = {}
+    without = 0
+    for e in claimed:
+        use = _subagent_usage(e["session"], e["id"], home)
+        if not use["requests"]:
+            without += 1
+            continue
+        cost = (COST_WEIGHTS["cache_write"] * use["cache_write"]
+                + COST_WEIGHTS["cache_read"] * use["cache_read"]
+                + COST_WEIGHTS["output"] * use["output"]) / 1e6
+        model = use["models"].most_common(1)[0][0].removeprefix("claude-")
+        level = e.get("level", "unstated")
+        flag = "  over budget: split it" if use["requests"] > SLICE_REQUEST_BUDGET else ""
+        print(f"  {e['id']:10s}{level:9s}{model:14s}{use['requests']:5d}"
+              f"{use['peak_context']:10d}{use['output'] / 1e3:7.0f}{cost:8.1f}{flag}")
+        slot = by_level.setdefault(level, [0, 0.0])
+        slot[0] += 1
+        slot[1] += cost
+    print("  by level (slices, cost M): "
+          + ", ".join(f"{k}={v[0]}/{v[1]:.1f}" for k, v in sorted(by_level.items())))
+    if without:
+        print(f"  {without} claim(s) had no worker transcript (implemented in the claiming session)")
 
 
 def _session_totals(home=None):
@@ -1050,6 +1118,11 @@ def main():
         help="summarise the diagnostic event log: verify stages, sessions, cost by branch",
     )
     parser.add_argument(
+        "--slices",
+        action="store_true",
+        help="one row per Claude-lane slice claimed in the window: level, worker model, requests, cost; marks those over the request budget",
+    )
+    parser.add_argument(
         "--model-check",
         nargs=2,
         metavar=("SESSION", "LEVEL"),
@@ -1075,6 +1148,10 @@ def main():
     # --events reads the diagnostic event log, likewise not the transcripts.
     if args.events:
         run_events(args.days)
+        return 0
+
+    if args.slices:
+        run_slice_cost(args.days)
         return 0
 
     projects = Path.home() / ".claude" / "projects"

@@ -50,10 +50,15 @@ sitting in a `.worktrees/` directory:
    worker implements the slice, so it does not check this session's own
    model against the plan level. Keep its JSON, and note `advice.level`.
 3. **Dispatch.** Spawn the worker in the foreground
-   (`run_in_background: false`). Its `subagent_type` comes from the level:
-   `slice-worker-low` (Haiku 5.5), `-medium` (Sonnet 5.5) or `-high`
-   (Opus 5.5). If the level is `unstated`, use
-   medium and say so in the report. The prompt is the `start` JSON
+   (`run_in_background: false`). Its `subagent_type` is `advice.worker` from
+   `start`, never your own reading of the level: `slice-worker-low` (Haiku
+   5.5), `-medium` (Sonnet 5.5), `-high` (Opus 5.5) or `-high-sonnet`
+   (Sonnet 5.5 at high effort, when the plan says `Worker: sonnet`). An
+   `unstated` level comes back as medium; say so in the report. If a worker
+   returns `blocked` with `"reason": "size"`, it hit its request budget: the
+   split it proposes is the plan edit, not a reason to resume it. Land what
+   it committed only if `ready`; otherwise stop the run, report the
+   proposal, and leave the branch. The prompt is the `start` JSON
    verbatim, plus `ROOT=<ROOT>` and `WORKTREE=<ROOT>\.worktrees\<id>`.
    Nothing else: the worker's brief says what to do.
 4. **Act on its result.**

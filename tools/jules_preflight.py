@@ -3,9 +3,9 @@
 Jules works from GitHub on a Linux VM, so it cannot run `tools/slice.ps1
 owner`. This is that check for Jules, read from `origin` alone:
 
-    python tools/jules_preflight.py --next              # the first free task (or due review), in full
+    python tools/jules_preflight.py --next              # next ordinary or efficiency task, in full
     python tools/jules_preflight.py <path> [<path> ...] # free or owned
-    python tools/jules_preflight.py --scope [J-n|R-x]   # files this branch changes outside the task
+    python tools/jules_preflight.py --scope [J-n|R-x|E-n]   # files this branch changes outside the task
     python tools/jules_preflight.py --queue             # every task's and review's state, and how many are free
     python tools/jules_preflight.py --ledger            # every unmerged Jules branch: unreviewed, returned, closed
 
@@ -25,7 +25,10 @@ prints the first task that is none of those and whose files are all free,
 with its Files/After/Why/Do lines so the rest of the task list need not be
 read.
 
-When no numbered task is free, `--next` prints the first due review of the
+Every other new task is an E-<n> token-efficiency review, routed before
+ordinary work. Commit trailers persist the sequence across sessions and
+unmerged PRs; see plans/reference/jules-efficiency.md. On ordinary turns,
+when no numbered task is free, `--next` prints the first due review of the
 rota (`plans/reference/jules-reviews.md`): the review files in
 `plans/reference/reviews/` whose `Jules:` line puts them on it, by priority.
 A review is due when no unprocessed `jules/r-<name>-*` branch exists, its
@@ -68,6 +71,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import review_due  # noqa: E402 -- the review files' header lines and record lookup
+import jules_efficiency  # noqa: E402 -- alternating tasks and report scope
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -80,7 +84,7 @@ REVIEW_METHOD = "plans/reference/jules-reviews.md"
 PLANNED = ["NEXTSTEPS.md", "plans/now"]
 BRANCH_PREFIXES = ("origin/claude/", "origin/codex/", "origin/jules/")
 TASK_HEADING = re.compile(r"^###\s+(J-\d+)\s+--\s+(.*?)\s*$")
-BRANCH_TASK = re.compile(r"jules/(j-\d+|r-[a-z]+)(?:-|$)", re.IGNORECASE)
+BRANCH_TASK = re.compile(r"jules/(j-\d+|r-[a-z]+|e-\d+)(?:-|$)", re.IGNORECASE)
 LEDGER_STATES = ("merged", "returned", "closed")
 LOW_WATER = 10  # free tasks below which the list needs a refill: a session may now take 20 (30 Oct 2026)
 
@@ -498,6 +502,9 @@ def scope_report(root: Path, task: Task, ref: str = "HEAD", base: str = BASE) ->
 
 def scope_task(root: Path, wanted: str, base: str = BASE) -> Task | None:
     """The task, or for a review the report it may add, that `--scope` checks a branch against."""
+    if wanted.startswith("E-"):
+        path = jules_efficiency.scope_path(wanted)
+        return Task(wanted, "Token efficiency", files=[path]) if path else None
     if wanted.startswith("R-"):
         review = next((item for item in parse_reviews(root, base) if item.id.upper() == wanted), None)
         return Task(review.id, review.title, files=[review.report_pattern]) if review else None
@@ -508,14 +515,14 @@ def scope_task(root: Path, wanted: str, base: str = BASE) -> Task | None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("paths", nargs="*", help="repo-relative paths to check")
-    parser.add_argument("--next", action="store_true", help=f"print the first free task in {TASK_FILE}, else a due review")
+    parser.add_argument("--next", action="store_true", help="print the next alternating ordinary or efficiency task")
     parser.add_argument("--queue", action="store_true", help="print every task's state; exit 1 when the list is short")
     parser.add_argument("--ledger", action="store_true", help="list unmerged Jules branches by what happened to them")
     parser.add_argument(
         "--scope",
         nargs="?",
         const="",
-        metavar="J-n",
+        metavar="J-n|R-x|E-n",
         help="list files --ref changes outside the task's Files (default task: from the branch name)",
     )
     parser.add_argument("--ref", default="HEAD", help="commit or branch --scope compares with origin/master")
@@ -567,6 +574,17 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.next:
+        try:
+            number, previous = jules_efficiency.next_turn(ROOT)
+        except (ValueError, subprocess.CalledProcessError) as error:
+            detail = error.stderr.strip() if isinstance(error, subprocess.CalledProcessError) else str(error)
+            print(f"stop  cannot determine Jules sequence: {detail}")
+            return 1
+        kind = "ordinary" if number % 2 else "efficiency"
+        print(f"Jules-Sequence: {number} {kind}")
+        if kind == "efficiency":
+            print("\n".join(jules_efficiency.task_block(number, previous)))
+            return 0
         task, skipped = next_task(ROOT, tasks, ledger=ledger)
         for line in skipped:
             print(f"skip  {line}")
