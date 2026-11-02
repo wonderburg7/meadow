@@ -24,7 +24,7 @@ Reviewed: e76d6be9 | Since: 2afe838 | Scope: qualified processing of Jules PR #6
 
 ## Hand-offs
 
-None. L-39 and L-40 are ready backlog specifications, not lane claims.
+None. L-39 and L-40 were admitted to the Codex lane through refill_lane.py; neither is claimed by this batch.
 
 ## Noted, not pursued
 

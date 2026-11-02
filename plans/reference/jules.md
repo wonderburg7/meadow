@@ -286,7 +286,7 @@ it, like `tools/heading.py`.
 - Files: tools/variable_shadow_check.py, tests/test_variable_shadow_check.py
 - After: none
 - Why: PR #71 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
-- Do: The accepted guard skips explicit nonexistent files and prints success. Return non-zero with the missing path when any requested input does not exist; do not silently report a scan succeeded. Add an isolated CLI regression for a missing path and retain all existing supported-class and real-tree tests. Keep the explicit class/property coverage boundary; no Godot or inheritance-system expansion.
+- Do: The accepted guard skips explicit nonexistent files and prints success. Return non-zero with the missing path when any requested input does not exist; do not silently report a scan succeeded. Add an isolated CLI regression for a missing path and retain the existing supported-class tests and add a real-tree invocation to the unit suite so ordinary verification executes the standalone scan. Keep the explicit class/property coverage boundary; no Godot or inheritance-system expansion.
 
 ### J-51 -- Correct the gameplay review without changing gameplay
 

@@ -1,11 +1,11 @@
 # Jules integration -- 2 November 2026
 
-Status: reference | Owner: Dave / Codex | Next: verify and integrate this prepared batch; J-31 and J-44 to J-53 hold the remaining corrections | Dependency: L-39 and L-40 in plans/now/agent-lifecycle.md | Baseline: a5c49644e2d48b0510af0fbf9ec2e17e414b0d42 | Verified: 2026-11-02
+Status: reference | Owner: Dave / Codex | Next: J-31 and J-44 to J-53 corrections; L-39 and L-40 are queued in the Codex lane | Dependency: L-39 and L-40 in plans/now/agent-lifecycle.md | Baseline: a5c49644e2d48b0510af0fbf9ec2e17e414b0d42 | Verified: 2026-11-02
 
 Dave authorised the implementation plans, merges and pushes following
 the [full review](jules-review-2026-11-02.md). This record distinguishes
 selected content from whole-branch merging: no Jules snapshot is merged.
-Reviewed PR tips remain unchanged. PR #85 arrived after the review and is
+Reviewed PR tips remain unchanged. PR #85 and any later submissions arrived after the review and are
 not covered or integrated by this batch; it retains its published sequence
 trailer and awaits its own review.
 
@@ -101,9 +101,23 @@ plans/now/run-repairs.md, as the full review names.
   required registration for this review-lane integration worktree.
 - Initial selected suites: 119 tests pass together on Windows/Python 3.14.7.
 - Numbered scope checks and mutation evidence are in the full review.
-- Full tools/verify.ps1 result: pending. This branch must not be merged
-  until the combined gate succeeds; any import-cache fault is repaired
-  without editing source.
+- Full branch run: Godot boot, GDScript lint (158 files), source checks
+  (108 scripts), all 15 balance checks and 230 of 233 unit IDs passed.
+  The three early runtime IDs timed out without session logs: RainFreeDaysRun,
+  test_nf3_tipsy and UnpreparedCrisisTest. Their initial elapsed times were
+  about 5,000 seconds; no code assertion or parse fault identified a defect.
+- Focused reruns, unchanged source and normal private scenario directories:
+  RainFreeDaysRun (2 tests), test_nf3_tipsy (5 tests) and
+  UnpreparedCrisisTest (7 tests) all pass individually. No timeout was raised,
+  no check was skipped and no code was changed to obtain those passes.
+- Remaining stages pass: update_function_map.py --check, and
+  tools/verify.ps1 -Docs -Scope all (generated stage reference, sprite sheets
+  and documentation/ledger checks). Lifecycle tests were correctly skipped
+  because no lifecycle implementation changed.
+- This is the full run plus its three successful focused reruns and remaining
+  stages, not a claim that the initial full command exited zero. All required
+  checks now have passing results at the same implementation tree. The exact
+  reason for the initial long runtime stalls is unconfirmed.
 - Risk tier: low -- tests, bounded offline tooling, qualified records and
   plans, check administration and a proven uncalled-function deletion;
   no gameplay/save/balance change or cross-lane source overlap.

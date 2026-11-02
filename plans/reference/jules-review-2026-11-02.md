@@ -1,8 +1,14 @@
 # Jules outstanding-work review — 2 November 2026
 
-Status: reference | Owner: Dave / Codex | Next: integrate only the accepted content below; obtain corrections and decisions separately | Dependency: none | Verified: 2026-11-02
+Status: reference | Owner: Dave / Codex | Next: follow-through in plans/reference/jules-integration-2026-11-02.md; retained corrections and product decisions | Dependency: none | Verified: 2026-11-02
 
 Review only. No implementation edits, shared-branch integration, push, PR comment, PR closure or branch deletion was performed. The existing Jules ledger and queue are unchanged. Dispositions below are recommendations, not records of delivery. This record is on local branch codex/jules-review-20261102.
+
+Follow-through (2 Nov): Dave subsequently authorised the relevant plans,
+merges and pushes. See [the integration record](jules-integration-2026-11-02.md)
+for actual selected-content delivery and checks. This remains the historical
+tip-by-tip review; read its plans/active/ recommendation with the explicit
+correction in the integration and context-processing records.
 
 ## Result and scope
 
