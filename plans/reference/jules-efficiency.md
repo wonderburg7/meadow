@@ -3,7 +3,9 @@
 <!-- CONTEXT: reference | LAYER: reference | LOAD: Jules "Running an efficiency task" when --next prints E-<n>; integrator "Processing an efficiency task" -->
 Status: reference | Owner: Dave / Claude Code / Codex | Next: alternate ordinary work with an efficiency task; retain only improvements with evidence and unchanged quality | Dependency: tools/jules_preflight.py, tools/jules_efficiency.py | Verified: 2026-11-02
 
-## Alternation and continuity
+## Running an efficiency task
+
+### Alternation and continuity
 
 Dave's instruction (2 Nov 2026): every other task Jules does reviews how to
 make game-slice implementation, code investigation and game development more
@@ -34,7 +36,7 @@ Claude, Codex and Dave must do, including review and integration.
 - When no ordinary task fits, stop. Do not manufacture extra efficiency work.
   Include the last published sequence and next kind in the final report.
 
-## Running an efficiency task
+### Review method
 
 This is a bounded review, not another whole-repository audit. Follow this
 section when --next prints E-<n>. The output names the focus, previous task

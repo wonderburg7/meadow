@@ -41,7 +41,7 @@ sequence, exact review method and integration contract live in
 ```text
 Work through Meadow's Jules tasks one after another in this one session, as many as you can, until a stop condition below is met. Opening a pull request is not a stop condition. Every rule in AGENTS.md's Jules section and in jules.md's "How to work" stands. Alternate ordinary tasks and E efficiency tasks exactly as --next routes them; preserve its Jules-Sequence trailer across sessions.
 
-Once, at the start: read the "If you are Google Jules" section of AGENTS.md. Of plans/reference/jules.md, read only the parts named below.
+Once, at the start: read the "If you are Google Jules" section of AGENTS.md, then `python tools/heading.py plans/reference/jules-efficiency.md "Alternation and continuity"`. Of plans/reference/jules.md, read only the parts named below.
 
 For each task:
 
