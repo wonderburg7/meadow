@@ -42,14 +42,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd**
-   - Plan: `plans/now/code-health.md` -- "CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd"
-   - Files: `scripts/main.gd`, `scripts/input_selection.gd`, `scripts/scenario_actions.gd`
-   - Check: `python tools/equivalence.py test_scenarios/hr2_click_view_switch_test.json master` and `python tools/equivalence.py test_scenarios/e1_placement_exclusion_test.json master` report no difference; `python -m unittest tests.test_rr1_queen_builds` passes; `.\tools\verify.ps1` is green
-   - Proof: `present: scripts/main.gd :: var pan_anchor`
-   - Next after: CQ-R13
-
-2. **[Codex] T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked**
+1. **[Codex] T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked**
    - Plan: `plans/now/tier-two.md` -- "T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked"
    - Files: `scripts/hive.gd`, `scripts/bee_building.gd`, `tests/test_nf5_clear_fermented.py`
    - Check: `python -m unittest tests.test_nf5_clear_fermented` passes with new cases (with both skills a cleaning comb worker empties a sour cell unasked; with only one skill it does not; corpses still come first); the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green
