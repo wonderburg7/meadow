@@ -1,7 +1,7 @@
 # Google Jules -- task list and method
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: Jules every task; Claude/Codex only to add or prune a task -->
-Status: reference | Owner: Dave / Claude Code / Codex | Next: refill -- every open task (J-31, J-42) is returned for correction, see `--ledger`; when no task is free Jules runs the review rota (`plans/reference/jules-reviews.md`) | Dependency: none | Verified: 2026-10-30
+Status: reference | Owner: Dave / Claude Code / Codex | Next: J-31 correction and J-44 to J-53; alternate ordinary and efficiency tasks as --next routes | Dependency: correction details in plans/reference/jules-integration-2026-11-02.md | Verified: 2026-11-02
 
 Jules works from GitHub on a Linux VM, outside the Claude/Codex slice queue.
 Its work is behaviour-preserving tooling: guards that catch a known bug class
@@ -239,22 +239,75 @@ it, like `tools/heading.py`.
   converted at the move. Candidate Jules tasks are source checks for any
   mixed shape a regex can catch; if none can, say so.
 
-### J-42 -- Prove Godot wrapper helpers propagate failure and skip
+### J-44 -- Make the JSON-number guard track numeric values and loop scope
 
-- Files: tests/test_godot_helper_contracts.py (new)
+- Files: tools/json_number_check.py (new), tests/test_json_number_check.py (new)
 - After: none
-- Why: J-37 wrongly calls helpers with assertions vacuous. A small mocked
-  contract test can prove the failure path without adding redundant return
-  values or requiring an engine installation.
-- Do: import the HO10 and Challenge2 Python test modules as modules, not
-  exported TestCase aliases. Instantiate their test cases and invoke
-  `_boot_and_run` with the engine discovery, cache preparation and process
-  launch mocked. A well-formed PASS payload and exit 0 must succeed;
-  missing PASS, a script error, an explicit FAIL line and a non-zero exit
-  must each raise AssertionError. No executable must raise unittest.SkipTest,
-  and the subprocess must not be called in that case. Build all results in
-  memory; never launch Godot, read a player profile or change the wrappers.
-  Mutation-prove removing the helper's output/error checks is detected.
+- Why: PR #72 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Use the rejected PR only as a starting point for its two named files. Accept string-array membership; expire taint at loop/function boundaries; do not infer numeric provenance merely from a variable name. Detect the documented raw numeric .get lookup before integer-array membership, or narrow the scanner contract explicitly. Test positive string/reused-loop-variable cases and negative raw-number cases. Pass on current scripts and mutation-prove the supported numeric-coercion failure. No GDScript or save edits.
+
+### J-45 -- Make the navigation-bound guard prove the reach expression
+
+- Files: tools/nav_reach_check.py (new), tests/test_nav_reach_check.py (new)
+- After: none
+- Why: PR #75 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Keep a two-file standalone guard. Check that navigation and chamber construction use the same exclusive outer bound, including arithmetic in reach, not merely three field-name substrings. Mutating current reach by adding + 1, subtracting rock rings, omitting a term or widening the range stop must each fail; ordinary formatting changes must pass. Do not edit navigation, GameConfig or game tests.
+
+### J-46 -- Make the obstacle-commitment guard respect conditional nesting
+
+- Files: tools/skirt_commitment_check.py (new), tests/test_skirt_commitment_check.py (new)
+- After: none
+- Why: PR #76 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Keep the two-file standalone guard. A skirt_obstacle clear must be inside the debounce conditional, not merely after a comparison token. Starting from current bee_movement.gd, move the clear outside the inner condition and leave pass inside it: the guard must fail. Reject a single-frame threshold within the supported shape; accept intentional navigation resets. Ignore comments/strings and pass on current scripts. No steering or cadence edits.
+
+### J-47 -- Keep one executable-code marker-reparenting guard
+
+- Files: tools/marker_reparent_check.py (new), tests/test_marker_reparent_check.py (new)
+- After: none
+- Why: PR #79 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Use only the two named files from PR #79, retaining visit-point coverage; discard its entire unrelated snapshot. Parse executable code rather than comments/strings. Commenting out the real central reparent must fail, as must missing parent assignment, uncovered marker stages, wrong ordering and branch-local reparenting. Check both marker functions. A nonexistent requested input file must exit non-zero. Pass on current challenge_runner.gd. Do not import PR #77 or change game source.
+
+### J-48 -- Make the drained-flower guard prove rejection and cooldown updates
+
+- Files: tools/drained_flower_exclusion_check.py (new), tests/test_drained_flower_exclusion_check.py (new)
+- After: none
+- Why: PR #84 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Keep the two-file standalone guard. Require an executable rejecting cooldown predicate outside the relaxed-search condition and an actual cooldown update on collection completion. Changing the current cooldown return false to return true, removing the rejection or replacing the assignment with a read/comment must each fail. Ignore strings/comments, preserve normal formatting and pass on current bee_foraging.gd. No foraging, simulation, settings or save edits.
+
+### J-49 -- Make run-scenario helper tests portable to Windows
+
+- Files: tests/test_run_scenario_helpers.py (new)
+- After: none
+- Why: PR #82 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Take only this test file from PR #82. Build all four terminal-line expected paths from str(result_path), preserving the platform-native formatting contract; never change the production helper to meet POSIX-only expectations. Run python -m unittest tests.test_run_scenario_helpers without a tests-directory PYTHONPATH on Windows and Linux, or state honestly which host was unavailable. Keep all nine tests meaningful.
+
+### J-50 -- Fail closed on missing variable-shadow guard inputs
+
+- Files: tools/variable_shadow_check.py, tests/test_variable_shadow_check.py
+- After: none
+- Why: PR #71 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: The accepted guard skips explicit nonexistent files and prints success. Return non-zero with the missing path when any requested input does not exist; do not silently report a scan succeeded. Add an isolated CLI regression for a missing path and retain all existing supported-class and real-tree tests. Keep the explicit class/property coverage boundary; no Godot or inheritance-system expansion.
+
+### J-51 -- Correct the gameplay review without changing gameplay
+
+- Files: docs/jules-reviews/gameplay-review-2026-10-30.md (new)
+- After: none
+- Why: PR #55 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Redo the report from a fresh current master under plans/reference/jules-reviews.md, preserving truthful provenance. Recognise the documented BS-9 queen exception; separate role and secondary-job transitions; supply a reachable causal reproduction before calling retained cargo a defect. Explain why _return_bee_bread does not return a primary honey maker load. Death-food recovery is a gameplay decision, not a Jules fix. Use existing runnable test modules and true Proof predicates. Give every prior finding a verified disposition; no source, balance or save edits.
+
+### J-52 -- Correct the UI review evidence and runnable coverage recommendation
+
+- Files: docs/jules-reviews/ui-review-2026-10-30.md (new)
+- After: none
+- Why: PR #59 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Redo the report under plans/reference/jules-reviews.md. Quote the existing distinct weather-state text as non-colour information; do not prescribe badges without a demonstrated accessibility defect. Treat More-panel child-rectangle coverage as an observation unless a scenario proves a fault. Any proposed assertion must have a concrete scenario/test that executes it. Separate skipped Python wrappers, real engine geometry assertions and actual rendered hands-on evidence; claim none that did not run. Refresh historical follow-through and propose no gameplay or UI-source edits.
+
+### J-53 -- Correct the architecture review protected-API and task claims
+
+- Files: docs/jules-reviews/architecture-review-2026-10-30.md (new)
+- After: none
+- Why: PR #60 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Redo the report under plans/reference/jules-reviews.md. Retain the explicit reservation of adaptation/for_sector APIs in plans/design/progression.md and plans/reference/jules.md; record a required product decision instead of authorising removal. Recognise is_mastered as separately removed in the 2 Nov integration. Distinguish uncalled observations from safe deletion and respect current file owners. Do not reuse delivered J-43. Record positive catalogue/extraction observations without manufacturing tasks. No implementation, balance, ownership-boundary or save edits.
 
 ### Not tasks yet
 
