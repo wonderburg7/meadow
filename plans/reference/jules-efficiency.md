@@ -13,7 +13,9 @@ token efficient, without losing quality. Optimise the total work Jules,
 Claude, Codex and Dave must do, including review and integration.
 
 - Run one serial Jules sequence for this repository. Before every new task,
-  publish the previous PR, then run python tools/jules_preflight.py --next.
+  commit and publish the previous PR, run git fetch origin, then
+  git switch --detach origin/master, then python tools/jules_preflight.py --next.
+  Detaching ensures ownership checks include the previous task's branch.
   It fetches shared refs and prints the next Jules-Sequence line and task.
 - Odd turns are ordinary work: numbered task, due rota review, then standing
   task. Even turns are E-<number> efficiency tasks and take precedence over
