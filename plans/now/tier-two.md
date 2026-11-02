@@ -36,7 +36,6 @@ What the open slices build on:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | T2-7b | The tier-2 price sweep T2-7 deferred: tier-2 costs set so the arc's first tier-2 purchase lands around day 5 | `scripts/skills.gd`, `plans/design/progression.md`, tests; specified when AR-4 lands | no -- after AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker | medium |
-| T2-15 | with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked | `scripts/hive.gd`, `scripts/bee_building.gd`, tests | yes -- DR-1 and CQ-M8 landed 25 Oct 2026 | medium |
 
 **Dependencies.** T2-7b waits for AR-4
 (`plans/now/alpha-route-evidence.md`): the alpha arc makes no honey, so the
@@ -59,58 +58,7 @@ T2-11 shipped 2026-10-17; its specification is `plans/archive/T2-11_2026-10-17.m
 
 T2-14 shipped 2026-10-21; its specification is `plans/archive/T2-14_2026-10-21.md`.
 
-## T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked
-
-Level: medium (a gameplay outcome). Moved to the Codex lane, which had no
-admissible work and shares no file with it (Dave, 2 Nov 2026).
-
-**True now.** Dave: "when fermentation sense and cleaning are both active,
-cleaning comb workers should automatically clear fermented nectar".
-Cleaning (`skill.hive_mind.cleaning`) gates the `comb_clean_cell` task
-(`actions.gd`, near l.67). Its finder,
-`bee_building.gd::find_cell_needing_cleaning` (near l.22), looks only at
-corpses (`hive.gd::find_cell_needing_cleaning`, near l.695) and bodies. Fermentation
-sense is `skill.colony.fermentation_sense`, read through
-`hive.gd::senses_fermentation` (near l.574). Sour nectar is cleared only by
-the player's "Discard all sour nectar" or a Discard order (NF-5).
-
-**When done:**
-
-1. `hive.gd` has a helper returning the first fermented cell with stock and no
-   `evict_requested`, when `senses_fermentation()`; null otherwise.
-2. In `find_cell_needing_cleaning`, after corpses and bodies and only when the
-   bee owns Cleaning, that cell is marked `evict_mode = "discard"` and
-   `evict_requested = true` and the function returns false, so the existing
-   `comb_evict_cell` task picks it up.
-3. The closeout runs the reference arc before and after
-   (`python tools/run_scenario.py test_scenarios/alpha_arc_test.json`) and
-   reports the difference. Do not tune anything.
-
-**Invariants.** Without both skills nothing changes. Corpses and bodies keep
-priority. One cell is marked per call, so there is no per-frame sweep: the
-helper runs only when a comb worker looks for work. No save change (the
-eviction fields are saved already).
-
-**Stop and escalate** if the arc's outcome changes by more than a day on any
-gate.
-
-**Open decisions:** none.
-
-**Closeout evidence (2 Nov 2026):** The baseline and changed
-`alpha_arc_test.json` runs both reached day 70 with identical 575 action
-records and identical summaries, so no gate moved. Both exited 1 for the
-same 17 existing action problems (14 rejected, three never fired), including
-refused honey-ferment assignments; these are present before the change.
-Prefinish passed the Godot boot, source checks and 31 affected tests.
-
-```queue
-**[Codex] T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked**
-- Plan: `plans/now/tier-two.md` -- "T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked"
-- Files: `scripts/hive.gd`, `scripts/bee_building.gd`, `tests/test_nf5_clear_fermented.py`
-- Check: `python -m unittest tests.test_nf5_clear_fermented` passes with new cases (with both skills a cleaning comb worker empties a sour cell unasked; with only one skill it does not; corpses still come first); the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/bee_building.gd :: senses_fermentation`
-- Next after: T2-7b -- the deferred tier-2 price sweep
-```
+T2-15 shipped 2026-11-02; its specification is `plans/archive/T2-15_2026-11-02.md`.
 
 ## Not in the queue, and why
 
