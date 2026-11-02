@@ -71,15 +71,61 @@ static func age_and_burn(bee: Node2D, delta: float) -> void:
 	# else burned straight past zero into the negative and stayed alive
 	# there, and if such a bee later reached the comb it drank the debt
 	# back out of the stores. That is the energy leak.
+	#
+	# ED-1 (plans/now/difficulty.md, decision 3): zero energy no longer
+	# kills on the spot. The bee loses health instead, crawls home, and
+	# dies of starvation only when her health runs out -- about half a
+	# game-day at the defaults. Inside, with anything eaten, she heals.
+	# A bee at full health pays one comparison here.
 	if bee.energy <= 0.0:
 		bee.energy = 0.0
-		die(bee, "starvation")
-		return
+		bee.health -= GameConfig.exhaustion_health_drain * delta
+		if bee.health <= 0.0:
+			bee.health = 0.0
+			die(bee, "starvation")
+			return
+		head_home_spent(bee)
+	elif bee.health < GameConfig.health_capacity and bee._is_inside_hive():
+		bee.health = minf(GameConfig.health_capacity, bee.health + GameConfig.health_regen_rate * delta)
 
 	# The queen doesn't die of old age -- losing her would silently end
 	# the colony, and there's no succession yet. She can still starve.
 	if not bee.is_queen and bee.age_seconds >= lifespan_seconds(bee):
 		die(bee, "old age")
+
+
+## ED-1: the outdoor errands a spent bee abandons to crawl home. Drinking
+## at a flower is not among them -- that is already refuelling -- nor is
+## sheltering from rain, which has its own way home.
+const SPENT_RECALL_STATES: Array[int] = [
+	State.SEEK_FLOWER, State.SEARCHING, State.TO_FLOWER, State.INSPECTING,
+	State.COLLECTING, State.MOVE_TO_POINT, State.IDLING,
+]
+
+
+## ED-1: an out-of-energy bee outdoors gives up her errand and heads home,
+## at GameConfig.spent_speed_factor of her speed (bee_movement.gd), to eat
+## and rest. An unmated queen's nuptial flight keeps its own return.
+static func head_home_spent(bee: Node2D) -> void:
+	if bee.state == State.TO_HIVE or bee.nuptial_phase != bee.NUPTIAL_NONE:
+		return
+	if not (bee.state in SPENT_RECALL_STATES) or bee._is_inside_hive():
+		return
+	if bee.current_flower != null and is_instance_valid(bee.current_flower):
+		bee.current_flower.release(bee)
+	bee.current_flower = null
+	bee.state = State.TO_HIVE
+
+
+## ED-1: a forager recovering from exhaustion (below full health) stays
+## inside until her health and energy both clear GameConfig's
+## rest_leave_health and rest_leave_energy. A bee at full health never
+## rests, so nothing about an unexhausted colony changes.
+static func must_rest(bee: Node2D) -> bool:
+	if bee.health >= GameConfig.health_capacity:
+		return false
+	return (bee.health < GameConfig.health_capacity * GameConfig.rest_leave_health
+		or bee.energy < GameConfig.energy_capacity * GameConfig.rest_leave_energy)
 
 
 ## How long this bee lives. Shortened by disease, which is most of what
@@ -181,7 +227,13 @@ static func should_go_and_eat(bee: Node2D) -> bool:
 		return false
 	if not bee._is_inside_hive():
 		return false
-	if bee.energy > GameConfig.energy_capacity * GameConfig.hunger_threshold:
+	# ED-1: a bee recovering from exhaustion eats as soon as she is below
+	# the energy she needs to leave, rather than resting until she is
+	# hungry by the ordinary measure.
+	var eat_below: float = GameConfig.hunger_threshold
+	if bee.health < GameConfig.health_capacity:
+		eat_below = maxf(eat_below, GameConfig.rest_leave_energy)
+	if bee.energy > GameConfig.energy_capacity * eat_below:
 		return false
 	return bee.hive.find_food_cell() != null
 

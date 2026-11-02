@@ -82,6 +82,9 @@ func _starve_queen() -> void:
 		return
 	_log.append("queen %s, energy %.2f, paused %s" % [_queen.get("bee_name"), float(_queen.get("energy")), paused])
 	_queen.set("energy", 0.01)
+	# ED-1: zero energy now drains health over half a day rather than
+	# killing on the spot, so her health goes too.
+	_queen.set("health", 0.01)
 	_phase = "starving"
 
 

@@ -12,8 +12,8 @@ extends Node2D
 ## repeat until the stomach is full, then fly home, walk in through the
 ## hive entrance, deposit into a cell, and walk back out.
 ##
-## Every bee burns energy constantly and dies if it hits zero, and dies
-## of old age at `bee_lifespan_days`. Foragers refuel from the comb when
+## Every bee burns energy constantly; at zero she loses health and dies
+## when that runs out (ED-1), and she dies of old age at `bee_lifespan_days`. Foragers refuel from the comb when
 ## they deposit; in-hive bees sip from the comb as they go.
 ##
 ## The queen is an ordinary bee with `is_queen` set: she moves slower,
@@ -194,6 +194,10 @@ var tint_factor: float = 1.0
 var size_jitter: float = 1.0
 
 var energy: float = 100.0
+## ED-1: full (GameConfig.health_capacity) at birth. Only exhaustion lowers
+## it -- see bee_survival.gd::age_and_burn. Not saved yet (ED-1c): a load
+## restores every bee at full health.
+var health: float = 100.0
 ## Held topped up and exempt from starvation -- only ever set by
 ## challenge_runner.gd, for the queen, during Challenge 1's "no lethal
 ## pressure" start state (see TUTORIAL_PLAN.md). Never touched anywhere
@@ -820,6 +824,7 @@ func _ready() -> void:
 	flower_handling_time = GameConfig.flower_handling_time
 	deposit_time = GameConfig.deposit_time
 	energy = GameConfig.energy_capacity
+	health = GameConfig.health_capacity
 
 	# One rolled stat trait, small and leaning positive -- see
 	# bee_identity.gd and BEE_INDIVIDUALITY_PLAN.md. _apply_stats() does
@@ -1542,7 +1547,10 @@ func _process(delta: float) -> void:
 				BeeForaging.finish_depositing(self)
 		State.IN_HIVE_TO_EXIT:
 			Perf.begin("bee_to_exit")
-			BeeForaging.go_to_exit(self, delta)
+			# ED-1: a forager recovering from exhaustion rests where she is
+			# until her health and energy clear GameConfig's thresholds.
+			if not BeeSurvival.must_rest(self):
+				BeeForaging.go_to_exit(self, delta)
 			Perf.end("bee_to_exit")
 
 		State.MOVE_TO_POINT:
@@ -2763,6 +2771,8 @@ func _task_line() -> String:
 				return "landing on a flower"
 			return "collecting %s (%d carried)" % [resource_type, int(current_load)]
 		State.TO_HIVE:
+			if energy <= 0.0:
+				return "crawling home with no energy left (health %d%%)" % int(100.0 * health / max(0.001, GameConfig.health_capacity))
 			return "returning %s to the hive (%d carried)" % [current_load_type, int(current_load)]
 		State.IN_HIVE_TO_CELL:
 			if target_cell == null or not is_instance_valid(target_cell):
@@ -2773,6 +2783,8 @@ func _task_line() -> String:
 		State.DEPOSITING:
 			return "unloading %s into a cell" % current_load_type
 		State.IN_HIVE_TO_EXIT:
+			if BeeSurvival.must_rest(self):
+				return "resting to recover before going back out (health %d%%)" % int(100.0 * health / max(0.001, GameConfig.health_capacity))
 			return "heading back out of the hive"
 		State.MOVE_TO_POINT:
 			return "moving where you sent it"
