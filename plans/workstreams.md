@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/ED-1` (`claude/ED-1`) | Claude | every bee has health | Claude | in progress | none | `plans/now/difficulty.md` ED-1 -- every bee has health |
+| `.worktrees/T2-15` (`codex/T2-15`) | Codex | with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked | Codex | in progress | none | `plans/now/tier-two.md` T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked |
