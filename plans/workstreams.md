@@ -48,5 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/T2-15` (`codex/T2-15`) | Codex | with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked | Codex | in progress | none | `plans/now/tier-two.md` T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked |
 | `.worktrees/CQ-R15` (`claude/CQ-R15`) | Claude | the Goals drop-down becomes scripts/hud_goal_shelf.gd | Claude | in progress | none | `plans/now/code-health.md` CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd |
