@@ -640,6 +640,17 @@ an enum not in `bee_enums.gd`, or any golden string changes.
 
 ## CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd
 
+Implementation prepared on `codex/CQ-R16`, 2 Nov 2026; verification is
+blocked. Godot 4.7.2 boots to a parser error at `main.gd:64`: it cannot
+resolve `res://scripts/saves_panel.gd`, outside this slice's file scope.
+Both equivalence commands initially failed writing to the sandbox temporary
+directory. A retry with a writable temporary directory and the queen-build
+test lost their tool sessions to a blocked `dc.services.visualstudio.com`
+request, so neither has a passing verdict. Next: restore executable checks,
+rerun the slice's acceptance and source checks, then close out. C-168 covers
+box selection and middle-drag panning; CQ-R13 still needs its successor
+specification before closeout.
+
 Level: low -- a mechanical rename of five fields with every use listed.
 SG-3 landed 1 Nov 2026; queued while no other queued slice names `main.gd`.
 Moved to the Codex lane, which had no admissible work (Dave, 2 Nov 2026).

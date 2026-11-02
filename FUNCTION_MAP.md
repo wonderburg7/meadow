@@ -582,71 +582,6 @@ Every setting's key, label, range and tip, plus the read/write and Prerequisites
 1703 static func _cascade_mutual_exclusion_static(key: String) -> Array[String]
 ```
 
-## main.gd (1,540 lines)
-
-Per-frame entry point and run wiring; headless scenario boot lives in headless/scenario_boot.gd.
-
-```
-37   # --- signals ------------------------------------------------------
-51   # --- preloads and boot constants ----------------------------------
-102  # --- delegate systems ---------------------------------------------
-147  # --- world and meadow constants -----------------------------------
-208  # --- state --------------------------------------------------------
-420  # --- _ready and construction --------------------------------------
-430  static func run_definition(level_id: int, developer_edits_allowed: bool, overrides_path: String = DeveloperOverrides.PATH) -> Dictionary
-449  func _ready() -> void
-754  func on_short_term_goals_refreshed(finished: Array) -> void
-762  # --- public surface other scripts call directly -------------------
-769  func is_on_screen(node: Node2D) -> bool
-772  func hive_entrance_inside() -> Vector2
-775  func entrance_wait_point(side: int) -> Vector2
-778  func move_bee_into_hive(bee: Node2D) -> void
-781  func move_bee_out_of_hive(bee: Node2D) -> void
-784  func mark_death(bee: Node2D) -> void
-792  func _on_bee_died(bee: Node2D) -> void
-796  func finish_mining(block: Node2D) -> void
-799  func save_run() -> void
-802  func begin_winter_countdown() -> void
-805  # --- per-frame ----------------------------------------------------
-815  func _process(delta: float) -> void
-907  # --- the frame rate readout ----------------------------------------
-926  func _sample_fps() -> void
-949  func _reseed_meadow(delta: float) -> void
-969  func _hatch_ready_brood() -> void
-1005 func _sample_day_stores() -> void
-1024 func _advance_weather(delta: float) -> void
-1057 func _apply_rain_overlay() -> void
-1068 # --- the first crisis ----------------------------------------------
-1074 static func _blank_first_crisis() -> Dictionary
-1085 static func first_crisis_bounds() -> Dictionary
-1091 static func first_crisis_cutoff() -> float
-1095 func _first_crisis_applies() -> bool
-1102 func _first_crisis_holds_weather() -> bool
-1114 func _first_crisis_readiness() -> Dictionary
-1118 func _advance_first_crisis(delta: float) -> void
-1159 func _warn_first_crisis(starts_at: float, path: String, readiness: Dictionary) -> void
-1191 func _first_crisis_warning_text(readiness: Dictionary, lead: float) -> String
-1205 func _start_first_crisis() -> void
-1222 func _show_first_crisis_note() -> void
-1254 static func rain_when_text(lead: float, now: float, day_seconds: float) -> String
-1264 static func _minutes_text(seconds: float) -> String
-1271 func _trace_first_crisis(phase: String, readiness: Dictionary = {}, extra: Dictionary = {}) -> void
-1310 func restore_first_crisis(saved: Variant) -> void
-1353 func _check_for_loss() -> void
-1381 func _promote_gyne_to_queen() -> bool
-1402 func _check_colony_energy(delta: float) -> void
-1433 func invalidate_population() -> void
-1444 func _role_counts(bees: Variant = null) -> Dictionary
-1461 func _update_population_readout(bees: Variant = null) -> void
-1475 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
-1481 func _prune_selection() -> void
-1494 func _on_restart_after_loss() -> void
-1500 func _on_level_chosen(level: int) -> void
-1514 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
-1528 func _apply_scenario_boot_arg() -> void
-1533 func _end_scenario_run(outcome: String) -> void
-```
-
 ## bee_foraging.gd (1,539 lines)
 
 The forager's search, scouting, recruitment and species-preference
@@ -735,6 +670,71 @@ behaviour.
 1505 static func _complete_dance(mentor: Node2D, seeker: Node2D) -> void
 1532 # --- remote deposit -----------------------------------------------
 1534 static func deposit_everything_remotely(bee: Node2D) -> void
+```
+
+## main.gd (1,534 lines)
+
+Per-frame entry point and run wiring; headless scenario boot lives in headless/scenario_boot.gd.
+
+```
+37   # --- signals ------------------------------------------------------
+51   # --- preloads and boot constants ----------------------------------
+102  # --- delegate systems ---------------------------------------------
+147  # --- world and meadow constants -----------------------------------
+208  # --- state --------------------------------------------------------
+414  # --- _ready and construction --------------------------------------
+424  static func run_definition(level_id: int, developer_edits_allowed: bool, overrides_path: String = DeveloperOverrides.PATH) -> Dictionary
+443  func _ready() -> void
+748  func on_short_term_goals_refreshed(finished: Array) -> void
+756  # --- public surface other scripts call directly -------------------
+763  func is_on_screen(node: Node2D) -> bool
+766  func hive_entrance_inside() -> Vector2
+769  func entrance_wait_point(side: int) -> Vector2
+772  func move_bee_into_hive(bee: Node2D) -> void
+775  func move_bee_out_of_hive(bee: Node2D) -> void
+778  func mark_death(bee: Node2D) -> void
+786  func _on_bee_died(bee: Node2D) -> void
+790  func finish_mining(block: Node2D) -> void
+793  func save_run() -> void
+796  func begin_winter_countdown() -> void
+799  # --- per-frame ----------------------------------------------------
+809  func _process(delta: float) -> void
+901  # --- the frame rate readout ----------------------------------------
+920  func _sample_fps() -> void
+943  func _reseed_meadow(delta: float) -> void
+963  func _hatch_ready_brood() -> void
+999  func _sample_day_stores() -> void
+1018 func _advance_weather(delta: float) -> void
+1051 func _apply_rain_overlay() -> void
+1062 # --- the first crisis ----------------------------------------------
+1068 static func _blank_first_crisis() -> Dictionary
+1079 static func first_crisis_bounds() -> Dictionary
+1085 static func first_crisis_cutoff() -> float
+1089 func _first_crisis_applies() -> bool
+1096 func _first_crisis_holds_weather() -> bool
+1108 func _first_crisis_readiness() -> Dictionary
+1112 func _advance_first_crisis(delta: float) -> void
+1153 func _warn_first_crisis(starts_at: float, path: String, readiness: Dictionary) -> void
+1185 func _first_crisis_warning_text(readiness: Dictionary, lead: float) -> String
+1199 func _start_first_crisis() -> void
+1216 func _show_first_crisis_note() -> void
+1248 static func rain_when_text(lead: float, now: float, day_seconds: float) -> String
+1258 static func _minutes_text(seconds: float) -> String
+1265 func _trace_first_crisis(phase: String, readiness: Dictionary = {}, extra: Dictionary = {}) -> void
+1304 func restore_first_crisis(saved: Variant) -> void
+1347 func _check_for_loss() -> void
+1375 func _promote_gyne_to_queen() -> bool
+1396 func _check_colony_energy(delta: float) -> void
+1427 func invalidate_population() -> void
+1438 func _role_counts(bees: Variant = null) -> Dictionary
+1455 func _update_population_readout(bees: Variant = null) -> void
+1469 func _record_emergence(role: int, focus: String, as_gyne: bool) -> void
+1475 func _prune_selection() -> void
+1488 func _on_restart_after_loss() -> void
+1494 func _on_level_chosen(level: int) -> void
+1508 func _on_scenario_chosen(level: int, preset_key: String, custom_overrides: Dictionary) -> void
+1522 func _apply_scenario_boot_arg() -> void
+1527 func _end_scenario_run(outcome: String) -> void
 ```
 
 ## hive.gd (1,307 lines)
@@ -1181,73 +1181,73 @@ and the menu buttons.
 783  func _is_completed(stage: Dictionary) -> bool
 ```
 
-## input_selection.gd (750 lines)
+## input_selection.gd (755 lines)
 
 Selection, drag and placement resolution.
 
 ```
-15   # --- Keyboard and pointer input ---
-16   func _unhandled_input(event: InputEvent) -> void
-24   func _handle_key(event: InputEventKey) -> void
-51   func _handle_mouse_button(event: InputEventMouseButton) -> void
-81   func _handle_mouse_motion(event: InputEventMouseMotion) -> void
-90   # --- Picking bees, comb and world objects ---
-91   func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void
-126  func _click_pick_in_hive(p: Vector2, add: bool) -> bool
-151  func _click_pick_in_meadow(p: Vector2) -> bool
-166  func _box_pick_comb(box: Rect2, add: bool) -> bool
-185  func _box_pick_death_marker(box: Rect2) -> bool
-196  func _apply_bee_pick(picked: Array, additive: bool) -> void
-212  func _select_cells(cells: Array, additive: bool) -> void
-232  func _clear_cell_selection() -> void
-238  func _select_blocks(blocks: Array, additive: bool) -> void
-262  func _clear_block_selection() -> void
-268  func _select_world_object(kind: String, object: Node2D) -> void
-276  func _clear_world_object_selection() -> void
-281  func _on_soil_mark_requested(mark: bool) -> void
-286  func _on_keep_clear_clear_requested() -> void
-290  func _bees_in_current_view() -> Array
-294  func _death_markers_in_current_view() -> Array
-301  func _click_switches_view(point: Vector2) -> bool
-317  func _bee_at(point: Vector2) -> Node2D
-323  func _cell_at(point: Vector2) -> Node2D
-329  func _soil_at(point: Vector2) -> Node2D
-335  func _death_marker_at(point: Vector2) -> Node2D
-341  func _hex_at(global_point: Vector2) -> Vector2i
-345  # --- Click-to-place tools ---
-385  func _placement_tool_def(tool_id: String) -> Dictionary
-395  func request_placement_tool(tool_id: String) -> void
-422  func clear_placement_tool() -> void
-428  func _place_with_active_tool(ctrl_held: bool) -> void
-436  func _place_build_cell(global_point: Vector2, keep_adding: bool) -> void
-446  func _place_queen_build_cell(global_point: Vector2, _keep_adding: bool = false) -> void
-453  func _place_mine_target(global_point: Vector2, keep_adding: bool) -> void
-464  func _place_keep_clear(global_point: Vector2, _keep_adding: bool) -> void
-469  func _place_home_cell(global_point: Vector2, _keep_adding: bool = false) -> void
-480  func _on_cell_empty_by_bee_requested(cell: Node2D) -> void
-489  func _place_home_cell_all(global_point: Vector2, _keep_adding: bool = false) -> void
-497  func _place_mine_home(global_point: Vector2, _keep_adding: bool = false) -> void
-505  func _place_forage_start(global_point: Vector2, _keep_adding: bool = false) -> void
-511  func _place_floral_preference(global_point: Vector2, _keep_adding: bool = false) -> void
-533  # --- Right-click orders ---
-534  func _issue_command(world_point: Vector2) -> void
-561  func _command_in_hive(world_point: Vector2, commandable: Array, targets_before: Array) -> void
-580  func _command_in_meadow(world_point: Vector2, commandable: Array, targets_before: Array) -> void
-606  func _prune_invalid_selected_bees() -> void
-615  func _show_click_marker(world_point: Vector2) -> void
-621  func _on_role_selection_requested(role: int, focus: String) -> void
-637  func _ensure_hive_view() -> void
-642  # --- Selection and order drawing ---
-643  func _draw_selection_box() -> void
-660  func _draw_hive_orders() -> void
-693  func _draw_build_hover() -> void
-702  func _draw_home_marker(point: Vector2) -> void
-708  func _build_queue_points(bee: Node2D) -> Array
-714  func _mine_queue_points(bee: Node2D) -> Array
-721  func _draw_order_chain(bee: Node2D, points: Array, colour: Color) -> void
-731  func _draw_tile_outline(centre: Vector2, colour: Color, width: float, dashed: bool) -> void
-740  func _tile_centre(hex: Vector2i) -> Vector2
-745  func _draw_start_point_marker(point: Vector2) -> void
+20   # --- Keyboard and pointer input ---
+21   func _unhandled_input(event: InputEvent) -> void
+29   func _handle_key(event: InputEventKey) -> void
+56   func _handle_mouse_button(event: InputEventMouseButton) -> void
+86   func _handle_mouse_motion(event: InputEventMouseMotion) -> void
+95   # --- Picking bees, comb and world objects ---
+96   func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void
+131  func _click_pick_in_hive(p: Vector2, add: bool) -> bool
+156  func _click_pick_in_meadow(p: Vector2) -> bool
+171  func _box_pick_comb(box: Rect2, add: bool) -> bool
+190  func _box_pick_death_marker(box: Rect2) -> bool
+201  func _apply_bee_pick(picked: Array, additive: bool) -> void
+217  func _select_cells(cells: Array, additive: bool) -> void
+237  func _clear_cell_selection() -> void
+243  func _select_blocks(blocks: Array, additive: bool) -> void
+267  func _clear_block_selection() -> void
+273  func _select_world_object(kind: String, object: Node2D) -> void
+281  func _clear_world_object_selection() -> void
+286  func _on_soil_mark_requested(mark: bool) -> void
+291  func _on_keep_clear_clear_requested() -> void
+295  func _bees_in_current_view() -> Array
+299  func _death_markers_in_current_view() -> Array
+306  func _click_switches_view(point: Vector2) -> bool
+322  func _bee_at(point: Vector2) -> Node2D
+328  func _cell_at(point: Vector2) -> Node2D
+334  func _soil_at(point: Vector2) -> Node2D
+340  func _death_marker_at(point: Vector2) -> Node2D
+346  func _hex_at(global_point: Vector2) -> Vector2i
+350  # --- Click-to-place tools ---
+390  func _placement_tool_def(tool_id: String) -> Dictionary
+400  func request_placement_tool(tool_id: String) -> void
+427  func clear_placement_tool() -> void
+433  func _place_with_active_tool(ctrl_held: bool) -> void
+441  func _place_build_cell(global_point: Vector2, keep_adding: bool) -> void
+451  func _place_queen_build_cell(global_point: Vector2, _keep_adding: bool = false) -> void
+458  func _place_mine_target(global_point: Vector2, keep_adding: bool) -> void
+469  func _place_keep_clear(global_point: Vector2, _keep_adding: bool) -> void
+474  func _place_home_cell(global_point: Vector2, _keep_adding: bool = false) -> void
+485  func _on_cell_empty_by_bee_requested(cell: Node2D) -> void
+494  func _place_home_cell_all(global_point: Vector2, _keep_adding: bool = false) -> void
+502  func _place_mine_home(global_point: Vector2, _keep_adding: bool = false) -> void
+510  func _place_forage_start(global_point: Vector2, _keep_adding: bool = false) -> void
+516  func _place_floral_preference(global_point: Vector2, _keep_adding: bool = false) -> void
+538  # --- Right-click orders ---
+539  func _issue_command(world_point: Vector2) -> void
+566  func _command_in_hive(world_point: Vector2, commandable: Array, targets_before: Array) -> void
+585  func _command_in_meadow(world_point: Vector2, commandable: Array, targets_before: Array) -> void
+611  func _prune_invalid_selected_bees() -> void
+620  func _show_click_marker(world_point: Vector2) -> void
+626  func _on_role_selection_requested(role: int, focus: String) -> void
+642  func _ensure_hive_view() -> void
+647  # --- Selection and order drawing ---
+648  func _draw_selection_box() -> void
+665  func _draw_hive_orders() -> void
+698  func _draw_build_hover() -> void
+707  func _draw_home_marker(point: Vector2) -> void
+713  func _build_queue_points(bee: Node2D) -> Array
+719  func _mine_queue_points(bee: Node2D) -> Array
+726  func _draw_order_chain(bee: Node2D, points: Array, colour: Color) -> void
+736  func _draw_tile_outline(centre: Vector2, colour: Color, width: float, dashed: bool) -> void
+745  func _tile_centre(hex: Vector2i) -> Vector2
+750  func _draw_start_point_marker(point: Vector2) -> void
 ```
 
 ## world_building.gd (718 lines)

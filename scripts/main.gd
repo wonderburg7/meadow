@@ -362,10 +362,6 @@ var scenario_performance_capture: Dictionary = {}
 ## verbs/triggers and main.gd::_process for where it's ticked.
 var scenario_actions: Array = []
 
-var dragging: bool = false
-var drag_start: Vector2 = Vector2.ZERO
-var drag_current: Vector2 = Vector2.ZERO
-
 var reseed_timer: float = 0.0
 ## Rolling window for the top-left rate readout: a sample every 10 sim
 ## seconds, keeping the last 7 (a 60s span once warmed up). Rate is the
@@ -401,8 +397,6 @@ var short_term_goal_day: int = 0
 var short_term_goal_progress: Dictionary = {}
 var cluster_centers: Dictionary = {}   # species name -> Array[Vector2]
 var microhabitat_zones: Dictionary = {}   # microhabitat name -> Array[{"centre": Vector2, "radius": float}]
-var panning: bool = false          # middle mouse button held
-var pan_anchor: Vector2 = Vector2.ZERO
 
 ## "Click a spot" placement: the id of the one tool armed from the HUD ("" =
 ## none). While one is active the next left click in the relevant view is
@@ -959,7 +953,7 @@ func _reseed_meadow(delta: float) -> void:
 		to_seed -= world_building._seed_flower(false, to_seed)
 	if room > 0 and owed > 0:
 		world_building._rebuild_flower_grid()
-	if dragging:
+	if input_selection.dragging:
 		selection_layer.queue_redraw()
 
 ## A finished brood cell releases a new bee. The cell decides what that

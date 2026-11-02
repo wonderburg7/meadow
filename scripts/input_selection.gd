@@ -1,10 +1,15 @@
 extends Node
 ## Mouse and keyboard input, selecting bees/cells/soil, the "click a spot"
 ## placement modes, and drawing the selection box and a bee's orders.
-## Split out of main.gd 14 Aug 2026 -- see MAIN_SPLIT_PLAN.md. Holds no
-## state; reads and writes main's fields through the `main` reference.
+## Split out of main.gd 14 Aug 2026 -- see MAIN_SPLIT_PLAN.md. Owns pointer
+## gesture state; reads and writes shared fields through the `main` reference.
 
 var main: Node2D
+var dragging: bool = false
+var drag_start: Vector2 = Vector2.ZERO
+var drag_current: Vector2 = Vector2.ZERO
+var panning: bool = false          # middle mouse button held
+var pan_anchor: Vector2 = Vector2.ZERO
 ## Flowers and obstacles use the same single-selection presentation contract
 ## as bees/cells/soil, without joining the simulation's persistent selection
 ## arrays. Object summaries and this glow always move together.
@@ -60,14 +65,14 @@ func _handle_mouse_button(event: InputEventMouseButton) -> void:
 			if event.pressed and main.camera_view._pointer_over_ui():
 				pass
 			elif event.pressed:
-				main.dragging = true
-				main.drag_start = main.get_global_mouse_position()
-				main.drag_current = main.drag_start
+				dragging = true
+				drag_start = main.get_global_mouse_position()
+				drag_current = drag_start
 			else:
 				_finish_drag(event.shift_pressed, event.ctrl_pressed)
 		MOUSE_BUTTON_MIDDLE:
-			main.panning = event.pressed
-			main.pan_anchor = event.position
+			panning = event.pressed
+			pan_anchor = event.position
 		MOUSE_BUTTON_RIGHT:
 			# Godot delivers a fast second right-click as a further pressed
 			# event with double_click set, so the same order was issued twice.
@@ -79,37 +84,37 @@ func _handle_mouse_button(event: InputEventMouseButton) -> void:
 
 
 func _handle_mouse_motion(event: InputEventMouseMotion) -> void:
-	if main.panning:
+	if panning:
 		var cam: Variant = main.camera_view._active_camera()
-		cam.position -= (event.position - main.pan_anchor) / cam.zoom.x
-		main.pan_anchor = event.position
-	elif main.dragging:
-		main.drag_current = main.get_global_mouse_position()
+		cam.position -= (event.position - pan_anchor) / cam.zoom.x
+		pan_anchor = event.position
+	elif dragging:
+		drag_current = main.get_global_mouse_position()
 
 
 # --- Picking bees, comb and world objects ---
 func _finish_drag(additive: bool, add_to_group_selection: bool = false) -> void:
-	if not main.dragging:
+	if not dragging:
 		return
-	main.dragging = false
+	dragging = false
 	main.selection_layer.queue_redraw()
 
 	if main.active_placement_tool != "":
 		_place_with_active_tool(add_to_group_selection)
 		return
 
-	var box: Rect2 = Rect2(main.drag_start, main.drag_current - main.drag_start).abs()
+	var box: Rect2 = Rect2(drag_start, drag_current - drag_start).abs()
 	var picked: Array = []
 	if box.size.length() < 6.0:
-		var bee: Variant = _bee_at(main.drag_start)
+		var bee: Variant = _bee_at(drag_start)
 		if bee:
 			picked.append(bee)
-		elif _click_switches_view(main.drag_start):
+		elif _click_switches_view(drag_start):
 			return
 		elif main.in_hive_view:
-			if _click_pick_in_hive(main.drag_start, add_to_group_selection):
+			if _click_pick_in_hive(drag_start, add_to_group_selection):
 				return
-		elif _click_pick_in_meadow(main.drag_start):
+		elif _click_pick_in_meadow(drag_start):
 			return
 	else:
 		for b: Variant in _bees_in_current_view():
@@ -429,7 +434,7 @@ func _place_with_active_tool(ctrl_held: bool) -> void:
 	var def: Dictionary = _placement_tool_def(main.active_placement_tool)
 	var keep_adding: bool = def.get("queues", false) and ctrl_held
 	var handler := Callable(self, def["handler"])
-	handler.call(main.drag_start, keep_adding)
+	handler.call(drag_start, keep_adding)
 	if not keep_adding:
 		clear_placement_tool()
 
@@ -642,8 +647,8 @@ func _ensure_hive_view() -> void:
 # --- Selection and order drawing ---
 func _draw_selection_box() -> void:
 	Perf.begin("draw")
-	if main.dragging:
-		var box: Rect2 = Rect2(main.drag_start, main.drag_current - main.drag_start).abs()
+	if dragging:
+		var box: Rect2 = Rect2(drag_start, drag_current - drag_start).abs()
 		main.selection_layer.draw_rect(box, Color(0.2, 1.0, 0.4, 0.15), true)
 		main.selection_layer.draw_rect(box, Color(0.2, 1.0, 0.4, 0.9), false, 2.0)
 

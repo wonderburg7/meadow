@@ -795,9 +795,9 @@ static func _do_click_world(main: Node2D, action: Dictionary) -> void:
 	else:
 		var root: Node2D = main.hive_root if str(action.get("view", "hive")) == "hive" else main.meadow_root
 		point = root.to_global(Vector2(float(action.get("x", 0.0)), float(action.get("y", 0.0))))
-	main.dragging = true
-	main.drag_start = point
-	main.drag_current = point
+	main.input_selection.dragging = true
+	main.input_selection.drag_start = point
+	main.input_selection.drag_current = point
 	main.input_selection._finish_drag(false)
 	_log("click_world", str(action), "accepted", "")
 
