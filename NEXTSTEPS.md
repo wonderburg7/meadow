@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] SP-6 -- meadow foragers drawn from the sheet**
-   - Plan: `plans/now/sprites.md` -- "SP-6 -- meadow foragers drawn from the sheet"
-   - Files: `scripts/bee.gd`, `tests/sp6_forager_sprite_test.gd`, `tests/test_sp6_forager_sprite.py`
-   - Check: `python -m unittest tests.test_sp6_forager_sprite` passes: an outdoor worker heading into each of the eight octants shows that direction's row, its frame advances with the wing clock, and its body circles are hidden outdoors and shown indoors; a before/after profile of the display update is recorded in the plan; `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/bee.gd :: FORAGERS_MEADOW_VIEW`
-   - Next after: None -- plan complete
-
-2. **[Claude] ED-1 -- every bee has health**
+1. **[Claude] ED-1 -- every bee has health**
    - Plan: `plans/now/difficulty.md` -- "ED-1 -- every bee has health"
    - Files: `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/crab_spider.gd`, `scripts/game_config.gd`, `scripts/hud.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/ed1_exhaustion.json`, `tests/ed1_health_test.gd`, `tests/test_ed1_health.py`
    - Check: `python -m unittest tests.test_ed1_health` passes (a bee out of energy crawls at 25% speed, loses health and dies after about half a game-day unless it eats first; resting restores health and it leaves only past the thresholds; an ambush still kills; health survives save and restore and an old save loads at full health); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/bee.gd :: var health`
    - Next after: ED-2 -- a run's difficulty, and Easy's rules
 
-3. **[Claude] CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd**
+2. **[Claude] CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd**
    - Plan: `plans/now/code-health.md` -- "CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd"
    - Files: `scripts/hud.gd`, `scripts/hud_goal_shelf.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/ts2_hud_typeface_size_test.gd`, `FUNCTION_MAP.md`
    - Check: `python -m unittest tests.test_gp1_goals_dropdown tests.test_gp2_goal_favourites tests.test_ts2_hud_typeface_size tests.test_sg3_goal_shelf tests.test_layout_regression` passes with no assertion changed; `scripts/hud.gd` no longer defines `_rebuild_favourites`; `.\tools\verify.ps1` is green
@@ -85,9 +78,9 @@ One line each: the id, its plan, and the single thing it waits for.
 - **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices of the alpha chain (ED-1, ED-2, RR-12, SP-8a in `plans/now/drones.md`; WP-2 landed 21 Oct 2026 and WP-3 landed 22 Oct 2026) and ED-3 (Dave, 18 Oct 2026); CQ-S0's round-trip harness landed 22 Oct 2026.
 - **CQ-R2** (`plans/now/code-health.md`) -- the first crisis moves out of `scripts/main.gd` into a new first_crisis.gd, touching the save files; waits, gated with CQ-S1, for the save slices of the alpha chain (ED-1, ED-2, RR-12, SP-8a in `plans/now/drones.md`; WP-2 landed 21 Oct 2026) and ED-3 (Dave, 18 Oct 2026); its plan section is written when that gate clears.
 - **CQ-R8** (`plans/now/code-health.md`) -- hud builders shortened and hud sections re-headed; waits for CQ-R15, which shares `scripts/hud.gd`.
-- **CQ-R3** (`plans/now/code-health.md`) -- bee display text moves into a new bee_readout.gd; waits for SP-6 and ED-1 to release `scripts/bee.gd`.
+- **CQ-R3** (`plans/now/code-health.md`) -- bee display text moves into a new bee_readout.gd; waits for ED-1 to release `scripts/bee.gd` (SP-6 landed 1 Nov 2026).
 - **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; needs its section and block after CQ-R8 (CQ-L2 released `tests/source_checks.py` 24 Oct 2026).
-- **CQ-M6** (`plans/now/code-health.md`) -- selection green and caste appearance named; waits for the Claude lane's SP-6 and ED-1 to release `scripts/bee.gd` and the Codex lane's CQ-R16 to release `scripts/input_selection.gd`.
+- **CQ-M6** (`plans/now/code-health.md`) -- selection green and caste appearance named; waits for the Claude lane's ED-1 to release `scripts/bee.gd` (SP-6 landed 1 Nov 2026) and the Codex lane's CQ-R16 to release `scripts/input_selection.gd`.
 - **CQ-M7** (`plans/now/code-health.md`) -- world draw order named; waits for CQ-M6 and then needs its section and block.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
 - **FR-4** (`plans/now/forager-recruitment.md`) -- a headless assertion replaces the C-143 hands-on check; `scripts/scenario_actions.gd` was released 25 Oct 2026, but `tools/admission.py` reads C-143, the check it retires, as an unlanded slice, so its block stays `queue-gated` until admission ignores check ids.
