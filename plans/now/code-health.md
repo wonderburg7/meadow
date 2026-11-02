@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the Claude lane's ED-1 and CQ-R15 to release scripts/hud.gd and CQ-R16 to release scripts/main.gd, and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for ED-1 to release scripts/bee.gd (SP-6 landed 1 Nov 2026) and CQ-R16 to release scripts/input_selection.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R15 and CQ-R16 are queued (SG-3 landed 1 Nov 2026), CQ-R8 and CQ-R3 stay gated on the queued slices that own their files | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-R15 and CQ-R16 are queued; CQ-R3 follows ED-1 (SP-6 landed 1 Nov 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the Claude lane's ED-1 and CQ-R15 to release scripts/hud.gd and the Codex lane's CQ-R16 to release scripts/main.gd, and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for ED-1 to release scripts/bee.gd (SP-6 landed 1 Nov 2026) and the Codex lane's CQ-R16 to release scripts/input_selection.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R15 and CQ-R16 are queued (SG-3 landed 1 Nov 2026), CQ-R8 and CQ-R3 stay gated on the queued slices that own their files | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-R15 and CQ-R16 are queued; CQ-R3 follows ED-1 (SP-6 landed 1 Nov 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -130,7 +130,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
 | CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | gated -- ED-1 and CQ-R15 own `hud.gd`, CQ-R16 `main.gd`, Jules J-14 holds `game_panel.gd` | low |
-| CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- ED-1 owns `bee.gd`, CQ-R16 `input_selection.gd` | low |
+| CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- ED-1 owns `bee.gd`, the Codex lane's CQ-R16 `input_selection.gd` | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `bee_readout.gd` (new), `FUNCTION_MAP.md` | gated -- ED-1 owns `bee.gd` | medium |
@@ -139,7 +139,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R8 | hud builders shortened (designation button table); hud sections re-headed | `hud.gd`, `FUNCTION_MAP.md` | gated -- after CQ-R15 | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
 | CQ-R15 | the Goals drop-down becomes scripts/hud_goal_shelf.gd | `hud.gd`, `hud_goal_shelf.gd` (new), 3 goal tests, `FUNCTION_MAP.md` | queued (SG-3 landed 1 Nov 2026) | medium |
-| CQ-R16 | drag and pan state moves from `main.gd` to `input_selection.gd` | `main.gd`, `input_selection.gd`, `scenario_actions.gd` | queued (SG-3 landed 1 Nov 2026) | low |
+| CQ-R16 | drag and pan state moves from `main.gd` to `input_selection.gd` | `main.gd`, `input_selection.gd`, `scenario_actions.gd` | queued, Codex lane (SG-3 landed 1 Nov 2026) | low |
 
 Only the first slice of each chain carries a full section and block. A row without one
 gets its block written by the session that claims its predecessor, from this table,
@@ -325,11 +325,11 @@ wrapped chain as `. name(` on its own line.
 - **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`
   and `scripts/saving.gd`; its ownership overlaps that lane's current work.
 - **CQ-M5b** -- waits for the Claude lane's ED-1 and CQ-R15 to release
-  `scripts/hud.gd` and CQ-R16 to release `scripts/main.gd`
+  `scripts/hud.gd` and the Codex lane's CQ-R16 to release `scripts/main.gd`
   and for the Jules J-14 branch (which deletes code in `scripts/game_panel.gd`)
   to be merged or closed; keep its block gated until both clear.
 - **CQ-M6** -- waits for the Claude lane's ED-1 (SP-6 landed 1 Nov 2026) to release
-  `scripts/bee.gd` and CQ-R16 to release `scripts/input_selection.gd`;
+  `scripts/bee.gd` and the Codex lane's CQ-R16 to release `scripts/input_selection.gd`;
   keep its queue block gated until that ownership clears. CQ-R10 also uses `scripts/input_selection.gd`, so take it first.
 
 CQ-S0b shipped 2026-10-25; its specification is `plans/archive/CQ-S0b_2026-10-25.md`.
@@ -642,6 +642,7 @@ an enum not in `bee_enums.gd`, or any golden string changes.
 
 Level: low -- a mechanical rename of five fields with every use listed.
 SG-3 landed 1 Nov 2026; queued while no other queued slice names `main.gd`.
+Moved to the Codex lane, which had no admissible work (Dave, 2 Nov 2026).
 From the modularity review (MOD-02, 30 Oct 2026), narrowed.
 
 **Problem and benefit.** `main.gd` declares `dragging`, `drag_start`,
@@ -676,7 +677,7 @@ in the hive (the box draws and selects them); hold the middle button and
 drag (the view pans).
 
 ```queue
-**[Claude] CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd**
+**[Codex] CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd**
 - Plan: `plans/now/code-health.md` -- "CQ-R16 -- drag and pan state moves from main.gd to input_selection.gd"
 - Files: `scripts/main.gd`, `scripts/input_selection.gd`, `scripts/scenario_actions.gd`
 - Check: `python tools/equivalence.py test_scenarios/hr2_click_view_switch_test.json master` and `python tools/equivalence.py test_scenarios/e1_placement_exclusion_test.json master` report no difference; `python -m unittest tests.test_rr1_queen_builds` passes; `.\tools\verify.ps1` is green
