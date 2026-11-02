@@ -42,21 +42,14 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked**
-   - Plan: `plans/now/tier-two.md` -- "T2-15 -- with Fermentation sense and Cleaning owned, cleaning comb workers discard sour nectar unasked"
-   - Files: `scripts/hive.gd`, `scripts/bee_building.gd`, `tests/test_nf5_clear_fermented.py`
-   - Check: `python -m unittest tests.test_nf5_clear_fermented` passes with new cases (with both skills a cleaning comb worker empties a sour cell unasked; with only one skill it does not; corpses still come first); the before/after `alpha_arc_test.json` outputs are recorded in the closeout; `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/bee_building.gd :: senses_fermentation`
-   - Next after: T2-7b -- the deferred tier-2 price sweep
-
-2. **[Codex] L-39 -- command guard permits worktree closeout**
+1. **[Codex] L-39 -- command guard permits worktree closeout**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-39 -- command guard permits worktree closeout"
    - Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`, `tests/test_guard_hook_helpers.py`
    - Check: `python -m unittest tests.test_guard_hook tests.test_guard_hook_helpers`
    - Proof: `present: tools/guard_hook.py :: Run slice.ps1 finish from the primary checkout, not this worktree.`
    - Next after: L-40
 
-3. **[Codex] L-40 -- Codex coordinator delegates queue housekeeping**
+2. **[Codex] L-40 -- Codex coordinator delegates queue housekeeping**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-40 -- Codex coordinator delegates queue housekeeping"
    - Files: `.agents/skills/run-queue/SKILL.md`
    - Check: `python tools/check_docs.py`
