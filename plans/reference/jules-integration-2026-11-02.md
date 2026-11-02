@@ -44,8 +44,8 @@ agent-lifecycle plan, with proofs and normal queue blocks:
 
 | Slice | Outcome | Files | Next action |
 | --- | --- | --- | --- |
-| L-39 | Guard permits documented worktree closeout; other denials survive | tools/guard_hook.py and the two guard suites | Admit through normal Codex lane refill; no lane claimed here. |
-| L-40 | Codex coordinator delegates gates/refill/finish-stop to its existing steward | .agents/skills/run-queue/SKILL.md | Follow L-39, preserving current worker/model/cap policy and Codex syntax. |
+| L-39 | Guard permits documented worktree closeout; other denials survive | tools/guard_hook.py and the two guard suites | Admitted to the Codex lane through refill_lane.py; no lane claimed here. |
+| L-40 | Codex coordinator delegates gates/refill/finish-stop to its existing steward | .agents/skills/run-queue/SKILL.md | Admitted after L-39, preserving current worker/model/cap policy and Codex syntax. |
 
 Correction to the earlier Codex report: plans/README.md's Directory
 contract deliberately reserves plans/active/ while empty. The missing
@@ -63,7 +63,8 @@ The ledger now records each processed branch and reviewed tip, including
 returned and superseded work. J-42's completed block is pruned only because
 the corrected test actually enters this batch. The unaccepted J-31 audit
 remains a returned correction. Ten additional bounded briefs refill the
-ordinary task list, without changing either integrated lane:
+ordinary task list. Only the related L-39/L-40 entries are added to the
+Codex lane; existing entries and the Claude lane are preserved:
 
 | Task | Exact responsibility | Source review |
 | --- | --- | --- |
