@@ -72,7 +72,6 @@ Verified 12 Oct 2026 against master `06bd26c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| ED-1 | Every bee has health; exhaustion drains it; rest restores it; a spent bee crawls home | `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `test_scenarios/ed1_exhaustion.json`, `tests/ed1_health_test.gd`, `tests/test_ed1_health.py` | yes -- queued (SG-3 landed 1 Nov 2026; FC-2 released the save files 17 Oct 2026) | high |
 | ED-1b | A spider ambush takes a bee's health; the selection panel shows health beside energy | `scripts/crab_spider.gd`, `scripts/hud.gd`, `tests/ed1b_health_panel_test.gd`, `tests/test_ed1b_health_panel.py` | yes -- queued (ED-1 landed 2 Nov 2026) | medium |
 | ED-1c | Health is saved per bee; an old save loads every bee at full health | `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed1c_health_save_test.gd`, `tests/test_ed1c_health_save.py`, `tests/test_save_migrations.py`, `tests/fixtures/saves/cq_s0_early.json`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json` | no -- after ED-1b | medium |
 | ED-2 | A run's difficulty, and Easy's rules: health floors at one, the queen cannot die, brood waits, winter spares | `scripts/session.gd`, `scripts/bee_survival.gd`, `scripts/bee_nursery.gd`, `scripts/season.gd`, `scripts/crab_spider.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed2_easy_rules_test.gd`, `tests/test_ed2_easy_rules.py` | no -- after ED-1c | high |
@@ -96,70 +95,7 @@ per bee, per frame), ED-1c and ED-2 `.claude/rules/saving.md`, ED-1b and ED-3
 
 **Code health (`plans/now/code-health.md`, 18 Oct 2026).** Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (ED-1c, ED-2; the gate is ED-3, the end of the chain); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
 
-## ED-1 -- every bee has health
-
-<!-- LAYER: immediate-task -->
-
-Level: high -- a per-bee, per-frame path (`.claude/rules/performance.md`) and
-the one Standard outcome that changes, exhaustion.
-
-**Change.** `bee.gd` gains `health` (full at birth). `bee_survival.gd`: at
-zero energy a bee no longer dies on the spot; it loses health at a rate set
-so a bee lasts about half a game-day (decision 3), and dies at zero health.
-A bee at zero energy, or at minimum health, moves at 25% speed
-(`bee_movement.gd`) and heads home; inside it eats and rests, regaining
-health, and leaves only once health and energy clear minimum thresholds.
-Rates and thresholds live in `GameConfig`; a headless sweep
-(`ed1_exhaustion.json`) sets the drain to the half-day intent and records its
-table here. A crab-spider ambush is untouched and still kills outright
-(ED-1b gives it health to take); health is not yet saved, so a load restores
-every bee at full health until ED-1c. Every existing scenario still passes, or
-its changed expectation is recorded here with the exhaustion reason.
-
-**Delivered (2 Nov 2026).** `GameConfig` gains `health_capacity` (100),
-`exhaustion_health_drain` (1.0 a second), `health_regen_rate` (0.5 a second,
-inside the hive with any energy), `spent_speed_factor` (0.25), and
-`rest_leave_health` and `rest_leave_energy` (both 0.5). Each has a settings
-row with `"persist": "none"`, so nothing reaches the save before ED-1c. Only
-a bee below full health rests or eats early (at `rest_leave_energy` rather
-than `hunger_threshold`), so an unexhausted colony behaves as before.
-
-**Sweep** (`test_scenarios/ed1_exhaustion.json`, seed 4242: empty comb,
-three nurses and the queen, `energy_burn_rate` 2.0 so every bee is empty at
-50 s; the run collapses when the queen starves). Time at zero energy is
-the run's end less 50 s; a day is 200 s.
-
-| `exhaustion_health_drain` | Run ends (s) | Lasted at zero energy | Of a game-day |
-| --- | --- | --- | --- |
-| 0.5 | 249.8 | 199.8 s | 1.00 |
-| 0.75 | 183.8 | 133.8 s | 0.67 |
-| **1.0 (set)** | 149.8 | 99.8 s | **0.50** |
-| 1.5 | 116.8 | 66.8 s | 0.33 |
-| 2.0 | 99.8 | 49.8 s | 0.25 |
-
-At 1.0, a bee crawling at a quarter of `bee_speed` (27.5 px/s) covers about
-2,750 px of meadow before she dies. In `tests/ed1_health_test.gd` a forager
-put out 220 px from the hive at 60% health crawled home at 0.250 of her
-speed, was down to 28% health by the time she had crossed the comb to food,
-and left again at 53% health and 92% energy.
-
-**Changed expectation.** `tests/ho10_queen_starvation_ends_run_test.gd` now
-sets the queen's health to 0.01 as well as her energy. It needs her dead
-within 600 frames, and since exhaustion she would otherwise take half a day.
-`python tools/scenario_sweep.py` (2 Nov 2026): 65 of the 71 short scenarios
-pass. The other six (`bs4_honey_gate`, `c53_controls_list_leading`,
-`g3_actions_offered`, `gc2_role_change_delivers_load`, `slice1_smoke`,
-`wo1_winter_onset`) fail with the same outcome when run on master's scripts,
-so they were red before ED-1 and are not exhaustion changes.
-
-```queue
-**[Claude] ED-1 -- every bee has health**
-- Plan: `plans/now/difficulty.md` -- "ED-1 -- every bee has health"
-- Files: `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `test_scenarios/ed1_exhaustion.json`, `tests/ed1_health_test.gd`, `tests/test_ed1_health.py`
-- Check: `python -m unittest tests.test_ed1_health` passes (a bee out of energy crawls at 25% speed, loses health and dies after about half a game-day unless it eats first; resting restores health and it leaves only past the thresholds; an ambush still kills); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/bee.gd :: var health`
-- Next after: ED-1b -- an ambush takes health and the panel shows it
-```
+ED-1 shipped 2026-11-02; its specification is `plans/archive/ED-1_2026-11-02.md`.
 
 ## ED-1b -- an ambush takes health and the panel shows it
 

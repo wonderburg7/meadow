@@ -23,19 +23,19 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] ED-1 -- every bee has health**
-   - Plan: `plans/now/difficulty.md` -- "ED-1 -- every bee has health"
-   - Files: `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `test_scenarios/ed1_exhaustion.json`, `tests/ed1_health_test.gd`, `tests/test_ed1_health.py`
-   - Check: `python -m unittest tests.test_ed1_health` passes (a bee out of energy crawls at 25% speed, loses health and dies after about half a game-day unless it eats first; resting restores health and it leaves only past the thresholds; an ambush still kills); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/bee.gd :: var health`
-   - Next after: ED-1b -- an ambush takes health and the panel shows it
-
-2. **[Claude] CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd**
+1. **[Claude] CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd**
    - Plan: `plans/now/code-health.md` -- "CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd"
    - Files: `scripts/hud.gd`, `scripts/hud_goal_shelf.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/ts2_hud_typeface_size_test.gd`, `FUNCTION_MAP.md`
    - Check: `python -m unittest tests.test_gp1_goals_dropdown tests.test_gp2_goal_favourites tests.test_ts2_hud_typeface_size tests.test_sg3_goal_shelf tests.test_layout_regression` passes with no assertion changed; `scripts/hud.gd` no longer defines `_rebuild_favourites`; `.\tools\verify.ps1` is green
    - Proof: `present: scripts/hud.gd :: func _rebuild_favourites(`
    - Next after: CQ-R8
+
+2. **[Claude] ED-1b -- an ambush takes health and the panel shows it**
+   - Plan: `plans/now/difficulty.md` -- "ED-1b -- an ambush takes health and the panel shows it"
+   - Files: `scripts/crab_spider.gd`, `scripts/hud.gd`, `tests/ed1b_health_panel_test.gd`, `tests/test_ed1b_health_panel.py`
+   - Check: `python -m unittest tests.test_ed1b_health_panel` passes (an ambushed bee loses all its health and dies with the same cause as before; a selected bee's panel shows its health beside its energy); `.\tools\verify.ps1` is green
+   - Proof: `absent: scripts/hud.gd :: .health`
+   - Next after: ED-1c -- health is saved per bee
 
 ### Codex lane
 
