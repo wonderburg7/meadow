@@ -30,7 +30,13 @@ each review's state: `due`, `taken` (a report waits to be processed),
 `rests` (reviewed by anyone within `every` days) or `quiet` (fewer than `min`
 commits on its watched paths since its record).
 
-Jules takes work in this order: a free numbered task in
+Every other task is an E token-efficiency review, routed before this rota
+by `--next`; see `plans/reference/jules-efficiency.md`. E reviews are bounded
+to a workflow and do not replace/reset R-context. They share the session
+limit of three audits/reviews, and their sequence trailer must survive
+integration.
+
+On ordinary turns Jules takes work in this order: a free numbered task in
 `plans/reference/jules.md`, then the highest-priority due review, then a
 standing task. Reviews come after numbered tasks because those were chosen by
 Claude or Codex for a reason; they come before standing tasks because a
@@ -207,6 +213,11 @@ Reviewed: <short sha of origin/master> | Since: <SINCE> | Review: <record key> |
 ## Processing a Jules review
 
 <!-- LAYER: durable-rules -->
+
+Preserve the PR's `Jules-Sequence` trailer in the integration commit (or
+ledger-recording commit for a rejected report), before deleting its remote
+branch; corrections keep their original trailer. This retains alternating
+efficiency turns across sessions (`plans/reference/jules-efficiency.md`).
 
 For Claude or Codex, when `python tools/review_due.py` marks a review `[Jules
 report waiting: <branch>]` or `python tools/jules_preflight.py --ledger` lists
