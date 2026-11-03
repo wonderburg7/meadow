@@ -250,6 +250,26 @@ Runner: dave
 Owner: `plans/now/run-repairs.md`
 
 Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass, with a follow-up comment handled in that day's check batch.
+## 31 Oct 2026 -- Dave's hands-on pass
+
+### C-142 -- Reorder a bee's backup jobs and the colony default
+
+What this checks: reordering backup jobs for selected bees and the colony default.
+In PowerShell, go to the repo root: at home, run
+`cd C:\Users\david\Documents\Meadow\meadow`; at work, run
+`cd C:\Users\dl13860\Documents\Meadow\meadow`. Close the game, then run this once headless:
+`python tools/run_scenario.py test_scenarios/c142_work_priorities.json --install-save "C142 work priorities"`.
+If that name already exists, remove that check save in Saves and close the game before rerunning.
+Open the game, then the cog menu > Saves, and load "C142 work priorities".
+Carry on from there: select two or three bees, click More... in the bottom command tray, and use the up and down arrows beside each job in "Falls back on, in order"; then open the Colony window (the Colony button in the top-right bar, or the C key), expand "New bees fall back on" and move a job there. Try Tab and Enter to move a job without the mouse.
+
+PASS: the arrows reorder the list for every selected bee and keyboard focus stays on the arrow you used; a mixed selection says it is showing the first bee's order; the Colony list changes what a newly emerged bee shows when selected.
+
+If it fails, the list controls in scripts/hud.gd or scripts/colony_panel.gd reopen as a follow-up to WP-3.
+
+Runner: dave
+
+Owner: `plans/archive/work-priorities_2026-10-22.md`
 
 ## 24 Oct 2026 -- Dave's hands-on pass
 

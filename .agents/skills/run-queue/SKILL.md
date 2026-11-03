@@ -19,11 +19,22 @@ lane allows one open branch (`plans/workstreams.md` § Lanes), and two Godot
 runs at once kill each other. Don't end your turn between steps: end it
 only to ask Dave a question or to give the final report.
 
-`ROOT` is the primary checkout: `C:\Users\dl13860\Documents\Meadow\meadow`.
+`ROOT` is the primary checkout: the parent of
+`git rev-parse --path-format=absolute --git-common-dir`, the same from the
+primary checkout and any worktree (PowerShell:
+`Split-Path -Parent (git rev-parse --path-format=absolute --git-common-dir)`).
+Work it out once, at the start of the run.
 Run every lifecycle command with the shell's working directory set to
 `ROOT` (or to the slice worktree for `finish`), never with a `cd` that
 leaves a shell sitting in `.worktrees/`:
 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 <cmd> -Lane Codex`.
+
+**Before the first `doctor`, prove `.git` is writable.** From `ROOT`,
+run `git update-ref refs/meadow/write-probe HEAD; git update-ref -d refs/meadow/write-probe`.
+If either fails, claim nothing and tell Dave: "This session cannot
+write `.git`: choose `meadow` in this session's Permissions dropdown,
+then rerun `$run-queue`." A `:workspace` profile overrides
+`.codex/config.toml`'s `default_permissions = "meadow"`.
 
 ## Workers keep contained contexts
 
@@ -64,8 +75,8 @@ while one is active.
    Read plans/reference/slice-worker.md (its "Codex workers" note covers
    your tools) and follow it exactly. Skip CHATGPT.md, never run
    tools/slice.ps1, and end with only the JSON that file asks for.
-   ROOT=C:\Users\dl13860\Documents\Meadow\meadow
-   WORKTREE=C:\Users\dl13860\Documents\Meadow\meadow\.worktrees\<id>
+   ROOT=<ROOT>
+   WORKTREE=<ROOT>\.worktrees\<id>
    <start JSON>
    ```
 4. **Act on its result.**

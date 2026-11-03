@@ -111,6 +111,18 @@ ambiguous enough that two readings produce different code; or when you need
 a file outside `files`. Give the options and the cost of each. Leave
 whatever you have committed or uncommitted in place.
 
+## Size budget
+
+Every request re-sends your whole context, so a long slice costs more than
+its length. Measured 26 Oct-1 Nov 2026: low and medium slices took 30-100
+requests; the three `high` slices took 327-365 and cost over ten times as
+much. Count your tool calls. At about 120 without a passing check, stop
+adding and return `blocked` with `"reason": "size"`, what is committed, what
+remains, and where the plan should be cut (name the files each half owns). A
+clean split costs less than finishing a slice that should have been two. The
+agent's `maxTurns` is the hard stop behind this budget; reaching it loses
+your reply, so do not coast towards it.
+
 ## What you return
 
 Your final message is only this JSON, no prose around it:
@@ -124,6 +136,7 @@ Your final message is only this JSON, no prose around it:
   "check_run": "<the command you ran and its result line; say so if it could not show the fault before the fix>",
   "hands_on": "<C-<n> filed, or none>",
   "question": "<blocked only: the decision, the options and their costs>",
+  "reason": "<blocked only: \"size\" when you hit the size budget, else omit>",
   "failure": "<failed only: the failing command and its key error lines>"
 }
 ```

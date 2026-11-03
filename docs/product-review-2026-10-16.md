@@ -26,7 +26,7 @@ Reviewed: d7ad7de | Since: 62e77fd | Scope: milestone alignment of every live pl
 | F4 -- no nurse in a Scenario | Shipped -- BS-7 (81eeeab) |
 | F5 -- BS-4's dropped `when` | Fixed -- on 30 Sep; BS-4 landed (44a3155) |
 | F6 -- nothing on the alpha's critical path | Shipped -- Colony Run (`plans/archive/colony-run_2026-10-08.md`), victory in `colony_milestones.gd::check_victory` |
-| F7 -- the goal layers had no owner | Shipped -- GP-1, GP-2, GP-4 (`plans/archive/goal-presentation_2026-10-15.md`); SG-2/3 gated in `plans/now/short-term-goals.md` |
+| F7 -- the goal layers had no owner | Shipped -- GP-1, GP-2, GP-4 (`plans/archive/goal-presentation_2026-10-15.md`); SG-2/3 gated in `plans/archive/short-term-goals_2026-11-01.md` |
 | F8 -- BS-6 developer edits | Shipped -- BS-6 built |
 | F9 -- 2.6's hint | Fixed -- on 30 Sep |
 | F10 -- Challenge 2 raising before a nurse | Shipped -- C-83 confirmed 2 Oct (3d22557) |

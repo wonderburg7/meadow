@@ -392,7 +392,7 @@ def dry_lane_advice(report: dict, queued: set[str] | None = None) -> list[str]:
     if (report["successor"] and not report["successor_deferred"]
             and report["successor"] not in (queued or set())):
         advice.append(f"{report['successor']} is neither queued nor deferred -- add its bullet "
-                      "under '## Not in the queue, and why'")
+                      "under NEXTSTEPS.md's '## Not in the queue, and why' (a plan's own section of that name does not count)")
     for entry in report["borrowable"]:
         other_lane = next(lane for lane in check_docs.LANES if lane != report["lane"])
         advice.append(f"the {other_lane} backlog holds {entry['id']} "

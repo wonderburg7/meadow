@@ -24,6 +24,7 @@ extends RefCounted
 
 const Conditions = preload("res://scripts/conditions.gd")
 const Levels = preload("res://scripts/levels.gd")
+const ShortTermGoals = preload("res://scripts/short_term_goals.gd")
 
 ## skills.gd's AUTOMATION id, spelled out because only progression.gd may read
 ## the skill catalogue (source_checks.py), as challenge_stages.gd does for
@@ -124,6 +125,10 @@ var genetic_points: int = 0
 ## GP-2: the goal ids the player has starred (LONG_TERM or a milestone id).
 ## A starred line stays on screen while the Goals drop-down is collapsed.
 var favourites: Array = []
+## SG-3: completion notes for short-term goals finished today, each
+## {id, text, day}. They show struck-through-style on the shelf until the day
+## changes. Not saved: a load simply has none.
+var short_term_notes: Array = []
 
 
 ## True in a Colony Run only. Read from the level row each time, so a load
@@ -227,10 +232,14 @@ func restore(data: Dictionary) -> void:
 				favourites.append(str(id))
 
 
-## GP-2: true for an id a favourite may carry. SG-3 adds the short-term ids.
+## GP-2: true for an id a favourite may carry: the long-term line, a
+## milestone, or (SG-3) a short-term goal.
 func _is_goal_id(id: String) -> bool:
 	if id == LONG_TERM:
 		return true
+	for goal: Dictionary in ShortTermGoals.CATALOGUE:
+		if goal.id == id:
+			return true
 	for milestone: Dictionary in MILESTONES:
 		if milestone.id == id:
 			return true
@@ -245,7 +254,7 @@ func toggle_favourite(id: String) -> void:
 		favourites.erase(id)
 	else:
 		favourites.append(id)
-	show_next()
+	show_goals()
 
 
 ## GP-2: the day a favourite was met, or -1. The long-term goal is met by the
@@ -290,9 +299,12 @@ func check_victory() -> void:
 ## COL-1: the goal shelf shows the first milestone not yet met, with the one
 ## most recently met struck through beneath it. Called when a milestone is
 ## newly met, at the start of the run and after a load -- never per frame.
-## No bar: a milestone has no single number. Does nothing outside a Colony Run.
+## No bar: a milestone has no single number. Outside a Colony Run it shows the short-term goals alone (SG-3), or nothing.
 func show_next() -> void:
-	if main == null or main.hud == null or not applies():
+	if main == null or main.hud == null:
+		return
+	if not applies():
+		_show_short_term_alone()
 		return
 	var next_goal := ""
 	var done_goal := ""
@@ -326,9 +338,114 @@ func show_next() -> void:
 		var id: String = milestone.id
 		if favourites.has(id) and met_days.has(id) and id != done_id:
 			entries.append({"id": id, "text": milestone.goal, "done": true, "starred": true, "extra": true})
+	entries.append_array(short_term_entries())
+	_connect_hud()
+	main.hud.set_colony_goals(entries)
+
+
+func _connect_hud() -> void:
 	if not main.hud.goal_star_toggled.is_connected(toggle_favourite):
 		main.hud.goal_star_toggled.connect(toggle_favourite)
+	if not main.hud.goal_dismiss_requested.is_connected(dismiss_short_term):
+		main.hud.goal_dismiss_requested.connect(dismiss_short_term)
+
+
+## SG-3: redraws the Goals drop-down. A Colony Run shows the milestones with
+## the short-term goals under them; any other run that is not a Challenge
+## (a Scenario) shows the short-term goals alone, and nothing at all while it
+## has none. Never per frame: main.gd calls it from the goal refresh.
+func show_goals() -> void:
+	show_next()
+
+
+## SG-3: show_next's branch for a run that is not a Colony Run.
+func _show_short_term_alone() -> void:
+	# A Challenge keeps its own goal shelf, whatever the goal state holds.
+	if Session.starting_level in [1, 2] or main.challenge_runner.active:
+		return
+	var entries: Array = short_term_entries()
+	if entries.is_empty() and main.hud.goals.colony_goal_entries.is_empty():
+		return
+	_connect_hud()
 	main.hud.set_colony_goals(entries)
+
+
+## SG-3: the short-term lines for the drop-down: each open goal with its
+## progress and reward, then today's completion notes. A starred goal that is
+## neither open nor a note of today is unstarred here.
+func short_term_entries() -> Array:
+	var entries: Array = []
+	if main == null:
+		return entries
+	var offered: Dictionary = main.short_term_goals.get("offered", {})
+	var day: int = main.day
+	short_term_notes = short_term_notes.filter(func(note: Dictionary) -> bool: return int(note.day) >= day)
+	for id: String in offered.keys():
+		var goal: Dictionary = offered[id]
+		var text: String = str(goal.get("label", id))
+		var progress: String = _progress_text(id, main.short_term_goal_progress.get(id, {}))
+		if not progress.is_empty():
+			text += " -- " + progress
+		var reward: float = float(goal.get("reward", 0.0))
+		if reward > 0.0:
+			text += " (pays %s %s)" % [_amount_text(reward), str(goal.get("resource", ""))]
+		entries.append({"id": id, "text": text, "done": false, "starred": favourites.has(id), "short_term": true})
+	for note: Dictionary in short_term_notes:
+		if not offered.has(note.id):
+			entries.append({"id": note.id, "text": note.text, "done": true, "starred": favourites.has(note.id), "short_term": true})
+	for goal: Dictionary in ShortTermGoals.CATALOGUE:
+		var kept := false
+		for entry: Dictionary in entries:
+			kept = kept or entry.id == goal.id
+		if favourites.has(goal.id) and not kept:
+			favourites.erase(goal.id)
+	return entries
+
+
+## SG-3: records the completion note for a goal year_winter.gd just finished.
+func note_short_term_finished(goal: Dictionary) -> void:
+	if main == null:
+		return
+	var text := "%s -- done" % str(goal.get("label", goal.get("id", "")))
+	var reward: float = float(goal.get("reward", 0.0))
+	if reward > 0.0:
+		text += ", %s %s added to the stores" % [_amount_text(reward), str(goal.get("resource", ""))]
+	short_term_notes.append({"id": str(goal.get("id", "")), "text": text, "day": main.day})
+
+
+## SG-3: Dismiss on a short-term line. The slot stays empty until the next day
+## (short_term_goals.gd::available).
+func dismiss_short_term(id: String) -> void:
+	if main == null:
+		return
+	ShortTermGoals.dismiss(main.short_term_goals, id, main.day)
+	favourites.erase(id)
+	show_goals()
+
+
+func _amount_text(amount: float) -> String:
+	return "%d" % int(round(amount)) if amount >= 10.0 else "%.1f" % amount
+
+
+## SG-3: one short line of progress for an open goal. Empty until the
+## refresh has worked it out (a goal offered a moment ago).
+func _progress_text(id: String, step: Dictionary) -> String:
+	if step.is_empty():
+		return ""
+	var current: int = int(round(float(step.get("current", 0))))
+	var target: int = int(round(float(step.get("target", 1))))
+	match id:
+		"pollen_surplus", "feed_every_larva":
+			return "%d of 1 day" % mini(current, 1)
+		"clear_blocked_work":
+			return "%d blocked" % current
+		"make_room":
+			return "%d more to build" % maxi(0, target - current)
+		"put_waiting_bees_to_work":
+			return "%d waiting, aim for %d or fewer" % [current, target]
+		"honey_for_winter":
+			return "winter-ready: %s" % ("yes" if current >= 1 else "not yet")
+	return "%d / %d" % [current, target]
 
 
 ## GP-1 (plans/now/goal-presentation.md decision 3): the long-term goal as

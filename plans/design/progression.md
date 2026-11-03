@@ -49,6 +49,11 @@ Net effect: Phase A of the build is mostly *extension*, not new systems.
 
 ## 3. New catalogue files
 
+**API reservation (Dave, 2 Nov 2026; Jules review D1).** Retain the reserved
+adaptation and skill-query APIs until progression work resumes. Their lack
+of current callers does not authorise removal through the Jules architecture
+report. Revisit their interfaces with the owning progression work.
+
 Only what has no existing home. Each modelled on `roles.gd`'s shape (static const data + lookup funcs).
 
 - **`skills.gd`** — skill nodes. Fields: stable ID, name, description, sector, tier, axial position, `max_rank`, cost recipe, previous-tier requirement, `all_of`/`any_of` prerequisites, campaign-introduction metadata, feature dependency, typed effects, icon metadata.

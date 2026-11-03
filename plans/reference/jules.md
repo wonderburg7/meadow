@@ -1,7 +1,7 @@
 # Google Jules -- task list and method
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: Jules every task; Claude/Codex only to add or prune a task -->
-Status: reference | Owner: Dave / Claude Code / Codex | Next: refill -- every open task (J-31, J-42) is returned for correction, see `--ledger`; when no task is free Jules runs the review rota (`plans/reference/jules-reviews.md`) | Dependency: none | Verified: 2026-10-30
+Status: reference | Owner: Dave / Claude Code / Codex | Next: J-31 correction and J-44 to J-53; alternate ordinary and efficiency tasks as --next routes | Dependency: correction details in plans/reference/jules-integration-2026-11-02.md | Verified: 2026-11-02
 
 Jules works from GitHub on a Linux VM, outside the Claude/Codex slice queue.
 Its work is behaviour-preserving tooling: guards that catch a known bug class
@@ -32,20 +32,24 @@ disposes of without re-reading the code base. **What happened to every Jules
 branch** is in `plans/reference/jules-ledger.md`; `python
 tools/jules_preflight.py --ledger` lists the ones nobody has processed.
 
+Every other new task is now an E-<n> token-efficiency review. The persistent
+sequence, exact review method and integration contract live in
+`plans/reference/jules-efficiency.md`; `--next` routes each turn.
+
 ## Starting prompt (Dave pastes this into Jules)
 
 ```text
-Work through Meadow's Jules tasks one after another in this one session, as many as you can, until a stop condition below is met. Opening a pull request is not a stop condition. Every rule in AGENTS.md's Jules section and in jules.md's "How to work" stands.
+Work through Meadow's Jules tasks one after another in this one session, as many as you can, until a stop condition below is met. Opening a pull request is not a stop condition. Every rule in AGENTS.md's Jules section and in jules.md's "How to work" stands. Alternate ordinary tasks and E efficiency tasks exactly as --next routes them; preserve its Jules-Sequence trailer across sessions.
 
-Once, at the start: read the "If you are Google Jules" section of AGENTS.md. Of plans/reference/jules.md, read only the parts named below.
+Once, at the start: read the "If you are Google Jules" section of AGENTS.md, then `python tools/heading.py plans/reference/jules-efficiency.md "Alternation and continuity"`. Of plans/reference/jules.md, read only the parts named below.
 
 For each task:
 
-1. Run `git fetch origin`, then `git switch -c jules/<id>-<topic> origin/master`. Cut every branch from origin/master, never from local master or an earlier task's branch. A stale or stacked base is what made earlier PRs carry two tasks and revert files.
-2. Run `python tools/jules_preflight.py --next` and do the task it prints. It never prints a task that is taken, waiting on an unmerged task, or touching a file an open branch changes, so no task ever needs stacking. If it prints a review (`next  R-<name>`), run that review as its block says, following `python tools/heading.py plans/reference/jules-reviews.md "Running a review"` instead of steps 3 and 4; its report is the only file you add. If it prints "none", run `python tools/heading.py plans/reference/jules.md "Standing tasks"` and take the first that fits. For S-1, S-2 and S-3, first run `git branch -r --list 'origin/jules/s-*'` and look at your own open PRs, then pick a tool, function or pitfall that none of them covers.
+1. With the previous PR committed and published, run `git fetch origin`, then `git switch --detach origin/master`, then `python tools/jules_preflight.py --next` to get the task id and Jules-Sequence. If a task was selected, run `git switch -c jules/<id>-<topic> origin/master` using its lower-case id (for `none`, choose the standing task before branching). Cut every branch from origin/master, never from local master or an earlier task's branch. A stale or stacked base is what made earlier PRs carry two tasks and revert files.
+2. Do the task --next printed. If it is `E-<n>`, run `python tools/heading.py plans/reference/jules-efficiency.md "Running an efficiency task"` and follow that method instead of steps 3 and 4; add only the named report. It is every other task, even when ordinary work is free. On ordinary turns it never prints a task that is taken, waiting on an unmerged task, or touching a file an open branch changes, so no task ever needs stacking. If it prints a review (`next  R-<name>`), run that review as its block says, following `python tools/heading.py plans/reference/jules-reviews.md "Running a review"` instead of steps 3 and 4; its report is the only file you add. If it prints "none", run `python tools/heading.py plans/reference/jules.md "Standing tasks"` and take the first that fits. For S-1, S-2 and S-3, first run `git branch -r --list 'origin/jules/s-*'` and look at your own open PRs, then pick a tool, function or pitfall that none of them covers.
 3. Run `python tools/heading.py plans/reference/jules.md "How to work"` and follow it. Write its plan (task id, preflight output, files, proof) in your message and carry on without waiting for approval.
 4. Before opening the PR, read your own diff once (`git diff origin/master...HEAD`) and remove anything the task's `Do:` does not ask for. Check each clause of `Do:` one by one against your change and say which test or edit meets it. Run `python tools/jules_preflight.py --scope`; it must print no `off` line. Title the PR `J-<n>: <task title>` (`S-<n>: ` for a standing task) and write the description in the order "How to work" step 8 gives, short enough that the reviewer need not open the diff to understand it.
-5. Open the PR, do not merge it, and start the next task at step 1 without waiting for review. Before each new task, look at the CI result of your earlier PRs: fix a failing one on its own branch if the fix is inside its task's files, once; if it still fails, mark that PR draft with the failure in its first line and carry on.
+5. Copy the printed `Jules-Sequence: <n> <ordinary|efficiency>` line into the commit message and PR description. Push and open the PR, do not merge it, and start the next task at step 1 without waiting for review. Corrections and CI repairs retain the original trailer; they are the same task. Before each new task, look at the CI result of your earlier PRs: fix a failing one on its own branch if the fix is inside its task's files, once; if it still fails, mark that PR draft with the failure in its first line and carry on.
 
 A task you cannot finish does not end the session. If one fails its checks and you cannot fix it within its scope, push what you have, open it as a draft PR whose first line is `Blocked: <the one reason>`, and take the next task.
 
@@ -54,11 +58,11 @@ Stop and report when any of these happens:
 - `--scope` shows an `off` line you cannot clear (your tree is stale or stacked; clearing it is the only safe move, so say so).
 - Two tasks in a row end as draft `Blocked:` PRs for the same reason (the cause is probably shared, not the tasks).
 - You have finished 20 tasks.
-- You have finished 3 audits or reviews ("Audit: ..." tasks and `R-` reviews together). Each reads the whole code base; after the third, take only other tasks, and stop if none are free.
+- You have finished 3 audits/reviews ("Audit: ...", `R-` and `E-` tasks together) and the next task would be another. Stop rather than skipping an efficiency turn. E tasks are bounded; ordinary audit/review scopes stay as specified.
 
 If you are unsure whether something is in scope, do not guess: skip that task as a draft `Blocked:` PR naming the question, and take the next. Do not edit plans/reference/jules.md or any file the task's `Files:` line does not name.
 
-Final report, one block, written so a reviewer can act on it without opening any PR: a table with one row per PR (task id, branch, PR link, ready or draft, files changed and lines changed from `git diff --shortstat origin/master...HEAD`, `--scope` result, the one command that reruns its proof); then every Follow-up from every PR in one list with file and function and, where one plainly owns it, the plan under `plans/`; then for each audit or review the three findings you re-checked by hand, and for each review the count of its findings by proposed disposition and the decisions it asks of Dave. List draft PRs first with their `Blocked:` reason. If you stopped early, say which condition.
+Final report, one block, written so a reviewer can act on it without opening any PR: a table with one row per PR (task id, branch, PR link, ready or draft, files changed and lines changed from `git diff --shortstat origin/master...HEAD`, `--scope` result, the one command that reruns its proof); then every Follow-up from every PR in one list with file and function and, where one plainly owns it, the plan under `plans/`; then for each ordinary audit or review the three findings you re-checked by hand (or all if fewer), and for E tasks the actionable findings re-checked, and for each review the count of its findings by proposed disposition and the decisions it asks of Dave. List draft PRs first with their `Blocked:` reason. Include the last published Jules-Sequence and the next task kind. If you stopped early, say which condition.
 ```
 
 **A session works as many tasks as it can in sequence** (sequence prompt 27
@@ -82,8 +86,14 @@ is waiting on review, not on Jules: merge its pull requests in one pass
 
 ## How to work
 
-1. **Pick.** `python tools/jules_preflight.py --next` fetches `origin` and
-   prints the first numbered task that is not done, not taken by an open
+1. **Pick.** With the previous PR committed and published, fetch origin and
+   run `git switch --detach origin/master` before selecting; the ownership
+   check must not exclude the preceding task's branch as the current branch.
+   `python tools/jules_preflight.py --next` fetches `origin`,
+   prints the persistent `Jules-Sequence` and alternates ordinary tasks with
+   E token-efficiency tasks. For E, read its printed method instead of the
+   remaining steps here; only its exact report may change. On an ordinary
+   turn it prints the first numbered task that is not done, not taken by an open
    `jules/j-<n>-*` branch, not waiting on another task, and whose files no
    queued slice, live plan or unmerged branch claims, and prints its whole
    block (`Files:`, `After:`, `Why:`, `Do:`). Take that one, not another, and
@@ -134,7 +144,13 @@ is waiting on review, not on Jules: merge its pull requests in one pass
    files you never touched. For each `off` line run the command it prints,
    commit, and run `--scope` again. Never push with an `off` line standing: CI
    runs the same check on every `jules/j-*` pull request and fails on one.
-8. **Pull request description**, in this order: `Verdict:` one line, `ready`
+8. **Sequence.** Copy the printed `Jules-Sequence` line into the final commit
+   message and PR description. Push and open the PR before picking again.
+   Keep the same trailer for corrections. The integrator must preserve it
+   when squashing or taking files by checkout, including rejected attempts
+   whose remote branch is deleted (see `jules-efficiency.md`).
+
+   **Pull request description**, in this order: `Verdict:` one line, `ready`
    or `draft: <reason>`; `Task:` id and title; `Diff:` the output of `git
    diff --shortstat origin/master...HEAD`; `Preflight:` the output of step 2;
    `Scope:` the output of step 7; `Ran:` each command and its result, with
@@ -223,22 +239,75 @@ it, like `tools/heading.py`.
   converted at the move. Candidate Jules tasks are source checks for any
   mixed shape a regex can catch; if none can, say so.
 
-### J-42 -- Prove Godot wrapper helpers propagate failure and skip
+### J-44 -- Make the JSON-number guard track numeric values and loop scope
 
-- Files: tests/test_godot_helper_contracts.py (new)
+- Files: tools/json_number_check.py (new), tests/test_json_number_check.py (new)
 - After: none
-- Why: J-37 wrongly calls helpers with assertions vacuous. A small mocked
-  contract test can prove the failure path without adding redundant return
-  values or requiring an engine installation.
-- Do: import the HO10 and Challenge2 Python test modules as modules, not
-  exported TestCase aliases. Instantiate their test cases and invoke
-  `_boot_and_run` with the engine discovery, cache preparation and process
-  launch mocked. A well-formed PASS payload and exit 0 must succeed;
-  missing PASS, a script error, an explicit FAIL line and a non-zero exit
-  must each raise AssertionError. No executable must raise unittest.SkipTest,
-  and the subprocess must not be called in that case. Build all results in
-  memory; never launch Godot, read a player profile or change the wrappers.
-  Mutation-prove removing the helper's output/error checks is detected.
+- Why: PR #72 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Use the rejected PR only as a starting point for its two named files. Accept string-array membership; expire taint at loop/function boundaries; do not infer numeric provenance merely from a variable name. Detect the documented raw numeric .get lookup before integer-array membership, or narrow the scanner contract explicitly. Test positive string/reused-loop-variable cases and negative raw-number cases. Pass on current scripts and mutation-prove the supported numeric-coercion failure. No GDScript or save edits.
+
+### J-45 -- Make the navigation-bound guard prove the reach expression
+
+- Files: tools/nav_reach_check.py (new), tests/test_nav_reach_check.py (new)
+- After: none
+- Why: PR #75 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Keep a two-file standalone guard. Check that navigation and chamber construction use the same exclusive outer bound, including arithmetic in reach, not merely three field-name substrings. Mutating current reach by adding + 1, subtracting rock rings, omitting a term or widening the range stop must each fail; ordinary formatting changes must pass. Do not edit navigation, GameConfig or game tests.
+
+### J-46 -- Make the obstacle-commitment guard respect conditional nesting
+
+- Files: tools/skirt_commitment_check.py (new), tests/test_skirt_commitment_check.py (new)
+- After: none
+- Why: PR #76 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Keep the two-file standalone guard. A skirt_obstacle clear must be inside the debounce conditional, not merely after a comparison token. Starting from current bee_movement.gd, move the clear outside the inner condition and leave pass inside it: the guard must fail. Reject a single-frame threshold within the supported shape; accept intentional navigation resets. Ignore comments/strings and pass on current scripts. No steering or cadence edits.
+
+### J-47 -- Keep one executable-code marker-reparenting guard
+
+- Files: tools/marker_reparent_check.py (new), tests/test_marker_reparent_check.py (new)
+- After: none
+- Why: PR #79 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Use only the two named files from PR #79, retaining visit-point coverage; discard its entire unrelated snapshot. Parse executable code rather than comments/strings. Commenting out the real central reparent must fail, as must missing parent assignment, uncovered marker stages, wrong ordering and branch-local reparenting. Check both marker functions. A nonexistent requested input file must exit non-zero. Pass on current challenge_runner.gd. Do not import PR #77 or change game source.
+
+### J-48 -- Make the drained-flower guard prove rejection and cooldown updates
+
+- Files: tools/drained_flower_exclusion_check.py (new), tests/test_drained_flower_exclusion_check.py (new)
+- After: none
+- Why: PR #84 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Keep the two-file standalone guard. Require an executable rejecting cooldown predicate outside the relaxed-search condition and an actual cooldown update on collection completion. Changing the current cooldown return false to return true, removing the rejection or replacing the assignment with a read/comment must each fail. Ignore strings/comments, preserve normal formatting and pass on current bee_foraging.gd. No foraging, simulation, settings or save edits.
+
+### J-49 -- Make run-scenario helper tests portable to Windows
+
+- Files: tests/test_run_scenario_helpers.py (new)
+- After: none
+- Why: PR #82 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Take only this test file from PR #82. Build all four terminal-line expected paths from str(result_path), preserving the platform-native formatting contract; never change the production helper to meet POSIX-only expectations. Run python -m unittest tests.test_run_scenario_helpers without a tests-directory PYTHONPATH on Windows and Linux, or state honestly which host was unavailable. Keep all nine tests meaningful.
+
+### J-50 -- Fail closed on missing variable-shadow guard inputs
+
+- Files: tools/variable_shadow_check.py, tests/test_variable_shadow_check.py
+- After: none
+- Why: PR #71 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: The accepted guard skips explicit nonexistent files and prints success. Return non-zero with the missing path when any requested input does not exist; do not silently report a scan succeeded. Add an isolated CLI regression for a missing path and retain the existing supported-class tests and add a real-tree invocation to the unit suite so ordinary verification executes the standalone scan. Keep the explicit class/property coverage boundary; no Godot or inheritance-system expansion.
+
+### J-51 -- Correct the gameplay review without changing gameplay
+
+- Files: docs/jules-reviews/gameplay-review-2026-10-30.md (new)
+- After: none
+- Why: PR #55 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Redo the report from a fresh current master under plans/reference/jules-reviews.md, preserving truthful provenance. Recognise the documented BS-9 queen exception; separate role and secondary-job transitions; supply a reachable causal reproduction before calling retained cargo a defect. Explain why _return_bee_bread does not return a primary honey maker load. Death-food recovery is a gameplay decision, not a Jules fix. Use existing runnable test modules and true Proof predicates. Give every prior finding a verified disposition; no source, balance or save edits.
+
+### J-52 -- Correct the UI review evidence and runnable coverage recommendation
+
+- Files: docs/jules-reviews/ui-review-2026-10-30.md (new)
+- After: none
+- Why: PR #59 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Redo the report under plans/reference/jules-reviews.md. Quote the existing distinct weather-state text as non-colour information; do not prescribe badges without a demonstrated accessibility defect. Treat More-panel child-rectangle coverage as an observation unless a scenario proves a fault. Any proposed assertion must have a concrete scenario/test that executes it. Separate skipped Python wrappers, real engine geometry assertions and actual rendered hands-on evidence; claim none that did not run. Refresh historical follow-through and propose no gameplay or UI-source edits.
+
+### J-53 -- Correct the architecture review protected-API and task claims
+
+- Files: docs/jules-reviews/architecture-review-2026-10-30.md (new)
+- After: none
+- Why: PR #60 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
+- Do: Redo the report under plans/reference/jules-reviews.md. Retain the explicit reservation of adaptation/for_sector APIs in plans/design/progression.md and plans/reference/jules.md; record a required product decision instead of authorising removal. Recognise is_mastered as separately removed in the 2 Nov integration. Distinguish uncalled observations from safe deletion and respect current file owners. Do not reuse delivered J-43. Record positive catalogue/extraction observations without manufacturing tasks. No implementation, balance, ownership-boundary or save edits.
 
 ### Not tasks yet
 
@@ -282,6 +351,12 @@ If no standing task fits either, say so and stop. Do not look for other work.
 ## Keeping this list
 
 For Claude, Codex and Dave, not Jules.
+
+- **Alternation is mandatory.** Preserve every published `Jules-Sequence`
+  trailer in integration/ledger commits before deleting a Jules branch,
+  including rejected/closed PRs. Do not renumber corrections. E reports
+  follow `plans/reference/jules-efficiency.md`, "Processing an efficiency
+  task"; integrate their recommendations without repeating the sweep.
 
 - A task here must be behaviour-preserving, need no decision from Dave,
   name every file it changes in `Files:`, and pass

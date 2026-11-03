@@ -20,6 +20,7 @@ const SaveMigrations = preload("res://scripts/save_migrations.gd")
 const SettingsCatalogue = preload("res://scripts/settings_catalogue.gd")
 const Availability = preload("res://scripts/availability.gd")
 const SaveSlots = preload("res://scripts/save_slots.gd")
+const Levels = preload("res://scripts/levels.gd")
 
 const SAVE_PATH := "user://meadow_save.json"
 ## Bumped 24 Sep 2026 (AP-4, plans/now/alpha-progression-spine.md): a save
@@ -169,6 +170,11 @@ static func save(world: Node2D, path: String = SAVE_PATH) -> bool:
 	# which reads the same as a save from before SG-2 (short_term_goals()).
 	if not world.short_term_goals.is_empty():
 		data["short_term_goals"] = world.short_term_goals.duplicate(true)
+	# C-140: a scenario run's level exists only while its scenario file is
+	# loaded, so a save made in one (a check's installed save) carries the row
+	# with it; apply_starting_level puts it back. Absent in any other run.
+	if Session.starting_level == Levels.SCENARIO_LEVEL_ID and not Levels.scenario_override.is_empty():
+		data["scenario_level"] = Levels.scenario_override.duplicate(true)
 
 	# SI-3: all-or-nothing -- a failed write leaves the old save in place.
 	return SaveSlots.write_atomic(path, JSON.stringify(data))
@@ -531,6 +537,21 @@ static func apply_starting_level(data: Dictionary) -> void:
 	if int(saved) in CHALLENGE_LEVELS:
 		return
 	Session.starting_level = int(saved)
+	# C-140: without its row, level 999 reads as no level at all -- no Colony
+	# Run, no weather -- so a check save would load with its first crisis
+	# stuck at "due". JSON hands the row's whole numbers back as floats.
+	var row: Variant = data.get("scenario_level")
+	if int(saved) == Levels.SCENARIO_LEVEL_ID and typeof(row) == TYPE_DICTIONARY:
+		Levels.scenario_override = _whole_numbers_as_ints(row)
+
+static func _whole_numbers_as_ints(row: Dictionary) -> Dictionary:
+	var out := {}
+	for key: Variant in row:
+		var value: Variant = row[key]
+		if typeof(value) == TYPE_FLOAT and float(int(value)) == value:
+			value = int(value)
+		out[key] = value
+	return out
 
 ## BS-14 (plans/now/brood-spine.md): puts back the skill grants and bans the
 ## saved run's availability sheet was built from, and whether developer edits

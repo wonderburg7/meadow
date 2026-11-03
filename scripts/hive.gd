@@ -754,6 +754,15 @@ func find_cell_needing_cleaning() -> Node2D:
 	var corpses := cells_holding("corpse")
 	return corpses[0] if not corpses.is_empty() else null
 
+## One sour cell for a cleaning worker to mark for disposal.
+func find_sour_cell_for_cleaning() -> Node2D:
+	if not senses_fermentation():
+		return null
+	for cell: Variant in cells_holding("nectar"):
+		if cell.amount > 0.0 and not cell.evict_requested and cell.is_fermented():
+			return cell
+	return null
+
 func find_cell_needing_eviction() -> Node2D:
 	for cell: Variant in cells:
 		if is_instance_valid(cell) and cell.needs_eviction():
@@ -1241,7 +1250,7 @@ func find_nearest_edge_block(from_point: Vector2 = Vector2(INF, INF)) -> Node2D:
 	return best
 
 func _is_markable_block(node: Variant) -> bool:
-	return node != null and is_instance_valid(node) and node.is_in_group("soil_blocks")
+	return node != null and is_instance_valid(node) and node.is_in_group("soil_blocks") and node.can_be_dug()
 
 ## The open tile a miner should stand on to dig `block`. Soil is solid,
 ## so routing a bee at the block's own centre finds no path at all and it

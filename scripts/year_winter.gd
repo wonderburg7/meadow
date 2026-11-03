@@ -284,15 +284,24 @@ func _refresh_short_term_goals(facts: Dictionary) -> void:
 	main.short_term_goal_day = day
 	ShortTermGoals.withdraw_lapsed(state, goal_facts)
 	var offered: Dictionary = state.get("offered", {})
+	# SG-3: what the Goals drop-down shows -- each open goal's progress and
+	# the goals finished just now -- handed to main.gd's hook below.
+	var progress_now: Dictionary = {}
+	var finished_now: Array = []
 	for id: String in offered.keys():
 		var entry: Dictionary = offered[id]
-		if not ShortTermGoals.progress(entry, goal_facts, state, day, thresholds, at_day_change).done:
+		var step: Dictionary = ShortTermGoals.progress(entry, goal_facts, state, day, thresholds, at_day_change)
+		if not step.done:
+			progress_now[id] = step
 			continue
 		var reward: float = ShortTermGoals.finish(state, id, day)
 		main.hive.pay_reward(str(entry.resource), reward)
+		finished_now.append(entry)
 	for entry: Dictionary in ShortTermGoals.available(goal_facts, state, day, thresholds,
 			GameConfig.goal_reward_fraction, GameConfig.goal_reward_floor):
 		ShortTermGoals.accept(state, entry)
+	main.short_term_goal_progress = progress_now
+	main.on_short_term_goals_refreshed(finished_now)
 
 func _refresh_panels(bees: Array, facts: Dictionary, counts: Dictionary) -> void:
 	var energy_share: float = 0.0

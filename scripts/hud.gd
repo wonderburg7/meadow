@@ -24,11 +24,14 @@ const Shapes = preload("res://scripts/shapes.gd")
 const Stages = preload("res://scripts/challenge_stages.gd")
 const BeeNursery = preload("res://scripts/bee_nursery.gd")
 const ColonyPanel = preload("res://scripts/colony_panel.gd")
+const HudGoalShelf = preload("res://scripts/hud_goal_shelf.gd")
 
 # --- signals ------------------------------------------------------
 signal role_requested(role_name: String)
 ## GP-2: a star on a Goals line was pressed; colony_milestones.gd listens.
 signal goal_star_toggled(id: String)
+## SG-3: Dismiss on a short-term goal's line; colony_milestones.gd listens.
+signal goal_dismiss_requested(id: String)
 signal view_toggle_requested()
 signal colony_panel_requested()
 signal foraging_panel_requested()
@@ -307,29 +310,9 @@ var _labeled_buttons: Array = []
 var colony_info: Button
 var nursery_info: Button
 var view_info: Button
-## The Challenge goal shelf (UI_PLAN.md section 5): current goal leads,
-## the goal just completed is shown struck through underneath it, and a
-## compact progress bar appears only for a goal with a countable target.
-## See set_challenge_goal.
-var goal_shelf: VBoxContainer
-var completed_goal_label: RichTextLabel
-var current_goal_label: Label
-var goal_progress_row: HBoxContainer
-var goal_progress_bar: ProgressBar
-var goal_progress_label: Label
-## GP-1: the Colony Run's Goals drop-down. The Goals button in the second
-## row folds the shelf (GP-5); `colony_goal_entries` holds what
-## set_colony_goals was last given (each with an `id`, so GP-2 can star
-## it). Both stay empty in a Challenge.
+var goals := HudGoalShelf.new()
+## GP-1: the Goals button in the second row; hud_goal_shelf.gd folds the shelf with it.
 var goals_button: Button
-var long_term_goal_label: Label
-var colony_goal_entries: Array = []
-## GP-2: a star on each line (child of the label) and the box that holds the
-## starred lines while the drop-down is collapsed. `goal_star_ids` maps a
-## label's star to the goal id its line currently shows.
-var goal_stars: Array = []
-var goal_star_ids: Dictionary = {}
-var favourites_box: VBoxContainer
 ## Restricts the Job row's "Change to..." dropdown / the Doing row's
 ## sub-modes to just these keys. Empty means no restriction -- only a
 ## Challenge (see challenge_runner.gd) ever sets these to something
@@ -754,6 +737,11 @@ func _build_top_right_bar() -> void:
 	bar.offset_top = 8  # fixed-inset
 	add_child(bar)
 
+	_build_speed_row(bar)
+	_build_window_buttons_row(bar)
+
+## Row 1 of the top-right bar: pause and the speed multipliers.
+func _build_speed_row(bar: VBoxContainer) -> void:
 	var row1 := HBoxContainer.new()
 	row1.name = "top_bar_row1"
 	row1.alignment = BoxContainer.ALIGNMENT_END
@@ -800,6 +788,8 @@ func _build_top_right_bar() -> void:
 
 	row1.add_child(_info("Game speed, as a multiple of normal. These change how fast the simulation runs; they do not change how much a bee gathers per in-game second."))
 
+## Row 2 of the top-right bar: the window/view icon buttons and Goals.
+func _build_window_buttons_row(bar: VBoxContainer) -> void:
 	var row2 := HBoxContainer.new()
 	row2.name = "top_bar_row2"
 	row2.alignment = BoxContainer.ALIGNMENT_END
@@ -932,95 +922,6 @@ func _apply_interface_label_visibility() -> void:
 		var width: float = entry.full_width if Session.show_interface_labels else entry.icon_width
 		entry.button.custom_minimum_size.x = width
 
-# --- Challenge goal readout ---------------------------------------
-## The goal shelf (UI_PLAN.md section 5): sits directly under the
-## top-right button row, anchored and widened the same way -- see
-## set_settings_button_width. Hidden outside a Challenge;
-## challenge_runner.gd is the only caller of set_challenge_goal.
-func _build_goal_shelf() -> void:
-	goal_shelf = VBoxContainer.new()
-	goal_shelf.theme = UiTheme.build_theme()
-	goal_shelf.visible = false
-	# The shelf overlaps the second top-bar row while a Challenge is active.
-	# It is display-only, so every part must pass pointer input through to
-	# the controls underneath instead of leaving only their exposed edge live.
-	goal_shelf.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	goal_shelf.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	goal_shelf.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	goal_shelf.offset_right = -(SETTINGS_BUTTON_DEFAULT_WIDTH + TOP_BAR_BUTTON_GAP * 2.0)
-	goal_shelf.offset_top = top_right_bar.offset_top + TOP_BAR_CONTROL_HEIGHT * 2.0 + TOP_BAR_ROW_SEPARATION + GOAL_SHELF_GAP
-	goal_shelf.custom_minimum_size = Vector2(320, 0)
-	goal_shelf.add_theme_constant_override("separation", 1)
-	add_child(goal_shelf)
-
-	# GP-2: starred lines, shown while the drop-down is collapsed.
-	favourites_box = VBoxContainer.new()
-	favourites_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	favourites_box.add_theme_constant_override("separation", 1)
-	favourites_box.visible = false
-	goal_shelf.add_child(favourites_box)
-
-	# GP-1: the long-term line, above the milestone.
-	long_term_goal_label = Label.new()
-	long_term_goal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	long_term_goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	long_term_goal_label.custom_minimum_size = Vector2(320, 0)
-	long_term_goal_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	long_term_goal_label.theme_type_variation = "Body"
-	long_term_goal_label.visible = false
-	UiTheme.bind_color(long_term_goal_label, "font_color", "text_primary")
-	goal_shelf.add_child(long_term_goal_label)
-	_add_goal_star(long_term_goal_label)
-
-	# Secondary: the goal just completed, struck through and faded, per
-	# section 5. A RichTextLabel rather than a Label since Label has no
-	# strikethrough of its own -- BBCode's [s] tag is the plain way to get
-	# one without hand-drawing a line.
-	completed_goal_label = RichTextLabel.new()
-	completed_goal_label.bbcode_enabled = true
-	completed_goal_label.fit_content = true
-	completed_goal_label.scroll_active = false
-	completed_goal_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	completed_goal_label.custom_minimum_size = Vector2(320, 0)
-	# RichTextLabel has no Label-based theme_type_variation to draw on, so
-	# this scales directly rather than joining the Small/Body/Heading set.
-	completed_goal_label.add_theme_font_size_override("normal_font_size", UiTheme.font_px(12))
-	completed_goal_label.add_theme_color_override("default_color", Color(UiTheme.color("warning"), 0.55))
-	completed_goal_label.visible = false
-	goal_shelf.add_child(completed_goal_label)
-	_add_goal_star(completed_goal_label)
-
-	# Primary: the current goal.
-	current_goal_label = Label.new()
-	current_goal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	current_goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	current_goal_label.custom_minimum_size = Vector2(320, 0)
-	current_goal_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	current_goal_label.theme_type_variation = "Body"
-	UiTheme.bind_color(current_goal_label, "font_color", "warning")
-	goal_shelf.add_child(current_goal_label)
-	_add_goal_star(current_goal_label)
-
-	# Tertiary: numeric progress, only for a goal with a countable target.
-	goal_progress_row = HBoxContainer.new()
-	goal_progress_row.visible = false
-	goal_progress_row.alignment = BoxContainer.ALIGNMENT_END
-	goal_progress_row.add_theme_constant_override("separation", 6)
-	goal_progress_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	goal_shelf.add_child(goal_progress_row)
-
-	goal_progress_bar = ProgressBar.new()
-	goal_progress_bar.custom_minimum_size = Vector2(160, 8)
-	goal_progress_bar.show_percentage = false
-	goal_progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	goal_progress_row.add_child(goal_progress_bar)
-
-	goal_progress_label = Label.new()
-	goal_progress_label.theme_type_variation = "Small"
-	UiTheme.bind_color(goal_progress_label, "font_color", "text_secondary")
-	goal_progress_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	goal_progress_row.add_child(goal_progress_label)
-
 ## Called by debug_panel.gd whenever its settings cog's actual width
 ## changes (including the first layout pass), so this bar sits exactly
 ## as far from the corner as the cog needs and no further -- see the
@@ -1029,161 +930,31 @@ func set_settings_button_width(width: float) -> void:
 	if top_right_bar == null:
 		return
 	top_right_bar.offset_right = -(width + TOP_BAR_BUTTON_GAP * 2.0)
-	goal_shelf.offset_right = -(width + TOP_BAR_BUTTON_GAP * 2.0)
-
-## Shown under the top-right button row for the length of a Challenge --
-## see TUTORIAL_PLAN.md and UI_PLAN.md section 5. `text` is the current
-## goal (empty hides the whole shelf). `completed_text`, when given,
-## shows the goal just finished, struck through and faded, underneath
-## it. `progress_current`/`progress_target` add a compact bar and count,
-## shown only when `progress_target` is a real target -- both default to
-## -1.0 ("no countable target") rather than 0.0, since 0 is itself a
-## valid amount of progress.
-func set_challenge_goal(text: String, completed_text: String = "", progress_current: float = -1.0, progress_target: float = -1.0) -> void:
-	# A Challenge's shelf has no header and no long-term line (GP-1).
-	colony_goal_entries = []
-	goals_button.visible = false
-	long_term_goal_label.visible = false
-	favourites_box.visible = false
-	for star in goal_stars:
-		star.visible = false
-	current_goal_label.visible = true
-	goal_shelf.visible = not text.is_empty()
-	current_goal_label.text = text
-
-	completed_goal_label.visible = not completed_text.is_empty()
-	if not completed_text.is_empty():
-		completed_goal_label.text = "[s]%s[/s]" % completed_text
-
-	var has_progress: bool = progress_target > 0.0
-	goal_progress_row.visible = has_progress
-	if has_progress:
-		goal_progress_bar.max_value = progress_target
-		goal_progress_bar.value = clampf(progress_current, 0.0, progress_target)
-		goal_progress_label.text = "%d / %d" % [int(round(progress_current)), int(round(progress_target))]
-
-## GP-1: the Colony Run's Goals drop-down. `entries` are dictionaries of
-## `id` ("long_term" or a milestone id), `text`, and `done` (true for the
-## last goal met, drawn struck through). Called by colony_milestones.gd
-## only; a Challenge keeps set_challenge_goal. Which lines show follows
-## Session.goals_collapsed: collapsed leaves the header alone.
-func set_colony_goals(entries: Array) -> void:
-	colony_goal_entries = entries.duplicate(true)
-	var long_text := ""
-	var next_text := ""
-	var done_text := ""
-	var long_id := ""
-	var next_id := ""
-	var done_id := ""
-	for entry in entries:
-		if bool(entry.get("extra", false)):
-			continue
-		if str(entry.id) == "long_term":
-			long_text = str(entry.text)
-			long_id = "long_term"
-		elif bool(entry.get("done", false)):
-			done_text = str(entry.text)
-			done_id = str(entry.id)
-		else:
-			next_text = str(entry.text)
-			next_id = str(entry.id)
-	_set_goal_star(long_term_goal_label, long_id, entries)
-	_set_goal_star(current_goal_label, next_id, entries)
-	_set_goal_star(completed_goal_label, done_id, entries)
-	_rebuild_favourites(entries)
-	long_term_goal_label.text = long_text
-	current_goal_label.text = next_text
-	completed_goal_label.text = "[s]%s[/s]" % done_text if not done_text.is_empty() else ""
-	goal_progress_row.visible = false
-	goals_button.visible = true
-	goal_shelf.visible = true
-	_apply_goals_collapsed()
-
-func _apply_goals_collapsed() -> void:
-	if not goals_button.visible:
-		return
-	goals_button.button_pressed = not Session.goals_collapsed
-	var open: bool = not Session.goals_collapsed
-	long_term_goal_label.visible = open and not long_term_goal_label.text.is_empty()
-	current_goal_label.visible = open and not current_goal_label.text.is_empty()
-	completed_goal_label.visible = open and not completed_goal_label.text.is_empty()
-	favourites_box.visible = not open and favourites_box.get_child_count() > 0
-
-## GP-2: a small star as a child of a goal line. Its look and its goal id are
-## set by set_colony_goals; pressing it only reports the id.
-func _add_goal_star(label: Control) -> void:
-	var star := Button.new()
-	star.flat = true
-	star.text = "☆"
-	star.visible = false
-	star.focus_mode = Control.FOCUS_NONE
-	star.theme_type_variation = "Small"
-	star.custom_minimum_size = Vector2(26, 20)
-	star.tooltip_text = "Keep this goal on screen when the Goals list is collapsed."
-	star.mouse_filter = Control.MOUSE_FILTER_STOP
-	star.pressed.connect(func(): _on_goal_star_pressed(star))
-	# On the right, where the right-aligned line ends (Dave, 24 Oct 2026),
-	# with the line's text kept clear of it by a right margin.
-	star.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	star.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	var room := StyleBoxEmpty.new()
-	room.content_margin_right = star.custom_minimum_size.x
-	label.add_theme_stylebox_override("normal", room)
-	label.add_child(star)
-	goal_stars.append(star)
-	goal_star_ids[star] = ""
-
-func _set_goal_star(label: Control, id: String, entries: Array) -> void:
-	var star: Button = null
-	for candidate in goal_stars:
-		if candidate.get_parent() == label:
-			star = candidate
-	if star == null:
-		return
-	goal_star_ids[star] = id
-	var starred := false
-	for entry in entries:
-		if str(entry.id) == id and bool(entry.get("starred", false)):
-			starred = true
-	star.text = "★" if starred else "☆"
-	star.visible = not id.is_empty() and id != "all_met"
-
-func _on_goal_star_pressed(star: Button) -> void:
-	var id: String = str(goal_star_ids.get(star, ""))
-	if not id.is_empty():
-		goal_star_toggled.emit(id)
-
-## GP-2: the collapsed view -- one line for each starred goal, a met one
-## struck through. Rebuilt whenever the entries are, never per frame.
-func _rebuild_favourites(entries: Array) -> void:
-	for child in favourites_box.get_children():
-		favourites_box.remove_child(child)
-		child.queue_free()
-	for entry in entries:
-		if not bool(entry.get("starred", false)):
-			continue
-		var line := RichTextLabel.new()
-		line.bbcode_enabled = true
-		line.fit_content = true
-		line.scroll_active = false
-		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		line.custom_minimum_size = Vector2(320, 0)
-		line.add_theme_font_size_override("normal_font_size", UiTheme.font_px(14))
-		var done: bool = bool(entry.get("done", false))
-		line.add_theme_color_override("default_color", Color(UiTheme.color("warning"), 0.55 if done else 1.0))
-		var text: String = str(entry.text).replace("[", "[lb]")
-		line.text = "[right]%s[/right]" % ("[s]%s[/s]" % text if done else text)
-		favourites_box.add_child(line)
-
-func _on_goals_button_pressed() -> void:
-	Session.goals_collapsed = not Session.goals_collapsed
-	Session.save_preferences()
-	_apply_goals_collapsed()
+	goals.goal_shelf.offset_right = -(width + TOP_BAR_BUTTON_GAP * 2.0)
 
 func set_speed_display(speed_scale: float) -> void:
 	pause_button.button_pressed = is_equal_approx(speed_scale, 0.0)
 	for entry in speed_buttons:
 		entry.button.button_pressed = is_equal_approx(entry.scale, speed_scale)
+
+# --- Challenge goal readout ---------------------------------------
+# (the goal shelf itself lives in hud_goal_shelf.gd)
+func _build_goal_shelf() -> void:
+	goals.star_toggled.connect(goal_star_toggled.emit)
+	goals.dismiss_requested.connect(goal_dismiss_requested.emit)
+	var offset_top: float = top_right_bar.offset_top + TOP_BAR_CONTROL_HEIGHT * 2.0 + TOP_BAR_ROW_SEPARATION + GOAL_SHELF_GAP
+	goals.build(self, goals_button, offset_top, -(SETTINGS_BUTTON_DEFAULT_WIDTH + TOP_BAR_BUTTON_GAP * 2.0))
+
+## GP-1/Challenge: see HudGoalShelf.set_challenge_goal.
+func set_challenge_goal(text: String, completed_text: String = "", progress_current: float = -1.0, progress_target: float = -1.0) -> void:
+	goals.set_challenge_goal(text, completed_text, progress_current, progress_target)
+
+## GP-1: see HudGoalShelf.set_colony_goals.
+func set_colony_goals(entries: Array) -> void:
+	goals.set_colony_goals(entries)
+
+func _on_goals_button_pressed() -> void:
+	goals.toggle_collapsed()
 
 # --- bottom row ---------------------------------------------------
 ## Four ranked labels (UI_PLAN.md section 5) rather than the old two --
@@ -1212,6 +983,14 @@ func _build_selection_panel() -> void:
 	var column := selection_column
 	_apply_selection_tray_width()
 
+	_build_summary_labels(column)
+	_build_soil_summary_row(column)
+	_build_keep_clear_row(column)
+
+	_set_summary_cog_kind("")
+
+## Header (identity, star, cog) and the energy / activity / trait labels.
+func _build_summary_labels(column: VBoxContainer) -> void:
 	# The cog sits on the same line as the identity label (Dave's 29 Aug
 	# ask) rather than a row of its own above it -- that row used to be
 	# empty air except for the cog, pushing every field down and making
@@ -1253,6 +1032,8 @@ func _build_selection_panel() -> void:
 	trait_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_wax")))
 	column.add_child(trait_label)
 
+## The soil summary's mark / clear buttons.
+func _build_soil_summary_row(column: VBoxContainer) -> void:
 	# Only shown for a soil summary -- see show_object_summary. Stacked
 	# vertically (rather than side by side) so the two buttons can never
 	# push the panel past its fixed width at a large text scale.
@@ -1287,6 +1068,8 @@ func _build_selection_panel() -> void:
 	soil_summary_row.add_child(soil_clear_wrapper)
 	_register_gated_control("soil_clear_btn", func(): return soil_clear_btn)
 
+## The kept-clear tile summary's button.
+func _build_keep_clear_row(column: VBoxContainer) -> void:
 	# Only shown for a kept-clear tile summary (HR-1); same stacking as above.
 	keep_clear_summary_row = VBoxContainer.new()
 	keep_clear_summary_row.name = "keep_clear_summary_row"
@@ -1301,8 +1084,6 @@ func _build_selection_panel() -> void:
 	keep_clear_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	keep_clear_btn.pressed.connect(func(): keep_clear_clear_requested.emit())
 	keep_clear_summary_row.add_child(keep_clear_btn)
-
-	_set_summary_cog_kind("")
 
 ## The star and the cog sit side by side in the summary panel's header, so
 ## they are one control pair and take one size (HC-13). Each used to set
@@ -1656,6 +1437,30 @@ func _build_tray_column(title: String) -> Array:
 ## without hunting through the text above.
 var live_buttons: Dictionary = {}
 
+# Order matters: it is the order the buttons sit in the "Reserve for" row.
+# "key" names the live_buttons entry (designation_<key>); "type" is what
+# _request_designation receives. Bee bread (BB-1) is shown once bought
+# (_apply_cell_popup_gating).
+const DESIGNATION_BUTTONS := [
+	{"key": "nectar", "type": "nectar", "label": "Nectar", "tip": "Reserve this cell for nectar. Foragers carrying pollen will walk past it."},
+	{"key": "pollen", "type": "pollen", "label": "Pollen", "tip": "Reserve this cell for pollen. Foragers carrying nectar will walk past it."},
+	{"key": "honey", "type": "honey", "label": "Honey", "tip": "Reserve this cell for honey. Honey makers spit their chewed nectar mix into cells like this one and then fan it dry."},
+	{"key": "jelly", "type": "jelly", "label": "Jelly", "tip": "Reserve this cell for royal jelly. Nurses on the royal jelly sub-mode store what they make here, and draw on it when feeding gyne larvae."},
+	{"key": "bee_bread", "type": "bee_bread", "label": "Bee bread", "tip": "Reserve this cell for bee bread. Honey makers on Fermenting pack pollen and ripe honey in here. Once the cell is full it seals itself and ripens over about two days."},
+	{"key": "brood", "type": "brood", "label": "Eggs", "tip": "Reserve this cell as a nursery. The queen lays here first, and foragers won't fill it with stores. Reserving enough of these is what stops laying stalling for want of a free cell."},
+	{"key": "any", "type": "", "label": "Unreserve", "tip": "Remove the reservation. The cell takes whichever resource arrives first, and reserves itself for that from then on."},
+]
+
+func _add_designation_button(row: Container, entry: Dictionary) -> void:
+	var btn := Button.new()
+	_style_button(btn)
+	btn.text = entry.label
+	btn.focus_mode = Control.FOCUS_NONE
+	var type: String = entry.type
+	btn.pressed.connect(func(): _request_designation(type))
+	live_buttons["designation_" + entry.key] = btn
+	row.add_child(_with_info(btn, entry.tip))
+
 ## Builds the tray's cell content into `parent` (command_tray's own
 ## column, alongside command_columns and more_panel) rather than a
 ## separate floating popup -- folded in per UI_BUGFIX_PLAN.md Slice 4/5,
@@ -1683,62 +1488,8 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	var row := HFlowContainer.new()
 	_build_cell_action_column(cell_primary_columns, "Reserve for").add_child(row)
 
-	var nectar_btn := Button.new()
-	_style_button(nectar_btn)
-	nectar_btn.text = "Nectar"
-	nectar_btn.focus_mode = Control.FOCUS_NONE
-	nectar_btn.pressed.connect(func(): _request_designation("nectar"))
-	live_buttons["designation_nectar"] = nectar_btn
-	row.add_child(_with_info(nectar_btn, "Reserve this cell for nectar. Foragers carrying pollen will walk past it."))
-
-	var pollen_btn := Button.new()
-	_style_button(pollen_btn)
-	pollen_btn.text = "Pollen"
-	pollen_btn.focus_mode = Control.FOCUS_NONE
-	pollen_btn.pressed.connect(func(): _request_designation("pollen"))
-	live_buttons["designation_pollen"] = pollen_btn
-	row.add_child(_with_info(pollen_btn, "Reserve this cell for pollen. Foragers carrying nectar will walk past it."))
-
-	var honey_btn := Button.new()
-	_style_button(honey_btn)
-	honey_btn.text = "Honey"
-	honey_btn.focus_mode = Control.FOCUS_NONE
-	honey_btn.pressed.connect(func(): _request_designation("honey"))
-	live_buttons["designation_honey"] = honey_btn
-	row.add_child(_with_info(honey_btn, "Reserve this cell for honey. Honey makers spit their chewed nectar mix into cells like this one and then fan it dry."))
-
-	var jelly_btn := Button.new()
-	_style_button(jelly_btn)
-	jelly_btn.text = "Jelly"
-	jelly_btn.focus_mode = Control.FOCUS_NONE
-	jelly_btn.pressed.connect(func(): _request_designation("jelly"))
-	live_buttons["designation_jelly"] = jelly_btn
-	row.add_child(_with_info(jelly_btn, "Reserve this cell for royal jelly. Nurses on the royal jelly sub-mode store what they make here, and draw on it when feeding gyne larvae."))
-
-	# BB-1: shown once Bee bread is bought (_apply_cell_popup_gating).
-	var bee_bread_btn := Button.new()
-	_style_button(bee_bread_btn)
-	bee_bread_btn.text = "Bee bread"
-	bee_bread_btn.focus_mode = Control.FOCUS_NONE
-	bee_bread_btn.pressed.connect(func(): _request_designation("bee_bread"))
-	live_buttons["designation_bee_bread"] = bee_bread_btn
-	row.add_child(_with_info(bee_bread_btn, "Reserve this cell for bee bread. Honey makers on Fermenting pack pollen and ripe honey in here. Once the cell is full it seals itself and ripens over about two days."))
-
-	var egg_btn := Button.new()
-	_style_button(egg_btn)
-	egg_btn.text = "Eggs"
-	egg_btn.focus_mode = Control.FOCUS_NONE
-	egg_btn.pressed.connect(func(): _request_designation("brood"))
-	live_buttons["designation_brood"] = egg_btn
-	row.add_child(_with_info(egg_btn, "Reserve this cell as a nursery. The queen lays here first, and foragers won't fill it with stores. Reserving enough of these is what stops laying stalling for want of a free cell."))
-
-	var auto_btn := Button.new()
-	_style_button(auto_btn)
-	auto_btn.text = "Unreserve"
-	auto_btn.focus_mode = Control.FOCUS_NONE
-	auto_btn.pressed.connect(func(): _request_designation(""))
-	live_buttons["designation_any"] = auto_btn
-	row.add_child(_with_info(auto_btn, "Remove the reservation. The cell takes whichever resource arrives first, and reserves itself for that from then on."))
+	for entry in DESIGNATION_BUTTONS:
+		_add_designation_button(row, entry)
 
 	_build_priority_controls(_build_cell_action_column(cell_primary_columns, "Priority"))
 	_build_raises_controls(_build_cell_action_column(cell_primary_columns, "Raises"))
@@ -1833,6 +1584,13 @@ func _build_priority_controls(column: VBoxContainer) -> void:
 ## cell tray's Nursery column fits in three narrower columns instead of one
 ## tall one.
 func _build_raises_controls(column: VBoxContainer) -> void:
+	_build_raises_hatch_row(column)
+	_build_raises_lock_row(column)
+	_build_raises_gyne_row(column)
+	_build_raises_drone_row(column)
+	_build_raises_feed_first_row(column)
+
+func _build_raises_hatch_row(column: VBoxContainer) -> void:
 	# Which role a bee raised here comes out as.
 	hatch_row = HFlowContainer.new()
 	hatch_row.name = "hatch_row"
@@ -1872,6 +1630,7 @@ func _build_raises_controls(column: VBoxContainer) -> void:
 	hatch_locked_note.visible = false
 	hatch_row.add_child(hatch_locked_note)
 
+func _build_raises_lock_row(column: VBoxContainer) -> void:
 	# Whether that role sticks for every future bee, or applies once.
 	lock_row = HBoxContainer.new()
 	column.add_child(lock_row)
@@ -1886,7 +1645,9 @@ func _build_raises_controls(column: VBoxContainer) -> void:
 			_refresh_cell_popup()
 	)
 	lock_row.add_child(hatch_lock_box)
+	lock_row.add_child(_info("On: every bee this cell ever raises comes out in the chosen role, so you can earmark a cell as a builder nursery once and forget about it. Off: the role applies to the next bee only and then clears, so a one-off choice doesn't quietly govern the cell forever."))
 
+func _build_raises_gyne_row(column: VBoxContainer) -> void:
 	# Whether the queen lays a gyne here rather than a worker.
 	gyne_row = HBoxContainer.new()
 	column.add_child(gyne_row)
@@ -1902,6 +1663,7 @@ func _build_raises_controls(column: VBoxContainer) -> void:
 	gyne_row.add_child(gyne_box)
 	gyne_row.add_child(_info("A gyne is a future queen. She costs the queen several times as much pollen to lay, takes four times as long to develop, and can only be fed on royal jelly with pollen and honey -- so you need nurses producing jelly before one will grow at all. She can do any worker job in the meantime, though she is bigger, slower and hungrier than a worker."))
 
+func _build_raises_drone_row(column: VBoxContainer) -> void:
 	# DR-2: whether the queen lays a drone here. No skill to buy.
 	drone_row = HBoxContainer.new()
 	column.add_child(drone_row)
@@ -1916,8 +1678,8 @@ func _build_raises_controls(column: VBoxContainer) -> void:
 	)
 	drone_row.add_child(drone_box)
 	drone_row.add_child(_info("A drone is a male bee. The queen lays him from an unfertilised egg, he does no work and eats from the stores, and he is needed to mate a gyne. Ticking this clears the gyne box for the cell, and the other way round."))
-	lock_row.add_child(_info("On: every bee this cell ever raises comes out in the chosen role, so you can earmark a cell as a builder nursery once and forget about it. Off: the role applies to the next bee only and then clears, so a one-off choice doesn't quietly govern the cell forever."))
 
+func _build_raises_feed_first_row(column: VBoxContainer) -> void:
 	# PP-5: nurses come to the larva here before any unmarked one.
 	feed_first_row = HBoxContainer.new()
 	feed_first_row.name = "feed_first_row"
@@ -2093,6 +1855,8 @@ func _fill_hatch_menu(popup: PopupMenu, role_value: int, options: Array) -> int:
 		popup.add_item(options[i].label, i)
 	return popup.item_count
 
+# --- warning banner -----------------------------------------------
+
 const WARNING_SECONDS := 18.0
 
 func _build_warning_banner() -> void:
@@ -2167,6 +1931,7 @@ func set_warnings_muted(value: bool) -> void:
 		warning_panel.visible = false
 		_pending_warning = {}
 
+# --- object summaries ---------------------------------------------
 ## --- object summary (flower / obstacle / death / soil) -------------
 ## Folded into the bottom-left selection panel from four separate
 ## mouse-anchored popups (UI_BUGFIX_PLAN.md Slice 5, Dave's 22 Aug
@@ -2286,6 +2051,7 @@ func _show_death_summary(info: Dictionary) -> void:
 		trait_lines.append("\"%s\"" % info.get("bee_fact"))
 	trait_label.text = "\n".join(trait_lines)
 
+# --- cell popup: show and refresh ---------------------------------
 ## Cell state now uses the bottom-left summary, while its actions share the
 ## command tray with Job/Focus/Orders and are mutually exclusive with those
 ## bee controls. Leaves the bee columns' own content untouched underneath
@@ -2505,6 +2271,7 @@ func _set_lit(key: String, lit: bool) -> void:
 	else:
 		UI.clear_current_mark(button)
 
+# --- stage marker (per frame) -------------------------------------
 func _process(_delta: float) -> void:
 	Perf.begin("hud")
 	_update_stage_marker_arrow()
@@ -2613,6 +2380,7 @@ func _marker_arrow_obscured(point: Vector2) -> bool:
 			return true
 	return false
 
+# --- cell requests ------------------------------------------------
 func _request_designation(type: String) -> void:
 	if active_cell and is_instance_valid(active_cell):
 		cell_designation_requested.emit(active_cell, type)
@@ -3118,8 +2886,9 @@ func _selection_identity_text(b) -> String:
 	return identity
 
 func _selection_energy_text(b) -> String:
-	return "Energy %d%%\n%s" % [
+	return "Energy %d%%  Health %d%%\n%s" % [
 		int(100.0 * b.energy / max(0.001, GameConfig.energy_capacity)),
+		int(100.0 * b.health / max(0.001, GameConfig.health_capacity)),
 		b.carrying_text(),
 	]
 
