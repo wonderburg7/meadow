@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude / Codex | Next: L-39 to reconcile the guard with worktree closeout; L-40 to delegate Codex queue housekeeping | Dependency: L-39 and L-40 have separate files; preserve current worker model and turn-cap policy | Verified: 2026-11-02
+Status: active | Owner: Dave / Claude / Codex | Next: L-40 to delegate Codex queue housekeeping | Dependency: preserve current worker model and turn-cap policy | Verified: 2026-11-03
 
 ## Objective
 
@@ -50,11 +50,10 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-39 | Allow the documented worktree closeout through the command guard | `tools/guard_hook.py`, `tests/test_guard_hook.py`, `tests/test_guard_hook_helpers.py` | medium |
 | L-40 | Delegate Codex gate/refill work to its existing queue steward | `.agents/skills/run-queue/SKILL.md` | medium |
 
-Both are startable backlog entries, not new lane claims. L-39's `Next after:`
-is L-40; L-40 is the final currently specified slice. Read only the assigned
+L-39 permits worktree-local finish through the command guard. L-40 is the
+final currently specified slice. Read only the assigned
 section and its named evidence. These follow the 2 Nov Jules review
 (`plans/reference/jules-review-2026-11-02.md`, F11 and the R-context triage).
 
