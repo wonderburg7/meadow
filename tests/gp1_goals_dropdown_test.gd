@@ -80,12 +80,12 @@ func _check_content() -> void:
 	_check(hud.goals_button.visible, "no Goals button in a Colony Run")
 	_check(hud.goals_button.text == "Goals", "the button reads '%s'" % hud.goals_button.text)
 	_check(hud.goals_button.button_pressed, "expanded, the Goals button is not pressed")
-	_check(hud.long_term_goal_label.visible and not hud.long_term_goal_label.text.is_empty(),
+	_check(hud.goals.long_term_goal_label.visible and not hud.goals.long_term_goal_label.text.is_empty(),
 		"the long-term line is not showing")
-	_check(hud.current_goal_label.visible and hud.current_goal_label.text == "Build your first cell",
-		"the next milestone is '%s'" % hud.current_goal_label.text)
+	_check(hud.goals.current_goal_label.visible and hud.goals.current_goal_label.text == "Build your first cell",
+		"the next milestone is '%s'" % hud.goals.current_goal_label.text)
 	var ids: Array = []
-	for entry: Variant in hud.colony_goal_entries:
+	for entry: Variant in hud.goals.colony_goal_entries:
 		ids.append(str(entry.id))
 	_check(ids == ["long_term", "first_cell"], "entries carry ids %s" % [ids])
 
@@ -96,11 +96,11 @@ func _check_content() -> void:
 		["first_egg", "Let the queen lay an egg"],
 	]
 	for i: int in walk.size():
-		_check(hud.current_goal_label.text == walk[i][1], "step %d reads '%s'" % [i, hud.current_goal_label.text])
+		_check(hud.goals.current_goal_label.text == walk[i][1], "step %d reads '%s'" % [i, hud.goals.current_goal_label.text])
 		ms.met_days[walk[i][0]] = _main.day
 		ms.show_next()
-	_check(hud.current_goal_label.text == "Raise your first worker",
-		"after the opening the line is '%s'" % hud.current_goal_label.text)
+	_check(hud.goals.current_goal_label.text == "Raise your first worker",
+		"after the opening the line is '%s'" % hud.goals.current_goal_label.text)
 	for step: Array in walk:
 		ms.met_days.erase(step[0])
 	ms.show_next()
@@ -111,10 +111,10 @@ func _check_content() -> void:
 	ms.restore({"first_worker": 5})
 	ms.show_next()
 	_check(ms.day_met("first_cell") == 5 and ms.day_met("first_egg") == 5, "the opening steps were not backfilled")
-	_check(hud.current_goal_label.text == "Unlock your first automation",
-		"an old save shows '%s' as next" % hud.current_goal_label.text)
+	_check(hud.goals.current_goal_label.text == "Unlock your first automation",
+		"an old save shows '%s' as next" % hud.goals.current_goal_label.text)
 	var done_texts: Array = []
-	for entry: Variant in hud.colony_goal_entries:
+	for entry: Variant in hud.goals.colony_goal_entries:
 		if entry.done:
 			done_texts.append(str(entry.text))
 	_check(done_texts == ["Raise your first worker"], "an old save's last-met line is %s" % [done_texts])
@@ -123,8 +123,8 @@ func _check_content() -> void:
 	ms.restore({})
 	ms.show_next()
 	_check(ms.day_met("first_cell") == -1, "a fresh save backfilled the opening steps")
-	_check(hud.current_goal_label.text == "Build your first cell",
-		"a fresh save shows '%s' as next" % hud.current_goal_label.text)
+	_check(hud.goals.current_goal_label.text == "Build your first cell",
+		"a fresh save shows '%s' as next" % hud.goals.current_goal_label.text)
 
 
 	# The long-term line, phase by phase.
@@ -149,11 +149,11 @@ func _check_content() -> void:
 	_session.winter_here = true
 	_session.winter_ends_day = float(_main.day) + 5.0
 	ms.evaluate()
-	_check(hud.long_term_goal_label.text == "Survive winter -- 5 days left", "evaluate left '%s'" % hud.long_term_goal_label.text)
+	_check(hud.goals.long_term_goal_label.text == "Survive winter -- 5 days left", "evaluate left '%s'" % hud.goals.long_term_goal_label.text)
 	_main.day += 1
 	ms.evaluate()
-	_check(hud.long_term_goal_label.text == "Survive winter -- 4 days left",
-		"a day later the line is '%s'" % hud.long_term_goal_label.text)
+	_check(hud.goals.long_term_goal_label.text == "Survive winter -- 4 days left",
+		"a day later the line is '%s'" % hud.goals.long_term_goal_label.text)
 	_session.winter_here = false
 	_session.winter_coming = false
 	_session.winter_ends_day = 0.0
@@ -172,7 +172,7 @@ func _start_layout(name: String) -> void:
 
 
 func _check_inside(label: String) -> void:
-	var rect: Rect2 = _main.hud.goal_shelf.get_global_rect()
+	var rect: Rect2 = _main.hud.goals.goal_shelf.get_global_rect()
 	var view := Rect2(Vector2.ZERO, Vector2(root.size))
 	print("GP1 %s shelf %s in viewport %s" % [label, rect, view])
 	_check(view.encloses(rect), "%s: the shelf %s leaves the viewport %s" % [label, rect, view])
@@ -183,8 +183,8 @@ func _check_collapsed() -> void:
 	_check(_session.goals_collapsed, "the button press did not collapse the drop-down")
 	_check(hud.goals_button.visible and not hud.goals_button.button_pressed,
 		"collapsed, the Goals button is missing or still pressed")
-	_check(not hud.long_term_goal_label.visible and not hud.current_goal_label.visible
-		and not hud.completed_goal_label.visible, "collapsed, goal lines still show")
+	_check(not hud.goals.long_term_goal_label.visible and not hud.goals.current_goal_label.visible
+		and not hud.goals.completed_goal_label.visible, "collapsed, goal lines still show")
 
 
 func _check_profile_and_challenge() -> void:
@@ -198,16 +198,16 @@ func _check_profile_and_challenge() -> void:
 	profile.apply_to_session({"preferences": {}})
 	_check(_session.goals_collapsed, "a profile without the key changed the state")
 	hud.goals_button.pressed.emit()
-	_check(not _session.goals_collapsed and hud.long_term_goal_label.visible, "pressing again did not expand")
+	_check(not _session.goals_collapsed and hud.goals.long_term_goal_label.visible, "pressing again did not expand")
 
 	hud.set_challenge_goal("Do the thing", "Did the other thing")
-	_check(not hud.goals_button.visible and not hud.long_term_goal_label.visible,
+	_check(not hud.goals_button.visible and not hud.goals.long_term_goal_label.visible,
 		"a Challenge's shelf shows the Goals button or long-term line")
-	_check(hud.current_goal_label.visible and hud.current_goal_label.text == "Do the thing"
-		and hud.completed_goal_label.visible, "a Challenge's shelf lines changed")
+	_check(hud.goals.current_goal_label.visible and hud.goals.current_goal_label.text == "Do the thing"
+		and hud.goals.completed_goal_label.visible, "a Challenge's shelf lines changed")
 	_session.goals_collapsed = true
 	hud.set_challenge_goal("Do the thing")
-	_check(hud.current_goal_label.visible, "collapsing the Colony Run's drop-down hid a Challenge's goal")
+	_check(hud.goals.current_goal_label.visible, "collapsing the Colony Run's drop-down hid a Challenge's goal")
 
 
 func _check(ok: bool, message: String) -> void:

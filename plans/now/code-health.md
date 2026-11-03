@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the Claude lane's ED-1b and CQ-R15 to release scripts/hud.gd and the Codex lane's CQ-R16 to release scripts/main.gd, and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for ED-1 to release scripts/bee.gd (SP-6 landed 1 Nov 2026) and the Codex lane's CQ-R16 to release scripts/input_selection.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R15 and CQ-R16 are queued (SG-3 landed 1 Nov 2026), CQ-R8 and CQ-R3 stay gated on the queued slices that own their files | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-R15 and CQ-R16 are queued; CQ-R3 follows ED-1 (SP-6 landed 1 Nov 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R15 implemented (3 Nov 2026); CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the Claude lane's ED-1b and CQ-R15 to release scripts/hud.gd and the Codex lane's CQ-R16 to release scripts/main.gd, and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for ED-1 to release scripts/bee.gd (SP-6 landed 1 Nov 2026) and the Codex lane's CQ-R16 to release scripts/input_selection.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R15 and CQ-R16 are queued (SG-3 landed 1 Nov 2026), CQ-R8 and CQ-R3 stay gated on the queued slices that own their files | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-R15 and CQ-R16 are queued; CQ-R3 follows ED-1 (SP-6 landed 1 Nov 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -138,7 +138,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R8 | hud builders shortened (designation button table); hud sections re-headed | `hud.gd`, `FUNCTION_MAP.md` | gated -- after CQ-R15 | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
-| CQ-R15 | the Goals drop-down becomes scripts/hud_goal_shelf.gd | `hud.gd`, `hud_goal_shelf.gd` (new), 3 goal tests, `FUNCTION_MAP.md` | queued (SG-3 landed 1 Nov 2026) | medium |
+| CQ-R15 | the Goals drop-down becomes scripts/hud_goal_shelf.gd | `hud.gd`, `hud_goal_shelf.gd` (new), `colony_milestones.gd`, 4 goal tests, `FUNCTION_MAP.md` | queued (SG-3 landed 1 Nov 2026) | medium |
 
 Only the first slice of each chain carries a full section and block. A row without one
 gets its block written by the session that claims its predecessor, from this table,
@@ -490,8 +490,18 @@ the same section but are not goals: they stay in `hud.gd`.
   goals_button: Button)`, `set_challenge_goal(...)` (same parameters),
   `set_colony_goals(entries)`, `apply_collapsed()`, `toggle_collapsed()` (the
   old `_on_goals_button_pressed` body), `rebuild_favourites(entries)`.
-- It declares `signal star_toggled(id: String)`; `hud.gd` connects it to its
-  existing `goal_star_toggled.emit`, so `main.gd`'s connection is unchanged.
+- It declares `signal star_toggled(id: String)` and, for SG-3's Dismiss
+  button, `signal dismiss_requested(id: String)`; `hud.gd` connects them to
+  its existing `goal_star_toggled.emit` and `goal_dismiss_requested.emit`, so
+  `colony_milestones.gd`'s connections are unchanged. SG-3's `short_term_box`,
+  `_short_term_sig` and `_rebuild_short_term` (rows with Dismiss and a star)
+  move into the shelf too.
+- Widened 3 Nov 2026 (Dave chose option A): `build` also takes the two
+  offsets (`hud.gd` keeps a thin `_build_goal_shelf` that computes them from
+  its layout constants); `colony_milestones.gd` reads
+  `main.hud.goals.colony_goal_entries`; `tests/sg3_goal_shelf_test.gd` reads
+  `hud.goals.*`. `set_settings_button_width` writes
+  `goals.goal_shelf.offset_right`. No forwarding accessors stay on `hud.gd`.
 - `hud.gd` keeps `var goals := HudGoalShelf.new()` and one-line forwarders
   `set_challenge_goal` and `set_colony_goals` (callers unchanged), and
   `_on_goals_button_pressed` becomes `goals.toggle_collapsed()`.
@@ -532,7 +542,7 @@ stays on screen; Dismiss on a short-term goal removes it.
 ```queue
 **[Claude] CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd**
 - Plan: `plans/now/code-health.md` -- "CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd"
-- Files: `scripts/hud.gd`, `scripts/hud_goal_shelf.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/ts2_hud_typeface_size_test.gd`, `FUNCTION_MAP.md`
+- Files: `scripts/hud.gd`, `scripts/hud_goal_shelf.gd`, `scripts/colony_milestones.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/ts2_hud_typeface_size_test.gd`, `tests/sg3_goal_shelf_test.gd`, `FUNCTION_MAP.md`
 - Check: `python -m unittest tests.test_gp1_goals_dropdown tests.test_gp2_goal_favourites tests.test_ts2_hud_typeface_size tests.test_sg3_goal_shelf tests.test_layout_regression` passes with no assertion changed; `scripts/hud.gd` no longer defines `_rebuild_favourites`; `.\tools\verify.ps1` is green
 - Proof: `present: scripts/hud.gd :: func _rebuild_favourites(`
 - Next after: CQ-R8
