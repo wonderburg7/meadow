@@ -174,13 +174,18 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.files:
         files = [Path(f) for f in args.files]
+        missing = [f for f in files if not f.is_file()]
+        if missing:
+            print("FAILED -- variable shadow check: missing input files:", file=sys.stderr)
+            for m in missing:
+                print(f"  {m}", file=sys.stderr)
+            return 2
     else:
         files = tracked_gd_files(ROOT)
 
     problems: list[str] = []
     for path in files:
-        if path.is_file():
-            problems.extend(check_file(path))
+        problems.extend(check_file(path))
 
     if problems:
         print("FAILED -- variable shadow check found problems:", file=sys.stderr)
