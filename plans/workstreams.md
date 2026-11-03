@@ -48,3 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
+| `.worktrees/CQ-R8` (`claude/CQ-R8`) | Claude | hud builders shortened; hud sections re-headed | Claude | in progress | none | `plans/now/code-health.md` CQ-R8 -- hud builders shortened; hud sections re-headed |
