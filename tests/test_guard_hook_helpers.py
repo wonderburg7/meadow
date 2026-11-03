@@ -77,6 +77,10 @@ class TestGuardHookHelpers(unittest.TestCase):
             "Run tools/… from inside the worktree, not ../../tools/… .",
         )
 
+    def test_reason_allows_worktree_finish(self) -> None:
+        cmd = "powershell.exe -NoProfile -File tools/slice.ps1 finish -Lane Codex"
+        self.assertEqual(guard_hook._reason(cmd, "/repo/.worktrees/slice-1"), "")
+
     def test_reason_reads_denied_tree(self) -> None:
         cmd = "cat .godot/state.txt"
         self.assertEqual(guard_hook._reason(cmd, "/repo"), "Do not read this denied path.")

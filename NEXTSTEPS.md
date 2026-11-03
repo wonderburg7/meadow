@@ -49,14 +49,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] L-39 -- command guard permits worktree closeout**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-39 -- command guard permits worktree closeout"
-   - Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`, `tests/test_guard_hook_helpers.py`
-   - Check: `python -m unittest tests.test_guard_hook tests.test_guard_hook_helpers`
-   - Proof: `present: tools/guard_hook.py :: Run slice.ps1 finish from the primary checkout, not this worktree.`
-   - Next after: L-40
-
-2. **[Codex] L-40 -- Codex coordinator delegates queue housekeeping**
+1. **[Codex] L-40 -- Codex coordinator delegates queue housekeeping**
    - Plan: `plans/now/agent-lifecycle.md` -- "L-40 -- Codex coordinator delegates queue housekeeping"
    - Files: `.agents/skills/run-queue/SKILL.md`
    - Check: `python tools/check_docs.py`

@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude / Codex | Next: L-39 to reconcile the guard with worktree closeout; L-40 to delegate Codex queue housekeeping | Dependency: L-39 and L-40 have separate files; preserve current worker model and turn-cap policy | Verified: 2026-11-02
+Status: active | Owner: Dave / Claude / Codex | Next: L-40 to delegate Codex queue housekeeping | Dependency: preserve current worker model and turn-cap policy | Verified: 2026-11-03
 
 ## Objective
 
@@ -50,11 +50,10 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-39 | Allow the documented worktree closeout through the command guard | `tools/guard_hook.py`, `tests/test_guard_hook.py`, `tests/test_guard_hook_helpers.py` | medium |
 | L-40 | Delegate Codex gate/refill work to its existing queue steward | `.agents/skills/run-queue/SKILL.md` | medium |
 
-Both are startable backlog entries, not new lane claims. L-39's `Next after:`
-is L-40; L-40 is the final currently specified slice. Read only the assigned
+L-39 permits worktree-local finish through the command guard. L-40 is the
+final currently specified slice. Read only the assigned
 section and its named evidence. These follow the 2 Nov Jules review
 (`plans/reference/jules-review-2026-11-02.md`, F11 and the R-context triage).
 
@@ -100,41 +99,7 @@ L-37 shipped 2026-10-25; its specification is `plans/archive/L-37_2026-10-25.md`
 
 L-38 shipped 2026-10-26; its specification is `plans/archive/L-38_2026-10-26.md`.
 
-## L-39 -- command guard permits worktree closeout
-
-<!-- LAYER: immediate-task -->
-
-**True now:** `tools/guard_hook.py::_reason` rejects every worktree command
-containing `slice.ps1 finish`, contradicting `CHATGPT.md` and `AGENTS.md`.
-The older `tests/test_guard_hook.py` assertion preserves that obsolete rule;
-the newly integrated helper suite deliberately omits its duplicate.
-
-**Do:** Remove only the primary-checkout-only finish restriction. Replace the
-old denial test with a positive assertion for a worktree-local,
-lane-qualified finish, and add the same positive helper case. Keep denials
-for piped finish, process killing, denied-tree reads and relative tools
-paths. Do not change lifecycle execution or weaken any other guard.
-
-**Acceptance:** Both guard suites pass; `_reason` returns an empty reason for
-`powershell.exe -NoProfile -File tools/slice.ps1 finish -Lane Codex` from a
-worktree, while existing forbidden-command cases still fail closed.
-This is command-time only, with no simulation or per-frame work.
-
-**Check:** `python -m unittest tests.test_guard_hook tests.test_guard_hook_helpers`.
-**Reasoning:** medium -- reconcile an executable guard with its durable rule.
-**Stop and escalate:** if the current lifecycle requires different routing,
-or the change needs another command-permission boundary.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] L-39 -- command guard permits worktree closeout**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-39 -- command guard permits worktree closeout"
-- Files: `tools/guard_hook.py`, `tests/test_guard_hook.py`, `tests/test_guard_hook_helpers.py`
-- Check: `python -m unittest tests.test_guard_hook tests.test_guard_hook_helpers`
-- Proof: `present: tools/guard_hook.py :: Run slice.ps1 finish from the primary checkout, not this worktree.`
-- Next after: L-40
-```
+L-39 shipped 2026-11-03; its specification is `plans/archive/L-39_2026-11-03.md`.
 
 ## L-40 -- Codex coordinator delegates queue housekeeping
 
