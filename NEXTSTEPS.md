@@ -23,14 +23,7 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] CQ-R8 -- hud builders shortened; hud sections re-headed**
-   - Plan: `plans/now/code-health.md` -- "CQ-R8 -- hud builders shortened; hud sections re-headed"
-   - Files: `scripts/hud.gd`, `FUNCTION_MAP.md`
-   - Check: `python -m unittest tests.test_layout_regression tests.test_gp1_goals_dropdown tests.test_gp2_goal_favourites tests.test_rr4_min_window tests.test_display_text_golden` passes; `scripts/hud.gd` has a `# --- warning banner` header; `.\tools\verify.ps1` is green
-   - Proof: `present: scripts/hud.gd :: var nectar_btn := Button.new()`
-   - Next after: CQ-T3
-
-2. **[Claude] ED-1c -- health is saved per bee**
+1. **[Claude] ED-1c -- health is saved per bee**
    - Plan: `plans/now/difficulty.md` -- "ED-1c -- health is saved per bee"
    - Files: `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed1c_health_save_test.gd`, `tests/test_ed1c_health_save.py`, `tests/test_save_migrations.py`, `tests/fixtures/saves/cq_s0_early.json`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json`
    - Check: `python -m unittest tests.test_ed1c_health_save tests.test_save_migrations` passes (a bee's health survives save and restore; an old save without the key loads every bee at full health); `.\tools\verify.ps1` is green

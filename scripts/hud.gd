@@ -737,6 +737,11 @@ func _build_top_right_bar() -> void:
 	bar.offset_top = 8  # fixed-inset
 	add_child(bar)
 
+	_build_speed_row(bar)
+	_build_window_buttons_row(bar)
+
+## Row 1 of the top-right bar: pause and the speed multipliers.
+func _build_speed_row(bar: VBoxContainer) -> void:
 	var row1 := HBoxContainer.new()
 	row1.name = "top_bar_row1"
 	row1.alignment = BoxContainer.ALIGNMENT_END
@@ -783,6 +788,8 @@ func _build_top_right_bar() -> void:
 
 	row1.add_child(_info("Game speed, as a multiple of normal. These change how fast the simulation runs; they do not change how much a bee gathers per in-game second."))
 
+## Row 2 of the top-right bar: the window/view icon buttons and Goals.
+func _build_window_buttons_row(bar: VBoxContainer) -> void:
 	var row2 := HBoxContainer.new()
 	row2.name = "top_bar_row2"
 	row2.alignment = BoxContainer.ALIGNMENT_END
@@ -915,14 +922,6 @@ func _apply_interface_label_visibility() -> void:
 		var width: float = entry.full_width if Session.show_interface_labels else entry.icon_width
 		entry.button.custom_minimum_size.x = width
 
-# --- Challenge goal readout ---------------------------------------
-# (the goal shelf itself lives in hud_goal_shelf.gd)
-func _build_goal_shelf() -> void:
-	goals.star_toggled.connect(goal_star_toggled.emit)
-	goals.dismiss_requested.connect(goal_dismiss_requested.emit)
-	var offset_top: float = top_right_bar.offset_top + TOP_BAR_CONTROL_HEIGHT * 2.0 + TOP_BAR_ROW_SEPARATION + GOAL_SHELF_GAP
-	goals.build(self, goals_button, offset_top, -(SETTINGS_BUTTON_DEFAULT_WIDTH + TOP_BAR_BUTTON_GAP * 2.0))
-
 ## Called by debug_panel.gd whenever its settings cog's actual width
 ## changes (including the first layout pass), so this bar sits exactly
 ## as far from the corner as the cog needs and no further -- see the
@@ -932,6 +931,19 @@ func set_settings_button_width(width: float) -> void:
 		return
 	top_right_bar.offset_right = -(width + TOP_BAR_BUTTON_GAP * 2.0)
 	goals.goal_shelf.offset_right = -(width + TOP_BAR_BUTTON_GAP * 2.0)
+
+func set_speed_display(speed_scale: float) -> void:
+	pause_button.button_pressed = is_equal_approx(speed_scale, 0.0)
+	for entry in speed_buttons:
+		entry.button.button_pressed = is_equal_approx(entry.scale, speed_scale)
+
+# --- Challenge goal readout ---------------------------------------
+# (the goal shelf itself lives in hud_goal_shelf.gd)
+func _build_goal_shelf() -> void:
+	goals.star_toggled.connect(goal_star_toggled.emit)
+	goals.dismiss_requested.connect(goal_dismiss_requested.emit)
+	var offset_top: float = top_right_bar.offset_top + TOP_BAR_CONTROL_HEIGHT * 2.0 + TOP_BAR_ROW_SEPARATION + GOAL_SHELF_GAP
+	goals.build(self, goals_button, offset_top, -(SETTINGS_BUTTON_DEFAULT_WIDTH + TOP_BAR_BUTTON_GAP * 2.0))
 
 ## GP-1/Challenge: see HudGoalShelf.set_challenge_goal.
 func set_challenge_goal(text: String, completed_text: String = "", progress_current: float = -1.0, progress_target: float = -1.0) -> void:
@@ -943,11 +955,6 @@ func set_colony_goals(entries: Array) -> void:
 
 func _on_goals_button_pressed() -> void:
 	goals.toggle_collapsed()
-
-func set_speed_display(speed_scale: float) -> void:
-	pause_button.button_pressed = is_equal_approx(speed_scale, 0.0)
-	for entry in speed_buttons:
-		entry.button.button_pressed = is_equal_approx(entry.scale, speed_scale)
 
 # --- bottom row ---------------------------------------------------
 ## Four ranked labels (UI_PLAN.md section 5) rather than the old two --
@@ -976,6 +983,14 @@ func _build_selection_panel() -> void:
 	var column := selection_column
 	_apply_selection_tray_width()
 
+	_build_summary_labels(column)
+	_build_soil_summary_row(column)
+	_build_keep_clear_row(column)
+
+	_set_summary_cog_kind("")
+
+## Header (identity, star, cog) and the energy / activity / trait labels.
+func _build_summary_labels(column: VBoxContainer) -> void:
 	# The cog sits on the same line as the identity label (Dave's 29 Aug
 	# ask) rather than a row of its own above it -- that row used to be
 	# empty air except for the cog, pushing every field down and making
@@ -1017,6 +1032,8 @@ func _build_selection_panel() -> void:
 	trait_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_wax")))
 	column.add_child(trait_label)
 
+## The soil summary's mark / clear buttons.
+func _build_soil_summary_row(column: VBoxContainer) -> void:
 	# Only shown for a soil summary -- see show_object_summary. Stacked
 	# vertically (rather than side by side) so the two buttons can never
 	# push the panel past its fixed width at a large text scale.
@@ -1051,6 +1068,8 @@ func _build_selection_panel() -> void:
 	soil_summary_row.add_child(soil_clear_wrapper)
 	_register_gated_control("soil_clear_btn", func(): return soil_clear_btn)
 
+## The kept-clear tile summary's button.
+func _build_keep_clear_row(column: VBoxContainer) -> void:
 	# Only shown for a kept-clear tile summary (HR-1); same stacking as above.
 	keep_clear_summary_row = VBoxContainer.new()
 	keep_clear_summary_row.name = "keep_clear_summary_row"
@@ -1065,8 +1084,6 @@ func _build_selection_panel() -> void:
 	keep_clear_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	keep_clear_btn.pressed.connect(func(): keep_clear_clear_requested.emit())
 	keep_clear_summary_row.add_child(keep_clear_btn)
-
-	_set_summary_cog_kind("")
 
 ## The star and the cog sit side by side in the summary panel's header, so
 ## they are one control pair and take one size (HC-13). Each used to set
@@ -1420,6 +1437,30 @@ func _build_tray_column(title: String) -> Array:
 ## without hunting through the text above.
 var live_buttons: Dictionary = {}
 
+# Order matters: it is the order the buttons sit in the "Reserve for" row.
+# "key" names the live_buttons entry (designation_<key>); "type" is what
+# _request_designation receives. Bee bread (BB-1) is shown once bought
+# (_apply_cell_popup_gating).
+const DESIGNATION_BUTTONS := [
+	{"key": "nectar", "type": "nectar", "label": "Nectar", "tip": "Reserve this cell for nectar. Foragers carrying pollen will walk past it."},
+	{"key": "pollen", "type": "pollen", "label": "Pollen", "tip": "Reserve this cell for pollen. Foragers carrying nectar will walk past it."},
+	{"key": "honey", "type": "honey", "label": "Honey", "tip": "Reserve this cell for honey. Honey makers spit their chewed nectar mix into cells like this one and then fan it dry."},
+	{"key": "jelly", "type": "jelly", "label": "Jelly", "tip": "Reserve this cell for royal jelly. Nurses on the royal jelly sub-mode store what they make here, and draw on it when feeding gyne larvae."},
+	{"key": "bee_bread", "type": "bee_bread", "label": "Bee bread", "tip": "Reserve this cell for bee bread. Honey makers on Fermenting pack pollen and ripe honey in here. Once the cell is full it seals itself and ripens over about two days."},
+	{"key": "brood", "type": "brood", "label": "Eggs", "tip": "Reserve this cell as a nursery. The queen lays here first, and foragers won't fill it with stores. Reserving enough of these is what stops laying stalling for want of a free cell."},
+	{"key": "any", "type": "", "label": "Unreserve", "tip": "Remove the reservation. The cell takes whichever resource arrives first, and reserves itself for that from then on."},
+]
+
+func _add_designation_button(row: Container, entry: Dictionary) -> void:
+	var btn := Button.new()
+	_style_button(btn)
+	btn.text = entry.label
+	btn.focus_mode = Control.FOCUS_NONE
+	var type: String = entry.type
+	btn.pressed.connect(func(): _request_designation(type))
+	live_buttons["designation_" + entry.key] = btn
+	row.add_child(_with_info(btn, entry.tip))
+
 ## Builds the tray's cell content into `parent` (command_tray's own
 ## column, alongside command_columns and more_panel) rather than a
 ## separate floating popup -- folded in per UI_BUGFIX_PLAN.md Slice 4/5,
@@ -1447,62 +1488,8 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	var row := HFlowContainer.new()
 	_build_cell_action_column(cell_primary_columns, "Reserve for").add_child(row)
 
-	var nectar_btn := Button.new()
-	_style_button(nectar_btn)
-	nectar_btn.text = "Nectar"
-	nectar_btn.focus_mode = Control.FOCUS_NONE
-	nectar_btn.pressed.connect(func(): _request_designation("nectar"))
-	live_buttons["designation_nectar"] = nectar_btn
-	row.add_child(_with_info(nectar_btn, "Reserve this cell for nectar. Foragers carrying pollen will walk past it."))
-
-	var pollen_btn := Button.new()
-	_style_button(pollen_btn)
-	pollen_btn.text = "Pollen"
-	pollen_btn.focus_mode = Control.FOCUS_NONE
-	pollen_btn.pressed.connect(func(): _request_designation("pollen"))
-	live_buttons["designation_pollen"] = pollen_btn
-	row.add_child(_with_info(pollen_btn, "Reserve this cell for pollen. Foragers carrying nectar will walk past it."))
-
-	var honey_btn := Button.new()
-	_style_button(honey_btn)
-	honey_btn.text = "Honey"
-	honey_btn.focus_mode = Control.FOCUS_NONE
-	honey_btn.pressed.connect(func(): _request_designation("honey"))
-	live_buttons["designation_honey"] = honey_btn
-	row.add_child(_with_info(honey_btn, "Reserve this cell for honey. Honey makers spit their chewed nectar mix into cells like this one and then fan it dry."))
-
-	var jelly_btn := Button.new()
-	_style_button(jelly_btn)
-	jelly_btn.text = "Jelly"
-	jelly_btn.focus_mode = Control.FOCUS_NONE
-	jelly_btn.pressed.connect(func(): _request_designation("jelly"))
-	live_buttons["designation_jelly"] = jelly_btn
-	row.add_child(_with_info(jelly_btn, "Reserve this cell for royal jelly. Nurses on the royal jelly sub-mode store what they make here, and draw on it when feeding gyne larvae."))
-
-	# BB-1: shown once Bee bread is bought (_apply_cell_popup_gating).
-	var bee_bread_btn := Button.new()
-	_style_button(bee_bread_btn)
-	bee_bread_btn.text = "Bee bread"
-	bee_bread_btn.focus_mode = Control.FOCUS_NONE
-	bee_bread_btn.pressed.connect(func(): _request_designation("bee_bread"))
-	live_buttons["designation_bee_bread"] = bee_bread_btn
-	row.add_child(_with_info(bee_bread_btn, "Reserve this cell for bee bread. Honey makers on Fermenting pack pollen and ripe honey in here. Once the cell is full it seals itself and ripens over about two days."))
-
-	var egg_btn := Button.new()
-	_style_button(egg_btn)
-	egg_btn.text = "Eggs"
-	egg_btn.focus_mode = Control.FOCUS_NONE
-	egg_btn.pressed.connect(func(): _request_designation("brood"))
-	live_buttons["designation_brood"] = egg_btn
-	row.add_child(_with_info(egg_btn, "Reserve this cell as a nursery. The queen lays here first, and foragers won't fill it with stores. Reserving enough of these is what stops laying stalling for want of a free cell."))
-
-	var auto_btn := Button.new()
-	_style_button(auto_btn)
-	auto_btn.text = "Unreserve"
-	auto_btn.focus_mode = Control.FOCUS_NONE
-	auto_btn.pressed.connect(func(): _request_designation(""))
-	live_buttons["designation_any"] = auto_btn
-	row.add_child(_with_info(auto_btn, "Remove the reservation. The cell takes whichever resource arrives first, and reserves itself for that from then on."))
+	for entry in DESIGNATION_BUTTONS:
+		_add_designation_button(row, entry)
 
 	_build_priority_controls(_build_cell_action_column(cell_primary_columns, "Priority"))
 	_build_raises_controls(_build_cell_action_column(cell_primary_columns, "Raises"))
@@ -1597,6 +1584,13 @@ func _build_priority_controls(column: VBoxContainer) -> void:
 ## cell tray's Nursery column fits in three narrower columns instead of one
 ## tall one.
 func _build_raises_controls(column: VBoxContainer) -> void:
+	_build_raises_hatch_row(column)
+	_build_raises_lock_row(column)
+	_build_raises_gyne_row(column)
+	_build_raises_drone_row(column)
+	_build_raises_feed_first_row(column)
+
+func _build_raises_hatch_row(column: VBoxContainer) -> void:
 	# Which role a bee raised here comes out as.
 	hatch_row = HFlowContainer.new()
 	hatch_row.name = "hatch_row"
@@ -1636,6 +1630,7 @@ func _build_raises_controls(column: VBoxContainer) -> void:
 	hatch_locked_note.visible = false
 	hatch_row.add_child(hatch_locked_note)
 
+func _build_raises_lock_row(column: VBoxContainer) -> void:
 	# Whether that role sticks for every future bee, or applies once.
 	lock_row = HBoxContainer.new()
 	column.add_child(lock_row)
@@ -1650,7 +1645,9 @@ func _build_raises_controls(column: VBoxContainer) -> void:
 			_refresh_cell_popup()
 	)
 	lock_row.add_child(hatch_lock_box)
+	lock_row.add_child(_info("On: every bee this cell ever raises comes out in the chosen role, so you can earmark a cell as a builder nursery once and forget about it. Off: the role applies to the next bee only and then clears, so a one-off choice doesn't quietly govern the cell forever."))
 
+func _build_raises_gyne_row(column: VBoxContainer) -> void:
 	# Whether the queen lays a gyne here rather than a worker.
 	gyne_row = HBoxContainer.new()
 	column.add_child(gyne_row)
@@ -1666,6 +1663,7 @@ func _build_raises_controls(column: VBoxContainer) -> void:
 	gyne_row.add_child(gyne_box)
 	gyne_row.add_child(_info("A gyne is a future queen. She costs the queen several times as much pollen to lay, takes four times as long to develop, and can only be fed on royal jelly with pollen and honey -- so you need nurses producing jelly before one will grow at all. She can do any worker job in the meantime, though she is bigger, slower and hungrier than a worker."))
 
+func _build_raises_drone_row(column: VBoxContainer) -> void:
 	# DR-2: whether the queen lays a drone here. No skill to buy.
 	drone_row = HBoxContainer.new()
 	column.add_child(drone_row)
@@ -1680,8 +1678,8 @@ func _build_raises_controls(column: VBoxContainer) -> void:
 	)
 	drone_row.add_child(drone_box)
 	drone_row.add_child(_info("A drone is a male bee. The queen lays him from an unfertilised egg, he does no work and eats from the stores, and he is needed to mate a gyne. Ticking this clears the gyne box for the cell, and the other way round."))
-	lock_row.add_child(_info("On: every bee this cell ever raises comes out in the chosen role, so you can earmark a cell as a builder nursery once and forget about it. Off: the role applies to the next bee only and then clears, so a one-off choice doesn't quietly govern the cell forever."))
 
+func _build_raises_feed_first_row(column: VBoxContainer) -> void:
 	# PP-5: nurses come to the larva here before any unmarked one.
 	feed_first_row = HBoxContainer.new()
 	feed_first_row.name = "feed_first_row"
@@ -1857,6 +1855,8 @@ func _fill_hatch_menu(popup: PopupMenu, role_value: int, options: Array) -> int:
 		popup.add_item(options[i].label, i)
 	return popup.item_count
 
+# --- warning banner -----------------------------------------------
+
 const WARNING_SECONDS := 18.0
 
 func _build_warning_banner() -> void:
@@ -1931,6 +1931,7 @@ func set_warnings_muted(value: bool) -> void:
 		warning_panel.visible = false
 		_pending_warning = {}
 
+# --- object summaries ---------------------------------------------
 ## --- object summary (flower / obstacle / death / soil) -------------
 ## Folded into the bottom-left selection panel from four separate
 ## mouse-anchored popups (UI_BUGFIX_PLAN.md Slice 5, Dave's 22 Aug
@@ -2050,6 +2051,7 @@ func _show_death_summary(info: Dictionary) -> void:
 		trait_lines.append("\"%s\"" % info.get("bee_fact"))
 	trait_label.text = "\n".join(trait_lines)
 
+# --- cell popup: show and refresh ---------------------------------
 ## Cell state now uses the bottom-left summary, while its actions share the
 ## command tray with Job/Focus/Orders and are mutually exclusive with those
 ## bee controls. Leaves the bee columns' own content untouched underneath
@@ -2269,6 +2271,7 @@ func _set_lit(key: String, lit: bool) -> void:
 	else:
 		UI.clear_current_mark(button)
 
+# --- stage marker (per frame) -------------------------------------
 func _process(_delta: float) -> void:
 	Perf.begin("hud")
 	_update_stage_marker_arrow()
@@ -2377,6 +2380,7 @@ func _marker_arrow_obscured(point: Vector2) -> bool:
 			return true
 	return false
 
+# --- cell requests ------------------------------------------------
 func _request_designation(type: String) -> void:
 	if active_cell and is_instance_valid(active_cell):
 		cell_designation_requested.emit(active_cell, type)
