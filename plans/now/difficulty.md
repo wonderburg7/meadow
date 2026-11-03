@@ -72,7 +72,6 @@ Verified 12 Oct 2026 against master `06bd26c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| ED-1b | A spider ambush takes a bee's health; the selection panel shows health beside energy | `scripts/crab_spider.gd`, `scripts/hud.gd`, `tests/ed1b_health_panel_test.gd`, `tests/test_ed1b_health_panel.py` | yes -- queued (ED-1 landed 2 Nov 2026) | medium |
 | ED-1c | Health is saved per bee; an old save loads every bee at full health | `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed1c_health_save_test.gd`, `tests/test_ed1c_health_save.py`, `tests/test_save_migrations.py`, `tests/fixtures/saves/cq_s0_early.json`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json` | no -- after ED-1b | medium |
 | ED-2 | A run's difficulty, and Easy's rules: health floors at one, the queen cannot die, brood waits, winter spares | `scripts/session.gd`, `scripts/bee_survival.gd`, `scripts/bee_nursery.gd`, `scripts/season.gd`, `scripts/crab_spider.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed2_easy_rules_test.gd`, `tests/test_ed2_easy_rules.py` | no -- after ED-1c | high |
 | ED-3 | Choosing Easy: the Colony Run tile, Relaxed and Custom, and the Saves window | `scripts/main_menu.gd`, `scripts/scenario_presets.gd`, `scripts/main.gd`, `scripts/levels.gd`, `scripts/saves_panel.gd`, `tests/test_ed3_difficulty_choice.py` | no -- after ED-2 | medium |
@@ -97,26 +96,7 @@ per bee, per frame), ED-1c and ED-2 `.claude/rules/saving.md`, ED-1b and ED-3
 
 ED-1 shipped 2026-11-02; its specification is `plans/archive/ED-1_2026-11-02.md`.
 
-## ED-1b -- an ambush takes health and the panel shows it
-
-<!-- LAYER: immediate-task -->
-
-Level: medium -- two files and a display, with ED-1's health already in place.
-
-**Change.** `crab_spider.gd`: an ambush takes a bee's health -- all of it on
-every difficulty for now, so Standard ambushes still kill (it still goes
-through `bee_survival.gd::die` with cause "crab spider ambush"). The
-selection panel shows health beside energy, in `hud.gd::_selection_energy_text`.
-No balance value is added.
-
-```queue
-**[Claude] ED-1b -- an ambush takes health and the panel shows it**
-- Plan: `plans/now/difficulty.md` -- "ED-1b -- an ambush takes health and the panel shows it"
-- Files: `scripts/crab_spider.gd`, `scripts/hud.gd`, `tests/ed1b_health_panel_test.gd`, `tests/test_ed1b_health_panel.py`
-- Check: `python -m unittest tests.test_ed1b_health_panel` passes (an ambushed bee loses all its health and dies with the same cause as before; a selected bee's panel shows its health beside its energy); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/hud.gd :: .health`
-- Next after: ED-1c -- health is saved per bee
-```
+ED-1b shipped 2026-11-03; its specification is `plans/archive/ED-1b_2026-11-03.md`.
 
 ## ED-1c -- health is saved per bee
 
