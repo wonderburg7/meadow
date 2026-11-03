@@ -54,8 +54,13 @@ class GuardHookTest(unittest.TestCase):
     def test_denies_piping_finish(self) -> None:
         self.assert_denied("powershell -File tools/slice.ps1 finish 2>&1 | Tee-Object output.txt", "pipe")
 
-    def test_denies_finishing_from_a_worktree(self) -> None:
-        self.assert_denied("powershell -File tools/slice.ps1 finish", "primary checkout", r"C:\repo\.worktrees\L-34")
+    def test_allows_finishing_from_a_worktree(self) -> None:
+        code, output = self.run_hook(
+            "powershell.exe -NoProfile -File tools/slice.ps1 finish -Lane Codex",
+            r"C:\repo\.worktrees\L-34",
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(output, {})
 
     def test_denies_relative_tool_paths_from_a_worktree(self) -> None:
         self.assert_denied("python ../../tools/verify.py", "tools/…", r"C:\repo\.worktrees\L-34")

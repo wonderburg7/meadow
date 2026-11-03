@@ -64,8 +64,6 @@ def _reason(command: str, cwd: str) -> str:
         return "Do not stop Godot or Python; use slice.ps1 stop-verify or slice.ps1 status."
     if re.search(r"\bslice\.ps1\b[^\r\n]*\bfinish\b[^\r\n]*2>&1\s*\|", lowered):
         return "Do not pipe slice.ps1 finish; run it directly so closeout can complete."
-    if _is_worktree(cwd) and re.search(r"\bslice\.ps1\b[^\r\n]*\bfinish\b", lowered):
-        return "Run slice.ps1 finish from the primary checkout, not this worktree."
     if _is_worktree(cwd) and "../../tools/" in normalised:
         return "Run tools/… from inside the worktree, not ../../tools/… ."
     if _reads_tree(command):
