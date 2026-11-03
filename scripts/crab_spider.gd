@@ -96,7 +96,11 @@ static func resolve_attack(bee: Node2D) -> bool:
 		# is the one place that context still exists. die() itself still
 		# calls log_death as normal straight after.
 		DiagnosticLog.log_crab_spider_event(bee, flower, "kill")
-		load("res://scripts/bee_survival.gd").die(bee, "crab spider ambush")
+		# ED-1b: the ambush takes all of her health (every difficulty for now),
+		# so it still kills; the cause and the die() path are unchanged.
+		bee.health = maxf(0.0, bee.health - GameConfig.health_capacity)
+		if bee.health <= 0.0:
+			load("res://scripts/bee_survival.gd").die(bee, "crab spider ambush")
 		return false
 	# Escaped -- a much longer cooldown on this exact flower than an
 	# ordinary rejection gets, and a snapshot of where/what she was

@@ -41,15 +41,15 @@ func _initialize() -> void:
 	hud.corner_column.add_child(hud.perf_plot)
 	hud.perf_breakdown = Label.new()
 	hud.corner_column.add_child(hud.perf_breakdown)
-	hud._rebuild_favourites([{"starred": true, "text": "Test goal", "done": false}])
+	hud.goals.rebuild_favourites([{"starred": true, "text": "Test goal", "done": false}])
 	hud.corner_texts[CORNER_KEY] = "Day 3"
 	hud._refresh_corner()
 
-	var goal_size: int = hud.completed_goal_label.get_theme_font_size("normal_font_size")
+	var goal_size: int = hud.goals.completed_goal_label.get_theme_font_size("normal_font_size")
 	_expect(failures, goal_size == theme_script.font_px(GOAL_BASE),
 		"completed goal line is %d px, want font_px(%d) = %d" % [goal_size, GOAL_BASE, theme_script.font_px(GOAL_BASE)])
 
-	var favourite_line: Control = hud.favourites_box.get_child(0) if hud.favourites_box.get_child_count() > 0 else null
+	var favourite_line: Control = hud.goals.favourites_box.get_child(0) if hud.goals.favourites_box.get_child_count() > 0 else null
 	if favourite_line == null:
 		failures.append("the favourites box built no goal line")
 	else:

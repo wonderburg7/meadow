@@ -106,7 +106,7 @@ func _offered() -> Dictionary:
 
 
 func _row(id: String) -> Node:
-	return _main.hud.short_term_box.get_node_or_null("short_term_" + id)
+	return _main.hud.goals.short_term_box.get_node_or_null("short_term_" + id)
 
 
 func _row_text(id: String) -> String:
@@ -132,12 +132,12 @@ func _run_case() -> void:
 	var text := _row_text("pollen_surplus")
 	_check(text.contains("Build a pollen surplus") and text.contains("pays 10 pollen"),
 		"%s: the goal's line names the outcome and the reward (%s)" % [_case, text])
-	_check(hud.goal_shelf.visible and hud.short_term_box.visible, "%s: the goal shows in the open drop-down" % _case)
+	_check(hud.goals.goal_shelf.visible and hud.goals.short_term_box.visible, "%s: the goal shows in the open drop-down" % _case)
 	if colony:
-		_check(not hud.current_goal_label.text.is_empty() and hud.current_goal_label.visible, "colony: the milestone still shows")
-		_check(hud.short_term_box.get_index() > hud.current_goal_label.get_index(), "colony: the goal sits under the milestone")
+		_check(not hud.goals.current_goal_label.text.is_empty() and hud.goals.current_goal_label.visible, "colony: the milestone still shows")
+		_check(hud.goals.short_term_box.get_index() > hud.goals.current_goal_label.get_index(), "colony: the goal sits under the milestone")
 	else:
-		_check(hud.current_goal_label.text.is_empty() and hud.long_term_goal_label.text.is_empty(),
+		_check(hud.goals.current_goal_label.text.is_empty() and hud.goals.long_term_goal_label.text.is_empty(),
 			"scenario: the drop-down holds the short-term goal alone")
 
 	# 2. Progress, once the next refresh has worked it out.
@@ -153,14 +153,14 @@ func _run_case() -> void:
 	_check(ms.favourites.has("pollen_surplus"), "%s: pressing the star favourites the goal (%s)" % [_case, ms.favourites])
 	_check(_row("pollen_surplus").get_node("star").text == "★", "%s: the star shows as on" % _case)
 	session.goals_collapsed = true
-	hud._apply_goals_collapsed()
+	hud.goals.apply_collapsed()
 	var kept := false
-	for line: Node in hud.favourites_box.get_children():
+	for line: Node in hud.goals.favourites_box.get_children():
 		kept = kept or str(line.text).contains("Build a pollen surplus")
-	_check(kept and hud.favourites_box.visible and not hud.short_term_box.visible,
+	_check(kept and hud.goals.favourites_box.visible and not hud.goals.short_term_box.visible,
 		"%s: collapsed, the starred goal stays and the list is folded" % _case)
 	session.goals_collapsed = false
-	hud._apply_goals_collapsed()
+	hud.goals.apply_collapsed()
 
 	# 4. Dismiss: gone, and nothing replaces it today; back tomorrow.
 	var before: int = _offered().size()
@@ -170,7 +170,7 @@ func _run_case() -> void:
 	_check(not _offered().has("pollen_surplus") and _row("pollen_surplus") == null,
 		"%s: Dismiss removes the goal and its line" % _case)
 	if _offered().is_empty() and not colony:
-		_check(not hud.goal_shelf.visible, "scenario: dismissing the last goal clears the shelf")
+		_check(not hud.goals.goal_shelf.visible, "scenario: dismissing the last goal clears the shelf")
 	_check(not ms.favourites.has("pollen_surplus"), "%s: a dismissed goal is unstarred" % _case)
 	_refresh()
 	_check(not _offered().has("pollen_surplus") and _offered().size() == before - 1,
@@ -206,13 +206,13 @@ func _challenge_case() -> void:
 	_main._sample_day_stores()
 	_next_day(40.0, 0.0)
 	_refresh()
-	_check(not _main.hud.short_term_box.visible and _main.hud.short_term_box.get_child_count() == 0,
+	_check(not _main.hud.goals.short_term_box.visible and _main.hud.goals.short_term_box.get_child_count() == 0,
 		"a Challenge's shelf shows no short-term line")
 	# Even with a goal in the state, a Challenge's own shelf is left alone.
 	_main.short_term_goals = {"offered": {"pollen_surplus": {"id": "pollen_surplus", "label": "Build a pollen surplus",
 		"resource": "pollen", "reward": 10.0}}}
 	_main.colony_milestones.show_next()
-	_check(not _main.hud.goals_button.visible and _main.hud.short_term_box.get_child_count() == 0,
+	_check(not _main.hud.goals_button.visible and _main.hud.goals.short_term_box.get_child_count() == 0,
 		"a Challenge's shelf is not overwritten by a short-term goal")
 
 

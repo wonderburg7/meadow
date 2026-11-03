@@ -48,4 +48,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/ED-1` (`claude/ED-1`) | Claude | every bee has health | Claude | in progress | none | `plans/now/difficulty.md` ED-1 -- every bee has health |
+| `.worktrees/L-39` (`codex/L-39`) | Codex | command guard permits worktree closeout | Codex | in progress | none | `plans/now/agent-lifecycle.md` L-39 -- command guard permits worktree closeout |
