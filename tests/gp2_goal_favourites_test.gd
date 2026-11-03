@@ -48,7 +48,7 @@ func _boot() -> void:
 
 
 func _star_for(label: Control) -> Button:
-	for star: Variant in _main.hud.goal_stars:
+	for star: Variant in _main.hud.goals.goal_stars:
 		if star.get_parent() == label:
 			return star
 	return null
@@ -60,39 +60,39 @@ func _run() -> void:
 	_check(ms.applies(), "the Colony Run's rules do not apply")
 	ms.favourites.clear()
 	ms.show_next()
-	_check(hud.favourites_box.get_child_count() == 0, "a line is favourited before any star is pressed")
+	_check(hud.goals.favourites_box.get_child_count() == 0, "a line is favourited before any star is pressed")
 
 	# Star the long-term line and the milestone through the real buttons.
-	var long_star := _star_for(hud.long_term_goal_label)
-	var next_star := _star_for(hud.current_goal_label)
+	var long_star := _star_for(hud.goals.long_term_goal_label)
+	var next_star := _star_for(hud.goals.current_goal_label)
 	_check(long_star != null and long_star.visible and long_star.text == "☆", "the long-term star is missing or already on")
 	_check(next_star != null and next_star.visible, "the milestone star is missing")
 	if long_star == null or next_star == null:
 		return
 	long_star.pressed.emit()
-	_star_for(hud.current_goal_label).pressed.emit()
+	_star_for(hud.goals.current_goal_label).pressed.emit()
 	_check(ms.favourites == ["long_term", "first_cell"], "favourites are %s" % [ms.favourites])
-	_check(_star_for(hud.long_term_goal_label).text == "★", "the long-term star does not show as on")
-	_star_for(hud.current_goal_label).pressed.emit()
+	_check(_star_for(hud.goals.long_term_goal_label).text == "★", "the long-term star does not show as on")
+	_star_for(hud.goals.current_goal_label).pressed.emit()
 	_check(ms.favourites == ["long_term"], "pressing again did not unstar: %s" % [ms.favourites])
-	_star_for(hud.current_goal_label).pressed.emit()
+	_star_for(hud.goals.current_goal_label).pressed.emit()
 
 	# Collapsed: the starred lines show, the ordinary ones do not.
 	_session.goals_collapsed = true
-	hud._apply_goals_collapsed()
-	_check(hud.favourites_box.visible and hud.favourites_box.get_child_count() == 2,
-		"collapsed, %d favourite lines show" % hud.favourites_box.get_child_count())
-	_check(not hud.long_term_goal_label.visible and not hud.current_goal_label.visible,
+	hud.goals.apply_collapsed()
+	_check(hud.goals.favourites_box.visible and hud.goals.favourites_box.get_child_count() == 2,
+		"collapsed, %d favourite lines show" % hud.goals.favourites_box.get_child_count())
+	_check(not hud.goals.long_term_goal_label.visible and not hud.goals.current_goal_label.visible,
 		"collapsed, the ordinary lines still show")
-	if hud.favourites_box.get_child_count() == 2:
-		var milestone_line: String = hud.favourites_box.get_child(1).text
+	if hud.goals.favourites_box.get_child_count() == 2:
+		var milestone_line: String = hud.goals.favourites_box.get_child(1).text
 		_check(milestone_line.contains("Build your first cell"), "the starred milestone line reads '%s'" % milestone_line)
 		_check(not milestone_line.contains("[s]"), "an unmet favourite is struck through")
 
 	# Unstarred: nothing shows collapsed.
 	ms.toggle_favourite("long_term")
 	ms.toggle_favourite("first_cell")
-	_check(not hud.favourites_box.visible, "collapsed with no stars, the favourites box shows")
+	_check(not hud.goals.favourites_box.visible, "collapsed with no stars, the favourites box shows")
 	ms.toggle_favourite("long_term")
 	ms.toggle_favourite("first_cell")
 
@@ -101,22 +101,22 @@ func _run() -> void:
 	ms.show_next()
 	_check(ms.favourites.has("first_cell"), "a favourite met today was dropped at once")
 	var struck := false
-	for line: Node in hud.favourites_box.get_children():
+	for line: Node in hud.goals.favourites_box.get_children():
 		if line.text.contains("[s]") and line.text.contains("Build your first cell"):
 			struck = true
 	_check(struck, "a met favourite is not struck through while collapsed")
-	_check(hud.favourites_box.get_child_count() == 2, "met today, %d lines show" % hud.favourites_box.get_child_count())
+	_check(hud.goals.favourites_box.get_child_count() == 2, "met today, %d lines show" % hud.goals.favourites_box.get_child_count())
 	_main.day += 1
 	ms.evaluate()
 	_check(not ms.favourites.has("first_cell"), "a met favourite survived the day change")
 	_check(ms.favourites == ["long_term"], "favourites after the day change: %s" % [ms.favourites])
-	_check(hud.favourites_box.get_child_count() == 1, "after the day change, %d lines show" % hud.favourites_box.get_child_count())
+	_check(hud.goals.favourites_box.get_child_count() == 1, "after the day change, %d lines show" % hud.goals.favourites_box.get_child_count())
 
 	# Every milestone met: the 'all met' line is not a goal, so it has no star.
 	for milestone: Variant in ms.MILESTONES:
 		ms.met_days[milestone.id] = _main.day
 	ms.show_next()
-	_check(not _star_for(hud.current_goal_label).visible, "the all-met line shows a star")
+	_check(not _star_for(hud.goals.current_goal_label).visible, "the all-met line shows a star")
 	ms.met_days.clear()
 	ms.show_next()
 

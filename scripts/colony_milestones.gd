@@ -364,7 +364,7 @@ func _show_short_term_alone() -> void:
 	if Session.starting_level in [1, 2] or main.challenge_runner.active:
 		return
 	var entries: Array = short_term_entries()
-	if entries.is_empty() and main.hud.colony_goal_entries.is_empty():
+	if entries.is_empty() and main.hud.goals.colony_goal_entries.is_empty():
 		return
 	_connect_hud()
 	main.hud.set_colony_goals(entries)

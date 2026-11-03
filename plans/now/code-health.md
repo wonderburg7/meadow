@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the Claude lane's ED-1b and CQ-R15 to release scripts/hud.gd and the Codex lane's CQ-R16 to release scripts/main.gd, and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for ED-1 to release scripts/bee.gd (SP-6 landed 1 Nov 2026) and the Codex lane's CQ-R16 to release scripts/input_selection.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R15 and CQ-R16 are queued (SG-3 landed 1 Nov 2026), CQ-R8 and CQ-R3 stay gated on the queued slices that own their files | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-R15 and CQ-R16 are queued; CQ-R3 follows ED-1 (SP-6 landed 1 Nov 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R15 implemented (3 Nov 2026); CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the Claude lane's ED-1b and CQ-R15 to release scripts/hud.gd and the Codex lane's CQ-R16 to release scripts/main.gd, and the J-14 Jules branch to settle scripts/game_panel.gd; CQ-M6 waits for ED-1 to release scripts/bee.gd (SP-6 landed 1 Nov 2026) and the Codex lane's CQ-R16 to release scripts/input_selection.gd; CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R15 and CQ-R16 are queued (SG-3 landed 1 Nov 2026), CQ-R8 and CQ-R3 stay gated on the queued slices that own their files | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-R15 and CQ-R16 are queued; CQ-R3 follows ED-1 (SP-6 landed 1 Nov 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -138,7 +138,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R8 | hud builders shortened (designation button table); hud sections re-headed | `hud.gd`, `FUNCTION_MAP.md` | gated -- after CQ-R15 | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
-| CQ-R15 | the Goals drop-down becomes scripts/hud_goal_shelf.gd | `hud.gd`, `hud_goal_shelf.gd` (new), 3 goal tests, `FUNCTION_MAP.md` | queued (SG-3 landed 1 Nov 2026) | medium |
 
 Only the first slice of each chain carries a full section and block. A row without one
 gets its block written by the session that claims its predecessor, from this table,
@@ -452,91 +451,7 @@ CQ-R10 shipped 2026-10-27; its specification is `plans/archive/CQ-R10_2026-10-27
 
 CQ-R14 shipped 2026-10-27; its specification is `plans/archive/CQ-R14_2026-10-27.md`.
 
-## CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd
-
-Level: medium -- a bounded move with a clean boundary and three headless tests,
-but node order and signal wiring must survive it. SG-3 landed 1 Nov 2026
-with this drop-down's short-term rows and Dismiss; move the finished shelf
-once. From the modularity review (MOD-01, 30 Oct 2026).
-
-**Problem and benefit.** `hud.gd` (3,544 lines) holds unrelated HUD jobs, and
-because ownership is per file, every goals change holds the whole HUD: SG-3
-now blocks CQ-R8, CQ-M5b and CQ-T3 and anything else that touches the HUD.
-The Goals drop-down is the one part with a clean seam: at `f09ad39` no
-function outside its section reads any of its eleven fields, and outside
-callers use two methods only (`challenge_runner.gd` -> `set_challenge_goal`,
-`colony_milestones.gd` -> `set_colony_goals`). Moving it makes goal work
-own one small file.
-
-**True now (re-list after SG-3; a line number is never the address).** The
-"Challenge goal readout" section of `hud.gd` holds `_build_goal_shelf`,
-`set_challenge_goal`, `set_colony_goals`, `_apply_goals_collapsed`,
-`_add_goal_star`, `_set_goal_star`, `_on_goal_star_pressed`,
-`_rebuild_favourites`, `_on_goals_button_pressed`, plus whatever SG-3 adds
-for short-term goals and Dismiss. Its fields are `goal_shelf`,
-`completed_goal_label`, `current_goal_label`, `goal_progress_row`,
-`goal_progress_bar`, `goal_progress_label`, `long_term_goal_label`,
-`colony_goal_entries`, `goal_stars`, `goal_star_ids`, `favourites_box` (and
-SG-3's). `goals_button` is built by `_build_top_right_bar` in the second row
-and stays there. `set_settings_button_width` and `set_speed_display` sit in
-the same section but are not goals: they stay in `hud.gd`.
-
-**Boundary (decided).**
-- `scripts/hud_goal_shelf.gd`: `extends RefCounted`, the `hud_command_rows.gd`
-  shape, but it holds **no** `hud` or `main` reference. It reads only
-  `Session`, `UiTheme` and `UI`. Dependency direction: `hud.gd` -> shelf.
-- It owns every field and function listed above, renamed without the leading
-  underscore where `hud.gd` or a test calls it: `build(parent: Container,
-  goals_button: Button)`, `set_challenge_goal(...)` (same parameters),
-  `set_colony_goals(entries)`, `apply_collapsed()`, `toggle_collapsed()` (the
-  old `_on_goals_button_pressed` body), `rebuild_favourites(entries)`.
-- It declares `signal star_toggled(id: String)`; `hud.gd` connects it to its
-  existing `goal_star_toggled.emit`, so `main.gd`'s connection is unchanged.
-- `hud.gd` keeps `var goals := HudGoalShelf.new()` and one-line forwarders
-  `set_challenge_goal` and `set_colony_goals` (callers unchanged), and
-  `_on_goals_button_pressed` becomes `goals.toggle_collapsed()`.
-- `build` creates the same nodes with the same names, in the same order,
-  under the same parent `_build_goal_shelf` uses now. Nothing becomes a
-  child `Control` of its own.
-- While moving `_set_goal_star`, replace its `get_parent()` scan with a
-  `label -> star` Dictionary filled in `_add_goal_star` (MOD-05's one valid
-  point). No other change of logic.
-
-**Must not change.** Every display string, node name, node order and theme
-variation; `goal_star_toggled` and every other hud signal; `Session` keys;
-the "Rules for every slice" list above.
-
-**Steps.** 1. Re-list the section's functions and fields on current master;
-grep `scripts/`, `tests/` and `test_scenarios/` for each field name.
-2. Create the shelf script and move the code verbatim apart from the renames.
-3. Point `hud.gd` at it as above. 4. Change the tests' reads from
-`hud.<field>` / `hud._rebuild_favourites` / `hud._apply_goals_collapsed` to
-`hud.goals.<name>` (`tests/gp1_goals_dropdown_test.gd`,
-`tests/gp2_goal_favourites_test.gd`, `tests/ts2_hud_typeface_size_test.gd`);
-change no assertion. SG-3's tests read a scenario result, not hud fields; if
-one reads a moved field, stop. 5. Update the comments that name
-"hud.gd's goal shelf" (`challenge_feedback.gd`, `challenge_runner.gd`,
-`challenge_stages.gd`) only if they would now mislead. 6.
-`python tools/update_function_map.py`.
-
-**Stop and escalate if** a function outside the moved set reads a moved field
-(the seam is not clean any more); a test needs an assertion changed; or SG-3
-put goal logic (not display) in the section.
-
-**Hands-on check** (click-driven): file with `python tools/new_check.py --name
-"Goals drop-down after the move" --owner plans/now/code-health.md --runner
-haiku`. Condition, from the player's seat: in a Colony Run press Goals; the
-list opens and closes; star a goal, close the list, and the starred line
-stays on screen; Dismiss on a short-term goal removes it.
-
-```queue
-**[Claude] CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd**
-- Plan: `plans/now/code-health.md` -- "CQ-R15 -- the Goals drop-down becomes scripts/hud_goal_shelf.gd"
-- Files: `scripts/hud.gd`, `scripts/hud_goal_shelf.gd`, `tests/gp1_goals_dropdown_test.gd`, `tests/gp2_goal_favourites_test.gd`, `tests/ts2_hud_typeface_size_test.gd`, `FUNCTION_MAP.md`
-- Check: `python -m unittest tests.test_gp1_goals_dropdown tests.test_gp2_goal_favourites tests.test_ts2_hud_typeface_size tests.test_sg3_goal_shelf tests.test_layout_regression` passes with no assertion changed; `scripts/hud.gd` no longer defines `_rebuild_favourites`; `.\tools\verify.ps1` is green
-- Proof: `present: scripts/hud.gd :: func _rebuild_favourites(`
-- Next after: CQ-R8
-```
+CQ-R15 shipped 2026-11-03; its specification is `plans/archive/CQ-R15_2026-11-03.md`.
 
 ## CQ-R8 -- hud builders shortened; hud sections re-headed
 
