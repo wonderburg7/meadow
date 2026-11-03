@@ -2972,14 +2972,14 @@
 	"hud.corner.signals_text_starred_false": "• Signal line 0\n• Signal line 1\n• Signal line 2\n• Signal line 3\n• Signal line 4\n• Signal line 5\n• Signal line 6\n• A quiet line",
 	"hud.corner.signals_text_starred_true": "• Signal line 0\n• Signal line 1\n• Signal line 2\n• Signal line 3\n• Signal line 4\n• Signal line 5\n• Signal line 6\n• A quiet line",
 	"hud.selection.builder_idle.activity": "Now: looking for building work\nNothing marked to build. Mark cells to build, or get the Automation skill so comb workers build outward on their own.",
-	"hud.selection.builder_idle.energy": "Energy 100%\nCarrying: nothing",
+	"hud.selection.builder_idle.energy": "Energy 100%  Health 100%\nCarrying: nothing",
 	"hud.selection.forager.activity": "Now: collecting nectar (3 carried)",
-	"hud.selection.forager.energy": "Energy 100%\nCarrying: 3 nectar (of 50)",
+	"hud.selection.forager.energy": "Energy 100%  Health 100%\nCarrying: 3 nectar (of 50)",
 	"hud.selection.miner_idle.activity": "Now: waiting for a block to be marked\nNothing marked to dig, and this miner isn't digging on its own. Use Mine to give it a block, or turn on \"Dig on its own\".",
-	"hud.selection.miner_idle.energy": "Energy 100%\nCarrying: 0 dirt (of 40)",
+	"hud.selection.miner_idle.energy": "Energy 100%  Health 100%\nCarrying: 0 dirt (of 40)",
 	"hud.selection.multiple.identity": "2 bees selected",
 	"hud.selection.nurse_idle.activity": "Now: looking for brood work\nNo brood to look after. Nothing has been laid, or it has all emerged.",
-	"hud.selection.nurse_idle.energy": "Energy 100%\nCarrying: nothing",
+	"hud.selection.nurse_idle.energy": "Energy 100%  Health 100%\nCarrying: nothing",
 	"hud.selection.queen.activity": "Now: looking for pollen to eat\nPollen eaten: 2 / 60 needed for an egg",
-	"hud.selection.queen.energy": "Energy 100%\nCarrying: nothing"
+	"hud.selection.queen.energy": "Energy 100%  Health 100%\nCarrying: nothing"
 }

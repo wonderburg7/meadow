@@ -1,7 +1,7 @@
 # Difficulty -- Easy rules, a Standard baseline, and the choice at run start
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: ED-1b -- an ambush takes health and the panel shows it, queued 2 Nov 2026 when ED-1 landed, then ED-1c, then ED-2 and ED-3, gated (specified 13 Oct 2026) | Dependency: ED-1 follows SG-3 (`plans/archive/short-term-goals_2026-11-01.md`, landed 1 Nov 2026) in Dave's order (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`, released the save files 17 Oct 2026) | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: ED-1c -- health is saved per bee (ED-1b landed 3 Nov 2026), then then ED-2 and ED-3, gated (specified 13 Oct 2026) | Dependency: ED-1 follows SG-3 (`plans/archive/short-term-goals_2026-11-01.md`, landed 1 Nov 2026) in Dave's order (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`, released the save files 17 Oct 2026) | Verified: 2026-10-12
 
 ## Objective
 
@@ -23,7 +23,7 @@ Verified 12 Oct 2026 against master `06bd26c`:
 - Since ED-1 (2 Nov 2026) every bee has `health`. At zero energy it drains
   over about half a game-day, and starvation comes at zero health; a spent
   bee crawls home at a quarter of her speed, eats, and rests. Health is not
-  saved yet (ED-1c), and an ambush does not touch it yet (ED-1b).
+  saved yet (ED-1c).
 - `scripts/scenario_presets.gd` gives the main menu's Scenario group
   Relaxed/Standard/Demanding/Custom presets: four `GameConfig` multipliers
   each, applied through `levels.gd::apply_config_overrides`. The Colony Run

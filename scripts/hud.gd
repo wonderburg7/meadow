@@ -2882,8 +2882,9 @@ func _selection_identity_text(b) -> String:
 	return identity
 
 func _selection_energy_text(b) -> String:
-	return "Energy %d%%\n%s" % [
+	return "Energy %d%%  Health %d%%\n%s" % [
 		int(100.0 * b.energy / max(0.001, GameConfig.energy_capacity)),
+		int(100.0 * b.health / max(0.001, GameConfig.health_capacity)),
 		b.carrying_text(),
 	]
 
