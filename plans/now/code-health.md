@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R15 implemented (3 Nov 2026); CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the Claude lane's ED-1b to release scripts/hud.gd, the unmerged Jules S-3 branches to settle scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd (CQ-R16 landed 2 Nov 2026, CQ-R15 3 Nov 2026); CQ-M6 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd and scripts/soil_block.gd and claude/dave-hands-on-checks-784f2a to settle scripts/hive_cell.gd (ED-1 and CQ-R16 landed 2 Nov 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R16 landed 2 Nov 2026 and CQ-R15 3 Nov 2026; CQ-R8 is queued after ED-1b, which shares scripts/hud.gd; CQ-R3 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd (ED-1 landed 2 Nov 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-R8 follows ED-1b in the Claude lane; CQ-R3 follows the unmerged Jules S-1 and S-3 branches (ED-1 landed 2 Nov 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R15 implemented (3 Nov 2026); CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the Claude lane's CQ-R8 to release scripts/hud.gd (ED-1b landed 3 Nov 2026), the unmerged Jules S-3 branches to settle scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd (CQ-R16 landed 2 Nov 2026, CQ-R15 3 Nov 2026); CQ-M6 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd and scripts/soil_block.gd and claude/dave-hands-on-checks-784f2a to settle scripts/hive_cell.gd (ED-1 and CQ-R16 landed 2 Nov 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R16 landed 2 Nov 2026 and CQ-R15 3 Nov 2026; CQ-R8 is queued (ED-1b, which shared scripts/hud.gd, landed 3 Nov 2026); CQ-R3 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd (ED-1 landed 2 Nov 2026) | Dependency: CQ-T3 follows CQ-R8 (CQ-L2 has released tests/source_checks.py); CQ-R8 leads the Claude lane; CQ-R3 follows the unmerged Jules S-1 and S-3 branches (ED-1 landed 2 Nov 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -129,14 +129,14 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
-| CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | gated -- ED-1b owns `hud.gd`, the Jules S-3 branches change `main.gd`, Jules J-14 holds `game_panel.gd` (CQ-R15 and CQ-R16 landed) | low |
+| CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | gated -- CQ-R8 owns `hud.gd`, the Jules S-3 branches change `main.gd`, Jules J-14 holds `game_panel.gd` (CQ-R15 and CQ-R16 landed) | low |
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- the Jules S-1 and S-3 branches change `bee.gd` and `soil_block.gd`, `claude/dave-hands-on-checks-784f2a` changes `hive_cell.gd` (ED-1 and CQ-R16 landed) | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
 | CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `bee_readout.gd` (new), `FUNCTION_MAP.md` | gated -- the Jules S-1 and S-3 branches change `bee.gd` (ED-1 landed 2 Nov 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
-| CQ-R8 | hud builders shortened (designation button table); hud sections re-headed | `hud.gd`, `FUNCTION_MAP.md` | queued after ED-1b, which shares `hud.gd` (CQ-R15 landed 3 Nov 2026) | medium |
+| CQ-R8 | hud builders shortened (designation button table); hud sections re-headed | `hud.gd`, `FUNCTION_MAP.md` | queued (CQ-R15 and ED-1b landed 3 Nov 2026) | medium |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
 
 Only the first slice of each chain carries a full section and block. A row without one
@@ -325,7 +325,7 @@ wrapped chain as `. name(` on its own line.
 
 - **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`
   and `scripts/saving.gd`; its ownership overlaps that lane's current work.
-- **CQ-M5b** -- waits for the Claude lane's ED-1b to release `scripts/hud.gd`,
+- **CQ-M5b** -- waits for the Claude lane's CQ-R8 to release `scripts/hud.gd`,
   for the unmerged Jules S-3 branches (which change `scripts/main.gd`) and
   for the Jules J-14 branch (which deletes code in `scripts/game_panel.gd`)
   to be merged or closed; keep its block gated until both clear.
@@ -456,7 +456,7 @@ CQ-R15 shipped 2026-11-03; its specification is `plans/archive/CQ-R15_2026-11-03
 
 ## CQ-R8 -- hud builders shortened; hud sections re-headed
 
-Level: medium. Queued after ED-1b, which shares `hud.gd` (CQ-R15 landed 3 Nov 2026). Research:
+Level: medium. Queued (CQ-R15 and ED-1b, which shared `hud.gd`, landed 3 Nov 2026). Research:
 `docs/code-health-research-2026-10-18.md`, "Decompositions", CQ-R8 bullet.
 
 **True now.** `_build_cell_group` copies one designation-button block seven
