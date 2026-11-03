@@ -16,7 +16,11 @@ whole instruction: the stop rules, refills and report below need no extra
 prompt. Run the slices **one at a time**. The lane allows one open branch (`plans/workstreams.md`
 § Lanes), and Godot runs from two sessions at once kill each other.
 
-`ROOT` is the primary checkout: `C:\Users\dl13860\Documents\Meadow\meadow`.
+`ROOT` is the primary checkout: the parent of
+`git rev-parse --path-format=absolute --git-common-dir`, the same from the
+primary checkout and any worktree (PowerShell:
+`Split-Path -Parent (git rev-parse --path-format=absolute --git-common-dir)`).
+Work it out once, at the start of the run.
 Run every lifecycle command in a subshell, so that no tool's shell is left
 sitting in a `.worktrees/` directory:
 `(cd <ROOT> && powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/slice.ps1 <cmd> -Lane Claude)`.
@@ -46,10 +50,15 @@ sitting in a `.worktrees/` directory:
    worker implements the slice, so it does not check this session's own
    model against the plan level. Keep its JSON, and note `advice.level`.
 3. **Dispatch.** Spawn the worker in the foreground
-   (`run_in_background: false`). Its `subagent_type` comes from the level:
-   `slice-worker-low` (Haiku 5.5), `-medium` (Sonnet 5.5) or `-high`
-   (Opus 5.5). If the level is `unstated`, use
-   medium and say so in the report. The prompt is the `start` JSON
+   (`run_in_background: false`). Its `subagent_type` is `advice.worker` from
+   `start`, never your own reading of the level: `slice-worker-low` (Haiku
+   5.5), `-medium` (Sonnet 5.5), `-high` (Opus 5.5) or `-high-sonnet`
+   (Sonnet 5.5 at high effort, when the plan says `Worker: sonnet`). An
+   `unstated` level comes back as medium; say so in the report. If a worker
+   returns `blocked` with `"reason": "size"`, it hit its request budget: the
+   split it proposes is the plan edit, not a reason to resume it. Land what
+   it committed only if `ready`; otherwise stop the run, report the
+   proposal, and leave the branch. The prompt is the `start` JSON
    verbatim, plus `ROOT=<ROOT>` and `WORKTREE=<ROOT>\.worktrees\<id>`.
    Nothing else: the worker's brief says what to do.
 4. **Act on its result.**

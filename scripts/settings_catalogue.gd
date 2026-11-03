@@ -802,6 +802,12 @@ const TUNABLES := [
 		"tip": "Roughly how often a day brings rain.",
 	},
 	{
+		"persist": "none",
+		"key": "rain_free_days", "label": "Rain-free days", "step": 0.5, "min": 0.0,
+		"category": "Weather",
+		"tip": "Game days at the start of a run before ordinary rain can fall.",
+	},
+	{
 		"persist": "run",
 		"key": "rain_min_seconds", "label": "Rain min s", "step": 10.0, "min": 5.0,
 		"category": "Weather",
@@ -1120,6 +1126,18 @@ const TUNABLES := [
 		"tip": "Miner-seconds needed to break down one soil block. Several miners on one block share the work, exactly like builders on a cell.",
 	},
 	{
+		"persist": "none",
+		"key": "hard_soil_start_fraction", "label": "Hard soil starts", "step": 0.1, "min": 0.0, "max": 1.0,
+		"category": "Mining",
+		"tip": "How far into the soil band hard soil begins, from 0 (right at the hollow) to 1 (only the outermost ring). The edge is deliberately rough. Hard soil needs Mighty Mandible to dig. Takes effect on Restart Run.",
+	},
+	{
+		"persist": "none",
+		"key": "hard_soil_mine_time_multiplier", "label": "Hard soil dig x", "step": 0.5, "min": 1.0,
+		"category": "Mining",
+		"tip": "How many times longer a hard soil block takes to dig than ordinary soil, once Mighty Mandible is owned.",
+	},
+	{
 		"persist": "run",
 		"key": "miner_dirt_capacity", "label": "Dirt capacity", "step": 5.0, "min": 1.0,
 		"category": "Mining",
@@ -1136,6 +1154,12 @@ const TUNABLES := [
 		"key": "dirt_dump_time", "label": "Dumping s", "step": 0.5, "min": 0.0,
 		"category": "Mining",
 		"tip": "Seconds a miner spends outside the hive emptying a load of spoil.",
+	},
+	{
+		"persist": "run",
+		"key": "body_drop_seconds", "label": "Body drop s", "step": 0.5, "min": 0.0,
+		"category": "Mining",
+		"tip": "Seconds a Comb worker stays outside the hive after carrying a dead bee out, before she comes back in.",
 	},
 
 	# --- Bee life ---
@@ -1180,13 +1204,49 @@ const TUNABLES := [
 		"persist": "run",
 		"key": "energy_capacity", "label": "Energy cap", "step": 10.0, "min": 10.0,
 		"category": "Bee life",
-		"tip": "Maximum energy a bee holds. Bees dim as this runs down and die at zero.",
+		"tip": "Maximum energy a bee holds. Bees dim as this runs down; at zero they start losing health.",
 	},
 	{
 		"persist": "run",
 		"key": "energy_burn_rate", "label": "Energy burn/s", "step": 0.1, "min": 0.0,
 		"category": "Bee life",
 		"tip": "Energy every bee burns per second just by being alive. Bees refuel from the comb, eating honey first where there is any.",
+	},
+	{
+		"persist": "none",
+		"key": "health_capacity", "label": "Health cap", "step": 10.0, "min": 10.0,
+		"category": "Bee life",
+		"tip": "Health every bee is born with. Health falls only while a bee has no energy left; at zero health she dies.",
+	},
+	{
+		"persist": "none",
+		"key": "exhaustion_health_drain", "label": "Exhausted health loss/s", "step": 0.1, "min": 0.0,
+		"category": "Bee life",
+		"tip": "Health a bee with no energy loses per second. At the defaults she lasts about half a day: long enough to crawl home and eat.",
+	},
+	{
+		"persist": "none",
+		"key": "health_regen_rate", "label": "Health regain/s", "step": 0.1, "min": 0.0,
+		"category": "Bee life",
+		"tip": "Health a bee below full regains per second while she is inside the hive and has some energy.",
+	},
+	{
+		"persist": "none",
+		"key": "spent_speed_factor", "label": "Spent speed x", "step": 0.05, "min": 0.05,
+		"category": "Bee life",
+		"tip": "A bee with no energy, or down to one health, moves at this fraction of her normal speed while she crawls home.",
+	},
+	{
+		"persist": "none",
+		"key": "rest_leave_health", "label": "Rest until health", "step": 0.05, "min": 0.0,
+		"category": "Bee life",
+		"tip": "A forager recovering from exhaustion stays inside until her health is at least this fraction of full.",
+	},
+	{
+		"persist": "none",
+		"key": "rest_leave_energy", "label": "Rest until energy", "step": 0.05, "min": 0.0,
+		"category": "Bee life",
+		"tip": "A forager recovering from exhaustion stays inside until her energy is at least this fraction of full.",
 	},
 	{
 		"persist": "run",

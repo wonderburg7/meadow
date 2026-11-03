@@ -4,6 +4,7 @@
 Record key: agent-workflow-review
 Reasoning: high
 Watches: tools/slice.ps1 tools/refill_lane.py tools/archive_slice.py tools/prefinish.py tools/session_cost.py plans/now/agent-lifecycle.md plans/observations/system-improvement-signals.md plans/workstreams.md plans/reference/closeout.md .claude/agents .claude/skills .agents .claude/settings.json .codex
+Jules: no -- it reads Claude session transcripts on Dave's machine
 
 **Owns:** how sessions actually run: the lifecycle tooling
 (`tools/slice.ps1`, `tools/refill_lane.py`, `tools/prefinish.py`, worktrees,
@@ -24,9 +25,11 @@ If it has none, run Claude-only and say so.
 
 1. **Measure Claude over the same period** with `python
    tools/session_cost.py`: `--days`, `--classify`, `--phases`, `--stops`,
-   `--events`, `--model-check` (level-to-model fit, judged on the worker)
-   and `--coordinator` (per `/run-queue` run: coordinator context,
-   dispatches, housekeeping share). Use the Codex block's metrics and
+   `--events`, `--model-check` (level-to-model fit, judged on the worker),
+   `--coordinator` (per `/run-queue` run: coordinator context,
+   dispatches, housekeeping share) and `--slices` (per slice: level, worker
+   model, requests, cost; a row over the 150-request budget means that plan
+   should have been cut, and a `high` row needs its rule 4 reason). Use the Codex block's metrics and
    failure classes so the agents compare. Open transcripts only to confirm
    the top findings.
 2. **Triage the signals intake.** For each entry added since the last

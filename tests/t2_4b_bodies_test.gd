@@ -220,8 +220,20 @@ func _cleaning(hive: Polygon2D) -> void:
 	_check(hive.bodies.size() == 1, "without Cleaning the body did not stay")
 
 	progression.grant_temporary(CLEANING)
+	var sense := "skill.colony.fermentation_sense"
+	var had_sense: bool = progression._temporary.has(sense)
+	progression.grant_temporary(sense)
 	_main.Availability.invalidate()
 
+	var sour: Node2D = _empty_built_cell(hive)
+	_check(sour != null, "no empty cell for the sour nectar priority check")
+	var old_time: float = _session.sim_time
+	if sour != null:
+		sour.add_resource("nectar", 10.0)
+		sour.nectar_since = 0.0
+		_session.sim_time = _config.seconds_per_day * _config.nectar_ferment_hours / 24.0 + 1.0
+		hive.invalidate_index()
+		_check(sour.is_fermented(), "the priority check nectar did not ferment")
 	# A dead larva comes before a body.
 	var cell: Node2D = _empty_built_cell(hive)
 	if cell != null:
@@ -231,6 +243,7 @@ func _cleaning(hive: Polygon2D) -> void:
 		worker.target_cell = null
 		_check(worker._try_role_work(_main.Bee.Role.BUILDER), "with Cleaning a Comb worker found no work")
 		_check(worker.target_cell == cell and worker.target_body == null, "a body was picked over a dead larva")
+		_check(sour == null or not sour.evict_requested, "sour nectar was marked ahead of a dead larva")
 		BeeBuilding.architect_go_to_clean(worker, 0.0)
 		worker.target_cell = null
 		cell.clear_cell()
@@ -239,8 +252,10 @@ func _cleaning(hive: Polygon2D) -> void:
 	worker.state = _main.Bee.State.BUILD_IDLE
 	_check(worker._try_role_work(_main.Bee.Role.BUILDER), "with Cleaning a Comb worker found no body to clear")
 	_check(worker.target_body == body, "the Comb worker did not take the body")
+	_check(sour == null or not sour.evict_requested, "sour nectar was marked ahead of a body")
 	_check(body.is_claimed(), "the body is not claimed by the Comb worker")
 	var saw_outside_with_body := false
+	var outside_seconds := 0.0
 	var steps := 0
 	while steps < MAX_STEPS:
 		steps += 1
@@ -254,15 +269,25 @@ func _cleaning(hive: Polygon2D) -> void:
 		elif state == _main.Bee.State.DUMPING_WASTE:
 			if worker.carrying_corpse and worker.corpse_is_bee and not worker._is_inside_hive():
 				saw_outside_with_body = true
+				outside_seconds += STEP
 			BeeBuilding.builder_dump_waste(worker, STEP)
 		else:
 			break
 	_check(saw_outside_with_body, "the Comb worker never carried the body outside (stopped in state %d after %d steps)" % [worker.state, steps])
+	# RR-20: outside for body_drop_seconds (to one step), not dirt_dump_time.
+	_check(absf(outside_seconds - _config.body_drop_seconds) <= STEP + 0.001,
+		"the Comb worker was outside %.2f s with the body, expected %.2f s" % [outside_seconds, _config.body_drop_seconds])
 	_check(hive.bodies.is_empty(), "the carried body is still on the floor")
 	_check(worker._is_inside_hive() and worker.state == _main.Bee.State.BUILD_IDLE, "the Comb worker did not come back in to idle")
 	_check(not worker.carrying_corpse and not worker.corpse_is_bee, "the Comb worker still carries a body")
 
 	progression._temporary.erase(CLEANING)
+	if not had_sense:
+		progression._temporary.erase(sense)
+	_session.sim_time = old_time
+	if sour != null:
+		sour.clear_cell()
+		hive.invalidate_index()
 	if not had_comb:
 		progression._temporary.erase(comb_skill)
 	if had_mastered:

@@ -1,7 +1,7 @@
 # Work Priorities -- Hive Mind tier 3: one colony-wide order of fallback jobs
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: complete | Owner: Dave / Claude Code | Next: nothing further -- WP-1 to WP-3 landed (22 Oct 2026); SG-2 in plans/now/short-term-goals.md follows in Dave's order | Dependency: none | Verified: 2026-10-22
+Status: complete | Owner: Dave / Claude Code | Next: nothing further -- WP-1 to WP-3 landed (22 Oct 2026); SG-2 in plans/archive/short-term-goals_2026-11-01.md follows in Dave's order | Dependency: none | Verified: 2026-10-22
 
 ## Objective
 
@@ -58,7 +58,7 @@ Verified 13 Oct 2026 against master `06bd26c`:
 
 WP-1, then WP-2, then WP-3: each needs the one before. Dave's order (13 Oct
 2026) is tier 3 first (`plans/archive/tier-three_2026-10-14.md` and this plan), then
-`plans/now/short-term-goals.md`, then `plans/now/difficulty.md`. Do not
+`plans/archive/short-term-goals_2026-11-01.md`, then `plans/now/difficulty.md`. Do not
 change Backup roles' behaviour for a run that does not own Work Priorities,
 or the queen's nurse-before-laying rule.
 

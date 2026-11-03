@@ -4,6 +4,7 @@
 Record key: context-review
 Reasoning: medium
 Watches: CLAUDE.md AGENTS.md CHATGPT.md README.md GAME_MODEL.md FUNCTION_MAP.md docs/agent-rules.md .claude/rules .claude/settings.json .claude/agents .claude/skills .agents .codex plans/reference/reviews
+Jules: R-context | priority 6 | every 14 days | min 20 commits
 
 **Owns:** everything an agent loads, or is routed to, that is not a plan:
 `CLAUDE.md`, `AGENTS.md`, `CHATGPT.md`, `docs/agent-rules.md` (the rules both
@@ -59,3 +60,16 @@ You may make trimming edits to instruction files directly: removing
 duplication, fixing drift, replacing text with pointers. Adding a new
 always-loaded rule, or removing one Dave dated and attributed, needs Dave's
 yes.
+
+## If Jules runs this
+
+Method and report: `plans/reference/jules-reviews.md` "Running a review".
+Do steps 1 to 6 for the repository's files; the memory index lives on
+Dave's machine, so list it under "Not reviewed". For step 2, quote both
+copies of a rule and say whether they agree or contradict. For step 3,
+resolve basenames, `python -m` modules, placeholders, wildcards and generated
+outputs before calling a reference broken (the J-39 audit did not). For step
+5, run `python tools/update_function_map.py --check` and report whether it
+is stale; you may not change `FUNCTION_MAP.md`. You make no trimming edit yourself: each is a recommendation whose `Do:`
+gives the exact old text and the exact new text, so Claude applies it without
+re-deriving it. Adding or removing an always-loaded rule is a `Decide` row.

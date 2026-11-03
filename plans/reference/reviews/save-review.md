@@ -4,6 +4,7 @@
 Record key: save-review
 Reasoning: high
 Watches: scripts/save_game.gd scripts/saving.gd scripts/save_migrations.gd scripts/save_slots.gd scripts/tutorial_checkpoint.gd tests/test_save_migrations.py .claude/rules/saving.md
+Jules: R-save | priority 2 | every 14 days | min 5 commits
 
 **Owns:** `scripts/save_game.gd`, `scripts/saving.gd`,
 `scripts/save_migrations.gd`, `scripts/save_slots.gd`, checkpoints
@@ -44,3 +45,18 @@ all-or-nothing).
 
 Any change to the save schema or the compatibility policy is Dave's decision:
 ask in this session, with the options and their costs.
+
+## If Jules runs this
+
+Method and report: `plans/reference/jules-reviews.md` "Running a review".
+Do steps 1 to 3 in full; the inventory is where your reading saves most. For
+every member added or changed since `SINCE`, give its category and whether it
+is saved, rebuilt or lost, and quote any comment that explains why it is not
+saved: a documented reason is a decision (the J-32 audit missed
+`scripts/bee.gd`'s note on nuptial state). Give the inventory's count and the
+command that produced it. Every change to the schema, a migration or the
+compatibility policy is a `Decide` row with a `D<n>` block, never a Queue,
+and its recommendation is `queue-gated` on that decision at high reasoning
+(agent rule 4). Recommend a round-trip or migration test as each finding's
+check, stating what must and must not be true after loading. No Jules task
+may change a save field, `to_dict` or `from_dict`.

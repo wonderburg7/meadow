@@ -113,6 +113,7 @@ const OrdersZones = preload("res://scripts/orders_zones.gd")
 const ForagingStats = preload("res://scripts/foraging_stats.gd")
 const YearWinter = preload("res://scripts/year_winter.gd")
 const ColonyMilestones = preload("res://scripts/colony_milestones.gd")
+const GuidanceCatalogue = preload("res://scripts/guidance_catalogue.gd")
 const ColonyDiagnostics = preload("res://scripts/colony_diagnostics.gd")
 const Pollination = preload("res://scripts/pollination.gd")
 const CameraView = preload("res://scripts/camera_view.gd")
@@ -361,10 +362,6 @@ var scenario_performance_capture: Dictionary = {}
 ## verbs/triggers and main.gd::_process for where it's ticked.
 var scenario_actions: Array = []
 
-var dragging: bool = false
-var drag_start: Vector2 = Vector2.ZERO
-var drag_current: Vector2 = Vector2.ZERO
-
 var reseed_timer: float = 0.0
 ## Rolling window for the top-left rate readout: a sample every 10 sim
 ## seconds, keeping the last 7 (a 60s span once warmed up). Rate is the
@@ -394,10 +391,12 @@ var short_term_goals: Dictionary = {}
 ## refresh, which is not a boundary. Set to the loaded day by
 ## saving.gd::_restore, so a load is not mistaken for a day boundary.
 var short_term_goal_day: int = 0
+## SG-3: each open short-term goal's latest progress ({current, target}),
+## keyed by goal id, as year_winter.gd's refresh last worked it out. Display
+## only; not saved.
+var short_term_goal_progress: Dictionary = {}
 var cluster_centers: Dictionary = {}   # species name -> Array[Vector2]
 var microhabitat_zones: Dictionary = {}   # microhabitat name -> Array[{"centre": Vector2, "radius": float}]
-var panning: bool = false          # middle mouse button held
-var pan_anchor: Vector2 = Vector2.ZERO
 
 ## "Click a spot" placement: the id of the one tool armed from the HUD ("" =
 ## none). While one is active the next left click in the relevant view is
@@ -739,7 +738,20 @@ func _ready() -> void:
 		# starting state for either.
 		challenge_runner.start()
 	# COL-1: the goal shelf's first line in a Colony Run, fresh or loaded.
+	# SG-3: outside a Colony Run it shows a Scenario's short-term goals alone.
 	colony_milestones.show_next()
+
+## SG-3: year_winter.gd's one-second goal refresh calls this when it is done.
+## `finished` holds the goals finished in it: each gets its completion note on
+## the shelf and, once per goal per run, Dr Gallerin's line. Then the Goals
+## drop-down is redrawn; the HUD skips the rebuild when nothing changed.
+func on_short_term_goals_refreshed(finished: Array) -> void:
+	for entry: Variant in finished:
+		colony_milestones.note_short_term_finished(entry)
+		var line: String = GuidanceCatalogue.goal_completion_line(str(entry.id))
+		if not line.is_empty() and is_instance_valid(gallerin_panel):
+			gallerin_panel.show_now({"id": "short_term_" + str(entry.id), "text": line})
+	colony_milestones.show_goals()
 
 # --- public surface other scripts call directly -------------------
 ## bee.gd holds a reference to this node (as `world`) and calls these by
@@ -941,7 +953,7 @@ func _reseed_meadow(delta: float) -> void:
 		to_seed -= world_building._seed_flower(false, to_seed)
 	if room > 0 and owed > 0:
 		world_building._rebuild_flower_grid()
-	if dragging:
+	if input_selection.dragging:
 		selection_layer.queue_redraw()
 
 ## A finished brood cell releases a new bee. The cell decides what that
@@ -1017,7 +1029,7 @@ func _advance_weather(delta: float) -> void:
 		if rain_seconds_left <= 0.0:
 			rain_target = 0.0
 			rain_changed.emit(false)
-	elif not _first_crisis_holds_weather():
+	elif not _first_crisis_holds_weather() and Session.sim_time >= GameConfig.rain_free_days * GameConfig.seconds_per_day:
 		# six attempts per in-game day, spread evenly over it (with a ten-second floor)
 		weather_timer -= delta
 		if weather_timer <= 0.0:
@@ -1180,8 +1192,8 @@ func _first_crisis_warning_text(readiness: Dictionary, lead: float) -> String:
 		foragers += " 1 assigned forager is too low on energy to fly."
 	elif int(readiness.unable_foragers) > 1:
 		foragers += " %d assigned foragers are too low on energy to fly." % int(readiness.unable_foragers)
-	return "Heavy rain is coming in about %s. While it falls your foragers stay at the hive and nectar in the flowers is watered down, so forage income stops. Your stores feed the colony for about %s at its current rate. %s Build up stores, or put a worker on foraging now so a trip comes home before the rain." % [
-		_minutes_text(lead), _minutes_text(float(readiness.food_cover_seconds)), foragers,
+	return "Heavy rain is coming %s. While it falls your foragers stay at the hive and nectar in the flowers is watered down, so forage income stops. Your stores feed the colony for about %s at its current rate. %s Build up stores, or put a worker on foraging now so a trip comes home before the rain." % [
+		rain_when_text(lead, Session.sim_time, GameConfig.seconds_per_day), _minutes_text(float(readiness.food_cover_seconds)), foragers,
 	]
 
 func _start_first_crisis() -> void:
@@ -1216,7 +1228,7 @@ func _show_first_crisis_note() -> void:
 	var note := ""
 	match state:
 		"warned":
-			note = "Heavy rain due in %s" % _minutes_text(step * 10.0)
+			note = "Heavy rain due %s" % rain_when_text(step * 10.0, Session.sim_time, GameConfig.seconds_per_day)
 		"active":
 			note = "Heavy rain: foragers kept in"
 		"spent":
@@ -1227,6 +1239,21 @@ func _show_first_crisis_note() -> void:
 	_first_crisis_note = note
 	if hud != null:
 		hud.set_weather_note(note)
+
+## RR-21: when rain is due, in plain words rather than a clock. `lead` is the
+## seconds until it starts, `now` the run time, `day_seconds` one game day.
+## "soon" is within about a game hour; otherwise by where the start falls in
+## the day: "later today", "by the end of the day" (the last quarter) or
+## "tomorrow" (any later day).
+static func rain_when_text(lead: float, now: float, day_seconds: float) -> String:
+	if lead <= day_seconds / 24.0:
+		return "soon"
+	var due: float = now + lead
+	if floori(due / day_seconds) > floori(now / day_seconds):
+		return "tomorrow"
+	if fposmod(due, day_seconds) >= day_seconds * 0.75:
+		return "by the end of the day"
+	return "later today"
 
 static func _minutes_text(seconds: float) -> String:
 	var whole: int = maxi(0, int(round(seconds)))
@@ -1290,6 +1317,12 @@ func restore_first_crisis(saved: Variant) -> void:
 	first_crisis_check_timer = 0.0
 	_first_crisis_traced.clear()
 	_show_first_crisis_note()
+	# C-140: a save made during the lead brings the warning back, not just the
+	# corner line, with the lead that is left and the readiness it was given.
+	if _first_crisis_applies() and str(first_crisis.state) == "warned" and hud != null \
+			and typeof(first_crisis.get("readiness")) == TYPE_DICTIONARY and not first_crisis.readiness.is_empty():
+		var lead: float = maxf(0.0, float(first_crisis.starts_at) - Session.sim_time)
+		hud.show_warning(_first_crisis_warning_text(first_crisis.readiness, lead), "", 0.0, hud.SEVERITY_DANGER)
 	if _first_crisis_applies():
 		# No readiness walk here: until the frame ends, the bees group still
 		# holds the bees the restore is retiring (saving.gd's _retire_node).

@@ -523,6 +523,81 @@ def check_queue_lookahead(warnings: list[str], text: str | None = None,
             )
 
 
+def plan_section(plan_text: str, heading: str) -> str:
+    """The text under the plan heading containing `heading`, up to the next
+    heading of the same or a shallower depth; empty when it is not found."""
+    heading_match = re.search(r"(?m)^(#{1,6})\s+.*%s.*$" % re.escape(heading), plan_text)
+    if not heading_match:
+        return ""
+    depth = len(heading_match.group(1))
+    rest = plan_text[heading_match.end():]
+    end = re.search(r"(?m)^#{1,%d}\s" % depth, rest)
+    return rest[: end.start()] if end else rest
+
+
+# A worker's context is re-read on every request, so cost grows faster than
+# the work: the three `high` slices of 26 Oct-1 Nov 2026 ran 327-365 requests
+# and cost over ten times a medium one (python tools/session_cost.py). Eight
+# files is where a slice stops being one reviewable move.
+QUEUE_ITEM_FILE_BUDGET = 8
+# What CLAUDE.md rule 4 allows a `high` level for, in the words a plan uses.
+HIGH_LEVEL_REASON = re.compile(
+    r"(?i)ownership|save|migration|event ordering|ordering|hot[- ]path|per-bee|"
+    r"ambiguous|multi-slice|planning"
+)
+HIGH_LEVEL_LINE = re.compile(r"(?i)(?:Reasoning level:?|Level:(?:\*\*)?)\s*high\b[^\n]*(?:\n[^\n]+){0,2}")
+
+
+def check_queue_items_fit_one_worker(
+    warnings: list[str], text: str | None = None, root: Path | None = None
+) -> None:
+    """A queued slice is small enough for one worker, and a `high` level
+    names the CLAUDE.md rule 4 reason that justifies Opus.
+
+    Two warnings, never errors (a plan can be queued before it is cut):
+    more than QUEUE_ITEM_FILE_BUDGET files in `Files:`, and a plan `Level:
+    high` line whose own words (and the two lines after) give none of rule 4's
+    reasons -- ownership boundary, save, event ordering, hot path, ambiguous
+    bug, multi-slice planning. A gameplay outcome alone is a reason to ask
+    Dave (rule 5), not to buy Opus.
+    """
+    root = root or ROOT
+    if text is None:
+        text = (root / "NEXTSTEPS.md").read_text(encoding="utf-8")
+    items = queue_item_chunks(text)
+    if items is None:
+        return
+    for index, (_, chunk) in enumerate(items, start=1):
+        item_match = re.match(r"\*\*\[\w+\]\s+([\w.-]+)\s+--", chunk)
+        files_match = re.search(r"- Files: (.+)", chunk)
+        if not item_match or not files_match:
+            continue
+        slice_id = item_match.group(1)
+        # Golden saves and other fixtures are data a slice re-captures, not
+        # moves a reviewer reads, so they do not count against the budget.
+        files = [name for name in re.findall(r"`([^`]+)`", files_match.group(1))
+                 if not name.startswith("tests/fixtures/")]
+        if len(files) > QUEUE_ITEM_FILE_BUDGET:
+            warnings.append(
+                f"NEXTSTEPS.md item {index} ({slice_id}): names {len(files)} files "
+                f"(budget {QUEUE_ITEM_FILE_BUDGET}); a worker that big runs hundreds of "
+                "requests. Split it at its natural seam, or say in the plan why not"
+            )
+        plan_match = re.search(r"- Plan: `([^`]+)` -- \"([^\"]+)\"", chunk)
+        plan_path = root / plan_match.group(1) if plan_match else None
+        if not plan_path or not plan_path.is_file():
+            continue
+        section = plan_section(plan_path.read_text(encoding="utf-8"), plan_match.group(2))
+        high = HIGH_LEVEL_LINE.search(section)
+        if high and not HIGH_LEVEL_REASON.search(high.group(0)):
+            warnings.append(
+                f"NEXTSTEPS.md item {index} ({slice_id}): its plan says Level: high but "
+                "gives none of CLAUDE.md rule 4's reasons (ownership boundary, save, event "
+                "ordering, hot path, ambiguous bug, multi-slice planning), so Opus is "
+                "unjustified. State the reason, or lower the level"
+            )
+
+
 def check_queue_items_state_a_level(warnings: list[str]) -> None:
     """Every queued item's plan states the reasoning level for that slice.
 
@@ -548,15 +623,7 @@ def check_queue_items_state_a_level(warnings: list[str]) -> None:
             continue   # check_queue_files reports a missing plan
         plan_text = plan_path.read_text(encoding="utf-8")
         heading, slice_id = plan_match.group(2), item_match.group(1)
-        section = ""
-        heading_match = re.search(
-            r"(?m)^(#{1,6})\s+.*%s.*$" % re.escape(heading), plan_text
-        )
-        if heading_match:
-            depth = len(heading_match.group(1))
-            rest = plan_text[heading_match.end():]
-            end = re.search(r"(?m)^#{1,%d}\s" % depth, rest)
-            section = rest[: end.start()] if end else rest
+        section = plan_section(plan_text, heading)
         if re.search(r"(?i)Level:(?:\*\*)?\s*(low|medium|high)\b", section):
             continue
         row = r"(?im)^\|\s*%s\s*\|.*\|\s*(low|medium|high)\s*\|\s*$" % re.escape(slice_id)
@@ -1599,6 +1666,7 @@ def main() -> int:
     check_queue_proofs(errors)
     check_queue_admission(warnings)
     check_queue_items_state_a_level(warnings)
+    check_queue_items_fit_one_worker(warnings)
     check_queue_ids_are_unused(warnings)
     check_queue_successors(errors)
     check_queue_lookahead(warnings)

@@ -3,6 +3,7 @@
 <!-- CONTEXT: review-prompt | LOAD: only when running this review or planning the code-health track -->
 Record key: none
 Reasoning: high
+Jules: no -- a one-off brief for the code-health planning session; balance classification needs judgement
 
 No `Watches:` line on purpose: this brief is run by the code-health
 planning session, not picked up as due by `/run-reviews`.

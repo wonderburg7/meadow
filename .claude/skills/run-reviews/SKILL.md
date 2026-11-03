@@ -17,7 +17,11 @@ The coordinator decides little, so Sonnet or Opus at low effort is enough.
 Run the reviews **one at a time**: reviews edit shared plans, and Godot runs
 from two sessions at once kill each other.
 
-`ROOT` is the primary checkout: `C:\Users\dl13860\Documents\Meadow\meadow`.
+`ROOT` is the primary checkout: the parent of
+`git rev-parse --path-format=absolute --git-common-dir`, the same from the
+primary checkout and any worktree (PowerShell:
+`Split-Path -Parent (git rev-parse --path-format=absolute --git-common-dir)`).
+Work it out once, at the start of the run.
 Run git and tool commands as `git -C <ROOT> ...` or in a subshell
 `(cd <ROOT> && ...)`, so that no shell is left sitting in a worktree.
 

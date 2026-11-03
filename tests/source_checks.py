@@ -1343,7 +1343,7 @@ ORIGINAL_SAVED_SETTINGS = frozenset({
     "rain_forage_limit", "honey_cell_capacity", "honey_energy_factor",
     "nectar_per_honey", "honey_chew_time", "honey_ripen_time",
     "honey_rewet_factor", "block_mine_time", "miner_dirt_capacity",
-    "dirt_fill_rate", "dirt_dump_time", "cell_build_time",
+    "dirt_fill_rate", "dirt_dump_time", "body_drop_seconds", "cell_build_time",
     "build_energy_burn", "hive_interior_rings", "hive_soil_depth",
     "hive_rock_rings", "hive_entrance_width", "hive_cell_size",
     "hive_cell_spacing", "cell_slow_factor", "bee_lifespan_days",

@@ -12,8 +12,8 @@ extends Node2D
 ## repeat until the stomach is full, then fly home, walk in through the
 ## hive entrance, deposit into a cell, and walk back out.
 ##
-## Every bee burns energy constantly and dies if it hits zero, and dies
-## of old age at `bee_lifespan_days`. Foragers refuel from the comb when
+## Every bee burns energy constantly; at zero she loses health and dies
+## when that runs out (ED-1), and she dies of old age at `bee_lifespan_days`. Foragers refuel from the comb when
 ## they deposit; in-hive bees sip from the comb as they go.
 ##
 ## The queen is an ordinary bee with `is_queen` set: she moves slower,
@@ -32,6 +32,7 @@ const Role = BeeEnums.Role
 const State = BeeEnums.State
 const ROLE_PERF_SECTIONS = BeeEnums.ROLE_PERF_SECTIONS
 
+const SpriteCatalogue = preload("res://scripts/sprite_catalogue.gd")
 const Shapes = preload("res://scripts/shapes.gd")
 const Roles = preload("res://scripts/roles.gd")
 const Levels = preload("res://scripts/levels.gd")
@@ -193,6 +194,10 @@ var tint_factor: float = 1.0
 var size_jitter: float = 1.0
 
 var energy: float = 100.0
+## ED-1: full (GameConfig.health_capacity) at birth. Only exhaustion lowers
+## it -- see bee_survival.gd::age_and_burn. Not saved yet (ED-1c): a load
+## restores every bee at full health.
+var health: float = 100.0
 ## Held topped up and exempt from starvation -- only ever set by
 ## challenge_runner.gd, for the queen, during Challenge 1's "no lethal
 ## pressure" start state (see TUTORIAL_PLAN.md). Never touched anywhere
@@ -794,6 +799,15 @@ var search_ring: Polygon2D
 ## picked first. See _update_dance_ring.
 var dance_ring: Polygon2D
 
+## SP-6: the black outline disc, kept so it can be hidden while the meadow
+## forager sprite is showing, and the sprite itself (a child of visual_root,
+## so bumble flight moves it with the body).
+var outline_disc: Polygon2D
+var meadow_sprite: Sprite2D
+## True while the sprite stands in for the circles. The display update
+## flips visibility only when this changes.
+var _meadow_art_showing: bool = false
+
 # --- _ready and construction --------------------------------------
 func _ready() -> void:
 	add_to_group("bees")
@@ -810,6 +824,7 @@ func _ready() -> void:
 	flower_handling_time = GameConfig.flower_handling_time
 	deposit_time = GameConfig.deposit_time
 	energy = GameConfig.energy_capacity
+	health = GameConfig.health_capacity
 
 	# One rolled stat trait, small and leaning positive -- see
 	# bee_identity.gd and BEE_INDIVIDUALITY_PLAN.md. _apply_stats() does
@@ -907,10 +922,10 @@ func _build_status_rings(outline_radius: float) -> void:
 
 
 func _build_body(outline_radius: float, body_radius: float, size_factor: float) -> void:
-	var outline := Polygon2D.new()
-	outline.polygon = Shapes.circle_points(outline_radius)
-	outline.color = Color(0.05, 0.05, 0.05)   # black outline
-	visual_root.add_child(outline)
+	outline_disc = Polygon2D.new()
+	outline_disc.polygon = Shapes.circle_points(outline_radius)
+	outline_disc.color = Color(0.05, 0.05, 0.05)   # black outline
+	visual_root.add_child(outline_disc)
 
 	# Sits between the outline and the body -- see the field comment above
 	# -- so it draws as a thin ring just inside the black edge rather than
@@ -932,6 +947,8 @@ func _build_body(outline_radius: float, body_radius: float, size_factor: float) 
 	centre_dot.polygon = Shapes.circle_points(body_radius * 0.35)
 	centre_dot.visible = false
 	visual_root.add_child(centre_dot)
+
+	_build_meadow_sprite()
 
 
 
@@ -1530,7 +1547,10 @@ func _process(delta: float) -> void:
 				BeeForaging.finish_depositing(self)
 		State.IN_HIVE_TO_EXIT:
 			Perf.begin("bee_to_exit")
-			BeeForaging.go_to_exit(self, delta)
+			# ED-1: a forager recovering from exhaustion rests where she is
+			# until her health and energy clear GameConfig's thresholds.
+			if not BeeSurvival.must_rest(self):
+				BeeForaging.go_to_exit(self, delta)
 			Perf.end("bee_to_exit")
 
 		State.MOVE_TO_POINT:
@@ -1654,6 +1674,7 @@ func _process(delta: float) -> void:
 	Perf.end("bee_label_text")
 	_update_alarm_ring()
 	_update_heading_marker()
+	_update_meadow_sprite()
 	_update_search_ring()
 	_update_dance_ring()
 	Perf.end("bee_label")
@@ -2272,14 +2293,16 @@ func _take_next_build_target() -> bool:
 
 ## Same idea for miners: an ordered list of blocks this bee will dig.
 func set_mine_target(block: Node2D) -> void:
-	mine_queue = [block] if is_instance_valid(block) else []
-	if is_instance_valid(block):
+	# HS-2: a hard block that cannot be dug yet counts as no block at all
+	var diggable: bool = is_instance_valid(block) and block.can_be_dug()
+	mine_queue = [block] if diggable else []
+	if diggable:
 		block.set_marked(true)
 	if hive != null:
 		hive.invalidate_mining_work()
 
 func queue_mine_target(block: Node2D) -> void:
-	if not is_instance_valid(block) or mine_queue.has(block):
+	if not is_instance_valid(block) or not block.can_be_dug() or mine_queue.has(block):
 		return
 	mine_queue.append(block)
 	block.set_marked(true)
@@ -2748,6 +2771,8 @@ func _task_line() -> String:
 				return "landing on a flower"
 			return "collecting %s (%d carried)" % [resource_type, int(current_load)]
 		State.TO_HIVE:
+			if energy <= 0.0:
+				return "crawling home with no energy left (health %d%%)" % int(100.0 * health / max(0.001, GameConfig.health_capacity))
 			return "returning %s to the hive (%d carried)" % [current_load_type, int(current_load)]
 		State.IN_HIVE_TO_CELL:
 			if target_cell == null or not is_instance_valid(target_cell):
@@ -2758,6 +2783,8 @@ func _task_line() -> String:
 		State.DEPOSITING:
 			return "unloading %s into a cell" % current_load_type
 		State.IN_HIVE_TO_EXIT:
+			if BeeSurvival.must_rest(self):
+				return "resting to recover before going back out (health %d%%)" % int(100.0 * health / max(0.001, GameConfig.health_capacity))
 			return "heading back out of the hive"
 		State.MOVE_TO_POINT:
 			return "moving where you sent it"
@@ -3063,6 +3090,60 @@ func _update_heading_marker() -> void:
 	heading_marker.visible = should_show
 	if should_show and heading != Vector2.ZERO:
 		heading_marker.rotation = heading.angle()
+
+## SP-6: an outdoor worker is drawn as one sprite from Dave's forager sheet
+## instead of the black outline disc and the body disc. The thin role ring
+## (outline_ring: miner, nurse, builder) stays on purpose -- it is role
+## information, not body art. Row = heading octant, column
+## = a wing clock shared by every bee and offset by wander_phase. The load dot
+## and the selection, alarm and attack rings stay as they were. Indoors, and
+## for drones, gynes and queens, the circles stay until their art exists.
+const WING_FRAMES_PER_SECOND := 15.0
+## Heading octants from angle 0 (east) clockwise on screen, as sheet row names.
+const OCTANT_NAMES: Array[String] = ["right", "down_right", "down", "down_left", "left", "up_left", "up", "up_right"]
+static var _octant_rows: PackedInt32Array = PackedInt32Array()
+
+static func _octant_row(octant: int) -> int:
+	if _octant_rows.is_empty():
+		_octant_rows.resize(OCTANT_NAMES.size())
+		for k: int in range(OCTANT_NAMES.size()):
+			var first_frame: int = SpriteCatalogue.FORAGERS_MEADOW_VIEW_FRAMES.find(OCTANT_NAMES[k] + ".0")
+			if first_frame < 0:
+				push_error("SP-6: forager sheet has no frame for '%s'" % OCTANT_NAMES[k])
+				first_frame = 0
+			_octant_rows[k] = first_frame / SpriteCatalogue.FORAGERS_MEADOW_VIEW_HFRAMES
+	return _octant_rows[octant]
+
+func _build_meadow_sprite() -> void:
+	meadow_sprite = Sprite2D.new()
+	meadow_sprite.name = "MeadowSprite"
+	meadow_sprite.texture = SpriteCatalogue.FORAGERS_MEADOW_VIEW_SHEET
+	meadow_sprite.hframes = SpriteCatalogue.FORAGERS_MEADOW_VIEW_HFRAMES
+	meadow_sprite.vframes = SpriteCatalogue.FORAGERS_MEADOW_VIEW_VFRAMES
+	PixelSprite.apply(meadow_sprite, PixelSprite.MEADOW_SCALE)
+	meadow_sprite.visible = false
+	_meadow_art_showing = false
+	# Under the load dot, so the dot still reads on top of the art.
+	visual_root.add_child(meadow_sprite)
+	visual_root.move_child(meadow_sprite, centre_dot.get_index())
+
+func _update_meadow_sprite() -> void:
+	if meadow_sprite == null:
+		return
+	var wants_art: bool = not is_queen and not is_drone and not is_gyne and not _is_inside_hive()
+	if wants_art != _meadow_art_showing:
+		_meadow_art_showing = wants_art
+		meadow_sprite.visible = wants_art
+		outline_disc.visible = not wants_art
+		body.visible = not wants_art
+	if not wants_art:
+		return
+	var angle: float = heading.angle() if heading != Vector2.ZERO else 0.0
+	var octant: int = posmod(roundi(angle / (PI / 4.0)), 8)
+	var wing: int = posmod(floori(Session.sim_time * WING_FRAMES_PER_SECOND + wander_phase / TAU * SpriteCatalogue.FORAGERS_MEADOW_VIEW_HFRAMES), SpriteCatalogue.FORAGERS_MEADOW_VIEW_HFRAMES)
+	var frame: int = _octant_row(octant) * SpriteCatalogue.FORAGERS_MEADOW_VIEW_HFRAMES + wing
+	if meadow_sprite.frame != frame:
+		meadow_sprite.frame = frame
 
 ## Pulses (scale, not just a static ring) so a searching bee catches the
 ## eye in a crowd rather than being one more small circle to spot. Same

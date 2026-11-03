@@ -353,6 +353,10 @@ static func _hive_move_toward(from_point: Vector2, to_point: Vector2, step: floa
 		return to_point
 	return from_point.lerp(to_point, step / true_gap)
 
+## ED-1: at or below this health a bee is spent and crawls, as she does at
+## zero energy (plans/now/difficulty.md decision 3: "at one health").
+const SPENT_HEALTH := 1.0
+
 ## Outdoors a bee flies straight. Inside the hive it walks a route over
 ## open tiles, because soil is solid. The route is recalculated only
 ## when the destination changes, not every frame.
@@ -364,6 +368,10 @@ static func move_towards(bee: Node2D, target: Vector2, delta: float) -> void:
 	var tipsy: bool = bee.tipsy_time_left > 0.0
 	if tipsy:
 		step *= GameConfig.tipsy_speed_factor
+	# ED-1: a spent bee -- no energy, or down to one health -- crawls.
+	# Two float tests for every other bee.
+	if bee.energy <= 0.0 or bee.health <= SPENT_HEALTH:
+		step *= GameConfig.spent_speed_factor
 
 	if not bee._is_inside_hive():
 		var aim: Vector2 = avoid_obstacles(bee, target)

@@ -1,7 +1,7 @@
 # Difficulty -- Easy rules, a Standard baseline, and the choice at run start
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: ED-1 -- every bee has health, then ED-2 and ED-3, all gated (specified 13 Oct 2026) | Dependency: ED-1 waits for SG-3 (`plans/now/short-term-goals.md`) in Dave's order (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`, released the save files 17 Oct 2026) | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: ED-1c -- health is saved per bee, queued (ED-1b landed 3 Nov 2026), then ED-2 and ED-3, gated (specified 13 Oct 2026) | Dependency: ED-1 follows SG-3 (`plans/archive/short-term-goals_2026-11-01.md`, landed 1 Nov 2026) in Dave's order (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`, released the save files 17 Oct 2026) | Verified: 2026-10-12
 
 ## Objective
 
@@ -20,7 +20,10 @@ Verified 12 Oct 2026 against master `06bd26c`:
   `lifespan_seconds` (which disease shortens), and a crab-spider ambush
   (`crab_spider.gd`, cause "crab spider ambush"). All go through
   `bee_survival.gd::die`. The queen never dies of old age; she can starve.
-- There is no health stat.
+- Since ED-1 (2 Nov 2026) every bee has `health`. At zero energy it drains
+  over about half a game-day, and starvation comes at zero health; a spent
+  bee crawls home at a quarter of her speed, eats, and rests. Health is not
+  saved yet (ED-1c).
 - `scripts/scenario_presets.gd` gives the main menu's Scenario group
   Relaxed/Standard/Demanding/Custom presets: four `GameConfig` multipliers
   each, applied through `levels.gd::apply_config_overrides`. The Colony Run
@@ -69,49 +72,49 @@ Verified 12 Oct 2026 against master `06bd26c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| ED-1 | Every bee has health; exhaustion drains it; spiders take it; rest restores it; a spent bee crawls home | `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/crab_spider.gd`, `scripts/game_config.gd`, `scripts/hud.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/ed1_exhaustion.json`, `tests/ed1_health_test.gd`, `tests/test_ed1_health.py` | no -- after SG-3 (FC-2 released the save files 17 Oct 2026) | high |
-| ED-2 | A run's difficulty, and Easy's rules: health floors at one, the queen cannot die, brood waits, winter spares | `scripts/session.gd`, `scripts/bee_survival.gd`, `scripts/bee_nursery.gd`, `scripts/season.gd`, `scripts/crab_spider.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed2_easy_rules_test.gd`, `tests/test_ed2_easy_rules.py` | no -- after ED-1 | high |
+| ED-1c | Health is saved per bee; an old save loads every bee at full health | `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed1c_health_save_test.gd`, `tests/test_ed1c_health_save.py`, `tests/test_save_migrations.py`, `tests/fixtures/saves/cq_s0_early.json`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json` | yes (ED-1b landed 3 Nov 2026) | medium |
+| ED-2 | A run's difficulty, and Easy's rules: health floors at one, the queen cannot die, brood waits, winter spares | `scripts/session.gd`, `scripts/bee_survival.gd`, `scripts/bee_nursery.gd`, `scripts/season.gd`, `scripts/crab_spider.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed2_easy_rules_test.gd`, `tests/test_ed2_easy_rules.py` | no -- after ED-1c | high |
 | ED-3 | Choosing Easy: the Colony Run tile, Relaxed and Custom, and the Saves window | `scripts/main_menu.gd`, `scripts/scenario_presets.gd`, `scripts/main.gd`, `scripts/levels.gd`, `scripts/saves_panel.gd`, `tests/test_ed3_difficulty_choice.py` | no -- after ED-2 | medium |
 
-ED-1, then ED-2, then ED-3: each needs the one before. Dave's order (13 Oct
+ED-1, then ED-1b, then ED-1c, then ED-2, then ED-3: each needs the one before.
+ED-1 was cut in three on 2 Nov 2026 (it named 11 files and was the largest slice
+in the queue; the measured cost of an oversized worker is in
+`plans/reference/slice-worker.md`, "Size budget"). Dave's order (13 Oct
 2026) puts this plan last: tier 3 (`plans/archive/tier-three_2026-10-14.md`,
-`plans/archive/work-priorities_2026-10-22.md`), then `plans/now/short-term-goals.md`, then
+`plans/archive/work-priorities_2026-10-22.md`), then `plans/archive/short-term-goals_2026-11-01.md`, then
 Easy. ED-1 changes Standard in one way only, exhaustion (decision 5);
 nothing else Standard does may change. Challenges stay Standard.
 
-**Reads.** A slice reads its own section only; ED-1 and ED-2 also read
-`.claude/rules/simulation.md`, `.claude/rules/saving.md` and
-`.claude/rules/performance.md` (health is per bee, per frame), ED-3
+**Reads.** A slice reads its own section only; ED-1 also reads
+`.claude/rules/simulation.md` and `.claude/rules/performance.md` (health is
+per bee, per frame), ED-1c and ED-2 `.claude/rules/saving.md`, ED-1b and ED-3
 `plans/reference/ui-rules.md`.
 
 **Drones (`plans/now/drones.md`, 22 Oct 2026).** DR-1 also edits `scripts/save_game.gd`/`scripts/saving.gd`; same lane, so one at a time in queue order, each re-capturing the CQ-S0 goldens it changes.
 
-**Code health (`plans/now/code-health.md`, 18 Oct 2026).** Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (ED-1, ED-2; the gate is ED-3, the end of the chain); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
+**Code health (`plans/now/code-health.md`, 18 Oct 2026).** Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (ED-1c, ED-2; the gate is ED-3, the end of the chain); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
 
-## ED-1 -- every bee has health
+ED-1 shipped 2026-11-02; its specification is `plans/archive/ED-1_2026-11-02.md`.
+
+ED-1b shipped 2026-11-03; its specification is `plans/archive/ED-1b_2026-11-03.md`.
+
+## ED-1c -- health is saved per bee
 
 <!-- LAYER: immediate-task -->
 
-**Change.** `bee.gd` gains `health` (full at birth). `bee_survival.gd`: at
-zero energy a bee no longer dies on the spot; it loses health at a rate set
-so a bee lasts about half a game-day (decision 3), and dies at zero health.
-A bee at zero energy, or at minimum health, moves at 25% speed
-(`bee_movement.gd`) and heads home; inside it eats and rests, regaining
-health, and leaves only once health and energy clear minimum thresholds.
-`crab_spider.gd`: an ambush takes health -- all of it on every difficulty
-for now, so Standard ambushes still kill. Rates and thresholds live in
-`GameConfig`; a headless sweep (`ed1_exhaustion.json`) sets the drain to the
-half-day intent and records its table here. The selection panel shows
-health beside energy. Health is saved per bee; a save without it loads
-every bee at full health. Every existing scenario still passes, or its
-changed expectation is recorded here with the exhaustion reason.
+Level: medium -- one additive save key with a default, and the golden saves it changes.
 
-```queue-gated
-**[Claude] ED-1 -- every bee has health**
-- Plan: `plans/now/difficulty.md` -- "ED-1 -- every bee has health"
-- Files: `scripts/bee.gd`, `scripts/bee_survival.gd`, `scripts/bee_movement.gd`, `scripts/crab_spider.gd`, `scripts/game_config.gd`, `scripts/hud.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `test_scenarios/ed1_exhaustion.json`, `tests/ed1_health_test.gd`, `tests/test_ed1_health.py`
-- Check: `python -m unittest tests.test_ed1_health` passes (a bee out of energy crawls at 25% speed, loses health and dies after about half a game-day unless it eats first; resting restores health and it leaves only past the thresholds; an ambush still kills; health survives save and restore and an old save loads at full health); the sweep's table is recorded in this section; `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/bee.gd :: var health`
+**Change.** `save_game.gd` writes each bee's `health`; `saving.gd` reads it and
+a save without the key loads that bee at full health. Re-capture the CQ-S0
+goldens this changes (`tests/fixtures/saves/`); `tests/test_save_migrations.py`
+gains the old-save case. Nothing else about saves moves.
+
+```queue
+**[Claude] ED-1c -- health is saved per bee**
+- Plan: `plans/now/difficulty.md` -- "ED-1c -- health is saved per bee"
+- Files: `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed1c_health_save_test.gd`, `tests/test_ed1c_health_save.py`, `tests/test_save_migrations.py`, `tests/fixtures/saves/cq_s0_early.json`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json`
+- Check: `python -m unittest tests.test_ed1c_health_save tests.test_save_migrations` passes (a bee's health survives save and restore; an old save without the key loads every bee at full health); `.\tools\verify.ps1` is green
+- Proof: `absent: scripts/save_game.gd :: "health"`
 - Next after: ED-2 -- a run's difficulty, and Easy's rules
 ```
 
@@ -162,5 +165,8 @@ they stay visible preset rules (product-scope §11).
 ## Open questions
 
 - Easy's "event timing follows player readiness more strongly than calendar
-  day" needs the event director (`NEXTSTEPS.md`, "Not in the queue"), which
-  has no design yet. It is out of this plan until that pass exists.
+  day" is answered by `plans/design/event-director.md` decision 6 (Dave,
+  1 Nov 2026): on Easy each director pressure waits for readiness up to a
+  later fallback day. It is built by the director's slices
+  (`plans/now/event-director.md`), not this plan; ED-2 records the run's
+  difficulty they read.

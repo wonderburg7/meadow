@@ -1,0 +1,42 @@
+{
+  "_comment": "ED-1 sweep (plans/now/difficulty.md, ED-1): a colony with empty comb and nothing to forage. energy_burn_rate 2.0 empties every bee, the queen included, in 50 s; she then lasts as long as exhaustion_health_drain allows, and her starvation collapses the run. Half a game-day is 100 s at seconds_per_day 200, so the run should end at 130-170 s. The sweep reruns this with other drains.",
+  "cells": 7,
+  "nectar_foragers": 0,
+  "pollen_foragers": 0,
+  "nurses": 3,
+  "builders": 0,
+  "miners": 0,
+  "weather": false,
+  "disease": false,
+  "rival_hive": false,
+  "winter": false,
+  "random_seed": 4242,
+  "config_overrides": {
+    "energy_burn_rate": 2.0
+  },
+  "actions": [],
+  "expect": [
+    {
+      "id": "collapsed_by_starvation",
+      "metric": "summary.outcome",
+      "op": "eq",
+      "value": "collapsed"
+    },
+    {
+      "id": "bees_died",
+      "metric": "summary.total_deaths",
+      "op": "gte",
+      "value": 1
+    },
+    {
+      "id": "first_death_half_a_day_after_empty",
+      "metric": "summary.game_time",
+      "op": "between",
+      "min": 130,
+      "max": 170
+    }
+  ],
+  "stop": {
+    "max_days": 3
+  }
+}

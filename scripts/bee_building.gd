@@ -24,7 +24,8 @@ const BODY_REACH := 8.0
 ## Catalogue finders all take one bee and return whether they started work.
 ## The cleaning row (actions.gd `comb_clean_cell`, gated on Cleaning) clears
 ## dead larvae first and, with none waiting, carries out the oldest body no
-## other Comb worker is on (T2-4b). Both walk out the same waste exit.
+## other Comb worker is on (T2-4b). Once both are clear, fermentation sense
+## lets it mark one sour cell for the existing discard job (T2-15).
 static func find_cell_needing_cleaning(bee: Node2D) -> bool:
 	var dead: Variant = bee.hive.find_cell_needing_cleaning()
 	if dead != null:
@@ -34,6 +35,11 @@ static func find_cell_needing_cleaning(bee: Node2D) -> bool:
 		return true
 	var body: Node2D = bee.hive.find_body_to_clear()
 	if body == null:
+		var sour: Node2D = bee.hive.find_sour_cell_for_cleaning()
+		if sour != null:
+			sour.evict_mode = "discard"
+			sour.evict_requested = true
+			sour.bump_display_epoch()
 		return false
 	bee.target_body = body
 	body.claimant = bee
@@ -500,7 +506,9 @@ static func builder_go_to_waste_exit(bee: Node2D, delta: float) -> void:
 	if BeeMovement.walk_to_hive_exit(bee, delta):
 		if bee.world:
 			bee.world.move_bee_out_of_hive(bee)
-		bee.timer = GameConfig.dirt_dump_time
+		# RR-20: a dead bee is dropped after body_drop_seconds; spoil and
+		# stores keep dirt_dump_time.
+		bee.timer = GameConfig.body_drop_seconds if bee.carrying_corpse and bee.corpse_is_bee else GameConfig.dirt_dump_time
 		bee.state = State.DUMPING_WASTE
 
 

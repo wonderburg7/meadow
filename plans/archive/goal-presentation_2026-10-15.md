@@ -1,7 +1,7 @@
 # Goal presentation -- the four goal layers on screen in a Colony Run
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: complete | Owner: Dave / Claude Code | Next: None — plan complete (GP-1, GP-2 and GP-4 built, GP-4 on 15 Oct 2026; archived by the 15 Oct 2026 plan review) | Dependency: GP-1 → GP-2 → GP-4 (Dave's order, 12 Oct 2026); short-term goals left this plan on 13 Oct 2026 (Dave) for `plans/now/short-term-goals.md` (SG-1 to SG-3), whose SG-3 draws into GP-1's drop-down after GP-2 | Verified: 2026-10-15
+Status: complete | Owner: Dave / Claude Code | Next: None — plan complete (GP-1, GP-2 and GP-4 built, GP-4 on 15 Oct 2026; archived by the 15 Oct 2026 plan review) | Dependency: GP-1 → GP-2 → GP-4 (Dave's order, 12 Oct 2026); short-term goals left this plan on 13 Oct 2026 (Dave) for `plans/archive/short-term-goals_2026-11-01.md` (SG-1 to SG-3), whose SG-3 draws into GP-1's drop-down after GP-2 | Verified: 2026-10-15
 
 ## Objective
 
@@ -27,7 +27,7 @@ Verified 12 Oct 2026 against master `291e5a3`:
   `winter_ends_day`, `season.gd::mating_curve()` (COL-7's window) and
   `colony_milestones.gd`'s `VICTORY` record.
 - **Short-term goals** do not exist. §16 listed their selection,
-  concurrency and dismissal as open; `plans/now/short-term-goals.md` settles
+  concurrency and dismissal as open; `plans/archive/short-term-goals_2026-11-01.md` settles
   them (Dave, 13 Oct 2026) and owns them, drawing into this plan's
   drop-down.
 - **Urgent problems** show on the corner problem strip (top left, under the
@@ -68,12 +68,12 @@ Dave, 12 Oct 2026, in the session that wrote this plan:
    goal on the shelf; Scenarios are unchanged. GP-4's click-area and length
    fixes are the exception: they fix a defect wherever the strip shows.
    Short-term goals are the other: they also show in Scenarios
-   (`plans/now/short-term-goals.md`, Dave, 13 Oct 2026).
+   (`plans/archive/short-term-goals_2026-11-01.md`, Dave, 13 Oct 2026).
 2. **Goals are a drop-down on the right.** The goal shelf becomes a
    collapsible "Goals" drop-down in the same place, keeping today's
    see-through look (no panel background). Expanded, it shows the long-term
    line, the next milestone, the short-term goals (SG-3 in
-   `plans/now/short-term-goals.md`) and the last goal
+   `plans/archive/short-term-goals_2026-11-01.md`) and the last goal
    met, struck through. Collapsed, it shows the header only, plus any
    favourite (decision 4). The collapsed state is an interface preference,
    remembered across runs. A new profile starts expanded.
@@ -92,10 +92,10 @@ Dave, 12 Oct 2026, in the session that wrote this plan:
    loses its star. Stars are saved with the run, and a save without them
    loads with none.
 5. *Superseded 13 Oct 2026 (Dave):* short-term goals' count, reward,
-   runs and dismissal now live in `plans/now/short-term-goals.md`
+   runs and dismissal now live in `plans/archive/short-term-goals_2026-11-01.md`
    decisions 1 to 3.
 6. *Superseded 13 Oct 2026 (Dave):* the first catalogue is
-   `plans/now/short-term-goals.md` decision 4.
+   `plans/archive/short-term-goals_2026-11-01.md` decision 4.
 7. **Warnings stay on the left**, under the starred readouts: yellow for
    warnings, red for urgent. The strip must stop blocking play: each line
    catches clicks only over its own text, and at most four lines show, worst

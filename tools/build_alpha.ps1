@@ -47,6 +47,12 @@ if (-not $versionMatch) {
     throw "project.godot has no config/version."
 }
 $version = $versionMatch.Matches[0].Groups[1].Value
+$commitHash = (& git -C $projectRoot rev-parse --short HEAD | Out-String).Trim()
+if ($LASTEXITCODE -ne 0 -or $commitHash -notmatch '^[0-9a-f]+$') {
+    throw "Could not read the build's Git commit."
+}
+$buildDate = Get-Date -Format "yyyy-MM-dd"
+$buildId = "$version-$commitHash-$buildDate"
 
 # Godot names its template folder from its own version ("4.7.2.stable").
 # Checking first turns a 30 s import ending in a buried error into one line.
@@ -64,16 +70,28 @@ $executable = Join-Path $outputDirectory "Meadow.exe"
 # Godot writes warnings to stderr; under "Stop", Windows PowerShell 5.1
 # turns the first one into a terminating error, so only the exit code
 # decides whether the export failed.
-$ErrorActionPreference = "Continue"
-$exportLog = & $godotPath --headless --path $projectRoot --export-release "Windows Desktop" $executable 2>&1 | ForEach-Object { "$_" }
-$exportExit = $LASTEXITCODE
-$ErrorActionPreference = "Stop"
+$buildInfoPath = Join-Path $projectRoot "scripts/build_info.gd"
+$buildInfoUidPath = "$buildInfoPath.uid"
+if ((Test-Path -LiteralPath $buildInfoPath) -or (Test-Path -LiteralPath $buildInfoUidPath)) {
+    throw "Temporary build_info.gd or its uid already exists; refusing to overwrite it."
+}
+try {
+    Set-Content -LiteralPath $buildInfoPath -Value "extends RefCounted`nconst BUILD_ID := `"$buildId`"" -Encoding UTF8
+    $ErrorActionPreference = "Continue"
+    $exportLog = & $godotPath --headless --path $projectRoot --export-release "Windows Desktop" $executable 2>&1 | ForEach-Object { "$_" }
+    $exportExit = $LASTEXITCODE
+} finally {
+    $ErrorActionPreference = "Stop"
+    Remove-Item -LiteralPath $buildInfoPath -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $buildInfoUidPath -Force -ErrorAction SilentlyContinue
+}
 if ($exportExit -ne 0) {
     $exportLog | Where-Object { $_ -match "ERROR|template" } | Select-Object -First 12 | ForEach-Object { Write-Output $_ }
     throw "Godot export failed with exit code $exportExit."
 }
 
-$zipPath = Join-Path $projectRoot "build/Meadow-$version-windows.zip"
+Copy-Item -LiteralPath (Join-Path $projectRoot "docs/alpha-start-here.md") -Destination (Join-Path $outputDirectory "START-HERE.txt") -Force
+$zipPath = Join-Path $projectRoot "build/Meadow-$buildId-windows.zip"
 Compress-Archive -Path (Join-Path $outputDirectory "*") -DestinationPath $zipPath -Force
 $zip = Get-Item -LiteralPath $zipPath
 Write-Output "$($zip.FullName) ($($zip.Length) bytes)"

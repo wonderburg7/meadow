@@ -146,10 +146,6 @@ func is_owned_or_absent(skill_id: String) -> bool:
 	return not Skills.has(skill_id) or is_owned(skill_id)
 
 
-func is_mastered(skill_id: String) -> bool:
-	return _mastered.has(skill_id)
-
-
 func is_temporary(skill_id: String) -> bool:
 	return _temporary.has(skill_id)
 

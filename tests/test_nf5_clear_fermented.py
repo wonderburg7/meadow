@@ -221,5 +221,41 @@ class QueenDiscardsSourTest(unittest.TestCase):
         self.assertAlmostEqual(pollen, 5, places=3, msg="the queen lost her leftover pollen")
 
 
+class AutomaticSourCleaningTest(unittest.TestCase):
+    """Cleaning and fermentation sense together use the normal discard job."""
+
+    def test_both_skills_are_required(self):
+        godot = find_godot()
+        if not godot:
+            self.skipTest("no Godot executable found")
+        cleaning = "skill.hive_mind.cleaning"
+        sense = "skill.colony.fermentation_sense"
+        for grants, should_clear in (([cleaning, sense], True), ([cleaning], False), ([sense], False)):
+            with self.subTest(grants=grants), tempfile.TemporaryDirectory() as tmp:
+                fixture = {
+                    "cells": 15, "nectar_foragers": 0, "pollen_foragers": 0,
+                    "nurses": 0, "builders": 2, "miners": 0, "honey_makers": 0,
+                    "weather": False, "disease": False, "rival_hive": False, "winter": False,
+                    "random_seed": 5205, "skill_grants": grants,
+                    "config_overrides": {"seconds_per_day": 20, "nectar_ferment_hours": 12},
+                    "actions": [
+                        {"do": "set_cell_contents", "hex": [0, 0], "resource": "nectar", "amount": 60},
+                        {"do": "wait", "seconds": 70},
+                        {"do": "save_run", "name": "T2 15 done"},
+                    ],
+                    "stop": {"when_actions_resolved": True, "max_days": 10},
+                }
+                path = Path(tmp) / "auto_sour.json"
+                path.write_text(json.dumps(fixture), encoding="utf-8")
+                session = run_once(path, godot, timeout=300, fixed_fps=30)
+                self.assertIsNotNone(session)
+                rejected = [e for e in load_entries(session)
+                            if e.get("type") == "action" and e.get("result") == "rejected"]
+                self.assertEqual(rejected, [])
+                save = json.loads((scenario_saves_dir(session) / "t2-15-done.json").read_text(encoding="utf-8"))
+                cell = _cell(save, (0, 0))
+                self.assertEqual(cell.get("content") != "nectar", should_clear)
+
+
 if __name__ == "__main__":
     unittest.main()

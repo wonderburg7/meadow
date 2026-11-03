@@ -3,6 +3,7 @@
 <!-- CONTEXT: review-prompt | LOAD: only when running this review -->
 Record key: none (stage 2 writes the `agent-workflow-review` record)
 Reasoning: medium
+Jules: no -- it reads Codex session rollouts on Dave's machine
 
 Run this in Codex. It measures Codex's recent sessions and returns a compact
 findings block, which Dave pastes into stage 2 (`agent-workflow-review.md`,

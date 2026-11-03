@@ -26,6 +26,9 @@ coordinator. The coordinator hands you:
    `WORKTREE`, and follow both. Your review file's steps win where they
    differ. Your `SINCE` replaces contract rule 2's lookup; the rest of rule
    2 (follow-through first, stop early when nothing changed) still applies.
+   Run `python tools/review_due.py <KEY>` once for its `jules:` line: a
+   waiting Jules report is processed, not swept again
+   (`plans/reference/jules-reviews.md` "Processing a Jules review").
 3. Treat each `HANDOFFS` line as a candidate finding in your lane: confirm it
    with evidence like any other, or reject it with a reason.
 4. **You cannot ask Dave.** Where contract rule 5 says a finding is

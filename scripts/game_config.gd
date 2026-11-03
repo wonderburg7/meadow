@@ -641,6 +641,9 @@ var pollen_raised_stat_factor: float = 0.95
 ## weather. Switch it on once the foraging loop makes sense.
 var weather_on: bool = false
 var rain_chance_per_day: float = 0.45
+## RR-21: ordinary random rain is not rolled before this many game days. The
+## first crisis and any scenario that starts rain itself are unaffected.
+var rain_free_days: float = 2.0
 var rain_min_seconds: float = 40.0
 var rain_max_seconds: float = 130.0
 var rain_nectar_dilution: float = 0.6   # share of nectar value lost at full intensity
@@ -726,6 +729,10 @@ var tipsy_wander_seconds: float = 6.0
 ## Miner-seconds to break down one soil block. Like building, several
 ## miners on the same block share the work.
 var block_mine_time: float = 120.0
+## HS-2. How far into the soil band hard soil begins (0 = at the cavity,
+## 1 = only the outermost ring), and how much longer a hard block takes.
+var hard_soil_start_fraction: float = 0.5
+var hard_soil_mine_time_multiplier: float = 2.5
 var starting_miners: float = 0.0
 
 ## A miner fills up with spoil as it digs and has to carry it outside
@@ -733,6 +740,9 @@ var starting_miners: float = 0.0
 var miner_dirt_capacity: float = 40.0
 var dirt_fill_rate: float = 0.5     # dirt per second while digging
 var dirt_dump_time: float = 2.0     # seconds spent outside emptying out
+## RR-20: a Comb worker carrying a dead bee stays outside this long, then
+## comes back in. Spoil and stores still use dirt_dump_time.
+var body_drop_seconds: float = 1.0
 
 ## Builder-seconds needed to finish one cell. Two builders working the
 ## same cell halve the wall-clock time, three thirds it, and so on.
@@ -775,6 +785,25 @@ var cell_slow_factor: float = 0.55
 var bee_lifespan_days: float = 25.0
 var energy_capacity: float = 100.0
 var energy_burn_rate: float = 0.17       # nectar-equivalent burned per second
+
+# --- health (ED-1, plans/now/difficulty.md decision 3) ---
+## Every bee is born at full health. A bee out of energy no longer dies on
+## the spot: it loses `exhaustion_health_drain` health a second and dies
+## at zero, so it may crawl home and eat first. At the defaults (100 health,
+## 1.0 a second, seconds_per_day 200) that is half a game-day -- the value
+## the ED-1 sweep (test_scenarios/ed1_exhaustion.json) set.
+var health_capacity: float = 100.0
+var exhaustion_health_drain: float = 1.0  # health lost per second at zero energy
+## Inside the hive with any energy at all, a bee below full health regains
+## this much a second.
+var health_regen_rate: float = 0.5
+## A spent bee (no energy, or one health) moves at this fraction of its
+## speed, indoors and out.
+var spent_speed_factor: float = 0.25
+## A forager recovering from exhaustion (below full health) waits inside
+## until her health and energy are both at least these fractions of full.
+var rest_leave_health: float = 0.5
+var rest_leave_energy: float = 0.5
 
 # --- bee individuality ---
 ## Every bee rolls one small stat trait at spawn (see bee_identity.gd

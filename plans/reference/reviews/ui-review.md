@@ -4,6 +4,7 @@
 Record key: ui-review
 Reasoning: medium
 Watches: scripts/ui_layout.gd scripts/ui_theme.gd scripts/hud.gd scripts/scenario_actions.gd plans/reference/ui-rules.md GAME_MODEL.md assets
+Jules: R-ui | priority 4 | every 14 days | min 10 commits
 
 **Owns:** presentation and interaction: HUD readouts, panels and windows,
 buttons, selection and targeting, context and command menus, warnings,
@@ -51,3 +52,15 @@ Code can show structure but not clarity, so split the work.
 Preserve gameplay. Propose a redesign only where the evidence shows the
 current structure cannot support what is needed. Rank by player impact
 divided by effort.
+
+## If Jules runs this
+
+Method and report: `plans/reference/jules-reviews.md` "Running a review".
+Do steps 1 and 3 from the code. Read a control's parent from its
+`add_child` call and the scene file, never from a variable's name, and do
+not call a fixed minimum width a fault without showing what it breaks (the
+J-30 audit misplaced a `ScrollContainer` child). Do not judge art from image
+files. Step 2's hands-on checks go in the report's "Hands-on checks to
+file" with their full `new_check.py` line, at most six; you cannot write
+`checks/`. Where a layout assertion could replace a check, name the assertion
+in `scripts/scenario_actions.gd` and the scenario it belongs in.

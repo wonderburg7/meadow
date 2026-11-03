@@ -4,6 +4,7 @@
 Record key: architecture-review
 Reasoning: high
 Watches: scripts scenes project.godot
+Jules: R-architecture | priority 5 | every 14 days | min 30 commits
 
 **Owns:** how Meadow is structured for change: where each rule, value and
 definition lives; catalogues and data-driven definitions; shared interfaces
@@ -62,3 +63,18 @@ behaviour-preserving refactor names its equivalence check (`python
 tools/equivalence.py <scenario> <ref>`). Preserve current gameplay unless
 Dave approves a change. Record every pattern considered and rejected under
 "Patterns deliberately not applied", with the reason.
+
+## If Jules runs this
+
+Method and report: `plans/reference/jules-reviews.md` "Running a review".
+Read the last record's "Patterns deliberately not applied" before anything,
+and do not re-propose one without new evidence. Answer "how many files does
+one more instance touch" from history, not estimate: for the last two or
+three instances of each kind added since `SINCE` (`git log --stat`), list the
+files each touched. Dead code: `python tools/uncalled.py`, then the string
+names (`"name"`, `call(`, `connect(`, `Callable(`) and `.tscn` `method=`
+lines before calling anything uncalled; a function a plan names is not dead.
+Separate command routing, data ownership and visibility gating before
+calling something an ownership breach, and quote the rule it breaks (the
+J-36 audit paraphrased one). Each refactor recommendation names its
+`python tools/equivalence.py <scenario> <ref>` check for Claude to run.
