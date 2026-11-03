@@ -54,7 +54,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 One line each: the id, its plan, and the single thing it waits for.
 
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for playable Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026).
-- **CQ-M5b** (`plans/now/code-health.md`) -- the last CanvasLayer readers and the bare-layer source check; waits for the Claude lane's CQ-R8 to release `scripts/hud.gd`, the unmerged Jules S-3 branches to settle `scripts/main.gd` and the Jules J-14 branch to settle `scripts/game_panel.gd` (CQ-R16 landed 2 Nov 2026, ED-1b landed 3 Nov 2026).
+- **CQ-M5b** (`plans/now/code-health.md`) -- the last CanvasLayer readers and the bare-layer source check; waits for the unmerged Jules S-3 branches to settle `scripts/main.gd` and the Jules J-14 branch to settle `scripts/game_panel.gd` (CQ-R16 landed 2 Nov 2026; ED-1b landed 3 Nov 2026, releasing `scripts/hud.gd`).
 - **CQ-M4** (`plans/now/code-health.md`) -- name Challenge level ids; waits for the Claude lane to release `scripts/save_game.gd` and `scripts/saving.gd`.
 - **RR-22** (`plans/now/run-repairs.md`) -- select a number of bees from a multi-selection; waits for the Codex lane's CQ-R6 to release `scripts/hud.gd`, which both name.
 - **RR-12** (`plans/now/run-repairs.md`) -- a loaded run keeps its readout history (Dave, 16 Oct 2026); waits for ED-3, the last of the alpha chain, which shares `scripts/main.gd` and the save files.
@@ -72,7 +72,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **CQ-R2** (`plans/now/code-health.md`) -- the first crisis moves out of `scripts/main.gd` into a new first_crisis.gd, touching the save files; waits, gated with CQ-S1, for the save slices of the alpha chain (ED-1c, ED-2, RR-12, SP-8a in `plans/now/drones.md`; WP-2 landed 21 Oct 2026) and ED-3 (Dave, 18 Oct 2026); its plan section is written when that gate clears.
 - **CQ-R13** (`plans/now/code-health.md`) -- `main.gd::_ready` into build steps; waits for CQ-R2, which shares `scripts/main.gd`, and then needs its slice specification.
 - **CQ-R3** (`plans/now/code-health.md`) -- bee display text moves into a new bee_readout.gd; waits for the unmerged Jules S-1 and S-3 branches, which change `scripts/bee.gd`, to be merged or closed (ED-1 landed 2 Nov 2026).
-- **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; needs its section and block after CQ-R8 (CQ-L2 released `tests/source_checks.py` 24 Oct 2026).
+- **CQ-T3** (`plans/now/code-health.md`) -- the UI scripts typed and the untyped warning made an error; waits only for its plan section and block to be written (CQ-L2 released `tests/source_checks.py` 24 Oct 2026).
 - **CQ-M6** (`plans/now/code-health.md`) -- selection green and caste appearance named; waits for the unmerged Jules S-1 and S-3 branches (`scripts/bee.gd`, `scripts/soil_block.gd`) and `claude/dave-hands-on-checks-784f2a` (`scripts/hive_cell.gd`) to be merged or closed (ED-1 and CQ-R16 landed 2 Nov 2026).
 - **CQ-M7** (`plans/now/code-health.md`) -- world draw order named; waits for CQ-M6 and then needs its section and block.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
