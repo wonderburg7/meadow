@@ -117,4 +117,5 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-167 -- Meadow foragers face their flight direction and flap](ready/C-167.md)
 - [C-168 -- Box select and middle-drag pan after the input move](ready/C-168.md)
 - [C-169 -- Goals drop-down after the move](ready/C-169.md)
+- [C-170 -- Cell designation buttons after the builder table](ready/C-170.md)
 - [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)
