@@ -62,7 +62,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **HM-2** (`plans/now/hive-and-menu-art.md`) -- five top-bar buttons drawn from Dave's menu icons; waits for Dave to queue it (his call, 13 Oct 2026); its gated block is written.
 - **HM-1** (`plans/now/hive-and-menu-art.md`) -- your hive and rival hives drawn from Dave's meadow hive art; waits for Dave to fit the large hive's layer 0 on its 54x41 canvas in Aseprite.
 - **T2-7b** (`plans/now/tier-two.md`) -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4, whose arc buys a Honey worker, and is specified when it lands.
-- **ED-1c** (`plans/now/difficulty.md`) -- health is saved per bee, with an old save loading at full health; waits for ED-1b, the order of the chain, and shares the save files with the Claude lane's other save slices.
+- **ED-1c** (`plans/now/difficulty.md`) -- health is saved per bee, with an old save loading at full health; waits for the order of the chain, and shares the save files with the Claude lane's other save slices.
 - **ED-2** (`plans/now/difficulty.md`) -- a run's difficulty and Easy's rules; waits for ED-1c.
 - **ED-3** (`plans/now/difficulty.md`) -- choosing Easy at run start; waits for ED-2.
 - **The event director** (`plans/design/product-scope.md` §6.2) -- needs its own design pass before a slice can be written; `plans/reference/colony-diagnostics.md` is the model for what that pass produces.

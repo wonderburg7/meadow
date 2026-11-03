@@ -48,4 +48,3 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/ED-1b` (`claude/ED-1b`) | Claude | an ambush takes health and the panel shows it | Claude | in progress | none | `plans/now/difficulty.md` ED-1b -- an ambush takes health and the panel shows it |
