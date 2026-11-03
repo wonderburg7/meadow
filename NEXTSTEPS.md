@@ -23,14 +23,7 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] ED-1b -- an ambush takes health and the panel shows it**
-   - Plan: `plans/now/difficulty.md` -- "ED-1b -- an ambush takes health and the panel shows it"
-   - Files: `scripts/crab_spider.gd`, `scripts/hud.gd`, `tests/ed1b_health_panel_test.gd`, `tests/test_ed1b_health_panel.py`
-   - Check: `python -m unittest tests.test_ed1b_health_panel` passes (an ambushed bee loses all its health and dies with the same cause as before; a selected bee's panel shows its health beside its energy); `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/hud.gd :: .health`
-   - Next after: ED-1c -- health is saved per bee
-
-2. **[Claude] CQ-R8 -- hud builders shortened; hud sections re-headed**
+1. **[Claude] CQ-R8 -- hud builders shortened; hud sections re-headed**
    - Plan: `plans/now/code-health.md` -- "CQ-R8 -- hud builders shortened; hud sections re-headed"
    - Files: `scripts/hud.gd`, `FUNCTION_MAP.md`
    - Check: `python -m unittest tests.test_layout_regression tests.test_gp1_goals_dropdown tests.test_gp2_goal_favourites tests.test_rr4_min_window tests.test_display_text_golden` passes; `scripts/hud.gd` has a `# --- warning banner` header; `.\tools\verify.ps1` is green
