@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R15 implemented (3 Nov 2026); CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the unmerged Jules S-3 branches to settle scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd (CQ-R16 landed 2 Nov 2026; CQ-R15, ED-1b and CQ-R8 3 Nov 2026, releasing scripts/hud.gd); CQ-M6 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd and scripts/soil_block.gd and claude/dave-hands-on-checks-784f2a to settle scripts/hive_cell.gd (ED-1 and CQ-R16 landed 2 Nov 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R16 landed 2 Nov 2026 and CQ-R15 3 Nov 2026; CQ-R8 implemented 3 Nov 2026 (ED-1b, which shared scripts/hud.gd, landed 3 Nov 2026); CQ-R3 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd (ED-1 landed 2 Nov 2026) | Dependency: CQ-T3 waits only for its section (CQ-R8 landed 3 Nov 2026; CQ-L2 has released tests/source_checks.py); CQ-R3 follows the unmerged Jules S-1 and S-3 branches (ED-1 landed 2 Nov 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R15 implemented (3 Nov 2026); CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the unmerged Jules S-3 branches to settle scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd (CQ-R16 landed 2 Nov 2026; CQ-R15, ED-1b and CQ-R8 3 Nov 2026, releasing scripts/hud.gd); CQ-M6 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd and scripts/soil_block.gd and claude/dave-hands-on-checks-784f2a to settle scripts/hive_cell.gd (ED-1 and CQ-R16 landed 2 Nov 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R16 landed 2 Nov 2026 and CQ-R15 3 Nov 2026; CQ-R8 implemented 3 Nov 2026 (ED-1b, which shared scripts/hud.gd, landed 3 Nov 2026); CQ-R3 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd (ED-1 landed 2 Nov 2026) | Dependency: CQ-T3 is queued behind RR-22 (section written 3 Nov 2026); CQ-T4 waits for CQ-T3 and claude/dave-hands-on-checks-784f2a; CQ-R3 follows the unmerged Jules S-1 and S-3 branches (ED-1 landed 2 Nov 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -122,7 +122,8 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | Slice | Outcome | Files it owns (block has the full list) | Startable | Level |
 | --- | --- | --- | --- | --- |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T3 | UI typed; warning becomes an error | 17 UI scripts, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | section needed (CQ-R8 landed 3 Nov 2026; CQ-L2 released `tests/source_checks.py` 24 Oct 2026) | low |
+| CQ-T3 | the 18 free UI scripts typed | those 18, `tests/source_checks.py`, `FUNCTION_MAP.md` | yes, after RR-22 in the Claude lane | low |
+| CQ-T4 | the other 54 scripts and tests typed; `untyped_declaration` becomes an error | those, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | gated -- after CQ-T3, `claude/dave-hands-on-checks-784f2a` and the Jules S-1/S-3 branches | low |
 | CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a, DR-1 | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
@@ -171,7 +172,7 @@ claim while `dry_after`).
     22 Oct 2026, then CQ-R7), as CQ-T2 waited for CQ-R1's moves; CQ-L1, which held
     `skill_tree_panel.gd` ahead of it, landed 22 Oct 2026. CQ-R7 landed 22 Oct
     2026. CQ-R8 preceded CQ-T3 so the builders are typed once (landed 3 Nov
-    2026); CQ-T3 still needs its section. For Codex admission, CQ-T3 also waited for
+    2026); CQ-T3's section was written 3 Nov 2026 and the error flip split to CQ-T4. For Codex admission, CQ-T3 also waited for
     Claude's CQ-L2 to release `tests/source_checks.py` (released 24 Oct 2026); `FUNCTION_MAP.md` is
     unowned (Dave, 23 Oct 2026) and gates nothing. This is a lane
     ownership gate, not unshipped functional prerequisites (verified
@@ -302,6 +303,51 @@ wrapped chain as `. name(` on its own line.
 - Next after: CQ-T3
 ```
 
+## CQ-T3 -- the free UI scripts typed
+
+Level: low -- claude-sonnet-5-5 at low effort. Mechanical: type annotations
+only, no behaviour change.
+
+**True now** (counted 3 Nov 2026 with `tests/source_checks.py::untyped_declarations`
+against `37314ed`). 72 scripts and tests outside `TYPED_FILES` hold 626 untyped
+declarations, so `untyped_declaration=1` in `project.godot` cannot become an
+error in one slice. The 18 UI scripts below hold 289 and no other branch or
+queued slice holds them (RR-22, ahead in this lane, also edits `scripts/hud.gd`
+and lands first, so its new code is typed here once). Five more UI scripts
+(`hud_command_rows`, `colony_panel`, `skill_tree_panel`, `gallerin_panel`,
+`problem_messages`) are changed by the unmerged `claude/dave-hands-on-checks-784f2a`
+and go to CQ-T4.
+
+**When done:**
+
+1. Every declaration `untyped_declarations` flags in `scripts/hud.gd` (115),
+   `debug_panel.gd` (48), `ui_theme.gd` (20), `main_menu.gd` (20),
+   `nursery_panel.gd` (18), `saves_panel.gd` (16), `hud_goal_shelf.gd` (11),
+   `challenge_complete.gd` (8), `ui.gd`, `run_availability_panel.gd` (5 each),
+   `ui_icon.gd`, `game_over.gd`, `foraging_panel.gd` (4 each),
+   `succession_panel.gd` (3), `winter_panel.gd`, `stage_gate.gd`, `perf_plot.gd`
+   and `perf_breakdown.gd` (2 each) carries an explicit type (`:=` where the
+   type is obvious, `-> void` on lambdas).
+2. All 18 are in `TYPED_FILES` in `tests/source_checks.py`.
+3. `python tools/update_function_map.py` has been re-run for the new signatures.
+4. Behaviour and every display string unchanged ("Rules for every slice").
+
+**Why one slice for 20 files.** The work list is `untyped_declarations`'
+output, one line per fix; the worker reads only the flagged lines, not the
+files, and nothing a reviewer must reason about moves. Splitting by file would
+add closeouts without shortening any.
+
+**Open decisions:** none.
+
+```queue
+**[Claude] CQ-T3 -- the free UI scripts typed**
+- Plan: `plans/now/code-health.md` -- "CQ-T3 -- the free UI scripts typed"
+- Files: `scripts/hud.gd`, `scripts/debug_panel.gd`, `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/nursery_panel.gd`, `scripts/saves_panel.gd`, `scripts/hud_goal_shelf.gd`, `scripts/challenge_complete.gd`, `scripts/ui.gd`, `scripts/run_availability_panel.gd`, `scripts/ui_icon.gd`, `scripts/game_over.gd`, `scripts/foraging_panel.gd`, `scripts/succession_panel.gd`, `scripts/winter_panel.gd`, `scripts/stage_gate.gd`, `scripts/perf_plot.gd`, `scripts/perf_breakdown.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
+- Check: `python tests/source_checks.py` passes with all 18 scripts in `TYPED_FILES`; `python tools/prefinish.py` boots without an `untyped_declaration` warning from them; `.\tools\verify.ps1` is green
+- Proof: `absent: tests/source_checks.py :: "scripts/debug_panel.gd"`
+- Next after: CQ-T4 -- the rest typed; the warning becomes an error
+```
+
 ## Not in the queue, and why
 
 - **CQ-R13** -- waits for CQ-R2 and a startable slice specification for
@@ -322,6 +368,11 @@ wrapped chain as `. name(` on its own line.
   rule; ownership changes need a separate reviewed design. None is admitted
   without that evidence; the source audit reports remain unaccepted.
 
+- **CQ-T4** -- the remaining 54 scripts and tests typed and `untyped_declaration`
+  made an error; waits for CQ-T3, and for `claude/dave-hands-on-checks-784f2a` and
+  the Jules S-1/S-3 branches, which between them change five of its UI scripts and
+  `scripts/soil_block.gd`, to be merged or closed. Its section is written
+  when CQ-T3 is claimed.
 - **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`
   and `scripts/saving.gd`; its ownership overlaps that lane's current work.
 - **CQ-M5b** -- waits for the unmerged Jules S-3 branches (which change

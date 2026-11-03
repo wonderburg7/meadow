@@ -43,7 +43,7 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
-| RR-22 | select a number of bees from a multi-selection, youngest and oldest | `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, tests | no -- after the Codex lane's CQ-R6 releases `scripts/hud.gd` (CQ-R10 landed 27 Oct 2026; GP-5 and SG-4 landed 26 Oct 2026) | medium |
+| RR-22 | select a number of bees from a multi-selection, youngest and oldest | `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, tests | yes -- CQ-R6 is implemented and CQ-R8 released `scripts/hud.gd` (3 Nov 2026) | medium |
 
 RR-9 and RR-10 are Codex-lane slices (Dave, 15 Oct 2026, plan review D3:
 the Claude lane was full and the Codex backlog dry); RR-7 and RR-11 stay in
@@ -141,9 +141,9 @@ Level: medium -- claude-sonnet-5-5 at medium effort.
 with '<<' '<' '>' '>>' buttons to change n by +/- 1 or 5. Also adds buttons
 for 'Select youngest bee', and 'Select oldest bee'". The multi-selection
 summary is the `else` branch of the identity-label code in
-`hud.gd::update_selection` (near l.3739, "%d bees selected",
-`_set_summary_cog_kind("multiple")`). The selection list is
-`main.selected_bees`, set in `input_selection.gd` (near l.168-184) and shown
+`hud.gd::update_selection` (near l.2983, "%d bees selected",
+`_set_summary_cog_kind("multiple")`; re-verified 3 Nov 2026). The selection list is
+`main.selected_bees`, set in `input_selection.gd` (near l.207-215) and shown
 through `hud.update_selection`. A bee's age is `Bee.age_seconds`.
 
 **When done:**
@@ -166,10 +166,13 @@ through `hud.update_selection`. A bee's age is `Bee.age_seconds`.
 **Invariants.** A single selection shows no row. Selecting never alters the
 simulation. Presentation and selection state only.
 
-**Open decisions:** which n bees `Select n` keeps (nearest the centre is
-provisional; Dave answers it at the hands-on check).
+Which n bees `Select n` keeps is built as nearest the centre (When done, 2);
+Dave confirms or changes it at the hands-on check, which does not block the
+build.
 
-```queue-gated
+**Open decisions:** none.
+
+```queue
 **[Claude] RR-22 -- select a number of bees from a multi-selection**
 - Plan: `plans/now/run-repairs.md` -- "RR-22 -- select a number of bees from a multi-selection"
 - Files: `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, `tests/test_layout_regression.py`, `tests/rr22_select_n_test.gd`, `tests/test_rr22_select_n.py`
@@ -199,5 +202,4 @@ provisional; Dave answers it at the hands-on check).
   before admitting a repair. No save schema or fallback changes are part
   of the Jules integration, and its incomplete Inventory is not accepted.
 
-- **RR-22** -- select a number of bees from a multi-selection; waits for the Codex lane's CQ-R6 (`plans/now/code-health.md`) to release `scripts/hud.gd`, which both name (gated 27 Oct 2026 to clear check_docs' lane collision).
 - **RR-12** -- a loaded run keeps its readout history; waits for ED-3, the last of the alpha chain, because SG-2 to ED-3 share `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.
