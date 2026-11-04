@@ -43,7 +43,6 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
-| RR-22 | select a number of bees from a multi-selection, youngest and oldest | `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, tests | yes -- CQ-R6 is implemented and CQ-R8 released `scripts/hud.gd` (3 Nov 2026) | medium |
 
 RR-9 and RR-10 are Codex-lane slices (Dave, 15 Oct 2026, plan review D3:
 the Claude lane was full and the Codex backlog dry); RR-7 and RR-11 stay in
@@ -133,53 +132,7 @@ RR-17 shipped 2026-10-29; its specification is `plans/archive/RR-17_2026-10-29.m
 
 RR-18 shipped 2026-10-31; its specification is `plans/archive/RR-18_2026-10-31.md`.
 
-## RR-22 -- select a number of bees from a multi-selection
-
-Level: medium -- claude-sonnet-5-5 at medium effort.
-
-**True now.** Dave: a button to select n bees, "select 1 bee as default for n,
-with '<<' '<' '>' '>>' buttons to change n by +/- 1 or 5. Also adds buttons
-for 'Select youngest bee', and 'Select oldest bee'". The multi-selection
-summary is the `else` branch of the identity-label code in
-`hud.gd::update_selection` (near l.2983, "%d bees selected",
-`_set_summary_cog_kind("multiple")`; re-verified 3 Nov 2026). The selection list is
-`main.selected_bees`, set in `input_selection.gd` (near l.207-215) and shown
-through `hud.update_selection`. A bee's age is `Bee.age_seconds`.
-
-**When done:**
-
-1. The multi-selection summary has a "Select n" row: `<<`, `<`, a count, `>`,
-   `>>` (steps of 5 and 1), n starting at 1 and clamped to 1..the selection
-   size, and a "Select" button that narrows `selected_bees` to n bees
-   through a new hud signal handled in `input_selection.gd` (wired in
-   `main.gd`), deselecting the rest with `set_selected(false)`.
-2. Which n bees are kept: the n nearest the selection's centre. This is
-   provisional, Dave to confirm at the hands-on check.
-3. "Select youngest bee" and "Select oldest bee" narrow the selection to the one
-   bee with the least or greatest `age_seconds`.
-4. The row follows `plans/reference/ui-rules.md` and fits at the minimum
-   width (`tests/test_layout_regression.py`); a new test checks the narrowing,
-   the clamp and both extremes.
-5. Dave's hands-on check is filed at closeout: drag-select a crowd, narrow it
-   by n, youngest and oldest.
-
-**Invariants.** A single selection shows no row. Selecting never alters the
-simulation. Presentation and selection state only.
-
-Which n bees `Select n` keeps is built as nearest the centre (When done, 2);
-Dave confirms or changes it at the hands-on check, which does not block the
-build.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] RR-22 -- select a number of bees from a multi-selection**
-- Plan: `plans/now/run-repairs.md` -- "RR-22 -- select a number of bees from a multi-selection"
-- Files: `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, `tests/test_layout_regression.py`, `tests/rr22_select_n_test.gd`, `tests/test_rr22_select_n.py`
-- Check: `python -m unittest tests.test_rr22_select_n` passes (n is clamped to 1..selection size, `>>` steps by 5, Select keeps n bees, youngest and oldest keep the one bee with the least or greatest age); `python -m unittest tests.test_layout_regression` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-- Proof: `absent: scripts/hud.gd :: select_youngest`
-- Next after: none -- multi-selection narrowing is complete
-```
+RR-22 shipped 2026-11-04; its specification is `plans/archive/RR-22_2026-11-04.md`.
 
 ## Not in the queue, and why
 
