@@ -48,7 +48,7 @@ Verified 14 Oct 2026 against master:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | FR-3 | owning Auto-recruitment switches it on, passing species with Adaptive constancy | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/levels.gd`, tests | no -- after PP-10 | high |
-| FR-4 | a headless assertion replaces the C-143 hands-on check | `scripts/scenario_actions.gd`, tests | no -- `scripts/scenario_actions.gd` was released 25 Oct 2026, but `tools/admission.py` reads C-143 as an unlanded slice | medium |
+| FR-4 | a headless assertion replaces the C-143 hands-on check | `scripts/scenario_actions.gd`, tests | yes -- admission ignores check ids since 30 Oct 2026 | medium |
 
 **Dependencies.** FR-1 changes no game file. FR-2 waits for FR-1's table;
 if a stage is not better than the one before, a tuning slice (FR-1b) is
@@ -173,11 +173,11 @@ filed: the assertion replaces it.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] FR-4 -- a headless assertion replaces the C-143 hands-on check**
 - Plan: `plans/now/forager-recruitment.md` -- "FR-4 -- a headless assertion replaces the C-143 hands-on check"
 - Files: `scripts/scenario_actions.gd`, `test_scenarios/fr4_scout_entrance.json`, `tests/test_fr4_scout_entrance.py`, `checks/ready/C-143.md`
 - Check: `python -m unittest tests.test_fr4_scout_entrance` passes (an unmatched scout is not in `AT_ENTRANCE_SEEKING` after its walk and leaves the hive; an established forager below the lower threshold waits there); C-143 is archived; `.\tools\verify.ps1` is green
 - Proof: `absent: scripts/scenario_actions.gd :: "bee_states"`
-- Next after: none -- FR-3 in `plans/now/forager-recruitment.md` does not depend on it
+- Next after: FR-3 -- owning Auto-recruitment switches it on, passing species with Adaptive constancy (it does not depend on FR-4)
 ```

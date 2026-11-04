@@ -407,6 +407,12 @@ func reset_run_state() -> void:
 	# A new run never inherits a load's policy (BS-14); a load itself does
 	# not come through here.
 	pending_skill_policy = {}
+	# Two display preferences that a new run always starts from the default
+	# of, whatever the last run left: the Problems star on and the goals
+	# list shown. A load does not come through here, so it keeps its own.
+	if not pinned_stats.has("signals"):
+		pinned_stats.append("signals")
+	goals_collapsed = false
 	if progression != null:
 		progression.end_run()
 		progression = null

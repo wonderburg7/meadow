@@ -144,7 +144,20 @@ of these has bitten more than once:
   the skep's centre, not its door (C-128). When art changes where a feature
   appears, list every ring, outline, marker and arrival point that used the
   old position, and test the overlay against the sprite's measured pixels,
-  not against the constant the overlay was built from.
+  not against the constant the overlay was built from. On 30 Oct 2026 it
+  came back a third way (C-134): with art on, the colour rings were scaled
+  about the cup's centroid by their art-off sizes, so one read too small,
+  another too big and shifted, and both showed at once. Size every ring
+  from the one that was measured correct (the selection ring).
+- **A player preference that is really run state follows the player, not
+  the run (30 Oct 2026).** `Session.pinned_stats` and
+  `Session.goals_collapsed` are saved to the profile on every click, so an
+  untick in one run started the next run with the Problems star off (C-146)
+  and a loaded save showed the Goals list as the last session left it, not
+  as it was saved (C-150). When a toggle describes what a run shows, decide
+  where it belongs before persisting it: reset it in
+  `Session.reset_run_state`, store it in the save, or both -- the profile
+  is for how the player likes the game, not for what this colony is doing.
 
 ## GDScript language and editing
 

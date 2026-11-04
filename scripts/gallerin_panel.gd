@@ -43,11 +43,18 @@ var _why_entries: Array[Dictionary] = []
 var guidance_policy = GuidancePolicy.new()
 var bubble: PanelContainer
 var _bubble_scroll: ScrollContainer
+var _close_btn: Button
 var _bubble_label: Label
 var _bubble_pointer: Polygon2D
 var _hovering_icon: bool = false
 var _hovering_bubble: bool = false
 var _last_message: String = ""
+## True while the bubble shows a guidance explanation rather than an authored
+## Challenge prompt; only then may a newer explanation replace it.
+var _showing_guidance: bool = false
+## Width the close cross takes beside the scrolling text, so it is never
+## squeezed or scrolled out (Dave, 31 Oct 2026).
+const CLOSE_RESERVE := 34.0
 ## The bubble's font-size override (unlike most labels, which read a
 ## theme_type_variation that UiTheme.refresh() updates for the whole game
 ## at once) is only ever set explicitly, so it needs its own live check --
@@ -237,7 +244,12 @@ func update_guidance_facts(facts: Dictionary) -> void:
 	guidance_policy.update_facts(facts)
 
 func _offer_guidance() -> void:
-	if not Session.gallerin_enabled or not visible or bubble.visible:
+	# A newer explanation replaces a guidance one still showing (Dave, 31 Oct
+	# 2026); the older stays in the Why? list. An authored prompt is never
+	# replaced.
+	if not Session.gallerin_enabled or not visible:
+		return
+	if bubble.visible and not _showing_guidance:
 		return
 	if _history_index != _history.size() - 1 or _why_popup.visible:
 		return
@@ -252,6 +264,7 @@ func _offer_guidance() -> void:
 	var entry: Dictionary = GuidanceCatalogue.explanation(fact_id, guidance_policy.facts)
 	_show_bubble(entry.text)
 	if bubble.visible:
+		_showing_guidance = true
 		guidance_policy.mark_rendered(entry)
 
 func _on_why_pressed() -> void:
@@ -324,7 +337,13 @@ func _build_bubble() -> void:
 	_bubble_scroll = ScrollContainer.new()
 	_bubble_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	_bubble_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	bubble.add_child(_bubble_scroll)
+	_bubble_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# The cross lives beside the scroll, not inside it, so it always shows at
+	# the bubble's top right.
+	var outer := HBoxContainer.new()
+	outer.add_theme_constant_override("separation", 6)
+	bubble.add_child(outer)
+	outer.add_child(_bubble_scroll)
 
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 6)
@@ -345,13 +364,7 @@ func _build_bubble() -> void:
 	# _apply_layout() reads is correct from the first frame.
 	_bubble_label.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
 	_bubble_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# The line shares its row with the close cross at its top right, so the
-	# cross never sits over the words (Dave, 24 Oct 2026: an x, not a
-	# "Dismiss" button).
-	var text_row := HBoxContainer.new()
-	text_row.add_theme_constant_override("separation", 6)
-	column.add_child(text_row)
-	text_row.add_child(_bubble_label)
+	column.add_child(_bubble_label)
 	var close_btn := Button.new()
 	close_btn.text = "×"
 	close_btn.tooltip_text = "Hide Dr Gallerin's note."
@@ -359,7 +372,8 @@ func _build_bubble() -> void:
 	close_btn.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	close_btn.pressed.connect(func(): bubble.visible = false)
 	_style_button(close_btn)
-	text_row.add_child(close_btn)
+	_close_btn = close_btn
+	outer.add_child(close_btn)
 	_apply_bubble_font_size()
 
 	_bubble_pointer = Polygon2D.new()
@@ -427,8 +441,9 @@ func _apply_layout() -> void:
 	# from whatever width the label last had.
 	# Less the vertical scrollbar, which takes its width when the text is tall,
 	# so the wrap never lands under it and cuts a word.
-	_bubble_label.custom_minimum_size.x = maxf(0.0, rect.size.x - ui_layout.panel_chrome().x - _bubble_scroll.get_v_scroll_bar().get_combined_minimum_size().x)
+	_bubble_label.custom_minimum_size.x = maxf(0.0, rect.size.x - ui_layout.panel_chrome().x - CLOSE_RESERVE - _bubble_scroll.get_v_scroll_bar().get_combined_minimum_size().x)
 	_ui_panel_layout().apply(bubble, _bubble_scroll, rect, ICON_MARGIN)
+	_bubble_scroll.custom_minimum_size.x = maxf(0.0, _bubble_scroll.custom_minimum_size.x - CLOSE_RESERVE)
 	_position_bubble_pointer()
 
 ## Empty when the settings window is closed or not yet built (a fresh boot's
@@ -465,9 +480,15 @@ func _on_bubble_gui_input(event: InputEvent) -> void:
 		_finish_typing()
 
 func _on_icon_pressed() -> void:
+	# Clicking Dr Gallerin hides his note; clicking again brings it back.
+	if bubble.visible:
+		bubble.visible = false
+		return
 	if _last_message.is_empty():
 		return
+	var was_guidance := _showing_guidance
 	_show_bubble(_last_message)
+	_showing_guidance = was_guidance
 
 func _on_disable_pressed() -> void:
 	Session.gallerin_enabled = false
@@ -546,6 +567,7 @@ func show_now(prompt: Dictionary) -> void:
 	if id != "":
 		_shown_ids[id] = true
 	_show_bubble(str(prompt.get("text", "")))
+	_showing_guidance = false
 
 func _fire_due_prompts() -> void:
 	if _queue.is_empty():
