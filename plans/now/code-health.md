@@ -163,7 +163,7 @@ claim while `dry_after`).
 - **Other plans:**
   - RR-10 (`plans/now/run-repairs.md`, Codex lane) held `hive.gd` and
     `skill_tree_panel.gd`; it landed 18 Oct 2026, clearing CQ-L1.
-  - L-30 (`plans/now/agent-lifecycle.md`) held `tools/verify.ps1`; it landed 18 Oct 2026, clearing CQ-L1.
+  - L-30 (`plans/archive/agent-lifecycle_2026-11-04.md`) held `tools/verify.ps1`; it landed 18 Oct 2026, clearing CQ-L1.
   - HP-3 (`plans/archive/hot-path-cadence_2026-10-18.md`) changes `bee.gd::_process`: CQ-R4 profiles
     after it.
   - T2-14 (`plans/now/tier-two.md`) fixed `idle_reason` before CQ-R3 moves it; it

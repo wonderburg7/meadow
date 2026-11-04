@@ -1,7 +1,7 @@
 # Agent lifecycle L-1 — the lifecycle suite is green and runs in verification
 
 Shipped 12 Sep 2026 to `master` (merge `d295b6d`, branch `claude/L-1`).
-Archived out of `plans/now/agent-lifecycle.md`, which owns the plan's
+Archived out of `plans/archive/agent-lifecycle_2026-11-04.md`, which owns the plan's
 remaining slices (L-2 onward).
 
 **Objective.** Fix the three failing tests in `tests/test_source_checks.py`,

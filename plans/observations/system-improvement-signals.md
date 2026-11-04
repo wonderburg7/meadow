@@ -326,7 +326,7 @@ explicit request from Dave.
   outside it. Related to the 20 Sep open-worktree signal below: both are
   lifecycle contention between lanes.
 - Disposition: promoted 25 Sep 2026, with the 20 Sep open-worktree signal,
-  to L-15 in `plans/now/agent-lifecycle.md` (the bounded wait; narrowing the
+  to L-15 in `plans/archive/agent-lifecycle_2026-11-04.md` (the bounded wait; narrowing the
   lock is recorded there as out of scope).
 
 ### 2026-09-20 — FUNCTION_MAP.md staleness is the most frequent verification failure, and the file is generated
@@ -404,7 +404,7 @@ explicit request from Dave.
   no-step record carries an empty `step` and a populated `cause`.
   `run_stops` in `tools/session_cost.py` folds them in with
   `by_step[record.get("step") or "(no step recorded)"]`.
-- Consequence: `plans/now/agent-lifecycle.md` gates L-12 on `--stops` showing
+- Consequence: `plans/archive/agent-lifecycle_2026-11-04.md` gates L-12 on `--stops` showing
   the refill step "among the two most frequent", so a real step has to outrank
   a bucket that is not a step. The gate cannot be read fairly until the two
   are separated. The preflight causes are themselves discarded as signal.
@@ -469,7 +469,7 @@ explicit request from Dave.
   this count visible in `--stops` at all; hold until ST-1 lands and the count
   can be tracked.
 - Disposition: promoted 25 Sep 2026 to L-15 in
-  `plans/now/agent-lifecycle.md`, clustered with the 25 Sep lifecycle-lock
+  `plans/archive/agent-lifecycle_2026-11-04.md`, clustered with the 25 Sep lifecycle-lock
   signal. Re-verified first: ST-1 landed and 5 more refusals followed
   (`ST-1` three times over 21-23 Sep, `FB-3`, `AP-7`), and the stop text is
   unchanged. L-15 names whether the branch is ahead and clean rather than
@@ -545,7 +545,7 @@ explicit request from Dave.
   (`docs/agent-workflow-review-2026-10-05.md` F3): L-18 warns at claim
   (`advice.dry_after`, either lane) and L-24 makes the warning a
   `check_docs.py` lookahead and a rule to specify before claiming, both in
-  `plans/now/agent-lifecycle.md`
+  `plans/archive/agent-lifecycle_2026-11-04.md`
 
 ### 2026-10-07 — a branch behind master reads a dry lane at `finish`
 
@@ -693,7 +693,7 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- the verified record stores and compares
   `HEAD` (or the tree hash), so any new commit forces a fresh branch verify.
 - Disposition: promoted by the agent-workflow review, 16 Oct 2026 as L-27 in
-  `plans/now/agent-lifecycle.md`: 4499fb6 (12 Oct) ties the verified
+  `plans/archive/agent-lifecycle_2026-11-04.md`: 4499fb6 (12 Oct) ties the verified
   record to HEAD, but the closing journal's `verified` phase still skips
   the check.
 
@@ -760,7 +760,7 @@ explicit request from Dave.
   leaves behind, a block for another id inside the section it cuts. This is
   the second recurrence, so CLAUDE.md's instrument rule applies.
 - Disposition: promoted by the agent-workflow review, 16 Oct 2026 as L-28 in
-  `plans/now/agent-lifecycle.md` (the archive leaves another id's block in
+  `plans/archive/agent-lifecycle_2026-11-04.md` (the archive leaves another id's block in
   the plan). The `check_docs.py` half waits: an unmerged branch owns that file.
 
 ### 2026-10-15 — archiving a plan repoints its routing row instead of dropping it
@@ -824,7 +824,7 @@ explicit request from Dave.
   closed id, and the closing session moves them; `check_docs.py` warns on a
   blocked check whose every named unblocker is in `plans/archive/`.
 - Disposition: promoted by the agent-workflow review, 16 Oct 2026 (finding F7) as
-  L-30 in `plans/now/agent-lifecycle.md`. Dave chose to surface it: the queue
+  L-30 in `plans/archive/agent-lifecycle_2026-11-04.md`. Dave chose to surface it: the queue
   steward clears deferrals and fences, the check processor moves the checks.
 
 ### 2026-10-16 — no colony size or frame budget to judge performance against (from the performance review)
@@ -875,7 +875,7 @@ explicit request from Dave.
   `tests/test_guard_hook.py` case for each. `slice.ps1 owner` reports both
   files owned by a Jules branch (`origin/jules/j-2-presentation-gate-check-…`),
   so the plan review did not edit them.
-- Disposition: promoted 24 Oct 2026 as L-37 in `plans/now/agent-lifecycle.md`
+- Disposition: promoted 24 Oct 2026 as L-37 in `plans/archive/agent-lifecycle_2026-11-04.md`
   (Codex lane; `slice.ps1 owner` now reports both files clear).
 
 ### 2026-10-23 — refill_lane still treats FUNCTION_MAP.md as owned after L-33 (from the plan review)

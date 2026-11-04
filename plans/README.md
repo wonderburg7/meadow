@@ -179,7 +179,6 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | EV-0 onward -- the event director: one Calendar and events settings group, winter a week later, then the alpha's pressures | `plans/now/event-director.md` (design: `plans/design/event-director.md`) |
 | SP-6 -- bee art: the meadow forager sheet | `plans/now/sprites.md` |
 | T2-7b -- tier two: the deferred tier-2 price sweep | `plans/now/tier-two.md` |
-| L-35, L-36 -- the slice lifecycle: known baseline failures and stop causes named, clean checkouts pass the doc checks | `plans/now/agent-lifecycle.md` |
 | CQ-L1 to CQ-R14 -- code health: gdlint in verify, static typing, entities owning their save fields, named data and magic numbers, splits by responsibility | `plans/now/code-health.md` (research: `docs/code-health-research-2026-10-18.md`) |
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates (the Colony Run definition itself is `plans/archive/colony-run_2026-10-08.md`) | `plans/design/product-scope.md` |
