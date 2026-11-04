@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/jules-review-20261103` (`codex/jules-review-20261103`) | Review | Assigned Jules review; report only; no integration | Codex | review complete, local | none | `plans/reference/jules-review-2026-11-03.md` |
+| `.worktrees/RR-22` (`claude/RR-22`) | Claude | select a number of bees from a multi-selection | Claude | in progress | none | `plans/now/run-repairs.md` RR-22 -- select a number of bees from a multi-selection |
