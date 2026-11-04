@@ -945,3 +945,23 @@ explicit request from Dave.
 - Consequence: a later reviewer or Jules session may skip work that was removed from master.
 - Hypothesis: completion detection should distinguish retained task work from reverted history, with a temporary-repository fixture proving both states.
 - Disposition: untriaged; no completion-detector change is included.
+
+### 2026-11-04 — Jules's R-gameplay sweep samples nine scripts instead of everything changed
+
+- Source: gameplay review processing (`docs/gameplay-review-2026-11-04.md`, Hand-offs)
+- Area: Jules review rota / process
+- Signal: the 4 Nov R-gameplay report re-adjudicated the returned 30 Oct
+  findings and swept nine scripts; 85 scripts changed in `9c490df..e8cc5401`,
+  including `input_selection.gd`, `challenge_runner.gd` and
+  `world_building.gd`, which the review owns.
+- Evidence: the report's `Scope:` line against `git diff --stat
+  9c490df..e8cc5401 -- scripts/`; `plans/reference/jules-reviews.md` step 3
+  says to read every file in scope, not a sample.
+- Consequence: processing resets `SINCE` to the report's commit, so an
+  unswept file drops out of the next diff unless a record carries it under
+  "Not reviewed"; a report with correct findings but thin coverage passes the
+  spot-check gate.
+- Candidate direction: Hypothesis — have `jules_preflight.py` (or the
+  processing step) compare the report's swept files with the owned files
+  changed since `SINCE`, and return a report that leaves most of them out.
+- Disposition: untriaged
