@@ -132,7 +132,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | gated -- the Jules S-3 branches change `main.gd`, Jules J-14 holds `game_panel.gd` (CQ-R15, CQ-R16 and CQ-R8 landed; `hud.gd` is free) | low |
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- the Jules S-1 and S-3 branches change `bee.gd` and `soil_block.gd`, `claude/dave-hands-on-checks-784f2a` changes `hive_cell.gd` (ED-1 and CQ-R16 landed) | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
-| CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
+| CQ-R2 | first crisis moves into scripts/event_director.gd as the shared cycle's first record (`plans/design/event-director.md` decisions 2 and 15) | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `bee_readout.gd` (new), `FUNCTION_MAP.md` | gated -- the Jules S-1 and S-3 branches change `bee.gd` (ED-1 landed 2 Nov 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |

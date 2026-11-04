@@ -33,6 +33,13 @@ FC-2's first crisis lives in `scripts/main.gd`, "the first crisis".
 PP-10, so PP-10 prices the route once, on the new calendar (Dave, 1 Nov
 2026). The director's event slices follow CQ-R2, which creates
 `event_director.gd` (new, in `scripts/`) (design decision 2), and ED-3.
+Each EV slice adds a kind to the shared cycle (design decision 15), not a
+cycle of its own. The spider surge and the forage dearth both need "one
+busy patch", and no patch exists on the world side today (a patch is only
+a bee's remembered position, `bee.gd::known_patches`): whichever of the two
+is written first creates one patch query in `event_director.gd` over
+`main.gd::flower_grid` (centre, radius, the flowers inside), and the other
+reuses it (`docs/architecture-review-2026-11-04.md` F2).
 
 **Read:** this plan's EV-0 section and `plans/design/event-director.md`
 decisions 7, 8 and 10.

@@ -970,6 +970,26 @@ explicit request from Dave.
   `tools/uncalled.py`. Closed unmerged: a full Claude sweep of the same
   commit superseded it (`docs/architecture-review-2026-11-04.md`).
 
+
+### 2026-11-04 — the director's later event records need a save shape
+
+- Source: architecture review (`docs/architecture-review-2026-11-04.md`, Hand-offs)
+- Area: save schema (save review)
+- Signal: design decision 15 (`plans/design/event-director.md`) keeps the
+  first crisis under its `first_crisis` save key and runs every later
+  director event as a record keyed by event id; decision 12 says a save
+  without the schedule field reads as "none". Where those later records live
+  in the save (one new key holding all of them, or the first crisis folded
+  in with a migration) is not decided.
+- Evidence: `save_game.gd` (`"first_crisis"` key), `saving.gd`
+  (`restore_first_crisis` call), `main.gd::restore_first_crisis`.
+- Consequence: the first EV slice would otherwise pick the shape alone, and
+  a per-event key would bring back the per-event save cost decision 15
+  removes.
+- Candidate direction: Hypothesis — one additive `director` key holding the
+  records by id, `first_crisis` unchanged, settled before CQ-R2's section is
+  written.
+
 ### 2026-11-05 — a returned Jules branch still holds its files for `slice.ps1 owner`
 
 - Source: R-architecture Jules report processing, 5 Nov 2026 (ledger row; folded into `docs/architecture-review-2026-11-04.md`)
