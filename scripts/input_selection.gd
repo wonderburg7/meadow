@@ -214,6 +214,39 @@ func _apply_bee_pick(picked: Array, additive: bool) -> void:
 			main.selected_bees.append(b)
 	main.hud.update_selection(main.selected_bees)
 
+## RR-22: keeps the n selected bees nearest the selection's centre and
+## deselects the rest. Selection state only.
+func narrow_selection_to_n(n: int) -> void:
+	var bees: Array = main.selected_bees.filter(func(b: Variant) -> bool: return is_instance_valid(b))
+	if bees.size() < 2:
+		return
+	var centre := Vector2.ZERO
+	for b: Variant in bees:
+		centre += b.global_position
+	centre /= bees.size()
+	bees.sort_custom(func(a: Variant, b: Variant) -> bool:
+		return a.global_position.distance_squared_to(centre) < b.global_position.distance_squared_to(centre))
+	_keep_bees(bees.slice(0, clampi(n, 1, bees.size())))
+
+## RR-22: keeps the one selected bee with the least (or, `oldest`, greatest)
+## age_seconds.
+func narrow_selection_to_extreme(oldest: bool) -> void:
+	var best: Variant = null
+	for b: Variant in main.selected_bees:
+		if not is_instance_valid(b):
+			continue
+		if best == null or (b.age_seconds > best.age_seconds if oldest else b.age_seconds < best.age_seconds):
+			best = b
+	if best != null and main.selected_bees.size() > 1:
+		_keep_bees([best])
+
+func _keep_bees(kept: Array) -> void:
+	for b: Variant in main.selected_bees:
+		if is_instance_valid(b) and not kept.has(b):
+			b.set_selected(false)
+	main.selected_bees = kept.duplicate()
+	main.hud.update_selection(main.selected_bees)
+
 func _select_cells(cells: Array, additive: bool) -> void:
 	_clear_world_object_selection()
 	_clear_block_selection()

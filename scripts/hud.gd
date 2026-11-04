@@ -118,6 +118,12 @@ signal follow_bee_toggled(bee: Node2D, following: bool)
 ## main.gd routes this to debug_panel.gd, which does.
 signal queen_lay_any_cell_toggled(value: bool)
 
+## RR-22: the multi-selection's "Select n" button -- keep the n bees nearest
+## the selection's centre.
+signal select_n_requested(n: int)
+## RR-22: keep only the youngest (oldest false) or oldest (oldest true) bee.
+signal select_extreme_requested(oldest: bool)
+
 ## The bottom row's occupied height changed (selection_panel_top()).
 ## Colony, Foraging and Nursery listen so an already-open window reflows
 ## instead of only sizing itself once in open() (UI-T-2, Dave 8 Sep 2026).
@@ -384,6 +390,10 @@ var active_flower: Node2D = null
 ## _apply_selection_tray_width can re-cap its width without a fresh build.
 var selection_column: VBoxContainer
 var soil_summary_row: BoxContainer
+## RR-22: the multi-selection's "Select n" row, and the n it will keep.
+var select_n_row: BoxContainer
+var select_n_label: Label
+var select_n: int = 1
 var keep_clear_summary_row: BoxContainer
 var soil_mark_btn: Button
 var soil_clear_btn: Button
@@ -985,6 +995,7 @@ func _build_selection_panel() -> void:
 
 	_build_summary_labels(column)
 	_build_soil_summary_row(column)
+	_build_select_n_row(column)
 	_build_keep_clear_row(column)
 
 	_set_summary_cog_kind("")
@@ -1031,6 +1042,78 @@ func _build_summary_labels(column: VBoxContainer) -> void:
 	trait_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	trait_label.add_theme_color_override("font_color", UiTheme.readable_accent(UiTheme.color("accent_wax")))
 	column.add_child(trait_label)
+
+## RR-22: the multi-selection's narrowing controls. Stacked rows so nothing
+## can push the panel past its fixed width at a large text scale.
+func _build_select_n_row(column: VBoxContainer) -> void:
+	select_n_row = VBoxContainer.new()
+	select_n_row.name = "select_n_row"
+	select_n_row.visible = false
+	column.add_child(select_n_row)
+
+	var steps := HBoxContainer.new()
+	steps.name = "select_n_steps"
+	select_n_row.add_child(steps)
+	for spec: Array in [["<<", -5], ["<", -1]]:
+		steps.add_child(_select_n_step_button(spec[0], spec[1]))
+	select_n_label = Label.new()
+	select_n_label.name = "select_n_label"
+	select_n_label.theme_type_variation = "Small"
+	select_n_label.text = "1"
+	select_n_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	select_n_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	steps.add_child(select_n_label)
+	for spec: Array in [[">", 1], [">>", 5]]:
+		steps.add_child(_select_n_step_button(spec[0], spec[1]))
+
+	var go_btn := Button.new()
+	go_btn.name = "select_n_btn"
+	_style_button(go_btn)
+	go_btn.text = "Select"
+	go_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	go_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	go_btn.pressed.connect(select_n_confirmed)
+	select_n_row.add_child(_with_info(go_btn, "Keep only this many of the selected bees, the ones nearest the middle of the group."))
+
+	var young_btn := Button.new()
+	young_btn.name = "select_youngest_btn"
+	_style_button(young_btn)
+	young_btn.text = "Select youngest bee"
+	young_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	young_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	young_btn.pressed.connect(select_youngest)
+	select_n_row.add_child(young_btn)
+
+	var old_btn := Button.new()
+	old_btn.name = "select_oldest_btn"
+	_style_button(old_btn)
+	old_btn.text = "Select oldest bee"
+	old_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	old_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	old_btn.pressed.connect(select_oldest)
+	select_n_row.add_child(old_btn)
+
+func _select_n_step_button(text: String, delta: int) -> Button:
+	var btn := Button.new()
+	btn.text = text
+	_style_button(btn)
+	btn.pressed.connect(func() -> void: step_select_n(delta))
+	return btn
+
+## Changes n by `delta`, clamped to 1..the selection size.
+func step_select_n(delta: int) -> void:
+	select_n = clampi(select_n + delta, 1, maxi(1, shown_bees.size()))
+	if select_n_label != null:
+		select_n_label.text = str(select_n)
+
+func select_n_confirmed() -> void:
+	select_n_requested.emit(clampi(select_n, 1, maxi(1, shown_bees.size())))
+
+func select_youngest() -> void:
+	select_extreme_requested.emit(false)
+
+func select_oldest() -> void:
+	select_extreme_requested.emit(true)
 
 ## The soil summary's mark / clear buttons.
 func _build_soil_summary_row(column: VBoxContainer) -> void:
@@ -1944,6 +2027,7 @@ func show_object_summary(kind: String, data) -> void:
 	active_summary_kind = kind
 	active_flower = data if kind == "flower" else null
 	soil_summary_row.visible = kind == "soil"
+	select_n_row.visible = false
 	keep_clear_summary_row.visible = kind == "keep_clear"
 	_set_favourite_star(null)
 	_set_summary_cog_kind(kind)
@@ -2062,6 +2146,7 @@ func show_cell_popup(cell: Node2D, count: int = 1) -> void:
 	active_summary_kind = "cell"
 	active_flower = null
 	soil_summary_row.visible = false
+	select_n_row.visible = false
 	keep_clear_summary_row.visible = false
 	_set_favourite_star(null)
 	_set_summary_cog_kind("cell")
@@ -2818,6 +2903,7 @@ func update_selection(bees: Array) -> void:
 	# might currently be showing -- see show_object_summary.
 	active_summary_kind = ""
 	soil_summary_row.visible = false
+	select_n_row.visible = false
 	keep_clear_summary_row.visible = false
 	var panel_was_visible := selection_panel.visible
 	var tray_was_visible := command_tray.visible
@@ -2947,6 +3033,7 @@ func _refresh_selection_text() -> void:
 			DiagnosticLog.log_selection_panels_hidden("_refresh_selection_text.command_tray", previously_shown_count, 0)
 		selection_panel.visible = false
 		command_tray.visible = false
+		select_n_row.visible = false
 		_set_favourite_star(null)
 		_set_summary_cog_kind("")
 		bottom_row_changed.emit()
@@ -2955,6 +3042,7 @@ func _refresh_selection_text() -> void:
 		var b = shown_bees[0]
 		_set_favourite_star(b)
 		_set_summary_cog_kind("bee")
+		select_n_row.visible = false
 
 		identity_label.text = _selection_identity_text(b)
 		energy_label.text = _selection_energy_text(b)
@@ -2986,6 +3074,8 @@ func _refresh_selection_text() -> void:
 		trait_label.text = ""
 		_set_favourite_star(null)
 		_set_summary_cog_kind("multiple")
+		select_n_row.visible = true
+		step_select_n(0)
 	# Both branches set their labels after _set_summary_cog_kind, so the
 	# empty-label test runs once here rather than twice above (HC-13).
 	_apply_selection_field_visibility()

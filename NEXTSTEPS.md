@@ -23,26 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] RR-22 -- select a number of bees from a multi-selection**
-   - Plan: `plans/now/run-repairs.md` -- "RR-22 -- select a number of bees from a multi-selection"
-   - Files: `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, `tests/test_layout_regression.py`, `tests/rr22_select_n_test.gd`, `tests/test_rr22_select_n.py`
-   - Check: `python -m unittest tests.test_rr22_select_n` passes (n is clamped to 1..selection size, `>>` steps by 5, Select keeps n bees, youngest and oldest keep the one bee with the least or greatest age); `python -m unittest tests.test_layout_regression` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-   - Proof: `absent: scripts/hud.gd :: select_youngest`
-   - Next after: none -- multi-selection narrowing is complete
-
-2. **[Claude] CQ-T3 -- the free UI scripts typed**
+1. **[Claude] CQ-T3 -- the free UI scripts typed**
    - Plan: `plans/now/code-health.md` -- "CQ-T3 -- the free UI scripts typed"
    - Files: `scripts/hud.gd`, `scripts/debug_panel.gd`, `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/nursery_panel.gd`, `scripts/saves_panel.gd`, `scripts/hud_goal_shelf.gd`, `scripts/challenge_complete.gd`, `scripts/ui.gd`, `scripts/run_availability_panel.gd`, `scripts/ui_icon.gd`, `scripts/game_over.gd`, `scripts/foraging_panel.gd`, `scripts/succession_panel.gd`, `scripts/winter_panel.gd`, `scripts/stage_gate.gd`, `scripts/perf_plot.gd`, `scripts/perf_breakdown.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
    - Check: `python tests/source_checks.py` passes with all 18 scripts in `TYPED_FILES`; `python tools/prefinish.py` boots without an `untyped_declaration` warning from them; `.\tools\verify.ps1` is green
    - Proof: `absent: tests/source_checks.py :: "scripts/debug_panel.gd"`
    - Next after: CQ-T4 -- the rest typed; the warning becomes an error
 
-5. **[Claude] FR-4 -- a headless assertion replaces the C-143 hands-on check**
+2. **[Claude] FR-4 -- a headless assertion replaces the C-143 hands-on check**
    - Plan: `plans/now/forager-recruitment.md` -- "FR-4 -- a headless assertion replaces the C-143 hands-on check"
    - Files: `scripts/scenario_actions.gd`, `test_scenarios/fr4_scout_entrance.json`, `tests/test_fr4_scout_entrance.py`, `checks/ready/C-143.md`
    - Check: `python -m unittest tests.test_fr4_scout_entrance` passes (an unmatched scout is not in `AT_ENTRANCE_SEEKING` after its walk and leaves the hive; an established forager below the lower threshold waits there); C-143 is archived; `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/scenario_actions.gd :: "bee_states"`
    - Next after: FR-3 -- owning Auto-recruitment switches it on, passing species with Adaptive constancy (it does not depend on FR-4)
+
+3. **[Claude] PN-1 -- OpenDyslexic and Silkscreen match Standard's height**
+   - Plan: `plans/now/play-notes.md` -- "PN-1 -- OpenDyslexic and Silkscreen match Standard's height"
+   - Files: `scripts/ui_theme.gd`, `tests/ts1_typeface_size_test.gd`, `tests/test_ts1_typeface_size.py`, `checks/ready/C-137.md`
+   - Check: `python -m unittest tests.test_ts1_typeface_size` passes with a height assertion (every face within 4% of Standard's `get_height` at the Body size, all scales); `.\tools\verify.ps1` is green. Hands-on: switching the Typeface setting leaves the `<` `>` buttons and body text the same height
+   - Proof: `present: scripts/ui_theme.gd :: _TYPEFACE_NUDGE`
+   - Next after: PN-2 -- rename a save in the saves list
+
+4. **[Claude] PN-2 -- rename a save in the saves list**
+   - Plan: `plans/now/play-notes.md` -- "PN-2 -- rename a save in the saves list"
+   - Files: `scripts/saves_panel.gd`, `scripts/save_slots.gd`, `tests/pn2_save_rename_test.gd`, `tests/test_pn2_save_rename.py`
+   - Check: `python -m unittest tests.test_pn2_save_rename` passes (rename updates the index name only, survives a reload, refuses empty and duplicate names); `.\tools\verify.ps1` is green. Hands-on: rename a save, quit, restart; the new name shows and it loads
+   - Proof: `absent: scripts/save_slots.gd :: func rename(`
+   - Next after: PN-3 -- a save remembers whether Goals was open
+
+5. **[Claude] PN-3 -- a save remembers whether Goals was open**
+   - Plan: `plans/now/play-notes.md` -- "PN-3 -- a save remembers whether Goals was open"
+   - Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/session.gd`, `tests/test_gp1_goals_dropdown.py`, `tests/gp1_goals_dropdown_test.gd`
+   - Check: `python -m unittest tests.test_gp1_goals_dropdown` passes with a save round trip of the Goals state and an old save with no key loading as shown; `.\tools\verify.ps1` is green. Hands-on: close Goals, save, load; it is closed (re-run C-150)
+   - Proof: `absent: scripts/save_game.gd :: goals_collapsed`
+   - Next after: PN-4 -- the queen finishes a cell she was told to build
 
 ### Codex lane
 
