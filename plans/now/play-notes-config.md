@@ -1,7 +1,7 @@
 # Play notes, config and bee -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PN-9 -- early spring, once HS-2 lands | Dependency: HS-2 (`plans/now/hard-soil.md`) releases `game_config.gd`, `settings_catalogue.gd`, `soil_block.gd`; HS-2 and SP-6 release `bee.gd`; PN-11 also needs the Codex lane's RR-18 | Verified: 2026-10-31
+Status: active | Owner: Dave / Claude Code | Next: PN-9 -- early spring, once the unmerged Jules E-14 and S-3 marker-reparent branches are merged or closed (HS-2 and SP-6 landed 1 Nov 2026, RR-18 31 Oct 2026) | Dependency: those two Jules branches change `game_config.gd`, `settings_catalogue.gd` and `bee.gd`, and the S-3 branch `soil_block.gd` | Verified: 2026-10-31
 
 ## Objective
 
@@ -16,12 +16,12 @@ Verified 2026-10-31 by `tools/slice.ps1 owner`; `skill_tree_panel.gd` and
 
 | Id | Outcome | Files | Startable | Level / model |
 | --- | --- | --- | --- | --- |
-| PN-9 | early spring: fast queen building, no souring before day 15 | `game_config.gd`, `settings_catalogue.gd`, `hive_cell.gd` | after HS-2 | medium / sonnet |
-| PN-11 | rain later: first rain day 10, crisis days 12-15 | `game_config.gd`, fc2 scenarios | after PN-9 and RR-18 | medium / sonnet |
+| PN-9 | early spring: fast queen building, no souring before day 15 | `game_config.gd`, `settings_catalogue.gd`, `hive_cell.gd` | after the Jules E-14 and S-3 branches (HS-2 landed 1 Nov 2026) | medium / sonnet |
+| PN-11 | rain later: first rain day 10, crisis days 12-15 | `game_config.gd`, fc2 scenarios | after PN-9 (RR-18 landed 31 Oct 2026) | medium / sonnet |
 | PN-12 | developer mode buys any skill | `skill_tree_panel.gd`, `settings_catalogue.gd` | after PN-11 | low / haiku |
-| PN-13 | bee labels switch and a calmer queen flight | `bee.gd`, `game_config.gd`, `settings_catalogue.gd` | after HS-2 and SP-6 | low / haiku |
+| PN-13 | bee labels switch and a calmer queen flight | `bee.gd`, `game_config.gd`, `settings_catalogue.gd` | after the Jules E-14 and S-3 branches (HS-2 and SP-6 landed 1 Nov 2026) | low / haiku |
 | PN-18 | the queen discards sour nectar when told to empty a cell | `bee.gd` | after PN-13 | medium / sonnet |
-| PN-19 | the soil block's selection ring closes | `soil_block.gd` | after HS-2 | low / haiku |
+| PN-19 | the soil block's selection ring closes | `soil_block.gd` | after the Jules S-3 branch (HS-2 landed 1 Nov 2026) | low / haiku |
 
 ## Dependencies
 
