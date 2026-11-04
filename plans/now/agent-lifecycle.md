@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 
-Status: active | Owner: Dave / Claude / Codex | Next: L-40 to delegate Codex queue housekeeping | Dependency: preserve current worker model and turn-cap policy | Verified: 2026-11-03
+Status: complete | Owner: Dave / Claude / Codex | Next: none -- L-40 completes the currently specified lifecycle work | Dependency: preserve current worker model and turn-cap policy | Verified: 2026-11-04
 
 ## Objective
 

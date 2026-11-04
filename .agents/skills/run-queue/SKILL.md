@@ -38,7 +38,7 @@ then rerun `$run-queue`." A `:workspace` profile overrides
 
 ## Workers keep contained contexts
 
-Every subagent you start (worker or reviewer) is started with
+Every subagent you start (worker, reviewer or steward) is started with
 `spawn_agent` and **`fork_turns: "none"`**, plus the `reasoning_effort`
 named below. This skill is the explicit instruction that permits the
 override. A full-history fork (`fork_turns` omitted or `"all"`) copies your
@@ -59,11 +59,14 @@ while one is active.
    line (`python tools/heading.py <plan> "<heading>"` piped through
    `Select-String -Pattern reasoning`, not the whole section), go to 5 with
    that level, and count it toward the maximum. Any other held state stops
-   the run. If the lane is empty, refill it (below), then rerun `doctor`.
-2. **Claim.** Read `advice.dry_after` from `doctor`. When it is true, run
-   "Refilling the lane" (below) or ask Dave *before* `start`, never after:
-   a slice built with nothing admissible behind it is stranded at
-   `finish`'s refill gate. Then run `start`. Keep its JSON, and note
+   the run. If the lane is empty, dispatch the steward with `JOB=refill`
+   (below), adding `gates` and the ids landed so far if any, then rerun
+   `doctor` after `done`.
+2. **Claim.** Read `advice.dry_after` from `doctor`. When it is true, dispatch
+   the steward with `JOB=gates refill` and the ids landed so far (below)
+   before `start`. Admission plans ahead; since L-32, a dry lane is a
+   warning after landing, but that is the backstop. After `done`, rerun
+   `doctor`, then run `start`. Keep its JSON, and note
    `advice.level`.
 3. **Dispatch.** Start the worker (`fork_turns: "none"`,
    `reasoning_effort` = the level: `low`, `medium` or `high`; if the level
@@ -128,70 +131,83 @@ while one is active.
    - On a stop, read only the stop block. A verify failure inside the
      slice's files goes back to the worker once, then rerun `finish`. A
      stale branch: merge master into it, regenerate `FUNCTION_MAP.md`,
-     rerun. The refill gate (backlog dry) means specifying the owning
-     plan's next slice. That is planning work, so do it yourself in the
-     slice worktree, as in steps 2-3 of the refill below, then rerun. The
-     same stop also comes when a block the worker wrote has a `Proof:` that
-     fails on master, or names a successor with no block: fix the block.
-     While there, open any `queue-gated` fence whose gate a slice landed
-     earlier in this run has now cleared (its gate line under
-     `## Not in the queue, and why` goes too).
+     rerun. A refill-gate stop, a block whose `Proof:` fails on master,
+     or a successor with no block is planning work: dispatch the steward
+     with `JOB=finish-stop`, the exact stop block and slice worktree.
+     After `done`, rerun `finish` in that worktree, not Preflight. Keep
+     any pending landed ids for the next batched `gates` dispatch.
+   - A dry lane is not a stop (L-32): after `Slice landed:`, `finish`
+     may print `lane dry: Codex`, `queue short: n of the 3-item floor`
+     or `successor gated: <id>`. A dry or short Codex lane needs
+     `JOB=gates refill` (step 8) before the next `doctor`;
+     `successor gated` alone needs nothing now.
      The lifecycle lock held by the other lane's `finish` (the cause names
      its PID): `Wait-Process -Id <pid>`, then rerun `finish`.
      Anything else stops the run.
 7. **Record.** Keep only the `Slice landed:` block and the worker's
    one-line summary. Drop everything else from your working notes.
-8. **Clear stale gates.** If the `Next slice:` line says an id `is
-   deferred`, and the gate it names is a slice landed in this run, that
-   gate has cleared. Update the id's line under `## Not in the queue, and
-   why` and the plan's slice-table row to say what it waits for now. Do
-   the same for any other line naming a slice landed in this run. This is
-   a docs-only edit, as in "Refilling the lane". Do it even after the last
-   slice of the run: `finish` never rewrites those lines (T2-4a, 7 Oct
-   2026).
+8. **Batch stale gates.** Add the landed id to the run's pending list.
+   Dispatch the steward with `JOB=gates` and the whole list after the
+   run's last slice, even when the maximum has been reached. Dispatch
+   earlier only when the lane needs it now: a dry/short warning or
+   `doctor`'s `advice.dry_after`. Then send `JOB=gates refill` together.
+   Include any ids `check_docs.py` warns "waits for a shipped slice",
+   including landings outside this run. Clear the pending list only after
+   `done`. `finish` never rewrites those gates.
 
 An empty or short lane is not a reason to stop: refill it. Stop only when
 the maximum is reached, a `start` refuses for any reason but an empty lane,
-a slice is high risk, or a refill needs Dave (below).
+a slice is high risk, or the steward returns `blocked` (below).
 
 ## Refilling the lane
 
-Do this when `doctor` finds the lane empty, or when `finish` lands it with
-no admissible block left in the backlog. It is planning work, so do it
-yourself at your own (high) reasoning, and read only what specifying the
-slice needs. Don't read plan history or `plans/archive/`.
+The existing `queue-steward` does all gate/refill/finish-stop plan and
+queue editing. Never sweep plans or refill manually in this session.
+Use `spawn_agent` with `agent_type: "queue-steward"`,
+`fork_turns: "none"` (its configured reasoning is high), and this message:
 
-1. **Find the owner.** In `plans/now/`, find a live plan whose Status is
-   not terminal and whose `Next:` names work that hasn't been specified
-   yet. Read its Status line and the section that `Next:` points to.
-2. **Specify** its next slice, or two if they are plainly sequential. Read
-   `plans/README.md` § "Writing or editing a plan" first. Each slice gets
-   a fenced `queue` block in its plan section (the backlog), holding the
-   `**[Codex] <id> -- <title>**` line and its `Plan:`/`Files:`/`Check:`/
-   `Proof:`/`Next after:` lines. Never edit the Claude lane. Use only files
-   the Claude lane doesn't own (`tools/slice.ps1 owner <path>` for each
-   one). State a reasoning level and a deterministic `Check:` where one
-   exists. Write a `Proof:` that holds on master today. Fence a slice that
-   can't start yet as `queue-gated`, with its one line under
-   `## Not in the queue, and why`.
-3. **Queue it.** Inside a slice worktree at a `finish` stop, edit there
-   (step 6 above). Otherwise a docs-only refill goes on a `codex/` work
-   branch of its own, never on master and never as a second lane slice
-   branch: add its row to `plans/workstreams.md` (lane "Codex (docs
-   only)") before editing, and remove the row once the merge is pushed.
-   Run `python tools/refill_lane.py --top-up --lane Codex`, then
-   `python tools/check_docs.py`. Commit, merge to master and push, then go
-   back to Preflight.
+```
+ROOT=<ROOT>
+LANE=Codex
+JOB=<gates | refill | finish-stop, one or more>
+LANDED=<pending landed ids, or none>
+SHIPPED_WARNINGS=<ids from check_docs.py warnings, or none>
+COORDINATOR_WORKTREE=<this session's worktree path>
+SLICE_WORKTREE=<slice worktree for finish-stop, otherwise none>
+STOP_BLOCK=<exact finish stop block for finish-stop, otherwise none>
+Read plans/reference/queue-steward.md and use its job/result contract.
+For this Codex dispatch, substitute Codex for the working Claude lane
+and Claude for the protected Codex lane in that shared routine: create
+[Codex] queue blocks, top up --lane Codex, protect Claude-owned files.
+Use a codex/ branch for docs-only edits in the coordinator worktree;
+check ownership before editing, register no ledger row, and merge/push
+in this dispatch. For finish-stop, edit and commit only in the supplied
+slice worktree; do not merge or push. Return only the routine's JSON.
+```
 
-Stop the run and ask Dave (give the options and their costs, and recommend
-one) only if either of these is true:
-- No live plan in `plans/now/` has work left to specify. In that case,
-  propose which `ROADMAP.md` or `DESIGN_BACKLOG.md` item should become a
-  new plan, reading them with `git -C <ROOT> show master:ROADMAP.md` and
-  `git -C <ROOT> show master:DESIGN_BACKLOG.md`.
-- Specifying the slice would change an ownership boundary, save
-  compatibility, a gameplay outcome, or more than one later slice, and
-  the plan leaves that open (CLAUDE.md rule 5).
+Wait with `wait_agent`; never overlap the steward with a worker or
+`finish`. It returns one of these JSON results:
+
+```
+{"status":"done","added":["<id>"],"cleared":["<id>"],"commit":"<sha>","note":"<one line>"}
+{"status":"blocked","question":"...","options":[{"choice":"...","cost":"..."}],"recommend":"..."}
+```
+
+- `done`: inspect `git -C <ROOT> show --stat <commit>` and rerun
+  `python tools/check_docs.py` in the edited worktree. Do not read the
+  plan sections it touched. Keep `added`, `cleared` and `note` for the
+  report. After a `gates` job, remove the submitted ids from the pending
+  list. Resume the calling step: `finish-stop` retries worktree-local
+  `finish`; refill returns to `doctor`; final gates proceeds to the report.
+- `blocked`: ask Dave its question, options and costs, recommending its
+  pick, and stop the run while awaiting his answer. Send the answer to
+  the same steward with `followup_task`, then handle its result here.
+  It blocks when no live plan has work left to specify, or when an open
+  decision falls under `docs/agent-rules.md` rule 5. Keep the branch and
+  pending ids intact; do not guess or implement a separate refill.
+
+The stale-branch stop in step 6 stays with the coordinator; it needs no
+plan reading.
 
 ## Final report
 
@@ -199,6 +215,7 @@ For each slice: the end-of-slice block from `CLAUDE.md` § "End-of-slice
 report" (`finish` prints most of it; fill in `Connectors: active now` from
 your own tool list), or the high-risk hand-off block, plus the worker's
 reasoning level and any reviews or retries. For each refill: the plan it
-came from, the ids it added, and why that slice came next. Then a
+came from (the steward's `note`), the ids it added, and why that slice came
+next. Include the steward's cleared gates. Then a
 one-paragraph trial note covering what the worker got wrong, where you had
 to step in, and any change the worker brief or this skill needs.
