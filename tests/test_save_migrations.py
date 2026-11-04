@@ -600,5 +600,28 @@ class SealFlagsTest(unittest.TestCase):
         self.assertNotIn("pending_open", migrations)
 
 
+class BeeHealthSaveTest(unittest.TestCase):
+    """ED-1c (plans/now/difficulty.md): a bee's health is an additive save
+    field. An older save has none and loads every bee at full health."""
+
+    def test_no_migration_and_no_version_bump(self):
+        migrations = (SCRIPTS / "save_migrations.gd").read_text(encoding="utf-8")
+        self.assertNotIn("health", migrations)
+
+    def test_the_loader_defaults_a_missing_key_to_full_health(self):
+        saving = (SCRIPTS / "saving.gd").read_text(encoding="utf-8")
+        self.assertIn('entry.get("health", GameConfig.health_capacity)', saving)
+
+    def test_old_saves_carry_no_health_and_current_goldens_do(self):
+        for name in ("save_v1.json", "save_v2.json"):
+            data = json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+            for bee in data.get("bees", []):
+                self.assertNotIn("health", bee)
+        for path in sorted((FIXTURES / "saves").glob("cq_s0_*.json")):
+            data = json.loads(path.read_text(encoding="utf-8"))
+            for bee in data["bees"]:
+                self.assertIn("health", bee, path.name)
+
+
 if __name__ == "__main__":
     unittest.main()

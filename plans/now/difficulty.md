@@ -1,7 +1,7 @@
 # Difficulty -- Easy rules, a Standard baseline, and the choice at run start
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: ED-1c -- health is saved per bee, queued (ED-1b landed 3 Nov 2026), then ED-2 and ED-3, gated (specified 13 Oct 2026) | Dependency: ED-1 follows SG-3 (`plans/archive/short-term-goals_2026-11-01.md`, landed 1 Nov 2026) in Dave's order (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`, released the save files 17 Oct 2026) | Verified: 2026-10-12
+Status: active | Owner: Dave / Claude Code | Next: ED-2 -- a run's difficulty, and Easy's rules (ED-1c landed 4 Nov 2026), then ED-3 and ED-3, gated (specified 13 Oct 2026) | Dependency: ED-1 follows SG-3 (`plans/archive/short-term-goals_2026-11-01.md`, landed 1 Nov 2026) in Dave's order (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`, released the save files 17 Oct 2026) | Verified: 2026-10-12
 
 ## Objective
 
