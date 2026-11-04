@@ -50,3 +50,4 @@ end-of-slice report states what was merged and what is next.
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/jules-review-20261103` (`codex/jules-review-20261103`) | Review | Assigned Jules review; report only; no integration | Codex | review complete, local | none | `plans/reference/jules-review-2026-11-03.md` |
 | `.worktrees/ED-1c` (`claude/ED-1c`) | Claude | health is saved per bee | Claude | in progress | none | `plans/now/difficulty.md` ED-1c -- health is saved per bee |
+| `.worktrees/L-40` (`codex/L-40`) | Codex | Codex coordinator delegates queue housekeeping | Codex | in progress | none | `plans/now/agent-lifecycle.md` L-40 -- Codex coordinator delegates queue housekeeping |
