@@ -73,7 +73,7 @@ func _section(column: VBoxContainer, title: String, open_by_default: bool) -> VB
 	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	header.theme_type_variation = "Small"
 	header.focus_mode = Control.FOCUS_NONE
-	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+	for state: String in ["normal", "hover", "pressed", "focus", "disabled"]:
 		header.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
 	column.add_child(header)
 
@@ -83,7 +83,7 @@ func _section(column: VBoxContainer, title: String, open_by_default: bool) -> VB
 	column.add_child(body)
 
 	header.text = "%s  %s" % ["▾" if body.visible else "▸", title]
-	header.pressed.connect(func():
+	header.pressed.connect(func() -> void:
 		body.visible = not body.visible
 		header.text = "%s  %s" % ["▾" if body.visible else "▸", title]
 		call_deferred("_apply_left_window_rect")
@@ -124,12 +124,12 @@ func refresh(stats: Node) -> void:
 ## favourites/needing-attention lists -- which species have any trips at
 ## all changes over the run, there's no fixed key set to update in place.
 func _rebuild_species(rows: Array) -> void:
-	for child in species_column.get_children():
+	for child: Variant in species_column.get_children():
 		if child != species_empty_label:
 			child.queue_free()
 
 	species_empty_label.visible = rows.is_empty()
-	for row in rows:
+	for row: Variant in rows:
 		var label := Label.new()
 		label.theme_type_variation = "Small"
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

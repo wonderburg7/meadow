@@ -52,9 +52,9 @@ func _ready() -> void:
 	# Only the states a plain Godot Button actually looks up ("selected"
 	# and "locked" from UiTheme's seven apply to custom-drawn controls
 	# like the future skill tree, not a native Button).
-	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+	for state: String in ["normal", "hover", "pressed", "focus", "disabled"]:
 		close_btn.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
-	close_btn.pressed.connect(func(): close())
+	close_btn.pressed.connect(func() -> void: close())
 	header.add_child(close_btn)
 
 	column.add_child(HSeparator.new())

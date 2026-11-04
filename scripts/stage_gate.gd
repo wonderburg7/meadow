@@ -50,7 +50,7 @@ func start(initial_unlocks: Array = []) -> void:
 	active = true
 	_unlocked.clear()
 	Availability.invalidate()
-	for key in initial_unlocks:
+	for key: Variant in initial_unlocks:
 		unlock(key)
 
 ## Called when a Challenge run ends -- completed, abandoned to the main
@@ -94,5 +94,5 @@ func unlocked_keys() -> Array:
 func set_unlocked_keys(keys: Array) -> void:
 	_unlocked.clear()
 	Availability.invalidate()
-	for key in keys:
+	for key: Variant in keys:
 		unlock(key)
