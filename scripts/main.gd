@@ -638,6 +638,8 @@ func _ready() -> void:
 	hud.finish_first_requested.connect(orders_zones._on_finish_first_requested)
 	hud.favourite_requested.connect(orders_zones._on_favourite_requested)
 	hud.follow_bee_toggled.connect(camera_view._on_follow_bee_toggled)
+	hud.select_n_requested.connect(input_selection.narrow_selection_to_n)
+	hud.select_extreme_requested.connect(input_selection.narrow_selection_to_extreme)
 	add_child(hud)
 	# Syncs Session.perf_enabled and the corner to whatever "fps" was
 	# left starred as, rather than assuming a fresh run starts unstarred.
