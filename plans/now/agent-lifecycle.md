@@ -50,7 +50,6 @@ measurement says what those sessions were doing.
 
 | Slice | What it does | Files it owns | Level |
 | --- | --- | --- | --- |
-| L-40 | Delegate Codex gate/refill work to its existing queue steward | `.agents/skills/run-queue/SKILL.md` | medium |
 
 L-39 permits worktree-local finish through the command guard. L-40 is the
 final currently specified slice. Read only the assigned
@@ -101,45 +100,7 @@ L-38 shipped 2026-10-26; its specification is `plans/archive/L-38_2026-10-26.md`
 
 L-39 shipped 2026-11-03; its specification is `plans/archive/L-39_2026-11-03.md`.
 
-## L-40 -- Codex coordinator delegates queue housekeeping
-
-<!-- LAYER: immediate-task -->
-
-**True now:** `.agents/skills/run-queue/SKILL.md` still makes its coordinator
-read and manually refill plans/gates. `.claude/skills/run-queue/SKILL.md`
-already uses the queue steward, and Codex has an existing queue-steward
-agent definition. The current worker model, turn caps and size checks are
-the newer policy and must survive this reconciliation.
-
-**Do:** Delegate the existing gate/refill/finish-stop jobs to Codex's
-queue-steward, using the same job/result contract already implemented by
-the Claude coordinator and `plans/reference/queue-steward.md`. Keep Codex
-lane names, worktree-local finish, supported Codex dispatch syntax, worker
-reasoning/model policy, review handling and all stop conditions. Replace
-the obsolete coordinator-owned refill instructions; do not add a second
-mechanism. The sole output file is the Codex skill.
-
-**Acceptance:** Each empty/dry lane, batched gate update and finish refill
-stop has one explicit steward dispatch with the required context and a
-clear resume/blocked branch. A textual walkthrough of those three cases
-shows no coordinator plan sweep or manual refill. Documentation checks
-pass; no live slice is claimed to test this instruction change.
-
-**Check:** `python tools/check_docs.py`, plus the three walkthroughs above.
-**Reasoning:** medium -- preserve two environments' distinct dispatch syntax.
-**Stop and escalate:** if the existing Codex steward cannot satisfy that job
-contract or a new agent/ownership boundary is required.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] L-40 -- Codex coordinator delegates queue housekeeping**
-- Plan: `plans/now/agent-lifecycle.md` -- "L-40 -- Codex coordinator delegates queue housekeeping"
-- Files: `.agents/skills/run-queue/SKILL.md`
-- Check: `python tools/check_docs.py`
-- Proof: `present: .agents/skills/run-queue/SKILL.md :: ## Refilling the lane`
-- Next after: none -- plans/now/agent-lifecycle.md is complete
-```
+L-40 shipped 2026-11-04; its specification is `plans/archive/L-40_2026-11-04.md`.
 
 ## Standing rules
 

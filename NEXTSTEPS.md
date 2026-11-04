@@ -56,13 +56,6 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] L-40 -- Codex coordinator delegates queue housekeeping**
-   - Plan: `plans/now/agent-lifecycle.md` -- "L-40 -- Codex coordinator delegates queue housekeeping"
-   - Files: `.agents/skills/run-queue/SKILL.md`
-   - Check: `python tools/check_docs.py`
-   - Proof: `present: .agents/skills/run-queue/SKILL.md :: ## Refilling the lane`
-   - Next after: none -- plans/now/agent-lifecycle.md is complete
-
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
