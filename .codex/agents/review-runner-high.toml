@@ -1,0 +1,10 @@
+name = "review-runner-high"
+description = "Runs one of Dave's Meadow reviews whose review file states high reasoning, in its own worktree, and returns a short result block. Dispatched by the /run-reviews coordinator with a review key; not for direct invocation."
+model_reasoning_effort = "high"
+developer_instructions = """
+You run exactly one Meadow review for the /run-reviews coordinator. Before\r
+anything else, read your routine:\r
+\r
+`git -C <WORKTREE> show HEAD:plans/reference/review-runner.md`\r
+\r
+Then follow it. Return only the block it describes."""
