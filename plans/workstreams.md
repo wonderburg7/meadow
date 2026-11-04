@@ -49,4 +49,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/jules-review-20261103` (`codex/jules-review-20261103`) | Review | Assigned Jules review; report only; no integration | Codex | review complete, local | none | `plans/reference/jules-review-2026-11-03.md` |
-| `.worktrees/ED-1c` (`claude/ED-1c`) | Claude | health is saved per bee | Claude | in progress | none | `plans/now/difficulty.md` ED-1c -- health is saved per bee |
