@@ -23,21 +23,14 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] ED-1c -- health is saved per bee**
-   - Plan: `plans/now/difficulty.md` -- "ED-1c -- health is saved per bee"
-   - Files: `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed1c_health_save_test.gd`, `tests/test_ed1c_health_save.py`, `tests/test_save_migrations.py`, `tests/fixtures/saves/cq_s0_early.json`, `tests/fixtures/saves/cq_s0_mid.json`, `tests/fixtures/saves/cq_s0_winter.json`, `tests/fixtures/saves/cq_s0_challenge2.json`, `tests/fixtures/saves/cq_s0_orientation.json`
-   - Check: `python -m unittest tests.test_ed1c_health_save tests.test_save_migrations` passes (a bee's health survives save and restore; an old save without the key loads every bee at full health); `.\tools\verify.ps1` is green
-   - Proof: `absent: scripts/save_game.gd :: "health"`
-   - Next after: ED-2 -- a run's difficulty, and Easy's rules
-
-2. **[Claude] RR-22 -- select a number of bees from a multi-selection**
+1. **[Claude] RR-22 -- select a number of bees from a multi-selection**
    - Plan: `plans/now/run-repairs.md` -- "RR-22 -- select a number of bees from a multi-selection"
    - Files: `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, `tests/test_layout_regression.py`, `tests/rr22_select_n_test.gd`, `tests/test_rr22_select_n.py`
    - Check: `python -m unittest tests.test_rr22_select_n` passes (n is clamped to 1..selection size, `>>` steps by 5, Select keeps n bees, youngest and oldest keep the one bee with the least or greatest age); `python -m unittest tests.test_layout_regression` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
    - Proof: `absent: scripts/hud.gd :: select_youngest`
    - Next after: none -- multi-selection narrowing is complete
 
-3. **[Claude] CQ-T3 -- the free UI scripts typed**
+2. **[Claude] CQ-T3 -- the free UI scripts typed**
    - Plan: `plans/now/code-health.md` -- "CQ-T3 -- the free UI scripts typed"
    - Files: `scripts/hud.gd`, `scripts/debug_panel.gd`, `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/nursery_panel.gd`, `scripts/saves_panel.gd`, `scripts/hud_goal_shelf.gd`, `scripts/challenge_complete.gd`, `scripts/ui.gd`, `scripts/run_availability_panel.gd`, `scripts/ui_icon.gd`, `scripts/game_over.gd`, `scripts/foraging_panel.gd`, `scripts/succession_panel.gd`, `scripts/winter_panel.gd`, `scripts/stage_gate.gd`, `scripts/perf_plot.gd`, `scripts/perf_breakdown.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
    - Check: `python tests/source_checks.py` passes with all 18 scripts in `TYPED_FILES`; `python tools/prefinish.py` boots without an `untyped_declaration` warning from them; `.\tools\verify.ps1` is green
