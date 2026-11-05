@@ -63,40 +63,40 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] AR-6 -- the pacing report's draft targets in one place, matched to product-scope §3**
-   - Plan: `plans/now/alpha-route-evidence.md` -- "AR-6 -- the pacing report's draft targets in one place, matched to product-scope §3"
-   - Files: `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `tests/test_t2_7_tier_two_prices.py`
-   - Check: `python -m unittest tests.test_pacing_gates` passes (first worker 9.0 in band and 9.5 out; automation in band on days 20.0 to 25.0 only; the table prints "<= 9" and "20-25", not "1.50"); `.\tools\verify.ps1` is green
-   - Proof: `present: tools/pacing_gates.py :: FIRST_WORKER_BY_DAY = 17.0`
-   - Next after: AR-4 -- a scripted Colony Run reaches and records all five gates (gated on PP-10)
-
-2. **[Codex] CQ-M5b -- the last CanvasLayer readers and the bare-layer source check**
+1. **[Codex] CQ-M5b -- the last CanvasLayer readers and the bare-layer source check**
    - Plan: `plans/now/code-health.md` -- "CQ-M5b -- the last CanvasLayer readers and the bare-layer source check"
    - Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/game_panel.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
    - Check: `python tests/source_checks.py` passes and fails on a planted `layer = 3` in a scratch copy of `scripts/hud.gd`; `python -m unittest tests.test_layout_regression` and `python tools/prefinish.py` pass
    - Proof: `present: scripts/main.gd :: weather_layer.layer = 5`
    - Next after: SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels
 
-3. **[Codex] CQ-M6 -- name selection green and caste appearance**
+2. **[Codex] CQ-M6 -- name selection green and caste appearance**
    - Plan: `plans/now/code-health.md` -- "CQ-M6 -- name selection green and caste appearance"
    - Files: `scripts/world_draw.gd`, `scripts/bee.gd`, `scripts/death_marker.gd`, `scripts/flower.gd`, `scripts/obstacle.gd`, `scripts/soil_block.gd`, `FUNCTION_MAP.md`
    - Check: `python -m unittest tests.test_sp9_soil_art tests.test_col9_drones` and `python tools/prefinish.py` pass; rendered selection alphas and caste sizes remain unchanged
    - Proof: `present: scripts/obstacle.gd :: selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)`
    - Next after: CQ-M6b -- the cell ring and the selection layer read the selection green
 
-4. **[Codex] PN-18 -- the queen discards sour nectar when told to empty a cell**
+3. **[Codex] PN-18 -- the queen discards sour nectar when told to empty a cell**
    - Plan: `plans/now/play-notes-config.md` -- "PN-18 -- the queen discards sour nectar when told to empty a cell"
    - Files: `scripts/bee.gd`, `test_scenarios/pn18_queen_empties_sour.json`, `tests/test_pn18_queen_empties_sour.py`
    - Check: `python -m unittest tests.test_pn18_queen_empties_sour` passes (lone queen, sour cell, no Cleaning: the cell ends empty and the nectar is discarded); `.\tools\verify.ps1` is green. Hands-on: the queen empties a sour cell on command
    - Proof: `absent: scripts/bee.gd :: PN-18`
    - Next after: PN-19 -- the soil block's selection ring closes
 
-5. **[Codex] PN-19 -- the soil block's selection ring closes**
+4. **[Codex] PN-19 -- the soil block's selection ring closes**
    - Plan: `plans/now/play-notes-config.md` -- "PN-19 -- the soil block's selection ring closes"
    - Files: `scripts/soil_block.gd`, `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`
    - Check: `python -m unittest tests.test_sp10_soil_depth tests.test_sp9_soil_art` pass with an assertion that the ring is closed; `.\tools\verify.ps1` is green. Hands-on: a selected soil block's outline has no gap
    - Proof: `present: scripts/soil_block.gd :: selection_ring.add_point(ring_points[0])`
    - Next after: none -- `plans/now/play-notes-config.md` is complete
+
+5. **[Codex] CQ-R3 -- bee display text becomes scripts/bee_readout.gd**
+   - Plan: `plans/now/code-health.md` -- "CQ-R3 -- bee display text becomes scripts/bee_readout.gd"
+   - Files: `scripts/bee.gd`, `scripts/bee_readout.gd`, `FUNCTION_MAP.md`
+   - Check: `python -m unittest tests.test_display_text_golden tests.test_t2_14_idle_reason_pure tests.test_t2_11_comb_cadence` passes with no expected string changed; `.\tools\verify.ps1` is green
+   - Proof: `present: scripts/bee.gd :: func _task_line(`
+   - Next after: CQ-R4
 
 ## Not in the queue, and why
 
@@ -111,7 +111,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **PN-7** (`plans/now/play-notes-hud.md`) -- startable, but the Codex lane is full.
 - **PN-14** (`plans/now/play-notes-hud.md`) -- startable, but the Codex lane is full.
 - **PN-15** (`plans/now/play-notes-hud.md`) -- startable, but the Codex lane is full.
-- **CQ-R3** (`plans/now/code-health.md`) -- startable, but the Codex lane is full.
 - **EV-0** (`plans/now/event-director.md`) -- one Calendar and events settings group, a new `RunCalendar` and a 35-day season (winter on day 36); waits for PN-11, whose crisis window it converts to days.
 - **EV-0b** (`plans/now/event-director.md`) -- the flowers read EV-0's calendar; waits for EV-0, and for CQ-M6 (Codex lane), which edits `scripts/flower.gd`.
 - **PP-10** (`plans/now/pollination.md`) -- the gyne route keeps its order on the new calendar; waits for EV-0, so the route is checked once, on the new calendar (Dave, 1 Nov 2026).

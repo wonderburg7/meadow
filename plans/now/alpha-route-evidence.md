@@ -32,7 +32,6 @@ hands-on feedback questions, not diagnostics.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| AR-6 | the pacing report's draft targets in one place, matched to product-scope §3 | `tools/pacing_gates.py`, `tests/test_pacing_gates.py` | yes | low |
 | AR-4 | a scripted Colony Run reaches and records all five gates | the alpha scenario and its new evidence test | no -- after PP-10 (`plans/now/pollination.md`) | high |
 
 AR-1, AR-2 and AR-3 shipped 7 Oct 2026; each has its record in `plans/archive/`, named by id and date.
@@ -86,55 +85,4 @@ five gates is visible. Its section is rewritten when PP-10 lands.
 - Next after: None -- plan complete
 ```
 
-## AR-6 -- the pacing report's draft targets in one place, matched to product-scope §3
-
-Level: low. One tool and its test; no game file; no pacing run.
-
-**Why (Dave, 5 Nov 2026, product review D2 and D5).** `plans/design/product-scope.md`
-§3 makes every timing a draft: the order matters, not the day, and a target
-lives in one editable place. Its table moves the first worker to about Day 9
-and first automation (and the first tier-2 purchase) to about Days 20 to 25,
-after honey arrives. `tools/pacing_gates.py` still judges day 17, days 5-8
-and day 5, and its "target day" column prints minutes converted at 1x (1.50,
-3.00, 6.00, 27.00), which nothing is judged against.
-
-**True now.** `tools/pacing_gates.py` near the top: `FIRST_WORKER_BY_DAY =
-17.0`, `FIRST_AUTOMATION_DAYS = (5.0, 8.0)`, `TIER2_TARGET_DAY = 5` (lower
-down) and `GYNE_AFFORDABLE_AFTER_WINTER_DAYS`. `build_rows` fills each row's
-`target_day` from `target_day(gate.target_minutes, ...)`; `render_table`
-prints it.
-
-**True afterwards.**
-
-1. One block at the top of `tools/pacing_gates.py`, headed by a comment
-   "Draft targets -- product-scope §3, 'Every timing is a draft' (Dave,
-   5 Nov 2026): edit them here", holds every judged target:
-   `FIRST_WORKER_BY_DAY = 9.0`, `FIRST_AUTOMATION_DAYS = (20.0, 25.0)`,
-   `TIER2_TARGET_DAY = 22` (moved up from its current place) and the
-   existing `GYNE_AFFORDABLE_AFTER_WINTER_DAYS`.
-2. `build_rows` adds a `"target"` string to each row, the target that row is
-   judged against: `"<= 9"`, `"20-25"` (both built from the constants),
-   `"-"` for the crisis and gyne/victory rows, and the winter end day as
-   `"%.0f"`. `render_table` prints `row["target"]` right-aligned in the
-   10-wide "target day" column.
-3. `tests/test_pacing_gates.py`: the first-worker test asserts the constant
-   is 9.0, 9.0 in band and 9.5 out; the automation test uses (20.0, 25.0),
-   in band at 20.0 and 25.0, out at 19.9 and 25.1; a new test renders a table
-   that holds `"<= 9"` and `"20-25"` and not `"1.50"`.
-
-**Must not change.** Every row's numeric `target_day` key (the winter test
-reads `rows[3]["target_day"]`); the `target_day()` function; the winter and
-Gyne-rearing verdicts; the line `Not instrumented: 20m forage/weather crisis;
-90m gyne release.` (AR-4's Proof reads it); any `GameConfig` or `skills.gd`
-value. No pacing run: a draft target needs no sweep (§3).
-
-**Open decisions:** none.
-
-```queue
-**[Codex] AR-6 -- the pacing report's draft targets in one place, matched to product-scope §3**
-- Plan: `plans/now/alpha-route-evidence.md` -- "AR-6 -- the pacing report's draft targets in one place, matched to product-scope §3"
-- Files: `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `tests/test_t2_7_tier_two_prices.py`
-- Check: `python -m unittest tests.test_pacing_gates` passes (first worker 9.0 in band and 9.5 out; automation in band on days 20.0 to 25.0 only; the table prints "<= 9" and "20-25", not "1.50"); `.\tools\verify.ps1` is green
-- Proof: `present: tools/pacing_gates.py :: FIRST_WORKER_BY_DAY = 17.0`
-- Next after: AR-4 -- a scripted Colony Run reaches and records all five gates (gated on PP-10)
-```
+AR-6 shipped 2026-11-05; its specification is `plans/archive/AR-6_2026-11-05.md`.
