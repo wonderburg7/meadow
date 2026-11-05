@@ -965,3 +965,27 @@ explicit request from Dave.
   processing step) compare the report's swept files with the owned files
   changed since `SINCE`, and return a report that leaves most of them out.
 - Disposition: untriaged
+- Recurrence (5 Nov 2026): the R-architecture report of 4 Nov shows reading
+  evidence for 8 of 86 changed watched files; its findings come from
+  `tools/uncalled.py`. Closed unmerged: a full Claude sweep of the same
+  commit superseded it (`docs/architecture-review-2026-11-04.md`).
+
+### 2026-11-05 — a returned Jules branch still holds its files for `slice.ps1 owner`
+
+- Source: R-architecture Jules report processing, 5 Nov 2026 (ledger row; folded into `docs/architecture-review-2026-11-04.md`)
+- Area: Jules branch lifecycle / file ownership
+- Signal: `jules/s-3-marker-reparent-check-9499576018780718307` was returned
+  on 2 Nov (ledger row; correction task J-47 asks for a clean two-file
+  branch), yet `tools/slice.ps1 owner` still reports it as owning
+  `scripts/bee.gd`, `scripts/hive.gd`, `scripts/main.gd` and `NEXTSTEPS.md`.
+- Evidence: `tools/slice.ps1 owner scripts/bee.gd NEXTSTEPS.md`;
+  `git diff --stat master...origin/jules/s-3-marker-reparent-check-9499576018780718307`
+  (28 files); the Status lines of `plans/now/code-health.md` (CQ-M5b, CQ-M6,
+  CQ-R3) and `plans/now/play-notes-hud.md` cite it as a gate; the review
+  could not remove three one-line dead helpers in `bee.gd`/`hive.gd` for it.
+- Consequence: work that a returned report will never merge waits on it, and
+  reviews cannot make one-line fixes in the files it spans.
+- Candidate direction: Hypothesis — close the returned branch once its
+  correction task is filed (the correction rebuilds from master anyway), or
+  have `owner` skip a branch whose latest ledger row is `returned`.
+- Disposition: untriaged
