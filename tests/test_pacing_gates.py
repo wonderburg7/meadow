@@ -68,23 +68,35 @@ class PacingGatesTest(unittest.TestCase):
         self.assertIn("hands-on question", table)
         self.assertIn("2.00", table)
 
+    def test_table_displays_the_judged_draft_targets(self):
+        rows = build_rows([{"settings": SCHEDULE_SETTINGS}], 200)
+        self.assertEqual(["<= 9", "20-25", "-", "41", "-"],
+                         [row["target"] for row in rows])
+        table = render_table(rows, 200, 1)
+        self.assertIn("<= 9", table)
+        self.assertIn("20-25", table)
+        self.assertNotIn("1.50", table)
+
     def test_first_worker_at_two_elapsed_days_is_within_the_calendar_target(self):
         rows = build_rows([{"settings": SCHEDULE_SETTINGS, "milestone_times": {"first_worker_day": 2.0}}], 200)
         self.assertTrue(rows[0]["inside_band"])
 
-    def test_first_worker_after_day_seventeen_is_outside_the_calendar_target(self):
-        rows = build_rows([{"settings": SCHEDULE_SETTINGS, "milestone_times": {"first_worker_day": 17.5}}], 200)
-        self.assertEqual(17.0, FIRST_WORKER_BY_DAY)
-        self.assertFalse(rows[0]["inside_band"])
+    def test_first_worker_uses_the_inclusive_calendar_deadline(self):
+        self.assertEqual(9.0, FIRST_WORKER_BY_DAY)
+        for day, expected in ((9.0, True), (9.5, False)):
+            with self.subTest(day=day):
+                rows = build_rows([{"settings": SCHEDULE_SETTINGS,
+                                    "milestone_times": {"first_worker_day": day}}], 200)
+                self.assertEqual(expected, rows[0]["inside_band"])
 
     def test_first_automation_uses_the_inclusive_calendar_window(self):
-        self.assertEqual((5.0, 8.0), FIRST_AUTOMATION_DAYS)
-        for day in (5.0, 8.0):
+        self.assertEqual((20.0, 25.0), FIRST_AUTOMATION_DAYS)
+        for day in (20.0, 25.0):
             with self.subTest(day=day):
                 rows = build_rows([{"settings": SCHEDULE_SETTINGS, "milestone_times": {},
                                     "alpha_route": {"first_automation_day": day}}], 200)
                 self.assertTrue(rows[1]["inside_band"])
-        for day in (4.9, 8.1):
+        for day in (19.9, 25.1):
             with self.subTest(day=day):
                 rows = build_rows([{"settings": SCHEDULE_SETTINGS, "milestone_times": {},
                                     "alpha_route": {"first_automation_day": day}}], 200)

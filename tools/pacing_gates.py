@@ -32,8 +32,12 @@ DEFAULT_REPEAT = 3
 DEFAULT_SEEDS = (20260923, 20260924, 20260925)
 BAND_FRACTION = 0.25
 WINTER_BAND_DAYS = 1
-FIRST_WORKER_BY_DAY = 17.0
-FIRST_AUTOMATION_DAYS = (5.0, 8.0)
+# Draft targets -- product-scope §3, 'Every timing is a draft' (Dave,
+# 5 Nov 2026): edit them here
+FIRST_WORKER_BY_DAY = 9.0
+FIRST_AUTOMATION_DAYS = (20.0, 25.0)
+# T2-7: the first tier-2 purchase is a diagnostic beside the five gates, not a sixth.
+TIER2_TARGET_DAY = 22
 # PP-6: Gyne rearing first becomes affordable in the first 11 days after winter ends.
 GYNE_AFFORDABLE_AFTER_WINTER_DAYS = (1.0, 11.0)
 SCENARIO = ROOT / "test_scenarios" / "alpha_arc_test.json"
@@ -57,9 +61,6 @@ GATES = (
     Gate("winter survival", "winter_survived_day", 60),
     Gate("gyne/victory", "victory_day", 90, "alpha_route", ("first_gyne_day", "victory_day")),
 )
-
-# T2-7: the first tier-2 purchase is a diagnostic beside the five gates, not a sixth.
-TIER2_TARGET_DAY = 5
 
 DIAGNOSTIC_METRICS = ("first_worker_day", "food_secure_day", "winter_entered_day", "winter_survived_day")
 
@@ -108,15 +109,19 @@ def build_rows(analyses: list[dict[str, Any]], day_length_seconds: float) -> lis
         )
         values = [source.get(gate.metric) for source in source_values]
         median_day = statistics.median(values) if complete else None
+        display_target = "-"
         if gate.metric == "first_worker_day":
             target = target_day(gate.target_minutes, day_length_seconds)
+            display_target = "<= %g" % FIRST_WORKER_BY_DAY
             inside = median_day is not None and median_day <= FIRST_WORKER_BY_DAY
         elif gate.metric == "first_automation_day":
             target = target_day(gate.target_minutes, day_length_seconds)
+            display_target = "%g-%g" % FIRST_AUTOMATION_DAYS
             inside = (median_day is not None
                       and FIRST_AUTOMATION_DAYS[0] <= median_day <= FIRST_AUTOMATION_DAYS[1])
         elif gate.metric == "winter_survived_day":
             target = winter_ended_day
+            display_target = "%.0f" % winter_ended_day
             inside = in_days(median_day, target)
         else:
             target = target_day(gate.target_minutes, day_length_seconds)
@@ -127,6 +132,7 @@ def build_rows(analyses: list[dict[str, Any]], day_length_seconds: float) -> lis
             "milestone": gate.label,
             "median_day": median_day,
             "target_day": target,
+            "target": display_target,
             "inside_band": inside,
             "status": status,
             "boundary": boundary,
@@ -196,7 +202,7 @@ def render_seed_rows(rows: list[dict[str, Any]], winter_entered_day: float,
 
 
 def tier2_row(analyses: list[dict[str, Any]]) -> dict[str, Any]:
-    """The first tier-2 purchase day against day 5, using the same band as the gates."""
+    """The first tier-2 purchase day against its draft target, using the gates' band."""
     values = [analysis.get("milestone_times", {}).get("first_tier2_day") for analysis in analyses]
     complete = bool(values) and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in values)
     median_day = statistics.median(values) if complete else None
@@ -228,8 +234,8 @@ def render_table(rows: list[dict[str, Any]], day_length_seconds: float, repeat: 
     ]
     for row in rows:
         median = "missing" if row["median_day"] is None else "%.2f" % row["median_day"]
-        lines.append("%-16s  %10s  %10.2f  %-11s  %s" % (
-            row["milestone"], median, row["target_day"], row["status"], row["boundary"],
+        lines.append("%-16s  %10s  %10s  %-11s  %s" % (
+            row["milestone"], median, row["target"], row["status"], row["boundary"],
         ))
     lines.append("Not instrumented: 20m forage/weather crisis; 90m gyne release.")
     return "\n".join(lines)
