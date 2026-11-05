@@ -1,7 +1,7 @@
 # Play notes -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PN-1 -- the typeface heights, with an instrument | Dependency: none for PN-1 to PN-6; the balance and `bee.gd` slices are in `plans/now/play-notes-config.md` and the HUD slices in `plans/now/play-notes-hud.md` | Verified: 2026-10-31
+Status: active | Owner: Dave / Claude Code | Next: PN-2, PN-3 and PN-4 in the Claude lane, behind PN-11 and ED-2 on the alpha route; PN-5 and PN-6 are startable and wait for room | Dependency: PN-3 follows ED-2 (`plans/now/difficulty.md`), which edits the same save files; PN-16 (`plans/now/play-notes-hud.md`, Codex) follows PN-6 | Verified: 2026-11-05
 
 ## Objective
 
@@ -25,63 +25,25 @@ to put nectar" warning; Dr Gallerin's bubble behaviour; drones skipped by
 
 ## Open slices
 
-| Id | Outcome | Files | Startable | Level / model |
+| Id | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PN-1 | OpenDyslexic and Silkscreen match Standard's height | `ui_theme.gd`, TS-1 test | yes | medium / sonnet |
-| PN-2 | rename a save in the saves list | `saves_panel.gd`, `save_slots.gd` | yes | medium / sonnet |
-| PN-3 | a save remembers whether Goals was open | `save_game.gd`, `saving.gd`, `session.gd` | yes | high / sonnet |
-| PN-4 | the queen finishes a cell she was told to build | `bee_survival.gd`, `orders_zones.gd`, `bee_building.gd` | yes | high / sonnet |
-| PN-5 | a cell or soil block is clicked by its top face | `input_selection.gd` | yes | medium / sonnet |
-| PN-6 | double-click selects bees of the same role | `input_selection.gd` | after PN-5 | low / haiku |
+| PN-2 | rename a save in the saves list | `saves_panel.gd`, `save_slots.gd` | yes -- queued | medium |
+| PN-3 | a save remembers whether Goals was open | `save_game.gd`, `saving.gd`, `session.gd` | yes -- queued after ED-2 | high |
+| PN-4 | the queen finishes a cell she was told to build | `bee_survival.gd`, `orders_zones.gd`, `bee_building.gd` | yes -- queued | high |
+| PN-5 | a cell or soil block is clicked by its top face | `input_selection.gd` | yes | medium |
+| PN-6 | double-click selects bees of the same role | `input_selection.gd` | after PN-5 | low |
 
 ## Dependencies
 
-PN-6 follows PN-5, and PN-16 (`plans/now/play-notes-hud.md`) follows PN-6: all
-three edit `scripts/input_selection.gd`. PN-3 avoids `hud.gd`, so it does not
-wait for SG-3. Do not touch `availability.gd` (jules J-13). A slice reads its own
-section and nothing else.
+PN-6 follows PN-5, and PN-16 (`plans/now/play-notes-hud.md`, Codex lane)
+follows PN-6: all three edit `scripts/input_selection.gd`, as SP-12
+(`plans/now/sprites.md`) and CQ-M6b (`plans/now/code-health.md`), both Codex,
+do: whichever is queued first runs first.
+PN-3 follows ED-2 (`plans/now/difficulty.md`) in the Claude lane; both edit
+`save_game.gd`, `saving.gd` and `session.gd`, so PN-3 re-captures the CQ-S0
+goldens after ED-2's. A slice reads its own section and nothing else.
 
-## PN-1 -- OpenDyslexic and Silkscreen match Standard's height
-
-**True now.** `scripts/ui_theme.gd::typeface_size_factor` scales a face by
-Standard's width over the face's width for `REFERENCE_TEXT` at 64 px, times
-`_TYPEFACE_NUDGE` (OpenDyslexic 1.04, Silkscreen 1.06). A width match leaves
-faces with a smaller line height short, so C-137 failed on 24 Oct and again
-on 30 Oct ("still too small"). `tests/ts1_typeface_size_test.gd` loops
-`TYPEFACES` x `SCALES` with a `_width` helper and allows 8% width tolerance.
-The `<` `>` buttons beside the Typeface setting
-(`scripts/debug_panel.gd::_make_options_row`) take their height from the
-button font's line height, so they change with the face; Dave: if those
-heights match, the text is probably right too.
-
-**Change.** In `typeface_size_factor` match the vertical metric
-(`Font.get_height` at the Body size) per face against Standard. Retire
-`_TYPEFACE_NUDGE`, or retune it only if a face still misses. Height wins over
-width: record each face's width ratio in the test, and relax or drop the width
-assertion for these two faces only. Add a `_height` helper to the TS-1 test
-asserting each face's height at `font_px(Body)` is within 4% of Standard's,
-for every scale. Optionally instantiate the options row and assert the `<`
-button height is equal across faces (settle pattern: `docs/headless-run-contract.md`).
-Add a "Re-run after" line to `checks/ready/C-137.md`. This is the second-failure
-instrument slice (`CLAUDE.md`, Verification).
-
-**Invariants.** Standard's size is unchanged; text never overflows the
-settings panel at the largest scale; `UiTheme.font_px` stays the one call site.
-
-**Acceptance (player seat, and the hands-on check).** In Settings, switch the
-Typeface setting between Standard, OpenDyslexic and Silkscreen: the `<` `>`
-buttons and the body text stay the same height, and nothing is cut off.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] PN-1 -- OpenDyslexic and Silkscreen match Standard's height**
-- Plan: `plans/now/play-notes.md` -- "PN-1 -- OpenDyslexic and Silkscreen match Standard's height"
-- Files: `scripts/ui_theme.gd`, `tests/ts1_typeface_size_test.gd`, `tests/test_ts1_typeface_size.py`, `checks/ready/C-137.md`
-- Check: `python -m unittest tests.test_ts1_typeface_size` passes with a height assertion (every face within 4% of Standard's `get_height` at the Body size, all scales); `.\tools\verify.ps1` is green. Hands-on: switching the Typeface setting leaves the `<` `>` buttons and body text the same height
-- Proof: `present: scripts/ui_theme.gd :: _TYPEFACE_NUDGE`
-- Next after: PN-2 -- rename a save in the saves list
-```
+PN-1 shipped 2026-11-05; its specification is `plans/archive/PN-1_2026-11-05.md`.
 
 ## PN-2 -- rename a save in the saves list
 

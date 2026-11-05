@@ -1,7 +1,7 @@
 # Meadow — product scope and development sequence
 
 <!-- CONTEXT: plan | LAYER: design -->
-Status: selected design, not scheduled | Owner: Dave | Next: the closed alpha's remaining route is sliced in live plans -- the crisis (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`), Work Priorities, short-term goals and Easy (`plans/archive/work-priorities_2026-10-22.md`, `short-term-goals.md`, `difficulty.md`, in Dave's order), the gyne route (PP-6, `plans/now/pollination.md`) and the five-gate evidence (AR-4, `plans/now/alpha-route-evidence.md`); the Colony Run definition is built (`plans/archive/colony-run_2026-10-08.md`); the event director's selection logic still needs its own pass; the goal model's data, the job catalogue/dispatcher and the stable catalogues are `plans/archive/architecture-review_2026-09-24.md`'s C, G and B chains (Dave, 11 Sep 2026) | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-10-16
+Status: selected design, not scheduled | Owner: Dave | Next: the closed alpha's remaining route -- Easy (ED-2, ED-3, `plans/now/difficulty.md`), the crisis and calendar re-pin (PN-11, `plans/now/play-notes-config.md`; EV-0, `plans/now/event-director.md`), the gyne route's price sweep (PP-10, `plans/now/pollination.md`; T2-7b was withdrawn under §3's "Every timing is a draft"), the event director's alpha events (EV-1 onward, after CQ-R2 and ED-3) and the five-gate evidence (AR-6, then AR-4, `plans/now/alpha-route-evidence.md`); the crisis (FC-2), Work Priorities, short-term goals and the Colony Run definition are built; the goal model's data, the job catalogue/dispatcher and the stable catalogues are `plans/archive/architecture-review_2026-09-24.md`'s C, G and B chains (Dave, 11 Sep 2026) | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-11-05
 
 This is Meadow's high-level product map. It defines what the game is trying to
 prove, what is essential for the first feedback build, which foundations later
@@ -73,15 +73,39 @@ reaches for them without being told to.
 | About 60 minutes | The colony enters and survives its first winter. |
 | About 90 minutes | After emerging from winter, the colony raises and releases gynes, reaches formal victory and may continue. |
 
-**How the gates are judged (Dave, 14 and 16 Oct 2026).** The headless
-pacing report (`tools/pacing_gates.py`) judges every timed gate on the run's
-calendar, not on minutes converted at 1x: the first worker by day 3; first
-automation on days 5 to 8 (the first tier-2 purchase lands around day 5,
-and Automation needs two other tier-2 nodes); winter survival on the run's
-winter schedule; the first gyne inside the second summer's mating window.
-The minutes above stay the experience budget a played run is checked
-against (C-139 for the first worker). Built by AR-5 and AR-4
-(`plans/now/alpha-route-evidence.md`).
+**Every timing is a draft (Dave, 5 Nov 2026, product review D5).** "Timings
+of when the player gets to different points in the game will be reviewed and
+likely change a lot (across different features of the game), so having
+precise timings for when the player should have different features or
+resources is currently not important and tokens shouldn't be wasted on that
+kind of work. The ordering and sequencing of when things happen is more
+important than the precise timings. All timings should be considered as
+drafts (across the whole game), with the code organised so they can be
+edited and updated quickly and cheaply, as they are likely to change in
+future. Targets should not dictate other components of the game, they are
+secondary and changeable." So: a slice or review checks the order below, not
+a day; no price or balance sweep is run to move a milestone by a few days; a
+timing lives in one named, editable place (a `GameConfig` row or a named
+constant), and when a target and a mechanic disagree, the target moves.
+
+**The order the alpha route keeps** (draft days on the default 200-second
+calendar; `tools/pacing_gates.py` reports them as information):
+
+| Order | Outcome | Draft day | Where the timing lives |
+| --- | --- | --- | --- |
+| 1 | First worker | about Day 9 (5 Nov 2026 median 8.41) | `pacing_gates.py` `FIRST_WORKER_BY_DAY` |
+| 2 | Crisis, warned then met | Days 12 to 15 | `GameConfig.first_crisis_window_*` (PN-11) |
+| 3 | Honey, then the first tier-2 purchase and first automation | about Days 20 to 25, after honey arrives (5 Nov 2026: honey from Days 19-22, tier 2 affordable from Day 27) | `pacing_gates.py` `FIRST_AUTOMATION_DAYS`; prices in `skills.gd` |
+| 4 | Winter entered and survived | about Day 38 | `GameConfig.winter_countdown_days` (EV-0) |
+| 5 | Gyne rearing affordable, gynes sent, victory | after winter, inside the second summer's mating window | prices in `skills.gd` (PP-10) |
+
+Because the crisis now comes before automation, the crisis meets a colony
+without automation; its readiness check still credits an able forager and
+food cover (D5 named this cost when Dave chose it). At 200 seconds a day the arc is about
+50 days, near 170 minutes at 1x; the minutes in the table above are the
+experience budget of a played run using fast-forward, which §13's gate
+reviews check (C-139 for the first worker). AR-4
+(`plans/now/alpha-route-evidence.md`) records the order, the crisis included.
 
 The 20-minute crisis uses the bounded readiness gate accepted for FC-1 in
 `plans/archive/crisis-readiness_2026-10-17.md`: early automation, an able forager and food
@@ -124,6 +148,10 @@ Use these labels in the product map so "planned" is never mistaken for
   starvation, disease pressure, seasons, winter and gyne scoring;
 - flowers with flowering windows and resource replenishment;
 - rain/weather foundations, a rival hive and crab-spider predator foundations;
+- drones laid by a mated queen in cells the player marks (DR-1, DR-2), and
+  hard outer soil that needs Mighty Mandible to dig (HS-1, HS-2) -- alpha
+  content since 5 Nov 2026 (product review D3); AR-4's reference run records
+  what they cost;
 - Challenges, Scenarios, stage gating, Dr Gallerin guidance and tutorial
   checkpoints;
 - save/load foundations, settings, accessibility options, fog of war,
@@ -166,7 +194,7 @@ These are part of alpha stabilisation. They should continue through
 - resource production-versus-consumption, missing-workforce, waiting/travel and
   blocked-work diagnostics;
 - progress-triggered skill discovery for the feedback-run policy;
-- the retained alpha skill set and one selected route to Gyne Rearing;
+- the retained alpha skill set (Mighty Mandible included) and one selected route to Gyne Rearing;
 - Backup Roles, early automation and Tier-3 Work Priorities progression;
 - Bee Bread production, larval use and adult consequences;
 - rain sensing/recall, predator avoidance and a readiness-aware crisis;
@@ -297,7 +325,7 @@ unplayed queen. It settles:
 
 - guards, combat, invading or robbing other colonies;
 - nectar robbing and robber defence;
-- drones, medicine, auto-defence/auto-attack;
+- medicine, auto-defence/auto-attack (drones moved into the alpha, 5 Nov 2026);
 - drought, Adjustment Panel, Chemical Cascade and Extended Backup Roles;
 - public Scenario/environment editor, sharing, moderation and distribution;
 - a 3D terrain conversion;
@@ -723,7 +751,7 @@ flowchart TD
     subgraph PARKED["Protected ideas — retained, but cannot delay closed alpha"]
         direction LR
         COMBAT_LATER["Guards · combat · invading/robbing · auto-defence"]
-        BIOLOGY_LATER["Drones · medicine · temperature · waste · temporal polyethism"]
+        BIOLOGY_LATER["Medicine · temperature · waste · temporal polyethism"]
         WORLD_LATER["Drought · multiple biomes · 3D terrain"]
         CREATOR_LATER["Public Scenario/environment editor<br/>sharing · moderation · distribution"]
         LAUNCH_LATER["Full localisation · launch-scale audio/art<br/>price · studio identity · charity model"]

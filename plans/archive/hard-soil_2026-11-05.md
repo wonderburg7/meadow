@@ -1,7 +1,7 @@
 # Hard soil -- the hive's outer soil needs Mighty Mandible to dig
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: nothing further -- HS-2 built 1 Nov 2026, awaiting closeout | Dependency: none left; HS-1, DR-1 and CQ-S0b landed 25 Oct 2026; PP-6 and FR-3 also edit `scripts/skills.gd` later | Verified: 2026-10-29
+Status: complete | Owner: Dave / Claude Code | Next: None -- plan complete; HS-1 landed 25 Oct 2026 and HS-2 1 Nov 2026; hard soil and Mighty Mandible are alpha content (product review D3, 5 Nov 2026) | Dependency: none | Verified: 2026-11-05
 
 ## Objective
 

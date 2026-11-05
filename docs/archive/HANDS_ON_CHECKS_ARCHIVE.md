@@ -6,6 +6,20 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 5 Nov 2026 -- Dave's hands-on pass
+
+### C-143 -- An unmatched scout resumes; an established seeker keeps waiting
+
+What this checks: start a Colony Run, open the settings panel's Foraging section and switch on Auto scouting and Auto-recruitment (leave Proximity recruitment off). In the first few days, before any forager is good enough to mentor, follow a scout as she comes back to the entrance; later, follow an established forager with a poor patch as she reaches the entrance.
+
+PASS: with no mentor waiting, the scout walks straight back out for her next bout instead of standing by the entrance, while the established low-rate forager still stands and waits beside the entrance.
+
+If it fails, FR-1d reopens: the scout guard in `scripts/bee_foraging.gd::go_to_exit` and `wait_at_entrance`, before FR-2 builds on it.
+
+Runner: dave -- watching two bees' paths over time, which stills cannot show
+
+Owner: `plans/now/forager-recruitment.md`
+
 ## 30 Oct 2026 -- Dave's hands-on pass
 
 ### C-127 -- The comb draws honey, jelly, brood, bee bread and wax caps from Dave's art
@@ -107,7 +121,7 @@ If it fails, DR-2 reopens; a glow colour too close to bee bread's (DRONE_COLOUR 
 
 Runner: dave
 
-Owner: `plans/now/drones.md`
+Owner: `plans/archive/drones_2026-11-05.md`
 
 Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
 
@@ -356,7 +370,7 @@ If it fails, T2-10 reopens: the no-work guard in `scripts/bee.gd::_try_role_work
 
 Runner: sonnet -- a skill purchase and a short wait, judged from still screenshots
 
-Owner: `plans/now/tier-two.md`
+Owner: `plans/archive/tier-two_2026-11-05.md`
 
 ### C-144 -- Colony plot series retain readable catalogue colours at minimum window size
 
@@ -396,11 +410,11 @@ What this checks: start Challenge 2 from the main menu and play to stage 2.7 ("r
 
 PASS: At 2.7 and 2.8 the tree shows Comb worker and then Miner as free buys, and each role appears in the Job menu only after you buy it.
 
-If it fails, the stage data in scripts/challenge_stages.gd (free_skills at 2.7 and 2.8) or the Job row gating in scripts/hud.gd is wrong; T2-9 (`plans/now/tier-two.md`) is the fix filed for the 11 Oct 2026 failure.
+If it fails, the stage data in scripts/challenge_stages.gd (free_skills at 2.7 and 2.8) or the Job row gating in scripts/hud.gd is wrong; T2-9 (`plans/archive/tier-two_2026-11-05.md`) is the fix filed for the 11 Oct 2026 failure.
 
 Runner: sonnet -- debug stage arrows, then the tree and Job menu read twice
 
-Owner: `plans/now/tier-two.md`
+Owner: `plans/archive/tier-two_2026-11-05.md`
 
 Confirmed 15 Oct 2026: run by opus (re-run after a sonnet fail that read the queen's Job menu, which offers Comb worker and Nurse without their skills by design, Availability.QUEEN_FREE_ROLES): at 2.7 Comb worker showed Cost: Free and a worker's Change to... listed it only after the free buy; at 2.8 Miner showed Cost: Free and appeared in a Comb worker's Change to... only after its buy.
 

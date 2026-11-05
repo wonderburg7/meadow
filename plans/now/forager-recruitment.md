@@ -1,7 +1,7 @@
 # Forager recruitment -- Orientation flight, then Auto scouting, then Auto-recruitment
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active (FR-2 landed) | Owner: Dave / Claude Code | Next: PP-10 (`plans/now/pollination.md`, the sweep Dave split from PP-9 27 Oct 2026), then FR-3 -- FR-2 landed: Auto scouting is a Foraging tier-2 purchase at (5, -1) that replaces Orientation flight (`scripts/bee.gd` joined its files, 25 Oct 2026, for the new-forager scouting gate) | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 → PP-9 → PP-10 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-27
+Status: active | Owner: Dave / Claude Code | Next: FR-3 -- owning Auto-recruitment switches it on, after PP-10 (`plans/now/pollination.md`), which shares `scripts/skills.gd`; FR-1 to FR-2 and FR-4 landed 17 Oct to 5 Nov 2026 | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 → PP-9 → PP-11 → PP-10 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-11-05
 
 ## Objective
 
@@ -48,7 +48,6 @@ Verified 14 Oct 2026 against master:
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
 | FR-3 | owning Auto-recruitment switches it on, passing species with Adaptive constancy | `scripts/skills.gd`, `scripts/bee_foraging.gd`, `scripts/hive.gd`, `scripts/game_config.gd`, `scripts/levels.gd`, tests | no -- after PP-10 | high |
-| FR-4 | a headless assertion replaces the C-143 hands-on check | `scripts/scenario_actions.gd`, tests | yes -- admission ignores check ids since 30 Oct 2026 | medium |
 
 **Dependencies.** FR-1 changes no game file. FR-2 waits for FR-1's table;
 if a stage is not better than the one before, a tuning slice (FR-1b) is
@@ -138,46 +137,4 @@ under Adaptive constancy; a sweep of the `recruit_*` values in
 `game_config.gd` to decision 4's gain, which also prices the node.
 Specified fully once PP-10 lands.
 
-## FR-4 -- a headless assertion replaces the C-143 hands-on check
-
-Level: medium -- claude-sonnet-5-5 at medium effort.
-
-**True now.** Dave, on C-143: "I don't have the patience to test this". The
-check asks him to watch that an unmatched scout does not wait at the entrance
-while an established forager does. Nothing asserts a bee's state in a
-scenario: `scenario_actions.gd` has `set_bee_load` but no way to set a bee's
-trip history and no condition that reads bee states.
-
-**When done:**
-
-1. A new assert condition `bee_states` in `scenario_actions.gd`'s assertion
-   checks: for a bee selector, the bee's state name is (or is not) in a listed
-   set, evaluated at the assertion's time.
-2. A `set_bee_stats` action verb, beside `set_bee_load`, that sets
-   `trips_scored` and `avg_collection_rate` on the matched bees.
-3. `test_scenarios/fr4_scout_entrance.json` turns Auto scouting and
-   Auto-recruitment on with `set_config`, then asserts that an unmatched scout
-   (`is_scouting`, no `entrance_mentors`) is not left in
-   `AT_ENTRANCE_SEEKING` and walks back out (`bee_foraging.gd::go_to_exit`,
-   `_leave_hive_and_resume`), while an established forager (`trips_scored` at
-   least `GameConfig.recruit_grace_trips`, `avg_collection_rate` below
-   `recruit_lower_threshold`) waits in `AT_ENTRANCE_SEEKING`.
-   `tests/test_fr4_scout_entrance.py` runs it.
-4. On a pass, the implementer archives C-143 with `python tools/new_check.py
-   --confirm C-143` and edits `checks/ready/C-143.md` if the tool asks.
-
-**Invariants.** No simulation code changes. If the assertion shows a scout
-waiting at the entrance, that is a gameplay bug in `bee_foraging.gd`: stop and
-escalate with the figures, do not fix it in this slice. No hands-on check is
-filed: the assertion replaces it.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] FR-4 -- a headless assertion replaces the C-143 hands-on check**
-- Plan: `plans/now/forager-recruitment.md` -- "FR-4 -- a headless assertion replaces the C-143 hands-on check"
-- Files: `scripts/scenario_actions.gd`, `test_scenarios/fr4_scout_entrance.json`, `tests/test_fr4_scout_entrance.py`, `checks/ready/C-143.md`
-- Check: `python -m unittest tests.test_fr4_scout_entrance` passes (an unmatched scout is not in `AT_ENTRANCE_SEEKING` after its walk and leaves the hive; an established forager below the lower threshold waits there); C-143 is archived; `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/scenario_actions.gd :: "bee_states"`
-- Next after: FR-3 -- owning Auto-recruitment switches it on, passing species with Adaptive constancy (it does not depend on FR-4)
-```
+FR-4 shipped 2026-11-05; its specification is `plans/archive/FR-4_2026-11-05.md`.

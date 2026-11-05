@@ -110,6 +110,10 @@ is a reason to refill it, not to stop while agreed, startable work remains.
   work, or queue work that would invalidate another lane's assumptions.
   Choose another independent slice when there is overlap; if none is safe,
   report the exact conflict rather than changing another lane's scope.
+  Refilling (below) adds two record edits outside the Codex lane, both
+  shown by the refill's gate review: correcting a `## Not in the queue, and
+  why` line or `queue-gated` fence whose gate has cleared, and retagging an
+  unqueued Claude-backlog block the review says this lane may take.
 - Make priority edits on a work branch, keeping the queue and plan blocks
   consistent. Read `plans/README.md`, "Writing or editing a plan", before
   specifying work. Use `tools/refill_lane.py --top-up --lane Codex` for
@@ -124,6 +128,30 @@ is a reason to refill it, not to stop while agreed, startable work remains.
   `finish` does not print it. If a scheduling change cannot be followed by
   implementation, disclose it and the blocker in that session's output.
   Use `Priority change: none` when no independent scheduling change was made.
+
+### Refilling an empty or gated Codex lane
+
+When `tools/slice.ps1 start -Lane Codex` stops with "no unclaimed [Codex]
+item", or `doctor`'s `advice.dry_after` is true, refill the lane in the same
+session and then claim; do not stop or ask Dave first (5 Nov 2026: the lane
+sat empty behind gates that had cleared, because nothing on this route
+reread them).
+
+1. In a `codex/refill-<date>` worktree, run `plans/reference/queue-steward.md`'s
+   `JOB: gates` and then `JOB: refill` yourself with `LANE=Codex` -- the
+   routine the `run-queue` skill dispatches to a steward. It starts with
+   `python tools/refill_lane.py --top-up --lane Codex --dry-run`, whose gate
+   review rechecks every recorded gate against today's branches and queue:
+   open the stale ones, take any Claude-backlog block it lists, and only
+   then specify new `[Codex]` blocks from agreed work in live plans.
+2. Admit through `python tools/refill_lane.py --top-up --lane Codex` (or
+   `--add <id>` per slice, to set the order), run `python tools/check_docs.py`,
+   commit, merge to `master` and push in the same sitting (a docs-only edit
+   takes no ledger row), then run `start -Lane Codex` again and implement
+   the slice it claims. Report the refill on the `Priority change:` line.
+3. If nothing is admissible after that, stop with `Lane blocked:` and, for
+   each candidate, the review's `now:` line and the one event or decision
+   that would clear it -- the routine's `blocked` result, asked of Dave.
 
 ### Risk-proportional closeout
 
@@ -264,7 +292,8 @@ commits distinct.
   `read` field holding the exact command that prints that slice's plan
   section and nothing else. Run the `read` command; that is the whole
   briefing. `doctor -Lane Codex` prints the same thing without claiming
-  anything. Read queue entries only when selecting or checking priorities
+  anything. An empty lane is refilled first ("Refilling an empty or gated
+  Codex lane", above), in the same session. Read queue entries only when selecting or checking priorities
   under "Independent Codex queue priorities"; do not read it whole.
 - Do not read the Claude lane's plan, the archive or Git history to work out
   what to do. `NEXTSTEPS.md` holds two independent lanes, `### Claude lane`

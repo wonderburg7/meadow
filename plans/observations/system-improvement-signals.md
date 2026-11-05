@@ -241,7 +241,7 @@ explicit request from Dave.
   `$unitModules` list, so `verify.ps1` appears in its `Files:`. No file may
   sit in both lanes, so only one lane at a time can hold such a slice.
 - Evidence: NF-1, COL-6, COL-11, NF-2 and the planned T2-1 to T2-4
-  (`plans/now/tier-two.md`) all list `tools/verify.ps1` for that one line;
+  (`plans/archive/tier-two_2026-11-05.md`) all list `tools/verify.ps1` for that one line;
   `tests/source_checks.py::TESTS_NOT_IN_VERIFY` enforces the listing.
 - Consequence: after COL-4 lands, COL-6 (Codex) and the tier-two chain
   (Claude) collide on `verify.ps1` alone, and one lane runs dry.
@@ -750,7 +750,7 @@ explicit request from Dave.
   was rewritten by hand in 7952bbb) and `plans/archive/SP-10_2026-10-15.md`
   holds SP-11's (SP-11 had no live block until the plan review restored it).
   On 15 Oct six more blocks sat that way in `plans/now/run-repairs.md` and
-  `plans/now/tier-two.md`.
+  `plans/archive/tier-two_2026-11-05.md`.
 - Evidence: `git show HEAD:plans/archive/SP-10_2026-10-15.md | grep -n "SP-11"`.
 - Consequence: a gated block lost this way leaves the backlog silently, and
   nothing fails; an admissible one costs a hand repair at closeout.
@@ -964,4 +964,52 @@ explicit request from Dave.
 - Candidate direction: Hypothesis — have `jules_preflight.py` (or the
   processing step) compare the report's swept files with the owned files
   changed since `SINCE`, and return a report that leaves most of them out.
+- Disposition: untriaged
+- Recurrence (5 Nov 2026): the R-architecture report of 4 Nov shows reading
+  evidence for 8 of 86 changed watched files; its findings come from
+  `tools/uncalled.py`. Closed unmerged: a full Claude sweep of the same
+  commit superseded it (`docs/architecture-review-2026-11-04.md`).
+
+
+### 2026-11-04 — the director's later event records need a save shape
+
+- Source: architecture review (`docs/architecture-review-2026-11-04.md`, Hand-offs)
+- Area: save schema (save review)
+- Signal: design decision 15 (`plans/design/event-director.md`) keeps the
+  first crisis under its `first_crisis` save key and runs every later
+  director event as a record keyed by event id; decision 12 says a save
+  without the schedule field reads as "none". Where those later records live
+  in the save (one new key holding all of them, or the first crisis folded
+  in with a migration) is not decided.
+- Evidence: `save_game.gd` (`"first_crisis"` key), `saving.gd`
+  (`restore_first_crisis` call), `main.gd::restore_first_crisis`.
+- Consequence: the first EV slice would otherwise pick the shape alone, and
+  a per-event key would bring back the per-event save cost decision 15
+  removes.
+- Candidate direction: Hypothesis — one additive `director` key holding the
+  records by id, `first_crisis` unchanged, settled before CQ-R2's section is
+  written.
+
+### 2026-11-05 — a returned Jules branch still holds its files for `slice.ps1 owner`
+
+- Source: R-architecture Jules report processing, 5 Nov 2026 (`docs/architecture-review-2026-11-04.md` F4 and Hand-offs)
+- Area: Jules branch lifecycle / file ownership
+- Signal: `jules/s-3-marker-reparent-check-9499576018780718307` was returned
+  on 2 Nov (ledger row; correction task J-47 asks for a clean two-file
+  branch), yet `tools/slice.ps1 owner` still reports it as owning
+  `scripts/bee.gd`, `scripts/hive.gd`, `scripts/main.gd` and `NEXTSTEPS.md`.
+- Evidence: `tools/slice.ps1 owner scripts/bee.gd NEXTSTEPS.md`;
+  `git diff --stat master...origin/jules/s-3-marker-reparent-check-9499576018780718307`
+  (28 files); the Status lines of `plans/now/code-health.md` (CQ-M5b, CQ-M6,
+  CQ-R3) and `plans/now/play-notes-hud.md` cite it as a gate; the review
+  could not remove three one-line dead helpers in `bee.gd`/`hive.gd` for it.
+- Consequence: work that a returned report will never merge waits on it, and
+  reviews cannot make one-line fixes in the files it spans.
+- Cause: `tools/slice.ps1`'s owner check takes every unmerged
+  `origin/jules/*` branch (`branch -r --no-merged ... origin/jules/*`) and
+  never reads the ledger, whereas `tools/jules_preflight.py`'s ownership check
+  already says a returned or closed branch owns nothing. The two disagree.
+- Candidate direction: Hypothesis — have `owner` skip a branch whose latest
+  ledger row is `returned` or `closed`, as `jules_preflight.py` does, or
+  close a returned branch once its correction task is filed.
 - Disposition: untriaged
