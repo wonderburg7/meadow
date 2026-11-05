@@ -50,7 +50,6 @@ class TestGoalDefaultCheck(unittest.TestCase):
 
     def test_mutation_omitting_explicit_fails(self) -> None:
         """A cell_count condition with designated but lacking 'explicit: true' is flagged."""
-        # Mutation: like stage 1.13 before the fix
         content = (
             'const STAGES := [{\n'
             '    "id": "1.13",\n'
@@ -59,7 +58,7 @@ class TestGoalDefaultCheck(unittest.TestCase):
         )
         problems = goal_default_check.check_content(content, "test.gd")
         self.assertEqual(len(problems), 1)
-        self.assertIn("cell_count specifies 'designated' without '\"explicit\": true'", problems[0])
+        self.assertIn("cell_count specifies 'designated' without 'explicit: true'", problems[0])
         self.assertIn("test.gd:3", problems[0])
 
     def test_mutation_explicit_false_fails(self) -> None:
@@ -72,19 +71,53 @@ class TestGoalDefaultCheck(unittest.TestCase):
         )
         problems = goal_default_check.check_content(content, "test.gd")
         self.assertEqual(len(problems), 1)
-        self.assertIn("cell_count specifies 'designated' without '\"explicit\": true'", problems[0])
+        self.assertIn("cell_count specifies 'designated' without 'explicit: true'", problems[0])
 
-    def test_comments_and_strings_ignored(self) -> None:
-        """Comments mentioning unguarded patterns are ignored."""
+    def test_single_quoted_cell_count_and_keys(self) -> None:
+        """Single-quoted strings in dictionary syntax are correctly tokenized and checked."""
+        bad_single = "const STAGES = [{'condition': {'cell_count': {'designated': 'pollen'}}}]"
+        problems = goal_default_check.check_content(bad_single, "test.gd")
+        self.assertEqual(len(problems), 1)
+        self.assertIn("cell_count specifies 'designated' without 'explicit: true'", problems[0])
+
+        good_single = "const STAGES = [{'condition': {'cell_count': {'designated': 'pollen', 'explicit': true}}}]"
+        self.assertEqual(goal_default_check.check_content(good_single, "test.gd"), [])
+
+    def test_note_string_with_explicit_fragment_does_not_mask_explicit_false(self) -> None:
+        """A note/doc string containing an explicit-true fragment does not mask an explicit-false condition."""
         content = (
-            '# Note: "cell_count": {"designated": "pollen"}\n'
-            'const STAGES := [{\n'
-            '    "id": "1.13",\n'
-            '    "condition": {"cell_count": {"designated": "pollen", "explicit": true, "at_least": 1}}\n'
+            'const STAGES = [{\n'
+            '    "note": "fragment with explicit: true here",\n'
+            '    "condition": {"cell_count": {"designated": "pollen", "explicit": false}}\n'
+            '}]\n'
+        )
+        problems = goal_default_check.check_content(content, "test.gd")
+        self.assertEqual(len(problems), 1)
+        self.assertIn("cell_count specifies 'designated' without 'explicit: true'", problems[0])
+
+    def test_hint_string_with_bad_dictionary_does_not_raise(self) -> None:
+        """A string (e.g. user prompt or hint) containing a raw unparsed dict is not treated as code."""
+        content = (
+            'const STAGES = [{\n'
+            '    "hint": \'Example: {"cell_count": {"designated": "pollen"}}\',\n'
+            '    "condition": {"cell_count": {"designated": "pollen", "explicit": true}}\n'
             '}]\n'
         )
         problems = goal_default_check.check_content(content, "test.gd")
         self.assertEqual(problems, [])
+
+    def test_real_stage_mutation_1_13(self) -> None:
+        """Mutating the real stage 1.13 in scripts/challenge_stages.gd to omit explicit fails."""
+        real_content = (ROOT / "scripts" / "challenge_stages.gd").read_text(encoding="utf-8")
+        # Mutate line 251 only (stage 1.13): remove `"explicit": true, `
+        target_stage_1_13 = '"id": "1.13", "goal": "pollen_cell_designated", "condition": {"cell_count": {"designated": "pollen", "explicit": true, "at_least": 1}}'
+        mutated_stage_1_13 = '"id": "1.13", "goal": "pollen_cell_designated", "condition": {"cell_count": {"designated": "pollen", "at_least": 1}}'
+        mutated = real_content.replace(target_stage_1_13, mutated_stage_1_13)
+        self.assertNotEqual(real_content, mutated)
+        problems = goal_default_check.check_content(mutated, "challenge_stages.gd")
+        self.assertEqual(len(problems), 1)
+        self.assertIn("challenge_stages.gd:251", problems[0])
+        self.assertIn("cell_count specifies 'designated' without 'explicit: true'", problems[0])
 
     def test_cli_on_temporary_file(self) -> None:
         """CLI main() fails with exit code 1 when bad file is passed."""

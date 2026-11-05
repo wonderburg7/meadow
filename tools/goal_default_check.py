@@ -25,8 +25,9 @@ Usage
 from __future__ import annotations
 
 import argparse
-import re
+import io
 import sys
+import tokenize
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -35,68 +36,123 @@ DEFAULT_FILES = [
     ROOT / "scripts" / "challenge_stages.gd",
 ]
 
-# Match "cell_count": { ... } blocks
-CELL_COUNT_BLOCK_RE = re.compile(
-    r'"cell_count"\s*:\s*\{([^}]+)\}',
-    re.DOTALL,
-)
 
-
-def strip_code(line: str) -> str:
-    """Drop comments from a line of code, preserving strings."""
-    out = []
-    i = 0
-    n = len(line)
-    in_quote = ""
-    while i < n:
-        c = line[i]
-        if in_quote:
-            if c == "\\":
-                out.append(c)
-                if i + 1 < n:
-                    out.append(line[i + 1])
-                    i += 2
-                    continue
-            elif c == in_quote:
-                in_quote = ""
-            out.append(c)
-        else:
-            if c in ('"', "'"):
-                in_quote = c
-                out.append(c)
-            elif c == "#":
-                break
-            else:
-                out.append(c)
-        i += 1
-    return "".join(out)
+def _clean_string(s: str) -> str:
+    """Extract string value without outer quotes."""
+    if (s.startswith('"""') and s.endswith('"""')) or (s.startswith("'''") and s.endswith("'''")):
+        return s[3:-3]
+    if (s.startswith('"') and s.endswith('"')) or (s.startswith("'") and s.endswith("'")):
+        return s[1:-1]
+    return s
 
 
 def check_content(content: str, filename: str = "challenge_stages.gd") -> list[str]:
     """Check text content for cell_count designation conditions lacking explicit requirement."""
+    try:
+        tokens = list(tokenize.tokenize(io.BytesIO(content.encode("utf-8")).readline))
+    except Exception as err:
+        return [f"{filename}: could not tokenize file ({err})"]
+
     problems: list[str] = []
+    i = 0
+    n = len(tokens)
 
-    # Strip line comments while tracking character positions to find line numbers
-    lines = content.splitlines(keepends=True)
-    code_lines = [strip_code(line) for line in lines]
-    clean_text = "".join(code_lines)
+    while i < n:
+        tok = tokens[i]
+        # Check if token is string literal evaluating to "cell_count"
+        if tok.type == tokenize.STRING:
+            s_val = _clean_string(tok.string)
+            if s_val == "cell_count":
+                # Look ahead for colon and opening brace
+                j = i + 1
+                while j < n and tokens[j].type in (tokenize.NL, tokenize.COMMENT):
+                    j += 1
+                if j < n and tokens[j].exact_type == tokenize.COLON:
+                    j += 1
+                    while j < n and tokens[j].type in (tokenize.NL, tokenize.COMMENT):
+                        j += 1
+                    if j < n and tokens[j].exact_type == tokenize.LBRACE:
+                        # Extract inner dictionary tokens matching this brace level
+                        brace_depth = 1
+                        k = j + 1
+                        inner_tokens: list[tokenize.TokenInfo] = []
+                        while k < n and brace_depth > 0:
+                            if tokens[k].exact_type == tokenize.LBRACE:
+                                brace_depth += 1
+                            elif tokens[k].exact_type == tokenize.RBRACE:
+                                brace_depth -= 1
+                                if brace_depth == 0:
+                                    break
+                            inner_tokens.append(tokens[k])
+                            k += 1
 
-    for match in CELL_COUNT_BLOCK_RE.finditer(clean_text):
-        block = match.group(1)
-        # Check if the cell_count specification specifies "designated"
-        has_designated = re.search(r'"designated"\s*:', block) is not None
-        if not has_designated:
-            continue
+                        # Parse key-value pairs at top level of inner dictionary
+                        keys_and_values: dict[str, list[tokenize.TokenInfo]] = {}
+                        depth = 0
+                        current_key: str | None = None
+                        expecting_key = True
+                        val_tokens: list[tokenize.TokenInfo] = []
 
-        # Check if it specifies "explicit": true
-        has_explicit_true = re.search(r'"explicit"\s*:\s*true\b', block) is not None
-        if not has_explicit_true:
-            # Find line number of the match
-            start_pos = match.start()
-            line_no = clean_text[:start_pos].count("\n") + 1
-            problems.append(
-                f"{filename}:{line_no} cell_count specifies 'designated' without '\"explicit\": true': {match.group(0)}"
-            )
+                        m = 0
+                        while m < len(inner_tokens):
+                            t = inner_tokens[m]
+                            if t.exact_type in (tokenize.LBRACE, tokenize.LSQB, tokenize.LPAR):
+                                depth += 1
+                                if not expecting_key:
+                                    val_tokens.append(t)
+                            elif t.exact_type in (tokenize.RBRACE, tokenize.RSQB, tokenize.RPAR):
+                                depth -= 1
+                                if not expecting_key:
+                                    val_tokens.append(t)
+                            elif depth == 0:
+                                if expecting_key:
+                                    if t.type == tokenize.STRING:
+                                        k_str = _clean_string(t.string)
+                                        # Look ahead for COLON
+                                        m_next = m + 1
+                                        while (
+                                            m_next < len(inner_tokens)
+                                            and inner_tokens[m_next].type
+                                            in (tokenize.NL, tokenize.COMMENT)
+                                        ):
+                                            m_next += 1
+                                        if (
+                                            m_next < len(inner_tokens)
+                                            and inner_tokens[m_next].exact_type == tokenize.COLON
+                                        ):
+                                            current_key = k_str
+                                            expecting_key = False
+                                            val_tokens = []
+                                            m = m_next
+                                elif t.exact_type == tokenize.COMMA:
+                                    if current_key is not None:
+                                        keys_and_values[current_key] = val_tokens
+                                        current_key = None
+                                        expecting_key = True
+                                        val_tokens = []
+                                else:
+                                    val_tokens.append(t)
+                            else:
+                                val_tokens.append(t)
+                            m += 1
+
+                        if current_key is not None:
+                            keys_and_values[current_key] = val_tokens
+
+                        # If "designated" is specified, require "explicit": true
+                        if "designated" in keys_and_values:
+                            explicit_tokens = keys_and_values.get("explicit", [])
+                            meaningful = [
+                                t
+                                for t in explicit_tokens
+                                if t.type not in (tokenize.NL, tokenize.COMMENT)
+                            ]
+                            has_explicit_true = len(meaningful) == 1 and meaningful[0].string == "true"
+                            if not has_explicit_true:
+                                problems.append(
+                                    f"{filename}:{tok.start[0]} cell_count specifies 'designated' without 'explicit: true'"
+                                )
+        i += 1
 
     return problems
 
