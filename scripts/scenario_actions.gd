@@ -63,7 +63,7 @@ const LOCAL_WHEN_KEYS := [
 	"queen_watch_hits_at_most", "in_hive_view", "camera_following_queen",
 	"challenge_overflow_discards", "cell_empty", "selected_mine_queue_at_least",
 	"challenge_goal_met", "queen_build_offered", "first_crisis_state", "first_crisis_recovered",
-	"cell_tone_strength",
+	"cell_tone_strength", "bee_states",
 ]
 
 # --- run_pending --------------------------------------------------
@@ -307,6 +307,8 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_set_queen_load(main, action)
 		"set_bee_load":
 			_do_set_bee_load(main, action)
+		"set_bee_stats":
+			_do_set_bee_stats(main, action)
 		"set_cell_contents":
 			_do_set_cell_contents(main, action)
 		"empty_cell":
@@ -406,6 +408,9 @@ static func _when_met(main: Node2D, when: Dictionary) -> bool:
 			return false
 		if toned_cell.tone_strength < float(toned.get("min", 0.0)) or toned_cell.tone_strength > float(toned.get("max", 1.0)):
 			return false
+	if when.has("bee_states"):
+		if not _check_bee_states(main, when["bee_states"]).get("ok", false):
+			return false
 	if when.has("selected_mine_queue_at_least"):
 		if main.selected_bees.is_empty() or not is_instance_valid(main.selected_bees[0]):
 			return false
@@ -495,9 +500,12 @@ static func _resolve_bees(main: Node2D, target: Dictionary) -> Array:
 		var ids: Array = target["bee_ids"]
 		return bees.filter(func(b: Variant) -> bool: return ids.has(b.bee_id))
 
-	if target.has("current_role"):
-		var role_id: int = main.Roles.id_for_key(target["current_role"])
+	if target.has("current_role") or target.has("is_scouting"):
+		var role_id: int = main.Roles.id_for_key(target.get("current_role", "forager"))
 		var matches: Array = bees.filter(func(b: Variant) -> bool: return b.role == role_id)
+		if target.has("is_scouting"):
+			var want_scouting: bool = bool(target["is_scouting"])
+			matches = matches.filter(func(b: Variant) -> bool: return b.is_scouting == want_scouting)
 		var count: int = int(target.get("count", matches.size()))
 		return matches.slice(0, count)
 
@@ -1206,6 +1214,22 @@ static func _do_set_bee_load(main: Node2D, action: Dictionary) -> void:
 		bee._update_label()
 	_log("set_bee_load", str(action), "accepted", "%d bee(s)" % bees.size())
 
+## FR-4. {"target": <bee selector>, "trips_scored": n, "avg_collection_rate": r}
+## -- either field optional. Writes the two fields a bee's trip history leaves
+## (bee_foraging.gd::score_trip) and nothing else, so the bee's own routine
+## decides what the history means. Rejected when no bee matches.
+static func _do_set_bee_stats(main: Node2D, action: Dictionary) -> void:
+	var bees: Array = _resolve_bees(main, action.get("target", {}))
+	if bees.is_empty():
+		_log("set_bee_stats", str(action), "rejected", "no matching bees")
+		return
+	for bee: Variant in bees:
+		if action.has("trips_scored"):
+			bee.trips_scored = int(action["trips_scored"])
+		if action.has("avg_collection_rate"):
+			bee.avg_collection_rate = float(action["avg_collection_rate"])
+	_log("set_bee_stats", str(action), "accepted", "%d bee(s)" % bees.size())
+
 ## C1F-2. {"hex": [q, r] (or "cell": {"built_index": n}), "resource": "nectar",
 ## "amount": n} -- through the cell's own add_resource, the function a
 ## deposit calls. Checks the cell now holds that resource, since add_resource
@@ -1396,6 +1420,8 @@ static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> D
 		if Session.winter_here == bool(condition["winter_here"]):
 			return {"ok": true, "reason": ""}
 		return {"ok": false, "reason": "winter_here: %s" % Session.winter_here}
+	if condition.has("bee_states"):
+		return _check_bee_states(main, condition["bee_states"])
 	if condition.has("skill_owned"):
 		var owned: bool = Session.progression != null and Session.progression.is_owned(str(condition["skill_owned"]))
 		if owned == bool(condition.get("owned", true)):
@@ -1404,6 +1430,28 @@ static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> D
 	if _when_met(main, condition):
 		return {"ok": true, "reason": ""}
 	return {"ok": false, "reason": "condition not met" + _queen_summary(main, condition)}
+
+## FR-4: {"bee_states": {"target": <bee selector>, "in": [names]} or
+## "not_in": [names], "mode": "all" (default) | "any"} -- the matched bees'
+## State names (bee_enums.gd) are, or are not, in the list, now. No matching
+## bee fails: an assertion about nobody proves nothing.
+static func _check_bee_states(main: Node2D, spec: Dictionary) -> Dictionary:
+	var bees: Array = _resolve_bees(main, spec.get("target", {}))
+	if bees.is_empty():
+		return {"ok": false, "reason": "no matching bees"}
+	var listed: Array = spec.get("in", spec.get("not_in", []))
+	var wants_in: bool = spec.has("in")
+	var want_any: bool = str(spec.get("mode", "all")) == "any"
+	var seen: Array = []
+	var hits := 0
+	for bee: Variant in bees:
+		var state_name: String = bee.State.keys()[bee.state]
+		seen.append("%d:%s" % [bee.bee_id, state_name])
+		if listed.has(state_name) == wants_in:
+			hits += 1
+	if (hits > 0) if want_any else (hits == bees.size()):
+		return {"ok": true, "reason": ""}
+	return {"ok": false, "reason": "bee states %s, wanted %s %s (%s)" % [seen, "in" if wants_in else "not in", listed, "any" if want_any else "all"]}
 
 ## SV-1: {"save_slot": "Run name", "named": true, "checkpoint_files": n,
 ## "next_checkpoint": n, "day_matches_saved": true} -- every key but
