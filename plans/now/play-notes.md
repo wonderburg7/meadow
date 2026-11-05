@@ -1,7 +1,7 @@
 # Play notes -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PN-1 -- the typeface heights, with an instrument | Dependency: none for PN-1 to PN-6; the balance and `bee.gd` slices are in `plans/now/play-notes-config.md` and the HUD slices in `plans/now/play-notes-hud.md` | Verified: 2026-10-31
+Status: active | Owner: Dave / Claude Code | Next: PN-2 -- rename a save in the saves list | Dependency: none for PN-1 to PN-6; the balance and `bee.gd` slices are in `plans/now/play-notes-config.md` and the HUD slices in `plans/now/play-notes-hud.md` | Verified: 2026-10-31
 
 ## Objective
 
