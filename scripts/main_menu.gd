@@ -224,7 +224,7 @@ func _build_left_content(left_pane: VBoxContainer) -> void:
 
 	# Challenges upper-left, Scenarios lower-left (UI-M) -- each group gets
 	# an equal EXPAND_FILL half instead of today's single stacked order.
-	for group in GROUPS:
+	for group: Variant in GROUPS:
 		var group_column := VBoxContainer.new()
 		group_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		group_column.add_theme_constant_override("separation", 6)
@@ -335,7 +335,7 @@ func _build_build_id(right_pane: VBoxContainer) -> void:
 
 static func _build_id_text() -> String:
 	if ResourceLoader.exists("res://scripts/build_info.gd"):
-		var build_info = load("res://scripts/build_info.gd")
+		var build_info: Variant = load("res://scripts/build_info.gd")
 		return str(build_info.BUILD_ID)
 	return "development build"
 
@@ -417,7 +417,7 @@ func _hex_row_height() -> float:
 
 func _make_honeycomb_strip(group_key: String) -> Control:
 	var stages_in_group: Array = []
-	for stage in STAGES:
+	for stage: Variant in STAGES:
 		if stage.group == group_key:
 			stages_in_group.append(stage)
 
@@ -436,7 +436,7 @@ func _make_honeycomb_strip(group_key: String) -> Control:
 	)
 	strip.size = strip.custom_minimum_size
 
-	for i in range(stages_in_group.size()):
+	for i: int in range(stages_in_group.size()):
 		var tile := _make_hex_tile(stages_in_group[i])
 		tile.position = Vector2(
 			paint_inset + float(i) * HEX_STEP_X,
@@ -460,7 +460,7 @@ static func hex_fit_size(font: Font, text: String, avail: Vector2, base: int, li
 
 
 static func hex_text_fits(font: Font, text: String, avail: Vector2, size: int, line_spacing: int) -> bool:
-	for word in text.split(" ", false):
+	for word: Variant in text.split(" ", false):
 		if font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > avail.x:
 			return false
 	var flags := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND | TextServer.BREAK_ADAPTIVE
@@ -577,9 +577,9 @@ func _make_hex_tile(stage: Dictionary) -> Control:
 	tile.add_child(button)
 
 	var level_value: int = stage.level
-	button.pressed.connect(func(): _select_stage(stage))
-	button.mouse_entered.connect(func(): _apply_hex_colors(level_value, "hover"))
-	button.mouse_exited.connect(func(): _refresh_hex_state(level_value))
+	button.pressed.connect(func() -> void: _select_stage(stage))
+	button.mouse_entered.connect(func() -> void: _apply_hex_colors(level_value, "hover"))
+	button.mouse_exited.connect(func() -> void: _refresh_hex_state(level_value))
 
 	_hex_nodes[level_value] = {"border": border, "fill": fill, "tick": tick}
 	_apply_hex_colors(level_value, "normal")
@@ -600,14 +600,14 @@ func _refresh_hex_state(level: int) -> void:
 	_apply_hex_colors(level, "selected" if level == _selected_level else "normal")
 
 func _refresh_ticks() -> void:
-	for level in _hex_nodes.keys():
+	for level: Variant in _hex_nodes.keys():
 		var stage := _stage_for_level(level)
 		if stage.is_empty():
 			continue
 		_hex_nodes[level].tick.visible = _is_completed(stage)
 
 func _stage_for_level(level: int) -> Dictionary:
-	for stage in STAGES:
+	for stage: Variant in STAGES:
 		if stage.level == level:
 			return stage
 	return {}
@@ -625,7 +625,7 @@ func _select_stage(stage: Dictionary) -> void:
 	_rebuild_detail_pane(stage)
 
 func _rebuild_detail_pane(stage: Dictionary) -> void:
-	for child in _detail_column.get_children():
+	for child: Variant in _detail_column.get_children():
 		child.queue_free()
 
 	var title := Label.new()
@@ -653,7 +653,7 @@ func _rebuild_detail_pane(stage: Dictionary) -> void:
 	start_btn.text = "Start"
 	start_btn.custom_minimum_size = Vector2(140, 32)
 	_style_button(start_btn)
-	start_btn.pressed.connect(func(): _choose(stage))
+	start_btn.pressed.connect(func() -> void: _choose(stage))
 	_detail_column.add_child(UI.with_info(start_btn, "Restarts the run with this choice. Anything unsaved in the colony you have now is lost."))
 
 func _make_note_label(text: String) -> Label:
@@ -670,13 +670,13 @@ func _make_note_label(text: String) -> Label:
 func _make_preset_row(stage: Dictionary) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
-	for preset in ScenarioPresets.PRESETS:
+	for preset: Variant in ScenarioPresets.PRESETS:
 		var btn := Button.new()
 		btn.text = preset.label
 		btn.custom_minimum_size = Vector2(90, 28)
 		var key: String = preset.key
 		_style_button(btn, key == _selected_preset_key)
-		btn.pressed.connect(func():
+		btn.pressed.connect(func() -> void:
 			_selected_preset_key = key
 			_custom_values.clear()
 			_rebuild_detail_pane(stage)
@@ -687,7 +687,7 @@ func _make_preset_row(stage: Dictionary) -> Control:
 func _make_preset_description() -> Control:
 	var col := VBoxContainer.new()
 	var preset := ScenarioPresets.get_preset(_selected_preset_key)
-	for line in preset.plain_english:
+	for line: Variant in preset.plain_english:
 		var lbl := Label.new()
 		lbl.text = "• %s" % line
 		lbl.theme_type_variation = "Small"
@@ -698,7 +698,7 @@ func _make_custom_controls() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 3)
 	var preset := ScenarioPresets.get_preset("custom")
-	for field in preset.customizable_keys:
+	for field: Variant in preset.customizable_keys:
 		col.add_child(_make_custom_row(field))
 	return col
 
@@ -734,12 +734,12 @@ func _make_custom_row(field: Dictionary) -> Control:
 	_style_button(plus)
 	row.add_child(plus)
 
-	minus.pressed.connect(func():
+	minus.pressed.connect(func() -> void:
 		var v: float = max(field.min, float(_custom_values.get(key, baseline)) - float(field.step))
 		_custom_values[key] = v
 		value_label.text = "%.2f" % v
 	)
-	plus.pressed.connect(func():
+	plus.pressed.connect(func() -> void:
 		var v: float = min(field.max, float(_custom_values.get(key, baseline)) + float(field.step))
 		_custom_values[key] = v
 		value_label.text = "%.2f" % v
@@ -764,7 +764,7 @@ func _uses_presets(stage: Dictionary) -> bool:
 	return stage.group == "starter" and bool(stage.get("presets", true))
 
 func _style_button(button: Button, selected: bool = false) -> void:
-	for state in UiTheme.BUTTON_STATES:
+	for state: Variant in UiTheme.BUTTON_STATES:
 		if state == "normal":
 			button.add_theme_stylebox_override("normal", UiTheme.button_stylebox("selected" if selected else "normal"))
 		else:
@@ -775,7 +775,7 @@ func _is_challenge_complete(level: int) -> bool:
 
 func _is_scenario_played(level: int) -> bool:
 	var played: Dictionary = PlayerProfile.played_scenarios(_profile_data)
-	for k in played.keys():
+	for k: Variant in played.keys():
 		if str(k).begins_with("%d_" % level):
 			return true
 	return false
