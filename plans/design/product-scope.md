@@ -1,7 +1,7 @@
 # Meadow — product scope and development sequence
 
 <!-- CONTEXT: plan | LAYER: design -->
-Status: selected design, not scheduled | Owner: Dave | Next: the closed alpha's remaining route -- Easy (ED-2, ED-3, `plans/now/difficulty.md`), the crisis and calendar re-pin (PN-11, `plans/now/play-notes-config.md`; EV-0, `plans/now/event-director.md`), the gyne route's price sweep (PP-10, `plans/now/pollination.md`), the event director's alpha events (EV-1 onward, after CQ-R2 and ED-3) and the five-gate evidence (AR-4, `plans/now/alpha-route-evidence.md`); the crisis (FC-2), Work Priorities, short-term goals and the Colony Run definition are built; the goal model's data, the job catalogue/dispatcher and the stable catalogues are `plans/archive/architecture-review_2026-09-24.md`'s C, G and B chains (Dave, 11 Sep 2026) | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-11-05
+Status: selected design, not scheduled | Owner: Dave | Next: the closed alpha's remaining route -- Easy (ED-2, ED-3, `plans/now/difficulty.md`), the crisis and calendar re-pin (PN-11, `plans/now/play-notes-config.md`; EV-0, `plans/now/event-director.md`), the tier-2 then gyne-route price sweeps (T2-7b, `plans/now/tier-two.md`; PP-10, `plans/now/pollination.md`), the event director's alpha events (EV-1 onward, after CQ-R2 and ED-3) and the five-gate evidence (AR-6, then AR-4, `plans/now/alpha-route-evidence.md`); the crisis (FC-2), Work Priorities, short-term goals and the Colony Run definition are built; the goal model's data, the job catalogue/dispatcher and the stable catalogues are `plans/archive/architecture-review_2026-09-24.md`'s C, G and B chains (Dave, 11 Sep 2026) | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-11-05
 
 This is Meadow's high-level product map. It defines what the game is trying to
 prove, what is essential for the first feedback build, which foundations later
@@ -73,15 +73,25 @@ reaches for them without being told to.
 | About 60 minutes | The colony enters and survives its first winter. |
 | About 90 minutes | After emerging from winter, the colony raises and releases gynes, reaches formal victory and may continue. |
 
-**How the gates are judged (Dave, 14 and 16 Oct 2026).** The headless
-pacing report (`tools/pacing_gates.py`) judges every timed gate on the run's
-calendar, not on minutes converted at 1x: the first worker by day 3; first
-automation on days 5 to 8 (the first tier-2 purchase lands around day 5,
-and Automation needs two other tier-2 nodes); winter survival on the run's
-winter schedule; the first gyne inside the second summer's mating window.
-The minutes above stay the experience budget a played run is checked
-against (C-139 for the first worker). Built by AR-5 and AR-4
-(`plans/now/alpha-route-evidence.md`).
+**How the gates are judged (Dave, 14 and 16 Oct 2026; restated on the
+calendar 5 Nov 2026, product review D2).** Each outcome has a day window on
+the run's calendar, and `tools/pacing_gates.py` judges the headless reference
+route against those days, never minutes converted at 1x:
+
+| Outcome | Calendar target | Set by |
+| --- | --- | --- |
+| First worker | by Day 9 (the reference route's median was 8.41 on 5 Nov 2026) | AR-6, `plans/now/alpha-route-evidence.md` |
+| First automation | Days 5 to 8 (first tier-2 purchase around Day 5) | progression.md step 8 |
+| Crisis | warned and met inside Days 12 to 15 | PN-11, `plans/now/play-notes-config.md` |
+| Winter | entered about Day 38, survived on the run's schedule | EV-0, `plans/now/event-director.md` |
+| Gynes, victory | Gyne rearing affordable in the first 11 days after winter; gynes sent in the second summer's mating window | PP-10, `plans/now/pollination.md` |
+
+At the default 200-second day the whole arc is about 50 days, near 170
+minutes at 1x. The minutes in the table above are the experience budget of a
+played run that uses fast-forward through quiet stretches, as this section's
+opening says; §13's gate reviews time a played run against them (C-139 for
+the first worker). AR-4 (`plans/now/alpha-route-evidence.md`) records all
+five, the crisis included.
 
 The 20-minute crisis uses the bounded readiness gate accepted for FC-1 in
 `plans/archive/crisis-readiness_2026-10-17.md`: early automation, an able forager and food
@@ -124,6 +134,10 @@ Use these labels in the product map so "planned" is never mistaken for
   starvation, disease pressure, seasons, winter and gyne scoring;
 - flowers with flowering windows and resource replenishment;
 - rain/weather foundations, a rival hive and crab-spider predator foundations;
+- drones laid by a mated queen in cells the player marks (DR-1, DR-2), and
+  hard outer soil that needs Mighty Mandible to dig (HS-1, HS-2) -- alpha
+  content since 5 Nov 2026 (product review D3); AR-4's reference run records
+  what they cost;
 - Challenges, Scenarios, stage gating, Dr Gallerin guidance and tutorial
   checkpoints;
 - save/load foundations, settings, accessibility options, fog of war,
@@ -166,7 +180,7 @@ These are part of alpha stabilisation. They should continue through
 - resource production-versus-consumption, missing-workforce, waiting/travel and
   blocked-work diagnostics;
 - progress-triggered skill discovery for the feedback-run policy;
-- the retained alpha skill set and one selected route to Gyne Rearing;
+- the retained alpha skill set (Mighty Mandible included) and one selected route to Gyne Rearing;
 - Backup Roles, early automation and Tier-3 Work Priorities progression;
 - Bee Bread production, larval use and adult consequences;
 - rain sensing/recall, predator avoidance and a readiness-aware crisis;
@@ -297,7 +311,7 @@ unplayed queen. It settles:
 
 - guards, combat, invading or robbing other colonies;
 - nectar robbing and robber defence;
-- drones, medicine, auto-defence/auto-attack;
+- medicine, auto-defence/auto-attack (drones moved into the alpha, 5 Nov 2026);
 - drought, Adjustment Panel, Chemical Cascade and Extended Backup Roles;
 - public Scenario/environment editor, sharing, moderation and distribution;
 - a 3D terrain conversion;
@@ -723,7 +737,7 @@ flowchart TD
     subgraph PARKED["Protected ideas — retained, but cannot delay closed alpha"]
         direction LR
         COMBAT_LATER["Guards · combat · invading/robbing · auto-defence"]
-        BIOLOGY_LATER["Drones · medicine · temperature · waste · temporal polyethism"]
+        BIOLOGY_LATER["Medicine · temperature · waste · temporal polyethism"]
         WORLD_LATER["Drought · multiple biomes · 3D terrain"]
         CREATOR_LATER["Public Scenario/environment editor<br/>sharing · moderation · distribution"]
         LAUNCH_LATER["Full localisation · launch-scale audio/art<br/>price · studio identity · charity model"]

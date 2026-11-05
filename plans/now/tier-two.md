@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-7b -- the tier-2 price sweep T2-7 deferred (Dave, 11 Oct 2026: the alpha arc makes no honey, so no median can land in band until AR-4's arc buys a Honey worker); specified when AR-4 lands | Dependency: T2-7b waits for AR-4 (`plans/now/alpha-route-evidence.md`), which waits for PP-10 (`plans/now/pollination.md`, split from PP-9 27 Oct 2026) | Verified: 2026-11-02
+Status: active | Owner: Dave / Claude Code | Next: T2-7b -- the tier-2 price sweep T2-7 deferred; it runs after EV-0 and before PP-10 (Dave, 5 Nov 2026, product review D4) and is specified by the product review once Dave answers its D5 (honey before Day 5) | Dependency: T2-7b waits for EV-0 (`plans/now/event-director.md`); PP-10 (`plans/now/pollination.md`) waits for T2-7b | Verified: 2026-11-05
 
 ## Objective
 
@@ -35,12 +35,13 @@ What the open slices build on:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-7b | The tier-2 price sweep T2-7 deferred: tier-2 costs set so the arc's first tier-2 purchase lands around day 5 | `scripts/skills.gd`, `plans/design/progression.md`, tests; specified when AR-4 lands | no -- after AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker | medium |
+| T2-7b | The tier-2 price sweep T2-7 deferred: tier-2 costs set so the arc's first tier-2 purchase lands around day 5 | `scripts/skills.gd`, `plans/design/progression.md`, tests; specified by the product review after D5 | no -- after EV-0 (`plans/now/event-director.md`); before PP-10 | medium |
 
-**Dependencies.** T2-7b waits for AR-4
-(`plans/now/alpha-route-evidence.md`): the alpha arc makes no honey, so the
-sweep's median cannot land in band before AR-4's arc buys a Honey worker
-(Dave, 11 Oct 2026); it prices NF-4's Colony tier-2 node and includes
+**Dependencies.** T2-7b follows EV-0 (`plans/now/event-director.md`) and
+precedes PP-10 (`plans/now/pollination.md`), so the gyne route is priced on
+final tier-2 prices (Dave, 5 Nov 2026, product review D4). The 11 Oct reason for waiting on AR-4 (the arc
+made no honey) no longer holds: PP-11's route reports `first_tier2_day` on
+every seed (5 Nov 2026: days 24.16, 53.02 and 27.22). It prices NF-4's Colony tier-2 node and includes
 BB-2's 15-day unfed-worker rule. FR-2 adds Auto scouting as a third
 Foraging tier-2 node; PP-10 prices it, so T2-7b leaves it alone. Open when
 T2-7b is specified: whether BB-4's Challenge routes are re-checked at the
@@ -62,4 +63,4 @@ T2-15 shipped 2026-11-02; its specification is `plans/archive/T2-15_2026-11-02.m
 
 ## Not in the queue, and why
 
-- **T2-7b** -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for AR-4 (`plans/now/alpha-route-evidence.md`), whose arc buys a Honey worker, and is specified when it lands.
+- **T2-7b** -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for EV-0 (`plans/now/event-director.md`) and runs before PP-10 (Dave, 5 Nov 2026, product review D4).

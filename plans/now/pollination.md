@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-10 (PP-11 landed 1 Nov 2026: the reference route owns Pollinator points on every seed and first affords Gyne rearing on days 60.31, 58.10 and 63.01) -- the sweep prices the route so Gyne rearing is first affordable after the first winter (Dave split PP-9, 27 Oct 2026: PP-9 builds the route, PP-10 the sweep; Dave narrowed PP-9 to its headless tools later that day and moved the route to PP-11) | Dependency: PP-6 followed FR-2 (Dave 14 Oct 2026; landed 25 Oct 2026); PP-9 follows PP-6; PP-11 follows PP-9; PP-10 follows PP-11; AR-4 (`plans/now/alpha-route-evidence.md`), T2-7b (through AR-4) and FR-3 wait for PP-10 | Verified: 2026-11-01
+Status: active | Owner: Dave / Claude Code | Next: PP-10 (PP-11 landed 1 Nov 2026: the reference route owns Pollinator points on every seed and first affords Gyne rearing on days 60.31, 58.10 and 63.01) -- the sweep prices the route so Gyne rearing is first affordable after the first winter (Dave split PP-9, 27 Oct 2026: PP-9 builds the route, PP-10 the sweep; Dave narrowed PP-9 to its headless tools later that day and moved the route to PP-11) | Dependency: PP-6 followed FR-2 (Dave 14 Oct 2026; landed 25 Oct 2026); PP-9 follows PP-6; PP-11 follows PP-9; PP-10 follows PP-11, EV-0 and T2-7b (`plans/now/tier-two.md`, Dave, 5 Nov 2026, product review D4); AR-4 (`plans/now/alpha-route-evidence.md`) and FR-3 wait for PP-10 | Verified: 2026-11-05
 
 ## Objective
 
@@ -49,7 +49,7 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-10 | the sweep prices the route so Gyne rearing is first affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, tests | no -- after EV-0 (`plans/now/event-director.md`); PP-11 landed 1 Nov 2026 | high |
+| PP-10 | the sweep prices the route so Gyne rearing is first affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, tests | no -- after EV-0 (`plans/now/event-director.md`) and then T2-7b (`plans/now/tier-two.md`); PP-11 landed 1 Nov 2026 | high |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
 once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
@@ -59,8 +59,9 @@ it in the Claude lane (T2-6 landed 11 Oct 2026; BB-2 and NF-4, which shared them
 lane and ran in the Codex lane. PP-5 shares `orders_zones.gd` with PP-3
 and `bee_nursery.gd` with BB-2 and NF-4, both landed 10 Oct 2026. PP-10 balances everything above; T2-7
 (`plans/now/tier-two.md`), which it followed, landed 11 Oct 2026 without moving
-prices. AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-10, and T2-7b,
-the tier-2 price sweep on the same arc, waits for AR-4. PP-6 followed FR-2
+prices. AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-10. T2-7b, the
+tier-2 price sweep on the same arc, runs before PP-10, so the route PP-10
+prices already pays the final tier-2 prices (Dave, 5 Nov 2026, product review D4). PP-6 followed FR-2
 (`plans/now/forager-recruitment.md`, landed 25 Oct 2026), which added Auto
 scouting to the route. PP-9 follows PP-6 and lands the headless tools a
 route needs; PP-11 builds the route with them, which must reach PP-6's probe
