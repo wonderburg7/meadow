@@ -1,6 +1,6 @@
 # Jules integration and corrections — 4 November 2026
 
-Status: reference | Owner: Dave / Codex | Next: final verification, then integration | Dependency: none | Baseline: 4db007db774f005c684429a1a01838ce0136f143 | Verified: 2026-11-05
+Status: reference | Owner: Dave / Codex | Next: Claude reviews the full diff and integrates this assigned batch | Dependency: required Claude high-risk review plus primary registration of codex-queue-priority-policy | Baseline: 4db007db774f005c684429a1a01838ce0136f143 | Verified: 2026-11-05
 
 Explicitly assigned batch; no queue slice claimed. Work branch `codex/jules-integrate-20261104`, worktree `.worktrees/jules-integrate-20261104`, registered from the primary checkout in `c2b64f6`. The review's final validation note was inspected at `23b336040d7d39d73105d4d07ba10fbe5453b6db`; it is not permission to copy its old snapshot.
 
@@ -10,32 +10,32 @@ Remote refs refreshed on 4 November. #85–#105 retain their reviewed full heads
 
 | Item | Current full SHA (same as reviewed for #85–#105) | Actual disposition | Delivery commit / remaining action |
 | --- | --- | --- | --- |
-| #85 — S-1 | `ed281d8dfb86734df44f5474854be1f6c97904c5` | merged: Only tests/test_jules_efficiency_helpers.py; five tests pass. | Batch content commit; final verify/merge pending |
-| #86 — E-2 | `8a537906b483f6cc89e14eec7bfd3945e9d0c054` | closed: Superseded by selected E14/#105 evidence once; neither feature implemented. | Batch content commit; final verify/merge pending |
-| #87 — S-3 | `f90a7199eae5547449b52036de0b90b47c99743e` | merged: Corrected consolidated tools/freeze_bee_check.py and tests; actual idle assignment and executable stage command path required. | Batch content commit; final verify/merge pending |
-| #88 — S-3 | `7cb66a77f0a1a8c9b20aa278d7d47c3657aa6837` | closed: Superseded by corrected J-48; cooled-flower rejection coverage consolidated, duplicate tool excluded. | Batch content commit; final verify/merge pending |
-| #89 — S-1 | `20f45029652a52ff49de042ea18342eb6a0cb2dd` | merged: Only tests/test_backlog_helpers.py; ten tests pass. | Batch content commit; final verify/merge pending |
-| #90 — S-3 | `faec3f29a77995d80a3e536a5fc6e9fc38495b76` | closed: Superseded by corrected J-48; comments and predator-cooldown tokens cannot satisfy personal cooldown rejection. | Batch content commit; final verify/merge pending |
-| #91 — S-3 | `20a823b1a9f8349925671b279e4d5b08eac0d89e` | closed: Consolidated into corrected #87 guard; workstreams snapshot and duplicate guard excluded. | Batch content commit; final verify/merge pending |
-| #92 — J-31 | `1a8732d33c6e4aba242fb813f51b1b7de6491207` | merged: Corrected J-31 report only: actual critical parent traces, honest low-confidence unknowns, pinned reproducible candidate inventory. No blanket clean conclusion. | Batch content commit; final verify/merge pending |
-| #93 — E-4 | `c9d21a5fa691e5231e08be249de09ec6f265842a` | merged: Selected E4 evidence combined with #104 in docs/jules-efficiency/e-4.md; proposals routed to plans/reference/developer-navigation.md. | Batch content commit; final verify/merge pending |
-| #94 — J-44 | `205292e8b895d550b50fe59082db0623a29c1ab5` | merged: Corrected J-44 two-file guard; executable numeric provenance, comment/string handling and loop/function boundaries tested. | Batch content commit; final verify/merge pending |
-| #95 — E-6 | `3ed2925f909ac863c9d4c383dc34bf6fc08cfc2a` | closed: False source-check omission rejected; qualified rule-routing proposal retained with #103 dispositions in e-6.md and closeout reference. No efficiency feature implemented. | Batch content commit; final verify/merge pending |
-| #96 — J-45 | `0c4da9b31a8fef57c664bb9e59476b1800eac336` | merged: Only J-45 tools/nav_reach_check.py and tests; four actual-source reach mutations rejected. | Batch content commit; final verify/merge pending |
-| #97 — E-8 | `d2194de77710846faed6af0e07e74a130dec72fb` | merged: Qualified E8 report: bounded empty-selection evidence and optional final summary; false interleaving/run_pool claims removed; closeout reference. | Batch content commit; final verify/merge pending |
-| #98 — J-46 | `4691d8246fbe83c9fe40038fef543eb862129268` | merged: Corrected J-46 two-file guard rejects zero/single-frame, unknown constants, bypass and out-of-scope clears. | Batch content commit; final verify/merge pending |
-| #99 — E-10 | `7b223d3fa8f5e840c91535cc3aa33936bfd3fd44` | merged: Selected E10 formatter proposal only; correction-instruction gap rejected; closeout reference. | Batch content commit; final verify/merge pending |
-| #100 — J-47 | `85f71a2e78dc867677f73cdf0a5b5fe548992798` | merged: Corrected J-47 two-file guard; quoted/commented/branch-local calls fail; both marker functions/order/stages/missing-input tests retained. | Batch content commit; final verify/merge pending |
-| #101 — E-12 | `b5a085ffa19d3f7d206ec1f469c52737a3487796` | merged: Qualified E12 report; correct provenance and helpers; optional heading listing and shared unit discovery routed to navigation/closeout references. | Batch content commit; final verify/merge pending |
-| #102 — J-48 | `9ff79b5521f50c03491773c564743785281b724f` | merged: Corrected J-48 two-file guard rejects accepting-cooled flowers, strict-gated rejection, comparison/read/comment/string updates; one guard replaces duplicates. | Batch content commit; final verify/merge pending |
-| #103 — E-6 | `df578335e9c74dde86dd76f7eed01225bd8e755f` | closed: Existing RR-10 coverage and finder bool contract acknowledged; unsupported gap/defect claims rejected alongside #95. No game feature implemented. | Batch content commit; final verify/merge pending |
-| #104 — E-4 | `dfdfb245e8fc93be18869e173c33cc22750d0c57` | merged: Complementary selected E4 evidence combined with #93, not overwritten; historical counts/savings/ownership qualified. | Batch content commit; final verify/merge pending |
-| #105 — E-14 | `31f517e8ea2f55b6d7f0a330a7ed2c710f55d531` | merged: Qualified E14 report only; 42 snapshot paths excluded. E2 proposals adopted once as unscheduled closeout contracts. | Batch content commit; final verify/merge pending |
-| #106 — J-49 | `17f65d673d027e734b9c3b909d34e30380ec9fd5` | merged: J-49 test file only; nine tests pass on Windows with native str(result_path); Linux unavailable. | Batch content commit; final verify/merge pending |
-| #108 — J-50 | `3bbd44dbd35809a0d542132d7f65e89df8e60500` | merged: J-50 incremental missing-input and real-tree tests/tool change only; eleven tests pass. Original class/property map boundary retained. | Batch content commit; final verify/merge pending |
-| #110 — J-51 | `3cb7c818c21d8e91e2190bf2e16e08b9707f2152` | merged: J-51 report only, further qualified: D2 resolved; no causal loss/overwrite reproduction; no source/save change. | Batch content commit; final verify/merge pending |
-| #112 — J-52 | `5aa7fd4e2025de2bd0ce7e97965feec4e89f72f9` | merged: J-52 report only, further qualified: distinct weather text; More coverage observation, no rendered-verification claim. | Batch content commit; final verify/merge pending |
-| #114 — J-53 | `8f25e87f070cd20e7b46e2285a2e4ee8435b6367` | merged: J-53 report only, further qualified: D1 resolved; is_mastered already delivered; no uncalled-to-safe-deletion inference. | Batch content commit; final verify/merge pending |
+| #85 — S-1 | `ed281d8dfb86734df44f5474854be1f6c97904c5` | Prepared, not merged: Only tests/test_jules_efficiency_helpers.py; five tests pass. | 1f458b9; required Claude review/integration |
+| #86 — E-2 | `8a537906b483f6cc89e14eec7bfd3945e9d0c054` | Superseded/rejected (PR still open): Superseded by selected E14/#105 evidence once; neither feature implemented. | 1f458b9; required Claude review/integration |
+| #87 — S-3 | `f90a7199eae5547449b52036de0b90b47c99743e` | Prepared, not merged: Corrected consolidated tools/freeze_bee_check.py and tests; actual idle assignment and executable stage command path required. | 1f458b9; required Claude review/integration |
+| #88 — S-3 | `7cb66a77f0a1a8c9b20aa278d7d47c3657aa6837` | Superseded/rejected (PR still open): Superseded by corrected J-48; cooled-flower rejection coverage consolidated, duplicate tool excluded. | 1f458b9; required Claude review/integration |
+| #89 — S-1 | `20f45029652a52ff49de042ea18342eb6a0cb2dd` | Prepared, not merged: Only tests/test_backlog_helpers.py; ten tests pass. | 1f458b9; required Claude review/integration |
+| #90 — S-3 | `faec3f29a77995d80a3e536a5fc6e9fc38495b76` | Superseded/rejected (PR still open): Superseded by corrected J-48; comments and predator-cooldown tokens cannot satisfy personal cooldown rejection. | 1f458b9; required Claude review/integration |
+| #91 — S-3 | `20a823b1a9f8349925671b279e4d5b08eac0d89e` | Superseded/rejected (PR still open): Consolidated into corrected #87 guard; workstreams snapshot and duplicate guard excluded. | 1f458b9; required Claude review/integration |
+| #92 — J-31 | `1a8732d33c6e4aba242fb813f51b1b7de6491207` | Prepared, not merged: Corrected J-31 report only: actual critical parent traces, honest low-confidence unknowns, pinned reproducible candidate inventory. No blanket clean conclusion. | 1f458b9; required Claude review/integration |
+| #93 — E-4 | `c9d21a5fa691e5231e08be249de09ec6f265842a` | Prepared, not merged: Selected E4 evidence combined with #104 in docs/jules-efficiency/e-4.md; proposals routed to plans/reference/developer-navigation.md. | 1f458b9; required Claude review/integration |
+| #94 — J-44 | `205292e8b895d550b50fe59082db0623a29c1ab5` | Prepared, not merged: Corrected J-44 two-file guard; executable numeric provenance, comment/string handling and loop/function boundaries tested. | 1f458b9; required Claude review/integration |
+| #95 — E-6 | `3ed2925f909ac863c9d4c383dc34bf6fc08cfc2a` | Superseded/rejected (PR still open): False source-check omission rejected; qualified rule-routing proposal retained with #103 dispositions in e-6.md and closeout reference. No efficiency feature implemented. | 1f458b9; required Claude review/integration |
+| #96 — J-45 | `0c4da9b31a8fef57c664bb9e59476b1800eac336` | Prepared, not merged: Only J-45 tools/nav_reach_check.py and tests; four actual-source reach mutations rejected. | 1f458b9; required Claude review/integration |
+| #97 — E-8 | `d2194de77710846faed6af0e07e74a130dec72fb` | Prepared, not merged: Qualified E8 report: bounded empty-selection evidence and optional final summary; false interleaving/run_pool claims removed; closeout reference. | 1f458b9; required Claude review/integration |
+| #98 — J-46 | `4691d8246fbe83c9fe40038fef543eb862129268` | Prepared, not merged: Corrected J-46 two-file guard rejects zero/single-frame, unknown constants, bypass and out-of-scope clears. | 1f458b9; required Claude review/integration |
+| #99 — E-10 | `7b223d3fa8f5e840c91535cc3aa33936bfd3fd44` | Prepared, not merged: Selected E10 formatter proposal only; correction-instruction gap rejected; closeout reference. | 1f458b9; required Claude review/integration |
+| #100 — J-47 | `85f71a2e78dc867677f73cdf0a5b5fe548992798` | Prepared, not merged: Corrected J-47 two-file guard; quoted/commented/branch-local calls fail; both marker functions/order/stages/missing-input tests retained. | 1f458b9; required Claude review/integration |
+| #101 — E-12 | `b5a085ffa19d3f7d206ec1f469c52737a3487796` | Prepared, not merged: Qualified E12 report; correct provenance and helpers; optional heading listing and shared unit discovery routed to navigation/closeout references. | 1f458b9; required Claude review/integration |
+| #102 — J-48 | `9ff79b5521f50c03491773c564743785281b724f` | Prepared, not merged: Corrected J-48 two-file guard rejects accepting-cooled flowers, strict-gated rejection, comparison/read/comment/string updates; one guard replaces duplicates. | 1f458b9; required Claude review/integration |
+| #103 — E-6 | `df578335e9c74dde86dd76f7eed01225bd8e755f` | Superseded/rejected (PR still open): Existing RR-10 coverage and finder bool contract acknowledged; unsupported gap/defect claims rejected alongside #95. No game feature implemented. | 1f458b9; required Claude review/integration |
+| #104 — E-4 | `dfdfb245e8fc93be18869e173c33cc22750d0c57` | Prepared, not merged: Complementary selected E4 evidence combined with #93, not overwritten; historical counts/savings/ownership qualified. | 1f458b9; required Claude review/integration |
+| #105 — E-14 | `31f517e8ea2f55b6d7f0a330a7ed2c710f55d531` | Prepared, not merged: Qualified E14 report only; 42 snapshot paths excluded. E2 proposals adopted once as unscheduled closeout contracts. | 1f458b9; required Claude review/integration |
+| #106 — J-49 | `17f65d673d027e734b9c3b909d34e30380ec9fd5` | Prepared, not merged: J-49 test file only; nine tests pass on Windows with native str(result_path); Linux unavailable. | 1f458b9; required Claude review/integration |
+| #108 — J-50 | `3bbd44dbd35809a0d542132d7f65e89df8e60500` | Prepared, not merged: J-50 incremental missing-input and real-tree tests/tool change only; eleven tests pass. Original class/property map boundary retained. | 1f458b9; required Claude review/integration |
+| #110 — J-51 | `3cb7c818c21d8e91e2190bf2e16e08b9707f2152` | Prepared, not merged: J-51 report only, further qualified: D2 resolved; no causal loss/overwrite reproduction; no source/save change. | 1f458b9; required Claude review/integration |
+| #112 — J-52 | `5aa7fd4e2025de2bd0ce7e97965feec4e89f72f9` | Prepared, not merged: J-52 report only, further qualified: distinct weather text; More coverage observation, no rendered-verification claim. | 1f458b9; required Claude review/integration |
+| #114 — J-53 | `8f25e87f070cd20e7b46e2285a2e4ee8435b6367` | Prepared, not merged: J-53 report only, further qualified: D1 resolved; is_mastered already delivered; no uncalled-to-safe-deletion inference. | 1f458b9; required Claude review/integration |
 
 ## New submissions outside this batch
 
@@ -59,7 +59,10 @@ Not silently admitted. The five new J-49–J-53 submissions are in scope because
 
 ## Evidence and verification
 
-Focused Windows runs: helper tests #85 (5), #89 (10), J-49/#106 (9), J-50/#108 (11), navigation guard (10 including four actual-source reach mutations), JSON guard (11), steering guard (12), marker guard (12), flower guard (13), idle guard (9) pass. Counts are module totals, not performance measurements. Negative CLI fixtures intentionally print errors. No Linux result is claimed. Final combined validation and delivery state will be recorded before closeout.
+Focused Windows runs: helper tests #85 (5), #89 (10), J-49/#106 (9), J-50/#108 (11), navigation guard (10 including four actual-source reach mutations), JSON guard (11), steering guard (12), marker guard (13), flower guard (13), idle guard (9) pass. Counts are module totals, not performance measurements. Negative CLI fixtures intentionally print errors. No Linux result is claimed. The first combined prefinish run passed 102 tests, with Godot boot and 109-script
+source checks. One additional actual-source branch-local marker regression then
+passed in the 13-test marker suite; the final full run covers 103 focused tests.
+Final full verification results and the administrative blocker are recorded below.
 
 ## Scope exclusions
 
@@ -83,11 +86,11 @@ the only extra path is #91's excluded workstream snapshot.
 
 | Source | Current / reviewed full SHA | Actual outcome | Remaining action |
 | --- | --- | --- | --- |
-| #55 | 96bc83b404a68c656e4a69eab7b06731e9be7f96 | Corrected by #110 / J-51; previous selected delivery preserved | Final batch verification/integration |
-| #59 | acd3f50ae7632cab87dfc370c712e96788879056 | Corrected by #112 / J-52; previous selected delivery preserved | Final batch verification/integration |
-| #60 | eda1bfd507c5939c93aa047226ec428e43639619 | Corrected by #114 / J-53; previous selected delivery preserved | Final batch verification/integration |
-| #71 | fe604cc115c476b212a530bb13eb39705480e550 | Corrected by #108 / J-50 (increment only); previous selected delivery preserved | Final batch verification/integration |
-| #82 | f3b0ae18da7cee4d24cf230848bf39f3fa7c88e9 | Corrected by #106 / J-49; previous selected delivery preserved | Final batch verification/integration |
+| #55 | 96bc83b404a68c656e4a69eab7b06731e9be7f96 | Corrected by #110 / J-51; previous selected delivery preserved | Prepared 1f458b9; required Claude review/integration |
+| #59 | acd3f50ae7632cab87dfc370c712e96788879056 | Corrected by #112 / J-52; previous selected delivery preserved | Prepared 1f458b9; required Claude review/integration |
+| #60 | eda1bfd507c5939c93aa047226ec428e43639619 | Corrected by #114 / J-53; previous selected delivery preserved | Prepared 1f458b9; required Claude review/integration |
+| #71 | fe604cc115c476b212a530bb13eb39705480e550 | Corrected by #108 / J-50 (increment only); previous selected delivery preserved | Prepared 1f458b9; required Claude review/integration |
+| #82 | f3b0ae18da7cee4d24cf230848bf39f3fa7c88e9 | Corrected by #106 / J-49; previous selected delivery preserved | Prepared 1f458b9; required Claude review/integration |
 
 
 ## Audit inventory reproduction and limits
@@ -99,3 +102,85 @@ Critical parent traces and honest unknowns replace the unsupported clean audit.
 Its reopening conditions are in plans/reference/developer-navigation.md.
 Local evidence: .git/jules-coordinate-inventory-20261104.jsonl and
 .git/jules-batch-scope-20261104.log. They are reproducible evidence, not committed game assets.
+
+
+## Integration dependency and ledger semantics
+
+Risk tier: high solely because the combined batch is a large diff (32 files,
+about 3,230 additions). No save/schema, game behaviour, balance, hot-path,
+dependency, generated game asset or active-source ownership change is present.
+CHATGPT.md Risk-proportional closeout requires Claude to review the full diff
+and integrate it. Codex therefore prepares and pushes rather than merging.
+The ledger's closed rows explicitly mean “prepared, awaiting required review”,
+not delivered to master; accepted content must become merged only at integration.
+Superseded/rejected attempts retain their original published sequences.
+All source PRs remain open and no remote branch is deleted.
+
+The exact handoff will name baseline 8dc78d367ea22c8fbfa0a481363b5838a7f312d7
+and final branch commit. This is an assigned Jules batch, not a claimed queue
+slice: use plans/reference/jules.md, Keeping this list (one verification/merge),
+and do not claim an unrelated Codex item. Retain current primary workstreams,
+including the CQ-T3 owner. At integration, update accepted ledger rows to merged,
+leave excluded attempts closed, record the merge and remove only this batch's
+workstream row. Task briefs stay for the next normal refill; their done J lines
+are already in the content commit. No efficiency features are admitted here.
+
+## Reproduce the inventory exactly
+
+In Windows PowerShell from the batch worktree, run:
+```powershell
+cd C:\Users\dl13860\Documents\Meadow\meadow\.worktrees\jules-integrate-20261104
+py -3 -c "from pathlib import Path; s=Path('docs/audits/coordinate-spaces.md').read_text(encoding='utf-8'); fence=chr(96)*3; exec(s.split(fence+'python'+chr(10),1)[1].split(fence,1)[0])"
+```
+
+
+## Final verification — 5 November
+
+Run from this worktree, outside the sandbox:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/verify.ps1 -Scope all
+
+- Godot cache imported here; project boots without script errors.
+- GDScript lint: 164 files, no problems.
+- Source checks: 109 scripts pass.
+- Balance checks: all 15 pass.
+- Selected unit runner: 124 IDs, 185 seconds, three workers, zero failed.
+  Includes all corrected offline guard/helper suites.
+- Game tests: 98 modules skipped by verify because this branch reaches no game file.
+- Lifecycle tests: skipped because no lifecycle implementation changed.
+- Function map is unchanged and up to date; stage reference and sprite checks pass.
+- Documentation check fails for one external administrative cause:
+  .worktrees/codex-queue-priority-policy is registered with Git but absent from
+  the primary plans/workstreams.md. The overall verify command therefore exits 1.
+  Existing warnings are not failures.
+- The primary checkout has another session's staged NEXTSTEPS, architecture
+  review and plan changes; this batch does not switch its branch, commit its
+  index or overwrite those files. The unregistered policy worktree contains
+  AGENTS.md, CHATGPT.md and docs/agent-rules.md edits owned by that session.
+- Initial prefinish: boot/source plus 102 focused tests passed; the subsequent
+  branch-local marker test passed in the 13-test suite. The final selected
+  runner includes that additional test (103 focused test cases in total).
+- Published audit extraction command was executed again: identical 109/55/909 counts.
+
+Log: .git/jules-batch-verify-20261105.log. This is a passing implementation
+verification with an overall failed documentation gate, not a green full command.
+No Linux, interactive visual, gameplay-scenario, performance or save round-trip
+result is claimed.
+
+## Concrete unblock and review action
+
+The owner of codex/queue-priority-policy must register its held-open worktree
+from the primary checkout, preserving the other staged work. A correct row
+names its actual branch, scope and owner; do not remove the worktree to hide it.
+Then run py -3 tools/check_docs.py in this batch worktree, and the primary
+documentation/workstream check required for integration. No code changed after
+the completed implementation checks, so do not repeat expensive game suites
+merely to repair this administrative row.
+
+Claude reviews the full baseline-to-tip diff, with F1–F11 and these mutation
+tests as evidence, and integrates only the accepted branch content after the
+documentation gate passes. Investigate why the policy worktree was opened
+without canonical registration and, within that policy owner's scope, verify
+a durable registration check/workflow correction so later batches do not hit
+the same failure. Do not broaden into efficiency-feature implementation,
+CQ-T3 source, protected APIs or D1–D3 decisions. Report the resulting merge
+and push SHAs, doc-check result, PR outcomes and retained unknowns.

@@ -83,7 +83,7 @@ def trace(expr, path, function, writes):
     node = expr.rsplit(".", 1)[0] if "." in expr else "self"
     prop = expr.rsplit(".", 1)[-1]
     parent = writes.get(node)
-    evidence = "explicit parent write in this function" if parent else ""
+    evidence = "last lexical parent write; branch dominance not established" if parent else ""
     if node in ("main.hive", "hive", "bee.hive") and path in (
             "scripts/bee.gd", "scripts/world_building.gd"):
         parent = "Main.meadow_root"
@@ -116,7 +116,7 @@ for path in sorted(p for p in files if p.endswith(".gd")):
         if not CANDIDATE.search(line):
             continue
         rows.append({"path": path, "function": function, "line": line_no,
-                     "code": original[line_no-1].strip(), "parent_writes": dict(writes),
+                     "code": original[line_no-1].strip(), "lexical_parent_writes": dict(writes),
                      "operands": [trace(expr, path, function, writes)
                                   for expr in OPERAND.findall(line)],
                      "classification": "unknown pending operand/flow proof", "confidence": "low"})
