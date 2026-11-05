@@ -6,6 +6,20 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 5 Nov 2026 -- Dave's hands-on pass
+
+### C-143 -- An unmatched scout resumes; an established seeker keeps waiting
+
+What this checks: start a Colony Run, open the settings panel's Foraging section and switch on Auto scouting and Auto-recruitment (leave Proximity recruitment off). In the first few days, before any forager is good enough to mentor, follow a scout as she comes back to the entrance; later, follow an established forager with a poor patch as she reaches the entrance.
+
+PASS: with no mentor waiting, the scout walks straight back out for her next bout instead of standing by the entrance, while the established low-rate forager still stands and waits beside the entrance.
+
+If it fails, FR-1d reopens: the scout guard in `scripts/bee_foraging.gd::go_to_exit` and `wait_at_entrance`, before FR-2 builds on it.
+
+Runner: dave -- watching two bees' paths over time, which stills cannot show
+
+Owner: `plans/now/forager-recruitment.md`
+
 ## 30 Oct 2026 -- Dave's hands-on pass
 
 ### C-127 -- The comb draws honey, jelly, brood, bee bread and wax caps from Dave's art

@@ -88,7 +88,6 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-139 -- A new Colony Run's first worker: what to do is readable, and it comes in about five minutes](ready/C-139.md)
 - [C-140 -- First crisis: can you see the heavy rain coming, tell why it hurts and answer it?](ready/C-140.md)
 - [C-141 -- Turning nectar is clearly amber, the colour-blind label shows on its own, and closed cells' tints differ](ready/C-141.md)
-- [C-143 -- An unmatched scout resumes; an established seeker keeps waiting](ready/C-143.md)
 - [C-150 -- GP-5: press Goals in the second HUD row, the list opens and closes; restart the game and it remembers](ready/C-150.md)
 - [C-151 -- SG-4 opening milestones: a new Colony Run shows the opening steps in order](ready/C-151.md)
 - [C-159 -- A Comb worker carries a dead bee out, waits one second outside, and comes back](ready/C-159.md)
