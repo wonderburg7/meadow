@@ -1,7 +1,7 @@
 # Difficulty -- Easy rules, a Standard baseline, and the choice at run start
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: ED-2 -- a run's difficulty, and Easy's rules (startable since 5 Nov 2026: the Jules E-14 and S-3 marker-reparent branches are closed; ED-1c landed 4 Nov 2026), then ED-3, gated (specified 13 Oct 2026) | Dependency: ED-1 follows SG-3 (`plans/archive/short-term-goals_2026-11-01.md`, landed 1 Nov 2026) in Dave's order (FC-2, `plans/archive/crisis-readiness_2026-10-17.md`, released the save files 17 Oct 2026) | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code | Next: ED-2 -- a run's difficulty, saved, in the Claude lane (its Jules gates closed 5 Nov 2026); then ED-2b, Easy's rules, and ED-3, each gated on the one before | Dependency: ED-1 to ED-1c landed 2-4 Nov 2026; CQ-R2 (`plans/now/code-health.md`) follows ED-3 (Dave, 5 Nov 2026), and RR-12 and SP-8a follow CQ-R2 | Verified: 2026-11-05
 
 ## Objective
 
@@ -72,10 +72,11 @@ Verified 12 Oct 2026 against master `06bd26c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| ED-2 | A run's difficulty, and Easy's rules: health floors at one, the queen cannot die, brood waits, winter spares | `scripts/session.gd`, `scripts/bee_survival.gd`, `scripts/bee_nursery.gd`, `scripts/season.gd`, `scripts/crab_spider.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed2_easy_rules_test.gd`, `tests/test_ed2_easy_rules.py` | yes (5 Nov 2026: the Jules E-14 and S-3 marker-reparent branches are closed; ED-1c landed 4 Nov 2026) | high |
-| ED-3 | Choosing Easy: the Colony Run tile, Relaxed and Custom, and the Saves window | `scripts/main_menu.gd`, `scripts/scenario_presets.gd`, `scripts/main.gd`, `scripts/levels.gd`, `scripts/saves_panel.gd`, `tests/test_ed3_difficulty_choice.py` | no -- after ED-2 | medium |
+| ED-2 | A run's difficulty, saved: `Session.difficulty`, Standard for old saves | `scripts/session.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed2_difficulty_save_test.gd`, `tests/test_ed2_difficulty_save.py` | yes -- queued | medium |
+| ED-2b | Easy's rules: health floors at one, the queen cannot die, brood waits, winter spares | `scripts/bee_survival.gd`, `scripts/bee_nursery.gd`, `scripts/season.gd`, `scripts/crab_spider.gd`, `tests/ed2_easy_rules_test.gd`, `tests/test_ed2_easy_rules.py` | no -- after ED-2 | high |
+| ED-3 | Choosing Easy: the Colony Run tile, Relaxed and Custom, and the Saves window | `scripts/main_menu.gd`, `scripts/scenario_presets.gd`, `scripts/main.gd`, `scripts/levels.gd`, `scripts/saves_panel.gd`, `tests/test_ed3_difficulty_choice.py` | no -- after ED-2b | medium |
 
-ED-1, then ED-1b, then ED-1c, then ED-2, then ED-3: each needs the one before.
+ED-1, then ED-1b, then ED-1c, then ED-2, then ED-2b, then ED-3: each needs the one before.
 ED-1 was cut in three on 2 Nov 2026 (it named 11 files and was the largest slice
 in the queue; the measured cost of an oversized worker is in
 `plans/reference/slice-worker.md`, "Size budget"). Dave's order (13 Oct
@@ -86,12 +87,11 @@ nothing else Standard does may change. Challenges stay Standard.
 
 **Reads.** A slice reads its own section only; ED-1 also reads
 `.claude/rules/simulation.md` and `.claude/rules/performance.md` (health is
-per bee, per frame), ED-1c and ED-2 `.claude/rules/saving.md`, ED-1b and ED-3
+per bee, per frame), ED-1c and ED-2 `.claude/rules/saving.md`, ED-2b `.claude/rules/simulation.md`, ED-1b and ED-3
 `plans/reference/ui-rules.md`.
 
-**Drones (`plans/now/drones.md`, 22 Oct 2026).** DR-1 also edits `scripts/save_game.gd`/`scripts/saving.gd`; same lane, so one at a time in queue order, each re-capturing the CQ-S0 goldens it changes.
 
-**Code health (`plans/now/code-health.md`, 18 Oct 2026).** Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (ED-1c, ED-2; the gate is ED-3, the end of the chain); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
+**Code health (`plans/now/code-health.md`, 18 Oct 2026).** Its save moves (CQ-S1 to CQ-S5) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (ED-2; the gate is ED-3, the end of the chain), and CQ-R2 follows ED-3 directly (Dave, 5 Nov 2026); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
 
 ED-1 shipped 2026-11-02; its specification is `plans/archive/ED-1_2026-11-02.md`.
 
@@ -99,26 +99,49 @@ ED-1b shipped 2026-11-03; its specification is `plans/archive/ED-1b_2026-11-03.m
 
 ED-1c shipped 2026-11-04; its specification is `plans/archive/ED-1c_2026-11-04.md`.
 
-## ED-2 -- a run's difficulty, and Easy's rules
+## ED-2 -- a run's difficulty, saved
 
 <!-- LAYER: immediate-task -->
 
+Level: medium. One run-state field and its save; no rule reads it yet.
+
 **Change.** `Session` gains the run's difficulty, `"standard"` or
 `"easy"`, reset with the run and saved; a save without it loads as
-Standard. On Easy: a worker's health stops at one (exhaustion and ambush
-alike); the queen cannot die of anything; an unfed larva stops developing
-and resumes when fed instead of starving (`bee_nursery.gd`); the winter bill
-(`season.gd`) still empties the stores, but the bees it cannot feed reach
-spring at one health and no energy. Old age, disease-shortened or not,
-still kills (decision 2). On Standard nothing differs from ED-1. Until ED-3
-nothing sets Easy except a headless scenario.
+Standard. Nothing reads it until ED-2b, and nothing sets Easy except a
+headless scenario until ED-3. ED-2 was cut in two on 5 Nov 2026 (plan
+review: nine files against a budget of eight), along the seam between the
+saved field and the rules that read it, as ED-1 was cut in three.
 
 ```queue
-**[Claude] ED-2 -- a run's difficulty, and Easy's rules**
-- Plan: `plans/now/difficulty.md` -- "ED-2 -- a run's difficulty, and Easy's rules"
-- Files: `scripts/session.gd`, `scripts/bee_survival.gd`, `scripts/bee_nursery.gd`, `scripts/season.gd`, `scripts/crab_spider.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed2_easy_rules_test.gd`, `tests/test_ed2_easy_rules.py`
-- Check: `python -m unittest tests.test_ed2_easy_rules` passes (on Easy an exhausted or ambushed worker stops at one health and crawls home; the queen survives starvation, ambush and winter; an unfed larva waits and then develops; a short winter leaves bees at one health, not dead; a bee past its lifespan still dies; on Standard every one of these behaves as ED-1; the difficulty survives save and restore and an old save is Standard); `.\tools\verify.ps1` is green
+**[Claude] ED-2 -- a run's difficulty, saved**
+- Plan: `plans/now/difficulty.md` -- "ED-2 -- a run's difficulty, saved"
+- Files: `scripts/session.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed2_difficulty_save_test.gd`, `tests/test_ed2_difficulty_save.py`
+- Check: `python -m unittest tests.test_ed2_difficulty_save` passes (a new run is Standard; Easy set by a headless scenario survives save and restore; a save without the key loads as Standard; the CQ-S0 round-trip goldens are re-captured with the new field); `.\tools\verify.ps1` is green
 - Proof: `absent: scripts/session.gd :: difficulty`
+- Next after: ED-2b -- Easy's rules
+```
+
+## ED-2b -- Easy's rules
+
+<!-- LAYER: immediate-task -->
+
+Level: high. Health floors, the queen's deaths and the winter bill change on
+Easy, and nothing on Standard may move.
+
+**Change.** On Easy (`Session.difficulty`, ED-2): a worker's health stops at
+one (exhaustion and ambush alike); the queen cannot die of anything; an unfed
+larva stops developing and resumes when fed instead of starving
+(`bee_nursery.gd`); the winter bill (`season.gd`) still empties the stores,
+but the bees it cannot feed reach spring at one health and no energy. Old
+age, disease-shortened or not, still kills (decision 2). On Standard nothing
+differs from ED-1.
+
+```queue-gated
+**[Claude] ED-2b -- Easy's rules**
+- Plan: `plans/now/difficulty.md` -- "ED-2b -- Easy's rules"
+- Files: `scripts/bee_survival.gd`, `scripts/bee_nursery.gd`, `scripts/season.gd`, `scripts/crab_spider.gd`, `tests/ed2_easy_rules_test.gd`, `tests/test_ed2_easy_rules.py`
+- Check: `python -m unittest tests.test_ed2_easy_rules` passes (on Easy an exhausted or ambushed worker stops at one health and crawls home; the queen survives starvation, ambush and winter; an unfed larva waits and then develops; a short winter leaves bees at one health, not dead; a bee past its lifespan still dies; on Standard every one of these behaves as ED-1); `.\tools\verify.ps1` is green
+- Proof: `absent: scripts/bee_survival.gd :: Session.difficulty`
 - Next after: ED-3 -- choosing Easy: the Colony Run tile, Relaxed and Custom, and the Saves window
 ```
 
@@ -140,7 +163,7 @@ they stay visible preset rules (product-scope §11).
 - Files: `scripts/main_menu.gd`, `scripts/scenario_presets.gd`, `scripts/main.gd`, `scripts/levels.gd`, `scripts/saves_panel.gd`, `tests/test_ed3_difficulty_choice.py`
 - Check: `python -m unittest tests.test_ed3_difficulty_choice` passes (choosing Easy on the Colony Run tile, or Relaxed or Custom with Easy rules ticked, starts an Easy run; Standard, Demanding and both Challenges start Standard; the Saves window names each run's difficulty); `.\tools\verify.ps1` is green
 - Proof: `absent: scripts/main_menu.gd :: easy_rules`
-- Next after: none -- the difficulty plan is complete
+- Next after: CQ-R2 -- the first crisis moves into a new event_director.gd (Dave, 5 Nov 2026)
 ```
 
 ## Open questions

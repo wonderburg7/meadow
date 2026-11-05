@@ -20,7 +20,7 @@ Reviewed: 1a1f81c | Since: b5e6751 | Scope: every live plan's Status and open-sl
 | F11 -- goal-presentation archived | Shipped -- no goal-presentation plan in `ls plans/now` |
 | F12 -- agent-lifecycle history | Shipped, regrew with L-31 to L-34 restrictions -- trimmed here (F6) |
 | F13 -- C-20's nudge superseded by SP-11 | Shipped -- SP-11 landed |
-| F14 -- guardrail 5 named an archived plan | Shipped -- it names `plans/now/tier-two.md` |
+| F14 -- guardrail 5 named an archived plan | Shipped -- it names `plans/archive/tier-two_2026-11-05.md` |
 | F15 -- SG-2, SG-3 hand-off | Shipped -- nothing further; SG-2 is in the Claude backlog |
 
 ## Findings
@@ -33,7 +33,7 @@ Reviewed: 1a1f81c | Since: b5e6751 | Scope: every live plan's Status and open-sl
 | F4 | CQ-M8's `Proof:` (`present: ... static func miner_go_to_exit`) still holds after CQ-M8 ships, since the function stays and calls the new helper -- the X3 pattern | CQ-M8 "When done"; `grep -rn walk_to_hive_exit scripts` (empty) | medium | Fixed -- `absent: scripts/bee_movement.gd :: func walk_to_hive_exit`, block and lane item |
 | F5 | CQ-M8 (Claude) and CQ-M10 (Codex) both named CQ-M4 as `Next after:`, so two lanes would claim it, and CQ-M4 shares `challenge_runner.gd` with CQ-R12 | both blocks; code-health D2 table (CQ-M4: `challenge_runner` 16 sites) | medium | Fixed -- CQ-M8 → FR-2 (shares `bee_foraging.gd`); CQ-M10 → CQ-R9 → CQ-R12 → CQ-M4 in Codex |
 | F6 | Status lines and prose named shipped slices: agent-lifecycle (Next: L-33, L-34), pollination (Next: PP-8, landed 16 Oct), tier-two (a paragraph of T2-10 to T2-14 history and restrictions) | each file's Status; `git log --oneline -1 --grep=PP-8 master` | low | Fixed -- three Status lines rewritten; shipped restrictions removed (rule 9) |
-| F7 | The routing table had no row for `plans/now/drones.md` and six rows naming shipped slices (PP-8, RR-7 to RR-11, SP-11, T2-10 to T2-13, L-27 to L-30, SP-8, FR-1) | `plans/README.md` "Current routing" against `ls plans/now` | low | Fixed -- one row per live plan, open ids only |
+| F7 | The routing table had no row for `plans/archive/drones_2026-11-05.md` and six rows naming shipped slices (PP-8, RR-7 to RR-11, SP-11, T2-10 to T2-13, L-27 to L-30, SP-8, FR-1) | `plans/README.md` "Current routing" against `ls plans/now` | low | Fixed -- one row per live plan, open ids only |
 | F8 | `plans/now/code-health.md` is 615 lines | `wc -l` | low | Rejected -- six of its sections are queued blocks that leave with their closeouts within days; splitting now would rewrite live `Plan:` lines in both lanes |
 
 Retain / defer / remove: every open slice **Retain** (L-35, L-36, CQ-L2, CQ-S0b, CQ-M8, CQ-M10, CQ-R9, CQ-R12, FR-2, FR-3, DR-1, DR-2, SG-2, SG-3, SP-6, SP-8a, ED-1 to ED-3, RR-12, PP-6, AR-4, T2-7b, HM-1, HM-2, CQ-S1 onward). `check_docs.py` evaluated every proof. Walked as a fresh agent: L-35 and L-36 (files and proofs hold; L-33 and L-34 left nothing they need); CQ-M10 (one function, check can fail on a changed weather outcome) and CQ-R9 (written here with a before/after snapshot comparison).

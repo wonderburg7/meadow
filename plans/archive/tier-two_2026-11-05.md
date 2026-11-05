@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: nothing further -- T2-7b, the deferred tier-2 price sweep, was withdrawn (Dave, 5 Nov 2026, product review D5: timings are drafts and the first tier-2 purchase follows the first honey, so no sweep is run); the plan is ready to archive | Dependency: none | Verified: 2026-11-05
+Status: complete | Owner: Dave / Claude Code | Next: None -- plan complete; T2-7b was withdrawn (Dave, 5 Nov 2026, product review D5), and tier-2 prices stay drafts, edited directly when play shows a need | Dependency: none | Verified: 2026-11-05
 
 ## Objective
 

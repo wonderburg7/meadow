@@ -1,7 +1,7 @@
 # Drones -- a mated queen lays drones in cells the player marks
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: nothing further -- DR-2 landed 26 Oct 2026; Dave's hands-on check C-153 remains | Dependency: none left -- DR-1 has landed and CQ-R7 (`plans/now/code-health.md`) released `scripts/hud.gd` 22 Oct 2026 | Verified: 2026-10-26
+Status: complete | Owner: Dave / Claude Code | Next: None -- plan complete; DR-1 landed 25 Oct 2026 and DR-2 26 Oct 2026, and drones are alpha content (product review D3, 5 Nov 2026); Dave's hands-on check C-153 stays in `checks/` | Dependency: none | Verified: 2026-11-05
 
 ## Objective
 

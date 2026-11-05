@@ -175,18 +175,19 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 
 | If the queue names | Read |
 | --- | --- |
-| AR-4 -- alpha-route evidence: a scripted Colony Run records all five gates | `plans/now/alpha-route-evidence.md` |
-| ED-1 to ED-3 -- difficulty: health for every bee, Easy's rules, choosing Easy at run start | `plans/now/difficulty.md` |
-| FR-2, FR-3 -- forager recruitment: Auto scouting bought at Foraging tier 2, then Auto-recruitment switched on by ownership | `plans/now/forager-recruitment.md` |
+| AR-6, AR-4 -- alpha-route evidence: the pacing report's draft targets, then a scripted Colony Run records all five gates | `plans/now/alpha-route-evidence.md` |
+| ED-2, ED-3 -- difficulty: Easy's rules, then choosing Easy at run start | `plans/now/difficulty.md` |
+| FR-3 -- forager recruitment: Auto-recruitment switched on by ownership | `plans/now/forager-recruitment.md` |
 | HM-1, HM-2 -- Dave's meadow hives and top-bar menu icons | `plans/now/hive-and-menu-art.md` |
-| SP-8a -- the meadow floor drawn in blocks, with everything on it lifted | `plans/now/meadow-terrain.md` |
-| DR-1, DR-2 -- drones: a mated queen lays drones in cells the player marks, then the cell popup's drone box | `plans/now/drones.md` |
-| PP-6 -- pollination: pricing the route to Gyne rearing | `plans/now/pollination.md` |
+| SP-8a, SP-8b -- the meadow floor drawn in blocks, then height's effects | `plans/now/meadow-terrain.md` |
+| PP-10 -- pollination: the gyne route keeps its order on EV-0's calendar | `plans/now/pollination.md` |
 | RR-12 -- run repairs: a loaded run keeps its readout history | `plans/now/run-repairs.md` |
-| EV-0 onward -- the event director: one Calendar and events settings group, winter a week later, then the alpha's pressures | `plans/now/event-director.md` (design: `plans/design/event-director.md`) |
-| SP-6 -- bee art: the meadow forager sheet | `plans/now/sprites.md` |
-| T2-7b -- tier two: the deferred tier-2 price sweep | `plans/now/tier-two.md` |
-| CQ-L1 to CQ-R14 -- code health: gdlint in verify, static typing, entities owning their save fields, named data and magic numbers, splits by responsibility | `plans/now/code-health.md` (research: `docs/code-health-research-2026-10-18.md`) |
+| EV-0, EV-0b, then EV-1 onward -- the event director: the Calendar and events settings group, a later winter and one calendar, then the alpha's pressures | `plans/now/event-director.md` (design: `plans/design/event-director.md`) |
+| SP-12 -- sprites: every comb-cell outline on the cup's rim | `plans/now/sprites.md` |
+| PN-2 to PN-6 -- play notes: renaming saves, Goals saved, the queen's build orders, picking and double-click selection | `plans/now/play-notes.md` |
+| PN-9, PN-11 to PN-13, PN-18, PN-19 -- play notes: early spring, later rain and crisis, developer skills, bee labels, sour nectar, the soil ring | `plans/now/play-notes-config.md` |
+| PN-7, PN-8, PN-10, PN-14 to PN-17 -- play notes, HUD side (Codex lane): cell popup, warning history, goal text, pause font, day dial, cell-type selection, Shift-queued orders | `plans/now/play-notes-hud.md` |
+| CQ-L3 to CQ-R13 -- code health: format and typing passes, entities owning their save fields, named data, splits by responsibility | `plans/now/code-health.md` (research: `docs/code-health-research-2026-10-18.md`) |
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates (the Colony Run definition itself is `plans/archive/colony-run_2026-10-08.md`) | `plans/design/product-scope.md` |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |
@@ -221,9 +222,9 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
    worked in its plan (UI-D, UI-P-5 and UI-R-1, all shipped, were the cases).
 5. If progression is selected, follow `plans/design/progression.md` section
    11's order. Phase A (catalogue, resolver, run definition, modifiers, the
-   tier-1 vertical slice) shipped, and so did Phase B's step 7
-   (`plans/archive/brood-spine_2026-10-05.md`); step 8 is
-   `plans/now/tier-two.md`. Do not begin adaptations, campaign meta, or
+   tier-1 vertical slice) shipped, and so did Phase B's steps 7
+   (`plans/archive/brood-spine_2026-10-05.md`) and 8
+   (`plans/archive/tier-two_2026-11-05.md`). Do not begin adaptations, campaign meta, or
    legacy-path removal first.
 6. A Challenge stage that means "the player drives this bee" says so once,
    in the stage data, and one choke point enforces it. Do not add a sixth

@@ -1,7 +1,7 @@
 # Meadow terrain -- the meadow floor in stacked blocks, then height's effects
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: SP-8a -- the meadow floor drawn in blocks, with everything on it lifted, gated until the alpha chain (FC-2 landed 17 Oct 2026) has landed -- ED-1 to ED-3 (WP-2 landed 21 Oct 2026, WP-3 22 Oct 2026, SG-2 26 Oct 2026, SG-3 1 Nov 2026) -- since all of them and SP-8a edit `scripts/main.gd` or the save files (Dave, 16 Oct 2026, product review D3); height's simulation effects are cut after it and wait for AR-4 | Dependency: ED-3 (`plans/now/difficulty.md`), the last of that chain; the block art is exported (`plans/now/sprites.md`, SP-2 and SP-9 landed) | Verified: 2026-10-16
+Status: active | Owner: Dave / Claude Code | Next: SP-8a -- the meadow floor drawn in blocks, with everything on it lifted, gated until CQ-R2 (`plans/now/code-health.md`) has landed, which follows ED-3, the end of the alpha chain (Dave, 16 Oct 2026; CQ-R2's place, 5 Nov 2026); then SP-8b, height's effects, cut after SP-8a and AR-4 | Dependency: CQ-R2, which edits `scripts/main.gd` and the save files SP-8a also edits; the block art is exported (`plans/now/sprites.md`, SP-2 and SP-9 landed) | Verified: 2026-11-05
 
 ## Objective
 
@@ -21,10 +21,16 @@ names `MeadowTerrain`. SP-8a's "True now" has the detail.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-8a | the meadow floor drawn in blocks, with everything on it lifted | see its `Files:` line below | no -- after ED-3, the last of the alpha chain ED-1 to ED-3 (WP-2 landed 21 Oct 2026, WP-3 22 Oct 2026, SG-2 26 Oct 2026, SG-3 1 Nov 2026; Dave, 16 Oct 2026) | high |
-| SP-8 (rest) | height's effects: flight cost, where flowers grow, scouting reach | to be cut after SP-8a | no -- after SP-8a and AR-4 (`plans/now/alpha-route-evidence.md`) | high (balance) |
+| SP-8a | the meadow floor drawn in blocks, with everything on it lifted | see its `Files:` line below | no -- after CQ-R2, which follows ED-3 (Dave, 16 Oct and 5 Nov 2026) | high |
+| SP-8b | height's effects: flight cost, where flowers grow, scouting reach | to be cut after SP-8a | no -- after SP-8a and AR-4 (`plans/now/alpha-route-evidence.md`) | high (balance) |
 
-**Dependencies.** SP-8a waits for the alpha chain that followed FC-2 (`plans/archive/crisis-readiness_2026-10-17.md`, landed 17 Oct 2026): WP-2 and WP-3 (`plans/archive/work-priorities_2026-10-22.md`), SG-2 and SG-3 (`plans/archive/short-term-goals_2026-11-01.md`) and ED-1 to ED-3 (`plans/now/difficulty.md`), in Dave's order, because the closed alpha runs on placeholder art (Dave, 16 Oct 2026, product review D3). Height's simulation effects (SP-8's rest) wait for AR-4 (`plans/now/alpha-route-evidence.md`), so they cannot move balance under PP-6's and T2-7b's price sweeps.
+**Dependencies.** SP-8a waits for the alpha chain (ED-2 and ED-3,
+`plans/now/difficulty.md`) and then CQ-R2 (`plans/now/code-health.md`): the
+closed alpha runs on placeholder art (Dave, 16 Oct 2026, product review D3),
+and the alpha's events follow CQ-R2 (Dave, 5 Nov 2026). Height's simulation
+effects (SP-8b) wait for AR-4 (`plans/now/alpha-route-evidence.md`), so the
+alpha's gate evidence is recorded before height moves balance.
+
 SP-8a and HM-1 (`plans/now/hive-and-menu-art.md`) both edit `scripts/hive.gd`
 and `scripts/rival_hive.gd`; both are Claude lane, so whichever lands second
 merges master first.
@@ -32,7 +38,7 @@ merges master first.
 **Reads.** SP-8a reads the SP-8 decisions and its own section below, and
 `.claude/rules/performance.md` and `.claude/rules/saving.md`.
 
-**Code health (`plans/now/code-health.md`, 18 Oct 2026).** Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (SP-8a); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
+**Code health (`plans/now/code-health.md`, 18 Oct 2026).** Its save moves (CQ-S1 to CQ-S5) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (SP-8a), and CQ-R2 runs before SP-8a (Dave, 5 Nov 2026); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
 
 ## SP-8 -- the meadow floor from stacked blocks (not yet cut)
 
@@ -166,5 +172,5 @@ interior, and the RAISED obstacles' blocking.
 - Files: `scripts/meadow_terrain.gd`, `scripts/main.gd`, `scripts/world_building.gd`, `scripts/flower.gd`, `scripts/hive.gd`, `scripts/rival_hive.gd`, `scripts/obstacle.gd`, `scripts/bee.gd`, `scripts/input_selection.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/sp8a_meadow_height_test.gd`, `tests/test_sp8a_meadow_height.py`
 - Check: `python -m unittest tests.test_sp8a_meadow_height` passes. It checks that a seeded map lies in -2 to +3 in half steps, that the same seed gives the same map, and that the hive's ground is 0. For the default seed, flower and obstacle positions match master. A flower and a landed bee on a raised column draw lifted by height x 21, and a click at the drawn point selects them. The map survives save and restore, and an old save loads flat. The frame-time comparison is recorded in this section, and `.\tools\verify.ps1` is green.
 - Proof: `absent: scripts/world_building.gd :: MeadowTerrain`
-- Next after: SP-6 -- meadow foragers drawn from the sheet: eight directions, flapping wings
+- Next after: SP-8b -- height's effects: flight cost, where flowers grow, scouting reach (cut after SP-8a and AR-4)
 ```
