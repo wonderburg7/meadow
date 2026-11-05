@@ -8,7 +8,7 @@ Status: complete | Owner: Dave / Claude Code | Next: nothing further -- the plan
 `plans/design/progression.md` §11 step 13 lists the tier-3 content. Two of
 its nodes, Weighted flower choice (Foraging) and Restocking (Colony), cover
 behaviour the game already has, which nothing gates. As tier 2 did for the
-five behaviours that existed (`plans/now/tier-two.md`), they become
+five behaviours that existed (`plans/archive/tier-two_2026-11-05.md`), they become
 purchases. Priority cells and Pollinator points belong to
 `plans/now/pollination.md`; Work Priorities to `plans/archive/work-priorities_2026-10-22.md`.
 

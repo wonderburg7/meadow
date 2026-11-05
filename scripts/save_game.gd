@@ -280,6 +280,8 @@ static func _bees_data(world: Node2D) -> Array:
 			"resource": b.resource_type,
 			"energy": b.energy,
 			"age": b.age_seconds,
+			# ED-1c, additive: an older save has none and loads that bee at full health.
+			"health": b.health,
 			# NF-3, additive: seconds of tipsiness left. An older save has
 			# none, and saving.gd loads that bee sober.
 			"tipsy": b.tipsy_time_left,

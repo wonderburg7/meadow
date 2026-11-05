@@ -54,6 +54,6 @@ If it fails, T2-12 reopens: the mode filter in `scripts/hud.gd` (the mode column
 
 Runner: haiku -- reading two menus for one label
 
-Owner: `plans/now/tier-two.md`
+Owner: `plans/archive/tier-two_2026-11-05.md`
 
-Blocked by: T2-12 (`plans/now/tier-two.md`), which waits for `scripts/hud.gd`.
+Blocked by: T2-12 (`plans/archive/tier-two_2026-11-05.md`), which waits for `scripts/hud.gd`.

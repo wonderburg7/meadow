@@ -2,7 +2,7 @@
 
 Static part: the two presentation constants, and the strength formula
 mirrored here, give the values the scenario asserts: quarter-full honey
-between 0.10 and 0.13, full honey and full pollen at 0.28, an empty cell at 0.
+between 0.24 and 0.26, full honey and full pollen at 0.55, an empty cell at 0.
 Run part (test_scenarios/ct1_cell_tones.json): five built cells are stocked,
 four are closed, and the scenario's own asserts read each cell's
 tone_strength in the running game. Every stocking, closing and assert action
@@ -26,8 +26,8 @@ from run_scenario import run_once  # noqa: E402
 
 FIXTURE = ROOT / "test_scenarios" / "ct1_cell_tones.json"
 SRC = (ROOT / "scripts" / "hive_cell.gd").read_text(encoding="utf-8")
-TONE_MIN = 0.06
-TONE_MAX = 0.28
+TONE_MIN = 0.15
+TONE_MAX = 0.55
 
 
 def tone_strength(fraction: float) -> float:
@@ -40,8 +40,8 @@ def tone_strength(fraction: float) -> float:
 
 class ToneFormulaTest(unittest.TestCase):
     def test_named_constants_in_the_cell_script(self):
-        self.assertIn("const CONTENT_TONE_MIN := 0.06", SRC)
-        self.assertIn("const CONTENT_TONE_MAX := 0.28", SRC)
+        self.assertIn("const CONTENT_TONE_MIN := 0.15", SRC)
+        self.assertIn("const CONTENT_TONE_MAX := 0.55", SRC)
 
     def test_tone_is_applied_to_art_and_cap(self):
         self.assertIn("static func content_tone(base: Color, strength: float) -> Color:", SRC)
@@ -49,17 +49,17 @@ class ToneFormulaTest(unittest.TestCase):
         self.assertIn("cap_sprite.modulate = tone", SRC)
 
     def test_quarter_full_honey_is_faint_but_visible(self):
-        self.assertTrue(0.10 <= tone_strength(50.0 / 200.0) <= 0.13)
+        self.assertTrue(0.24 <= tone_strength(50.0 / 200.0) <= 0.26)
 
     def test_full_honey_and_pollen_are_full_strength(self):
-        self.assertAlmostEqual(tone_strength(200.0 / 200.0), 0.28)
+        self.assertAlmostEqual(tone_strength(200.0 / 200.0), 0.55)
 
     def test_empty_cell_has_no_tone(self):
         self.assertEqual(tone_strength(0.0), 0.0)
 
     def test_scenario_asserts_the_expected_values(self):
         text = FIXTURE.read_text(encoding="utf-8")
-        self.assertIn('"min": 0.10, "max": 0.13', text)
+        self.assertIn('"min": 0.24, "max": 0.26', text)
         self.assertIn('"min": 0.0, "max": 0.0', text)
 
 

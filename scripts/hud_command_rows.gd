@@ -58,10 +58,16 @@ func _rebuild_role_controls(bees: Array) -> void:
 			queen_bee = b
 			break
 
+	# Drones have no jobs to change to: they idle in the hive and the nurses
+	# feed them (Dave, 30 Oct), so a selection of only drones gets no Job,
+	# Doing or "If idle" rows.
+	var all_drones: bool = _all_drones(bees)
+
 	var show_queen_build_row: bool = hud.show_queen_build_button and bees.size() == 1 and first != null and first.is_queen
 	if show_queen_build_row:
 		_build_queen_build_row(hud.job_column)
-	_build_doing_row(common_working_role, first)
+	if not all_drones:
+		_build_doing_row(common_working_role, first)
 	_build_mating_row(bees, first)
 	_build_gyne_send_row(bees, first)
 	# Skipped while the queen's own "Build cell" button is showing --
@@ -71,8 +77,9 @@ func _rebuild_role_controls(bees: Array) -> void:
 		_build_orders_row(common_role, first)
 	_build_follow_control(bees, first)
 
-	_build_job_row(common_role, any_queen, queen_bee)
-	_build_fallback_row(common_role, first)
+	if not all_drones:
+		_build_job_row(common_role, any_queen, queen_bee)
+		_build_fallback_row(common_role, first)
 
 	# The wrapper itself stays visible (see job_column_wrapper's field
 	# comment) so it keeps its GridContainer slot; only the header and
@@ -533,6 +540,17 @@ func _current_role_marker(label: String) -> Control:
 
 ## -1 means the selection is mixed -- no role is marked as current in
 ## that case, since there's no single answer to what they're all doing.
+## True when the selection holds at least one live bee and every one is a drone.
+func _all_drones(bees: Array) -> bool:
+	var found := false
+	for b in bees:
+		if not is_instance_valid(b):
+			continue
+		if not b.is_drone:
+			return false
+		found = true
+	return found
+
 func _common_role(bees: Array) -> int:
 	var found := false
 	var role_value := -1

@@ -44,11 +44,11 @@ class FirstTierTwoDay(unittest.TestCase):
         self.assertNotIn("first_tier2_day", result["milestones"])
         self.assertNotIn("first_tier2_day", result["milestone_times"])
 
-    def test_pacing_row_against_day_five_leaves_the_gates_alone(self):
+    def test_pacing_row_against_day_twenty_two_leaves_the_gates_alone(self):
         gates_before = [g.label for g in pacing_gates.GATES]
-        hit = pacing_gates.tier2_row([analysed([(5, True)])] * 3)
+        hit = pacing_gates.tier2_row([analysed([(22, True)])] * 3)
         self.assertEqual("in band", hit["status"])
-        self.assertEqual(5.0, hit["target_day"])
+        self.assertEqual(22.0, hit["target_day"])
         miss = pacing_gates.tier2_row([analysed([(5, False)])] * 3)
         self.assertEqual("unavailable", miss["status"])
         self.assertEqual(5, len(pacing_gates.GATES))

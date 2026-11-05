@@ -1,7 +1,7 @@
 # Alpha Route Evidence -- measure the promised five gates without inventing player understanding
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: AR-5 -- the first two gates on the calendar, and a reference queen who lays early (product review, 16 Oct 2026); then AR-4 -- a scripted Colony Run reaches and records all five gates | Dependency: AR-1 → AR-2 → AR-3; the playable end-to-end route remains gated on Tier 2 and Colony Run work (Bee Bread finished 11 Oct 2026) | Verified: 2026-10-16
+Status: active | Owner: Dave / Codex | Next: AR-4 -- a scripted Colony Run reaches and records all five gates; it waits for PP-10 (`plans/now/pollination.md`), which prices the gyne route after EV-0 re-sets the calendar (AR-5 shipped 21 Oct 2026) | Dependency: AR-1 → AR-2 → AR-3 → AR-5 built; AR-4 follows PN-11 → EV-0 → PP-10; AR-6 implemented: draft targets centralised and judged targets printed | Verified: 2026-11-05
 
 ## Objective
 
@@ -32,18 +32,17 @@ hands-on feedback questions, not diagnostics.
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| AR-4 | a scripted Colony Run reaches and records all five gates | the alpha scenario and its new evidence test | no -- after Tier 2 automation and the gyne route are playable (Bee Bread finished 11 Oct 2026) | high |
+| AR-4 | a scripted Colony Run reaches and records all five gates | the alpha scenario and its new evidence test | no -- after PP-10 (`plans/now/pollination.md`) | high |
 
 AR-1, AR-2 and AR-3 shipped 7 Oct 2026; each has its record in `plans/archive/`, named by id and date.
 
 ## Not in the queue, and why
 
-AR-4 is gated on Tier 2 automation and the gyne route (Bee Bread finished 11 Oct 2026); the gyne
-route is `plans/now/pollination.md`, whose last slice, PP-10 (the sweep Dave
-split from PP-9, 27 Oct 2026), opens AR-4. T2-7
-(`plans/now/tier-two.md`, landed 11 Oct 2026) added a `first_tier2_day` row to
-`tools/pacing_gates.py`; AR-4 keeps that row when it is admitted. AR-4's arc
-buying a Honey worker opens T2-7b, the tier-2 price sweep T2-7 deferred. It cannot be
+AR-4 is gated on PP-10 (`plans/now/pollination.md`), the gyne route's last
+slice, which checks the route's order on EV-0's calendar. T2-7
+(`plans/archive/tier-two_2026-11-05.md`, landed 11 Oct 2026) added a `first_tier2_day` row to
+`tools/pacing_gates.py`; AR-4 keeps that row when it is admitted. T2-7b, the
+tier-2 price sweep T2-7 deferred, was withdrawn (Dave, 5 Nov 2026, product review D5). AR-4 cannot be
 an honest acceptance scenario while those mechanics are still incomplete; the
 first three slices make that absence visible instead of faking a successful run.
 
@@ -67,6 +66,16 @@ gate could never pass. PP-10 (`plans/now/pollination.md`) sets the day Gyne
 rearing becomes affordable to the first 11 days after winter, which leaves
 this window reachable.
 
+Decisions (Dave, 5 Nov 2026, product review D2 and D3): AR-4 records the
+first crisis on the calendar -- the day its warning shows and the day the
+rain starts -- and reports whether the five outcomes keep the order of
+`plans/design/product-scope.md` §3's table (D5: the order, not the day; the
+crisis's draft days are 12 to 15 after PN-11), replacing the crisis's
+"hands-on question" row. Drones and hard soil are alpha content: AR-4's
+reference run marks drone cells as a player would and its evidence table
+records the drones raised and the hard blocks dug, so their cost to the
+five gates is visible. Its section is rewritten when PP-10 lands.
+
 ```queue-gated
 **[Codex] AR-4 -- a scripted Colony Run reaches and records all five gates**
 - Plan: `plans/now/alpha-route-evidence.md` -- "AR-4 -- a scripted Colony Run reaches and records all five gates"
@@ -76,3 +85,4 @@ this window reachable.
 - Next after: None -- plan complete
 ```
 
+AR-6 shipped 2026-11-05; its specification is `plans/archive/AR-6_2026-11-05.md`.

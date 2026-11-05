@@ -30,11 +30,11 @@ sessions ran at (WD-3). Records: `plans/archive/WD-0_2026-09-17.md`,
 
 **This log does not record stops.** `tools/slice.ps1` writes them to its own
 `meadow-slice-stops.jsonl` and `python tools/session_cost.py --stops` tallies
-them by step; `plans/now/agent-lifecycle.md`'s L-12 is gated on that output.
+them by step; `plans/archive/agent-lifecycle_2026-11-04.md`'s L-12 is gated on that output.
 No slice here may add a `slice_stop` kind, move that ledger, or change
 `--stops`.
 
-**Against `plans/now/agent-lifecycle.md`.** That plan owns
+**Against `plans/archive/agent-lifecycle_2026-11-04.md`.** That plan owns
 `tools/session_cost.py`'s `--days`, `--classify`, `--phases` and `--stops`
 and the open slices L-12 and L-13. This plan owns `--events` and changes none
 of them.

@@ -7,7 +7,7 @@ owner`. This is that check for Jules, read from `origin` alone:
     python tools/jules_preflight.py <path> [<path> ...] # free or owned
     python tools/jules_preflight.py --scope [J-n|R-x|E-n]   # files this branch changes outside the task
     python tools/jules_preflight.py --queue             # every task's and review's state, and how many are free
-    python tools/jules_preflight.py --ledger            # every unmerged Jules branch: unreviewed, returned, closed
+    python tools/jules_preflight.py --ledger            # every unmerged Jules branch: unreviewed, reviewed, returned, closed
 
 A path is owned when `NEXTSTEPS.md` or a live plan in `plans/now/` names it
 on `origin/master` (a queued or planned slice will edit it), or when an
@@ -41,9 +41,13 @@ The ledger (`plans/reference/jules-ledger.md`, kept by Claude and Codex) says
 what happened to each Jules branch that was not merged as it stood: `merged`
 (integrated another way), `returned` (not merged; the task is free again and
 the row says what to correct) or `closed` (not merged and finished with:
-its findings went elsewhere, or it was rejected). A branch with no row is
-merged when its task has a `J-<n>:` line on master or every file it changes
-already matches master, and otherwise unreviewed. `--ledger` lists them.
+its findings went elsewhere, or it was rejected) or `reviewed` (checked,
+awaiting integration; its Outcome starts `at <SHA>:`, and it still takes its
+task). A branch with no row is merged when its task has a `J-<n>:` line on
+master or every file it changes already matches master, and otherwise
+unreviewed. `--ledger` lists them, and exits 1 on a `moved` reviewed branch
+(tip no longer the recorded SHA), a `stale` reviewed branch (already on
+master) or a stale row whose Outcome still says "not on master".
 
 `--scope` lists what a pull request would change (`origin/master...ref`, the
 view GitHub shows) and flags every changed file the task's `Files:` line does
@@ -84,8 +88,12 @@ REVIEW_METHOD = "plans/reference/jules-reviews.md"
 PLANNED = ["NEXTSTEPS.md", "plans/now"]
 BRANCH_PREFIXES = ("origin/claude/", "origin/codex/", "origin/jules/")
 TASK_HEADING = re.compile(r"^###\s+(J-\d+)\s+--\s+(.*?)\s*$")
-BRANCH_TASK = re.compile(r"jules/(j-\d+|r-[a-z]+|e-\d+)(?:-|$)", re.IGNORECASE)
-LEDGER_STATES = ("merged", "returned", "closed")
+BRANCH_TASK = re.compile(r"jules/(j-\d+|r-[a-z]+|e-\d+|s-[1-4])(?:-|$)", re.IGNORECASE)
+LEDGER_STATES = ("merged", "returned", "closed", "reviewed")
+# A `reviewed` row's Outcome starts `at <40-char SHA>:` (optionally after `#<PR> `):
+# the tip the reviewer checked. It is the "reviewed, awaiting integration" state
+# a prepared batch lacked on 4 Nov 2026 (see stale_rows).
+REVIEWED_AT = re.compile(r"^(?:#\d+\s+)?at ([0-9a-f]{40}):")
 LOW_WATER = 10  # free tasks below which the list needs a refill: a session may now take 20 (30 Oct 2026)
 
 
@@ -233,7 +241,8 @@ def owners(
     root: Path, paths: list[str], base: str = BASE, ledger: dict[str, LedgerRow] | None = None
 ) -> dict[str, list[str]]:
     """For each path, why it is owned: a planned mention or an unmerged branch. Empty means free.
-    A Jules branch the ledger has processed (returned or closed) owns nothing."""
+    A Jules branch the ledger has processed (merged, returned or closed) owns nothing;
+    a `reviewed` one still awaits integration and keeps its files."""
     ledger = load_ledger(root, base) if ledger is None else ledger
     found: dict[str, list[str]] = {path: [] for path in paths}
     for path in paths:
@@ -269,11 +278,15 @@ def is_done(root: Path, task: Task, base: str = BASE) -> bool:
 
 
 def unprocessed(name: str, ledger: dict[str, LedgerRow]) -> bool:
-    return name.removeprefix("origin/") not in ledger
+    """No row yet, or a `reviewed` row: the branch still waits for integration,
+    so it keeps its task taken and its files owned."""
+    row = ledger.get(name.removeprefix("origin/"))
+    return row is None or row.state == "reviewed"
 
 
 def is_taken(root: Path, task: Task, base: str = BASE, ledger: dict[str, LedgerRow] | None = None) -> bool:
-    """An open branch for the task that the ledger has not processed (a returned or closed one takes nothing)."""
+    """An open branch for the task that the ledger has not processed or only marks `reviewed`
+    (a merged, returned or closed one takes nothing)."""
     ledger = load_ledger(root, base) if ledger is None else ledger
     return any(
         name.startswith(f"origin/{task.branch_stem}") and unprocessed(name, ledger) for name in open_branches(root, base)
@@ -446,6 +459,9 @@ def jules_branches(root: Path, ledger: dict[str, LedgerRow], base: str = BASE) -
             continue
         name = ref.removeprefix("origin/")
         row = ledger.get(name)
+        if row and row.state == "reviewed":
+            out.append((name, *reviewed_state(root, ref, row, base)))
+            continue
         if row:
             out.append((name, row.state, f"{row.item}, {row.date} by {row.by}: {row.outcome}"))
             continue
@@ -460,18 +476,106 @@ def jules_branches(root: Path, ledger: dict[str, LedgerRow], base: str = BASE) -
     return out
 
 
+def reviewed_state(root: Path, ref: str, row: LedgerRow, base: str = BASE) -> tuple[str, str]:
+    """(state, detail) for a `reviewed` row: reviewed, moved (the tip is not the
+    SHA the reviewer recorded, so it needs another look) or stale (every file it
+    changes already matches `base`, so the row should now say merged)."""
+    detail = f"{row.item}, {row.date} by {row.by}: {row.outcome}"
+    found = REVIEWED_AT.match(row.outcome)
+    if not found:
+        return "moved", f"{detail} [no 'at <40-char SHA>:' at the start of the Outcome: record the reviewed tip]"
+    tip = git(root, "rev-parse", ref).strip()
+    if tip != found.group(1):
+        return "moved", f"{detail} [tip is now {tip[:12]}: review the new commits]"
+    if matches_base(root, ref, base):
+        return "stale", f"{detail} [already on {base}: flip the row to merged]"
+    return "reviewed", detail
+
+
+def stale_rows(ledger: dict[str, LedgerRow]) -> list[LedgerRow]:
+    """Rows whose Outcome still says their content is not on master.
+
+    A prepared batch's branch may record rows as "pending review, not on
+    master" (the 4 Nov batch did); whoever merges it rewrites each to what
+    actually landed. On master such a row is false by definition, so it names
+    an integration that skipped that rewrite."""
+    return [row for row in ledger.values() if "not on master" in row.outcome.lower()]
+
+
 def ledger_report(root: Path, base: str = BASE) -> list[str]:
-    branches = jules_branches(root, load_ledger(root, base), base)
+    ledger = load_ledger(root, base)
+    branches = jules_branches(root, ledger, base)
     lines = [
         f"{state:<10} {name} -- {detail}"
-        for wanted in ("unreviewed", "returned", "closed")
+        for wanted in ("unreviewed", "moved", "stale", "reviewed", "returned", "closed")
         for name, state, detail in branches
         if state == wanted
     ]
-    counts = {state: sum(1 for _, found, _ in branches if found == state) for state in ("unreviewed", *LEDGER_STATES)}
+    stale = stale_rows(ledger)
+    lines += [f"stale      {row.branch} -- says 'not on master' but is on {base}: rewrite it to what landed" for row in stale]
+    counts = {
+        state: sum(1 for _, found, _ in branches if found == state)
+        for state in ("unreviewed", *LEDGER_STATES, "moved", "stale")
+    }
     lines.append("total      " + ", ".join(f"{count} {state}" for state, count in counts.items()))
     if counts["unreviewed"]:
         lines.append(f"next       process the unreviewed ones, then add a row each to {LEDGER_FILE}")
+    if stale:
+        lines.append(f"next       correct the {len(stale)} stale row(s) in {LEDGER_FILE} to merged or closed")
+    if counts["moved"]:
+        lines.append(f"next       re-review the {counts['moved']} moved branch(es) and record the new tip in {LEDGER_FILE}")
+    if counts["stale"]:
+        lines.append(f"next       flip the {counts['stale']} reviewed row(s) already on {BASE} to merged")
+    return lines
+
+
+# --- sequence ---
+
+
+def sequence_report(root: Path, ref: str = "HEAD", base: str = BASE,
+                    ledger: dict[str, LedgerRow] | None = None) -> list[str]:
+    """One line per `Jules-Sequence` number the pull request at `ref` carries: `ok`, or `dup`
+    naming an older `origin/jules/*` branch that already used it.
+
+    Two Jules sessions running at once both read the same highest trailer and
+    take the same number (E-20 three times, #119 and #120 72 seconds apart,
+    5 Nov 2026); nothing caught it before review. Commits in `ref`'s own
+    history are exempt (a correction keeps its trailer), as is a branch the
+    ledger marks `returned` (its correction may come on a fresh branch). Only
+    the later submission fails, so the first stays green."""
+    ledger = load_ledger(root, base) if ledger is None else ledger
+    returned = {name for name, row in ledger.items() if row.state == "returned"}
+    own: dict[int, tuple[int, str]] = {}  # number -> (earliest committer time, kind)
+    for entry in git(root, "log", f"{base}..{ref}", "--format=%ct%x1f%B%x00").split("\0"):
+        if "\x1f" not in entry:
+            continue
+        when, message = entry.strip().split("\x1f", 1)
+        for match in jules_efficiency.TRAILER.finditer(message):
+            number = int(match[1])
+            if number not in own or int(when) < own[number][0]:
+                own[number] = (int(when), match[2])
+    if not own:
+        return ["note  no Jules-Sequence trailer between " + base + " and " + ref]
+    others = git(root, "log", "--glob=refs/remotes/origin/jules/*", "--not", ref,
+                 "--format=%H%x1f%ct%x1f%B%x00", "--extended-regexp", "--grep=^Jules-Sequence:", check=False)
+    lines: list[str] = []
+    for number, (when, kind) in sorted(own.items()):
+        earlier: list[tuple[int, str]] = []
+        for entry in others.split("\0"):
+            if "\x1f" not in entry:
+                continue
+            commit, other_when, message = entry.strip().split("\x1f", 2)
+            if int(other_when) >= when or not any(int(m[1]) == number for m in jules_efficiency.TRAILER.finditer(message)):
+                continue
+            branches = git(root, "branch", "-r", "--contains", commit, "--list", "origin/jules/*",
+                           "--format=%(refname:short)").split()
+            earlier += [(int(other_when), b.removeprefix("origin/")) for b in branches
+                        if b.removeprefix("origin/") not in returned]
+        if earlier:
+            lines.append(f"dup   Jules-Sequence: {number} {kind} -- duplicate of {min(earlier)[1]} "
+                         "(older): close this PR as a duplicate")
+        else:
+            lines.append(f"ok    Jules-Sequence: {number} {kind}")
     return lines
 
 
@@ -500,6 +604,68 @@ def scope_report(root: Path, task: Task, ref: str = "HEAD", base: str = BASE) ->
     return lines
 
 
+STANDING_TASKS = {
+    "S-1": "Test the untested functions of a tool",
+    "S-2": "Remove dead code",
+    "S-3": "Guard a known pitfall",
+    "S-4": "Refresh an audit",
+}
+
+
+def off_line(status: str, path: str, why: str, base: str = BASE) -> str:
+    fix = f"delete it: git rm -f {path}" if status == "A" else f"restore it: git checkout {base} -- {path}"
+    return f"off   {status} {path} -- {why}; {fix}"
+
+
+def standing_scope_report(root: Path, task_id: str, ref: str = "HEAD", base: str = BASE) -> list[str]:
+    """`--scope` for a standing task (plans/reference/jules.md, "Standing tasks"), which has no
+    `Files:` line: each has a fixed shape instead. S-1 adds only tests/test_<tool>_helpers.py for one
+    existing tools/<tool>.py (a suffix after the tool name is allowed: test_uncalled_search_helpers.py
+    for tools/uncalled.py); S-2 changes exactly one existing file under scripts/ or tools/; S-3 adds
+    only tools/<name>_check.py and tests/test_<name>_check.py for one name; S-4 rewrites one
+    existing report under docs/audits/ in place."""
+    entries = [line.split("\t", 1) for line in
+               git(root, "diff", "--name-status", "--no-renames", f"{base}...{ref}").splitlines()]
+    lines: list[str] = []
+    taken: list[str] = []  # the files that fit the shape, in order
+
+    def take(status: str, path: str, fits: bool, why: str, limit: int, same: str = "") -> None:
+        if not fits:
+            lines.append(off_line(status, path, why, base))
+        elif len(taken) >= limit or (same and taken and same != shape_key(taken[0])):
+            lines.append(off_line(status, path, f"{task_id} takes one {'tool' if task_id == 'S-1' else 'file' if limit == 1 else 'guard'} per pull request", base))
+        else:
+            taken.append(path)
+            lines.append(f"ok    {status} {path}")
+
+    def shape_key(path: str) -> str:
+        found = re.fullmatch(r"tools/(\w+)_check\.py|tests/test_(\w+)_check\.py", path)
+        return (found[1] or found[2]) if found else path
+
+    tracked = set(git(root, "ls-tree", "-r", "--name-only", base, "--", "tools").split())
+    for status, path in entries:
+        if task_id == "S-1":
+            found = re.fullmatch(r"tests/test_(\w+)_helpers\.py", path)
+            tools = {name.removeprefix("tools/").removesuffix(".py") for name in tracked if name.endswith(".py")}
+            fits = status == "A" and bool(found) and any(
+                found[1] == tool or found[1].startswith(f"{tool}_") for tool in tools
+            )
+            take(status, path, fits, "S-1 adds only a new tests/test_<tool>_helpers.py for an existing tools/<tool>.py", 1)
+        elif task_id == "S-2":
+            fits = status == "M" and path.startswith(("scripts/", "tools/"))
+            take(status, path, fits, "S-2 changes only one existing file under scripts/ or tools/", 1)
+        elif task_id == "S-3":
+            fits = re.fullmatch(r"tools/\w+_check\.py|tests/test_\w+_check\.py", path) is not None
+            take(status, path, fits, "S-3 adds only tools/<name>_check.py and tests/test_<name>_check.py", 2, shape_key(path))
+        else:
+            fits = status == "M" and path.startswith("docs/audits/")
+            take(status, path, fits, "S-4 refreshes only one existing report under docs/audits/ in place", 1)
+    if task_id == "S-3" and len(taken) == 1:
+        name = shape_key(taken[0])
+        lines.append(f"note  {name} -- S-3 needs both tools/{name}_check.py and tests/test_{name}_check.py")
+    return lines
+
+
 def scope_task(root: Path, wanted: str, base: str = BASE) -> Task | None:
     """The task, or for a review the report it may add, that `--scope` checks a branch against."""
     if wanted.startswith("E-"):
@@ -522,22 +688,38 @@ def main(argv: list[str] | None = None) -> int:
         "--scope",
         nargs="?",
         const="",
-        metavar="J-n|R-x|E-n",
+        metavar="J-n|R-x|E-n|S-n",
         help="list files --ref changes outside the task's Files (default task: from the branch name)",
     )
-    parser.add_argument("--ref", default="HEAD", help="commit or branch --scope compares with origin/master")
+    parser.add_argument(
+        "--sequence",
+        action="store_true",
+        help="fail when --ref's Jules-Sequence number is already used by an older origin/jules/* branch",
+    )
+    parser.add_argument("--ref", default="HEAD", help="commit or branch --scope/--sequence compares with origin/master")
     parser.add_argument("--no-fetch", action="store_true", help="use the remote branches as last fetched")
     args = parser.parse_args(argv)
     for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8", errors="replace")
-    if not (args.next or args.queue or args.ledger or args.scope is not None or args.paths):
-        parser.error("give --next, --queue, --ledger, --scope or at least one path")
+    if not (args.next or args.queue or args.ledger or args.sequence or args.scope is not None or args.paths):
+        parser.error("give --next, --queue, --ledger, --scope, --sequence or at least one path")
 
     if not args.no_fetch:
         fetch(ROOT)
 
+    if args.sequence:
+        report = sequence_report(ROOT, args.ref)
+        print(f"sequence {args.ref}")
+        print("\n".join(report))
+        return 1 if any(line.startswith("dup") for line in report) else 0
+
     if args.scope is not None:
         wanted = (args.scope or task_for_ref(ROOT, args.ref) or "").upper()
+        if wanted in STANDING_TASKS:
+            report = standing_scope_report(ROOT, wanted, args.ref)
+            print(f"scope {wanted} -- {STANDING_TASKS[wanted]} (standing task)")
+            print("\n".join(report) if report else "      no file differs from " + BASE)
+            return 1 if any(line.startswith(("off", "note")) for line in report) else 0
         task = scope_task(ROOT, wanted)
         if task is None:
             print(f"stop  no task {wanted or '(none in the branch name)'} on {BASE}: name it, as --scope J-n")
@@ -548,8 +730,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1 if any(line.startswith("off") for line in report) else 0
 
     if args.ledger:
-        print("\n".join(ledger_report(ROOT)))
-        return 0
+        report = ledger_report(ROOT)
+        print("\n".join(report))
+        return 1 if any(line.startswith(("stale", "moved")) for line in report) else 0
 
     tasks = parse_tasks(git(ROOT, "show", f"{BASE}:{TASK_FILE}")) if (args.next or args.queue) else []
     ledger = load_ledger(ROOT)

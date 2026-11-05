@@ -1,7 +1,7 @@
 # Google Jules -- task list and method
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: Jules every task; Claude/Codex only to add or prune a task -->
-Status: reference | Owner: Dave / Claude Code / Codex | Next: J-31 correction and J-44 to J-53; alternate ordinary and efficiency tasks as --next routes | Dependency: correction details in plans/reference/jules-integration-2026-11-02.md | Verified: 2026-11-02
+Status: reference | Owner: Dave / Claude Code / Codex | Next: J-31 and J-44 to J-53 processed in the assigned integration batch; see plans/reference/jules-integration-2026-11-04.md; prune delivered briefs at the next normal refill | Dependency: none; the batch is on master (its record's final section) | Verified: 2026-11-05
 
 Jules works from GitHub on a Linux VM, outside the Claude/Codex slice queue.
 Its work is behaviour-preserving tooling: guards that catch a known bug class
@@ -321,6 +321,10 @@ dead-code removal.
 
 Take these only when `--next` prints `none`. Each still goes through every
 step of "How to work"; one tool, file or pitfall per pull request.
+`--scope` checks the shape below for an `s-<n>` branch, in CI too (5 Nov
+2026): any other file, such as an inherited `AGENTS.md`, is an `off` line.
+CI also fails a pull request whose `Jules-Sequence` number an older open
+`jules/*` branch already carries (`--sequence`): close the later one.
 
 - **S-1 -- Test the untested functions of a tool.** Every `tools/*.py` is now
   named by some test (24 Oct 2026), so go by function: for one tool, tools/NAME.py,
@@ -405,6 +409,11 @@ For Claude, Codex and Dave, not Jules.
   session not merged by a `J-<n>:` line: `returned` with what to correct,
   `closed` with where its findings went, or `merged` for a file taken by
   checkout. A row is what stops the next reviewer opening it again.
+  A review that will not be integrated in the same sitting records a
+  `reviewed` row on master straight away (Outcome `at <40-char SHA>: ...`,
+  docs-only, merged and pushed at once); the integrator flips it to
+  `merged`/`closed`. A prepared batch branch never writes ledger rows
+  (5 Nov 2026: the 4 Nov batch faked 36 rows as `closed`).
 - Number new tasks after the highest id ever used (`git log -E
   --grep="^J-[0-9]+:"` shows used ones); never reuse an id.
 - Delete merged task blocks at the next refill, not per merge. `--next`

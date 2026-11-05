@@ -30,7 +30,7 @@ Path-scoped rules, on the most-edited paths (`git log --since=2026-09-18 --name-
 | B-2 -- panel-rectangle rule in four homes | Fixed -- durable UI rules moved to `plans/reference/ui-rules.md` (F1); the plan-file restatements are handed off |
 | B-2 -- presentation, read-a-function, `GameConfig` allowlist | Shipped -- rule 2/rule 1 short forms in `docs/agent-rules.md`; long forms in `.claude/rules/simulation.md`, `saving.md` |
 | B-3 -- `LEVEL_MODELS` second copy of the level-to-model rule | Rejected -- `tools/` is outside this review's lane; still unchanged, so routed to the signal log ("`session_cost.py` keeps a second copy") |
-| B-4 -- long plan files | Shipped -- `WORKFLOW_DIAGNOSTICS` archived; `plans/now/agent-lifecycle.md` is 107 lines |
+| B-4 -- long plan files | Shipped -- `WORKFLOW_DIAGNOSTICS` archived; `plans/archive/agent-lifecycle_2026-11-04.md` is 107 lines |
 | B-5 -- prompt v. deny list | Shipped -- review contract rule 1 and `docs/known-pitfalls.md` "Why four paths are denied" name `git show HEAD:` (Dave, 18 Sep) |
 
 ## Findings

@@ -183,8 +183,10 @@ func _role_permitted(role_id: int, bee: Variant = null) -> bool:
 	return main.Availability.role_query(role_id, null, Session.progression, bee).available
 
 func _assign_role(role_id: int) -> void:
+	# Drones stay idle in the hive and rely on nurses to feed them (Dave), so a
+	# mixed selection's job never reaches them.
 	for b: Variant in main.selected_bees:
-		if is_instance_valid(b) and _role_permitted(role_id, b):
+		if is_instance_valid(b) and _role_permitted(role_id, b) and not b.is_drone:
 			b.set_role(role_id)
 	main._update_population_readout()
 	main.hud.update_selection(main.selected_bees)

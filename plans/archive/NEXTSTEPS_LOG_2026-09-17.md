@@ -433,7 +433,7 @@ misreport it as a crash. `doctor` reports it as `godot_capability`; only
 `plans/archive/L-8_2026-09-17.md`. Its `Next after` (L-9) then shipped the
 same day: `session_cost.py --phases` and the repository/host context split
 now exist, but the completion gate they feed is unmet on three of its four
-conditions, so `plans/now/agent-lifecycle.md` has no further slice and does
+conditions, so `plans/archive/agent-lifecycle_2026-11-04.md` has no further slice and does
 not refill the Claude lane -- full record at
 `plans/archive/L-9_2026-09-17.md`. UI-W-2 leads the Claude lane below.
 

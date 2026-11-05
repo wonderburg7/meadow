@@ -1,6 +1,6 @@
 # Jules integration -- 2 November 2026
 
-Status: reference | Owner: Dave / Codex | Next: J-31 and J-44 to J-53 corrections; L-39 and L-40 are queued in the Codex lane | Dependency: L-39 and L-40 in plans/now/agent-lifecycle.md | Baseline: a5c49644e2d48b0510af0fbf9ec2e17e414b0d42 | Verified: 2026-11-02
+Status: reference | Owner: Dave / Codex | Next: J-31 and J-44 to J-53 corrections; L-39 and L-40 are queued in the Codex lane | Dependency: L-39 and L-40 in plans/archive/agent-lifecycle_2026-11-04.md | Baseline: a5c49644e2d48b0510af0fbf9ec2e17e414b0d42 | Verified: 2026-11-02
 
 Dave authorised the implementation plans, merges and pushes following
 the [full review](jules-review-2026-11-02.md). This record distinguishes

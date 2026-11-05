@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-21 built on claude/RR-21, 30 Oct 2026, awaiting Dave's hands-on check; RR-20 built on claude/RR-20, 30 Oct 2026, awaiting Dave's hands-on check; RR-18 implemented on codex/RR-18, awaiting high-risk review and integration (Dave, 30 Oct 2026); RR-12 waits for ED-3 (RR-17 verified on codex/RR-17, 29 Oct 2026; RR-19 on claude/RR-19, 28 Oct 2026; RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-30
+Status: active | Owner: Dave / Claude Code | Next: RR-12 -- a loaded run keeps its readout history, gated until CQ-R2 (`plans/now/code-health.md`), which follows ED-3 (Dave, 5 Nov 2026); RR-13 to RR-22 landed 27 Oct to 4 Nov 2026 | Dependency: CQ-R2, which edits `scripts/main.gd` and the save files RR-12 also edits | Verified: 2026-11-05
 
 ## Objective
 
@@ -42,15 +42,10 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
-| RR-22 | select a number of bees from a multi-selection, youngest and oldest | `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, tests | yes -- CQ-R6 is implemented and CQ-R8 released `scripts/hud.gd` (3 Nov 2026) | medium |
-
-RR-9 and RR-10 are Codex-lane slices (Dave, 15 Oct 2026, plan review D3:
-the Claude lane was full and the Codex backlog dry); RR-7 and RR-11 stay in
-the Claude lane, and RR-11 opens only once SP-11 and RR-10 have both landed.
+| RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after CQ-R2, which follows ED-3 | medium |
 
 Each slice reads its own section only. Do not change skill prices, the
-branch-tier rule (settled by `plans/now/tier-two.md` T2-9, landed 12 Oct 2026), or the save
+branch-tier rule (settled by `plans/archive/tier-two_2026-11-05.md` T2-9, landed 12 Oct 2026), or the save
 format.
 
 RR-6 shipped 2026-10-15; its specification is `plans/archive/RR-6_2026-10-15.md`.
@@ -61,7 +56,7 @@ RR-8 shipped 2026-10-17; its specification is `plans/archive/RR-8_2026-10-17.md`
 
 RR-9 shipped 2026-10-17; its specification is `plans/archive/RR-9_2026-10-17.md`.
 
-**Code health (`plans/now/code-health.md`, 18 Oct 2026).** CQ-L1 (gdlint fixes in `hive.gd` and `skill_tree_panel.gd`) landed 22 Oct 2026. Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (RR-12); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
+**Code health (`plans/now/code-health.md`, 18 Oct 2026).** CQ-L1 (gdlint fixes in `hive.gd` and `skill_tree_panel.gd`) landed 22 Oct 2026. Its save moves (CQ-S1 to CQ-S5) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (RR-12), and CQ-R2 runs before RR-12 (Dave, 5 Nov 2026); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
 
 RR-10 shipped 2026-10-18; its specification is `plans/archive/RR-10_2026-10-18.md`.
 
@@ -118,7 +113,7 @@ test shows `day_store_totals` changing a condition's result across a load
 - Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, `tests/rr12_readout_history_test.gd`, `tests/test_rr12_readout_history.py`
 - Check: `python -m unittest tests.test_rr12_readout_history` passes: after a save and load of a run holding history samples, day-store entries, an emergence entry and a recorded trip, `history_samples`, `emergence_log`, `day_store_totals` and `foraging_stats.save_data()` equal their saved values, and a save with `readout_history` removed loads with all four empty; `python -m unittest tests.test_save_migrations` still passes.
 - Proof: `absent: scripts/save_game.gd :: readout_history`
-- Next after: none -- `plans/now/run-repairs.md` is complete once RR-8 and RR-11 have landed
+- Next after: none -- `plans/now/run-repairs.md` is complete
 ```
 
 RR-13 shipped 2026-10-27; its specification is `plans/archive/RR-13_2026-10-27.md`.
@@ -133,53 +128,7 @@ RR-17 shipped 2026-10-29; its specification is `plans/archive/RR-17_2026-10-29.m
 
 RR-18 shipped 2026-10-31; its specification is `plans/archive/RR-18_2026-10-31.md`.
 
-## RR-22 -- select a number of bees from a multi-selection
-
-Level: medium -- claude-sonnet-5-5 at medium effort.
-
-**True now.** Dave: a button to select n bees, "select 1 bee as default for n,
-with '<<' '<' '>' '>>' buttons to change n by +/- 1 or 5. Also adds buttons
-for 'Select youngest bee', and 'Select oldest bee'". The multi-selection
-summary is the `else` branch of the identity-label code in
-`hud.gd::update_selection` (near l.2983, "%d bees selected",
-`_set_summary_cog_kind("multiple")`; re-verified 3 Nov 2026). The selection list is
-`main.selected_bees`, set in `input_selection.gd` (near l.207-215) and shown
-through `hud.update_selection`. A bee's age is `Bee.age_seconds`.
-
-**When done:**
-
-1. The multi-selection summary has a "Select n" row: `<<`, `<`, a count, `>`,
-   `>>` (steps of 5 and 1), n starting at 1 and clamped to 1..the selection
-   size, and a "Select" button that narrows `selected_bees` to n bees
-   through a new hud signal handled in `input_selection.gd` (wired in
-   `main.gd`), deselecting the rest with `set_selected(false)`.
-2. Which n bees are kept: the n nearest the selection's centre. This is
-   provisional, Dave to confirm at the hands-on check.
-3. "Select youngest bee" and "Select oldest bee" narrow the selection to the one
-   bee with the least or greatest `age_seconds`.
-4. The row follows `plans/reference/ui-rules.md` and fits at the minimum
-   width (`tests/test_layout_regression.py`); a new test checks the narrowing,
-   the clamp and both extremes.
-5. Dave's hands-on check is filed at closeout: drag-select a crowd, narrow it
-   by n, youngest and oldest.
-
-**Invariants.** A single selection shows no row. Selecting never alters the
-simulation. Presentation and selection state only.
-
-Which n bees `Select n` keeps is built as nearest the centre (When done, 2);
-Dave confirms or changes it at the hands-on check, which does not block the
-build.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] RR-22 -- select a number of bees from a multi-selection**
-- Plan: `plans/now/run-repairs.md` -- "RR-22 -- select a number of bees from a multi-selection"
-- Files: `scripts/hud.gd`, `scripts/input_selection.gd`, `scripts/main.gd`, `tests/test_layout_regression.py`, `tests/rr22_select_n_test.gd`, `tests/test_rr22_select_n.py`
-- Check: `python -m unittest tests.test_rr22_select_n` passes (n is clamped to 1..selection size, `>>` steps by 5, Select keeps n bees, youngest and oldest keep the one bee with the least or greatest age); `python -m unittest tests.test_layout_regression` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-- Proof: `absent: scripts/hud.gd :: select_youngest`
-- Next after: none -- multi-selection narrowing is complete
-```
+RR-22 shipped 2026-11-04; its specification is `plans/archive/RR-22_2026-11-04.md`.
 
 ## Not in the queue, and why
 
@@ -202,4 +151,4 @@ build.
   before admitting a repair. No save schema or fallback changes are part
   of the Jules integration, and its incomplete Inventory is not accepted.
 
-- **RR-12** -- a loaded run keeps its readout history; waits for ED-3, the last of the alpha chain, because SG-2 to ED-3 share `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.
+- **RR-12** -- a loaded run keeps its readout history; waits for CQ-R2, which follows ED-3 (Dave, 5 Nov 2026), because they share `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.

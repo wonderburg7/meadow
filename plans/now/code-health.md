@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R15 implemented (3 Nov 2026); CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the unmerged Jules S-3 branches to settle scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd (CQ-R16 landed 2 Nov 2026; CQ-R15, ED-1b and CQ-R8 3 Nov 2026, releasing scripts/hud.gd); CQ-M6 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd and scripts/soil_block.gd and claude/dave-hands-on-checks-784f2a to settle scripts/hive_cell.gd (ED-1 and CQ-R16 landed 2 Nov 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R16 landed 2 Nov 2026 and CQ-R15 3 Nov 2026; CQ-R8 implemented 3 Nov 2026 (ED-1b, which shared scripts/hud.gd, landed 3 Nov 2026); CQ-R3 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd (ED-1 landed 2 Nov 2026) | Dependency: CQ-T3 is queued behind RR-22 (section written 3 Nov 2026); CQ-T4 waits for CQ-T3 and claude/dave-hands-on-checks-784f2a; CQ-R3 follows the unmerged Jules S-1 and S-3 branches (ED-1 landed 2 Nov 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
+Status: active | Owner: Dave / Claude Code / Codex | Next: the Codex lane holds CQ-M5b and CQ-M6 (their Jules gates cleared 5 Nov 2026), and CQ-R3 waits in its backlog; CQ-M6b waits for the Claude lane's PN-5, PN-6 and PN-9; CQ-M4 for the Claude lane to release the save files; CQ-T4 for the Codex lane's CQ-M5b, CQ-M6, PN-19, PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-05
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -81,7 +81,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
   - `tools/gdscript_style.py` skips with a message when gdtoolkit is missing (the Codex
     runtime).
   - `bee.gd::idle_reason` starting a comb site is fixed by T2-14 in
-    `plans/now/tier-two.md`, not here.
+    `plans/archive/tier-two_2026-11-05.md`, not here.
   - Jules's audit (23 Oct 2026) put four options to Dave, none backed by a
     measured problem, so none is pursued: UI moved into `.tscn` scenes
     (breaks the headless geometry checks), bee helpers as child nodes (5-10x
@@ -122,19 +122,19 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | Slice | Outcome | Files it owns (block has the full list) | Startable | Level |
 | --- | --- | --- | --- | --- |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T3 | the 18 free UI scripts typed | those 18, `tests/source_checks.py`, `FUNCTION_MAP.md` | yes, after RR-22 in the Claude lane | low |
-| CQ-T4 | the other 54 scripts and tests typed; `untyped_declaration` becomes an error | those, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | gated -- after CQ-T3, `claude/dave-hands-on-checks-784f2a` and the Jules S-1/S-3 branches | low |
-| CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a, DR-1 | high |
+| CQ-T4 | the other 56 scripts and tests typed; `untyped_declaration` becomes an error | those, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | gated -- after CQ-M5b, CQ-M6, PN-19, PN-8 and PN-14 in the Codex lane (its Jules gates cleared 5 Nov 2026) | low |
+| CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
-| CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
-| CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | gated -- the Jules S-3 branches change `main.gd`, Jules J-14 holds `game_panel.gd` (CQ-R15, CQ-R16 and CQ-R8 landed; `hud.gd` is free) | low |
-| CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- the Jules S-1 and S-3 branches change `bee.gd` and `soil_block.gd`, `claude/dave-hands-on-checks-784f2a` changes `hive_cell.gd` (ED-1 and CQ-R16 landed) | low |
-| CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
-| CQ-R2 | first crisis becomes scripts/first_crisis.gd | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
-| CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `bee_readout.gd` (new), `FUNCTION_MAP.md` | gated -- the Jules S-1 and S-3 branches change `bee.gd` (ED-1 landed 2 Nov 2026) | medium |
+| CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | gated: the Claude lane holds `save_game.gd` and `saving.gd` | medium |
+| CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | yes -- queued (Codex) | low |
+| CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | `world_draw.gd` (new) and 5 world scripts | yes (5 Nov 2026) | low |
+| CQ-M6b | the cell ring and the selection layer read it | `hive_cell.gd`, `input_selection.gd` | after CQ-M6, and the Claude lane's PN-5, PN-6 and PN-9 | low |
+| CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6b | medium |
+| CQ-R2 | first crisis moves into scripts/event_director.gd as the shared cycle's first record (`plans/design/event-director.md` decisions 2 and 15) | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated: after ED-3 alone (Dave, 5 Nov 2026); RR-12 and SP-8a follow it | high |
+| CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `bee_readout.gd` (new), `FUNCTION_MAP.md` | yes -- Codex lane (5 Nov 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
@@ -163,10 +163,10 @@ claim while `dry_after`).
 - **Other plans:**
   - RR-10 (`plans/now/run-repairs.md`, Codex lane) held `hive.gd` and
     `skill_tree_panel.gd`; it landed 18 Oct 2026, clearing CQ-L1.
-  - L-30 (`plans/now/agent-lifecycle.md`) held `tools/verify.ps1`; it landed 18 Oct 2026, clearing CQ-L1.
+  - L-30 (`plans/archive/agent-lifecycle_2026-11-04.md`) held `tools/verify.ps1`; it landed 18 Oct 2026, clearing CQ-L1.
   - HP-3 (`plans/archive/hot-path-cadence_2026-10-18.md`) changes `bee.gd::_process`: CQ-R4 profiles
     after it.
-  - T2-14 (`plans/now/tier-two.md`) fixed `idle_reason` before CQ-R3 moves it; it
+  - T2-14 (`plans/archive/tier-two_2026-11-05.md`) fixed `idle_reason` before CQ-R3 moves it; it
     landed 21 Oct 2026, clearing CQ-R3 of everything but the `hud.gd` order.
   - CQ-T3 types `hud.gd` after the queued slices that reshape it (WP-3, landed
     22 Oct 2026, then CQ-R7), as CQ-T2 waited for CQ-R1's moves; CQ-L1, which held
@@ -180,9 +180,11 @@ claim while `dry_after`).
   - CQ-M9 is independent of those gates: `colony_panel.gd` is below the
     function-map threshold and no Claude queue item owns it. CQ-M10's
     Codex block stays `queue-gated` until it is opened by hand.
-  - The save moves (CQ-S1 to S5 and CQ-R2) wait for every specified slice that edits
-    `save_game.gd`/`saving.gd`: WP-2, SG-2, ED-1c, ED-2 (difficulty, ending at ED-3),
-    RR-12, SP-8a and DR-1 (`plans/now/drones.md`). Each of those plans carries the reverse pointer.
+  - The save moves CQ-S1 to S5 wait for every specified slice that edits
+    `save_game.gd`/`saving.gd`: ED-2 and ED-3 (`plans/now/difficulty.md`), RR-12
+    and SP-8a. CQ-R2 waits for ED-3 alone (Dave, 5 Nov 2026, plan review), so the
+    alpha's events do not wait for the meadow floor; RR-12 and SP-8a follow it.
+    Each of those plans carries the reverse pointer.
   - CQ-L3 needs both lanes empty, per `plans/workstreams.md`.
 
 ## Rules for every slice
@@ -300,52 +302,47 @@ wrapped chain as `. name(` on its own line.
 - Files: every tracked `.gd` outside `addons/`, `tools/verify.ps1`, `FUNCTION_MAP.md`, `docs/challenge-stages.md`
 - Check: `gdformat --check` over every tracked `.gd` outside `addons/` reports nothing to change; `.\tools\verify.ps1` is green
 - Proof: `absent: tools/verify.ps1 :: gdformat`
-- Next after: CQ-T3
+- Next after: CQ-T4 -- the rest typed
 ```
 
-## CQ-T3 -- the free UI scripts typed
+CQ-T3 shipped 2026-11-05; its specification is `plans/archive/CQ-T3_2026-11-05.md`.
 
-Level: low -- claude-sonnet-5-5 at low effort. Mechanical: type annotations
+## CQ-T4 -- the rest typed
+
+Level: low -- claude-sonnet-5-5 at low effort. Mechanical, as CQ-T3: type annotations
 only, no behaviour change.
 
-**True now** (counted 3 Nov 2026 with `tests/source_checks.py::untyped_declarations`
-against `37314ed`). 72 scripts and tests outside `TYPED_FILES` hold 626 untyped
-declarations, so `untyped_declaration=1` in `project.godot` cannot become an
-error in one slice. The 18 UI scripts below hold 289 and no other branch or
-queued slice holds them (RR-22, ahead in this lane, also edits `scripts/hud.gd`
-and lands first, so its new code is typed here once). Five more UI scripts
-(`hud_command_rows`, `colony_panel`, `skill_tree_panel`, `gallerin_panel`,
-`problem_messages`) are changed by the unmerged `claude/dave-hands-on-checks-784f2a`
-and go to CQ-T4.
+**True now** (counted 4 Nov 2026 with `tests/source_checks.py::untyped_declarations`,
+after CQ-T3's 18 files were typed). 56 scripts and tests outside `TYPED_FILES` hold 348
+untyped declarations. `claude/dave-hands-on-checks-784f2a`, which changed five of the
+UI scripts, merged 4 Nov 2026. No open Jules branch changes these files (rechecked
+5 Nov 2026: E-14 and the S-3 marker-reparent branch are closed, and E-34's copies of
+them equal master's). It waits for the Codex lane's CQ-M5b, CQ-M6, PN-19, PN-8 and
+PN-14, which hold `tests/source_checks.py`, `scripts/obstacle.gd`,
+`scripts/soil_block.gd`, `scripts/colony_panel.gd` and `scripts/camera_view.gd`.
 
 **When done:**
 
-1. Every declaration `untyped_declarations` flags in `scripts/hud.gd` (115),
-   `debug_panel.gd` (48), `ui_theme.gd` (20), `main_menu.gd` (20),
-   `nursery_panel.gd` (18), `saves_panel.gd` (16), `hud_goal_shelf.gd` (11),
-   `challenge_complete.gd` (8), `ui.gd`, `run_availability_panel.gd` (5 each),
-   `ui_icon.gd`, `game_over.gd`, `foraging_panel.gd` (4 each),
-   `succession_panel.gd` (3), `winter_panel.gd`, `stage_gate.gd`, `perf_plot.gd`
-   and `perf_breakdown.gd` (2 each) carries an explicit type (`:=` where the
-   type is obvious, `-> void` on lambdas).
-2. All 18 are in `TYPED_FILES` in `tests/source_checks.py`.
+1. Every declaration `untyped_declarations` flags in the 56 files carries an explicit
+   type, as CQ-T3 did (`:=` where the type is obvious, `-> void` or `-> Variant` on
+   lambdas and functions).
+2. All 56 are in `TYPED_FILES`, and `project.godot` sets `untyped_declaration=2`, so the
+   warning is an error.
 3. `python tools/update_function_map.py` has been re-run for the new signatures.
 4. Behaviour and every display string unchanged ("Rules for every slice").
 
-**Why one slice for 20 files.** The work list is `untyped_declarations`'
-output, one line per fix; the worker reads only the flagged lines, not the
-files, and nothing a reviewer must reason about moves. Splitting by file would
-add closeouts without shortening any.
+**Why one slice.** The work list is `untyped_declarations`' output, one line per fix;
+the worker reads only the flagged lines.
 
 **Open decisions:** none.
 
-```queue
-**[Claude] CQ-T3 -- the free UI scripts typed**
-- Plan: `plans/now/code-health.md` -- "CQ-T3 -- the free UI scripts typed"
-- Files: `scripts/hud.gd`, `scripts/debug_panel.gd`, `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/nursery_panel.gd`, `scripts/saves_panel.gd`, `scripts/hud_goal_shelf.gd`, `scripts/challenge_complete.gd`, `scripts/ui.gd`, `scripts/run_availability_panel.gd`, `scripts/ui_icon.gd`, `scripts/game_over.gd`, `scripts/foraging_panel.gd`, `scripts/succession_panel.gd`, `scripts/winter_panel.gd`, `scripts/stage_gate.gd`, `scripts/perf_plot.gd`, `scripts/perf_breakdown.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
-- Check: `python tests/source_checks.py` passes with all 18 scripts in `TYPED_FILES`; `python tools/prefinish.py` boots without an `untyped_declaration` warning from them; `.\tools\verify.ps1` is green
-- Proof: `absent: tests/source_checks.py :: "scripts/debug_panel.gd"`
-- Next after: CQ-T4 -- the rest typed; the warning becomes an error
+```queue-gated
+**[Claude] CQ-T4 -- the rest typed**
+- Plan: `plans/now/code-health.md` -- "CQ-T4 -- the rest typed"
+- Files: `scripts/actions.gd`, `scripts/bee_identity.gd`, `scripts/bee_movement.gd`, `scripts/bee_survival.gd`, `scripts/camera_view.gd`, `scripts/colony_panel.gd`, `scripts/crab_spider.gd`, `scripts/flower_species.gd`, `scripts/fog_of_war.gd`, `scripts/gallerin_panel.gd`, `scripts/guidance_catalogue.gd`, `scripts/hud_command_rows.gd`, `scripts/levels.gd`, `scripts/obstacle.gd`, `scripts/pollination_pop.gd`, `scripts/prerequisites.gd`, `scripts/problem_messages.gd`, `scripts/queen_hearts_vfx.gd`, `scripts/rain_effect.gd`, `scripts/roles.gd`, `scripts/scenario_presets.gd`, `scripts/shapes.gd`, `scripts/skill_tree_panel.gd`, `scripts/soil_block.gd`, `scripts/spatial_grid.gd`, `tests/bs13_stage_columns_test.gd`, `tests/c140_scenario_level_save_test.gd`, `tests/challenge2_checks_test.gd`, `tests/col10_succession_test.gd`, `tests/col11_nuptial_flight_test.gd`, `tests/col9_drones_test.gd`, `tests/display_text_golden_test.gd`, `tests/dr1_drone_cells_test.gd`, `tests/drone_command_rows_test.gd`, `tests/ed1_health_test.gd`, `tests/ed1b_health_panel_test.gd`, `tests/ed1c_health_save_test.gd`, `tests/fr1d_forager_behaviour_test.gd`, `tests/gc4_nurse_role_change_keeps_food_test.gd`, `tests/ho10_queen_starvation_ends_run_test.gd`, `tests/ho15_menu_hex_fit_test.gd`, `tests/rr5_hex_refit_test.gd`, `tests/rr7_silkscreen_fit_test.gd`, `tests/sg1_short_term_goals_test.gd`, `tests/si1_run_state_test.gd`, `tests/si3_atomic_write_test.gd`, `tests/sp1_pixel_sprite_test.gd`, `tests/sp6_forager_sprite_test.gd`, `tests/t2_12_automine_offer_test.gd`, `tests/t2_13_carried_body_test.gd`, `tests/t2_14_idle_reason_pure_test.gd`, `tests/t2_2_automation_gate_test.gd`, `tests/t2_5_rain_skills_test.gd`, `tests/t2_6_associative_learning_test.gd`, `tests/ts1_typeface_size_test.gd`, `tests/ts2_hud_typeface_size_test.gd`, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md`
+- Check: `python tests/source_checks.py` passes with all 56 scripts and tests in `TYPED_FILES` and `project.godot` sets `untyped_declaration=2`; `python tools/prefinish.py` boots without an `untyped_declaration` warning; `.\tools\verify.ps1` is green
+- Proof: `absent: tests/source_checks.py :: "scripts/skill_tree_panel.gd"`
+- Next after: none -- the last typing slice
 ```
 
 ## Not in the queue, and why
@@ -368,21 +365,23 @@ add closeouts without shortening any.
   rule; ownership changes need a separate reviewed design. None is admitted
   without that evidence; the source audit reports remain unaccepted.
 
-- **CQ-T4** -- the remaining 54 scripts and tests typed and `untyped_declaration`
-  made an error; waits for CQ-T3, and for `claude/dave-hands-on-checks-784f2a` and
-  the Jules S-1/S-3 branches, which between them change five of its UI scripts and
-  `scripts/soil_block.gd`, to be merged or closed. Its section is written
-  when CQ-T3 is claimed.
+- **CQ-T4** -- the remaining 56 scripts and tests typed and `untyped_declaration`
+  made an error; waits for the Codex lane's CQ-M5b, CQ-M6, PN-19, PN-8 and PN-14,
+  which hold `tests/source_checks.py`, `scripts/obstacle.gd`, `scripts/soil_block.gd`,
+  `scripts/colony_panel.gd` and `scripts/camera_view.gd` (its Jules gates cleared
+  5 Nov 2026). Its section is `## CQ-T4 -- the rest typed`.
 - **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`
   and `scripts/saving.gd`; its ownership overlaps that lane's current work.
-- **CQ-M5b** -- waits for the unmerged Jules S-3 branches (which change
-  `scripts/main.gd`) and for the Jules J-14 branch (which deletes code in
-  `scripts/game_panel.gd`) to be merged or closed; keep its block gated until
-  both clear (CQ-R8 released `scripts/hud.gd`, 3 Nov 2026).
-- **CQ-M6** -- waits for the unmerged Jules S-1 and S-3 branches (which change
-  `scripts/bee.gd` and `scripts/soil_block.gd`) and `claude/dave-hands-on-checks-784f2a`
-  (which changes `scripts/hive_cell.gd`) to be merged or closed (ED-1 and CQ-R16
-  landed 2 Nov 2026); keep its queue block gated until that ownership clears. CQ-R10 also uses `scripts/input_selection.gd`, so take it first.
+- **CQ-M6b** -- the cell ring and the selection layer read `SELECTION_COLOUR`;
+  waits for the Claude lane's PN-5, PN-6 and PN-9, which edit
+  `scripts/input_selection.gd` and `scripts/hive_cell.gd`, and for CQ-M6, which
+  creates the constant.
+- **CQ-R4** -- `bee.gd::_process` into four helpers, profiled (high); HP-3
+  landed 18 Oct 2026, so it needs only its section and block, written by the
+  session that claims CQ-R3.
+
+CQ-M5b and CQ-M6 had waited for the Jules S-1, S-3 and J-14 branches; on
+5 Nov 2026 none was open and changing their files, so both were queued.
 
 CQ-S0b shipped 2026-10-25; its specification is `plans/archive/CQ-S0b_2026-10-25.md`.
 
@@ -440,7 +439,7 @@ checks. Stop if the replacement changes a save compatibility decision.
 - Files: `scripts/levels.gd`, `scripts/challenge_runner.gd`, `scripts/saving.gd`, `scripts/save_game.gd`, `scripts/main.gd`, `scripts/debug_panel.gd`, `scripts/challenge_complete.gd`, `scripts/world_building.gd`, `FUNCTION_MAP.md`
 - Check: `python tools/equivalence.py test_scenarios/h4_challenge1_stage_advance_test.json master` and `python tools/equivalence.py test_scenarios/bb4_challenge1_route.json master` report no difference; `python tests/source_checks.py`, `python tools/prefinish.py` and `./tools/verify.ps1` are green
 - Proof: `present: scripts/saving.gd :: if Session.starting_level in [1, 2]:`
-- Next after: CQ-M5b -- the last CanvasLayer readers and the bare-layer source check
+- Next after: CQ-M6 -- name selection green and caste appearance
 ```
 
 CQ-R11 shipped 2026-10-26; its specification is `plans/archive/CQ-R11_2026-10-26.md`.
@@ -456,16 +455,16 @@ CQ-M5a shipped 2026-10-29; its specification is `plans/archive/CQ-M5a_2026-10-29
 `game_panel.gd::setup_layer`'s default read `scripts/canvas_layers.gd`, and
 `tests/source_checks.py` fails any `layer = <integer>` assignment in
 `scripts/` outside `canvas_layers.gd`. Integers unchanged; regenerate
-`FUNCTION_MAP.md`. Re-verify the line numbers and the J-14 outcome when
-claiming. Reasoning: **low**. **Open decisions:** none.
+`FUNCTION_MAP.md`. Re-verify the line numbers when
+claiming (J-14 has gone, 5 Nov 2026). Reasoning: **low**. **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Codex] CQ-M5b -- the last CanvasLayer readers and the bare-layer source check**
 - Plan: `plans/now/code-health.md` -- "CQ-M5b -- the last CanvasLayer readers and the bare-layer source check"
 - Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/game_panel.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
 - Check: `python tests/source_checks.py` passes and fails on a planted `layer = 3` in a scratch copy of `scripts/hud.gd`; `python -m unittest tests.test_layout_regression` and `python tools/prefinish.py` pass
 - Proof: `present: scripts/main.gd :: weather_layer.layer = 5`
-- Next after: CQ-M4 -- gated until the Claude lane releases the save files
+- Next after: SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels
 ```
 
 ## CQ-M6 -- name selection green and caste appearance
@@ -478,23 +477,45 @@ these as presentation constants; `scripts/obstacle.gd` still assigns
 26 Oct 2026). The Claude lane owns none of the files listed below, as checked
 with `tools/slice.ps1 owner` on 26 Oct 2026.
 
-**When done.** After CT-1 releases `scripts/hive_cell.gd`, add a leaf
-`scripts/world_draw.gd` with `SELECTION_COLOUR` and
-use it at the existing selection sites while preserving each site's alpha.
-Name the caste colours and `QUEEN_SIZE_FACTOR` beside their present use in
-`bee.gd`. Keep the rendered colours, sizes, display strings, RNG calls and
+**When done.** Add a leaf `scripts/world_draw.gd` with `SELECTION_COLOUR`
+and use it at the world-object selection rings -- `bee.gd`, `death_marker.gd`,
+`flower.gd`, `obstacle.gd` and `soil_block.gd` -- while preserving each site's
+alpha. Name the caste colours and `QUEEN_SIZE_FACTOR` beside their present use
+in `bee.gd`. Keep the rendered colours, sizes, display strings, RNG calls and
 simulation outcomes unchanged. Extend the existing owner; do not add a new
 drawing service. Regenerate `FUNCTION_MAP.md` if a mapped function changes.
 Reasoning: **low**.
 
+**Split (5 Nov 2026).** The cell ring (`hive_cell.gd:503`) and the drag box and
+order marker (`input_selection.gd:685`, `:686`, `:784`, `:785`) are CQ-M6b:
+the Claude lane's PN-5 and PN-6 hold `input_selection.gd`, and PN-9, that
+lane's next slice, edits `hive_cell.gd`.
+
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Codex] CQ-M6 -- name selection green and caste appearance**
 - Plan: `plans/now/code-health.md` -- "CQ-M6 -- name selection green and caste appearance"
-- Files: `scripts/world_draw.gd`, `scripts/bee.gd`, `scripts/death_marker.gd`, `scripts/flower.gd`, `scripts/hive_cell.gd`, `scripts/input_selection.gd`, `scripts/obstacle.gd`, `scripts/soil_block.gd`, `FUNCTION_MAP.md`
-- Check: `python -m unittest tests.test_sp11_cell_rim tests.test_sp9_soil_art tests.test_col9_drones` and `python tools/prefinish.py` pass; rendered selection alphas and caste sizes remain unchanged
+- Files: `scripts/world_draw.gd`, `scripts/bee.gd`, `scripts/death_marker.gd`, `scripts/flower.gd`, `scripts/obstacle.gd`, `scripts/soil_block.gd`, `FUNCTION_MAP.md`
+- Check: `python -m unittest tests.test_sp9_soil_art tests.test_col9_drones` and `python tools/prefinish.py` pass; rendered selection alphas and caste sizes remain unchanged
 - Proof: `present: scripts/obstacle.gd :: selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)`
+- Next after: CQ-M6b -- the cell ring and the selection layer read the selection green
+```
+
+## CQ-M6b -- the cell ring and the selection layer read the selection green
+
+**When CQ-M6 has landed and the Claude lane has released the files.**
+`hive_cell.gd`'s selection ring and `input_selection.gd`'s drag box and order
+marker use `WorldDraw.SELECTION_COLOUR` from CQ-M6, each keeping its own alpha
+(0.95; 0.15 and 0.9; 0.95 and 0.2). Rendered colours unchanged. Reasoning:
+**low**. **Open decisions:** none.
+
+```queue-gated
+**[Codex] CQ-M6b -- the cell ring and the selection layer read the selection green**
+- Plan: `plans/now/code-health.md` -- "CQ-M6b -- the cell ring and the selection layer read the selection green"
+- Files: `scripts/hive_cell.gd`, `scripts/input_selection.gd`
+- Check: `python -m unittest tests.test_sp11_cell_rim` and `python tools/prefinish.py` pass; no `Color(0.2, 1.0, 0.4` literal is left in either file
+- Proof: `present: scripts/input_selection.gd :: Color(0.2, 1.0, 0.4, 0.15)`
 - Next after: CQ-M7 -- name world draw order
 ```
 
@@ -508,7 +529,7 @@ CQ-R8 shipped 2026-11-03; its specification is `plans/archive/CQ-R8_2026-11-03.m
 
 ## CQ-R3 -- bee display text becomes scripts/bee_readout.gd
 
-Level: medium. Gated: the unmerged Jules S-1 and S-3 branches change `bee.gd` (ED-1 landed 2 Nov 2026; HS-2 and SP-6 1 Nov 2026). D1 (Dave chose this split,
+Level: medium. Codex lane, after PN-18 (which shares `bee.gd`); if it lands before PN-13 (`plans/now/play-notes-config.md`, Claude), PN-13 re-checks its label lines against `bee_readout.gd`. Startable since 5 Nov 2026, when no open Jules branch changed `bee.gd` (ED-1 landed 2 Nov 2026; HS-2 and SP-6 1 Nov 2026). D1 (Dave chose this split,
 18 Oct 2026); the modularity review's MOD-03 lands here instead of a
 `BeeView` child node, which D1's settled list rejects.
 
@@ -549,8 +570,8 @@ slice's. 5. `python tools/update_function_map.py`.
 **Stop and escalate if** a moved function turns out to run per frame, needs
 an enum not in `bee_enums.gd`, or any golden string changes.
 
-```queue-gated
-**[Claude] CQ-R3 -- bee display text becomes scripts/bee_readout.gd**
+```queue
+**[Codex] CQ-R3 -- bee display text becomes scripts/bee_readout.gd**
 - Plan: `plans/now/code-health.md` -- "CQ-R3 -- bee display text becomes scripts/bee_readout.gd"
 - Files: `scripts/bee.gd`, `scripts/bee_readout.gd`, `FUNCTION_MAP.md`
 - Check: `python -m unittest tests.test_display_text_golden tests.test_t2_14_idle_reason_pure tests.test_t2_11_comb_cadence` passes with no expected string changed; `.\tools\verify.ps1` is green

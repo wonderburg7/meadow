@@ -42,7 +42,11 @@ it goes.
    runner as `plans/reference/check-runner.md` "Choosing a runner" says, or
    hand-offs to the gameplay consistency review.
 4. **Pacing and balance.** Run `python tools/pacing_gates.py` once and
-   compare it with the alpha pacing targets. Balance changes are simulated
+   compare it with the alpha pacing targets. Every timing is a draft
+   (Dave, 5 Nov 2026; `plans/design/product-scope.md` §3): judge the order
+   the outcomes come in, not their days; never specify a sweep or slice
+   whose only aim is moving a milestone by a few days; when a target and a
+   mechanic disagree, move the target. Balance changes are simulated
    first (`docs/agent-rules.md` rule 2): for a value that looks wrong, do not
    change the number; specify an experiment (`.\tools\run_headless.ps1
    --experiment <scenario>`, `docs/headless-run-contract.md`) and the

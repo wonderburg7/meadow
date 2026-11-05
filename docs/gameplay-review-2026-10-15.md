@@ -19,14 +19,14 @@ Reviewed: 9c490df | Since: 2e9f7b4 | Scope: follow-through of the 30 Sep record,
 | --- | --- | --- | --- | --- |
 | F1 | A skipped winter ferments every nectar cell and ripens sealed bee bread: spring's first day starts with honey makers skipping all nectar, eaters going tipsy and foragers topping up sour cells | `season.gd::_resolve_winter` moves `Session.sim_time` 240 h and touches no cell; `hive_cell.gd::is_fermented` reads `sim_time - nectar_since` against 96 h. Probe: 40 nectar stored the day before winter read fermented, age 240 h, on day 41 | medium | Decided -- `.claude/rules/simulation.md` ("Nothing ferments over winter", Dave D1: option A); built by RR-9, queued in `plans/now/run-repairs.md` |
 | F2 | Fermented nectar still buys skills, though NF decision 2 says it can only be drunk or hauled out | `skill_tree_panel.gd::_stores` counts nectar cells with no `is_fermented` check; `hive.gd::take` skips nothing sour (`grep -n is_fermented scripts/skill_tree_panel.gd` finds nothing) | low | Decided -- `.claude/rules/simulation.md` ("Fermented nectar is not currency", Dave D2: option B, extended with a pre-fermented warning stage); built by RR-10 (queued) and RR-11 (gated on SP-11), `plans/now/run-repairs.md` |
-| F3 | A bee given a new role while carrying a body keeps `carrying_corpse` for good: its panel says it carries a dead bee over any real load, and the body is lost | `bee.gd::_apply_role` and `_release_everything` never clear `carrying_corpse`/`corpse_is_bee` (only `bee_building.gd::builder_dump_waste` does). Probe: a comb worker carrying a body, made a Forager with 30 nectar, showed "Carrying: a dead bee, for disposal outside" | low | Gated -- T2-13 in `plans/now/tier-two.md` (home chosen by Dave, D3), waits for T2-10 to release `scripts/bee.gd` |
+| F3 | A bee given a new role while carrying a body keeps `carrying_corpse` for good: its panel says it carries a dead bee over any real load, and the body is lost | `bee.gd::_apply_role` and `_release_everything` never clear `carrying_corpse`/`corpse_is_bee` (only `bee_building.gd::builder_dump_waste` does). Probe: a comb worker carrying a body, made a Forager with 30 nectar, showed "Carrying: a dead bee, for disposal outside" | low | Gated -- T2-13 in `plans/archive/tier-two_2026-11-05.md` (home chosen by Dave, D3), waits for T2-10 to release `scripts/bee.gd` |
 
 Dave's answers, 15 Oct 2026: D1 "Over winter it's too cold for the nectar
 to ferment"; D2 "skills skip fermented nectar. there should also be a
 "pre-fermented" nectar type, which has a slight colour shift between the
 normal and fermented, and can be used as normal (and still used for skills)
 which acts as a warning mode for players"; D3: new slice sections in
-`plans/now/tier-two.md` and `plans/now/run-repairs.md`, though both files
+`plans/archive/tier-two_2026-11-05.md` and `plans/now/run-repairs.md`, though both files
 were owned by queued slices (T2-11, RR-7) at the time.
 
 D2 covers skills only, so `hive.gd::_stock()` still counts fermented nectar

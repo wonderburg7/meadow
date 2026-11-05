@@ -3403,6 +3403,12 @@ TYPED_FILES = [
     "scripts/challenge_stage_setup.gd", "scripts/save_migrations.gd",
     "scripts/player_profile.gd", "scripts/headless/diagnostic_probes.gd",
     "scripts/headless/scenario_boot.gd",
+    "scripts/hud.gd", "scripts/debug_panel.gd", "scripts/ui_theme.gd",
+    "scripts/main_menu.gd", "scripts/nursery_panel.gd", "scripts/saves_panel.gd",
+    "scripts/hud_goal_shelf.gd", "scripts/challenge_complete.gd", "scripts/ui.gd",
+    "scripts/run_availability_panel.gd", "scripts/ui_icon.gd", "scripts/game_over.gd",
+    "scripts/foraging_panel.gd", "scripts/succession_panel.gd", "scripts/winter_panel.gd",
+    "scripts/stage_gate.gd", "scripts/perf_plot.gd", "scripts/perf_breakdown.gd",
 ]
 
 UNTYPED_VAR = re.compile(

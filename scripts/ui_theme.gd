@@ -196,16 +196,16 @@ static func _build_panel_image(mode: String) -> Image:
 		# almost equally far.
 		img = Image.create(12, 18, false, Image.FORMAT_RGBA8)
 		var centres := []
-		for cy in range(-1, 3):
-			for cx in range(-1, 3):
+		for cy: int in range(-1, 3):
+			for cx: int in range(-1, 3):
 				centres.append(Vector2(cx * 12, cy * 18))
 				centres.append(Vector2(cx * 12 + 6, cy * 18 + 9))
-		for y in 18:
-			for x in 12:
+		for y: Variant in 18:
+			for x: Variant in 12:
 				var p := Vector2(x + 0.5, y + 0.5)
 				var d1 := 1e9
 				var d2 := 1e9
-				for c in centres:
+				for c: Variant in centres:
 					var d := p.distance_to(c)
 					if d < d1:
 						d2 = d1
@@ -226,8 +226,8 @@ static func _build_panel_image(mode: String) -> Image:
 		var rng := RandomNumberGenerator.new()
 		rng.seed = 20260919
 		img = Image.create(64, 64, false, Image.FORMAT_RGBA8)
-		for y in 64:
-			for x in 64:
+		for y: Variant in 64:
+			for x: Variant in 64:
 				var c: Color
 				if rng.randf() < light_share:
 					c = bg.lightened(rng.randf_range(0.0, max_lighter))
@@ -245,7 +245,7 @@ static func contrast_ratio(a: Color, b: Color) -> float:
 
 static func _relative_luminance(c: Color) -> float:
 	var ch := [c.r, c.g, c.b]
-	for i in 3:
+	for i: Variant in 3:
 		var v: float = ch[i]
 		ch[i] = v / 12.92 if v <= 0.04045 else pow((v + 0.055) / 1.055, 2.4)
 	return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2]
@@ -265,8 +265,8 @@ static func panel_texture_contrast(mode: String) -> Dictionary:
 		var comb := 1.0
 		if out["drawn"]:
 			var img := _build_panel_image("comb")
-			for y in img.get_height():
-				for x in img.get_width():
+			for y: Variant in img.get_height():
+				for x: Variant in img.get_width():
 					var px := img.get_pixel(x, y)
 					if px.a <= 0.0:
 						continue
@@ -283,8 +283,8 @@ static func panel_texture_contrast(mode: String) -> Dictionary:
 			var seen := 0
 			var visible := 0
 			darkest = 99.0
-			for y in gimg.get_height():
-				for x in gimg.get_width():
+			for y: Variant in gimg.get_height():
+				for x: Variant in gimg.get_width():
 					var px := gimg.get_pixel(x, y)
 					var over := bg.lerp(Color(px.r, px.g, px.b), px.a)
 					var r := contrast_ratio(over, bg)
@@ -378,18 +378,16 @@ const TYPE_SIZES := {
 	"Tiny": 11,
 }
 
-## TS-1: sample sentence used to match each typeface's width to Standard's.
+## TS-1: sample sentence for the width ratios the TS-1 test records.
 const REFERENCE_TEXT := "The quick brown fox jumps over the lazy dog 0123456789"
 const _FACTOR_MEASURE_SIZE := 64
-## Width-matched to Standard, these faces still read slightly small (Dave,
-## C-137, 24 Oct 2026): OpenDyslexic for its tall lower case, Silkscreen for
-## its all-capital pixels. Kept inside TS-1's 8% width tolerance: 6% put
-## OpenDyslexic at 108% of Standard at text scale 2 once sizes round.
-const _TYPEFACE_NUDGE := {"opendyslexic": 1.04, "silkscreen": 1.06}
+## Faces sized by line height rather than width (PN-1). Replaces _TYPEFACE_NUDGE.
+const _HEIGHT_MATCHED := ["opendyslexic", "silkscreen"]
 static var _typeface_factors: Dictionary = {}
 
 ## How much to scale a font size so `typeface` draws REFERENCE_TEXT as wide as
-## Standard does. 1.0 for "sans" or a missing font. Measured once per face.
+## Standard does, or (OpenDyslexic, Silkscreen) as tall in line height. 1.0 for
+## "sans" or a missing font. Measured once per face.
 static func typeface_size_factor(typeface: String) -> float:
 	if typeface == "sans":
 		return 1.0
@@ -398,14 +396,24 @@ static func typeface_size_factor(typeface: String) -> float:
 	var factor := 1.0
 	var font: Font = _typeface_font(typeface)
 	if font != null:
-		var own: float = font.get_string_size(REFERENCE_TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, _FACTOR_MEASURE_SIZE).x
-		var base: float = ThemeDB.fallback_font.get_string_size(REFERENCE_TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, _FACTOR_MEASURE_SIZE).x
-		if own > 0.0 and base > 0.0:
-			factor = base / own * float(_TYPEFACE_NUDGE.get(typeface, 1.0))
+		var measure := ThemeDB.fallback_font
+		if _HEIGHT_MATCHED.has(typeface):
+			# PN-1: these two match line height, not width. A width match left
+			# them short (C-137 failed 24 and 30 Oct); the `<` `>` buttons take
+			# their height from the font's line height.
+			var own_h: float = font.get_height(_FACTOR_MEASURE_SIZE)
+			var base_h: float = measure.get_height(_FACTOR_MEASURE_SIZE)
+			if own_h > 0.0 and base_h > 0.0:
+				factor = base_h / own_h
+		else:
+			var own: float = font.get_string_size(REFERENCE_TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, _FACTOR_MEASURE_SIZE).x
+			var base: float = measure.get_string_size(REFERENCE_TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, _FACTOR_MEASURE_SIZE).x
+			if own > 0.0 and base > 0.0:
+				factor = base / own
 	_typeface_factors[typeface] = factor
 	return factor
 
-## A base size scaled by the text scale and the typeface's width factor.
+## A base size scaled by the text scale and the typeface's height factor.
 static func font_px(base: float) -> int:
 	return maxi(1, int(round(base * Session.text_scale * typeface_size_factor(Session.ui_typeface))))
 
@@ -436,7 +444,7 @@ static func refresh_for_setting(key: String) -> void:
 ## on every appearance change. Runs only from refresh(), never per frame.
 static func bind_color(control: Control, property: String, token: String) -> void:
 	control.add_theme_color_override(property, color(token))
-	for entry in _color_bindings:
+	for entry: Variant in _color_bindings:
 		if entry[0].get_ref() == control and entry[1] == property:
 			entry[2] = token
 			return
@@ -444,8 +452,8 @@ static func bind_color(control: Control, property: String, token: String) -> voi
 
 static func _refresh_color_bindings() -> void:
 	var live: Array = []
-	for entry in _color_bindings:
-		var control = entry[0].get_ref()
+	for entry: Variant in _color_bindings:
+		var control: Variant = entry[0].get_ref()
 		if control == null:
 			continue
 		control.add_theme_color_override(entry[1], color(entry[2]))
@@ -462,19 +470,19 @@ static func refresh() -> void:
 	theme.set_block_signals(true)
 	if _panel_stylebox != null:
 		_panel_stylebox.set_block_signals(true)
-	for state in _button_styleboxes:
+	for state: Variant in _button_styleboxes:
 		_button_styleboxes[state].set_block_signals(true)
 	_refresh_theme_resource(theme)
 	_texture_cache.clear()
 	if _panel_stylebox != null:
 		_refresh_panel_stylebox(_panel_stylebox)
-	for state in _button_styleboxes:
+	for state: Variant in _button_styleboxes:
 		_refresh_button_stylebox(_button_styleboxes[state], state)
 	theme.set_block_signals(false)
 	if _panel_stylebox != null:
 		_panel_stylebox.set_block_signals(false)
 		_panel_stylebox.emit_changed()
-	for state in _button_styleboxes:
+	for state: Variant in _button_styleboxes:
 		_button_styleboxes[state].set_block_signals(false)
 		_button_styleboxes[state].emit_changed()
 	theme.emit_changed()
@@ -482,7 +490,7 @@ static func refresh() -> void:
 
 static func _refresh_theme_resource(theme: Theme) -> void:
 	var font: Font = _typeface_font(Session.ui_typeface)
-	for variation in TYPE_SIZES:
+	for variation: Variant in TYPE_SIZES:
 		theme.set_type_variation(variation, "Label")
 		theme.set_font_size("font_size", variation, font_px(TYPE_SIZES[variation]))
 		theme.set_color("font_color", variation, color("text_primary"))
@@ -490,7 +498,7 @@ static func _refresh_theme_resource(theme: Theme) -> void:
 			theme.set_font("font", variation, font)
 		elif theme.has_font("font", variation):
 			theme.clear_font("font", variation)
-	for base_type in ["Label", "Button"]:
+	for base_type: String in ["Label", "Button"]:
 		theme.set_font_size("font_size", base_type, font_px(TYPE_SIZES["Body"]))
 		theme.set_color("font_color", base_type, color("text_primary"))
 		if font != null:

@@ -58,6 +58,18 @@ class LayoutRegressionTest(unittest.TestCase):
         self.assertIn("drone_row.visible = allowed_role_keys.is_empty()", hud)
         self.assertIn("hud.cell_drone_requested.connect(orders_zones._on_cell_drone_requested)", main)
 
+    def test_multi_selection_has_the_select_n_row_wired_up(self):
+        # RR-22: the row's behaviour is tests/rr22_select_n_test.gd; here, the
+        # static wiring, and that it sits in the fixed-width selection column.
+        hud = (ROOT / "scripts" / "hud.gd").read_text(encoding="utf-8")
+        main = (ROOT / "scripts" / "main.gd").read_text(encoding="utf-8")
+        self.assertIn("signal select_n_requested", hud)
+        self.assertIn("signal select_extreme_requested", hud)
+        self.assertIn("_build_select_n_row(column)", hud)
+        self.assertIn("select_n_row = VBoxContainer.new()", hud)
+        self.assertIn("hud.select_n_requested.connect(input_selection.narrow_selection_to_n)", main)
+        self.assertIn("hud.select_extreme_requested.connect(input_selection.narrow_selection_to_extreme)", main)
+
     def _assert_fixture_passes(self, fixture: Path):
         godot_path = _resolve_godot_path()
         if not godot_path:

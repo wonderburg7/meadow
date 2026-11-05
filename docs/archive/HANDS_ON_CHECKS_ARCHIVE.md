@@ -6,6 +6,264 @@ hands-on one) so the live checklist doesn't accumulate write-ups anyone
 has to re-read. Newest first. See `git log` for the commit that shipped
 each item if more detail is needed.
 
+## 5 Nov 2026 -- Dave's hands-on pass
+
+### C-143 -- An unmatched scout resumes; an established seeker keeps waiting
+
+What this checks: start a Colony Run, open the settings panel's Foraging section and switch on Auto scouting and Auto-recruitment (leave Proximity recruitment off). In the first few days, before any forager is good enough to mentor, follow a scout as she comes back to the entrance; later, follow an established forager with a poor patch as she reaches the entrance.
+
+PASS: with no mentor waiting, the scout walks straight back out for her next bout instead of standing by the entrance, while the established low-rate forager still stands and waits beside the entrance.
+
+If it fails, FR-1d reopens: the scout guard in `scripts/bee_foraging.gd::go_to_exit` and `wait_at_entrance`, before FR-2 builds on it.
+
+Runner: dave -- watching two bees' paths over time, which stills cannot show
+
+Owner: `plans/now/forager-recruitment.md`
+
+## 30 Oct 2026 -- Dave's hands-on pass
+
+### C-127 -- The comb draws honey, jelly, brood, bee bread and wax caps from Dave's art
+
+What this checks: Start a new run with Settings > Appearance > Cell art on,
+and play until the comb holds honey, royal jelly, brood and a full bee bread
+cell. Zoom in on each. Then select any filled cell and close it from its
+popup.
+
+PASS: Each cell shows your drawing filling up (brood growing through its stages), full bee bread wears a wax cap that closes over while it ripens, and the closed cell wears the whole cap with no bar across it.
+
+If it fails, the SP-7 drawing in scripts/hive_cell.gd (`CELL_ART`,
+`_show_cap`) or a row's anchor or levels in assets/sprites/SPRITES.md
+changes.
+
+Runner: dave
+
+Owner: `plans/now/sprites.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
+
+### C-128 -- The skep sits where the hive square was, and the rival hive is a darker skep
+
+What this checks: Start a game and look at the meadow view: your hive is now a straw skep drawn where the brown square used to be. If a rival hive is on the map, it is the same skep in darker red-brown, and your foragers still fly in to the skep's entrance.
+
+PASS: the skep sits centred where the square was, the rival hive is a darker skep, and foragers arrive at the entrance.
+
+If it fails, the skep's offset or size in scripts/hive.gd or scripts/rival_hive.gd is reopened.
+
+Runner: dave
+
+Owner: `plans/now/sprites.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
+
+### C-129 -- A +1 rises over a flower that earns a Pollinator Point, and the stores line counts points
+
+What this checks: in Windows PowerShell, go to the repo (home PC: `cd C:\Users\david\Documents\Meadow\meadow`; work PC: `cd C:\Users\dl13860\Documents\Meadow\meadow`), then run `python tools/run_scenario.py test_scenarios/pp2_points_watch.json --windowed --fixed-fps 0`. If it prints `status=crashed reason=environment`, it found no Godot: add `--godot-path "<full path to Godot.exe>"` (24 Oct 2026: on the home PC it could not find the Godot kept beside the repo, now fixed in `tools/godot_compile_check.py`). The run plays at real time (1x) and ends after 6 days or five minutes. The colony already owns Pollinator points and nothing is bought. Expect the first "+1" within about 15 seconds; then watch foragers working the meadow for a minute, and the stores line in the top-left corner (Nectar / Pollen / Honey / Jelly).
+
+PASS: a small gold "+1" rises and fades over a flower when a forager earns a point there, and the stores line ends with "Points: N", which climbs as they appear.
+
+If it fails, PP-2's pollination_pop.gd (the "+1": size, colour, rise or z-order) or hud.gd's stores readout is reopened before PP-6 prices points.
+
+Runner: dave -- a +1 that rises and fades is motion stills cannot show
+
+Owner: `plans/now/pollination.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
+
+### C-145 -- Dr Gallerin's note appears a word at a time and closes from an x at its top right
+
+What this checks: start Challenge 1 from the main menu so Dr Gallerin speaks (bottom right). Watch a note appear, then press the small × at the top right of his bubble.
+
+PASS: each note appears a whole word at a time, taking about as long as the old letter-by-letter typing, and the × at the bubble's top right hides it (there is no "Dismiss" button any more).
+
+If it fails, `scripts/gallerin_panel.gd` changes: `_whole_words_visible` (the reveal) or the close cross built in `_build_bubble`.
+
+Runner: dave -- whether a word-by-word reveal reads well is motion and feel
+
+Owner: `plans/now/run-repairs.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
+
+### C-148 -- Goal stars sit at the right-hand end of their lines
+
+What this checks: start a Colony Run and open the Goals list at the top right of the screen.
+
+PASS: the small star beside the long-term line and beside the milestone sits at the right-hand end of each line, clear of its text, and pressing it still stars the goal.
+
+If it fails, the star's placement in `scripts/hud.gd::_add_goal_star` changes.
+
+Runner: sonnet -- one screenshot of the Goals list and one press
+
+Owner: `plans/now/run-repairs.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
+
+### C-149 -- Auto scouting is offered after Orientation flight and replaces it
+
+What this checks: Start a Colony Run, buy Orientation flight, and open the skill tree. Look at the Foraging row: Auto scouting should be offered at tier 2 on the same row, straight after Orientation flight. Buy it, then hover Orientation flight and read the tooltip.
+
+PASS: After buying Auto scouting, Orientation flight's tooltip ends with "Replaced by Auto scouting: new foragers now scout for themselves."
+
+If it fails, FR-2 reopens: the skill tree node, its prerequisite or the tooltip note is wrong.
+
+Runner: dave
+
+Owner: `plans/now/forager-recruitment.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
+
+### C-153 -- Tick Raise a drone on an empty nursery cell and watch a drone hatch
+
+What this checks: Start a run, make sure the queen has mated (or use a run where she has), click an empty comb cell and, in the cell popup, tick "Raise a drone (a male)" under the gyne box. Open the Nursery window to see the cell tagged D in violet, then let time pass until a drone hatches from it. Also tick the gyne box and confirm it clears the drone box.
+
+PASS: The drone box ticks, the cell glows violet tagged D in the Nursery zones view, the zone counts list it as Drones, and a drone hatches from it.
+
+If it fails, DR-2 reopens; a glow colour too close to bee bread's (DRONE_COLOUR is 0.087 OKLab from it) is Dave's colour choice to make.
+
+Runner: dave
+
+Owner: `plans/archive/drones_2026-11-05.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
+
+### C-154 -- Selection keys, box and right-click orders
+
+What this checks: In a new game, select a bee with a click and with a drag box in both hive and meadow views, then use Shift-click to add to selection. Drag a box around a death marker with no bee inside it in the meadow view. Use Space, Tab, C, N, G, F, O, Ctrl+1/1 and Ctrl+Z; zoom with the wheel, and right-click a destination, the hive entrance and a meadow flower with a bee selected.
+
+PASS: Each control produces its usual visible response once; selection (including the meadow death-marker summary), view, zoom, panels and bee orders follow the chosen input without duplicate orders or unexpected deselection.
+
+If it fails, reopen CQ-R10 in `plans/now/code-health.md` and correct the input or selection path in `scripts/input_selection.gd`.
+
+Runner: dave
+
+Owner: `plans/now/code-health.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
+
+### C-156 -- A comb worker caps a sealed cell over 15 seconds and uncaps it over 5
+
+What this checks: In Windows PowerShell, run `cd C:\Users\dl13860\Documents\Meadow\meadow` and then `python tools\run_scenario.py test_scenarios\rr19_sealing_stocked.json --windowed --fixed-fps 0`. The game opens with four cells already stocked: two full honey cells (`h200`), a full royal jelly cell (`RJ120`) and a brood cell. Two Comb workers are on Anything, and the run lasts three game-days (about ten minutes). Zoom in on the comb. Click a full honey cell and press "Sealed" in its popup. Then press "Fill then seal" on the jelly cell and on the brood cell. Once the honey cell is fully capped, open its popup again and press "Open".
+
+PASS: For each cell, a Comb worker walks over and the wax cap goes on frame by frame over about 15 seconds; until it closes, bees can still take honey from the honey cell. Once it is fully capped there is no bar across it. After "Open" the cap comes off frame by frame over about 5 seconds.
+
+If it fails, the cap frames in `scripts/hive_cell.gd` (`_refresh`, the RR-19 cap stage), the comb worker's sealing job in `scripts/bee_building.gd` (`find_cell_needing_sealing`, `seal_cell`) or `GameConfig.cell_seal_seconds` / `cell_unseal_seconds` change, and RR-19 in `plans/now/run-repairs.md` reopens.
+
+Runner: dave
+
+Owner: `plans/now/run-repairs.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
+
+### C-157 -- Bee command buttons after row extraction
+
+What this checks: Select a bee in a running game and use the Job, Focus, Orders and More controls in its command tray. Change its job and an available focus, issue an order, and toggle a More option; reselect the bee.
+
+PASS: The available controls respond to their commands and the tray shows the resulting selection and settings correctly after reselection.
+
+If it fails, reopen CQ-R6 in `plans/now/code-health.md` and repair the affected command row or callback.
+
+Runner: sonnet
+
+Owner: `plans/now/code-health.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
+
+### C-158 -- Queen on comb work discards sour nectar
+
+What this checks: In Windows PowerShell, run `cd C:\Users\dl13860\Documents\Meadow\meadow` and then `python tools/run_scenario.py test_scenarios/rr17_queen_discards_sour_watch.json --windowed --fixed-fps 0`. Open the hive view and wait about 20 seconds: the lone queen is selected on Comb worker / Anything, with leftover pollen to store; click the sour nectar cell at hex (0, 0) and press "Discard all sour nectar".
+
+PASS: The queen on comb work empties the sour cell within 40 seconds of the command.
+
+If it fails, reopen RR-17 in `plans/now/run-repairs.md` and repair the queen's dispatch or load handling in `scripts/bee.gd`.
+
+Runner: sonnet -- the fixture creates the condition in seconds; judge the resulting cell contents in its popup.
+
+Owner: `plans/now/run-repairs.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
+
+### C-161 -- foragers come and go at the skep's entrance
+
+What this checks: In the Godot editor, open the project folder C:/Users/dl13860/Documents/Meadow/meadow (once this slice is on master) and press F5 to start a game, then look at the meadow view with your straw skep in the middle of the map. Watch the foragers fly out and back in: they should appear and disappear at the bottom of the skep, where its dark entrance hole is, not beside it or above it. A rival hive, if on the map, behaves the same way.
+
+PASS: the foragers leave and arrive at the skep's entrance hole at the bottom of the art, not beside or above the skep.
+
+If it fails, the door offset `HIVE_SKEP_DOOR` in `scripts/hive.gd` is reopened (SP-13), along with the skep position in `scripts/hive.gd` and `scripts/rival_hive.gd`.
+
+Runner: dave
+
+Owner: `plans/now/sprites.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
+
+### C-146 -- An open Colony window keeps its size while warning lines come and go above it
+
+What this checks: start a Colony Run and open the Colony window (the Colony button in the top-right bar, or C). Play on at 4x until a warning line appears in, or leaves, the top-left corner above the window; then close and reopen the window.
+
+PASS: while the window is open its top edge and height stay put as corner lines come and go, and reopening it places it under whatever the corner now shows.
+
+If it fails, `scripts/game_panel.gd::connect_left_window_reflow` changes (and `scripts/saves_panel.gd::connect_hud_reflow` with it).
+
+Runner: sonnet -- two screenshots of the window's edge before and after a corner line changes
+
+Owner: `plans/now/run-repairs.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass, with a follow-up comment handled in that day's check batch.
+
+### C-147 -- A selected soil block's ring outlines the top of the block
+
+What this checks: start a run with Settings > Appearance > Cell art on, open the hive view, zoom in on the soil wall and click a soil block to select it.
+
+PASS: the green selection ring sits on the block's flat top face, not on the floor below it.
+
+If it fails, the lift in `scripts/soil_block.gd::_refresh_art` (`SIDE_HEIGHT_PX` times the art scale) changes.
+
+Runner: dave -- whether the ring sits on the art is a visual judgement (C-134 failed on the comb's version of this)
+
+Owner: `plans/now/sprites.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass, with a follow-up comment handled in that day's check batch.
+
+### C-152 -- CT-1 cell tones: closed cells wear a faint tint of their contents
+
+What this checks: In Windows PowerShell, run `cd C:\Users\dl13860\Documents\Meadow\meadow` and then `python tools\run_scenario.py test_scenarios\ct1_cell_tones.json --windowed`. The game opens on the hive comb and stocks five cells, then closes four of them and holds the view for about a minute. Find the cells whose labels read `h50 25%` (quarter-full honey), `h200 100%` (full honey), `P200` (pollen), `N200` (nectar) and `BB sealed` (bee bread, capped), and look at their art and caps: each should carry a faint tint of its contents, and the `h200 100%` cell should be visibly more tinted than the `h50 25%` one.
+
+PASS: all five stocked cells show a faint tint that differs by contents (honey, pollen, nectar, bee bread), the full honey cell is clearly stronger than the quarter-full honey cell, and the empty cells beside them stay untinted.
+
+If it fails, the tint is missing, identical on every cell, or the full and quarter-full honey look the same; that reopens CT-1, which changes `_refresh` and `content_tone` in `scripts/hive_cell.gd`.
+
+Runner: dave
+
+Owner: `plans/archive/cell-content-tones_2026-10-26.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass, with a follow-up comment handled in that day's check batch.
+
+### C-155 -- C-141 re-run: a nectar cell turns visibly yellow-green about a day and a half before it sours
+
+What this checks: start a new game from the main menu with the default settings, and watch a hive cell that holds raw nectar (a pale lime fill, shown with an "N" count). Let it sit: the cell should turn a yellow-green warning colour about 36 game hours (1.5 game days) before it turns murky olive. Judge it by eye in the hive view, at normal game speed.
+
+PASS: the cell turns visibly yellow-green, clearly different from the pale lime of fresh nectar and from the murky olive, about a day and a half before it turns murky olive.
+
+If it fails, the warning colour or the warning point is wrong: the failure reopens RR-13 as a new slice in `plans/now/run-repairs.md`, changing the colours in `scripts/hive_cell.gd` or `nectar_pre_ferment_fraction` in `scripts/game_config.gd`.
+
+Runner: dave
+
+Owner: `plans/now/run-repairs.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass, with a follow-up comment handled in that day's check batch.
+
+### C-160 -- Rain stays away for the first two days, and its warning says when in plain words
+
+What this checks: Start a Colony Run with weather switched on in Settings (Weather, "Weather on") and play through the first two in-game days at normal speed, then keep going until the first heavy-rain warning appears (around the 20-minute mark; the C-140 skip save gets you there).
+
+PASS: No rain falls on day 1 or day 2, and the heavy-rain warning and the line under the day counter say "soon", "later today", "by the end of the day" or "tomorrow" instead of a minutes-and-seconds clock.
+
+If it fails, a shower in the first two days reopens RR-21's roll gate in scripts/main.gd (_advance_weather); clock times in the warning reopen rain_when_text.
+
+Runner: dave
+
+Owner: `plans/now/run-repairs.md`
+
+Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass, with a follow-up comment handled in that day's check batch.
 ## 31 Oct 2026 -- Dave's hands-on pass
 
 ### C-142 -- Reorder a bee's backup jobs and the colony default
@@ -112,7 +370,7 @@ If it fails, T2-10 reopens: the no-work guard in `scripts/bee.gd::_try_role_work
 
 Runner: sonnet -- a skill purchase and a short wait, judged from still screenshots
 
-Owner: `plans/now/tier-two.md`
+Owner: `plans/archive/tier-two_2026-11-05.md`
 
 ### C-144 -- Colony plot series retain readable catalogue colours at minimum window size
 
@@ -152,11 +410,11 @@ What this checks: start Challenge 2 from the main menu and play to stage 2.7 ("r
 
 PASS: At 2.7 and 2.8 the tree shows Comb worker and then Miner as free buys, and each role appears in the Job menu only after you buy it.
 
-If it fails, the stage data in scripts/challenge_stages.gd (free_skills at 2.7 and 2.8) or the Job row gating in scripts/hud.gd is wrong; T2-9 (`plans/now/tier-two.md`) is the fix filed for the 11 Oct 2026 failure.
+If it fails, the stage data in scripts/challenge_stages.gd (free_skills at 2.7 and 2.8) or the Job row gating in scripts/hud.gd is wrong; T2-9 (`plans/archive/tier-two_2026-11-05.md`) is the fix filed for the 11 Oct 2026 failure.
 
 Runner: sonnet -- debug stage arrows, then the tree and Job menu read twice
 
-Owner: `plans/now/tier-two.md`
+Owner: `plans/archive/tier-two_2026-11-05.md`
 
 Confirmed 15 Oct 2026: run by opus (re-run after a sonnet fail that read the queen's Job menu, which offers Comb worker and Nurse without their skills by design, Availability.QUEEN_FREE_ROLES): at 2.7 Comb worker showed Cost: Free and a worker's Change to... listed it only after the free buy; at 2.8 Miner showed Cost: Free and appeared in a Comb worker's Change to... only after its buy.
 

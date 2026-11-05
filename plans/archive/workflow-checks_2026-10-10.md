@@ -14,7 +14,7 @@ logged as untriaged signals in `plans/observations/system-improvement-signals.md
 
 Nothing here changes a queue rule, lowers a floor, reassigns a slice
 between lanes, or changes `NEXTSTEPS.md`'s or a `queue` block's format
-(`plans/now/agent-lifecycle.md`, "Standing rules": extend the parsers, never
+(`plans/archive/agent-lifecycle_2026-11-04.md`, "Standing rules": extend the parsers, never
 the formats). Each slice adds a warning, an error for a shape that already
 cannot work, or a test.
 
@@ -53,7 +53,7 @@ Verified 9 Oct 2026 against master `4ca584c`:
 that order; WC-3 and WC-5 depend on nothing. None edits `tools/slice.ps1`,
 so each can be built and tested in any session. WC-5 shares `tools/session_cost.py` with CX-1 (`plans/archive/coordinator-context_2026-10-12.md`, Claude lane); `refill_lane.py` refuses to queue both at once. `tools/check_docs.py` and
 `tools/refill_lane.py` are lifecycle tooling owned by
-`plans/now/agent-lifecycle.md`, which has no open slice; it points here.
+`plans/archive/agent-lifecycle_2026-11-04.md`, which has no open slice; it points here.
 
 **Queue state.** The current Codex lane retains the higher-priority
 gameplay, save-integrity and Tier-two slices already on `master`; every block

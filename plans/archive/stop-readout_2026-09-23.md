@@ -22,7 +22,7 @@ against a skewed list. Fix the readout, not the ledger.
   worktree` (`SF-1` 3, `SM-1` 2, `T-3` 2, `UI-X-2` 1, `PERF-1` 1). The second
   group is a finished-but-unmerged worktree blocking the next claim -- the
   condition that blocked the Codex lane on 20 Sep 2026.
-- **This is load-bearing.** `plans/now/agent-lifecycle.md` gates L-12 on
+- **This is load-bearing.** `plans/archive/agent-lifecycle_2026-11-04.md` gates L-12 on
   `--stops` showing "the refill step among the two most frequent stops". A
   real step must therefore outrank a bucket that is not a step at all. On the
   present ledger the two refill steps stand at 1 each, so the gate is not met

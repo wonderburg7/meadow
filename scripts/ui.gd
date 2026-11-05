@@ -32,7 +32,7 @@ static func info_badge(text: String) -> Button:
 	badge.add_theme_color_override("font_hover_color", Color(0.0, 0.0, 0.0))
 	badge.add_theme_color_override("font_pressed_color", Color(0.0, 0.0, 0.0))
 
-	for style_name in ["normal", "hover", "pressed"]:
+	for style_name: String in ["normal", "hover", "pressed"]:
 		var box := StyleBoxFlat.new()
 		box.bg_color = Color(1, 1, 1) if style_name == "normal" else Color(0.88, 0.9, 0.95)
 		box.set_corner_radius_all(int(BADGE_SIZE / 2.0))
@@ -73,7 +73,7 @@ const CURRENT_ROLE_COLOUR := Color(0.35, 1.0, 0.55)
 ## same place, and the current one is lit up.
 static func mark_as_current(button: Button) -> Button:
 	button.add_theme_color_override("font_color", CURRENT_ROLE_COLOUR)
-	for style_name in ["normal", "hover", "pressed", "focus"]:
+	for style_name: String in ["normal", "hover", "pressed", "focus"]:
 		var box := StyleBoxFlat.new()
 		box.bg_color = Color(0.16, 0.30, 0.20) if style_name == "normal" else Color(0.22, 0.38, 0.26)
 		box.set_corner_radius_all(4)
@@ -92,7 +92,7 @@ static func mark_as_current(button: Button) -> Button:
 ## selection changes, so the old lighting has to come off.
 static func clear_current_mark(button: Button) -> void:
 	button.remove_theme_color_override("font_color")
-	for style_name in ["normal", "hover", "pressed", "focus"]:
+	for style_name: String in ["normal", "hover", "pressed", "focus"]:
 		button.remove_theme_stylebox_override(style_name)
 
 ## One line of a "things going wrong" list -- the same shape hud.gd's
@@ -124,7 +124,7 @@ static func signal_line_button(entry: Array, on_action: Callable = Callable()) -
 	var action: String = entry[2] if entry.size() > 2 else ""
 	if action != "" and on_action.is_valid():
 		line.tooltip_text = "Click to select what this is about."
-		line.pressed.connect(func(): on_action.call(action))
+		line.pressed.connect(func() -> void: on_action.call(action))
 	return line
 
 ## Applies the current Session.show_info_badges setting to every badge
@@ -133,6 +133,6 @@ static func signal_line_button(entry: Array, on_action: Callable = Callable()) -
 static func refresh_badge_visibility(node: Node) -> void:
 	if node == null or not node.is_inside_tree():
 		return
-	for badge in node.get_tree().get_nodes_in_group("info_badges"):
+	for badge: Variant in node.get_tree().get_nodes_in_group("info_badges"):
 		if is_instance_valid(badge):
 			badge.visible = Session.show_info_badges

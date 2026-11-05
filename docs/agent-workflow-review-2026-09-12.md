@@ -2,7 +2,7 @@
 
 <!-- CONTEXT: workflow-audit | LOAD: on-demand -->
 
-Status: current | Owner: Dave | Implementation plan: `plans/now/agent-lifecycle.md` | Verified: 2026-09-12
+Status: current | Owner: Dave | Implementation plan: `plans/archive/agent-lifecycle_2026-11-04.md` | Verified: 2026-09-12
 
 The second combined audit. Part 1 measures the 72 Claude Code sessions from
 4 to 12 September 2026 out of their JSONL records. Part 2 takes Codex's
@@ -585,7 +585,7 @@ active product slice's files:
    and the exact command to fix it if not. It is a report, not a gate, and it
    never touches a file outside the repository.
 
-Everything else is in `plans/now/agent-lifecycle.md`, as slices with
+Everything else is in `plans/archive/agent-lifecycle_2026-11-04.md`, as slices with
 prerequisites, algorithms, tests and proof lines. That plan's completion gate
 requires a before-and-after session measurement and one real canary slice.
 
@@ -766,7 +766,7 @@ routing changes of 12 September reach only sessions opened after that merge.
    for that lane.
 
 Any of those four missing is the finding; say which one and it goes to the
-owning slice in `plans/now/agent-lifecycle.md`.
+owning slice in `plans/archive/agent-lifecycle_2026-11-04.md`.
 
 **When to do this again.** After any change to `.codex/`,
 `.claude/settings.json`, `CLAUDE.md`, `CHATGPT.md` or `tools/slice.ps1`. A
@@ -778,7 +778,7 @@ so the prompt to run a canary comes to you rather than being remembered.
 - **This session, continued:** nothing outstanding. WF-1 and WF-2 are merged
   and their lanes are clear.
 - **A new session, "implement the next slice":** the Claude lane leads with
-  `B3`, a product slice. `L-1` of `plans/now/agent-lifecycle.md` sits behind
+  `B3`, a product slice. `L-1` of `plans/archive/agent-lifecycle_2026-11-04.md` sits behind
   it and fixes the three red lifecycle tests and puts that suite inside
   `tools/verify.ps1`. Nothing else in that plan is trustworthy until `L-1` is
   done, so move it above `B3` in `NEXTSTEPS.md` if you want it taken first.

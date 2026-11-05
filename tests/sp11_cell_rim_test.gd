@@ -50,24 +50,38 @@ func _boot() -> void:
 func _run() -> void:
 	var cell: Polygon2D = _make_cell(true)
 	_check(cell.EMPTY_RIM.size() == 6, "EMPTY_RIM has %d points, not six" % cell.EMPTY_RIM.size())
+	# With the art on, every colour ring traces the rim at the selection
+	# ring's size, so a cell never shows a large ring and a small one.
 	var rings := {
 		"selection_ring": cell.cell_size + 2.0,
-		"designation_ring": cell.cell_size - 3.0,
-		"zone_halo": cell.cell_size + 6.0,
-		"zone_glow": cell.cell_size + 4.0,
+		"designation_ring": cell.cell_size + 2.0,
+		"zone_halo": cell.cell_size + 2.0,
+		"zone_glow": cell.cell_size + 2.0,
 		"outline": cell.cell_size,
 	}
 	for ring_name: Variant in rings:
 		_check_cup_ring(cell, ring_name, cell.get(ring_name), rings[ring_name])
+	for ring_name: String in ["designation_ring", "zone_halo", "zone_glow"]:
+		_check(cell.get(ring_name).points == cell.selection_ring.points,
+			"Cell art on: %s points differ from the selection ring" % ring_name)
+	_check(cell.selection_ring.z_as_relative == false and cell.selection_ring.z_index == cell.SELECTION_RING_Z,
+		"Selection ring is not drawn above neighbouring cells")
 	cell.queue_free()
 
 	var flat: Polygon2D = _make_cell(false)
+	var flat_rings := {
+		"selection_ring": flat.cell_size + 2.0,
+		"designation_ring": flat.cell_size - 3.0,
+		"zone_halo": flat.cell_size + 6.0,
+		"zone_glow": flat.cell_size + 4.0,
+		"outline": flat.cell_size,
+	}
 	for ring_name: Variant in rings:
 		var line: Line2D = flat.get(ring_name)
 		_check(line != null and line.points.size() == 7,
 			"Cell art off: %s is not the hexagon" % ring_name)
 		if line != null and line.points.size() == 7:
-			var hex: PackedVector2Array = flat.Shapes.hexagon_points(rings[ring_name], flat.squashed)
+			var hex: PackedVector2Array = flat.Shapes.hexagon_points(flat_rings[ring_name], flat.squashed)
 			for i: int in 6:
 				if not line.points[i].is_equal_approx(hex[i]):
 					_fail("Cell art off: %s point %d is not the hexagon corner" % [ring_name, i])

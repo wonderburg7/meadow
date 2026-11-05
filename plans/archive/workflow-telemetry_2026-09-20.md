@@ -3,7 +3,7 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
 Status: archived | Owner: Dave / Codex | Next: None -- plan complete | Dependency: none | Verified: 2026-09-20
 
-**Objective.** `plans/now/agent-lifecycle.md` sets a measured target -- raise
+**Objective.** `plans/archive/agent-lifecycle_2026-11-04.md` sets a measured target -- raise
 the implementing share of a session's context above 40% -- and every decision
 about how to get there is read off `tools/session_cost.py`. Three of its
 readouts are silently empty or wrong, so the decisions they were built to
@@ -42,7 +42,7 @@ while triaging it, and this plan is where all three are owned.
 Dependencies, stated rather than implied. T-2 and T-1 both edit
 `tools/session_cost.py` and `tests/test_source_checks.py`, and T-2 also edits
 `tools/slice.ps1`, so both queue behind **L-14**
-(`plans/now/agent-lifecycle.md`), which owns those two files first, and run in
+(`plans/archive/agent-lifecycle_2026-11-04.md`), which owns those two files first, and run in
 the order above. T-3 shares no file with either and could run at any point.
 None of the three depends on the Claude lane.
 

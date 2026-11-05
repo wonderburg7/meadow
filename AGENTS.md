@@ -60,7 +60,9 @@ closeout" section is needed only once the code is green: skip it when
 starting, and read it then with
 `python tools/heading.py CHATGPT.md "Risk-proportional closeout"`. To start
 implementing, follow its "Session routing" -- `tools/slice.ps1 start -Lane
-Codex` -- and never read `NEXTSTEPS.md` whole.
+Codex` -- and never read `NEXTSTEPS.md` whole. An empty or gated lane is
+refilled in the same session, then claimed: `CHATGPT.md`, "Refilling an
+empty or gated Codex lane".
 
 To work through several Codex-lane slices in a row, Dave invokes the
 `run-queue` skill (`.agents/skills/run-queue/SKILL.md`). A worker subagent
@@ -80,8 +82,11 @@ the triggers.
 
 `NEXTSTEPS.md` and `plans/` are the shared planning and implementation
 records for Claude and Codex. They establish integrated-project priority.
-Codex may propose an assigned queue update on its work branch, but must not
-independently curate the queue or treat unmerged work as completed. In
+Codex may independently select, specify, refill and reorder its own lane's
+unclaimed work on a work branch, following `CHATGPT.md`, "Independent Codex
+queue priorities". Protect other lanes' queued and active work, and disclose
+each priority change and its reason in the slice output. Never treat unmerged
+work as completed. In
 advisory mode, ChatGPT may write only to the Markdown files allowed by
 `CHATGPT.md`.
 

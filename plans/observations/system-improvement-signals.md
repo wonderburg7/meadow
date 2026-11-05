@@ -241,7 +241,7 @@ explicit request from Dave.
   `$unitModules` list, so `verify.ps1` appears in its `Files:`. No file may
   sit in both lanes, so only one lane at a time can hold such a slice.
 - Evidence: NF-1, COL-6, COL-11, NF-2 and the planned T2-1 to T2-4
-  (`plans/now/tier-two.md`) all list `tools/verify.ps1` for that one line;
+  (`plans/archive/tier-two_2026-11-05.md`) all list `tools/verify.ps1` for that one line;
   `tests/source_checks.py::TESTS_NOT_IN_VERIFY` enforces the listing.
 - Consequence: after COL-4 lands, COL-6 (Codex) and the tier-two chain
   (Claude) collide on `verify.ps1` alone, and one lane runs dry.
@@ -326,7 +326,7 @@ explicit request from Dave.
   outside it. Related to the 20 Sep open-worktree signal below: both are
   lifecycle contention between lanes.
 - Disposition: promoted 25 Sep 2026, with the 20 Sep open-worktree signal,
-  to L-15 in `plans/now/agent-lifecycle.md` (the bounded wait; narrowing the
+  to L-15 in `plans/archive/agent-lifecycle_2026-11-04.md` (the bounded wait; narrowing the
   lock is recorded there as out of scope).
 
 ### 2026-09-20 — FUNCTION_MAP.md staleness is the most frequent verification failure, and the file is generated
@@ -404,7 +404,7 @@ explicit request from Dave.
   no-step record carries an empty `step` and a populated `cause`.
   `run_stops` in `tools/session_cost.py` folds them in with
   `by_step[record.get("step") or "(no step recorded)"]`.
-- Consequence: `plans/now/agent-lifecycle.md` gates L-12 on `--stops` showing
+- Consequence: `plans/archive/agent-lifecycle_2026-11-04.md` gates L-12 on `--stops` showing
   the refill step "among the two most frequent", so a real step has to outrank
   a bucket that is not a step. The gate cannot be read fairly until the two
   are separated. The preflight causes are themselves discarded as signal.
@@ -469,7 +469,7 @@ explicit request from Dave.
   this count visible in `--stops` at all; hold until ST-1 lands and the count
   can be tracked.
 - Disposition: promoted 25 Sep 2026 to L-15 in
-  `plans/now/agent-lifecycle.md`, clustered with the 25 Sep lifecycle-lock
+  `plans/archive/agent-lifecycle_2026-11-04.md`, clustered with the 25 Sep lifecycle-lock
   signal. Re-verified first: ST-1 landed and 5 more refusals followed
   (`ST-1` three times over 21-23 Sep, `FB-3`, `AP-7`), and the stop text is
   unchanged. L-15 names whether the branch is ahead and clean rather than
@@ -545,7 +545,7 @@ explicit request from Dave.
   (`docs/agent-workflow-review-2026-10-05.md` F3): L-18 warns at claim
   (`advice.dry_after`, either lane) and L-24 makes the warning a
   `check_docs.py` lookahead and a rule to specify before claiming, both in
-  `plans/now/agent-lifecycle.md`
+  `plans/archive/agent-lifecycle_2026-11-04.md`
 
 ### 2026-10-07 — a branch behind master reads a dry lane at `finish`
 
@@ -693,7 +693,7 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- the verified record stores and compares
   `HEAD` (or the tree hash), so any new commit forces a fresh branch verify.
 - Disposition: promoted by the agent-workflow review, 16 Oct 2026 as L-27 in
-  `plans/now/agent-lifecycle.md`: 4499fb6 (12 Oct) ties the verified
+  `plans/archive/agent-lifecycle_2026-11-04.md`: 4499fb6 (12 Oct) ties the verified
   record to HEAD, but the closing journal's `verified` phase still skips
   the check.
 
@@ -750,7 +750,7 @@ explicit request from Dave.
   was rewritten by hand in 7952bbb) and `plans/archive/SP-10_2026-10-15.md`
   holds SP-11's (SP-11 had no live block until the plan review restored it).
   On 15 Oct six more blocks sat that way in `plans/now/run-repairs.md` and
-  `plans/now/tier-two.md`.
+  `plans/archive/tier-two_2026-11-05.md`.
 - Evidence: `git show HEAD:plans/archive/SP-10_2026-10-15.md | grep -n "SP-11"`.
 - Consequence: a gated block lost this way leaves the backlog silently, and
   nothing fails; an admissible one costs a hand repair at closeout.
@@ -760,7 +760,7 @@ explicit request from Dave.
   leaves behind, a block for another id inside the section it cuts. This is
   the second recurrence, so CLAUDE.md's instrument rule applies.
 - Disposition: promoted by the agent-workflow review, 16 Oct 2026 as L-28 in
-  `plans/now/agent-lifecycle.md` (the archive leaves another id's block in
+  `plans/archive/agent-lifecycle_2026-11-04.md` (the archive leaves another id's block in
   the plan). The `check_docs.py` half waits: an unmerged branch owns that file.
 
 ### 2026-10-15 — archiving a plan repoints its routing row instead of dropping it
@@ -824,7 +824,7 @@ explicit request from Dave.
   closed id, and the closing session moves them; `check_docs.py` warns on a
   blocked check whose every named unblocker is in `plans/archive/`.
 - Disposition: promoted by the agent-workflow review, 16 Oct 2026 (finding F7) as
-  L-30 in `plans/now/agent-lifecycle.md`. Dave chose to surface it: the queue
+  L-30 in `plans/archive/agent-lifecycle_2026-11-04.md`. Dave chose to surface it: the queue
   steward clears deferrals and fences, the check processor moves the checks.
 
 ### 2026-10-16 — no colony size or frame budget to judge performance against (from the performance review)
@@ -875,7 +875,7 @@ explicit request from Dave.
   `tests/test_guard_hook.py` case for each. `slice.ps1 owner` reports both
   files owned by a Jules branch (`origin/jules/j-2-presentation-gate-check-…`),
   so the plan review did not edit them.
-- Disposition: promoted 24 Oct 2026 as L-37 in `plans/now/agent-lifecycle.md`
+- Disposition: promoted 24 Oct 2026 as L-37 in `plans/archive/agent-lifecycle_2026-11-04.md`
   (Codex lane; `slice.ps1 owner` now reports both files clear).
 
 ### 2026-10-23 — refill_lane still treats FUNCTION_MAP.md as owned after L-33 (from the plan review)
@@ -945,3 +945,71 @@ explicit request from Dave.
 - Consequence: a later reviewer or Jules session may skip work that was removed from master.
 - Hypothesis: completion detection should distinguish retained task work from reverted history, with a temporary-repository fixture proving both states.
 - Disposition: untriaged; no completion-detector change is included.
+
+### 2026-11-04 — Jules's R-gameplay sweep samples nine scripts instead of everything changed
+
+- Source: gameplay review processing (`docs/gameplay-review-2026-11-04.md`, Hand-offs)
+- Area: Jules review rota / process
+- Signal: the 4 Nov R-gameplay report re-adjudicated the returned 30 Oct
+  findings and swept nine scripts; 85 scripts changed in `9c490df..e8cc5401`,
+  including `input_selection.gd`, `challenge_runner.gd` and
+  `world_building.gd`, which the review owns.
+- Evidence: the report's `Scope:` line against `git diff --stat
+  9c490df..e8cc5401 -- scripts/`; `plans/reference/jules-reviews.md` step 3
+  says to read every file in scope, not a sample.
+- Consequence: processing resets `SINCE` to the report's commit, so an
+  unswept file drops out of the next diff unless a record carries it under
+  "Not reviewed"; a report with correct findings but thin coverage passes the
+  spot-check gate.
+- Candidate direction: Hypothesis — have `jules_preflight.py` (or the
+  processing step) compare the report's swept files with the owned files
+  changed since `SINCE`, and return a report that leaves most of them out.
+- Disposition: untriaged
+- Recurrence (5 Nov 2026): the R-architecture report of 4 Nov shows reading
+  evidence for 8 of 86 changed watched files; its findings come from
+  `tools/uncalled.py`. Closed unmerged: a full Claude sweep of the same
+  commit superseded it (`docs/architecture-review-2026-11-04.md`).
+
+
+### 2026-11-04 — the director's later event records need a save shape
+
+- Source: architecture review (`docs/architecture-review-2026-11-04.md`, Hand-offs)
+- Area: save schema (save review)
+- Signal: design decision 15 (`plans/design/event-director.md`) keeps the
+  first crisis under its `first_crisis` save key and runs every later
+  director event as a record keyed by event id; decision 12 says a save
+  without the schedule field reads as "none". Where those later records live
+  in the save (one new key holding all of them, or the first crisis folded
+  in with a migration) is not decided.
+- Evidence: `save_game.gd` (`"first_crisis"` key), `saving.gd`
+  (`restore_first_crisis` call), `main.gd::restore_first_crisis`.
+- Consequence: the first EV slice would otherwise pick the shape alone, and
+  a per-event key would bring back the per-event save cost decision 15
+  removes.
+- Candidate direction: Hypothesis — one additive `director` key holding the
+  records by id, `first_crisis` unchanged, settled before CQ-R2's section is
+  written.
+
+### 2026-11-05 — a returned Jules branch still holds its files for `slice.ps1 owner`
+
+- Source: R-architecture Jules report processing, 5 Nov 2026 (`docs/architecture-review-2026-11-04.md` F4 and Hand-offs)
+- Area: Jules branch lifecycle / file ownership
+- Signal: `jules/s-3-marker-reparent-check-9499576018780718307` was returned
+  on 2 Nov (ledger row; correction task J-47 asks for a clean two-file
+  branch), yet `tools/slice.ps1 owner` still reports it as owning
+  `scripts/bee.gd`, `scripts/hive.gd`, `scripts/main.gd` and `NEXTSTEPS.md`.
+- Evidence: `tools/slice.ps1 owner scripts/bee.gd NEXTSTEPS.md`;
+  `git diff --stat master...origin/jules/s-3-marker-reparent-check-9499576018780718307`
+  (28 files); the Status lines of `plans/now/code-health.md` (CQ-M5b, CQ-M6,
+  CQ-R3) and `plans/now/play-notes-hud.md` cite it as a gate; the review
+  could not remove three one-line dead helpers in `bee.gd`/`hive.gd` for it.
+- Consequence: work that a returned report will never merge waits on it, and
+  reviews cannot make one-line fixes in the files it spans.
+- Cause: `tools/slice.ps1`'s owner check takes every unmerged
+  `origin/jules/*` branch (`branch -r --no-merged ... origin/jules/*`) and
+  never reads the ledger, whereas `tools/jules_preflight.py`'s ownership check
+  already says a returned or closed branch owns nothing. The two disagree.
+- Candidate direction: Hypothesis — have `owner` skip a branch whose latest
+  ledger row is `returned` or `closed`, as `jules_preflight.py` does, or
+  close a returned branch once its correction task is filed.
+- Disposition: untriaged

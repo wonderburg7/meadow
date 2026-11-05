@@ -58,6 +58,24 @@ func run() -> void:
 	panel._on_why_selected(0)
 	assert(panel._why_detail.text.contains("3 cells blocked"))
 	assert(panel._why_detail.text.contains("cleared"))
+	# A newer explanation replaces a guidance one still showing.
+	assert(panel.bubble.visible and panel._showing_guidance)
+	panel._why_popup.visible = false
+	panel.update_guidance_facts({"missing_nurse_workforce": 1, "brood_cells": 2, "nurses": 0})
+	panel._offer_guidance()
+	assert(panel.guidance_policy.shown_entries().size() == 2)
+	# An authored prompt is never replaced by guidance.
+	panel.update_guidance_facts({"missing_comb_workforce": 0, "blocked_cells": 0, "comb_workers": 1, "missing_nurse_workforce": 0})
+	panel.show_now({"id": "authored", "text": "Authored stage text"})
+	assert(not panel._showing_guidance)
+	panel._offer_guidance()
+	assert(panel._last_message == "Authored stage text")
+	# The icon hides the bubble, then shows the last note again.
+	panel._on_icon_pressed()
+	assert(not panel.bubble.visible)
+	panel._on_icon_pressed()
+	assert(panel.bubble.visible and panel._last_message == "Authored stage text")
+	assert(panel._close_btn != null and panel._close_btn.get_parent() != panel._bubble_scroll.get_child(0))
 	panel._on_disable_pressed()
 	assert(not panel._why_popup.visible)
 	print("GD2A PASS")

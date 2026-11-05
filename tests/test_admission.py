@@ -1,6 +1,7 @@
 """tools/admission.py: one admission test for check_docs, start and closeout (L-33)."""
 from __future__ import annotations
 
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -95,6 +96,13 @@ class AdmissionTests(unittest.TestCase):
         self.assertIn("waits for L-9", line)
         self.assertNotIn("L-0", line)
 
+    def test_hands_on_check_id_is_not_a_dependency(self) -> None:
+        self.plan("**Open decisions:** none.\n\n**Gate.** C-143 is replaced by this slice; L-9 too.\n")
+        text = nextsteps(item(1, "Claude", "L-1", "`tools/a.py`"), item(1, "Codex", "C-1", "`tools/b.py`"))
+        line = self.verdict(text, "L-1").line()
+        self.assertIn("waits for L-9", line)
+        self.assertNotIn("C-143", line)
+
     def test_merged_branch_counts_as_landed(self) -> None:
         self.plan("**Open decisions:** none.\n\n**Gate.** L-9 must land first.\n")
         text = nextsteps(item(1, "Claude", "L-1", "`tools/a.py`"), item(1, "Codex", "C-1", "`tools/b.py`"))
@@ -123,6 +131,48 @@ class AdmissionTests(unittest.TestCase):
         self.assertFalse(self.verdict(clash, "L-1").admissible)
         self.assertEqual(admission.lane_conflicts(text, "Claude", {"FUNCTION_MAP.md"}), [])
         self.assertEqual(admission.lane_conflicts(clash, "Claude", {"tools/a.py"}), ["tools/a.py"])
+
+    def test_a_jules_task_in_a_gate_waits_only_while_its_branch_changes_a_file(self) -> None:
+        # 5 Nov 2026: "waits for the unmerged Jules S-1 and S-3 branches" read
+        # S-1 and S-3 as slices that never land, so CQ-M6, CQ-R3 and ED-2
+        # stayed blocked after those branches stopped changing their files.
+        self.plan("**Open decisions:** none.\n\n**Gate.** waits for the unmerged Jules S-1 and "
+                  "S-3 branches, and for L-9.\n")
+        text = nextsteps(item(1, "Claude", "L-1", "`tools/a.py`"), item(1, "Codex", "C-1", "`tools/b.py`"))
+        found = admission.queue_items(text)[0]
+        clear = admission.check_item(text, self.root, found, branches={}, merged={"L-9"})
+        self.assertTrue(clear.admissible, clear.line())
+        held = admission.check_item(text, self.root, found, merged={"L-9"},
+                                    branches={"origin/jules/s-3-guard-1": {"tools/a.py"}})
+        self.assertEqual("blocked: unmerged branch origin/jules/s-3-guard-1 changes tools/a.py",
+                         held.line())
+        # Outside a git checkout no Jules branch is open, so --queue-only clears it too.
+        self.assertTrue(admission.check_item(text, self.root, found, merged={"L-9"}).admissible)
+        # The same id without "Jules" is a slice and still has to land.
+        self.plan("**Open decisions:** none.\n\n**Gate.** waits for S-3.\n")
+        self.assertIn("waits for S-3", admission.check_item(text, self.root, found, branches={}).line())
+
+    def test_a_branch_owns_only_what_merging_it_would_change(self) -> None:
+        # Jules E-34 was cut before CQ-T3 landed and carried CQ-T3's typed UI
+        # scripts byte for byte; the merge-base diff alone made it own
+        # scripts/hud.gd and tests/source_checks.py (5 Nov 2026).
+        def git(*args: str) -> None:
+            subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@example.com",
+                            "-C", str(self.root), *args], check=True, capture_output=True)
+
+        git("init", "-q", "-b", "master")
+        git("add", "-A")
+        git("commit", "-q", "-m", "base")
+        git("switch", "-q", "-c", "jules/e-34-stale")
+        (self.root / "tools/a.py").write_text("typed\n", encoding="utf-8")
+        (self.root / "tools/b.py").write_text("its own change\n", encoding="utf-8")
+        git("commit", "-q", "-am", "stale copy of a.py, and b.py")
+        git("switch", "-q", "master")
+        (self.root / "tools/a.py").write_text("typed\n", encoding="utf-8")
+        git("commit", "-q", "-am", "a.py lands by another route")
+        self.assertEqual({"tools/b.py"}, admission.branch_changes(self.root, "master", "jules/e-34-stale"))
+        self.assertEqual({"jules/e-34-stale": {"tools/b.py"}},
+                         admission.unmerged_branch_files(self.root, set()))
 
     def test_clear_landed_drops_id_from_gate_lists(self) -> None:
         text = nextsteps(

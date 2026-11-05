@@ -133,7 +133,7 @@ Found by applying `plans/README.md` rule 10 to every live plan:
   `plans/now/`, whose contract is "an executable current/successor slice".
   Its 60 lines of durable layout rules belong in `plans/reference/`, where
   `check-loop.md` already restates two of them (see B-2).
-- `plans/now/agent-lifecycle.md`, "Current state": nine bullets of shipped
+- `plans/archive/agent-lifecycle_2026-11-04.md`, "Current state": nine bullets of shipped
   history (L-1, L-3, L-9, the 12 Sep fixes) that the same file repeats under
   "Shipped, one pointer each". The README says history moves to the archive
   at a slice transition; here it is stated twice in one live file.
@@ -219,7 +219,7 @@ Re-sequencing that would make later slices cheaper (front-loading):
 - `plans/archive/season-feel_2026-09-30.md` SF-1 requirement 2 changes the random draw
   order per founder and says so. Fine, and a model of how to state a
   behavioural side effect.
-- `plans/now/agent-lifecycle.md` L-10: "`plans/archive/**` is denied to the
+- `plans/archive/agent-lifecycle_2026-11-04.md` L-10: "`plans/archive/**` is denied to the
   file tools, so the reproduction goes through a Bash heredoc" -- a model
   that reads this may conclude it should use a heredoc today. Add "until
   L-10 ships, and never for a section over forty lines".
@@ -289,7 +289,7 @@ Two places still cost more than they need to:
 - `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md` is 286 lines (the checker warns at
   260). Its "State" paragraph is fifteen lines of what WD-0 built, which the
   archive record holds. Trim to three lines.
-- `plans/now/agent-lifecycle.md`: 60 lines of "Current state" history (A-2).
+- `plans/archive/agent-lifecycle_2026-11-04.md`: 60 lines of "Current state" history (A-2).
 
 Neither is loaded whole by a slice, so both are low priority; they matter
 only to the planning model, which is the reader that opens whole files.
@@ -562,7 +562,7 @@ cheaper come first, then by dependency. Each states what it unblocks.
 | 3.2 | **Q-1: refill the Claude lane and make "lane is full" checkable.** Add WD-1 and WD-2 (both low, file-disjoint from both lanes) to the Claude lane at positions 4 and 5; reword the L-10/L-11 line to "wait for a free slot"; add `check_not_in_queue_reasons` to `tools/check_docs.py` (a bullet whose text contains "lane is full" fails unless that lane holds five items) | quick | low | `NEXTSTEPS.md`, `tools/check_docs.py`, `tests/test_source_checks.py` | two idle slots; the defect cannot recur |
 | 3.3 | **WD-3 amendment**: replace step 2's `LEVEL_MODELS` with a reader over `tools/slice.ps1` (text below) | quick | low | `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md` | WD-3 ships without a second copy of the rule |
 | 3.4 | **E1 amendment**: add two scenario verbs and `scenario_actions.gd` to E1's files (text below) | quick | low | `plans/archive/architecture-review_2026-09-24.md`, `NEXTSTEPS.md` item 1 | E1's acceptance can be run |
-| 3.5 | **A-2 trims**: guardrail 14, C1F-1 table, README routing rows and rule numbering, C-18 stub, agent-lifecycle history, workflow-diagnostics State | quick | low | `plans/README.md`, `plans/archive/c1-followups_2026-09-28.md`, `plans/now/agent-lifecycle.md`, `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md`, `checks/blocked.md` | the planning model stops re-deriving four expired restrictions |
+| 3.5 | **A-2 trims**: guardrail 14, C1F-1 table, README routing rows and rule numbering, C-18 stub, agent-lifecycle history, workflow-diagnostics State | quick | low | `plans/README.md`, `plans/archive/c1-followups_2026-09-28.md`, `plans/archive/agent-lifecycle_2026-11-04.md`, `plans/archive/WORKFLOW_DIAGNOSTICS_2026-09-18.md`, `checks/blocked.md` | the planning model stops re-deriving four expired restrictions |
 | 3.6 | **IDLE-1: idle dispatch on the think tick** (plan 4.1) | quick code, measured | medium | `scripts/bee.gd`, `docs/PERFORMANCE_BASELINE.md` | PERF-1's numbers are read against a fixed idle cost; the biggest unmeasured per-frame scan is gone |
 | 3.7 | **GDT-1: a GDScript test boot** (plan 4.2) | moderate | medium | `scripts/main.gd`, new tools/godot_test_check.py, new `tests/gd/` folder, `tools/verify.ps1`, `docs/headless-run-contract.md` | executed tests for G3, F2s, CH-1, CH-2, C1F-1, SF-1, every migration |
 | 3.8 | **CH-1: a Challenge is a level-record field** (plan 4.3) | moderate | medium | `scripts/levels.gd`, `scripts/challenge_stages.gd`, `scripts/challenge_runner.gd`, `scripts/main.gd`, `scripts/world_building.gd`, `scripts/debug_panel.gd`, `scripts/challenge_complete.gd`, `scripts/scenario_actions.gd`, `tests/source_checks.py` | a third Challenge; G3's stage-named actions built on the right shape. Queue after C1F-1 per guardrail 14 |
@@ -1031,7 +1031,7 @@ key's default cannot mean "do nothing" without changing a Challenge 2 stage.
 
 ### 4.5 DOC-2 — one home for the merge rules, and the UI rules move to reference
 
-*Owning plan: `plans/now/agent-lifecycle.md` "Standing rules" is the nearest owner; or run it as a documentation-only branch with `verify.ps1 -Docs`. Level: low.*
+*Owning plan: `plans/archive/agent-lifecycle_2026-11-04.md` "Standing rules" is the nearest owner; or run it as a documentation-only branch with `verify.ps1 -Docs`. Level: low.*
 
 **Purpose.** Findings B-2 and A-2: the merge/lane rule has four homes, the
 panel-rectangle rule has four, and `plans/archive/ui_2026-09-20.md` holds durable rules and
@@ -1088,7 +1088,7 @@ untouched).
 **Rollback.** Doc-only; `git revert` of the one commit.
 
 ```
-- Plan: plans/now/agent-lifecycle.md -- "DOC-2 — one home for the merge rules, and the UI rules move to reference"
+- Plan: plans/archive/agent-lifecycle_2026-11-04.md -- "DOC-2 — one home for the merge rules, and the UI rules move to reference"
 - Files: plans/reference/closeout.md, plans/workstreams.md, CHATGPT.md, plans/reference/ui-rules.md, plans/archive/ui_2026-09-20.md, plans/README.md, plans/reference/check-loop.md, DESIGN_BACKLOG.md, CLAUDE.md
 - Check: check_docs.py passes and "one slice, one branch" appears in exactly one Markdown file
 - Proof: absent: plans/reference/ui-rules.md :: Durable rules

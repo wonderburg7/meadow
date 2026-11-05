@@ -105,6 +105,21 @@ shared foundation; this file is that design pass for the closed alpha.
     action, like `set_config`), so each event has a headless check without
     waiting for its slot. Not a gameplay outcome; recorded here so EV
     slices do not each invent one.
+15. **One shared cycle, one record per event (Dave, 4 Nov 2026,
+    architecture review).** Every director event runs the cycle FC-2 runs
+    today -- pending inside a window of days, a readiness check, a
+    fallback at the window's end, then (heavy rain only) warned, active and
+    spent -- so `event_director.gd` holds that cycle once and runs it over
+    records keyed by event id (`id`, `kind`, `state`, window, `starts_at`,
+    `started_at`, `ended_at`, `path`, `readiness`). CQ-R2 moves the first
+    crisis in as the first record, behaviour unchanged and its
+    `first_crisis` save key kept. A kind supplies only its start, end and
+    warning text. The scenario condition (`director_event_state`), the
+    forced event (decision 14) and the diagnostics reading take an event id,
+    so a later event adds no save, restore, scenario or diagnostics code:
+    about four files (`event_director.gd`, `game_config.gd`,
+    `settings_catalogue.gd`, `guidance_catalogue.gd`) plus tests, against
+    the ten FC-2 touched (`docs/architecture-review-2026-11-04.md` F1).
 
 ## Open questions
 
