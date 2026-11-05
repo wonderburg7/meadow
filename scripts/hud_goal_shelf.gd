@@ -154,7 +154,7 @@ func set_challenge_goal(text: String, completed_text: String = "", progress_curr
 	favourites_box.visible = false
 	short_term_box.visible = false
 	_short_term_sig = ""
-	for star in goal_stars:
+	for star: Variant in goal_stars:
 		star.visible = false
 	current_goal_label.visible = true
 	goal_shelf.visible = not text.is_empty()
@@ -184,7 +184,7 @@ func set_colony_goals(entries: Array) -> void:
 	var long_id := ""
 	var next_id := ""
 	var done_id := ""
-	for entry in entries:
+	for entry: Variant in entries:
 		if bool(entry.get("extra", false)) or bool(entry.get("short_term", false)):
 			continue
 		if str(entry.id) == "long_term":
@@ -226,17 +226,17 @@ func apply_collapsed() -> void:
 ## buttons, so the keyboard reaches Dismiss.
 func _rebuild_short_term(entries: Array) -> void:
 	var lines: Array = []
-	for entry in entries:
+	for entry: Variant in entries:
 		if bool(entry.get("short_term", false)):
 			lines.append(entry)
 	var sig: String = JSON.stringify(lines)
 	if sig == _short_term_sig:
 		return
 	_short_term_sig = sig
-	for child in short_term_box.get_children():
+	for child: Variant in short_term_box.get_children():
 		short_term_box.remove_child(child)
 		child.queue_free()
-	for entry in lines:
+	for entry: Variant in lines:
 		var id: String = str(entry.id)
 		var done: bool = bool(entry.get("done", false))
 		var row := HBoxContainer.new()
@@ -261,7 +261,7 @@ func _rebuild_short_term(entries: Array) -> void:
 			dismiss.text = "Dismiss"
 			dismiss.theme_type_variation = "Small"
 			dismiss.tooltip_text = "Drop this goal. No other is offered until tomorrow."
-			dismiss.pressed.connect(func(): dismiss_requested.emit(id))
+			dismiss.pressed.connect(func() -> void: dismiss_requested.emit(id))
 			row.add_child(dismiss)
 		var star := Button.new()
 		star.name = "star"
@@ -270,7 +270,7 @@ func _rebuild_short_term(entries: Array) -> void:
 		star.theme_type_variation = "Small"
 		star.custom_minimum_size = Vector2(26, 20)
 		star.tooltip_text = "Keep this goal on screen when the Goals list is collapsed."
-		star.pressed.connect(func(): star_toggled.emit(id))
+		star.pressed.connect(func() -> void: star_toggled.emit(id))
 		row.add_child(star)
 		short_term_box.add_child(row)
 
@@ -286,7 +286,7 @@ func _add_goal_star(label: Control) -> void:
 	star.custom_minimum_size = Vector2(26, 20)
 	star.tooltip_text = "Keep this goal on screen when the Goals list is collapsed."
 	star.mouse_filter = Control.MOUSE_FILTER_STOP
-	star.pressed.connect(func(): _on_goal_star_pressed(star))
+	star.pressed.connect(func() -> void: _on_goal_star_pressed(star))
 	# On the right, where the right-aligned line ends (Dave, 24 Oct 2026),
 	# with the line's text kept clear of it by a right margin.
 	star.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
@@ -305,7 +305,7 @@ func _set_goal_star(label: Control, id: String, entries: Array) -> void:
 		return
 	goal_star_ids[star] = id
 	var starred := false
-	for entry in entries:
+	for entry: Variant in entries:
 		if str(entry.id) == id and bool(entry.get("starred", false)):
 			starred = true
 	star.text = "★" if starred else "☆"
@@ -319,10 +319,10 @@ func _on_goal_star_pressed(star: Button) -> void:
 ## GP-2: the collapsed view -- one line for each starred goal, a met one
 ## struck through. Rebuilt whenever the entries are, never per frame.
 func rebuild_favourites(entries: Array) -> void:
-	for child in favourites_box.get_children():
+	for child: Variant in favourites_box.get_children():
 		favourites_box.remove_child(child)
 		child.queue_free()
-	for entry in entries:
+	for entry: Variant in entries:
 		if not bool(entry.get("starred", false)):
 			continue
 		var line := RichTextLabel.new()

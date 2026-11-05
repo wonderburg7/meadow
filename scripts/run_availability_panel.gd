@@ -117,7 +117,7 @@ func open() -> void:
 	show()
 
 func _fill() -> void:
-	for child in grid.get_children():
+	for child: Variant in grid.get_children():
 		grid.remove_child(child)
 		child.queue_free()
 	var level_id: int = Session.starting_level
@@ -128,10 +128,10 @@ func _fill() -> void:
 	var edited_level: Dictionary = DeveloperOverrides.apply(level_id, level) if editable else level
 	var sheet: Dictionary = RunAvailability.sheet_for(edited_level, Session.progression)
 
-	for heading in COLUMNS:
+	for heading: Variant in COLUMNS:
 		_cell(heading, "Body")
 	var skills: Dictionary = sheet.get("skills", {})
-	for skill_id in skills:
+	for skill_id: Variant in skills:
 		var row: Dictionary = skills[skill_id]
 		var edits: Array = _edit_cycle(own_skills.get(skill_id, row)) if editable else []
 		if edits.is_empty():
@@ -151,10 +151,10 @@ func _fill() -> void:
 		_cell(REASON_TEXT.get(row.get("reason", ""), str(row.get("reason", ""))), "Small")
 		_stage_cells(skill_id)
 	var roles: Dictionary = sheet.get("roles", {})
-	for role_key in roles:
+	for role_key: Variant in roles:
 		_row("Role: %s" % Roles.label_for(Roles.id_for_key(role_key)), roles[role_key], str(roles[role_key].get("skill", "")))
 	var features: Dictionary = sheet.get("features", {})
-	for feature_id in features:
+	for feature_id: Variant in features:
 		_row("Feature: %s" % FEATURE_LABELS.get(feature_id, feature_id.trim_prefix("feature.").capitalize()), features[feature_id])
 
 ## The edits a skill row cycles through, from its source in the level's own

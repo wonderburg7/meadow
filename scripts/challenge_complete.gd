@@ -92,18 +92,18 @@ func _build_buttons(column: VBoxContainer) -> void:
 	continue_btn = Button.new()
 	continue_btn.text = "Continue playing"
 	continue_btn.custom_minimum_size = Vector2(0, 32)
-	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+	for state: String in ["normal", "hover", "pressed", "focus", "disabled"]:
 		continue_btn.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
-	continue_btn.pressed.connect(func(): continue_requested.emit())
+	continue_btn.pressed.connect(func() -> void: continue_requested.emit())
 	continue_row = UI.with_info(continue_btn, "Keep playing this colony -- everything the Challenge was gating is now unlocked.")
 	column.add_child(continue_row)
 
 	continue_to_next_btn = Button.new()
 	continue_to_next_btn.text = "Continue to Challenge 2"
 	continue_to_next_btn.custom_minimum_size = Vector2(0, 32)
-	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+	for state: String in ["normal", "hover", "pressed", "focus", "disabled"]:
 		continue_to_next_btn.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
-	continue_to_next_btn.pressed.connect(func(): continue_to_next_requested.emit())
+	continue_to_next_btn.pressed.connect(func() -> void: continue_to_next_requested.emit())
 	continue_to_next_row = UI.with_info(continue_to_next_btn, "Begin Challenge 2 with a fresh colony.")
 	continue_to_next_row.visible = false
 	column.add_child(continue_to_next_row)
@@ -111,9 +111,9 @@ func _build_buttons(column: VBoxContainer) -> void:
 	restart_btn = Button.new()
 	restart_btn.text = "Restart Challenge 1"
 	restart_btn.custom_minimum_size = Vector2(0, 32)
-	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+	for state: String in ["normal", "hover", "pressed", "focus", "disabled"]:
 		restart_btn.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
-	restart_btn.pressed.connect(func(): restart_requested.emit())
+	restart_btn.pressed.connect(func() -> void: restart_requested.emit())
 	restart_row = UI.with_info(restart_btn, "Start Challenge 1 again from the beginning.")
 	restart_row.visible = false
 	column.add_child(restart_row)
@@ -121,9 +121,9 @@ func _build_buttons(column: VBoxContainer) -> void:
 	var menu_btn := Button.new()
 	menu_btn.text = "Main menu"
 	menu_btn.custom_minimum_size = Vector2(0, 32)
-	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+	for state: String in ["normal", "hover", "pressed", "focus", "disabled"]:
 		menu_btn.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
-	menu_btn.pressed.connect(func(): menu_requested.emit())
+	menu_btn.pressed.connect(func() -> void: menu_requested.emit())
 	column.add_child(UI.with_info(menu_btn, "Go back to the menu and pick a different Challenge or Scenario."))
 
 ## `headline`/`flavour` are the Challenge's own completion text (the same

@@ -34,11 +34,11 @@ func _draw() -> void:
 	# Autoscaled with a floor at the 30fps line, so a quiet stretch
 	# doesn't blow the bars up to fill the plot on nothing but noise.
 	var worst: float = WARN_MS
-	for ms in history:
+	for ms: Variant in history:
 		worst = max(worst, ms)
 
 	var bar_w: float = w / float(Perf.HISTORY_SLOTS)
-	for i in history.size():
+	for i: int in history.size():
 		var ms: float = history[i]
 		var bar_h: float = clampf(ms / worst, 0.0, 1.0) * h
 		var colour := Color(0.35, 0.75, 0.4)

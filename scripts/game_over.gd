@@ -80,13 +80,13 @@ func _ready() -> void:
 	var restart_btn := Button.new()
 	restart_btn.text = "Try again"
 	restart_btn.custom_minimum_size = Vector2(0, 32)
-	restart_btn.pressed.connect(func(): restart_requested.emit())
+	restart_btn.pressed.connect(func() -> void: restart_requested.emit())
 	column.add_child(UI.with_info(restart_btn, "Start the run again at the same stage, with the same tuning values."))
 
 	var menu_btn := Button.new()
 	menu_btn.text = "Main menu"
 	menu_btn.custom_minimum_size = Vector2(0, 32)
-	menu_btn.pressed.connect(func(): menu_requested.emit())
+	menu_btn.pressed.connect(func() -> void: menu_requested.emit())
 	column.add_child(UI.with_info(menu_btn, "Go back to the menu and pick a different starting stage."))
 
 ## `day` and `bees` are shown as a short epitaph for the run.
@@ -122,11 +122,11 @@ func _offer_checkpoint() -> void:
 		return
 	var slug := SaveSlots.slugify(Session.run_name)
 	var checkpoints: Dictionary = {}
-	for entry in SaveSlots.list_slots():
+	for entry: Variant in SaveSlots.list_slots():
 		if entry["slug"] == slug:
 			checkpoints = entry.get("checkpoints", {})
 	var best_time := -1
-	for number in checkpoints:
+	for number: Variant in checkpoints:
 		var path := SaveSlots.checkpoint_path(slug, int(number))
 		var saved_at := int(checkpoints[number].get("saved_at", 0))
 		if FileAccess.file_exists(path) and saved_at > best_time:

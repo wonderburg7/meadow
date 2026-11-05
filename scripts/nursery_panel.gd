@@ -132,7 +132,7 @@ func _ready() -> void:
 	close_btn.text = "×"
 	close_btn.custom_minimum_size = Vector2(26, 22)
 	_style_button(close_btn)
-	close_btn.pressed.connect(func(): close())
+	close_btn.pressed.connect(func() -> void: close())
 	header.add_child(close_btn)
 
 	column.add_child(HSeparator.new())
@@ -187,7 +187,7 @@ func _ready() -> void:
 ## The five states a plain Godot Button actually looks up -- see
 ## colony_panel.gd's identical helper.
 func _style_button(button: Button) -> Button:
-	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+	for state: String in ["normal", "hover", "pressed", "focus", "disabled"]:
 		button.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
 	return button
 
@@ -223,7 +223,7 @@ func _starred_row(column: VBoxContainer, key: String, title: String, standalone:
 	star.button_pressed = Session.pinned_stats.has(key)
 	star.text = "★" if star.button_pressed else "☆"
 	star.tooltip_text = "Show this in the top-left corner of the screen as well as here."
-	star.toggled.connect(func(pressed: bool): _set_pinned(key, pressed))
+	star.toggled.connect(func(pressed: bool) -> void: _set_pinned(key, pressed))
 	row.add_child(star)
 	star_buttons[key] = star
 
@@ -232,7 +232,7 @@ func _starred_row(column: VBoxContainer, key: String, title: String, standalone:
 	label.theme_type_variation = "Body"
 	row.add_child(label)
 
-	for entry in STAT_ROWS:
+	for entry: Variant in STAT_ROWS:
 		if entry.key == key:
 			row.add_child(UI.info_badge(entry.tip))
 			break
@@ -307,20 +307,20 @@ func refresh(
 ## identical favourites/needing-attention lists -- which problems exist,
 ## and how many, changes at any time.
 func _rebuild_needing_attention(signals: Array) -> void:
-	for child in needing_attention_column.get_children():
+	for child: Variant in needing_attention_column.get_children():
 		if child != needing_attention_ok_label:
 			child.queue_free()
 
 	var relevant: Array = []
-	for entry in signals:
+	for entry: Variant in signals:
 		var category: String = entry[3] if entry.size() > 3 else ""
 		if category == BROOD_SIGNAL_CATEGORY:
 			relevant.append(entry)
 
 	needing_attention_ok_label.visible = relevant.is_empty()
-	for entry in relevant:
+	for entry: Variant in relevant:
 		needing_attention_column.add_child(
-			UI.signal_line_button(entry, func(action): signal_clicked.emit(action))
+			UI.signal_line_button(entry, func(action: Variant) -> void: signal_clicked.emit(action))
 		)
 
 ## Capacity (how big the zone is, how much of it is free) and the tier
@@ -343,7 +343,7 @@ func _refresh_zone(zone: Dictionary) -> void:
 	var weights := [
 		GameConfig.lay_weight_low, GameConfig.lay_weight_medium, GameConfig.lay_weight_high,
 	]
-	for tier in range(3):
+	for tier: int in range(3):
 		tier_lines.append("%s ×%d: %d cells (%d free)" % [
 			TIER_NAMES[tier], int(weights[tier]), int(counts[tier]), int(free[tier]),
 		])
@@ -354,7 +354,7 @@ func _refresh_zone(zone: Dictionary) -> void:
 func _refresh_intended_roles(zone: Dictionary, total_cells: int) -> void:
 	var by_role: Dictionary = zone.get("by_role", {})
 	var lines: Array = []
-	for key in row_order():
+	for key: Variant in row_order():
 		var count: int = int(by_role.get(key, 0))
 		if count <= 0:
 			continue
@@ -384,14 +384,14 @@ func _refresh_brood_stages(stages: Dictionary) -> void:
 
 func _refresh_ring(live: Dictionary) -> void:
 	var total := 0
-	for key in live.keys():
+	for key: Variant in live.keys():
 		total += int(live[key])
 	ring_slices = []
 	if total <= 0:
 		_update_ring_min_size()
 		ring.queue_redraw()
 		return
-	for key in row_order():
+	for key: Variant in row_order():
 		var count: int = int(live.get(key, 0))
 		if count <= 0:
 			continue
@@ -409,7 +409,7 @@ func _refresh_ring(live: Dictionary) -> void:
 	# count. Reading proportions off arc lengths by eye is exactly the
 	# thing pie charts are bad at.
 	var lines: Array = []
-	for slice in ring_slices:
+	for slice: Variant in ring_slices:
 		lines.append("%s: %d (%.0f%%)" % [slice.label, slice.count, slice.share * 100.0])
 	corner_texts["nursery_mix"] = "Colony mix — %s" % ", ".join(lines) if not lines.is_empty() else ""
 
@@ -420,7 +420,7 @@ func _refresh_emergence(emerged: Dictionary, window: float) -> void:
 	var minutes: float = max(0.001, window / 60.0)
 	var lines: Array = []
 	var total := 0
-	for key in row_order():
+	for key: Variant in row_order():
 		var count: int = int(emerged.get(key, 0))
 		if count <= 0:
 			continue
@@ -446,7 +446,7 @@ func _update_ring_min_size() -> void:
 	var font := ring.get_theme_font("font", "Small")
 	var font_size := ring.get_theme_font_size("font_size", "Small")
 	var widest := 0.0
-	for slice in ring_slices:
+	for slice: Variant in ring_slices:
 		widest = maxf(widest, font.get_string_size(
 			_ring_legend_text(slice), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x)
 	ring.custom_minimum_size.x = maxf(
@@ -482,7 +482,7 @@ func _draw_ring() -> void:
 		return
 
 	var angle := -PI / 2.0   # start at twelve o'clock
-	for slice in ring_slices:
+	for slice: Variant in ring_slices:
 		var sweep: float = slice.share * TAU
 		ring.draw_arc(centre, radius, angle, angle + sweep, 32, slice.colour, thickness)
 		# A tag on any slice wide enough to hold one, so a reader who
@@ -500,7 +500,7 @@ func _draw_ring() -> void:
 	var y := 6.0
 	var line_height := float(font_size) + 4.0
 	var legend_width := ring.size.x - RING_LEGEND_TEXT_X - UiLayout.SCROLLBAR_GUTTER
-	for slice in ring_slices:
+	for slice: Variant in ring_slices:
 		ring.draw_rect(Rect2(Vector2(RING_LEGEND_SWATCH_X, y), Vector2(10, 10)), slice.colour, true)
 		ring.draw_string(
 			font, Vector2(RING_LEGEND_TEXT_X, y + 10), _ring_legend_text(slice),
