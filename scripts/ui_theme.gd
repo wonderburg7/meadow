@@ -378,18 +378,16 @@ const TYPE_SIZES := {
 	"Tiny": 11,
 }
 
-## TS-1: sample sentence used to match each typeface's width to Standard's.
+## TS-1: sample sentence for the width ratios the TS-1 test records.
 const REFERENCE_TEXT := "The quick brown fox jumps over the lazy dog 0123456789"
 const _FACTOR_MEASURE_SIZE := 64
-## Width-matched to Standard, these faces still read slightly small (Dave,
-## C-137, 24 Oct 2026): OpenDyslexic for its tall lower case, Silkscreen for
-## its all-capital pixels. Kept inside TS-1's 8% width tolerance: 6% put
-## OpenDyslexic at 108% of Standard at text scale 2 once sizes round.
-const _TYPEFACE_NUDGE := {"opendyslexic": 1.04, "silkscreen": 1.06}
+## Faces sized by line height rather than width (PN-1). Replaces _TYPEFACE_NUDGE.
+const _HEIGHT_MATCHED := ["opendyslexic", "silkscreen"]
 static var _typeface_factors: Dictionary = {}
 
 ## How much to scale a font size so `typeface` draws REFERENCE_TEXT as wide as
-## Standard does. 1.0 for "sans" or a missing font. Measured once per face.
+## Standard does, or (OpenDyslexic, Silkscreen) as tall in line height. 1.0 for
+## "sans" or a missing font. Measured once per face.
 static func typeface_size_factor(typeface: String) -> float:
 	if typeface == "sans":
 		return 1.0
@@ -398,14 +396,24 @@ static func typeface_size_factor(typeface: String) -> float:
 	var factor := 1.0
 	var font: Font = _typeface_font(typeface)
 	if font != null:
-		var own: float = font.get_string_size(REFERENCE_TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, _FACTOR_MEASURE_SIZE).x
-		var base: float = ThemeDB.fallback_font.get_string_size(REFERENCE_TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, _FACTOR_MEASURE_SIZE).x
-		if own > 0.0 and base > 0.0:
-			factor = base / own * float(_TYPEFACE_NUDGE.get(typeface, 1.0))
+		var measure := ThemeDB.fallback_font
+		if _HEIGHT_MATCHED.has(typeface):
+			# PN-1: these two match line height, not width. A width match left
+			# them short (C-137 failed 24 and 30 Oct); the `<` `>` buttons take
+			# their height from the font's line height.
+			var own_h: float = font.get_height(_FACTOR_MEASURE_SIZE)
+			var base_h: float = measure.get_height(_FACTOR_MEASURE_SIZE)
+			if own_h > 0.0 and base_h > 0.0:
+				factor = base_h / own_h
+		else:
+			var own: float = font.get_string_size(REFERENCE_TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, _FACTOR_MEASURE_SIZE).x
+			var base: float = measure.get_string_size(REFERENCE_TEXT, HORIZONTAL_ALIGNMENT_LEFT, -1, _FACTOR_MEASURE_SIZE).x
+			if own > 0.0 and base > 0.0:
+				factor = base / own
 	_typeface_factors[typeface] = factor
 	return factor
 
-## A base size scaled by the text scale and the typeface's width factor.
+## A base size scaled by the text scale and the typeface's height factor.
 static func font_px(base: float) -> int:
 	return maxi(1, int(round(base * Session.text_scale * typeface_size_factor(Session.ui_typeface))))
 
