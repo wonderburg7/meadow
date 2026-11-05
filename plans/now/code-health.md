@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-T3 implemented (4 Nov 2026); CQ-R15 implemented (3 Nov 2026); CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the unmerged Jules S-3 branches to settle scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd (CQ-R16 landed 2 Nov 2026; CQ-R15, ED-1b and CQ-R8 3 Nov 2026, releasing scripts/hud.gd); CQ-M6 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd and scripts/soil_block.gd and claude/dave-hands-on-checks-784f2a to settle scripts/hive_cell.gd (ED-1 and CQ-R16 landed 2 Nov 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R16 landed 2 Nov 2026 and CQ-R15 3 Nov 2026; CQ-R8 implemented 3 Nov 2026 (ED-1b, which shared scripts/hud.gd, landed 3 Nov 2026); CQ-R3 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd (ED-1 landed 2 Nov 2026) | Dependency: CQ-T3 is queued behind RR-22 (section written 3 Nov 2026); CQ-T4 waits for CQ-T3 and claude/dave-hands-on-checks-784f2a; CQ-R3 follows the unmerged Jules S-1 and S-3 branches (ED-1 landed 2 Nov 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-T3 landed 5 Nov 2026; CQ-T4 waits for the unmerged Jules E-14, E-34 and S-3 marker-reparent branches; CQ-R15 implemented (3 Nov 2026); CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the unmerged Jules S-3 branches to settle scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd (CQ-R16 landed 2 Nov 2026; CQ-R15, ED-1b and CQ-R8 3 Nov 2026, releasing scripts/hud.gd); CQ-M6 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd and scripts/soil_block.gd and claude/dave-hands-on-checks-784f2a to settle scripts/hive_cell.gd (ED-1 and CQ-R16 landed 2 Nov 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R16 landed 2 Nov 2026 and CQ-R15 3 Nov 2026; CQ-R8 implemented 3 Nov 2026 (ED-1b, which shared scripts/hud.gd, landed 3 Nov 2026); CQ-R3 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd (ED-1 landed 2 Nov 2026) | Dependency: CQ-T4 waits for the unmerged Jules E-14, E-34 and S-3 marker-reparent branches (CQ-T3 landed 5 Nov 2026; claude/dave-hands-on-checks-784f2a merged 4 Nov 2026); CQ-R3 follows the unmerged Jules S-1 and S-3 branches (ED-1 landed 2 Nov 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -122,7 +122,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | Slice | Outcome | Files it owns (block has the full list) | Startable | Level |
 | --- | --- | --- | --- | --- |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T4 | the other 56 scripts and tests typed; `untyped_declaration` becomes an error | those, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | gated -- after CQ-T3, `claude/dave-hands-on-checks-784f2a` and the Jules S-1/S-3 branches | low |
+| CQ-T4 | the other 56 scripts and tests typed; `untyped_declaration` becomes an error | those, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | gated -- after the Jules E-14, E-34 and S-3 marker-reparent branches (CQ-T3 landed 5 Nov 2026) | low |
 | CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a, DR-1 | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
@@ -311,10 +311,11 @@ only, no behaviour change.
 
 **True now** (counted 4 Nov 2026 with `tests/source_checks.py::untyped_declarations`,
 after CQ-T3's 18 files were typed). 56 scripts and tests outside `TYPED_FILES` hold 348
-untyped declarations. Five of the UI scripts (`hud_command_rows`, `colony_panel`,
-`skill_tree_panel`, `gallerin_panel`, `problem_messages`) are changed by the unmerged
-`claude/dave-hands-on-checks-784f2a`, and `scripts/soil_block.gd` by the Jules S-1 and
-S-3 branches, so this slice waits for those to merge or close.
+untyped declarations. `claude/dave-hands-on-checks-784f2a`, which changed five of the
+UI scripts, merged 4 Nov 2026. The unmerged Jules E-14, E-34 and S-3 marker-reparent
+branches still change `scripts/bee_movement.gd`, `scripts/bee_survival.gd`,
+`scripts/crab_spider.gd`, `scripts/soil_block.gd`, `tests/source_checks.py` and five of
+its tests (checked 5 Nov 2026), so this slice waits for those to merge or close.
 
 **When done:**
 
@@ -361,9 +362,11 @@ the worker reads only the flagged lines.
   without that evidence; the source audit reports remain unaccepted.
 
 - **CQ-T4** -- the remaining 56 scripts and tests typed and `untyped_declaration`
-  made an error; waits for CQ-T3, and for `claude/dave-hands-on-checks-784f2a` and
-  the Jules S-1/S-3 branches, which between them change five of its UI scripts and
-  `scripts/soil_block.gd`, to be merged or closed. Its section is `## CQ-T4 -- the rest
+  made an error; waits for the unmerged Jules E-14, E-34 and S-3 marker-reparent
+  branches, which between them change `scripts/bee_movement.gd`,
+  `scripts/bee_survival.gd`, `scripts/crab_spider.gd`, `scripts/soil_block.gd`,
+  `tests/source_checks.py` and five of its tests, to be merged or closed (CQ-T3
+  landed 5 Nov 2026; `claude/dave-hands-on-checks-784f2a` merged 4 Nov 2026). Its section is `## CQ-T4 -- the rest
   typed`, after CQ-T3's.
 - **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`
   and `scripts/saving.gd`; its ownership overlaps that lane's current work.
