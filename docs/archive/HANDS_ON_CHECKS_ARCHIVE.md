@@ -121,7 +121,7 @@ If it fails, DR-2 reopens; a glow colour too close to bee bread's (DRONE_COLOUR 
 
 Runner: dave
 
-Owner: `plans/now/drones.md`
+Owner: `plans/archive/drones_2026-11-05.md`
 
 Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
 
