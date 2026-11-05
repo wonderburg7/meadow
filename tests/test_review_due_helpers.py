@@ -136,6 +136,46 @@ Some other details...
         self.assertEqual(len(problems), 1)
         self.assertIn("watches a path that does not exist: missing.txt", problems[0])
 
+    def test_missing_watches_rejects_archive(self) -> None:
+        archived = self.temp_dir / "plans" / "archive" / "old.md"
+        archived.parent.mkdir(parents=True)
+        archived.write_text("x", encoding="utf-8")
+        prompt = review_due.Prompt(
+            path=Path("plans/reference/reviews/demo.md"),
+            key="demo",
+            watches=["plans/archive/old.md"],
+        )
+        problems = review_due.missing_watches([prompt], root=self.temp_dir)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("archived path", problems[0])
+
+    def test_handoffs_for(self) -> None:
+        path = self.temp_dir / review_due.SIGNALS
+        path.parent.mkdir(parents=True)
+        path.write_text(
+            "## Entries\n\n<!--\n### YYYY-MM-DD - template\n- Area: x (save review)\n-->\n\n"
+            "### 2026-11-04 - open\n- Area: save schema (save review)\n- Disposition: untriaged\n\n"
+            "### 2026-11-03 - no disposition\n- Source: x, hand-off to the agent-workflow review\n\n"
+            "### 2026-11-02 - done\n- Area: save schema (save review)\n- Disposition: promoted\n\n"
+            "### 2026-11-01 - other\n- Area: ui (ui review)\n- Disposition: untriaged\n",
+            encoding="utf-8",
+        )
+        found = review_due.handoffs_for("save-review", self.temp_dir)
+        self.assertEqual(len(found), 1)
+        self.assertIn("2026-11-04", found[0])
+        self.assertEqual(len(review_due.handoffs_for("agent-workflow-review", self.temp_dir)), 1)
+        self.assertEqual(review_due.handoffs_for("plan-review", self.temp_dir), [])
+
+    def test_deepen_command(self) -> None:
+        original = review_due.git
+        try:
+            review_due.git = lambda *a, **k: "true\n"
+            self.assertIn("git fetch", review_due.deepen_command(self.temp_dir) or "")
+            review_due.git = lambda *a, **k: "false\n"
+            self.assertIsNone(review_due.deepen_command(self.temp_dir))
+        finally:
+            review_due.git = original
+
     def test_load_prompts(self) -> None:
         prompts_dir = self.temp_dir / review_due.PROMPTS_DIR
         prompts_dir.mkdir(parents=True, exist_ok=True)

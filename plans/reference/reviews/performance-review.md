@@ -19,12 +19,7 @@ state is correct after a restore: save review.
 **Read first:** `.claude/rules/performance.md`, `docs/performance.md`,
 `docs/PERFORMANCE_BASELINE.md`, and the "Deferred work" section of
 `plans/reference/technical-audit.md` (those items stay deferred unless a
-fresh, comparable profile says otherwise). On the first run (no record yet),
-also `python tools/heading.py docs/codebase-review-2026-09-18.md "C. Runtime
-and performance"`, and the
-outcomes of the finished plans `plans/archive/hot-path-queries_2026-09-29.md`
-and `plans/archive/render-scale_2026-10-07.md` (through `git show`, their
-results sections only) so you do not redo them.
+fresh, comparable profile says otherwise).
 
 ## Steps
 

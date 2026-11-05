@@ -34,6 +34,11 @@ Each entry must include:
 - a candidate direction, explicitly marked as a hypothesis; and
 - a disposition: `untriaged`, `promoted`, `rejected`, or `superseded`.
 
+To hand a signal to a review, end its `Area:` line with `(<name> review)`
+(for example `save schema (save review)`) or write "hand-off to the <name>
+review" in its `Source:` line. `python tools/review_due.py <key>` lists the
+untriaged entries addressed that way.
+
 Do not paste transcripts, secrets, lengthy command output, or a full design
 into this file. Link to the durable evidence instead. Do not record an item
 already owned by an open plan; add new evidence to that plan instead.

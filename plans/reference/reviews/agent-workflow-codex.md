@@ -42,7 +42,8 @@ PERIOD.
    targeted excerpts.
 5. **Check each finding against the current repository** before calling it
    active: the latest `docs/agent-workflow-review-*.md` and
-   `plans/archive/agent-lifecycle_2026-11-04.md`. A fix that exists but is bypassed is a
+   `plans/archive/agent-lifecycle_2026-11-04.md` (read with `git show
+   HEAD:<path>`). A fix that exists but is bypassed is a
    finding in its own right; say why it is bypassed.
 
 ## Output

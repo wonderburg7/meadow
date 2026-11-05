@@ -3,12 +3,13 @@
 <!-- CONTEXT: review-prompt | LOAD: only when running this review -->
 Record key: context-review
 Reasoning: medium
-Watches: CLAUDE.md AGENTS.md CHATGPT.md README.md GAME_MODEL.md FUNCTION_MAP.md docs/agent-rules.md .claude/rules .claude/settings.json .claude/agents .claude/skills .agents .codex plans/reference/reviews
+Watches: CLAUDE.md AGENTS.md CHATGPT.md README.md GAME_MODEL.md FUNCTION_MAP.md docs/agent-rules.md .claude/rules .claude/output-styles .claude/settings.json .claude/agents .claude/skills .agents .codex plans/reference/reviews
 Jules: R-context | priority 6 | every 14 days | min 20 commits
 
 **Owns:** everything an agent loads, or is routed to, that is not a plan:
 `CLAUDE.md`, `AGENTS.md`, `CHATGPT.md`, `docs/agent-rules.md` (the rules both
-agents share), `.claude/rules/`, `.claude/settings.json` (permissions and
+agents share), `.claude/rules/`, `.claude/output-styles/` (mirrors
+`docs/agent-rules.md` "Output"), `.claude/settings.json` (permissions and
 hooks), the subagent briefs in `.claude/agents/`, the skills in
 `.claude/skills/` and `.agents/skills/`, Codex's `.codex/` configuration and
 rules, the review prompts in `plans/reference/reviews/`, the reference files

@@ -54,7 +54,8 @@ Run git and tool commands as `git -C <ROOT> ...` or in a subshell
 
 1. Read its `SINCE` and level:
    `(cd <ROOT> && python tools/review_due.py <key>)` -- keep only the
-   `prompt:` and `SINCE:` lines.
+   `prompt:`, `SINCE:`, `handoffs:` and `shallow:` lines. `shallow:` names the
+   `git fetch` that deepens a shallow clone: run it first.
 2. Create its worktree: `(cd <ROOT> && git worktree add
    .claude/worktrees/review-<key> -b claude/review-<key>-<YYYYMMDD> master)`.
    Not under `.worktrees/`: `check_docs.py` fails any worktree there that
@@ -63,8 +64,8 @@ Run git and tool commands as `git -C <ROOT> ...` or in a subshell
    `subagent_type` `review-runner-high` or `review-runner-medium` from the
    level, with a prompt of these lines only: `KEY=<key>`, `ROOT=<ROOT>`,
    `WORKTREE=<ROOT>\.claude\worktrees\review-<key>`, `SINCE=<commit or first run>`,
-   `PHASE=review`, and `HANDOFFS=` followed by any hand-off lines earlier
-   runners aimed at this review. Keep the agent's id for step 5.
+   `PHASE=review`, and `HANDOFFS=` followed by step 1's `handoffs:` entries
+   and any hand-off lines earlier runners aimed at this review. Keep the agent's id for step 5.
 4. Act on its block:
    - `done`: merge (below) and remove the worktree.
    - `decisions`: merge what it committed, keep the worktree and the agent,
