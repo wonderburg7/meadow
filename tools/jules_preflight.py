@@ -415,6 +415,25 @@ def review_state(
     return "due", f"{commits} commits on its watched paths since {since} ({record[0]})"
 
 
+def efficiency_states(
+    root: Path, base: str = BASE, today: datetime.date | None = None, ledger: dict[str, LedgerRow] | None = None
+) -> list[tuple[str, str, str, str]]:
+    """jules_efficiency.topic_states, fed from the ledger: `closed` E rows count as a run, and an
+    open `jules/e-<n>-*` branch the ledger has not processed holds its topic."""
+    ledger = load_ledger(root, base) if ledger is None else ledger
+    closed = [
+        (int(row.item[2:]), row.date, row.branch)
+        for row in ledger.values()
+        if row.state == "closed" and re.fullmatch(r"E-[1-9][0-9]*", row.item.upper())
+    ]
+    waiting = []
+    for name in open_branches(root, base):
+        found = re.match(r"origin/jules/e-([1-9][0-9]*)(?:-|$)", name)
+        if found and unprocessed(name, ledger) and not matches_base(root, name, base):
+            waiting.append((int(found[1]), name))
+    return jules_efficiency.topic_states(root, base, today or datetime.date.today(), closed, waiting)
+
+
 def next_review(
     root: Path, base: str = BASE, today: datetime.date | None = None, ledger: dict[str, LedgerRow] | None = None
 ) -> tuple[Review | None, str, list[str]]:
@@ -758,16 +777,21 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.next:
         try:
-            number, previous = jules_efficiency.next_turn(ROOT)
+            number, previous, last_kind = jules_efficiency.next_turn(ROOT)
         except (ValueError, subprocess.CalledProcessError) as error:
             detail = error.stderr.strip() if isinstance(error, subprocess.CalledProcessError) else str(error)
             print(f"stop  cannot determine Jules sequence: {detail}")
             return 1
-        kind = "ordinary" if number % 2 else "efficiency"
-        print(f"Jules-Sequence: {number} {kind}")
-        if kind == "efficiency":
-            print("\n".join(jules_efficiency.task_block(number, previous)))
+        focus, why, rested = None, "", []
+        if last_kind == "ordinary":
+            focus, why, rested = jules_efficiency.next_topic(efficiency_states(ROOT, ledger=ledger))
+        if focus is not None:
+            print(f"Jules-Sequence: {number} efficiency")
+            print("\n".join(jules_efficiency.task_block(number, previous, focus, why)))
             return 0
+        print(f"Jules-Sequence: {number} ordinary")
+        if last_kind == "ordinary":
+            print("skip  efficiency: no topic is due (" + "; ".join(rested) + ")")
         task, skipped = next_task(ROOT, tasks, ledger=ledger)
         for line in skipped:
             print(f"skip  {line}")

@@ -32,9 +32,11 @@ disposes of without re-reading the code base. **What happened to every Jules
 branch** is in `plans/reference/jules-ledger.md`; `python
 tools/jules_preflight.py --ledger` lists the ones nobody has processed.
 
-Every other new task is now an E-<n> token-efficiency review. The persistent
-sequence, exact review method and integration contract live in
-`plans/reference/jules-efficiency.md`; `--next` routes each turn.
+After an ordinary task, `--next` offers an E-<n> token-efficiency review
+when one of its six topics is due (5 Nov 2026; before then every other task
+was one). The persistent sequence, the due rule, the exact review method and
+the integration contract live in `plans/reference/jules-efficiency.md`;
+`--next` routes each turn.
 
 ## Starting prompt (Dave pastes this into Jules)
 
@@ -46,7 +48,7 @@ Once, at the start: read the "If you are Google Jules" section of AGENTS.md, the
 For each task:
 
 1. With the previous PR committed and published, run `git fetch origin`, then `git switch --detach origin/master`, then `python tools/jules_preflight.py --next` to get the task id and Jules-Sequence. If a task was selected, run `git switch -c jules/<id>-<topic> origin/master` using its lower-case id (for `none`, choose the standing task before branching). Cut every branch from origin/master, never from local master or an earlier task's branch. A stale or stacked base is what made earlier PRs carry two tasks and revert files.
-2. Do the task --next printed. If it is `E-<n>`, run `python tools/heading.py plans/reference/jules-efficiency.md "Running an efficiency task"` and follow that method instead of steps 3 and 4; add only the named report. It is every other task, even when ordinary work is free. On ordinary turns it never prints a task that is taken, waiting on an unmerged task, or touching a file an open branch changes, so no task ever needs stacking. If it prints a review (`next  R-<name>`), run that review as its block says, following `python tools/heading.py plans/reference/jules-reviews.md "Running a review"` instead of steps 3 and 4; its report is the only file you add. If it prints "none", run `python tools/heading.py plans/reference/jules.md "Standing tasks"` and take the first that fits. For S-1, S-2 and S-3, first run `git branch -r --list 'origin/jules/s-*'` and look at your own open PRs, then pick a tool, function or pitfall that none of them covers.
+2. Do the task --next printed. If it is `E-<n>`, run `python tools/heading.py plans/reference/jules-efficiency.md "Running an efficiency task"` and follow that method instead of steps 3 and 4; add only the named report. It comes after an ordinary task whenever a topic is due, even when ordinary work is free. On ordinary turns it never prints a task that is taken, waiting on an unmerged task, or touching a file an open branch changes, so no task ever needs stacking. If it prints a review (`next  R-<name>`), run that review as its block says, following `python tools/heading.py plans/reference/jules-reviews.md "Running a review"` instead of steps 3 and 4; its report is the only file you add. If it prints "none", run `python tools/heading.py plans/reference/jules.md "Standing tasks"` and take the first that fits. For S-1, S-2 and S-3, first run `git branch -r --list 'origin/jules/s-*'` and look at your own open PRs, then pick a tool, function or pitfall that none of them covers.
 3. Run `python tools/heading.py plans/reference/jules.md "How to work"` and follow it. Write its plan (task id, preflight output, files, proof) in your message and carry on without waiting for approval.
 4. Before opening the PR, read your own diff once (`git diff origin/master...HEAD`) and remove anything the task's `Do:` does not ask for. Check each clause of `Do:` one by one against your change and say which test or edit meets it. Run `python tools/jules_preflight.py --scope`; it must print no `off` line. Title the PR `J-<n>: <task title>` (`S-<n>: ` for a standing task) and write the description in the order "How to work" step 8 gives, short enough that the reviewer need not open the diff to understand it.
 5. Copy the printed `Jules-Sequence: <n> <ordinary|efficiency>` line into the commit message and PR description. Push and open the PR, do not merge it, and start the next task at step 1 without waiting for review. Corrections and CI repairs retain the original trailer; they are the same task. Before each new task, look at the CI result of your earlier PRs: fix a failing one on its own branch if the fix is inside its task's files, once; if it still fails, mark that PR draft with the failure in its first line and carry on.
@@ -90,8 +92,8 @@ is waiting on review, not on Jules: merge its pull requests in one pass
    run `git switch --detach origin/master` before selecting; the ownership
    check must not exclude the preceding task's branch as the current branch.
    `python tools/jules_preflight.py --next` fetches `origin`,
-   prints the persistent `Jules-Sequence` and alternates ordinary tasks with
-   E token-efficiency tasks. For E, read its printed method instead of the
+   prints the persistent `Jules-Sequence` and, after an ordinary task, an E
+   token-efficiency task when a topic is due. For E, read its printed method instead of the
    remaining steps here; only its exact report may change. On an ordinary
    turn it prints the first numbered task that is not done, not taken by an open
    `jules/j-<n>-*` branch, not waiting on another task, and whose files no
