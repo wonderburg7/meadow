@@ -1,7 +1,7 @@
 # Event director -- the run's calendar in one place, then the alpha's pressures
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: EV-0 -- the Calendar and events settings group, and winter a week later, gated on PN-11 (SG-3, HS-2 and PP-11 landed 1 Nov 2026) | Dependency: EV-0 runs before PP-10 (`plans/now/pollination.md`, Dave 1 Nov 2026); the director's events (EV-1 onward, not yet written) wait for CQ-R2 (`plans/now/code-health.md`) and the alpha chain's save slices ending with ED-3 (`plans/now/difficulty.md`) | Verified: 2026-11-01
+Status: active | Owner: Dave / Claude Code | Next: EV-0 -- the Calendar and events settings group, and winter a week later, gated on PN-11 (SG-3, HS-2 and PP-11 landed 1 Nov 2026) | Dependency: EV-0 runs before T2-7b (`plans/now/tier-two.md`) and PP-10 (`plans/now/pollination.md`; Dave 1 Nov 2026 and 5 Nov 2026, product review D4); the director's events (EV-1 onward, not yet written) wait for CQ-R2 (`plans/now/code-health.md`) and the alpha chain's save slices ending with ED-3 (`plans/now/difficulty.md`) | Verified: 2026-11-01
 
 ## Objective
 
@@ -30,8 +30,8 @@ FC-2's first crisis lives in `scripts/main.gd`, "the first crisis".
 
 **Dependencies.** EV-0 follows PN-11 (SG-3, HS-2 and PP-11 landed 1 Nov
 2026), and precedes
-PP-10, so PP-10 prices the route once, on the new calendar (Dave, 1 Nov
-2026). The director's event slices follow CQ-R2, which creates
+T2-7b and then PP-10, so both price the route once, on the new calendar
+(Dave, 1 Nov 2026; T2-7b's place, 5 Nov 2026). The director's event slices follow CQ-R2, which creates
 `event_director.gd` (new, in `scripts/`) (design decision 2), and ED-3.
 Each EV slice adds a kind to the shared cycle (design decision 15), not a
 cycle of its own. The spider surge and the forage dearth both need "one
@@ -83,5 +83,5 @@ slice's. FC-2's behaviour at the default day length is unchanged.
 - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/main.gd`, `scripts/season.gd`, `tests/test_ev0_calendar.py`
 - Check: `python -m unittest tests.test_ev0_calendar tests.test_fc2_first_crisis` passes (every timing value sits in the "Calendar and events" group; the first crisis window is in days and gives PN-11's seconds at the default day length; the timeline row names the crisis window, winter and the mating window); over 3 seeds `python tools/pacing_gates.py` reports winter entered about a week later than before, with the before/after table recorded in the EV-0 section; `.\tools\verify.ps1` is green
 - Proof: `absent: scripts/game_config.gd :: first_crisis_window_open_day`
-- Next after: PP-10 -- the sweep prices the route so Gyne rearing is first affordable after the first winter
+- Next after: T2-7b -- the tier-2 price sweep, before PP-10 prices the gyne route
 ```
