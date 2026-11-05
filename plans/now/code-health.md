@@ -81,7 +81,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
   - `tools/gdscript_style.py` skips with a message when gdtoolkit is missing (the Codex
     runtime).
   - `bee.gd::idle_reason` starting a comb site is fixed by T2-14 in
-    `plans/now/tier-two.md`, not here.
+    `plans/archive/tier-two_2026-11-05.md`, not here.
   - Jules's audit (23 Oct 2026) put four options to Dave, none backed by a
     measured problem, so none is pursued: UI moved into `.tscn` scenes
     (breaks the headless geometry checks), bee helpers as child nodes (5-10x
@@ -165,7 +165,7 @@ claim while `dry_after`).
   - L-30 (`plans/archive/agent-lifecycle_2026-11-04.md`) held `tools/verify.ps1`; it landed 18 Oct 2026, clearing CQ-L1.
   - HP-3 (`plans/archive/hot-path-cadence_2026-10-18.md`) changes `bee.gd::_process`: CQ-R4 profiles
     after it.
-  - T2-14 (`plans/now/tier-two.md`) fixed `idle_reason` before CQ-R3 moves it; it
+  - T2-14 (`plans/archive/tier-two_2026-11-05.md`) fixed `idle_reason` before CQ-R3 moves it; it
     landed 21 Oct 2026, clearing CQ-R3 of everything but the `hud.gd` order.
   - CQ-T3 types `hud.gd` after the queued slices that reshape it (WP-3, landed
     22 Oct 2026, then CQ-R7), as CQ-T2 waited for CQ-R1's moves; CQ-L1, which held

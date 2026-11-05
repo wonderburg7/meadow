@@ -241,7 +241,7 @@ explicit request from Dave.
   `$unitModules` list, so `verify.ps1` appears in its `Files:`. No file may
   sit in both lanes, so only one lane at a time can hold such a slice.
 - Evidence: NF-1, COL-6, COL-11, NF-2 and the planned T2-1 to T2-4
-  (`plans/now/tier-two.md`) all list `tools/verify.ps1` for that one line;
+  (`plans/archive/tier-two_2026-11-05.md`) all list `tools/verify.ps1` for that one line;
   `tests/source_checks.py::TESTS_NOT_IN_VERIFY` enforces the listing.
 - Consequence: after COL-4 lands, COL-6 (Codex) and the tier-two chain
   (Claude) collide on `verify.ps1` alone, and one lane runs dry.
@@ -750,7 +750,7 @@ explicit request from Dave.
   was rewritten by hand in 7952bbb) and `plans/archive/SP-10_2026-10-15.md`
   holds SP-11's (SP-11 had no live block until the plan review restored it).
   On 15 Oct six more blocks sat that way in `plans/now/run-repairs.md` and
-  `plans/now/tier-two.md`.
+  `plans/archive/tier-two_2026-11-05.md`.
 - Evidence: `git show HEAD:plans/archive/SP-10_2026-10-15.md | grep -n "SP-11"`.
 - Consequence: a gated block lost this way leaves the backlog silently, and
   nothing fails; an admissible one costs a hand repair at closeout.

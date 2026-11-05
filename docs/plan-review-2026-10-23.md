@@ -20,7 +20,7 @@ Reviewed: 1a1f81c | Since: b5e6751 | Scope: every live plan's Status and open-sl
 | F11 -- goal-presentation archived | Shipped -- no goal-presentation plan in `ls plans/now` |
 | F12 -- agent-lifecycle history | Shipped, regrew with L-31 to L-34 restrictions -- trimmed here (F6) |
 | F13 -- C-20's nudge superseded by SP-11 | Shipped -- SP-11 landed |
-| F14 -- guardrail 5 named an archived plan | Shipped -- it names `plans/now/tier-two.md` |
+| F14 -- guardrail 5 named an archived plan | Shipped -- it names `plans/archive/tier-two_2026-11-05.md` |
 | F15 -- SG-2, SG-3 hand-off | Shipped -- nothing further; SG-2 is in the Claude backlog |
 
 ## Findings

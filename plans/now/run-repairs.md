@@ -45,7 +45,7 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 | RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after CQ-R2, which follows ED-3 | medium |
 
 Each slice reads its own section only. Do not change skill prices, the
-branch-tier rule (settled by `plans/now/tier-two.md` T2-9, landed 12 Oct 2026), or the save
+branch-tier rule (settled by `plans/archive/tier-two_2026-11-05.md` T2-9, landed 12 Oct 2026), or the save
 format.
 
 RR-6 shipped 2026-10-15; its specification is `plans/archive/RR-6_2026-10-15.md`.

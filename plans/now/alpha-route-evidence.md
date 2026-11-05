@@ -41,7 +41,7 @@ AR-1, AR-2 and AR-3 shipped 7 Oct 2026; each has its record in `plans/archive/`,
 
 AR-4 is gated on PP-10 (`plans/now/pollination.md`), the gyne route's last
 slice, which checks the route's order on EV-0's calendar. T2-7
-(`plans/now/tier-two.md`, landed 11 Oct 2026) added a `first_tier2_day` row to
+(`plans/archive/tier-two_2026-11-05.md`, landed 11 Oct 2026) added a `first_tier2_day` row to
 `tools/pacing_gates.py`; AR-4 keeps that row when it is admitted. T2-7b, the
 tier-2 price sweep T2-7 deferred, was withdrawn (Dave, 5 Nov 2026, product review D5). AR-4 cannot be
 an honest acceptance scenario while those mechanics are still incomplete; the

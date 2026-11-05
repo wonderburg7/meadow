@@ -224,7 +224,7 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
    11's order. Phase A (catalogue, resolver, run definition, modifiers, the
    tier-1 vertical slice) shipped, and so did Phase B's steps 7
    (`plans/archive/brood-spine_2026-10-05.md`) and 8
-   (`plans/now/tier-two.md`). Do not begin adaptations, campaign meta, or
+   (`plans/archive/tier-two_2026-11-05.md`). Do not begin adaptations, campaign meta, or
    legacy-path removal first.
 6. A Challenge stage that means "the player drives this bee" says so once,
    in the stage data, and one choke point enforces it. Do not add a sixth

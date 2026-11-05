@@ -37,7 +37,7 @@ slice was gated (F1), and the Codex lane was empty.
 | Id | Finding | Evidence | Severity | Disposition |
 | --- | --- | --- | --- | --- |
 | F1 | ED-2 and ED-3 (Easy), PN-11 to EV-0 to PP-10 to AR-4, and PN-7 to PN-19 all waited on Jules E-14 (#105) and S-3 marker (#79), whose game-script changes are already on master; the Codex lane held 0 of 5. `slice.ps1 owner` diffs `master...branch` and ignores the Jules ledger. | `git diff HEAD origin/jules/e-14-slice-briefs-5523427098625137402 -- scripts/game_config.gd` is empty; `tools/slice.ps1` `owner`; `refill_lane.py --top-up --lane Codex --dry-run` | high | Decided -- D1 A: `plans/reference/jules-ledger.md` rows closing both (prepared on codex/jules-integrate-20261104); Dave closes #105 and #79 and deletes both branches |
-| F2 | First automation median Day 52 against Days 5-8; tier 2 first affordable Days 24.16, 53.02, 27.22 against Day 5. T2-7b, the sweep meant to fix it, was ordered after PP-10, which prices the gyne path on tier-2 prices. | `python tools/pacing_gates.py`, 5 Nov | high | Decided -- D4 A then D5 B: `plans/now/tier-two.md` (T2-7b withdrawn), `plans/design/progression.md` step 8 |
+| F2 | First automation median Day 52 against Days 5-8; tier 2 first affordable Days 24.16, 53.02, 27.22 against Day 5. T2-7b, the sweep meant to fix it, was ordered after PP-10, which prices the gyne path on tier-2 prices. | `python tools/pacing_gates.py`, 5 Nov | high | Decided -- D4 A then D5 B: `plans/archive/tier-two_2026-11-05.md` (T2-7b withdrawn), `plans/design/progression.md` step 8 |
 | F3 | §3 promised 5/20/60/90 minutes and a first worker by Day 3, while the gate was Day 17, the crisis was moving to Days 12-15 and winter to Day 38: about 170 minutes at 1x. | §3; `pacing_gates.py` constants; PN-11, EV-0 | medium | Decided -- D2 A and D5 B: `plans/design/product-scope.md` §3, now an order with draft days |
 | F4 | Drones (DR-1, DR-2) and hard soil with Mighty Mandible (HS-1, HS-2) are in every run, but §6.4 listed drones as cut from the alpha and §6.1 did not name Mighty Mandible. | `grep -n -i drone plans/design/product-scope.md` | medium | Decided -- D3 A: `plans/design/product-scope.md` §5.1, §6.1, §6.4; AR-4 records their cost |
 | F5 | PN-11 pinned the crisis window at 1980/2700 s for a 180 s day; at the game's 200 s day that opens on Day 10, not 12. | `main.gd::_process` day counter; `GameConfig.seconds_per_day` | medium | Fixed -- `plans/now/play-notes-config.md` PN-11 now 2200/3000 (e451820) |
@@ -63,7 +63,7 @@ until it does. AR-6 runs no pacing check.
   appended: `owner` reports the signals file owned by Jules E-28, whose only
   change there is a copy of master's own 4 Nov entry. The `/run-reviews`
   coordinator carries it to `plans/observations/system-improvement-signals.md`.
-- **Plan review.** `plans/now/tier-two.md` (T2-7b withdrawn), `hard-soil.md`
+- **Plan review.** `plans/archive/tier-two_2026-11-05.md` (T2-7b withdrawn), `hard-soil.md`
   and `drones.md` have nothing left to build and are ready to archive.
   NEXTSTEPS "Not in the queue" lines for T2-7b, PP-10 and AR-4 are stale
   (T2-7b is withdrawn; PP-10 follows EV-0; AR-4 follows PP-10). NEXTSTEPS.md

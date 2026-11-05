@@ -58,7 +58,7 @@ it in the Claude lane (T2-6 landed 11 Oct 2026; BB-2 and NF-4, which shared them
 `skill_tree_panel.gd` is free since BB-3 landed (10 Oct 2026). PP-3 shares no file with the Claude
 lane and ran in the Codex lane. PP-5 shares `orders_zones.gd` with PP-3
 and `bee_nursery.gd` with BB-2 and NF-4, both landed 10 Oct 2026. PP-10 balances everything above; T2-7
-(`plans/now/tier-two.md`), which it followed, landed 11 Oct 2026 without moving
+(`plans/archive/tier-two_2026-11-05.md`), which it followed, landed 11 Oct 2026 without moving
 prices. AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-10. T2-7b, the
 tier-2 price sweep, was withdrawn (Dave, 5 Nov 2026, product review D5); tier-2 prices stay drafts. PP-6 followed FR-2
 (`plans/now/forager-recruitment.md`, landed 25 Oct 2026), which added Auto
