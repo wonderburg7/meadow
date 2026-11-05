@@ -992,7 +992,7 @@ explicit request from Dave.
 
 ### 2026-11-05 — a returned Jules branch still holds its files for `slice.ps1 owner`
 
-- Source: R-architecture Jules report processing, 5 Nov 2026 (ledger row; folded into `docs/architecture-review-2026-11-04.md`)
+- Source: R-architecture Jules report processing, 5 Nov 2026 (`docs/architecture-review-2026-11-04.md` F4 and Hand-offs)
 - Area: Jules branch lifecycle / file ownership
 - Signal: `jules/s-3-marker-reparent-check-9499576018780718307` was returned
   on 2 Nov (ledger row; correction task J-47 asks for a clean two-file
@@ -1005,7 +1005,11 @@ explicit request from Dave.
   could not remove three one-line dead helpers in `bee.gd`/`hive.gd` for it.
 - Consequence: work that a returned report will never merge waits on it, and
   reviews cannot make one-line fixes in the files it spans.
-- Candidate direction: Hypothesis — close the returned branch once its
-  correction task is filed (the correction rebuilds from master anyway), or
-  have `owner` skip a branch whose latest ledger row is `returned`.
+- Cause: `tools/slice.ps1`'s owner check takes every unmerged
+  `origin/jules/*` branch (`branch -r --no-merged ... origin/jules/*`) and
+  never reads the ledger, whereas `tools/jules_preflight.py`'s ownership check
+  already says a returned or closed branch owns nothing. The two disagree.
+- Candidate direction: Hypothesis — have `owner` skip a branch whose latest
+  ledger row is `returned` or `closed`, as `jules_preflight.py` does, or
+  close a returned branch once its correction task is filed.
 - Disposition: untriaged

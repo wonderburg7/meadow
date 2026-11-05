@@ -232,7 +232,7 @@ all honey cells are selected and the summary shows the total honey.
 
 ## PN-17 -- Shift queues build and dig orders
 
-**True now** (re-verified 5 Nov 2026, architecture review F4). Queues live in
+**True now** (re-verified 5 Nov 2026, `docs/architecture-review-2026-11-04.md` F4). Queues live in
 `bee.gd` (`queue_build_target`, `queue_mine_target`, `_next_queued_block`).
 Ctrl already queues: `input_selection.gd::_finish_drag` passes only
 `event.ctrl_pressed` to `_place_with_active_tool(ctrl_held)`, whose
