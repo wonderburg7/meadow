@@ -30,13 +30,13 @@
     {
       "when": {"event_count_at_least": {"type": "scouting_settled", "count": 8}},
       "do": "set_bee_stats",
-      "target": {"current_role": "forager", "count": 1},
+      "target": {"current_role": "forager", "is_scouting": false, "count": 1},
       "trips_scored": 5, "avg_collection_rate": 0.0
     },
     {
-      "when": {"event_count_at_least": {"type": "scouting_settled", "count": 8}, "bee_states": {"target": {"current_role": "forager", "count": 1}, "in": ["AT_ENTRANCE_SEEKING"]}},
+      "when": {"event_count_at_least": {"type": "scouting_settled", "count": 8}, "bee_states": {"target": {"current_role": "forager", "is_scouting": false, "count": 1}, "in": ["AT_ENTRANCE_SEEKING"]}},
       "do": "assert",
-      "condition": {"bee_states": {"target": {"current_role": "forager", "count": 1}, "in": ["AT_ENTRANCE_SEEKING"]}}
+      "condition": {"bee_states": {"target": {"current_role": "forager", "is_scouting": false, "count": 1}, "in": ["AT_ENTRANCE_SEEKING"]}}
     }
   ],
   "stop": {"max_days": 40}

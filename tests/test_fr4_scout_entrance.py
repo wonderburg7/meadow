@@ -53,6 +53,10 @@ class ScoutEntranceRunTest(unittest.TestCase):
         self.assertEqual(self.rejected, [], self.rejected)
         self.assertEqual(len(self._accepted("assert")), 3, self.asserts)
 
+    def test_established_forager_assert_ran(self):
+        ran = [e for e in self._accepted("assert") if '"in": ["AT_ENTRANCE_SEEKING"]' in str(e.get("target", ""))]
+        self.assertEqual(len(ran), 1, self._accepted("assert"))
+
     def test_stats_were_set(self):
         self.assertEqual(len(self._accepted("set_bee_stats")), 1)
 
