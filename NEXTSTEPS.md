@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] PN-1 -- OpenDyslexic and Silkscreen match Standard's height**
-   - Plan: `plans/now/play-notes.md` -- "PN-1 -- OpenDyslexic and Silkscreen match Standard's height"
-   - Files: `scripts/ui_theme.gd`, `tests/ts1_typeface_size_test.gd`, `tests/test_ts1_typeface_size.py`, `checks/ready/C-137.md`
-   - Check: `python -m unittest tests.test_ts1_typeface_size` passes with a height assertion (every face within 4% of Standard's `get_height` at the Body size, all scales); `.\tools\verify.ps1` is green. Hands-on: switching the Typeface setting leaves the `<` `>` buttons and body text the same height
-   - Proof: `present: scripts/ui_theme.gd :: _TYPEFACE_NUDGE`
-   - Next after: PN-2 -- rename a save in the saves list
-
-2. **[Claude] PN-2 -- rename a save in the saves list**
+1. **[Claude] PN-2 -- rename a save in the saves list**
    - Plan: `plans/now/play-notes.md` -- "PN-2 -- rename a save in the saves list"
    - Files: `scripts/saves_panel.gd`, `scripts/save_slots.gd`, `tests/pn2_save_rename_test.gd`, `tests/test_pn2_save_rename.py`
    - Check: `python -m unittest tests.test_pn2_save_rename` passes (rename updates the index name only, survives a reload, refuses empty and duplicate names); `.\tools\verify.ps1` is green. Hands-on: rename a save, quit, restart; the new name shows and it loads
    - Proof: `absent: scripts/save_slots.gd :: func rename(`
    - Next after: PN-3 -- a save remembers whether Goals was open
 
-3. **[Claude] PN-3 -- a save remembers whether Goals was open**
+2. **[Claude] PN-3 -- a save remembers whether Goals was open**
    - Plan: `plans/now/play-notes.md` -- "PN-3 -- a save remembers whether Goals was open"
    - Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/session.gd`, `tests/test_gp1_goals_dropdown.py`, `tests/gp1_goals_dropdown_test.gd`
    - Check: `python -m unittest tests.test_gp1_goals_dropdown` passes with a save round trip of the Goals state and an old save with no key loading as shown; `.\tools\verify.ps1` is green. Hands-on: close Goals, save, load; it is closed (re-run C-150)
    - Proof: `absent: scripts/save_game.gd :: goals_collapsed`
    - Next after: PN-4 -- the queen finishes a cell she was told to build
 
-4. **[Claude] PN-4 -- the queen finishes a cell she was told to build**
+3. **[Claude] PN-4 -- the queen finishes a cell she was told to build**
    - Plan: `plans/now/play-notes.md` -- "PN-4 -- the queen finishes a cell she was told to build"
    - Files: `scripts/bee_survival.gd`, `scripts/orders_zones.gd`, `scripts/bee_building.gd`, `test_scenarios/pn4_queen_build_after_meal.json`, `test_scenarios/pn4_queen_build_from_meadow.json`, `tests/test_pn4_queen_build.py`
    - Check: `python -m unittest tests.test_pn4_queen_build` passes (both scenarios fail before the fix and finish the cell after it); `python -m unittest tests.test_rr1_queen_builds` still passes; `.\tools\verify.ps1` is green. Hands-on: a Forager queen ordered to build finishes the cell after eating; one ordered from the meadow walks in and builds
    - Proof: `absent: scripts/orders_zones.gd :: ordered_site`
    - Next after: PN-5 -- a cell or soil block is clicked by its top face
 
-5. **[Claude] PN-5 -- a cell or soil block is clicked by its top face**
+4. **[Claude] PN-5 -- a cell or soil block is clicked by its top face**
    - Plan: `plans/now/play-notes.md` -- "PN-5 -- a cell or soil block is clicked by its top face"
    - Files: `scripts/input_selection.gd`, `tests/pn5_top_face_pick_test.gd`, `tests/test_pn5_top_face_pick.py`
    - Check: `python -m unittest tests.test_pn5_top_face_pick` passes (top face picks, a covered floor hexagon does not, an uncovered one does, soil follows the same rule); `.\tools\verify.ps1` is green. Hands-on: clicking inside a cell's top ring selects it
    - Proof: `absent: scripts/input_selection.gd :: _point_in_hex`
    - Next after: PN-6 -- double-click selects bees of the same role
+
+5. **[Claude] PN-6 -- double-click selects bees of the same role**
+   - Plan: `plans/now/play-notes.md` -- "PN-6 -- double-click selects bees of the same role"
+   - Files: `scripts/input_selection.gd`, `tests/pn6_double_click_select_test.gd`, `tests/test_pn6_double_click_select.py`
+   - Check: `python -m unittest tests.test_pn6_double_click_select` passes (same role and sub-role, on screen only, Shift adds); `.\tools\verify.ps1` is green. Hands-on: double-click a Forager selects the on-screen Foragers
+   - Proof: `absent: scripts/input_selection.gd :: _select_same_role`
+   - Next after: PN-9 -- early spring: fast queen building, no souring before day 15
 
 ### Codex lane
 
