@@ -94,7 +94,7 @@ the archived plan is never reopened or extended.
 
 <!-- LAYER: durable-rules -->
 
-Ten rules, added 11 and 17 Sep 2026 by reviews of every active plan. They cover
+Twelve rules, the first ten added 11 and 17 Sep 2026 by reviews of every active plan. They cover
 what that review found missing; everything else about plan shape is the
 schema above, `.claude/rules/documentation.md` for the lifecycle,
 `plans/reference/check-loop.md` for acceptance wording, and `CLAUDE.md`
@@ -163,6 +163,13 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
    the slice before it: on 15 Oct 2026 RR-6's and SP-10's archives carried
    off RR-7's and SP-11's blocks, and RR-7's had to be rewritten by hand.
    Added 15 Oct 2026 by the plan review.
+
+12. **Every timing is a draft.** A day, duration or pacing target in a slice
+   is a draft that will change (Dave, 5 Nov 2026; `plans/design/product-scope.md`
+   §3). Specify the order things happen in, not precise days; never write a
+   sweep or slice whose only aim is moving a milestone by a few days; keep a
+   timing in one named, editable place; and when a target and a mechanic
+   disagree, move the target. Added 5 Nov 2026 by the product review (D5).
 
 ## Current routing
 
