@@ -178,3 +178,26 @@ worked around -- that is likely to recur? If so, append one entry to
 otherwise record nothing. Most slices record nothing. Do not act on the
 signal in the slice. Until 25 Sep 2026 nothing on the slice route pointed
 here, and every entry came from maintenance passes.
+
+## Qualified Jules tooling proposals
+
+Processed evidence, 4 November 2026: docs/jules-efficiency/e-8.md,
+docs/jules-efficiency/e-10.md, docs/jules-efficiency/e-12.md,
+docs/jules-efficiency/e-14.md and corrected docs/jules-efficiency/e-6.md.
+These are unscheduled lifecycle/verification proposals. L-39/L-40 shipped;
+their archived plan is not a new task owner. Recheck ownership and admit
+implementation through normal planning and lane admission.
+
+| Proposal | Evidence and consequence | Required contract |
+| --- | --- | --- |
+| E14-1 (supersedes E2-1) | Size warnings read NEXTSTEPS, not backlog plan fences. Earlier warnings may help authors. | Extend tools/check_docs.py and tests/test_queue_sizing_checks.py; retain warning severity, fixture exemptions, high-reasoning justification and both lane checks. |
+| E14-2 / E2-2 | Worker Routine and final-acceptance Check wording can be ambiguous. | Clarify plans/reference/slice-worker.md with the lifecycle owner: focused worker proof versus mandatory final verification. Retain lifecycle/combined checks; never strip acceptance conditions mechanically. |
+| E8-1 | prefinish.select_modules returns empty for bee/main/skills. | Define bounded relevance, fixtures and mapping rationale; no arbitrary first-eight fallback or weaker checks. Existing tests/test_prefinish.py covers selection. |
+| E8-2 plus E12-2 | Failure blocks are locked; explicit modules are required today. | Optional final reason summary and shared all-unit discovery: preserve logs/non-zero exits, explicit modules, private-user isolation, case expansion, timing and game filters. Share discovery/exclusions with verify, including future testsNotInVerify entries. Extend existing runner suites. |
+| E10-1 | Handoff fields are assembled manually. | Optional formatter takes explicit evidence and retains task/scope, commits, branch/worktree, blocker, ownership, resume check, expected report, exact model/effort, risks, manual checks and successor. Never infer a pass. |
+| #95 E6-1 | Matched path-rule routing is not explicit in start output. | Define backward-compatible machine-readable output; retain rule-reading obligations and avoid source-check duplication. |
+
+E10-2 is rejected: parse_ledger and ledger_notes already supply corrections.
+#103 E6-1 must prove extra coverage beyond RR-10 before considering a fast
+check. The finder bool contract is present. No feature, policy change or
+queue entry is implemented here. Savings remain unmeasured estimates.

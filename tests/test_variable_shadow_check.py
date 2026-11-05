@@ -116,6 +116,22 @@ var offset: Vector2 = Vector2.ZERO
             self.assertEqual(exit_code, 1)
             self.assertIn("FAILED -- variable shadow check found problems", stderr_buf.getvalue())
 
+    def test_main_cli_missing_file_fails_closed(self):
+        missing_path = Path("scripts/nonexistent_script_xyz.gd")
+        stderr_buf = io.StringIO()
+        with redirect_stderr(stderr_buf):
+            exit_code = variable_shadow_check.main([str(missing_path)])
+        self.assertNotEqual(exit_code, 0)
+        self.assertIn("missing input files", stderr_buf.getvalue())
+        self.assertIn(str(missing_path), stderr_buf.getvalue())
+
+    def test_main_cli_real_tree_scan(self):
+        stdout_buf = io.StringIO()
+        with redirect_stdout(stdout_buf):
+            exit_code = variable_shadow_check.main([])
+        self.assertEqual(exit_code, 0)
+        self.assertIn("no shadowed properties", stdout_buf.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
