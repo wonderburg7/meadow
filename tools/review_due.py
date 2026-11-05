@@ -14,6 +14,12 @@ which reviews were due without opening a session for each.
                                         record, the SINCE commit, and the watched
                                         files changed since
 
+Entries in `plans/observations/system-improvement-signals.md` that are still
+`untriaged` and name a review in their `Area:` line ("(save review)") or
+`Source:` line ("hand-off to the product review") are listed under
+`<key>` as `handoffs:`, for review-runner's HANDOFFS. A shallow clone prints
+the `git fetch` that deepens it, since SINCE cannot be diffed without history.
+
 A review file's `Jules:` line says whether Google Jules runs it on its rota
 (`plans/reference/jules-reviews.md`): `Jules: R-<name> | priority <n> | every
 <d> days | min <c> commits`, or `Jules: no -- <reason>`. Both outputs say when
@@ -34,6 +40,8 @@ PROMPTS_DIR = Path("plans/reference/reviews")
 RECORD_NAME = re.compile(r"^(?:docs/(?P<a>.+)-|plans/archive/(?P<b>.+)_)(?P<date>\d{4}-\d{2}-\d{2})\.md$")
 REVIEWED = re.compile(r"^Reviewed:\s*([0-9a-f]{7,40})\b", re.MULTILINE)
 DETAIL_FILE_LIMIT = 60
+SIGNALS = Path("plans/observations/system-improvement-signals.md")
+ARCHIVE_PREFIX = "plans/archive/"
 JULES_ROTA = re.compile(
     r"^(R-[a-z]+)\s*\|\s*priority\s+(\d+)\s*\|\s*every\s+(\d+)\s+days?\s*\|\s*min\s+(\d+)\s+commits?\s*$"
 )
@@ -107,12 +115,48 @@ def load_prompts(root: Path = ROOT) -> list[Prompt]:
 
 def missing_watches(prompts: list[Prompt], root: Path = ROOT) -> list[str]:
     """Watched paths that name nothing -- a moved file silently stops a review being due."""
-    return [
-        f"{prompt.path.as_posix()}: watches a path that does not exist: {watch}"
-        for prompt in prompts
-        for watch in prompt.watches
-        if not (root / watch).exists()
-    ]
+    problems = []
+    for prompt in prompts:
+        for watch in prompt.watches:
+            where = prompt.path.as_posix()
+            if watch.replace("\\", "/").removeprefix("./").startswith(ARCHIVE_PREFIX):
+                problems.append(f"{where}: watches an archived path, which never changes: {watch}")
+            elif not (root / watch).exists():
+                problems.append(f"{where}: watches a path that does not exist: {watch}")
+    return problems
+
+
+def handoffs_for(key: str, root: Path = ROOT) -> list[str]:
+    """`<heading> (<signals line>)` for each untriaged signals entry addressed to review `key`."""
+    path = root / SIGNALS
+    if not path.exists():
+        return []
+    stem = "[- ]".join(re.escape(part) for part in key.removesuffix("-review").split("-"))
+    address = re.compile(rf"\({stem} review\)|(?<!\w)to the {stem} review(?!\w)", re.IGNORECASE)
+    found = []
+    for entry in re.split(r"^### ", path.read_text(encoding="utf-8"), flags=re.MULTILINE)[1:]:
+        lines = entry.splitlines()
+        if lines[0].startswith("YYYY-MM-DD"):
+            continue
+        addressed = any(
+            address.search(line) for line in lines if line.startswith(("- Area:", "- Source:"))
+        )
+        dispositions = [line for line in lines if line.startswith("- Disposition:")]
+        # An entry with no Disposition line has not been triaged either.
+        untriaged = not dispositions or dispositions[0].startswith("- Disposition: untriaged")
+        if addressed and untriaged:
+            found.append(f"{lines[0].strip()} ({SIGNALS.as_posix()})")
+    return found
+
+
+def deepen_command(root: Path = ROOT) -> str | None:
+    """The fetch that deepens a shallow clone, or None when history is complete."""
+    try:
+        if git("rev-parse", "--is-shallow-repository", root=root).strip() != "true":
+            return None
+    except RuntimeError:
+        return None
+    return "git fetch --unshallow origin"
 
 
 def latest_record(key: str, tracked: list[str]) -> tuple[str, str] | None:
@@ -212,6 +256,9 @@ def summary(root: Path = ROOT) -> int:
             print(f"warning: {prompt.path.as_posix()}: {prompt.jules_note}")
     if waiting:
         print('a waiting Jules report replaces that review\'s sweep: plans/reference/jules-reviews.md "Processing a Jules review"')
+    deepen = deepen_command(root)
+    if deepen:
+        print(f"warning: shallow clone, SINCE diffs may fail; deepen it with: {deepen}")
     print("one review's starting point: python tools/review_due.py <key>")
     return 0
 
@@ -235,6 +282,14 @@ def detail(key: str, root: Path = ROOT) -> int:
         )
     else:
         print(f"jules:    not on the Jules rota ({prompt.jules_note})")
+    deepen = deepen_command(root)
+    if deepen:
+        print(f"shallow:  this clone has partial history, so SINCE may not diff; deepen it with: {deepen}")
+    handoffs = handoffs_for(key, root)
+    if handoffs:
+        print("handoffs: " + "; ".join(handoffs))
+    else:
+        print("handoffs: none untriaged")
     if status.problem:
         print(f"SINCE:    unknown -- {status.problem}")
         return 0
