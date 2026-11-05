@@ -88,7 +88,7 @@ REVIEW_METHOD = "plans/reference/jules-reviews.md"
 PLANNED = ["NEXTSTEPS.md", "plans/now"]
 BRANCH_PREFIXES = ("origin/claude/", "origin/codex/", "origin/jules/")
 TASK_HEADING = re.compile(r"^###\s+(J-\d+)\s+--\s+(.*?)\s*$")
-BRANCH_TASK = re.compile(r"jules/(j-\d+|r-[a-z]+|e-\d+)(?:-|$)", re.IGNORECASE)
+BRANCH_TASK = re.compile(r"jules/(j-\d+|r-[a-z]+|e-\d+|s-[1-4])(?:-|$)", re.IGNORECASE)
 LEDGER_STATES = ("merged", "returned", "closed", "reviewed")
 # A `reviewed` row's Outcome starts `at <40-char SHA>:` (optionally after `#<PR> `):
 # the tip the reviewer checked. It is the "reviewed, awaiting integration" state
@@ -529,6 +529,56 @@ def ledger_report(root: Path, base: str = BASE) -> list[str]:
     return lines
 
 
+# --- sequence ---
+
+
+def sequence_report(root: Path, ref: str = "HEAD", base: str = BASE,
+                    ledger: dict[str, LedgerRow] | None = None) -> list[str]:
+    """One line per `Jules-Sequence` number the pull request at `ref` carries: `ok`, or `dup`
+    naming an older `origin/jules/*` branch that already used it.
+
+    Two Jules sessions running at once both read the same highest trailer and
+    take the same number (E-20 three times, #119 and #120 72 seconds apart,
+    5 Nov 2026); nothing caught it before review. Commits in `ref`'s own
+    history are exempt (a correction keeps its trailer), as is a branch the
+    ledger marks `returned` (its correction may come on a fresh branch). Only
+    the later submission fails, so the first stays green."""
+    ledger = load_ledger(root, base) if ledger is None else ledger
+    returned = {name for name, row in ledger.items() if row.state == "returned"}
+    own: dict[int, tuple[int, str]] = {}  # number -> (earliest committer time, kind)
+    for entry in git(root, "log", f"{base}..{ref}", "--format=%ct%x1f%B%x00").split("\0"):
+        if "\x1f" not in entry:
+            continue
+        when, message = entry.strip().split("\x1f", 1)
+        for match in jules_efficiency.TRAILER.finditer(message):
+            number = int(match[1])
+            if number not in own or int(when) < own[number][0]:
+                own[number] = (int(when), match[2])
+    if not own:
+        return ["note  no Jules-Sequence trailer between " + base + " and " + ref]
+    others = git(root, "log", "--glob=refs/remotes/origin/jules/*", "--not", ref,
+                 "--format=%H%x1f%ct%x1f%B%x00", "--extended-regexp", "--grep=^Jules-Sequence:", check=False)
+    lines: list[str] = []
+    for number, (when, kind) in sorted(own.items()):
+        earlier: list[tuple[int, str]] = []
+        for entry in others.split("\0"):
+            if "\x1f" not in entry:
+                continue
+            commit, other_when, message = entry.strip().split("\x1f", 2)
+            if int(other_when) >= when or not any(int(m[1]) == number for m in jules_efficiency.TRAILER.finditer(message)):
+                continue
+            branches = git(root, "branch", "-r", "--contains", commit, "--list", "origin/jules/*",
+                           "--format=%(refname:short)").split()
+            earlier += [(int(other_when), b.removeprefix("origin/")) for b in branches
+                        if b.removeprefix("origin/") not in returned]
+        if earlier:
+            lines.append(f"dup   Jules-Sequence: {number} {kind} -- duplicate of {min(earlier)[1]} "
+                         "(older): close this PR as a duplicate")
+        else:
+            lines.append(f"ok    Jules-Sequence: {number} {kind}")
+    return lines
+
+
 # --- scope ---
 
 
@@ -554,6 +604,68 @@ def scope_report(root: Path, task: Task, ref: str = "HEAD", base: str = BASE) ->
     return lines
 
 
+STANDING_TASKS = {
+    "S-1": "Test the untested functions of a tool",
+    "S-2": "Remove dead code",
+    "S-3": "Guard a known pitfall",
+    "S-4": "Refresh an audit",
+}
+
+
+def off_line(status: str, path: str, why: str, base: str = BASE) -> str:
+    fix = f"delete it: git rm -f {path}" if status == "A" else f"restore it: git checkout {base} -- {path}"
+    return f"off   {status} {path} -- {why}; {fix}"
+
+
+def standing_scope_report(root: Path, task_id: str, ref: str = "HEAD", base: str = BASE) -> list[str]:
+    """`--scope` for a standing task (plans/reference/jules.md, "Standing tasks"), which has no
+    `Files:` line: each has a fixed shape instead. S-1 adds only tests/test_<tool>_helpers.py for one
+    existing tools/<tool>.py (a suffix after the tool name is allowed: test_uncalled_search_helpers.py
+    for tools/uncalled.py); S-2 changes exactly one existing file under scripts/ or tools/; S-3 adds
+    only tools/<name>_check.py and tests/test_<name>_check.py for one name; S-4 rewrites one
+    existing report under docs/audits/ in place."""
+    entries = [line.split("\t", 1) for line in
+               git(root, "diff", "--name-status", "--no-renames", f"{base}...{ref}").splitlines()]
+    lines: list[str] = []
+    taken: list[str] = []  # the files that fit the shape, in order
+
+    def take(status: str, path: str, fits: bool, why: str, limit: int, same: str = "") -> None:
+        if not fits:
+            lines.append(off_line(status, path, why, base))
+        elif len(taken) >= limit or (same and taken and same != shape_key(taken[0])):
+            lines.append(off_line(status, path, f"{task_id} takes one {'tool' if task_id == 'S-1' else 'file' if limit == 1 else 'guard'} per pull request", base))
+        else:
+            taken.append(path)
+            lines.append(f"ok    {status} {path}")
+
+    def shape_key(path: str) -> str:
+        found = re.fullmatch(r"tools/(\w+)_check\.py|tests/test_(\w+)_check\.py", path)
+        return (found[1] or found[2]) if found else path
+
+    tracked = set(git(root, "ls-tree", "-r", "--name-only", base, "--", "tools").split())
+    for status, path in entries:
+        if task_id == "S-1":
+            found = re.fullmatch(r"tests/test_(\w+)_helpers\.py", path)
+            tools = {name.removeprefix("tools/").removesuffix(".py") for name in tracked if name.endswith(".py")}
+            fits = status == "A" and bool(found) and any(
+                found[1] == tool or found[1].startswith(f"{tool}_") for tool in tools
+            )
+            take(status, path, fits, "S-1 adds only a new tests/test_<tool>_helpers.py for an existing tools/<tool>.py", 1)
+        elif task_id == "S-2":
+            fits = status == "M" and path.startswith(("scripts/", "tools/"))
+            take(status, path, fits, "S-2 changes only one existing file under scripts/ or tools/", 1)
+        elif task_id == "S-3":
+            fits = re.fullmatch(r"tools/\w+_check\.py|tests/test_\w+_check\.py", path) is not None
+            take(status, path, fits, "S-3 adds only tools/<name>_check.py and tests/test_<name>_check.py", 2, shape_key(path))
+        else:
+            fits = status == "M" and path.startswith("docs/audits/")
+            take(status, path, fits, "S-4 refreshes only one existing report under docs/audits/ in place", 1)
+    if task_id == "S-3" and len(taken) == 1:
+        name = shape_key(taken[0])
+        lines.append(f"note  {name} -- S-3 needs both tools/{name}_check.py and tests/test_{name}_check.py")
+    return lines
+
+
 def scope_task(root: Path, wanted: str, base: str = BASE) -> Task | None:
     """The task, or for a review the report it may add, that `--scope` checks a branch against."""
     if wanted.startswith("E-"):
@@ -576,22 +688,38 @@ def main(argv: list[str] | None = None) -> int:
         "--scope",
         nargs="?",
         const="",
-        metavar="J-n|R-x|E-n",
+        metavar="J-n|R-x|E-n|S-n",
         help="list files --ref changes outside the task's Files (default task: from the branch name)",
     )
-    parser.add_argument("--ref", default="HEAD", help="commit or branch --scope compares with origin/master")
+    parser.add_argument(
+        "--sequence",
+        action="store_true",
+        help="fail when --ref's Jules-Sequence number is already used by an older origin/jules/* branch",
+    )
+    parser.add_argument("--ref", default="HEAD", help="commit or branch --scope/--sequence compares with origin/master")
     parser.add_argument("--no-fetch", action="store_true", help="use the remote branches as last fetched")
     args = parser.parse_args(argv)
     for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8", errors="replace")
-    if not (args.next or args.queue or args.ledger or args.scope is not None or args.paths):
-        parser.error("give --next, --queue, --ledger, --scope or at least one path")
+    if not (args.next or args.queue or args.ledger or args.sequence or args.scope is not None or args.paths):
+        parser.error("give --next, --queue, --ledger, --scope, --sequence or at least one path")
 
     if not args.no_fetch:
         fetch(ROOT)
 
+    if args.sequence:
+        report = sequence_report(ROOT, args.ref)
+        print(f"sequence {args.ref}")
+        print("\n".join(report))
+        return 1 if any(line.startswith("dup") for line in report) else 0
+
     if args.scope is not None:
         wanted = (args.scope or task_for_ref(ROOT, args.ref) or "").upper()
+        if wanted in STANDING_TASKS:
+            report = standing_scope_report(ROOT, wanted, args.ref)
+            print(f"scope {wanted} -- {STANDING_TASKS[wanted]} (standing task)")
+            print("\n".join(report) if report else "      no file differs from " + BASE)
+            return 1 if any(line.startswith(("off", "note")) for line in report) else 0
         task = scope_task(ROOT, wanted)
         if task is None:
             print(f"stop  no task {wanted or '(none in the branch name)'} on {BASE}: name it, as --scope J-n")

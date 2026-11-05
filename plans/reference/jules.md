@@ -321,6 +321,10 @@ dead-code removal.
 
 Take these only when `--next` prints `none`. Each still goes through every
 step of "How to work"; one tool, file or pitfall per pull request.
+`--scope` checks the shape below for an `s-<n>` branch, in CI too (5 Nov
+2026): any other file, such as an inherited `AGENTS.md`, is an `off` line.
+CI also fails a pull request whose `Jules-Sequence` number an older open
+`jules/*` branch already carries (`--sequence`): close the later one.
 
 - **S-1 -- Test the untested functions of a tool.** Every `tools/*.py` is now
   named by some test (24 Oct 2026), so go by function: for one tool, tools/NAME.py,
