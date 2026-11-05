@@ -23,6 +23,14 @@ or a dedicated worktree if one is already set up). It must keep changes
 focused, preserve all pre-existing work, and follow the same branch discipline
 as Claude: never leave or commit edits directly on `master`.
 
+Dave authorises Codex to commit and push authorised work automatically,
+without asking for confirmation again (5 Nov 2026). This includes pushing
+`master` after integrating Codex's own completed changes through the permitted
+closeout path, and committing and publishing explicitly requested policy or
+queue updates. Keep work-branch discipline, verification, other lanes'
+ownership and the high-risk review requirement; this grants no permission
+to force-push, rewrite shared history or include unrelated work.
+
 Run `tools/slice.ps1 start -Lane Codex` to claim the lane's leading item and
 register its worktree in `plans/workstreams.md` atomically -- it also checks
 the item's `Proof:` line still holds and refuses a lane that already has an
