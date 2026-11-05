@@ -24,13 +24,13 @@ func _draw() -> void:
 		"hex":
 			var pts := Shapes.hexagon_points(size.x * 0.42)
 			var outline := PackedVector2Array()
-			for p in pts:
+			for p: Variant in pts:
 				outline.append(p + c)
 			outline.append(outline[0])
-			for i in range(outline.size() - 1):
+			for i: int in range(outline.size() - 1):
 				draw_line(outline[i], outline[i + 1], col, 2.0)
 		"flower":
-			for i in range(5):
+			for i: int in range(5):
 				var angle: float = TAU * i / 5.0
 				var petal: Vector2 = c + Vector2(cos(angle), sin(angle)) * size.x * 0.22
 				draw_circle(petal, size.x * 0.15, col)
@@ -46,7 +46,7 @@ func _draw() -> void:
 			draw_colored_polygon(pts, col)
 		"snow":
 			# Six-pointed snowflake: three lines through the centre at 60°.
-			for i in range(3):
+			for i: int in range(3):
 				var angle: float = PI / 3.0 * i
 				var dir: Vector2 = Vector2(cos(angle), sin(angle)) * size.x * 0.38
 				draw_line(c - dir, c + dir, col, 2.0)

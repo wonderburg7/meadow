@@ -48,7 +48,7 @@ func _ready() -> void:
 	))
 	var close_btn := _button("×")
 	close_btn.custom_minimum_size = Vector2(26, 22)
-	close_btn.pressed.connect(func(): close())
+	close_btn.pressed.connect(func() -> void: close())
 	header.add_child(close_btn)
 
 	save_run_btn = _button("Save this run")
@@ -68,7 +68,7 @@ func _ready() -> void:
 	name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_edit.custom_minimum_size = Vector2(240, 0)
 	name_edit.max_length = 40
-	name_edit.text_submitted.connect(func(_text): _on_name_confirmed())
+	name_edit.text_submitted.connect(func(_text: Variant) -> void: _on_name_confirmed())
 	edit_row.add_child(name_edit)
 	var confirm_btn := _button("Save")
 	confirm_btn.pressed.connect(_on_name_confirmed)
@@ -170,14 +170,14 @@ func _on_name_confirmed() -> void:
 	name_row.visible = false
 	var slug := SaveSlots.slugify(run_name)
 	var taken := false
-	for entry in SaveSlots.list_slots():
+	for entry: Variant in SaveSlots.list_slots():
 		if entry["slug"] == slug and int(entry.get("saved_at", 0)) > 0:
 			taken = true
 	if taken and Session.warn_on_discard:
 		_confirm(
 			"Replace the saved run",
 			"There is already a saved run called \"%s\". Saving under that name replaces it." % run_name,
-			"Replace it", "Keep the old one", func(): _save(run_name))
+			"Replace it", "Keep the old one", func() -> void: _save(run_name))
 		return
 	_save(run_name)
 
@@ -192,14 +192,14 @@ func _save(run_name: String) -> void:
 # --- the list -------------------------------------------------------
 
 func _rebuild() -> void:
-	for child in list_box.get_children():
+	for child: Variant in list_box.get_children():
 		child.queue_free()
 	var slots: Array = SaveSlots.list_slots()
 	if slots.is_empty():
 		list_box.add_child(_label("No saved runs yet.", "Small"))
 		return
 	var now := int(Time.get_unix_time_from_system())
-	for entry in slots:
+	for entry: Variant in slots:
 		var slug: String = entry["slug"]
 		var display_name: String = str(entry.get("name", slug))
 		var row := HBoxContainer.new()
@@ -216,17 +216,17 @@ func _rebuild() -> void:
 		row.add_child(label)
 		if named:
 			var load_btn := _button("Load")
-			load_btn.pressed.connect(func(): _load(SaveSlots.slot_path(slug), display_name))
+			load_btn.pressed.connect(func() -> void: _load(SaveSlots.slot_path(slug), display_name))
 			row.add_child(load_btn)
 		var delete_btn := _button("Delete")
-		delete_btn.pressed.connect(func(): _on_delete_pressed(slug, display_name))
+		delete_btn.pressed.connect(func() -> void: _on_delete_pressed(slug, display_name))
 		row.add_child(delete_btn)
 
 		var checkpoints: Dictionary = entry.get("checkpoints", {})
 		var numbers: Array = checkpoints.keys()
 		# Newest checkpoint first, the same order as the runs above.
-		numbers.sort_custom(func(a, b): return int(checkpoints[a].get("saved_at", 0)) > int(checkpoints[b].get("saved_at", 0)))
-		for number in numbers:
+		numbers.sort_custom(func(a: Variant, b: Variant) -> Variant: return int(checkpoints[a].get("saved_at", 0)) > int(checkpoints[b].get("saved_at", 0)))
+		for number: Variant in numbers:
 			var path := SaveSlots.checkpoint_path(slug, int(number))
 			if not FileAccess.file_exists(path):
 				continue
@@ -238,7 +238,7 @@ func _rebuild() -> void:
 			point_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			point_row.add_child(point_label)
 			var point_load := _button("Load")
-			point_load.pressed.connect(func(): _load(path, display_name))
+			point_load.pressed.connect(func() -> void: _load(path, display_name))
 			point_row.add_child(point_load)
 
 ## The same reload the cog's Load run performs: the saved tuning values
@@ -272,7 +272,7 @@ func _on_delete_pressed(slug: String, display_name: String) -> void:
 	_confirm(
 		"Delete this run",
 		"Delete \"%s\" and its checkpoints? This cannot be undone." % display_name,
-		"Delete it", "Keep it", func(): _delete(slug), false)
+		"Delete it", "Keep it", func() -> void: _delete(slug), false)
 
 func _delete(slug: String) -> void:
 	SaveSlots.delete(slug)
@@ -304,6 +304,6 @@ func _button(text: String) -> Button:
 	var btn := Button.new()
 	btn.text = text
 	btn.focus_mode = Control.FOCUS_NONE
-	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+	for state: String in ["normal", "hover", "pressed", "focus", "disabled"]:
 		btn.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
 	return btn

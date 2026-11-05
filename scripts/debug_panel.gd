@@ -95,7 +95,7 @@ var _c2_collapse_presses: int = 0
 ## The five states a plain Godot Button actually looks up -- see
 ## colony_panel.gd's identical helper.
 func _style_button(button: BaseButton) -> BaseButton:
-	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+	for state: String in ["normal", "hover", "pressed", "focus", "disabled"]:
 		button.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
 	return button
 
@@ -207,7 +207,7 @@ func _ready() -> void:
 
 	# Collections and their topic sections both start closed. The first
 	# click chooses an area of the game; the second opens the relevant rows.
-	for collection in Settings.COLLECTIONS:
+	for collection: Variant in Settings.COLLECTIONS:
 		column.add_child(_make_collection(
 			collection.name, collection.categories, false
 		))
@@ -224,14 +224,14 @@ func _apply_panel_width() -> void:
 	panel_scroll.custom_minimum_size.x = width
 
 func _report_settings_button_width() -> void:
-	for hud in get_tree().get_nodes_in_group("huds"):
+	for hud: Variant in get_tree().get_nodes_in_group("huds"):
 		if is_instance_valid(hud) and hud.has_method("set_settings_button_width"):
 			hud.set_settings_button_width(toggle_button.size.x)
 
 # --- collections and sections -------------------------------------
 func _rows_in(category: String) -> Array:
 	var found: Array = []
-	for entry in Settings.TUNABLES:
+	for entry: Variant in Settings.TUNABLES:
 		if entry.get("category", "") != category:
 			continue
 		# star rows aren't settings at all -- they toggle whether
@@ -264,14 +264,14 @@ func _make_collection(collection_name: String, categories: Array, start_open: bo
 	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	header.custom_minimum_size = Vector2(0, 30)
 	header.theme_type_variation = "Body"
-	header.pressed.connect(func(): _set_open(header, body, collection_name, not body.visible))
+	header.pressed.connect(func() -> void: _set_open(header, body, collection_name, not body.visible))
 	wrapper.add_child(header)
 	wrapper.add_child(body)
 
 	collection_bodies[collection_name] = body
 	collection_headers[collection_name] = header
 
-	for category in categories:
+	for category: Variant in categories:
 		var rows := _rows_in(category)
 		if rows.is_empty() and category != "Controls":
 			continue
@@ -293,16 +293,16 @@ func _set_open(header: Button, body: Control, label: String, open: bool) -> void
 func open_to_categories(categories: Array) -> void:
 	_apply_layer_for_context()
 	panel.visible = true
-	for collection in Settings.COLLECTIONS:
+	for collection: Variant in Settings.COLLECTIONS:
 		var categories_here: Array = collection.categories
 		var contains_target := false
-		for cat in categories:
+		for cat: Variant in categories:
 			if categories_here.has(cat):
 				contains_target = true
 				break
 		if contains_target and collection_headers.has(collection.name):
 			_set_open(collection_headers[collection.name], collection_bodies[collection.name], collection.name, true)
-	for cat in categories:
+	for cat: Variant in categories:
 		if section_headers.has(cat):
 			_set_open(section_headers[cat], sections[cat], cat, true)
 
@@ -311,9 +311,9 @@ func open_to_categories(categories: Array) -> void:
 ## from the pre-run menu's Settings button (open_to_categories) does not
 ## follow the player into the game (Dave, 8 Sep 2026).
 func collapse_all() -> void:
-	for key in collection_headers:
+	for key: Variant in collection_headers:
 		_set_open(collection_headers[key], collection_bodies[key], key, false)
-	for key in section_headers:
+	for key: Variant in section_headers:
 		_set_open(section_headers[key], sections[key], key, false)
 
 ## A clickable heading with its rows underneath, hidden until the heading
@@ -331,7 +331,7 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	header.custom_minimum_size = Vector2(0, 24)
 	header.theme_type_variation = "Small"
-	header.pressed.connect(func(): _set_open(header, body, category, not body.visible))
+	header.pressed.connect(func() -> void: _set_open(header, body, category, not body.visible))
 	wrapper.add_child(header)
 	wrapper.add_child(body)
 	section_headers[category] = header
@@ -339,16 +339,16 @@ func _make_section(category: String, entries: Array, start_open: bool) -> Contro
 	var ordered_entries := []
 	# Preserve the authored order inside each group while putting the most
 	# frequently changed on/off controls first and passive readout stars last.
-	for entry in entries:
+	for entry: Variant in entries:
 		if entry.get("toggle", false):
 			ordered_entries.append(entry)
-	for entry in entries:
+	for entry: Variant in entries:
 		if not entry.get("toggle", false) and not entry.get("star", false):
 			ordered_entries.append(entry)
-	for entry in entries:
+	for entry: Variant in entries:
 		if entry.get("star", false):
 			ordered_entries.append(entry)
-	for entry in ordered_entries:
+	for entry: Variant in ordered_entries:
 		var made: Control
 		if entry.get("star", false):
 			made = _make_star_row(entry)
@@ -453,7 +453,7 @@ func _refresh_pollination_readout() -> void:
 	var worlds := get_tree().get_nodes_in_group("world")
 	if worlds.is_empty() or worlds[0].pollination == null:
 		return
-	var ledger = worlds[0].pollination
+	var ledger: Variant = worlds[0].pollination
 	var key := "%d|%d" % [ledger.points, ledger.contribution]
 	if key == _pollination_key:
 		return
@@ -467,7 +467,7 @@ func _refresh_challenge_stage_navigation() -> void:
 	if challenge_stage_row == null:
 		return
 	var worlds := get_tree().get_nodes_in_group("world")
-	var runner = null if worlds.is_empty() else worlds[0].challenge_runner
+	var runner: Variant = null if worlds.is_empty() else worlds[0].challenge_runner
 	var active: bool = runner != null and runner.active
 	var stage_id: String = runner.current_stage_id() if active else ""
 	var stage_goal: String = runner.current_stage_goal_text() if active else ""
@@ -596,7 +596,7 @@ func _build_actions(column: VBoxContainer) -> void:
 
 ## HO-3: the Triggers group exists only with Developer mode on.
 func _rebuild_triggers() -> void:
-	for child in triggers_box.get_children():
+	for child: Variant in triggers_box.get_children():
 		triggers_box.remove_child(child)
 		child.queue_free()
 	if not Session.developer_mode:
@@ -634,7 +634,7 @@ func _on_end_run_pressed() -> void:
 	var worlds := get_tree().get_nodes_in_group("world")
 	if worlds.is_empty():
 		return
-	var world = worlds[0]
+	var world: Variant = worlds[0]
 	if world.scenario_active or not is_instance_valid(world.queen):
 		return
 	BeeSurvival.die(world.queen, "debug")
@@ -642,12 +642,12 @@ func _on_end_run_pressed() -> void:
 ## BS-5: the Developer mode rows. With it off the row is empty -- the
 ## button is absent, not disabled -- and an open table closes.
 func _refresh_developer_row() -> void:
-	for dev_row in dev_only_rows:
+	for dev_row: Variant in dev_only_rows:
 		if is_instance_valid(dev_row):
 			dev_row.visible = Session.developer_mode
 	if triggers_box != null:
 		_rebuild_triggers()
-	for child in developer_row.get_children():
+	for child: Variant in developer_row.get_children():
 		developer_row.remove_child(child)
 		child.queue_free()
 	var button := _make_run_availability_button()
@@ -682,7 +682,7 @@ func _on_run_availability_pressed() -> void:
 		run_availability_panel = RunAvailabilityPanel.new()
 		add_child(run_availability_panel)
 		# It belongs to the settings window: closing that closes it too.
-		panel.visibility_changed.connect(func():
+		panel.visibility_changed.connect(func() -> void:
 			if not panel.visible:
 				run_availability_panel.hide())
 	run_availability_panel.open()
@@ -739,7 +739,7 @@ func _on_fire_test_warnings_pressed() -> void:
 	var worlds := get_tree().get_nodes_in_group("world")
 	if worlds.is_empty():
 		return
-	var hud = worlds[0].hud
+	var hud: Variant = worlds[0].hud
 	var bees := get_tree().get_nodes_in_group("bees")
 	if bees.is_empty():
 		return
@@ -772,10 +772,10 @@ func _on_force_c2_collapse_pressed() -> void:
 	var worlds := get_tree().get_nodes_in_group("world")
 	if worlds.is_empty():
 		return
-	var world = worlds[0]
+	var world: Variant = worlds[0]
 	if Session.starting_level != 2 or not world.challenge_runner.active:
 		return
-	var hive = world.hive
+	var hive: Variant = world.hive
 	var nectar: float = hive.total("nectar")
 	_c2_collapse_presses += 1
 	var target: float = Stages.C2_RESCUE_THRESHOLD - 1.0 if _c2_collapse_presses == 1 else Stages.C2_FAILURE_FLOOR - 1.0
@@ -824,7 +824,7 @@ func _on_load_pressed() -> void:
 	if not worlds.is_empty() and (menu_visible or not (Session.starting_level in [1, 2])):
 		# RR-2: main.gd builds the window before the menu returns early, so
 		# it exists at boot even though the hud and year_winter do not.
-		var saves_panel = worlds[0].saves_panel
+		var saves_panel: Variant = worlds[0].saves_panel
 		if saves_panel != null:
 			panel.visible = false
 			if not saves_panel.is_open():
@@ -935,21 +935,21 @@ func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) ->
 	# captures it, so mutating start_ms[0] is visible to all of them.
 	var start_ms := [0]
 
-	var schedule_next := func():
+	var schedule_next := func() -> void:
 		var held_seconds: float = (Time.get_ticks_msec() - start_ms[0]) / 1000.0
 		var t: float = clamp(held_seconds / REPEAT_ACCEL_SECONDS, 0.0, 1.0)
 		timer.start(lerp(REPEAT_INITIAL_DELAY, REPEAT_MIN_INTERVAL, t))
 
-	timer.timeout.connect(func():
+	timer.timeout.connect(func() -> void:
 		_adjust(entry, direction * entry.step)
 		schedule_next.call()
 	)
-	button.pressed.connect(func(): _adjust(entry, direction * entry.step))
-	button.button_down.connect(func():
+	button.pressed.connect(func() -> void: _adjust(entry, direction * entry.step))
+	button.button_down.connect(func() -> void:
 		start_ms[0] = Time.get_ticks_msec()
 		timer.start(REPEAT_INITIAL_DELAY)
 	)
-	button.button_up.connect(func(): timer.stop())
+	button.button_up.connect(func() -> void: timer.stop())
 
 ## An on/off setting rather than a number, shown as a checkbox. Takes
 ## effect immediately -- no Restart Run needed.
@@ -973,7 +973,7 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 	box.button_pressed = Settings.setting_get(entry.key)
 	var key: String = entry.key
 	toggle_boxes[key] = box
-	box.toggled.connect(func(pressed: bool):
+	box.toggled.connect(func(pressed: bool) -> void:
 		Settings.setting_set(key, pressed)
 		if key == "show_info_badges":
 			# applies to every badge already on screen, not just new ones
@@ -983,32 +983,32 @@ func _make_toggle_row(entry: Dictionary) -> Control:
 		elif key == "colour_blind_mode":
 			# every cell relabels itself on its next frame; the panels are
 			# told so they can redraw their keys straight away
-			for listener in get_tree().get_nodes_in_group("colour_blind_listeners"):
+			for listener: Variant in get_tree().get_nodes_in_group("colour_blind_listeners"):
 				if is_instance_valid(listener) and listener.has_method("colour_blind_changed"):
 					listener.colour_blind_changed()
 		elif key == "use_cell_sprites":
 			# cells otherwise only redraw themselves on their own staggered
 			# timer (see hive_cell.gd's display cadence note) -- force it so
 			# the swap is visible straight away rather than up to 1/6s late
-			for cell in get_tree().get_nodes_in_group("hive_cells"):
+			for cell: Variant in get_tree().get_nodes_in_group("hive_cells"):
 				if is_instance_valid(cell):
 					cell._refresh()
 		elif key == "gallerin_enabled":
 			# gallerin_panel.gd only reads this once, in its own _ready() --
 			# toggling it here has to reach the live node directly, same
 			# idea as the colour-blind broadcast above.
-			for gallerin_panel in get_tree().get_nodes_in_group("gallerin"):
+			for gallerin_panel: Variant in get_tree().get_nodes_in_group("gallerin"):
 				if is_instance_valid(gallerin_panel):
 					gallerin_panel.visible = pressed
 		elif key == "show_speed_8x":
 			# the button only exists once in the top-right bar per hud --
 			# same "huds" group dispatch set_settings_button_width uses.
-			for hud in get_tree().get_nodes_in_group("huds"):
+			for hud: Variant in get_tree().get_nodes_in_group("huds"):
 				if is_instance_valid(hud) and hud.has_method("refresh_speed_visibility"):
 					hud.refresh_speed_visibility()
 		elif key == "show_interface_labels":
 			# same "huds" group dispatch as show_speed_8x above.
-			for hud in get_tree().get_nodes_in_group("huds"):
+			for hud: Variant in get_tree().get_nodes_in_group("huds"):
 				if is_instance_valid(hud) and hud.has_method("_apply_interface_label_visibility"):
 					hud._apply_interface_label_visibility()
 		elif Prerequisites.is_gated(key):
@@ -1047,19 +1047,19 @@ func _make_options_row(entry: Dictionary) -> Control:
 	_style_button(prev)
 	prev.text = "‹"
 	prev.custom_minimum_size = Vector2(26, 24)
-	prev.pressed.connect(func(): _cycle_option(entry, -1))
+	prev.pressed.connect(func() -> void: _cycle_option(entry, -1))
 	controls.add_child(prev)
 
 	var next := Button.new()
 	_style_button(next)
 	next.text = "›"
 	next.custom_minimum_size = Vector2(26, 24)
-	next.pressed.connect(func(): _cycle_option(entry, 1))
+	next.pressed.connect(func() -> void: _cycle_option(entry, 1))
 	controls.add_child(next)
 
 	return row
 
-func _option_display(entry: Dictionary, value) -> String:
+func _option_display(entry: Dictionary, value: Variant) -> String:
 	var labels: Dictionary = entry.get("option_labels", {})
 	return labels.get(value, value)
 
@@ -1079,13 +1079,13 @@ func _cycle_option(entry: Dictionary, direction: int) -> void:
 ## `_cascade_prerequisites_on_static` -- ticks the checkbox for every
 ## key the cascade actually changed.
 func _cascade_prerequisites_on(key: String) -> void:
-	for changed in Settings._cascade_prerequisites_on_static(key):
+	for changed: Variant in Settings._cascade_prerequisites_on_static(key):
 		if toggle_boxes.has(changed):
 			toggle_boxes[changed].button_pressed = true
 	# An ancestor switched on above may have turned off its mutually
 	# exclusive sibling. Refresh every such pair from the authoritative
 	# setting so their checkboxes do not retain the old pressed state.
-	for mutually_exclusive in Prerequisites.MUTUALLY_EXCLUSIVE:
+	for mutually_exclusive: Variant in Prerequisites.MUTUALLY_EXCLUSIVE:
 		if toggle_boxes.has(mutually_exclusive):
 			toggle_boxes[mutually_exclusive].button_pressed = Settings.setting_get(mutually_exclusive)
 
@@ -1093,7 +1093,7 @@ func _cascade_prerequisites_on(key: String) -> void:
 ## `_cascade_dependents_off_static` -- unticks the checkbox for every
 ## key the cascade actually changed.
 func _cascade_dependents_off(key: String) -> void:
-	for changed in Settings._cascade_dependents_off_static(key):
+	for changed: Variant in Settings._cascade_dependents_off_static(key):
 		if toggle_boxes.has(changed):
 			toggle_boxes[changed].button_pressed = false
 
@@ -1101,7 +1101,7 @@ func _cascade_dependents_off(key: String) -> void:
 ## `_cascade_mutual_exclusion_static` -- unticks the checkbox for
 ## whatever it turned off.
 func _cascade_mutual_exclusion(key: String) -> void:
-	for changed in Settings._cascade_mutual_exclusion_static(key):
+	for changed: Variant in Settings._cascade_mutual_exclusion_static(key):
 		if toggle_boxes.has(changed):
 			toggle_boxes[changed].button_pressed = false
 
@@ -1135,7 +1135,7 @@ func _make_star_row(entry: Dictionary) -> Control:
 	star.text = "★" if star.button_pressed else "☆"
 	star.theme_type_variation = "Body"
 	star.tooltip_text = "Show this in the top-right corner."
-	star.toggled.connect(func(pressed: bool):
+	star.toggled.connect(func(pressed: bool) -> void:
 		if pressed and not Session.pinned_stats.has(key):
 			Session.pinned_stats.append(key)
 		elif not pressed:
@@ -1144,7 +1144,7 @@ func _make_star_row(entry: Dictionary) -> Control:
 		Session.save_preferences()
 		# The corner has to be told: no number changed, so nothing else
 		# would prompt it to redraw.
-		for hud in get_tree().get_nodes_in_group("huds"):
+		for hud: Variant in get_tree().get_nodes_in_group("huds"):
 			if is_instance_valid(hud) and hud.has_method("pinned_stats_changed"):
 				hud.pinned_stats_changed()
 	)
@@ -1168,7 +1168,7 @@ func _adjust(entry: Dictionary, delta: float) -> void:
 		# individually -- see UI_PLAN.md section 7.
 		ProjectSettings.set("gui/timers/tooltip_delay_sec", new_value)
 
-func _format_value(v) -> String:
+func _format_value(v: Variant) -> String:
 	if v is bool:
 		return "on" if v else "off"
 	if v == int(v):

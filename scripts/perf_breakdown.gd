@@ -30,12 +30,12 @@ func _process(_delta: float) -> void:
 		return
 	_last_version = Perf.history_version
 	var parts: Array = []
-	for key in Perf.top_sections(SHOWN):
+	for key: Variant in Perf.top_sections(SHOWN):
 		parts.append("%s %dms" % [key, roundi(float(Perf.averages[key]))])
 	var lines: Array = ["  ·  ".join(parts)]
 
 	var worst_parts: Array = []
-	for key in Perf.worst_sections(SHOWN):
+	for key: Variant in Perf.worst_sections(SHOWN):
 		worst_parts.append("%s %dms" % [key, roundi(float(Perf.last_worst_breakdown[key]))])
 	if not worst_parts.is_empty():
 		lines.append("worst frame (%dms): %s" % [roundi(Perf.last_worst_ms), "  ·  ".join(worst_parts)])

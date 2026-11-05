@@ -42,15 +42,15 @@ func _ready() -> void:
 	detail = _make_label(column, "Small")
 
 	lay_btn = _make_button(column, "Lay drones in the hive")
-	lay_btn.pressed.connect(func(): choose_flights(false))
+	lay_btn.pressed.connect(func() -> void: choose_flights(false))
 	flights_btn = _make_button(column, "Nuptial flights")
-	flights_btn.pressed.connect(func(): choose_flights(true))
+	flights_btn.pressed.connect(func() -> void: choose_flights(true))
 	connect_left_window_reflow()
 
 func _make_button(column: VBoxContainer, text: String) -> Button:
 	var button := Button.new()
 	button.text = text
-	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+	for state: String in ["normal", "hover", "pressed", "focus", "disabled"]:
 		button.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
 	column.add_child(button)
 	return button

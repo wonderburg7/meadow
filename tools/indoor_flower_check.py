@@ -15,13 +15,14 @@ same for focus changes.
 
 This tool checks that:
 1. `scripts/bee_foraging.gd` defines `_walk_out_if_indoors(bee)`.
-2. `_walk_out_if_indoors` checks `bee._is_inside_hive()` and routes the bee to
-   `autonomous_state(bee, State.IN_HIVE_TO_EXIT)`.
+2. `_walk_out_if_indoors` checks `not bee._is_inside_hive(): return false`,
+   routes an indoor bee via `bee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT)`,
+   and returns `true`.
 3. Flower perception / search entry functions (`seek_flower` and `search_for_flower`)
-   guard their entry with `if _walk_out_if_indoors(bee): return` as their very first
-   executable statement.
-4. `scripts/bee.gd`'s `set_focus()` checks `not _is_inside_hive()` before setting
-   `state = State.SEEK_FLOWER`, and routes indoor bees to `State.IN_HIVE_TO_EXIT`.
+   guard their entry with `if _walk_out_if_indoors(bee):` and immediately `return`.
+4. `scripts/bee.gd`'s `set_focus()` only ever assigns `State.SEEK_FLOWER` inside an
+   `if not _is_inside_hive():` block, with no subsequent or unguarded assignments
+   to `State.SEEK_FLOWER`, and routes indoor bees to `State.IN_HIVE_TO_EXIT`.
 
 Usage
 -----
@@ -112,11 +113,24 @@ def check_bee_foraging(text: str, filename: str = "scripts/bee_foraging.gd") -> 
         return problems
 
     walk_out_text = "\n".join(walk_out_body)
-    if "bee._is_inside_hive()" not in walk_out_text:
-        problems.append(f"{filename}:{start}: _walk_out_if_indoors must check bee._is_inside_hive()")
-    if "autonomous_state(bee, State.IN_HIVE_TO_EXIT)" not in walk_out_text:
+    stripped_walk_out = strip_code(walk_out_text)
+
+    # Check that when outdoors, it returns false
+    if not re.search(r"if\s+not\s+bee\._is_inside_hive\(\)\s*:\s*\n\s*return\s+false\b", stripped_walk_out):
+        problems.append(
+            f"{filename}:{start}: _walk_out_if_indoors must return false when not bee._is_inside_hive()"
+        )
+
+    # Check that when indoors, it sets State.IN_HIVE_TO_EXIT via autonomous_state
+    if not re.search(r"bee\.state\s*=\s*autonomous_state\(\s*bee\s*,\s*State\.IN_HIVE_TO_EXIT\s*\)", stripped_walk_out):
         problems.append(
             f"{filename}:{start}: _walk_out_if_indoors must set State.IN_HIVE_TO_EXIT via autonomous_state"
+        )
+
+    # Check that it returns true when walking out indoors
+    if not re.search(r"\n\s*return\s+true\b", stripped_walk_out):
+        problems.append(
+            f"{filename}:{start}: _walk_out_if_indoors must return true when bee is inside hive"
         )
 
     for guarded_func in ("seek_flower", "search_for_flower"):
@@ -125,19 +139,31 @@ def check_bee_foraging(text: str, filename: str = "scripts/bee_foraging.gd") -> 
             problems.append(f"{filename}: func {guarded_func} not found")
             continue
 
-        exec_statements = [
-            strip_code_line(line).strip()
-            for line in f_body
-            if strip_code_line(line).strip()
-        ]
+        exec_statements: list[tuple[str, int]] = []
+        for line in f_body:
+            st = strip_code_line(line).strip()
+            if st:
+                exec_statements.append((st, len(line) - len(line.lstrip())))
+
         if not exec_statements:
             problems.append(f"{filename}:{f_start}: func {guarded_func} has empty body")
             continue
 
-        first_stmt = exec_statements[0]
+        first_stmt, first_indent = exec_statements[0]
         if first_stmt != "if _walk_out_if_indoors(bee):":
             problems.append(
                 f"{filename}:{f_start}: {guarded_func} must start with 'if _walk_out_if_indoors(bee):', found: '{first_stmt}'"
+            )
+            continue
+
+        if len(exec_statements) < 2:
+            problems.append(f"{filename}:{f_start}: {guarded_func} missing body for 'if _walk_out_if_indoors(bee):'")
+            continue
+
+        second_stmt, second_indent = exec_statements[1]
+        if second_indent <= first_indent or second_stmt != "return":
+            problems.append(
+                f"{filename}:{f_start}: {guarded_func} must immediately 'return' when _walk_out_if_indoors(bee) is true, found: '{second_stmt}'"
             )
 
     return problems
@@ -153,20 +179,39 @@ def check_bee_focus(text: str, filename: str = "scripts/bee.gd") -> list[str]:
         problems.append(f"{filename}: func set_focus not found")
         return problems
 
-    body_text = "\n".join(body)
-    stripped_body = strip_code(body_text)
+    # Parse enclosing control flow line by line
+    seek_flower_assign_re = re.compile(r"^\s*state\s*=\s*(?:BeeEnums\.)?State\.SEEK_FLOWER\b")
+    enclosed_in_outdoor_check = False
+    outdoor_indent = -1
+    found_seek_flower_assignment = False
 
-    # In set_focus, setting State.SEEK_FLOWER must be guarded by not _is_inside_hive()
-    hive_check = re.search(
-        r"if\s+not\s+_is_inside_hive\(\)\s*:\s*\n\s*state\s*=\s*(?:BeeEnums\.)?State\.SEEK_FLOWER",
-        stripped_body,
-    )
-    if not hive_check:
+    for idx, raw_line in enumerate(body, start + 1):
+        stripped = strip_code_line(raw_line).strip()
+        if not stripped:
+            continue
+        indent = len(raw_line) - len(raw_line.lstrip())
+
+        if enclosed_in_outdoor_check and indent <= outdoor_indent:
+            enclosed_in_outdoor_check = False
+
+        if re.match(r"^if\s+not\s+_is_inside_hive\(\)\s*:", stripped):
+            enclosed_in_outdoor_check = True
+            outdoor_indent = indent
+
+        if seek_flower_assign_re.match(stripped):
+            found_seek_flower_assignment = True
+            if not enclosed_in_outdoor_check:
+                problems.append(
+                    f"{filename}:{idx}: assignment 'state = State.SEEK_FLOWER' is not enclosed in 'if not _is_inside_hive():'"
+                )
+
+    if not found_seek_flower_assignment:
         problems.append(
-            f"{filename}:{start}: set_focus() does not guard State.SEEK_FLOWER with 'if not _is_inside_hive():'"
+            f"{filename}:{start}: set_focus() contains no assignment to State.SEEK_FLOWER"
         )
 
-    # And indoor bees must be walked out to exit
+    # And indoor bees must be routed to State.IN_HIVE_TO_EXIT
+    stripped_body = strip_code("\n".join(body))
     exit_check = re.search(
         r"state\s*=\s*(?:BeeEnums\.)?State\.IN_HIVE_TO_EXIT",
         stripped_body,

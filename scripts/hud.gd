@@ -146,7 +146,7 @@ static func hatch_options() -> Array:
 		"label": "Default", "role": -1,
 		"options": [{"label": "Colony default", "focus": "nectar", "automine": false}],
 	}]
-	for role in Roles.ROLES:
+	for role: Variant in Roles.ROLES:
 		if role.id == Roles.QUEEN or role.id == Roles.IDLE:
 			continue   # a cell can't raise a queen, and "raises idle" is nonsense
 		var options: Array = []
@@ -156,7 +156,7 @@ static func hatch_options() -> Array:
 		if role.modes.is_empty() or role.id == Roles.HONEY:
 			options.append({"label": role.label, "focus": "nectar", "automine": false})
 		else:
-			for mode in role.modes:
+			for mode: Variant in role.modes:
 				options.append({
 					"label": "%s — %s" % [role.label, mode.label],
 					"mode": mode.key,
@@ -334,7 +334,7 @@ var allowed_mode_keys: Array = []
 ## The stage gate apply_gates was last handed, so _role_offered can ask
 ## Availability.role_query without reaching into main.gd. Null until then,
 ## which role_query reads as "no stage restriction".
-var _stage_gate = null
+var _stage_gate: Variant = null
 ## Restricts the cell popup's "Reserve for" row to just these designation
 ## keys ("nectar", "pollen", "honey", "jelly", "brood", "any" for
 ## Unreserve). Empty means no restriction. See set_allowed_designation_keys.
@@ -366,7 +366,7 @@ var trait_label: Label
 ## The header's ☆/★ toggle (HC-10) and the single bee it currently names,
 ## if any -- see _build_favourite_star and _set_favourite_star.
 var favourite_star_btn: Button
-var _favourite_star_bee = null
+var _favourite_star_bee: Variant = null
 ## The header's settings cog (HC-11) and the selection kind its popup is
 ## currently built for -- "bee", "multiple", or any other string, which
 ## SELECTION_FIELD_TABLE has no entry for and so hides the cog. See
@@ -600,7 +600,7 @@ func _ready() -> void:
 	main.add_child.call_deferred(pollination_pop)
 	if main.pollination != null:
 		main.pollination.points_earned.connect(pollination_pop.show_at)
-		main.pollination.points_earned.connect(func(_flower): _refresh_stores_text())
+		main.pollination.points_earned.connect(func(_flower: Variant) -> void: _refresh_stores_text())
 	# So the settings window can find the corner readout to refresh it when
 	# a star is toggled, without either script holding a reference to the
 	# other.
@@ -708,7 +708,7 @@ func _with_info(control: Control, tip: String) -> HBoxContainer:
 ## The five states a plain Godot Button actually looks up -- see
 ## colony_panel.gd's identical helper.
 func _style_button(button: BaseButton) -> BaseButton:
-	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+	for state: String in ["normal", "hover", "pressed", "focus", "disabled"]:
 		button.add_theme_stylebox_override(state, UiTheme.button_stylebox(state))
 	return button
 
@@ -766,7 +766,7 @@ func _build_speed_row(bar: VBoxContainer) -> void:
 	pause_button.theme_type_variation = "Small"
 	pause_button.focus_mode = Control.FOCUS_NONE
 	pause_button.toggle_mode = true
-	pause_button.pressed.connect(func(): speed_requested.emit(0.0))
+	pause_button.pressed.connect(func() -> void: speed_requested.emit(0.0))
 	row1.add_child(pause_button)
 
 	# The speed buttons sit in their own tight group with no gaps, which
@@ -776,7 +776,7 @@ func _build_speed_row(bar: VBoxContainer) -> void:
 	speed_group.add_theme_constant_override("separation", SPEED_GROUP_GAP)
 	row1.add_child(speed_group)
 
-	for entry in SPEEDS:
+	for entry: Variant in SPEEDS:
 		var dev_only: bool = entry.get("dev_only", false)
 		var btn := Button.new()
 		_style_button(btn)
@@ -792,7 +792,7 @@ func _build_speed_row(bar: VBoxContainer) -> void:
 		# next scene reload.
 		btn.visible = not dev_only or Session.show_speed_8x
 		var scale_value: float = entry.scale
-		btn.pressed.connect(func(): speed_requested.emit(scale_value))
+		btn.pressed.connect(func() -> void: speed_requested.emit(scale_value))
 		speed_group.add_child(btn)
 		speed_buttons.append({"button": btn, "scale": scale_value, "dev_only": dev_only})
 
@@ -810,31 +810,31 @@ func _build_window_buttons_row(bar: VBoxContainer) -> void:
 	# (Dave's 29 Aug ask -- "Opens Nursery Panel", not a paragraph); the
 	# full explanation stays on each button's own "i" info badge, unchanged.
 	colony_button = _icon_button("bee", "Colony", TOP_BAR_BUTTON_WIDTH, "Opens the Colony window.")
-	colony_button.pressed.connect(func(): colony_panel_requested.emit())
+	colony_button.pressed.connect(func() -> void: colony_panel_requested.emit())
 	colony_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(colony_button)
 	colony_info = _info("Open the colony overview: how many bees are on each job, what is in the comb, how the brood is doing, and how any of that has changed over time. Click a role in it to select every bee doing that job at once.")
 	row2.add_child(colony_info)
-	_register_gated_control("colony_button", func(): return colony_button)
-	_register_gated_control("colony_info", func(): return colony_info)
+	_register_gated_control("colony_button", func() -> Variant: return colony_button)
+	_register_gated_control("colony_info", func() -> Variant: return colony_info)
 
 	nursery_button = _icon_button("hex", "Nursery", TOP_BAR_BUTTON_WIDTH, "Opens the Nursery window.")
-	nursery_button.pressed.connect(func(): nursery_window_requested.emit())
+	nursery_button.pressed.connect(func() -> void: nursery_window_requested.emit())
 	nursery_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(nursery_button)
 	nursery_info = _info("Open the nursery window: which cells are set to raise which role, what the colony is made of now, and how many of each kind have emerged recently. While it is open the reserved cells glow on the comb.")
 	row2.add_child(nursery_info)
-	_register_gated_control("nursery_button", func(): return nursery_button)
-	_register_gated_control("nursery_info", func(): return nursery_info)
+	_register_gated_control("nursery_button", func() -> Variant: return nursery_button)
+	_register_gated_control("nursery_info", func() -> Variant: return nursery_info)
 
 	# Icon-plus-label, same shape as colony/nursery/view now (UI-N) -- at
 	# TOP_BAR_BUTTON_WIDTH there isn't room for "Foraging" as full text, so
 	# it gets the icon+tooltip treatment instead of truncating ad hoc.
 	foraging_button = _icon_button("flower", "Foraging", TOP_BAR_BUTTON_WIDTH, "Opens the Foraging window.")
-	foraging_button.pressed.connect(func(): foraging_panel_requested.emit())
+	foraging_button.pressed.connect(func() -> void: foraging_panel_requested.emit())
 	foraging_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(foraging_button)
-	_register_gated_control("foraging_button", func(): return foraging_button)
+	_register_gated_control("foraging_button", func() -> Variant: return foraging_button)
 	row2.add_child(_info("Open the foraging window: trip timing (search+flight versus handling), flowers visited per trip, empty-return rate, and the same breakdown split by species, plus recruitment/scouting counts. Only fills in once Auto scouting or Auto-recruitment is on -- that is what scores a trip today."))
 
 	# Only appears once a winter has been scheduled -- until then there is
@@ -842,7 +842,7 @@ func _build_window_buttons_row(bar: VBoxContainer) -> void:
 	# no button. Same icon+label treatment as the rest of the row (UI-N).
 	winter_button = _icon_button("snow", "Winter", TOP_BAR_BUTTON_WIDTH, "Opens the Winter forecast.")
 	winter_button.visible = Session.winter_coming
-	winter_button.pressed.connect(func(): winter_window_requested.emit())
+	winter_button.pressed.connect(func() -> void: winter_window_requested.emit())
 	winter_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(winter_button)
 
@@ -850,10 +850,10 @@ func _build_window_buttons_row(bar: VBoxContainer) -> void:
 	# Challenge by its UI_GATES row (AP-7), as 8.5 asks.
 	skills_button = _icon_button("arrow_up", "Skills", TOP_BAR_BUTTON_WIDTH, "Opens the skill tree.")
 	# SK-1: a full-screen view, not a left window, so it leaves those alone.
-	skills_button.pressed.connect(func(): skill_tree_panel.toggle())
+	skills_button.pressed.connect(func() -> void: skill_tree_panel.toggle())
 	skills_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(skills_button)
-	_register_gated_control("skills_button", func(): return skills_button)
+	_register_gated_control("skills_button", func() -> Variant: return skills_button)
 
 	# GP-5: the Goals drop-down's toggle, beside Skills. Text-only: no
 	# UiIcon shape draws "Goals", and an icon-only button would show
@@ -875,13 +875,13 @@ func _build_window_buttons_row(bar: VBoxContainer) -> void:
 	view_button = _icon_button("hive", "Hive", TOP_BAR_BUTTON_WIDTH, "Switch to the Hive view.")
 	view_icon = view_button.get_child(0).get_child(0)
 	view_button_label = view_button.get_child(0).get_child(1)
-	view_button.pressed.connect(func(): view_toggle_requested.emit())
+	view_button.pressed.connect(func() -> void: view_toggle_requested.emit())
 	view_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(view_button)
 	view_info = _info("Switch between the meadow (flowers and foragers) and the hive interior (comb, queen, brood) -- or press Tab. Both keep simulating whichever one you are looking at.")
 	row2.add_child(view_info)
-	_register_gated_control("view_button", func(): return view_button)
-	_register_gated_control("view_info", func(): return view_info)
+	_register_gated_control("view_button", func() -> Variant: return view_button)
+	_register_gated_control("view_info", func() -> Variant: return view_info)
 
 ## A small icon-plus-label button for the top-right bar's window/view
 ## row. The icon is a procedural UiIcon (UI_PLAN.md section 8's
@@ -927,7 +927,7 @@ func _icon_button(shape: String, label: String, min_width: float, tip: String) -
 ## the button to icon-only width when hidden. Called once after the row is
 ## built and again whenever the setting changes.
 func _apply_interface_label_visibility() -> void:
-	for entry in _labeled_buttons:
+	for entry: Variant in _labeled_buttons:
 		entry.label.visible = Session.show_interface_labels
 		var width: float = entry.full_width if Session.show_interface_labels else entry.icon_width
 		entry.button.custom_minimum_size.x = width
@@ -944,7 +944,7 @@ func set_settings_button_width(width: float) -> void:
 
 func set_speed_display(speed_scale: float) -> void:
 	pause_button.button_pressed = is_equal_approx(speed_scale, 0.0)
-	for entry in speed_buttons:
+	for entry: Variant in speed_buttons:
 		entry.button.button_pressed = is_equal_approx(entry.scale, speed_scale)
 
 # --- Challenge goal readout ---------------------------------------
@@ -1133,11 +1133,11 @@ func _build_soil_summary_row(column: VBoxContainer) -> void:
 	# _apply_selection_tray_width has given it (Dave, 8 Sep 2026, C-18).
 	soil_mark_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	soil_mark_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	soil_mark_btn.pressed.connect(func(): soil_mark_requested.emit(true))
+	soil_mark_btn.pressed.connect(func() -> void: soil_mark_requested.emit(true))
 	soil_mark_wrapper = _with_info(soil_mark_btn, "Flag every selected block for miners to dig out. Blocks buried behind other soil can be marked too -- miners simply cannot reach them until the ones in front are gone, so a marked seam digs itself inward layer by layer.")
 	soil_mark_wrapper.name = "soil_mark_wrapper"
 	soil_summary_row.add_child(soil_mark_wrapper)
-	_register_gated_control("soil_mark_btn", func(): return soil_mark_btn)
+	_register_gated_control("soil_mark_btn", func() -> Variant: return soil_mark_btn)
 
 	soil_clear_btn = Button.new()
 	soil_clear_btn.name = "soil_clear_btn"
@@ -1145,11 +1145,11 @@ func _build_soil_summary_row(column: VBoxContainer) -> void:
 	soil_clear_btn.text = "Clear marks"
 	soil_clear_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	soil_clear_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	soil_clear_btn.pressed.connect(func(): soil_mark_requested.emit(false))
+	soil_clear_btn.pressed.connect(func() -> void: soil_mark_requested.emit(false))
 	soil_clear_wrapper = _with_info(soil_clear_btn, "Take the digging flag off the selected blocks. Any digging already done is kept, so you can put the mark back later without losing the work.")
 	soil_clear_wrapper.name = "soil_clear_wrapper"
 	soil_summary_row.add_child(soil_clear_wrapper)
-	_register_gated_control("soil_clear_btn", func(): return soil_clear_btn)
+	_register_gated_control("soil_clear_btn", func() -> Variant: return soil_clear_btn)
 
 ## The kept-clear tile summary's button.
 func _build_keep_clear_row(column: VBoxContainer) -> void:
@@ -1165,7 +1165,7 @@ func _build_keep_clear_row(column: VBoxContainer) -> void:
 	keep_clear_btn.text = "Clear the mark"
 	keep_clear_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	keep_clear_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	keep_clear_btn.pressed.connect(func(): keep_clear_clear_requested.emit())
+	keep_clear_btn.pressed.connect(func() -> void: keep_clear_clear_requested.emit())
 	keep_clear_summary_row.add_child(keep_clear_btn)
 
 ## The star and the cog sit side by side in the summary panel's header, so
@@ -1200,7 +1200,7 @@ func _build_favourite_star() -> Control:
 	favourite_star_btn.tooltip_text = "Pin this bee by name so you can find it again in the colony window's Favourites list, in a colony of hundreds."
 	favourite_star_btn.focus_mode = Control.FOCUS_NONE
 	favourite_star_btn.visible = false
-	favourite_star_btn.pressed.connect(func():
+	favourite_star_btn.pressed.connect(func() -> void:
 		if _favourite_star_bee != null and is_instance_valid(_favourite_star_bee):
 			favourite_requested.emit(not _favourite_star_bee.is_favourite)
 	)
@@ -1212,7 +1212,7 @@ func _build_favourite_star() -> Control:
 ## change and on the same periodic refresh that keeps the identity label
 ## current, so a bee dying while selected clears the star the same way it
 ## clears the name (see _refresh_selection_text).
-func _set_favourite_star(bee) -> void:
+func _set_favourite_star(bee: Variant) -> void:
 	_favourite_star_bee = bee
 	favourite_star_btn.visible = bee != null
 	if bee != null:
@@ -1274,7 +1274,7 @@ func _build_selection_cog() -> Control:
 	var popup := selection_cog_btn.get_popup()
 	_theme_popup_on_open(popup)
 	popup.hide_on_checkable_item_selection = false
-	popup.id_pressed.connect(func(id: int): _on_selection_field_toggled(id, popup))
+	popup.id_pressed.connect(func(id: int) -> void: _on_selection_field_toggled(id, popup))
 	return selection_cog_btn
 
 ## HO-11: a MenuButton's popup is its own window and takes none of the HUD
@@ -1282,7 +1282,7 @@ func _build_selection_cog() -> Control:
 ## shared theme's font, size and colours as it opens, so it follows a change
 ## to text scale, typeface or contrast without a refresh hook.
 func _theme_popup_on_open(popup: PopupMenu) -> void:
-	popup.about_to_popup.connect(func():
+	popup.about_to_popup.connect(func() -> void:
 		var theme := UiTheme.active_theme()
 		if theme.has_font("font", "Button"):
 			popup.add_theme_font_override("font", theme.get_font("font", "Button"))
@@ -1307,7 +1307,7 @@ func _set_summary_cog_kind(kind: String) -> void:
 	selection_cog_btn.visible = not fields.is_empty()
 	var popup := selection_cog_btn.get_popup()
 	popup.clear()
-	for i in fields.size():
+	for i: int in fields.size():
 		var field: Dictionary = fields[i]
 		popup.add_check_item(field["label"], i)
 		popup.set_item_checked(i, Session.get(field["key"]))
@@ -1336,9 +1336,9 @@ func _on_selection_field_toggled(id: int, popup: PopupMenu) -> void:
 func _apply_selection_field_visibility() -> void:
 	var fields: Array = SELECTION_FIELD_TABLE.get(_summary_cog_kind, [])
 	var toggled_on := {}
-	for field in fields:
+	for field: Variant in fields:
 		toggled_on[field["control"]] = bool(Session.get(field["key"]))
-	for field_name in ["identity", "energy", "activity", "trait"]:
+	for field_name: String in ["identity", "energy", "activity", "trait"]:
 		var label := _field_control(field_name) as Label
 		if label == null:
 			continue
@@ -1461,7 +1461,7 @@ func _build_command_tray() -> void:
 	more_button.focus_mode = Control.FOCUS_NONE
 	more_button.toggle_mode = true
 	more_button.visible = false
-	more_button.pressed.connect(func():
+	more_button.pressed.connect(func() -> void:
 		more_panel_open = more_button.button_pressed
 		more_panel.visible = more_panel_open
 		call_deferred("_resize_command_tray")
@@ -1540,7 +1540,7 @@ func _add_designation_button(row: Container, entry: Dictionary) -> void:
 	btn.text = entry.label
 	btn.focus_mode = Control.FOCUS_NONE
 	var type: String = entry.type
-	btn.pressed.connect(func(): _request_designation(type))
+	btn.pressed.connect(func() -> void: _request_designation(type))
 	live_buttons["designation_" + entry.key] = btn
 	row.add_child(_with_info(btn, entry.tip))
 
@@ -1571,7 +1571,7 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	var row := HFlowContainer.new()
 	_build_cell_action_column(cell_primary_columns, "Reserve for").add_child(row)
 
-	for entry in DESIGNATION_BUTTONS:
+	for entry: Variant in DESIGNATION_BUTTONS:
 		_add_designation_button(row, entry)
 
 	_build_priority_controls(_build_cell_action_column(cell_primary_columns, "Priority"))
@@ -1583,7 +1583,7 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	cell_more_button.theme_type_variation = "Small"
 	cell_more_button.focus_mode = Control.FOCUS_NONE
 	cell_more_button.toggle_mode = true
-	cell_more_button.pressed.connect(func():
+	cell_more_button.pressed.connect(func() -> void:
 		cell_more_open = cell_more_button.button_pressed
 		cell_more_panel.visible = cell_more_open
 		call_deferred("_resize_command_tray")
@@ -1638,14 +1638,14 @@ func _build_priority_controls(column: VBoxContainer) -> void:
 	tier_title.theme_type_variation = "Small"
 	tier_row.add_child(tier_title)
 
-	for tier in range(3):
+	for tier: int in range(3):
 		var btn := Button.new()
 		_style_button(btn)
 		btn.text = ["Low", "Medium", "High"][tier]
 		btn.theme_type_variation = "Small"
 		btn.focus_mode = Control.FOCUS_NONE
 		var tier_value: int = tier
-		btn.pressed.connect(func(): _request_priority(tier_value))
+		btn.pressed.connect(func() -> void: _request_priority(tier_value))
 		tier_row.add_child(btn)
 		# tracked so _refresh_cell_popup can light up whichever is in
 		# force on the cell being shown
@@ -1659,7 +1659,7 @@ func _build_priority_controls(column: VBoxContainer) -> void:
 	_style_button(open_btn)
 	open_btn.text = "Open nursery window"
 	open_btn.theme_type_variation = "Small"
-	open_btn.pressed.connect(func(): nursery_window_requested.emit())
+	open_btn.pressed.connect(func() -> void: nursery_window_requested.emit())
 	open_row.add_child(_with_info(open_btn, "Open the nursery window: how many cells are assigned to each role and tier, what the colony is made of right now, and how many bees of each kind have emerged in the last three minutes. While it is open every reserved cell glows in the colour of the role it raises."))
 
 ## What a bee raised in this cell becomes: the role, its lock, and whether
@@ -1685,7 +1685,7 @@ func _build_raises_hatch_row(column: VBoxContainer) -> void:
 	hatch_row.add_child(_info("Set what a bee raised in this cell becomes when it emerges. Roles that have a sub-mode -- a forager's resource, whether a miner starts automining -- offer it here, so the new bee arrives already set up."))
 
 	hatch_option_controls.clear()
-	for entry in hatch_options():
+	for entry: Variant in hatch_options():
 		if not allowed_role_keys.is_empty() and (entry.role == -1 or not allowed_role_keys.has(Roles.key_for(entry.role))):
 			continue
 		var options: Array = entry.options
@@ -1697,7 +1697,7 @@ func _build_raises_hatch_row(column: VBoxContainer) -> void:
 			btn.theme_type_variation = "Small"
 			var role_value: int = entry.role
 			var only: Dictionary = options[0]
-			btn.pressed.connect(func(): _request_hatch_role(role_value, only.focus, only.automine))
+			btn.pressed.connect(func() -> void: _request_hatch_role(role_value, only.focus, only.automine))
 			hatch_row.add_child(btn)
 			control = btn
 		else:
@@ -1717,12 +1717,12 @@ func _build_raises_lock_row(column: VBoxContainer) -> void:
 	# Whether that role sticks for every future bee, or applies once.
 	lock_row = HBoxContainer.new()
 	column.add_child(lock_row)
-	_register_gated_control("lock_row", func(): return lock_row)
+	_register_gated_control("lock_row", func() -> Variant: return lock_row)
 	hatch_lock_box = CheckBox.new()
 	_style_button(hatch_lock_box)
 	hatch_lock_box.text = "Keep for every bee"
 	hatch_lock_box.theme_type_variation = "Small"
-	hatch_lock_box.toggled.connect(func(pressed: bool):
+	hatch_lock_box.toggled.connect(func(pressed: bool) -> void:
 		if active_cell and is_instance_valid(active_cell):
 			cell_hatch_lock_requested.emit(active_cell, pressed)
 			_refresh_cell_popup()
@@ -1738,7 +1738,7 @@ func _build_raises_gyne_row(column: VBoxContainer) -> void:
 	_style_button(gyne_box)
 	gyne_box.text = "Raise a gyne (a future queen)"
 	gyne_box.theme_type_variation = "Small"
-	gyne_box.toggled.connect(func(pressed: bool):
+	gyne_box.toggled.connect(func(pressed: bool) -> void:
 		if active_cell and is_instance_valid(active_cell):
 			cell_gyne_requested.emit(active_cell, pressed)
 			_refresh_cell_popup()
@@ -1754,7 +1754,7 @@ func _build_raises_drone_row(column: VBoxContainer) -> void:
 	_style_button(drone_box)
 	drone_box.text = "Raise a drone (a male)"
 	drone_box.theme_type_variation = "Small"
-	drone_box.toggled.connect(func(pressed: bool):
+	drone_box.toggled.connect(func(pressed: bool) -> void:
 		if active_cell and is_instance_valid(active_cell):
 			cell_drone_requested.emit(active_cell, pressed)
 			_refresh_cell_popup()
@@ -1771,7 +1771,7 @@ func _build_raises_feed_first_row(column: VBoxContainer) -> void:
 	_style_button(feed_first_box)
 	feed_first_box.text = "Feed first"
 	feed_first_box.theme_type_variation = "Small"
-	feed_first_box.toggled.connect(func(pressed: bool):
+	feed_first_box.toggled.connect(func(pressed: bool) -> void:
 		if active_cell and is_instance_valid(active_cell):
 			cell_feed_first_requested.emit(active_cell, pressed)
 			_refresh_cell_popup()
@@ -1795,7 +1795,7 @@ func _build_closing_controls(column: VBoxContainer) -> void:
 	close_btn.text = "Sealed"
 	close_btn.theme_type_variation = "Small"
 	close_btn.focus_mode = Control.FOCUS_NONE
-	close_btn.pressed.connect(func(): _request_close(true))
+	close_btn.pressed.connect(func() -> void: _request_close(true))
 	row.add_child(_with_info(close_btn, "Seal the selected cells. Nothing can be added and nothing taken out until you open them again -- the contents are held in reserve. A sealed cell is drawn with a dark bar across it."))
 	live_buttons["closed"] = close_btn
 
@@ -1804,7 +1804,7 @@ func _build_closing_controls(column: VBoxContainer) -> void:
 	open_btn.text = "Open"
 	open_btn.theme_type_variation = "Small"
 	open_btn.focus_mode = Control.FOCUS_NONE
-	open_btn.pressed.connect(func(): _request_close(false))
+	open_btn.pressed.connect(func() -> void: _request_close(false))
 	row.add_child(_with_info(open_btn, "Unseal the selected cells so the colony can use what is in them again."))
 	live_buttons["open"] = open_btn
 
@@ -1813,7 +1813,7 @@ func _build_closing_controls(column: VBoxContainer) -> void:
 	fill_btn.text = "Fill then seal"
 	fill_btn.theme_type_variation = "Small"
 	fill_btn.focus_mode = Control.FOCUS_NONE
-	fill_btn.pressed.connect(func(): _request_fill_close())
+	fill_btn.pressed.connect(func() -> void: _request_fill_close())
 	row.add_child(_with_info(fill_btn, "Keep taking deposits but refuse every withdrawal, and seal the cell the moment it is full. Without this a honey cell is sipped from as fast as it is filled and never quite gets to the top, so there is never a full pot to put by. A cell in this state is drawn with a yellow bar."))
 	live_buttons["fill_close"] = fill_btn
 
@@ -1834,14 +1834,14 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 	_style_button(move_btn)
 	move_btn.text = "To another cell"
 	move_btn.theme_type_variation = "Small"
-	move_btn.pressed.connect(func(): _request_empty("move"))
+	move_btn.pressed.connect(func() -> void: _request_empty("move"))
 	empty_row.add_child(_with_info(move_btn, "A builder comes and carries the contents to another cell with room for them. Fermented nectar is always thrown out instead. If nothing anywhere has room, the load is lost -- so keep an eye on how full the comb is."))
 
 	var discard_btn := Button.new()
 	_style_button(discard_btn)
 	discard_btn.text = "Discard outside"
 	discard_btn.theme_type_variation = "Small"
-	discard_btn.pressed.connect(func(): _request_empty("discard"))
+	discard_btn.pressed.connect(func() -> void: _request_empty("discard"))
 	empty_row.add_child(_with_info(discard_btn, "Throw the contents out of the hive. Quicker than moving them, but everything in the cell is gone."))
 
 	# NF-5: only offered while the popup's cell holds fermented nectar.
@@ -1849,7 +1849,7 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 	_style_button(clear_fermented_btn)
 	clear_fermented_btn.text = "Discard all sour nectar"
 	clear_fermented_btn.theme_type_variation = "Small"
-	clear_fermented_btn.pressed.connect(func():
+	clear_fermented_btn.pressed.connect(func() -> void:
 		clear_fermented_requested.emit()
 		_refresh_cell_popup()
 	)
@@ -1863,7 +1863,7 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 	_style_button(empty_by_bee_btn)
 	empty_by_bee_btn.text = "Empty this cell"
 	empty_by_bee_btn.theme_type_variation = "Small"
-	empty_by_bee_btn.pressed.connect(func():
+	empty_by_bee_btn.pressed.connect(func() -> void:
 		if active_cell and is_instance_valid(active_cell):
 			cell_empty_by_bee_requested.emit(active_cell)
 			_refresh_cell_popup()
@@ -1881,7 +1881,7 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 	_style_button(keep_empty_box)
 	keep_empty_box.text = "Leave empty"
 	keep_empty_box.theme_type_variation = "Small"
-	keep_empty_box.toggled.connect(func(pressed: bool):
+	keep_empty_box.toggled.connect(func(pressed: bool) -> void:
 		if active_cell and is_instance_valid(active_cell):
 			cell_keep_empty_requested.emit(active_cell, pressed)
 			_refresh_cell_popup()
@@ -1906,7 +1906,7 @@ func _make_hatch_menu(entry: Dictionary) -> Control:
 	var popup := menu.get_popup()
 	_theme_popup_on_open(popup)
 	_fill_hatch_menu(popup, role_value, options)
-	popup.id_pressed.connect(func(id: int):
+	popup.id_pressed.connect(func(id: int) -> void:
 		_request_hatch_role(role_value, options[id].focus, options[id].automine)
 	)
 	return menu
@@ -1926,7 +1926,7 @@ func _make_hatch_menu(entry: Dictionary) -> Control:
 ## that 2.2 asks for (19 Sep 2026). Returns how many items it offers.
 func _fill_hatch_menu(popup: PopupMenu, role_value: int, options: Array) -> int:
 	popup.clear()
-	for i in range(options.size()):
+	for i: int in range(options.size()):
 		var mode: String = options[i].get("mode", "")
 		var gate_key: String = Availability.mode_gate_key(role_value, mode)
 		if mode != "" and not allowed_mode_keys.is_empty() and not allowed_mode_keys.has(gate_key):
@@ -2023,7 +2023,7 @@ func set_warnings_muted(value: bool) -> void:
 ## shown_bees/command_tray alone -- a bee can stay selected (and its
 ## command tray stay up) while this panel shows something else the
 ## player clicked to look at. See input_selection.gd's call sites.
-func show_object_summary(kind: String, data) -> void:
+func show_object_summary(kind: String, data: Variant) -> void:
 	active_summary_kind = kind
 	active_flower = data if kind == "flower" else null
 	soil_summary_row.visible = kind == "soil"
@@ -2163,7 +2163,7 @@ func show_cell_popup(cell: Node2D, count: int = 1) -> void:
 	call_deferred("_resize_command_tray")
 	bottom_row_changed.emit()
 
-func _cell_content_lines(cell, count: int) -> Array:
+func _cell_content_lines(cell: Variant, count: int) -> Array:
 	var content_lines := []
 	if count > 1:
 		content_lines.append("Bulk selection")
@@ -2218,7 +2218,7 @@ func _cell_content_lines(cell, count: int) -> Array:
 				content_lines.append("Empty")
 	return content_lines
 
-func _cell_state_lines(cell) -> Array:
+func _cell_state_lines(cell: Variant) -> Array:
 	var state_lines := []
 	var reserved := "any resource"
 	if cell.keep_empty:
@@ -2240,9 +2240,9 @@ func _cell_state_lines(cell) -> Array:
 		state_lines.append("Waiting for a comb worker to empty it")
 	return state_lines
 
-func _cell_hatch_text(cell) -> String:
+func _cell_hatch_text(cell: Variant) -> String:
 	var hatch_name := "colony default"
-	for entry in hatch_options():
+	for entry: Variant in hatch_options():
 		if entry.role == cell.hatch_role:
 			hatch_name = entry.label
 			if entry.role == 0:
@@ -2299,13 +2299,13 @@ func _refresh_cell_popup() -> void:
 ## empty means unrestricted -- outside a Challenge every control here
 ## stays visible, same convention as the bee-selection panel's role row.
 func _apply_cell_popup_gating() -> void:
-	for suffix in ["nectar", "pollen", "honey", "jelly", "bee_bread", "brood", "any"]:
+	for suffix: String in ["nectar", "pollen", "honey", "jelly", "bee_bread", "brood", "any"]:
 		var btn: Button = live_buttons.get("designation_%s" % suffix)
 		if btn != null:
 			var staged: bool = allowed_designation_keys.is_empty() or allowed_designation_keys.has(suffix)
 			btn.visible = staged and Availability.designation_owned(suffix, Session.progression)
 	var any_raise_option := false
-	for entry in hatch_option_controls:
+	for entry: Variant in hatch_option_controls:
 		var role: int = entry.role
 		entry.control.visible = (role == -1 and allowed_role_keys.is_empty()) or (role != -1 and _role_offered(role))
 		if entry.control is MenuButton:
@@ -2338,7 +2338,7 @@ func _light_current_options() -> void:
 	_set_lit("designation_brood", designation == "brood")
 	_set_lit("designation_any", designation == "" and not active_cell.keep_empty)
 
-	for tier in range(3):
+	for tier: int in range(3):
 		_set_lit("priority_%d" % tier, active_cell.is_nursery_cell() and active_cell.nursery_priority == tier)
 
 	_set_lit("closed", active_cell.is_closed)
@@ -2448,8 +2448,8 @@ func _slide_arrow_along_edge(edge_point: Vector2, edge_bounds: Rect2) -> Vector2
 	var horizontal_edge := is_equal_approx(edge_point.y, edge_bounds.position.y) \
 		or is_equal_approx(edge_point.y, edge_bounds.end.y)
 	var limit: float = edge_bounds.size.x if horizontal_edge else edge_bounds.size.y
-	for step in range(int(MARKER_ARROW_SCAN_STEP), int(limit + MARKER_ARROW_SCAN_STEP), int(MARKER_ARROW_SCAN_STEP)):
-		for direction in [-1.0, 1.0]:
+	for step: int in range(int(MARKER_ARROW_SCAN_STEP), int(limit + MARKER_ARROW_SCAN_STEP), int(MARKER_ARROW_SCAN_STEP)):
+		for direction: float in [-1.0, 1.0]:
 			var candidate := edge_point
 			if horizontal_edge:
 				candidate.x = clampf(edge_point.x + step * direction, edge_bounds.position.x, edge_bounds.end.x)
@@ -2460,7 +2460,7 @@ func _slide_arrow_along_edge(edge_point: Vector2, edge_bounds: Rect2) -> Vector2
 	return edge_point # At the minimum supported viewport no clear edge exists.
 
 func _marker_arrow_obscured(point: Vector2) -> bool:
-	for panel_rect in _marker_exclusion_rects:
+	for panel_rect: Variant in _marker_exclusion_rects:
 		if panel_rect.has_point(point):
 			return true
 	return false
@@ -2678,9 +2678,9 @@ func update_fps(average: int, frame_ms: float, worst_ms: float, game_speed: floa
 ## `lines` is an array of [text, severity, action, category, id] from main.gd.
 func update_signals(lines: Array) -> void:
 	shown_signals = lines
-	var reported: Array = lines.map(func(e): return str(e[4]))
-	removed_signal_ids = removed_signal_ids.filter(func(id): return reported.has(id))
-	corner_texts["signals"] = "\n".join(lines.map(func(e): return "• %s" % e[0]))
+	var reported: Array = lines.map(func(e: Variant) -> Variant: return str(e[4]))
+	removed_signal_ids = removed_signal_ids.filter(func(id: Variant) -> Variant: return reported.has(id))
+	corner_texts["signals"] = "\n".join(lines.map(func(e: Variant) -> Variant: return "• %s" % e[0]))
 	_refresh_corner()
 
 ## True in a Colony Run, where red lines stay on screen with the strip unstarred.
@@ -2694,7 +2694,7 @@ func strip_lines() -> Array:
 	if not starred and not _red_always_shows():
 		return []
 	var out: Array = []
-	for entry in shown_signals:
+	for entry: Variant in shown_signals:
 		var severity := int(entry[1])
 		if severity <= 0 or removed_signal_ids.has(str(entry[4])):
 			continue
@@ -2710,15 +2710,15 @@ func _remove_signal(id: String) -> void:
 
 func _corner_signature(strip: Array) -> String:
 	var signature := "scale=%s typeface=%s\n" % [Session.text_scale, Session.ui_typeface]
-	for key in CORNER_ORDER:
+	for key: Variant in CORNER_ORDER:
 		if Session.pinned_stats.has(key):
 			signature += "%s=%s\n" % [key, corner_texts.get(key, "")]
-	for entry in strip:
+	for entry: Variant in strip:
 		signature += "s%d|%s|%s\n" % [entry[1], entry[0], entry[2]]
 	return signature
 
 func _rebuild_corner_labels() -> void:
-	for key in CORNER_ORDER:
+	for key: Variant in CORNER_ORDER:
 		if not Session.pinned_stats.has(key):
 			continue
 		var text: String = str(corner_texts.get(key, ""))
@@ -2753,7 +2753,7 @@ func _add_signal_row(entry: Array) -> void:
 	var action: String = str(entry[2])
 	if action != "":
 		line.tooltip_text = "Click to select what this is about."
-		line.pressed.connect(func(): signal_clicked.emit(action))
+		line.pressed.connect(func() -> void: signal_clicked.emit(action))
 	row.add_child(line)
 	var remove := Button.new()
 	_style_button(remove)
@@ -2765,13 +2765,13 @@ func _add_signal_row(entry: Array) -> void:
 	remove.tooltip_text = "Remove this warning until the problem clears and comes back."
 	remove.add_theme_color_override("font_color", _signal_color(int(entry[1])))
 	var id: String = str(entry[4])
-	remove.pressed.connect(func(): _remove_signal(id))
+	remove.pressed.connect(func() -> void: _remove_signal(id))
 	row.add_child(remove)
 	corner_column.add_child(row)
 	_fit_corner_line(line)
 
 func _rebuild_corner_signals(strip: Array) -> void:
-	for entry in strip.slice(0, SIGNAL_LINE_CAP):
+	for entry: Variant in strip.slice(0, SIGNAL_LINE_CAP):
 		_add_signal_row(entry)
 	if strip.size() > SIGNAL_LINE_CAP:
 		var more := Label.new()
@@ -2798,7 +2798,7 @@ func _refresh_corner() -> void:
 	corner_signature = signature
 
 	Perf.begin("corner_rebuild_free")
-	for child in corner_column.get_children():
+	for child: Variant in corner_column.get_children():
 		# perf_plot and perf_breakdown are persistent -- see their
 		# declaration -- so their own redraw timing survives a rebuild
 		# triggered by something unrelated, like the day counter.
@@ -2840,7 +2840,7 @@ func _corner_line_width() -> float:
 
 ## Re-wraps the strip's lines after a viewport resize. Not per frame.
 func _apply_corner_line_width() -> void:
-	for child in corner_column.get_children():
+	for child: Variant in corner_column.get_children():
 		if child is Button:
 			_fit_corner_line(child)
 
@@ -2884,7 +2884,7 @@ func pinned_stats_changed() -> void:
 ## than only on the next scene reload -- same "huds" group dispatch
 ## set_settings_button_width already uses.
 func refresh_speed_visibility() -> void:
-	for entry in speed_buttons:
+	for entry: Variant in speed_buttons:
 		if entry.dev_only:
 			entry.button.visible = Session.show_speed_8x
 
@@ -2929,27 +2929,27 @@ func update_selection(bees: Array) -> void:
 	call_deferred("_resize_command_tray")
 
 func _selection_has_command_lock(bees: Array) -> bool:
-	command_locked_bees = command_locked_bees.filter(func(b): return is_instance_valid(b))
-	for bee in bees:
+	command_locked_bees = command_locked_bees.filter(func(b: Variant) -> Variant: return is_instance_valid(b))
+	for bee: Variant in bees:
 		if command_locked_bees.has(bee):
 			return true
 	return false
 
 # --- bee command rows ---------------------------------------------
 
-var _command_rows = preload("res://scripts/hud_command_rows.gd").new(self)
+var _command_rows: Variant = preload("res://scripts/hud_command_rows.gd").new(self)
 
 func _rebuild_role_controls(bees: Array) -> void:
 	_command_rows._rebuild_role_controls(bees)
 
-func _gyne_not_ready_reason(gyne) -> String:
+func _gyne_not_ready_reason(gyne: Variant) -> String:
 	return _command_rows._gyne_not_ready_reason(gyne)
 
-func _refresh_gyne_send_button(gyne) -> void:
+func _refresh_gyne_send_button(gyne: Variant) -> void:
 	_command_rows._refresh_gyne_send_button(gyne)
 
 ## scenario_actions.gd reads this through main.hud, so it stays a hud method.
-func _mode_is_active(role_id: int, bee, mode_key: String) -> bool:
+func _mode_is_active(role_id: int, bee: Variant, mode_key: String) -> bool:
 	return _command_rows._mode_is_active(role_id, bee, mode_key)
 
 # --- selection readout and tray sizing -----------------------------
@@ -2957,7 +2957,7 @@ func _mode_is_active(role_id: int, bee, mode_key: String) -> bool:
 ## Identity block: name (starred if a favourite), role, age. Name first --
 ## this is what turns "Bee 214" into someone the player can recognise. See
 ## BEE_INDIVIDUALITY_PLAN.md.
-func _selection_identity_text(b) -> String:
+func _selection_identity_text(b: Variant) -> String:
 	var identity := "%s%s — %s" % [
 		"Queen " if b.is_queen else "Bee ",
 		"" if b.is_queen else str(b.bee_id),
@@ -2971,7 +2971,7 @@ func _selection_identity_text(b) -> String:
 		identity += "\nAge: %.1f days   Left: %.1f days" % [b.age_days(), b.days_remaining()]
 	return identity
 
-func _selection_energy_text(b) -> String:
+func _selection_energy_text(b: Variant) -> String:
 	return "Energy %d%%  Health %d%%\n%s" % [
 		int(100.0 * b.energy / max(0.001, GameConfig.energy_capacity)),
 		int(100.0 * b.health / max(0.001, GameConfig.health_capacity)),
@@ -2981,7 +2981,7 @@ func _selection_energy_text(b) -> String:
 ## Activity block. `instruction_runner` is the Challenge runner when the
 ## queen is waiting for an instruction, else null; `stuck` is the bee's
 ## idle_reason() (empty while the runner is waiting).
-func _selection_activity_text(b, instruction_runner, stuck: String) -> String:
+func _selection_activity_text(b: Variant, instruction_runner: Variant, stuck: String) -> String:
 	var activity: String
 	if instruction_runner != null:
 		var instruction: String = instruction_runner.current_stage_instruction()
@@ -3009,7 +3009,7 @@ func _selection_activity_text(b, instruction_runner, stuck: String) -> String:
 ## "trait" is a reserved GDScript word (used for the language's own
 ## trait/mixin feature), so the local can't be called that even though it
 ## holds a bee's rolled trait line.
-func _selection_trait_text(b) -> String:
+func _selection_trait_text(b: Variant) -> String:
 	var trait_line: String = b.trait_text()
 	# BB-2: what she was raised on, and what it gave her.
 	var outcome_line: String = b.brood_outcome_text()
@@ -3025,7 +3025,7 @@ func _selection_trait_text(b) -> String:
 ## label so _apply_selection_field_visibility can hide any one of them.
 func _refresh_selection_text() -> void:
 	var previously_shown_count: int = shown_bees.size()
-	shown_bees = shown_bees.filter(func(b): return is_instance_valid(b))
+	shown_bees = shown_bees.filter(func(b: Variant) -> Variant: return is_instance_valid(b))
 	if shown_bees.is_empty():
 		if selection_panel.visible:
 			DiagnosticLog.log_selection_panels_hidden("_refresh_selection_text.selection_panel", previously_shown_count, 0)
@@ -3039,7 +3039,7 @@ func _refresh_selection_text() -> void:
 		bottom_row_changed.emit()
 		return
 	if shown_bees.size() == 1:
-		var b = shown_bees[0]
+		var b: Variant = shown_bees[0]
 		_set_favourite_star(b)
 		_set_summary_cog_kind("bee")
 		select_n_row.visible = false
@@ -3047,7 +3047,7 @@ func _refresh_selection_text() -> void:
 		identity_label.text = _selection_identity_text(b)
 		energy_label.text = _selection_energy_text(b)
 
-		var challenge_runner = main.challenge_runner if main != null else null
+		var challenge_runner: Variant = main.challenge_runner if main != null else null
 		var waiting_for_instruction: bool = (
 			challenge_runner != null and challenge_runner.active
 			and b.is_queen
@@ -3169,7 +3169,7 @@ func _apply_even_column_widths(wrappers: Array) -> void:
 	# A hidden wrapper (an empty cell-popup column) must not claim a share
 	# of the width it never draws into, or the visible columns are left
 	# narrower than the space they actually have.
-	var visible_wrappers := wrappers.filter(func(w): return w.visible)
+	var visible_wrappers := wrappers.filter(func(w: Variant) -> Variant: return w.visible)
 	if visible_wrappers.is_empty():
 		return
 	# Measured against UiLayout.panel_chrome(), the same function
@@ -3178,7 +3178,7 @@ func _apply_even_column_widths(wrappers: Array) -> void:
 	var inner: float = UiLayout.command_tray_width(get_viewport().get_visible_rect().size.x) - UiLayout.panel_chrome().x
 	var count := visible_wrappers.size()
 	var width: float = floor((inner - float(count - 1) * TRAY_COLUMN_SEPARATION) / float(count))
-	for wrapper in visible_wrappers:
+	for wrapper: Variant in visible_wrappers:
 		wrapper.custom_minimum_size.x = width
 
 ## The command tray is centred at half the viewport until its two side bands
@@ -3203,7 +3203,7 @@ func _update_command_tray_width() -> void:
 	command_columns.custom_minimum_size.x = 0.0
 	var inner: float = UiLayout.command_tray_width(viewport_width) - UiLayout.panel_chrome().x
 	var column_width: float = _tray_column_share(inner)
-	for wrapper in [job_column_wrapper, focus_column_wrapper, orders_column_wrapper]:
+	for wrapper: Variant in [job_column_wrapper, focus_column_wrapper, orders_column_wrapper]:
 		wrapper.custom_minimum_size.x = column_width
 	if cell_primary_columns != null:
 		cell_primary_columns.custom_minimum_size.x = 0.0
@@ -3311,7 +3311,7 @@ func set_allowed_role_keys(keys: Array) -> void:
 ## offer `role_id`: Availability.role_query over the stage gate and the run's
 ## skills. A role the stage has taught but whose skill is not bought yet
 ## stays hidden until it is.
-func _role_offered(role_id: int, bee = null) -> bool:
+func _role_offered(role_id: int, bee: Variant = null) -> bool:
 	return Availability.role_query(role_id, _stage_gate, Session.progression, bee).available
 
 ## Re-applies role availability to whatever is open: the selection's role
@@ -3364,13 +3364,13 @@ func set_queen_build_button_visible(value: bool) -> void:
 ## allow-list. A control not built yet is skipped and picks its state up
 ## when it registers. Called on stage entry and on
 ## stage_gate.unlocked_changed, never per frame.
-func apply_gates(stage_gate) -> void:
+func apply_gates(stage_gate: Variant) -> void:
 	_stage_gate = stage_gate
 	var designations: Array = []
-	for key in Availability.UI_GATES:
+	for key: Variant in Availability.UI_GATES:
 		var row: Dictionary = Availability.UI_GATES[key]
 		var open: bool = stage_gate.is_unlocked(key)
-		for control_name in row.get("controls", []):
+		for control_name: Variant in row.get("controls", []):
 			_gate_open[control_name] = open
 			_apply_gate_to_control(control_name)
 		if open:
@@ -3384,7 +3384,7 @@ func apply_gates(stage_gate) -> void:
 ## "hud/**/<name>" or "command_tray/**/<name>".
 func _register_gated_control(control_name: String, getter: Callable) -> void:
 	_gate_controls[control_name] = getter
-	var control = getter.call()
+	var control: Variant = getter.call()
 	if control != null and is_instance_valid(control):
 		control.name = control_name
 	if not _is_gate_open(control_name):
@@ -3394,7 +3394,7 @@ func _apply_gate_to_control(control_name: String) -> void:
 	var getter: Callable = _gate_controls.get(control_name, Callable())
 	if not getter.is_valid():
 		return
-	var control = getter.call()
+	var control: Variant = getter.call()
 	if control != null and is_instance_valid(control):
 		control.visible = _is_gate_open(control_name)
 

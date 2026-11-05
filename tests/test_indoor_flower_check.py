@@ -90,7 +90,7 @@ static func search_for_flower(bee: Node2D, delta: float) -> void:
         problems = check_bee_foraging(broken)
         self.assertTrue(any("seek_flower must start with 'if _walk_out_if_indoors(bee):'" in p for p in problems))
 
-    def test_search_for_flower_missing_indoor_guard_fails(self) -> None:
+    def test_guarded_returns_become_pass_fails(self) -> None:
         broken = """\
 static func _walk_out_if_indoors(bee: Node2D) -> bool:
 \tif not bee._is_inside_hive():
@@ -100,13 +100,55 @@ static func _walk_out_if_indoors(bee: Node2D) -> bool:
 
 static func seek_flower(bee: Node2D) -> void:
 \tif _walk_out_if_indoors(bee):
-\t\treturn
+\t\tpass
+\tvar best := _perceive_flower(bee)
 
 static func search_for_flower(bee: Node2D, delta: float) -> void:
+\tif _walk_out_if_indoors(bee):
+\t\tpass
 \tBeeMovement.move_towards(bee, bee.search_waypoint, delta)
 """
         problems = check_bee_foraging(broken)
-        self.assertTrue(any("search_for_flower must start with 'if _walk_out_if_indoors(bee):'" in p for p in problems))
+        self.assertEqual(len(problems), 2)
+        self.assertTrue(any("seek_flower must immediately 'return'" in p for p in problems))
+        self.assertTrue(any("search_for_flower must immediately 'return'" in p for p in problems))
+
+    def test_walk_out_returns_false_indoors_fails(self) -> None:
+        broken = """\
+static func _walk_out_if_indoors(bee: Node2D) -> bool:
+\tif bee._is_inside_hive():
+\t\treturn false
+\tbee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT)
+\treturn true
+
+static func seek_flower(bee: Node2D) -> void:
+\tif _walk_out_if_indoors(bee):
+\t\treturn
+
+static func search_for_flower(bee: Node2D, delta: float) -> void:
+\tif _walk_out_if_indoors(bee):
+\t\treturn
+"""
+        problems = check_bee_foraging(broken)
+        self.assertTrue(any("_walk_out_if_indoors must return false when not bee._is_inside_hive()" in p for p in problems))
+
+    def test_walk_out_missing_return_true_fails(self) -> None:
+        broken = """\
+static func _walk_out_if_indoors(bee: Node2D) -> bool:
+\tif not bee._is_inside_hive():
+\t\treturn false
+\tbee.state = autonomous_state(bee, State.IN_HIVE_TO_EXIT)
+
+static func seek_flower(bee: Node2D) -> void:
+\tif _walk_out_if_indoors(bee):
+\t\treturn
+
+static func search_for_flower(bee: Node2D, delta: float) -> void:
+\tif _walk_out_if_indoors(bee):
+\t\treturn
+"""
+        problems = check_bee_foraging(broken)
+        self.assertTrue(any("_walk_out_if_indoors must return true when bee is inside hive" in p for p in problems))
 
     def test_walk_out_missing_autonomous_state_fails(self) -> None:
         broken = """\
@@ -134,7 +176,19 @@ func set_focus(type: String) -> void:
 \tstate = State.IN_HIVE_TO_EXIT
 """
         problems = check_bee_focus(broken)
-        self.assertTrue(any("does not guard State.SEEK_FLOWER with 'if not _is_inside_hive():'" in p for p in problems))
+        self.assertTrue(any("is not enclosed in 'if not _is_inside_hive():'" in p for p in problems))
+
+    def test_set_focus_final_unguarded_seek_flower_fails(self) -> None:
+        broken = """\
+func set_focus(type: String) -> void:
+\tif not _is_inside_hive():
+\t\tstate = State.SEEK_FLOWER
+\telif state == State.IDLING:
+\t\tstate = State.IN_HIVE_TO_EXIT
+\tstate = State.SEEK_FLOWER
+"""
+        problems = check_bee_focus(broken)
+        self.assertTrue(any("is not enclosed in 'if not _is_inside_hive():'" in p for p in problems))
 
     def test_set_focus_missing_indoor_exit_fails(self) -> None:
         broken = """\
