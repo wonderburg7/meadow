@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import sys
 import tempfile
+import io
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
@@ -63,6 +65,60 @@ class AdmissionHelpersTests(unittest.TestCase):
         )
         self.assertEqual(admission.deferral_reason(text, "L-1"), " (`plans/now/x.md`) -- waits for L-0.")
         self.assertEqual(admission.deferral_reason(text, "L-99"), "")
+
+    def test_drop_id(self) -> None:
+        self.assertEqual(admission._drop_id("waits on L-1, and L-2", "L-2"), "waits on L-1")
+        self.assertEqual(admission._drop_id("waits on L-1, L-2", "L-1"), "waits on L-2")
+        self.assertEqual(admission._drop_id("waits on L-1 and L-2", "L-2"), "waits on L-1")
+        self.assertEqual(admission._drop_id("waits on and L-1 next", "L-1"), "waits on next")
+
+    def test_merged_ids(self) -> None:
+        with patch.object(admission, "git_lines", return_value=["claude/L-1", "master", "codex/SLICE-2"]):
+            ids = admission.merged_ids(self.root)
+            self.assertEqual(ids, {"L-1", "master", "SLICE-2"})
+
+    def test_unmerged_branch_files(self) -> None:
+        def fake_git_lines(root: Path, *args: str) -> list[str]:
+            if args[0] == "branch" and "origin/jules/*" in args:
+                return ["origin/jules/j-1-test"]
+            if args[0] == "branch":
+                return ["claude/L-1", "codex/L-2", "skip-me"]
+            if args[0] == "diff":
+                ref = args[2]
+                if "claude/L-1" in ref:
+                    return ["scripts/bee.gd", "scripts/hive.gd"]
+                if "origin/jules/j-1-test" in ref:
+                    return ["tools/admission.py"]
+                return ["other.txt"]
+            return []
+
+        with patch.object(admission, "git_lines", side_effect=fake_git_lines):
+            res = admission.unmerged_branch_files(self.root, skip={"codex/L-2", "skip-me"})
+            self.assertEqual(
+                res,
+                {
+                    "claude/L-1": {"scripts/bee.gd", "scripts/hive.gd"},
+                    "origin/jules/j-1-test": {"tools/admission.py"},
+                },
+            )
+
+    def test_run_clear_landed(self) -> None:
+        text = (
+            "## Not in the queue, and why\n\n"
+            "- **CQ-X** (`plans/now/x.md`) -- waits for L-1, SG-2.\n"
+        )
+        (self.root / "NEXTSTEPS.md").write_text(text, encoding="utf-8")
+        (self.root / "plans/archive/X_2026-10-23.md").write_text("", encoding="utf-8")
+
+        with patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            exit_code = admission.run_clear_landed(self.root, "L-1")
+            self.assertEqual(exit_code, 0)
+            output = mock_stdout.getvalue()
+            self.assertIn("touched: NEXTSTEPS.md", output)
+
+        new_text = (self.root / "NEXTSTEPS.md").read_text(encoding="utf-8")
+        self.assertIn("waits for SG-2.", new_text)
+        self.assertNotIn("L-1", new_text)
 
     def test_plan_section(self) -> None:
         plan_file = self.root / "plans/now/x.md"
