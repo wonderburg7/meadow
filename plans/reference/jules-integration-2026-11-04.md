@@ -226,3 +226,17 @@ flags all 36 rows of the unrewritten branch ledger and none after this merge.
 Source PRs stay open on GitHub and no remote branch is deleted here: closing
 them is GitHub work for Dave or the next processing pass. #107-#134 outside
 this batch keep the dispositions in plans/reference/jules-review-2026-11-05.md.
+
+Follow-up, 5 November (Claude, cloud session): on Linux at cacf46b the 11
+batch test modules pass (`python -m unittest tests.test_backlog_helpers
+tests.test_drained_flower_exclusion_check tests.test_freeze_bee_check
+tests.test_json_number_check tests.test_jules_efficiency_helpers
+tests.test_jules_review_rota tests.test_marker_reparent_check
+tests.test_nav_reach_check tests.test_run_scenario_helpers
+tests.test_skirt_commitment_check tests.test_variable_shadow_check`: 120 tests,
+OK), closing the "No Linux result is claimed" caveat. "Unwired from verify"
+above means no separate verify stage, not unenforced: each guard's test module
+runs it on the real tree, and verify's unit job runs every `tests/test_*.py`.
+The 25 batch source PRs (#85-#104, #106, #108, #110, #112, #114) are closed
+on GitHub with their ledger outcome; their `jules/*` branches stay, because
+`Jules-Sequence` numbers 30-36 live only on open `jules/*` branches.
