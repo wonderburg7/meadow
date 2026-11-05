@@ -23,6 +23,14 @@ or a dedicated worktree if one is already set up). It must keep changes
 focused, preserve all pre-existing work, and follow the same branch discipline
 as Claude: never leave or commit edits directly on `master`.
 
+Dave authorises Codex to commit and push authorised work automatically,
+without asking for confirmation again (5 Nov 2026). This includes pushing
+`master` after integrating Codex's own completed changes through the permitted
+closeout path, and committing and publishing explicitly requested policy or
+queue updates. Keep work-branch discipline, verification, other lanes'
+ownership and the high-risk review requirement; this grants no permission
+to force-push, rewrite shared history or include unrelated work.
+
 Run `tools/slice.ps1 start -Lane Codex` to claim the lane's leading item and
 register its worktree in `plans/workstreams.md` atomically -- it also checks
 the item's `Proof:` line still holds and refuses a lane that already has an
@@ -79,6 +87,43 @@ branch, so their ownership is stricter:
 
 In short: an implementation branch documents what it changes; the integrator
 records what is true on `master`.
+
+### Independent Codex queue priorities
+
+Dave delegates Codex-lane scheduling to Codex (5 Nov 2026). When asked to
+implement the next slice, Codex may select, specify, refill and reorder
+unclaimed Codex work without asking Dave to choose priorities. An empty lane
+is a reason to refill it, not to stop while agreed, startable work remains.
+
+- Prefer work that unblocks agreed dependencies, fixes a verified defect or
+  completes an active plan; weigh player value, evidence, readiness and scope.
+  Follow live plans' Status and `Next:` sections and explicit dependencies.
+  Scheduling authority does not settle open product, architecture, save or
+  balance decisions covered by `docs/agent-rules.md` rule 5.
+- Before changing priorities, inspect the current queue's lane entries,
+  `plans/workstreams.md` and lifecycle status. Check each proposed `Files:`
+  path with `tools/slice.ps1 owner <path>`, and check queued and active work
+  in other lanes for file, dependency and shared-contract overlap. Read only
+  the relevant plan sections if those checks need more context.
+- Change only unclaimed Codex entries and their owning plan sections. Never
+  move, reorder, remove or rewrite another lane's entries, take over claimed
+  work, or queue work that would invalidate another lane's assumptions.
+  Choose another independent slice when there is overlap; if none is safe,
+  report the exact conflict rather than changing another lane's scope.
+- Make priority edits on a work branch, keeping the queue and plan blocks
+  consistent. Read `plans/README.md`, "Writing or editing a plan", before
+  specifying work. Use `tools/refill_lane.py --top-up --lane Codex` for
+  admission, preserve its lifecycle locking and proof checks, and run
+  `tools/check_docs.py`. Reordering must preserve dependencies and the
+  existing admission checks. Recheck current ownership and queue state
+  before integrating; preserve concurrent edits. Integrate the scheduling
+  update before claiming it with `tools/slice.ps1 start -Lane Codex`.
+- In the slice output, add `Priority change: <what was selected, added or
+  reordered and why; other lanes checked and unaffected>`. Include this in
+  both the normal end-of-slice report and a high-risk hand-off, even though
+  `finish` does not print it. If a scheduling change cannot be followed by
+  implementation, disclose it and the blocker in that session's output.
+  Use `Priority change: none` when no independent scheduling change was made.
 
 ### Risk-proportional closeout
 
@@ -171,6 +216,7 @@ Branch:       codex/<slice-id>  (pushed)  |  verify.ps1: green
 Risk tier:    high -- <the specific trigger>
 Hands-on:     <concrete check for Claude to file in checks/ready.md>  (or: none)
 Next in my lane: <id> -- <one line on what it does>
+Priority change: <what changed and why; other lanes checked and unaffected, or none>
 Ready to merge: yes -- Claude reviews the full diff, then runs 'finish'
 ```
 
@@ -212,25 +258,29 @@ commits distinct.
 
 ## Session routing
 
-- Do not read `NEXTSTEPS.md` to find your work. `tools/slice.ps1 start -Lane
+- Normally use the existing queue to find your work. `tools/slice.ps1 start -Lane
   Codex` claims the first unclaimed **[Codex]** item and prints it as JSON:
   `id`, `plan`, `heading`, `files`, `check`, `proof`, `next_after`, and a
   `read` field holding the exact command that prints that slice's plan
   section and nothing else. Run the `read` command; that is the whole
   briefing. `doctor -Lane Codex` prints the same thing without claiming
-  anything. Reading the queue file itself is never needed to start.
+  anything. Read queue entries only when selecting or checking priorities
+  under "Independent Codex queue priorities"; do not read it whole.
 - Do not read the Claude lane's plan, the archive or Git history to work out
   what to do. `NEXTSTEPS.md` holds two independent lanes, `### Claude lane`
   and `### Codex lane`, up to five items each (`tools/check_docs.py`
-  enforces it); your lane's leading item is already the decision. At
+  enforces it); normally your lane's leading item is already the decision.
+  Independent scheduling may inspect other lanes' queue and ownership records
+  and relevant plan sections solely to avoid disrupting their work. At
   closeout, edit only the `### Codex lane` subsection.
 - No file appears in both lanes (`tools/check_docs.py` proves
   it), so a Codex branch and a Claude branch can run at the same time without
   conflicting. If the slice you are on turns out to need a file the other
   lane's leading item names, stop and say so rather than editing it -- that
   means the queue is wrong.
-- Update the owning shared plan, the queue and any player check only at a real
-  slice transition; archive terminal execution records in `plans/archive/`
+- Update the owning shared plan and queue at a real slice transition or an
+  independent scheduling change under the policy above. Update player checks
+  only at a real slice transition; archive terminal execution records in `plans/archive/`
   rather than retaining them at the root.
 - Read other Meadow files only as evidence needed for the requested analysis.
 - Keep recommendations clearly labelled as recommendations, not completed
