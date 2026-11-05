@@ -129,6 +129,8 @@ Gyne-rearing verdicts; the line `Not instrumented: 20m forage/weather crisis;
 90m gyne release.` (AR-4's Proof reads it); any `GameConfig` or `skills.gd`
 value. No pacing run: a draft target needs no sweep (§3).
 
+**Open decisions:** none.
+
 ```queue
 **[Codex] AR-6 -- the pacing report's draft targets in one place, matched to product-scope §3**
 - Plan: `plans/now/alpha-route-evidence.md` -- "AR-6 -- the pacing report's draft targets in one place, matched to product-scope §3"

@@ -1,7 +1,7 @@
 # Play notes, HUD side -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PN-7 -- the cell popup and selection text batch, once the unmerged Jules E-14 branch is merged or closed (SG-3 landed 1 Nov 2026) | Dependency: the slices here wait for the unmerged Jules E-14 branch (`scripts/hud.gd`, `scripts/colony_milestones.gd`) and S-3 marker-reparent branch to be merged or closed; PN-17 needs only PN-16; PN-16 also waits for PN-6 in `plans/now/play-notes.md` | Verified: 2026-10-31
+Status: active | Owner: Dave / Claude Code | Next: PN-7 -- the cell popup and selection text batch, and PN-10, both startable since 5 Nov 2026 (the Jules E-14 branch is closed) | Dependency: the `hud.gd` chain runs PN-7, PN-8, PN-14, PN-15, PN-16, PN-17 in turn; PN-16 also waits for PN-6 in `plans/now/play-notes.md` | Verified: 2026-11-05
 
 ## Objective
 
@@ -22,9 +22,9 @@ and `colony_milestones.gd`) and grep on this branch.
 
 | Id | Outcome | Files | Startable | Level / model |
 | --- | --- | --- | --- | --- |
-| PN-7 | cell popup wording, Empty controls, a warning box that stays | `hud.gd` | after the Jules E-14 branch (SG-3 landed 1 Nov 2026) | medium / sonnet |
+| PN-7 | cell popup wording, Empty controls, a warning box that stays | `hud.gd` | yes (5 Nov 2026) | medium / sonnet |
 | PN-8 | Warning history in the Colony window | `hud.gd`, `colony_panel.gd`, `session.gd` | after PN-7 | medium / sonnet |
-| PN-10 | opening goal text a new player can act on | `colony_milestones.gd` | after the Jules E-14 branch (SG-3 landed 1 Nov 2026) | low / haiku |
+| PN-10 | opening goal text a new player can act on | `colony_milestones.gd` | yes (5 Nov 2026) | low / haiku |
 | PN-14 | text no longer shrinks when unpausing | `hud.gd`, `camera_view.gd` | after PN-8 | high / sonnet |
 | PN-15 | a day dial beside "Day N" | new `hud_day_dial.gd`, `hud.gd` | after PN-14 | medium / sonnet |
 | PN-16 | double-click a cell selects all of its type | `input_selection.gd`, `hud.gd` | after PN-15 and PN-6 | medium / sonnet |
@@ -32,7 +32,7 @@ and `colony_milestones.gd`) and grep on this branch.
 
 ## Dependencies
 
-- SG-3 landed 1 Nov 2026; all seven now wait for the unmerged Jules E-14 and S-3 marker-reparent branches to be merged or closed. Same-file slices run in turn (the chain below):
+- SG-3 landed 1 Nov 2026, and the Jules E-14 and S-3 marker-reparent branches were closed by 5 Nov 2026. Same-file slices run in turn (the chain below):
   PN-7, PN-8, PN-10, PN-14 and PN-15 touch `hud.gd` or its neighbours;
   PN-16 and PN-17 touch `input_selection.gd`.
 - PN-16 needs PN-6 (`plans/now/play-notes.md`), which also edits
@@ -77,7 +77,7 @@ real seconds.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] PN-7 -- cell popup and selection text batch**
 - Plan: `plans/now/play-notes-hud.md` -- "PN-7 -- cell popup and selection text batch"
 - Files: `scripts/hud.gd`, `tests/display_text_golden_test.gd`, `tests/test_pn7_cell_popup.py`
@@ -133,7 +133,7 @@ first goal tells you what to do, not only what to achieve.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] PN-10 -- opening goal text a new player can act on**
 - Plan: `plans/now/play-notes-hud.md` -- "PN-10 -- opening goal text a new player can act on"
 - Files: `scripts/colony_milestones.gd`, `tests/gp1_goals_dropdown_test.gd`

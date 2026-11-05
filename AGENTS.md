@@ -60,7 +60,9 @@ closeout" section is needed only once the code is green: skip it when
 starting, and read it then with
 `python tools/heading.py CHATGPT.md "Risk-proportional closeout"`. To start
 implementing, follow its "Session routing" -- `tools/slice.ps1 start -Lane
-Codex` -- and never read `NEXTSTEPS.md` whole.
+Codex` -- and never read `NEXTSTEPS.md` whole. An empty or gated lane is
+refilled in the same session, then claimed: `CHATGPT.md`, "Refilling an
+empty or gated Codex lane".
 
 To work through several Codex-lane slices in a row, Dave invokes the
 `run-queue` skill (`.agents/skills/run-queue/SKILL.md`). A worker subagent
