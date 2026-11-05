@@ -73,7 +73,7 @@ Challenge goal readout.
 1119 func _build_soil_summary_row(column: VBoxContainer) -> void
 1155 func _build_keep_clear_row(column: VBoxContainer) -> void
 1184 func _build_favourite_star() -> Control
-1215 func _set_favourite_star(bee: Variant) -> void
+1215 func _set_favourite_star(bee) -> void
 1243 func _field_control(field_name: String) -> Control
 1257 func _build_selection_cog() -> Control
 1284 func _theme_popup_on_open(popup: PopupMenu) -> void
@@ -106,7 +106,7 @@ Challenge goal readout.
 2006 func _dismiss_warning() -> void
 2011 func set_warnings_muted(value: bool) -> void
 2017 # --- object summaries ---------------------------------------------
-2026 func show_object_summary(kind: String, data: Variant) -> void
+2026 func show_object_summary(kind: String, data) -> void
 2054 func _refresh_flower_summary() -> void
 2090 func _show_obstacle_summary(obstacle: Node2D) -> void
 2096 func _show_soil_summary(count: int, reachable: int) -> void
@@ -114,9 +114,9 @@ Challenge goal readout.
 2120 func _show_death_summary(info: Dictionary) -> void
 2138 # --- cell popup: show and refresh ---------------------------------
 2143 func show_cell_popup(cell: Node2D, count: int = 1) -> void
-2166 func _cell_content_lines(cell: Variant, count: int) -> Array
-2221 func _cell_state_lines(cell: Variant) -> Array
-2243 func _cell_hatch_text(cell: Variant) -> String
+2166 func _cell_content_lines(cell, count: int) -> Array
+2221 func _cell_state_lines(cell) -> Array
+2243 func _cell_hatch_text(cell) -> String
 2258 func _refresh_cell_popup() -> void
 2301 func _apply_cell_popup_gating() -> void
 2329 func _light_current_options() -> void
@@ -175,14 +175,14 @@ Challenge goal readout.
 2931 func _selection_has_command_lock(bees: Array) -> bool
 2938 # --- bee command rows ---------------------------------------------
 2942 func _rebuild_role_controls(bees: Array) -> void
-2945 func _gyne_not_ready_reason(gyne: Variant) -> String
-2948 func _refresh_gyne_send_button(gyne: Variant) -> void
-2952 func _mode_is_active(role_id: int, bee: Variant, mode_key: String) -> bool
+2945 func _gyne_not_ready_reason(gyne) -> String
+2948 func _refresh_gyne_send_button(gyne) -> void
+2952 func _mode_is_active(role_id: int, bee, mode_key: String) -> bool
 2955 # --- selection readout and tray sizing -----------------------------
-2960 func _selection_identity_text(b: Variant) -> String
-2974 func _selection_energy_text(b: Variant) -> String
-2984 func _selection_activity_text(b: Variant, instruction_runner: Variant, stuck: String) -> String
-3012 func _selection_trait_text(b: Variant) -> String
+2960 func _selection_identity_text(b) -> String
+2974 func _selection_energy_text(b) -> String
+2984 func _selection_activity_text(b, instruction_runner, stuck: String) -> String
+3012 func _selection_trait_text(b) -> String
 3026 func _refresh_selection_text() -> void
 3090 func _apply_selection_tray_width() -> void
 3141 func _match_summary_header_button_heights() -> void
@@ -196,14 +196,14 @@ Challenge goal readout.
 3291 func set_winter_button_visible(value: bool) -> void
 3297 func set_view_label(in_hive: bool) -> void
 3306 func set_allowed_role_keys(keys: Array) -> void
-3314 func _role_offered(role_id: int, bee: Variant = null) -> bool
+3314 func _role_offered(role_id: int, bee = null) -> bool
 3320 func refresh_role_gating() -> void
 3329 func set_command_locked_bees(bees: Array) -> void
 3334 func set_allowed_mode_keys(keys: Array) -> void
 3344 func set_allowed_designation_keys(keys: Array) -> void
 3354 func set_queen_build_button_visible(value: bool) -> void
 3359 # --- stage gates --------------------------------------------------
-3367 func apply_gates(stage_gate: Variant) -> void
+3367 func apply_gates(stage_gate) -> void
 3385 func _register_gated_control(control_name: String, getter: Callable) -> void
 3393 func _apply_gate_to_control(control_name: String) -> void
 3402 func _is_gate_open(control_name: String) -> bool
@@ -1013,7 +1013,7 @@ restart.
 926  func _wire_repeat_button(button: Button, entry: Dictionary, direction: float) -> void
 956  func _make_toggle_row(entry: Dictionary) -> Control
 1029 func _make_options_row(entry: Dictionary) -> Control
-1062 func _option_display(entry: Dictionary, value: Variant) -> String
+1062 func _option_display(entry: Dictionary, value) -> String
 1066 func _cycle_option(entry: Dictionary, direction: int) -> void
 1077 # --- prerequisite cascades ----------------------------------------
 1081 func _cascade_prerequisites_on(key: String) -> void
@@ -1022,7 +1022,7 @@ restart.
 1108 # --- star rows and value editing ----------------------------------
 1113 func _make_star_row(entry: Dictionary) -> Control
 1154 func _adjust(entry: Dictionary, delta: float) -> void
-1171 func _format_value(v: Variant) -> String
+1171 func _format_value(v) -> String
 1178 # --- restart and main menu ----------------------------------------
 1179 func _on_restart_pressed() -> void
 1184 func _on_main_menu_pressed() -> void
