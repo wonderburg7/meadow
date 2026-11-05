@@ -85,14 +85,13 @@ C-141 and C-151.
 
 **True now.** `GameConfig.rain_free_days = 2.0` (RR-21; the gate is in
 `main.gd`, SG-3's file, read only here). `first_crisis_window_open = 1080` and
-`first_crisis_window_close = 1500` seconds (a day is 180 s, so day 6 to day
-8.3); `first_crisis_warning_lead = 120`.
+`first_crisis_window_close = 1500` seconds (`main.gd`: day = 1 + sim_time /
+200 s, so Day 6 to Day 8); `first_crisis_warning_lead = 120`.
 
 **Change (Dave, 31 Oct 2026: "ordinary rain from day 10. Crisis window moves
 to days 12-15").** `rain_free_days = 9.0` (first rain on day 10),
-`first_crisis_window_open = 1980` (start of day 12), `first_crisis_window_close
-= 2700` (end of day 15). Confirm the day arithmetic against how `main.gd`
-counts days before pinning. Re-pin `test_scenarios/fc2_first_crisis_prepared.json`,
+`first_crisis_window_open = 2200` (start of Day 12), `first_crisis_window_close
+= 3000` (end of Day 15); product review, 5 Nov 2026: not 1980/2700 (a 180 s day). Re-pin `test_scenarios/fc2_first_crisis_prepared.json`,
 `fc2_first_crisis_unprepared.json` and RR-18's C-140 skip save.
 
 **Balance change: simulate first (rule 2).** Run both fc2 scenarios before
