@@ -59,8 +59,8 @@ Dependencies: HM-2 -> HM-1 by queue order only (HM-2 needs no art fixed
 first); neither reads the other's code. HM-1 and
 SP-8a (`plans/now/meadow-terrain.md`) both edit `scripts/hive.gd` and
 `scripts/rival_hive.gd`; both are Claude lane, so the second to land merges
-master first. HM-2 edits `scripts/hud.gd`, which the Claude lane's queued
-items also edit; it runs after them in the same lane.
+master first. HM-2 edits `scripts/hud.gd`, which the Codex lane's HUD play notes
+(`plans/now/play-notes-hud.md`) hold while queued; it follows them.
 
 ## HM-1 -- your hive and rival hives drawn from Dave's meadow hive art
 

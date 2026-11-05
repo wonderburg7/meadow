@@ -1,7 +1,7 @@
 # Forager recruitment -- Orientation flight, then Auto scouting, then Auto-recruitment
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active (FR-2, FR-4 landed) | Owner: Dave / Claude Code | Next: PP-10 (`plans/now/pollination.md`, the sweep Dave split from PP-9 27 Oct 2026), then FR-3 -- FR-2 landed: Auto scouting is a Foraging tier-2 purchase at (5, -1) that replaces Orientation flight (`scripts/bee.gd` joined its files, 25 Oct 2026, for the new-forager scouting gate); FR-4 added the bee_states assertion and set_bee_stats verb to scenario_actions.gd and archived C-143 | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 → PP-9 → PP-10 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-10-27
+Status: active | Owner: Dave / Claude Code | Next: FR-3 -- owning Auto-recruitment switches it on, after PP-10 (`plans/now/pollination.md`), which shares `scripts/skills.gd`; FR-1 to FR-2 and FR-4 landed 17 Oct to 5 Nov 2026 | Dependency: FR-1 → FR-1b → FR-1c → FR-1d → FR-2 → PP-6 → PP-9 → PP-11 → PP-10 (`plans/now/pollination.md`) → FR-3 | Verified: 2026-11-05
 
 ## Objective
 

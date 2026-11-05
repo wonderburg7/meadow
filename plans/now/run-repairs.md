@@ -1,7 +1,7 @@
 # Run repairs -- faults the 10-11 Oct 2026 hands-on pass found in archived areas
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: RR-22 built on claude/RR-22, 4 Nov 2026, awaiting Dave's hands-on check C-178; RR-21 built on claude/RR-21, 30 Oct 2026, awaiting Dave's hands-on check; RR-20 built on claude/RR-20, 30 Oct 2026, awaiting Dave's hands-on check; RR-18 implemented on codex/RR-18, awaiting high-risk review and integration (Dave, 30 Oct 2026); RR-12 waits for ED-3 (RR-17 verified on codex/RR-17, 29 Oct 2026; RR-19 on claude/RR-19, 28 Oct 2026; RR-16 on claude/RR-16, 27 Oct 2026; RR-15 on claude/RR-15, 27 Oct 2026; RR-14 on claude/RR-14, 27 Oct 2026; RR-13 landed 27 Oct 2026; RR-11 landed 21 Oct 2026; RR-10 18 Oct, RR-8 17 Oct, RR-6 15 Oct, RR-1 to RR-5 13 Oct) | Dependency: none left (PP-3 landed 12 Oct 2026) | Verified: 2026-10-30
+Status: active | Owner: Dave / Claude Code | Next: RR-12 -- a loaded run keeps its readout history, gated until CQ-R2 (`plans/now/code-health.md`), which follows ED-3 (Dave, 5 Nov 2026); RR-13 to RR-22 landed 27 Oct to 4 Nov 2026 | Dependency: CQ-R2, which edits `scripts/main.gd` and the save files RR-12 also edits | Verified: 2026-11-05
 
 ## Objective
 
@@ -42,11 +42,7 @@ Verified 11 Oct 2026 against master `8a7e5ac`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after ED-3 releases the save files | medium |
-
-RR-9 and RR-10 are Codex-lane slices (Dave, 15 Oct 2026, plan review D3:
-the Claude lane was full and the Codex backlog dry); RR-7 and RR-11 stay in
-the Claude lane, and RR-11 opens only once SP-11 and RR-10 have both landed.
+| RR-12 | a loaded run keeps its readout history (graphs, emergence, day stores, foraging counters) | `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, tests | no -- after CQ-R2, which follows ED-3 | medium |
 
 Each slice reads its own section only. Do not change skill prices, the
 branch-tier rule (settled by `plans/now/tier-two.md` T2-9, landed 12 Oct 2026), or the save
@@ -60,7 +56,7 @@ RR-8 shipped 2026-10-17; its specification is `plans/archive/RR-8_2026-10-17.md`
 
 RR-9 shipped 2026-10-17; its specification is `plans/archive/RR-9_2026-10-17.md`.
 
-**Code health (`plans/now/code-health.md`, 18 Oct 2026).** CQ-L1 (gdlint fixes in `hive.gd` and `skill_tree_panel.gd`) landed 22 Oct 2026. Its save moves (CQ-S1 to CQ-S5, CQ-R2) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (RR-12); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
+**Code health (`plans/now/code-health.md`, 18 Oct 2026).** CQ-L1 (gdlint fixes in `hive.gd` and `skill_tree_panel.gd`) landed 22 Oct 2026. Its save moves (CQ-S1 to CQ-S5) wait for this plan's slices that edit `scripts/save_game.gd`/`scripts/saving.gd` (RR-12), and CQ-R2 runs before RR-12 (Dave, 5 Nov 2026); add new save fields the current way, and the round-trip goldens of CQ-S0 are re-captured by whichever slice adds a field.
 
 RR-10 shipped 2026-10-18; its specification is `plans/archive/RR-10_2026-10-18.md`.
 
@@ -117,7 +113,7 @@ test shows `day_store_totals` changing a condition's result across a load
 - Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/foraging_stats.gd`, `scripts/main.gd`, `tests/rr12_readout_history_test.gd`, `tests/test_rr12_readout_history.py`
 - Check: `python -m unittest tests.test_rr12_readout_history` passes: after a save and load of a run holding history samples, day-store entries, an emergence entry and a recorded trip, `history_samples`, `emergence_log`, `day_store_totals` and `foraging_stats.save_data()` equal their saved values, and a save with `readout_history` removed loads with all four empty; `python -m unittest tests.test_save_migrations` still passes.
 - Proof: `absent: scripts/save_game.gd :: readout_history`
-- Next after: none -- `plans/now/run-repairs.md` is complete once RR-8 and RR-11 have landed
+- Next after: none -- `plans/now/run-repairs.md` is complete
 ```
 
 RR-13 shipped 2026-10-27; its specification is `plans/archive/RR-13_2026-10-27.md`.
@@ -155,4 +151,4 @@ RR-22 shipped 2026-11-04; its specification is `plans/archive/RR-22_2026-11-04.m
   before admitting a repair. No save schema or fallback changes are part
   of the Jules integration, and its incomplete Inventory is not accepted.
 
-- **RR-12** -- a loaded run keeps its readout history; waits for ED-3, the last of the alpha chain, because SG-2 to ED-3 share `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.
+- **RR-12** -- a loaded run keeps its readout history; waits for CQ-R2, which follows ED-3 (Dave, 5 Nov 2026), because they share `scripts/main.gd`, `scripts/save_game.gd` and `scripts/saving.gd`.

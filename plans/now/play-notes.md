@@ -1,7 +1,7 @@
 # Play notes -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PN-2 -- rename a save in the saves list | Dependency: none for PN-1 to PN-6; the balance and `bee.gd` slices are in `plans/now/play-notes-config.md` and the HUD slices in `plans/now/play-notes-hud.md` | Verified: 2026-10-31
+Status: active | Owner: Dave / Claude Code | Next: PN-2 and PN-3 in the Claude lane, behind PN-11, EV-0b and ED-2 on the alpha route; PN-4 is startable and waits for room; PN-5 and PN-6 wait for SP-12 (`plans/now/sprites.md`, Codex lane) to release `input_selection.gd` | Dependency: PN-3 follows ED-2 (`plans/now/difficulty.md`), which edits the same save files; PN-16 (`plans/now/play-notes-hud.md`, Codex lane) follows PN-6 | Verified: 2026-11-05
 
 ## Objective
 
@@ -25,20 +25,22 @@ to put nectar" warning; Dr Gallerin's bubble behaviour; drones skipped by
 
 ## Open slices
 
-| Id | Outcome | Files | Startable | Level / model |
+| Id | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PN-2 | rename a save in the saves list | `saves_panel.gd`, `save_slots.gd` | yes | medium / sonnet |
-| PN-3 | a save remembers whether Goals was open | `save_game.gd`, `saving.gd`, `session.gd` | yes | high / sonnet |
-| PN-4 | the queen finishes a cell she was told to build | `bee_survival.gd`, `orders_zones.gd`, `bee_building.gd` | yes | high / sonnet |
-| PN-5 | a cell or soil block is clicked by its top face | `input_selection.gd` | yes | medium / sonnet |
-| PN-6 | double-click selects bees of the same role | `input_selection.gd` | after PN-5 | low / haiku |
+| PN-2 | rename a save in the saves list | `saves_panel.gd`, `save_slots.gd` | yes -- queued | medium |
+| PN-3 | a save remembers whether Goals was open | `save_game.gd`, `saving.gd`, `session.gd` | yes -- queued after ED-2 | high |
+| PN-4 | the queen finishes a cell she was told to build | `bee_survival.gd`, `orders_zones.gd`, `bee_building.gd` | yes | high |
+| PN-5 | a cell or soil block is clicked by its top face | `input_selection.gd` | after SP-12 (Codex lane), which edits `input_selection.gd` | medium |
+| PN-6 | double-click selects bees of the same role | `input_selection.gd` | after PN-5 | low |
 
 ## Dependencies
 
-PN-6 follows PN-5, and PN-16 (`plans/now/play-notes-hud.md`) follows PN-6: all
-three edit `scripts/input_selection.gd`. PN-3 avoids `hud.gd`, so it does not
-wait for SG-3. Do not touch `availability.gd` (jules J-13). A slice reads its own
-section and nothing else.
+PN-6 follows PN-5, and PN-16 (`plans/now/play-notes-hud.md`, Codex lane)
+follows PN-6: all three edit `scripts/input_selection.gd`, as SP-12
+(`plans/now/sprites.md`, Codex lane) does, so PN-5 waits for SP-12 to land.
+PN-3 follows ED-2 (`plans/now/difficulty.md`) in the Claude lane; both edit
+`save_game.gd`, `saving.gd` and `session.gd`, so PN-3 re-captures the CQ-S0
+goldens after ED-2's. A slice reads its own section and nothing else.
 
 PN-1 shipped 2026-11-05; its specification is `plans/archive/PN-1_2026-11-05.md`.
 

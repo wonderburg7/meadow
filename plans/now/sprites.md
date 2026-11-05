@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: nothing further in this plan -- SP-6 (meadow foragers drawn from the sheet) is done on its branch, awaiting Dave's hands-on check; the meadow floor in blocks (SP-8, SP-8a) moved to `plans/now/meadow-terrain.md` on 15 Oct 2026, and the hive and menu art is `plans/now/hive-and-menu-art.md`; SP-13 (the skep door on `hive.position`) landed 30 Oct 2026, hands-on check C-161 filed; SP-14 (no outline on an unselected comb cell with cell art on) done on its branch, hands-on check C-162 filed | Dependency: none left | Verified: 2026-10-30
+Status: active | Owner: Dave / Claude Code / Codex | Next: SP-12 -- every outline on a comb cell sits on the cup's rim, in the Codex lane (Dave, 1 Nov 2026) | Dependency: none left -- `claude/dave-hands-on-checks-784f2a` merged 4 Nov 2026; while SP-12 is queued it holds `input_selection.gd`, so the Claude lane's PN-5 and PN-6 follow it | Verified: 2026-11-05
 
 ## Objective
 
@@ -65,15 +65,12 @@ from the art in front-over-back order. What the open slices build on:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-12 | every outline on a comb cell sits on the cup's rim, proved by a new pixel assertion | `scripts/input_selection.gd`, `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, tests | yes -- DR-1 landed 25 Oct 2026 | medium |
+| SP-12 | every outline on a comb cell sits on the cup's rim, proved by a new pixel assertion | `scripts/input_selection.gd`, `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, tests | yes -- queued (Codex) | medium |
 
-**Dependencies.** RR-11 (`plans/now/run-repairs.md`) waits for SP-11 to
-release `scripts/hive_cell.gd`. SP-6's last gate, CQ-L1
-(`plans/now/code-health.md`), landed 22 Oct 2026; it no longer
-follows SP-8a (`plans/now/meadow-terrain.md`), though both edit
-`scripts/bee.gd`, so whichever is queued first runs first (Dave,
-22 Oct 2026). CQ-S0b (`plans/now/code-health.md`) also edits
-`scripts/bee.gd`'s `setup()`; the same order applies.
+**Dependencies.** SP-12 shares `scripts/input_selection.gd` with PN-5 and PN-6
+(`plans/now/play-notes.md`), PN-16 and PN-17 (`plans/now/play-notes-hud.md`) and
+CQ-M6 (`plans/now/code-health.md`), and `scripts/hive_cell.gd` with PN-9
+(`plans/now/play-notes-config.md`): whichever is queued first runs first.
 
 SP-1, SP-2, SP-4, SP-5, SP-7 (ad-hoc, on Dave's request), SP-9 and SP-10
 shipped 9-15 Oct 2026; each has its record in `plans/archive/`, named by id
@@ -85,13 +82,12 @@ SP-6 shipped 2026-11-01; its specification is `plans/archive/SP-6_2026-11-01.md`
 
 ## SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels
 
-Level: medium -- claude-sonnet-5-5 at medium effort.
+Level: medium.
 
-**Lane (Dave, 1 Nov 2026).** SP-12 and FR-4 (`plans/now/forager-recruitment.md`)
-both edit `scripts/scenario_actions.gd`, so they go to the Codex lane
-together, SP-12 first, once `claude/dave-hands-on-checks-784f2a` (which owns
-`NEXTSTEPS.md` and FR-4's plan) has merged. The move rewrites both blocks'
-`[Claude]` tag and level line.
+**Lane (Dave, 1 Nov 2026).** SP-12 runs in the Codex lane. FR-4, which was to
+follow it there, landed in the Claude lane on 5 Nov 2026 and added the
+`bee_states` assertion and `set_bee_stats` verb to `scripts/scenario_actions.gd`;
+the new condition goes beside them.
 
 **True now.** C-125 and then C-134 failed on the same misfit: the keep-clear,
 build-hover and order-chain outlines sit about 10 px below the cup's rim.
@@ -133,13 +129,13 @@ cost is added: the rim points are built once and cached.
 
 **Open decisions:** none.
 
-```queue-gated
-**[Claude] SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels**
+```queue
+**[Codex] SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels**
 - Plan: `plans/now/sprites.md` -- "SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels"
 - Files: `scripts/input_selection.gd`, `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, `test_scenarios/sp_outline_rim.json`, `tests/test_sp_outline_rim.py`, `tests/sp11_cell_rim_test.gd`, `tests/test_sp11_cell_rim.py`
 - Check: `python -m unittest tests.test_sp_outline_rim` passes (the `cell_outline_matches_sprite` assertion holds for the selection ring and the tile outline within 1.5 px, and fails when the outline is moved 10 px); `python -m unittest tests.test_sp11_cell_rim` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
 - Proof: `absent: scripts/scenario_actions.gd :: cell_outline_matches_sprite`
-- Next after: FR-4 -- a headless assertion replaces the C-143 hands-on check (it shares `scripts/scenario_actions.gd`)
+- Next after: PN-7 -- cell popup and selection text batch
 ```
 
 SP-13 shipped 2026-10-30; its specification is `plans/archive/SP-13_2026-10-30.md`.

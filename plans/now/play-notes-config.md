@@ -1,7 +1,7 @@
 # Play notes, config and bee -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PN-9 -- early spring, once the unmerged Jules E-14 and S-3 marker-reparent branches are merged or closed (HS-2 and SP-6 landed 1 Nov 2026, RR-18 31 Oct 2026) | Dependency: those two Jules branches change `game_config.gd`, `settings_catalogue.gd` and `bee.gd`, and the S-3 branch `soil_block.gd` | Verified: 2026-10-31
+Status: active | Owner: Dave / Claude Code | Next: PN-11 -- rain later, at the head of the Claude lane (the Jules E-14 and S-3 marker branches closed 5 Nov 2026); PN-9, PN-12, PN-13, PN-18 and PN-19 are startable and wait for room in the lane | Dependency: PN-11 precedes EV-0 (`plans/now/event-director.md`) on the alpha route; the others share `game_config.gd`, `settings_catalogue.gd` or `bee.gd` and run in turn | Verified: 2026-11-05
 
 ## Objective
 
@@ -14,20 +14,24 @@ Verified 2026-10-31 by `tools/slice.ps1 owner`; `skill_tree_panel.gd` and
 
 ## Open slices
 
-| Id | Outcome | Files | Startable | Level / model |
+| Id | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PN-9 | early spring: fast queen building, no souring before day 15 | `game_config.gd`, `settings_catalogue.gd`, `hive_cell.gd` | after the Jules E-14 and S-3 branches (HS-2 landed 1 Nov 2026) | medium / sonnet |
-| PN-11 | rain later: first rain day 10, crisis days 12-15 | `game_config.gd`, fc2 scenarios | after PN-9 (RR-18 landed 31 Oct 2026) | medium / sonnet |
-| PN-12 | developer mode buys any skill | `skill_tree_panel.gd`, `settings_catalogue.gd` | after PN-11 | low / haiku |
-| PN-13 | bee labels switch and a calmer queen flight | `bee.gd`, `game_config.gd`, `settings_catalogue.gd` | after the Jules E-14 and S-3 branches (HS-2 and SP-6 landed 1 Nov 2026) | low / haiku |
-| PN-18 | the queen discards sour nectar when told to empty a cell | `bee.gd` | after PN-13 | medium / sonnet |
-| PN-19 | the soil block's selection ring closes | `soil_block.gd` | after the Jules S-3 branch (HS-2 landed 1 Nov 2026) | low / haiku |
+| PN-11 | rain later: first rain day 10, crisis days 12-15 | `game_config.gd`, fc2 scenarios | yes -- queued; EV-0 follows it | medium |
+| PN-9 | early spring: fast queen building, no souring before day 15 | `game_config.gd`, `settings_catalogue.gd`, `hive_cell.gd` | yes | medium |
+| PN-12 | developer mode buys any skill | `skill_tree_panel.gd`, `settings_catalogue.gd` | yes | low |
+| PN-13 | bee labels switch and a calmer queen flight | `bee.gd`, `game_config.gd`, `settings_catalogue.gd` | yes | low |
+| PN-18 | the queen discards sour nectar when told to empty a cell | `bee.gd` | yes, after PN-13 in queue order | medium |
+| PN-19 | the soil block's selection ring closes | `soil_block.gd` | yes | low |
 
 ## Dependencies
 
-PN-9, PN-11, PN-12 and PN-13 share `game_config.gd` or `settings_catalogue.gd`,
-so they run in turn; PN-13 and PN-18 share `bee.gd`. Do not edit `main.gd`
-(SG-3's). A slice reads its own section and nothing else.
+PN-11 runs first: it is on the alpha route, ahead of EV-0
+(`plans/now/event-director.md`). PN-9, PN-12 and PN-13 share `game_config.gd`
+or `settings_catalogue.gd` with it and with each other, so they run in turn;
+PN-13 and PN-18 share `bee.gd`, and CQ-R3 (`plans/now/code-health.md`), which
+moves bee text out of it, follows them. A day setting added after EV-0 lands
+goes in its "Calendar and events" group. Do not edit `main.gd`. A slice reads
+its own section and nothing else.
 
 ## PN-9 -- early spring: fast queen building, no souring before day 15
 
@@ -54,6 +58,9 @@ measure age from `nectar_since`; there is no start day.
 - Both apply in a Colony Run and in the Challenge stages. `docs/challenge-stages.md`
   lists Challenges 1 and 2 and none introduces fermentation, so they apply in all
   of them; record this in the commit.
+- If EV-0 (`plans/now/event-director.md`) has landed, the two day settings
+  (`early_spring_build_days`, `nectar_ferment_start_day`) go in its "Calendar
+  and events" group (Dave, 5 Nov 2026: a timing lives in one place).
 
 **Balance change: simulate first (rule 2).** Before editing, run
 `test_scenarios/alpha_arc_test.json` for the first-worker day and record it
@@ -72,13 +79,13 @@ C-141 and C-151.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] PN-9 -- early spring: fast queen building, no souring before day 15**
 - Plan: `plans/now/play-notes-config.md` -- "PN-9 -- early spring: fast queen building, no souring before day 15"
 - Files: `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/hive_cell.gd`, `tests/test_nf2_fermentation.py`, `tests/test_rr11_pre_fermented.py`, `tests/rr11_pre_fermented_test.gd`, `tests/test_rr1_queen_builds.py`
 - Check: the four named tests pass with new assertions (queen builds in a third of the time in the first 10 days, nectar does not ferment before day 15, the turning warning is 24 h before souring); the alpha_arc first-worker day is recorded before and after and is no later; `.\tools\verify.ps1` is green. Hands-on: re-run C-139, C-141 and C-151
 - Proof: `absent: scripts/game_config.gd :: early_spring_build_days`
-- Next after: PN-11 -- rain later
+- Next after: PN-12 -- developer mode buys any skill
 ```
 
 ## PN-11 -- rain later: first rain on day 10, crisis days 12-15
@@ -106,13 +113,13 @@ rain falls then, not before; the first crisis warning arrives in days 12-15.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] PN-11 -- rain later: first rain on day 10, crisis days 12-15**
 - Plan: `plans/now/play-notes-config.md` -- "PN-11 -- rain later: first rain on day 10, crisis days 12-15"
 - Files: `scripts/game_config.gd`, `test_scenarios/fc2_first_crisis_prepared.json`, `test_scenarios/fc2_first_crisis_unprepared.json`, `test_scenarios/c140_first_crisis_warned.json`, `tests/test_rr21_rain_free_days.py`, `tests/test_fc2_first_crisis.py`
 - Check: `python -m unittest tests.test_rr21_rain_free_days tests.test_fc2_first_crisis` pass with the new days; the fc2 onset days before and after are recorded; `.\tools\verify.ps1` is green
 - Proof: `present: scripts/game_config.gd :: var first_crisis_window_open: float = 1080.0`
-- Next after: PN-12 -- developer mode buys any skill
+- Next after: EV-0 -- one Calendar and events settings group, and winter a week later
 ```
 
 ## PN-12 -- developer mode buys any skill
@@ -136,7 +143,7 @@ bought, costing nothing. Turn it off: it cannot.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] PN-12 -- developer mode buys any skill**
 - Plan: `plans/now/play-notes-config.md` -- "PN-12 -- developer mode buys any skill"
 - Files: `scripts/skill_tree_panel.gd`, `scripts/settings_catalogue.gd`, `tests/test_pn12_developer_skills.py`
@@ -171,7 +178,7 @@ forager's.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] PN-13 -- bee labels switch and a calmer queen flight**
 - Plan: `plans/now/play-notes-config.md` -- "PN-13 -- bee labels switch and a calmer queen flight"
 - Files: `scripts/bee.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_pn13_bee_labels.py`
@@ -203,7 +210,7 @@ cell empties.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] PN-18 -- the queen discards sour nectar when told to empty a cell**
 - Plan: `plans/now/play-notes-config.md` -- "PN-18 -- the queen discards sour nectar when told to empty a cell"
 - Files: `scripts/bee.gd`, `test_scenarios/pn18_queen_empties_sour.json`, `tests/test_pn18_queen_empties_sour.py`
@@ -231,7 +238,7 @@ hexagon outline is unbroken all round, including the far right.
 
 **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Claude] PN-19 -- the soil block's selection ring closes**
 - Plan: `plans/now/play-notes-config.md` -- "PN-19 -- the soil block's selection ring closes"
 - Files: `scripts/soil_block.gd`, `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`

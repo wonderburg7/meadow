@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-T3 landed 5 Nov 2026; CQ-T4 waits for the unmerged Jules E-14, E-34 and S-3 marker-reparent branches; CQ-R15 implemented (3 Nov 2026); CQ-M5a complete; CQ-M5b remains gated (CQ-R6 implemented; C-157 filed) (CQ-R10 implementation ready, C-154 filed; CQ-R11 complete); CQ-M5b waits for the unmerged Jules S-3 branches to settle scripts/main.gd and the J-14 Jules branch to settle scripts/game_panel.gd (CQ-R16 landed 2 Nov 2026; CQ-R15, ED-1b and CQ-R8 3 Nov 2026, releasing scripts/hud.gd); CQ-M6 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd and scripts/soil_block.gd and claude/dave-hands-on-checks-784f2a to settle scripts/hive_cell.gd (ED-1 and CQ-R16 landed 2 Nov 2026); CQ-M8, CQ-S0b and CQ-L2 complete, 24-25 Oct 2026; CQ-L3 waits for both lanes to empty; CQ-M4 is deferred until the Claude lane releases scripts/save_game.gd and scripts/saving.gd (CQ-R12 complete, 24 Oct 2026); the modularity review (30 Oct 2026) specified CQ-R15, CQ-R8, CQ-R3 and CQ-R16; CQ-R16 landed 2 Nov 2026 and CQ-R15 3 Nov 2026; CQ-R8 implemented 3 Nov 2026 (ED-1b, which shared scripts/hud.gd, landed 3 Nov 2026); CQ-R3 waits for the unmerged Jules S-1 and S-3 branches to settle scripts/bee.gd (ED-1 landed 2 Nov 2026) | Dependency: CQ-T4 waits for the unmerged Jules E-14, E-34 and S-3 marker-reparent branches (CQ-T3 landed 5 Nov 2026; claude/dave-hands-on-checks-784f2a merged 4 Nov 2026); CQ-R3 follows the unmerged Jules S-1 and S-3 branches (ED-1 landed 2 Nov 2026); CQ-S1 to CQ-S5 and CQ-R2 wait for ED-3, RR-12, SP-8a and DR-1; the rest is in "Dependencies" | Verified: 2026-10-30
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5b -- the last CanvasLayer readers, in the Codex lane (its Jules gates cleared 5 Nov 2026); CQ-M6 waits for PN-5 and PN-6 to release `input_selection.gd`, CQ-M4 for the Claude lane to release the save files, CQ-T4 for the Codex lane's PN-8 and PN-14, CQ-R3 for PN-13 and PN-18; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-05
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -122,18 +122,18 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | Slice | Outcome | Files it owns (block has the full list) | Startable | Level |
 | --- | --- | --- | --- | --- |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T4 | the other 56 scripts and tests typed; `untyped_declaration` becomes an error | those, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | gated -- after the Jules E-14, E-34 and S-3 marker-reparent branches (CQ-T3 landed 5 Nov 2026) | low |
-| CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a, DR-1 | high |
+| CQ-T4 | the other 56 scripts and tests typed; `untyped_declaration` becomes an error | those, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | gated -- after PN-8 and PN-14 (Codex lane), which edit `colony_panel.gd` and `camera_view.gd` | low |
+| CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
-| CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | yes | medium |
-| CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | gated -- the Jules S-3 branches change `main.gd`, Jules J-14 holds `game_panel.gd` (CQ-R15, CQ-R16 and CQ-R8 landed; `hud.gd` is free) | low |
-| CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- the Jules S-1 and S-3 branches change `bee.gd` and `soil_block.gd`, `claude/dave-hands-on-checks-784f2a` changes `hive_cell.gd` (ED-1 and CQ-R16 landed) | low |
+| CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | gated: the Claude lane holds `save_game.gd` and `saving.gd` | medium |
+| CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | yes -- queued (Codex) | low |
+| CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | 8 world scripts | gated -- after PN-5 and PN-6 (Claude) release `input_selection.gd`; a top-up refuses it while the Claude lane holds any of its files | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6 | medium |
-| CQ-R2 | first crisis moves into scripts/event_director.gd as the shared cycle's first record (`plans/design/event-director.md` decisions 2 and 15) | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated with CQ-S1 | high |
-| CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `bee_readout.gd` (new), `FUNCTION_MAP.md` | gated -- the Jules S-1 and S-3 branches change `bee.gd` (ED-1 landed 2 Nov 2026) | medium |
+| CQ-R2 | first crisis moves into scripts/event_director.gd as the shared cycle's first record (`plans/design/event-director.md` decisions 2 and 15) | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated: after ED-3 alone (Dave, 5 Nov 2026); RR-12 and SP-8a follow it | high |
+| CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `bee_readout.gd` (new), `FUNCTION_MAP.md` | gated -- after PN-13 and PN-18 (`plans/now/play-notes-config.md`), which change `bee.gd` text it moves | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
@@ -179,9 +179,11 @@ claim while `dry_after`).
   - CQ-M9 is independent of those gates: `colony_panel.gd` is below the
     function-map threshold and no Claude queue item owns it. CQ-M10's
     Codex block stays `queue-gated` until it is opened by hand.
-  - The save moves (CQ-S1 to S5 and CQ-R2) wait for every specified slice that edits
-    `save_game.gd`/`saving.gd`: WP-2, SG-2, ED-1c, ED-2 (difficulty, ending at ED-3),
-    RR-12, SP-8a and DR-1 (`plans/now/drones.md`). Each of those plans carries the reverse pointer.
+  - The save moves CQ-S1 to S5 wait for every specified slice that edits
+    `save_game.gd`/`saving.gd`: ED-2 and ED-3 (`plans/now/difficulty.md`), RR-12
+    and SP-8a. CQ-R2 waits for ED-3 alone (Dave, 5 Nov 2026, plan review), so the
+    alpha's events do not wait for the meadow floor; RR-12 and SP-8a follow it.
+    Each of those plans carries the reverse pointer.
   - CQ-L3 needs both lanes empty, per `plans/workstreams.md`.
 
 ## Rules for every slice
@@ -299,7 +301,7 @@ wrapped chain as `. name(` on its own line.
 - Files: every tracked `.gd` outside `addons/`, `tools/verify.ps1`, `FUNCTION_MAP.md`, `docs/challenge-stages.md`
 - Check: `gdformat --check` over every tracked `.gd` outside `addons/` reports nothing to change; `.\tools\verify.ps1` is green
 - Proof: `absent: tools/verify.ps1 :: gdformat`
-- Next after: CQ-T3
+- Next after: CQ-T4 -- the rest typed
 ```
 
 CQ-T3 shipped 2026-11-05; its specification is `plans/archive/CQ-T3_2026-11-05.md`.
@@ -312,10 +314,12 @@ only, no behaviour change.
 **True now** (counted 4 Nov 2026 with `tests/source_checks.py::untyped_declarations`,
 after CQ-T3's 18 files were typed). 56 scripts and tests outside `TYPED_FILES` hold 348
 untyped declarations. `claude/dave-hands-on-checks-784f2a`, which changed five of the
-UI scripts, merged 4 Nov 2026. The unmerged Jules E-14, E-34 and S-3 marker-reparent
-branches still change `scripts/bee_movement.gd`, `scripts/bee_survival.gd`,
-`scripts/crab_spider.gd`, `scripts/soil_block.gd`, `tests/source_checks.py` and five of
-its tests (checked 5 Nov 2026), so this slice waits for those to merge or close.
+UI scripts, merged 4 Nov 2026. The Jules E-14 and S-3 marker branches that changed
+`scripts/bee_movement.gd`, `scripts/bee_survival.gd`, `scripts/crab_spider.gd`,
+`scripts/soil_block.gd` and `tests/source_checks.py` closed 5 Nov 2026, and E-34's
+apparent ownership of `tests/source_checks.py` is a copy of master. This slice
+waits only for PN-8 and PN-14 (Codex lane) to release `colony_panel.gd` and
+`camera_view.gd`.
 
 **When done:**
 
@@ -362,22 +366,16 @@ the worker reads only the flagged lines.
   without that evidence; the source audit reports remain unaccepted.
 
 - **CQ-T4** -- the remaining 56 scripts and tests typed and `untyped_declaration`
-  made an error; waits for the unmerged Jules E-14, E-34 and S-3 marker-reparent
-  branches, which between them change `scripts/bee_movement.gd`,
-  `scripts/bee_survival.gd`, `scripts/crab_spider.gd`, `scripts/soil_block.gd`,
-  `tests/source_checks.py` and five of its tests, to be merged or closed (CQ-T3
-  landed 5 Nov 2026; `claude/dave-hands-on-checks-784f2a` merged 4 Nov 2026). Its section is `## CQ-T4 -- the rest
-  typed`, after CQ-T3's.
+  made an error; waits for PN-8 and PN-14 (Codex lane), which edit
+  `scripts/colony_panel.gd` and `scripts/camera_view.gd` among its files. The
+  Jules E-14 and S-3 marker branches closed 5 Nov 2026, and E-34's apparent
+  ownership of `tests/source_checks.py` is a copy of master (plan review,
+  5 Nov 2026). Its section is `## CQ-T4 -- the rest typed`.
 - **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`
   and `scripts/saving.gd`; its ownership overlaps that lane's current work.
-- **CQ-M5b** -- waits for the unmerged Jules S-3 branches (which change
-  `scripts/main.gd`) and for the Jules J-14 branch (which deletes code in
-  `scripts/game_panel.gd`) to be merged or closed; keep its block gated until
-  both clear (CQ-R8 released `scripts/hud.gd`, 3 Nov 2026).
-- **CQ-M6** -- waits for the unmerged Jules S-1 and S-3 branches (which change
-  `scripts/bee.gd` and `scripts/soil_block.gd`) and `claude/dave-hands-on-checks-784f2a`
-  (which changes `scripts/hive_cell.gd`) to be merged or closed (ED-1 and CQ-R16
-  landed 2 Nov 2026); keep its queue block gated until that ownership clears. CQ-R10 also uses `scripts/input_selection.gd`, so take it first.
+- **CQ-M6** -- waits for PN-5 and PN-6 (`plans/now/play-notes.md`) to release
+  `scripts/input_selection.gd`; the Jules S-1 and S-3 branches and
+  `claude/dave-hands-on-checks-784f2a` no longer hold its files (5 Nov 2026).
 
 CQ-S0b shipped 2026-10-25; its specification is `plans/archive/CQ-S0b_2026-10-25.md`.
 
@@ -435,7 +433,7 @@ checks. Stop if the replacement changes a save compatibility decision.
 - Files: `scripts/levels.gd`, `scripts/challenge_runner.gd`, `scripts/saving.gd`, `scripts/save_game.gd`, `scripts/main.gd`, `scripts/debug_panel.gd`, `scripts/challenge_complete.gd`, `scripts/world_building.gd`, `FUNCTION_MAP.md`
 - Check: `python tools/equivalence.py test_scenarios/h4_challenge1_stage_advance_test.json master` and `python tools/equivalence.py test_scenarios/bb4_challenge1_route.json master` report no difference; `python tests/source_checks.py`, `python tools/prefinish.py` and `./tools/verify.ps1` are green
 - Proof: `present: scripts/saving.gd :: if Session.starting_level in [1, 2]:`
-- Next after: CQ-M5b -- the last CanvasLayer readers and the bare-layer source check
+- Next after: CQ-M6 -- name selection green and caste appearance
 ```
 
 CQ-R11 shipped 2026-10-26; its specification is `plans/archive/CQ-R11_2026-10-26.md`.
@@ -451,16 +449,16 @@ CQ-M5a shipped 2026-10-29; its specification is `plans/archive/CQ-M5a_2026-10-29
 `game_panel.gd::setup_layer`'s default read `scripts/canvas_layers.gd`, and
 `tests/source_checks.py` fails any `layer = <integer>` assignment in
 `scripts/` outside `canvas_layers.gd`. Integers unchanged; regenerate
-`FUNCTION_MAP.md`. Re-verify the line numbers and the J-14 outcome when
-claiming. Reasoning: **low**. **Open decisions:** none.
+`FUNCTION_MAP.md`. Re-verify the line numbers when
+claiming (J-14 has gone, 5 Nov 2026). Reasoning: **low**. **Open decisions:** none.
 
-```queue-gated
+```queue
 **[Codex] CQ-M5b -- the last CanvasLayer readers and the bare-layer source check**
 - Plan: `plans/now/code-health.md` -- "CQ-M5b -- the last CanvasLayer readers and the bare-layer source check"
 - Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/game_panel.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
 - Check: `python tests/source_checks.py` passes and fails on a planted `layer = 3` in a scratch copy of `scripts/hud.gd`; `python -m unittest tests.test_layout_regression` and `python tools/prefinish.py` pass
 - Proof: `present: scripts/main.gd :: weather_layer.layer = 5`
-- Next after: CQ-M4 -- gated until the Claude lane releases the save files
+- Next after: SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels
 ```
 
 ## CQ-M6 -- name selection green and caste appearance
@@ -503,7 +501,7 @@ CQ-R8 shipped 2026-11-03; its specification is `plans/archive/CQ-R8_2026-11-03.m
 
 ## CQ-R3 -- bee display text becomes scripts/bee_readout.gd
 
-Level: medium. Gated: the unmerged Jules S-1 and S-3 branches change `bee.gd` (ED-1 landed 2 Nov 2026; HS-2 and SP-6 1 Nov 2026). D1 (Dave chose this split,
+Level: medium. Gated: PN-13 and PN-18 (`plans/now/play-notes-config.md`) change `bee.gd` text and labels first (plan review, 5 Nov 2026). D1 (Dave chose this split,
 18 Oct 2026); the modularity review's MOD-03 lands here instead of a
 `BeeView` child node, which D1's settled list rejects.
 
