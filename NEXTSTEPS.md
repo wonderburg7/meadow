@@ -65,7 +65,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 1. **[Codex] AR-6 -- the pacing report's draft targets in one place, matched to product-scope §3**
    - Plan: `plans/now/alpha-route-evidence.md` -- "AR-6 -- the pacing report's draft targets in one place, matched to product-scope §3"
-   - Files: `tools/pacing_gates.py`, `tests/test_pacing_gates.py`
+   - Files: `tools/pacing_gates.py`, `tests/test_pacing_gates.py`, `tests/test_t2_7_tier_two_prices.py`
    - Check: `python -m unittest tests.test_pacing_gates` passes (first worker 9.0 in band and 9.5 out; automation in band on days 20.0 to 25.0 only; the table prints "<= 9" and "20-25", not "1.50"); `.\tools\verify.ps1` is green
    - Proof: `present: tools/pacing_gates.py :: FIRST_WORKER_BY_DAY = 17.0`
    - Next after: AR-4 -- a scripted Colony Run reaches and records all five gates (gated on PP-10)
