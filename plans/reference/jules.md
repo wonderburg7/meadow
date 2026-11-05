@@ -387,8 +387,12 @@ For Claude, Codex and Dave, not Jules.
   a Jules branch can revert master's queue, plans and hooks (PR 4, PR 5). Fix
   a thin or inaccurate test in the same merge, as J-3, J-8 and J-9 each needed.
   Do all of it in a worktree of its own, never in the primary checkout:
-  `git worktree add .claude/worktrees/jules-J-<n> -b claude/jules-J-<n> origin/master`,
-  check out the files and commit there, then merge that branch into master.
+  `python tools/worktree.py open --name jules-J-<n> --branch claude/jules-J-<n>
+  --lane Jules --scope "<what it integrates>" --owner Claude --plan plans/reference/jules.md`
+  (from the primary checkout; it creates `.worktrees/jules-J-<n>` from
+  `origin/master` and registers it in `plans/workstreams.md` in one commit),
+  check out the files and commit there, merge that branch into master, then
+  `python tools/worktree.py close --name jules-J-<n>`.
   A `git checkout <ref> -- <files>` in the primary checkout stages them on
   master, and the next `tools/slice.ps1 finish` stops on "staged changes"
   (L-37, 25 Oct 2026).

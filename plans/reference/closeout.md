@@ -15,7 +15,11 @@ One `[Claude]`-lane branch and one `[Codex]`-lane branch may be open at once;
 they cannot conflict. Two branches in the same lane means the lane is being
 worked out of order -- finish or abandon the first. `tools/slice.ps1 start`
 adds the `plans/workstreams.md` row from the primary checkout; that file is
-never edited from inside a feature branch. Deliberate overlap (comparing two
+never edited from inside a feature branch. Ad-hoc work (a Jules batch, a
+review, policy work) opens and closes its worktree with `python
+tools/worktree.py open ...` / `close --name <n>`, which registers and removes
+the row in the same commit, so `tools/check_docs.py` never meets a worktree
+Git knows and the ledger does not (the 4 Nov Jules batch did; 5 Nov 2026). Deliberate overlap (comparing two
 approaches) is the one exception: mark both rows `competing` with the
 comparison criterion, and delete the loser's branch/worktree the moment the
 decision is made.

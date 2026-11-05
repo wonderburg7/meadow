@@ -5,7 +5,9 @@
 Edit this file only from the primary checkout (never from inside a feature
 branch/worktree -- parallel branches editing this file will conflict on
 merge). Add a row when a branch/worktree is created; remove it the moment
-that work is integrated and closed out. A docs-only edit merged and pushed
+that work is integrated and closed out (`tools/slice.ps1 start`/`finish`
+for claimed slices; `python tools/worktree.py open`/`close` for ad-hoc work,
+in Python so it runs in cloud sessions too). A docs-only edit merged and pushed
 in the same sitting takes no row (`plans/reference/closeout.md`, "Branches
 follow the lanes"). `tools/check_docs.py` fails
 verification if a row's worktree/branch no longer exists, or if a registered
