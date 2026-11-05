@@ -321,6 +321,41 @@ class SliceDoctorTest(unittest.TestCase):
         self.assertEqual(0, clear.returncode, clear.stdout + clear.stderr)
         self.assertEqual("clear", json.loads(clear.stdout)["status"])
 
+    def test_owner_ignores_a_jules_edit_master_already_has(self):
+        """Jules E-34 was cut before CQ-T3 landed and carried CQ-T3's typed UI
+        scripts byte for byte, so the merge-base diff made it own
+        scripts/hud.gd although merging it would change nothing there
+        (5 Nov 2026). Only what merging would still change is owned."""
+        def git(*args: str) -> str:
+            return subprocess.run(
+                ["git", *args], cwd=self.root, capture_output=True, text=True, check=True
+            ).stdout
+
+        self.write_queue("`absent: scripts/sample.gd :: new_function`")
+        git("add", "NEXTSTEPS.md")
+        git("commit", "-q", "-m", "queue")
+        git("switch", "-q", "-c", "jules/e-34-stale", "master")
+        for path in ("tools/landed_elsewhere.py", "tools/jules_only.py"):
+            (self.root / path).write_text("# same text\n", encoding="utf-8")
+        git("add", "tools/landed_elsewhere.py", "tools/jules_only.py")
+        git("commit", "-q", "-m", "jules edits both")
+        git("push", "-q", "origin", "jules/e-34-stale")
+        git("switch", "-q", "master")
+        (self.root / "tools/landed_elsewhere.py").write_text("# same text\n", encoding="utf-8")
+        git("add", "tools/landed_elsewhere.py")
+        git("commit", "-q", "-m", "the same edit lands by another route")
+        git("push", "-q", "origin", "master")
+        git("branch", "-q", "-D", "jules/e-34-stale")
+
+        result = self.run_owner("tools/landed_elsewhere.py", "tools/jules_only.py")
+
+        self.assertEqual(1, result.returncode, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(
+            [("jules", "origin/jules/e-34-stale", ["tools/jules_only.py"])],
+            [(o["kind"], o["branch"], o["paths"]) for o in report["owners"]],
+        )
+
     def test_doc_check_accepts_a_path_git_ignores_when_it_is_absent(self):
         """L-36: a fresh checkout lacks the gitignored settings.local.json, so a
         doc naming it must not fail check_docs.py as a dead pointer."""

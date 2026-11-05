@@ -626,7 +626,8 @@ def check_queue_items_state_a_level(warnings: list[str]) -> None:
         section = plan_section(plan_text, heading)
         if re.search(r"(?i)Level:(?:\*\*)?\s*(low|medium|high)\b", section):
             continue
-        row = r"(?im)^\|\s*%s\s*\|.*\|\s*(low|medium|high)\s*\|\s*$" % re.escape(slice_id)
+        # The cell may name a model too: "medium / sonnet" (the play-notes plans).
+        row = r"(?im)^\|\s*%s\s*\|.*\|\s*(low|medium|high)\b[^|\n]*\|\s*$" % re.escape(slice_id)
         if re.search(row, plan_text):
             continue
         warnings.append(

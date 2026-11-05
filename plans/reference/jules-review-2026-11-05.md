@@ -1,0 +1,90 @@
+# Jules outstanding-work review — 5 November 2026
+
+Status: reference | Owner: Dave / Codex | Next: integrate ready/selected content in the order below; return the named corrections | Dependency: required Claude review of the existing correction batch | Baseline: 197b1d927caad0c6d7b63cd896dbe7190250c24e | Verified: 2026-11-05
+
+## Result
+
+Every discovered item has a disposition. **Most of the apparent backlog was already checked.** The 3 November review covers 104 Jules PRs through #105, all at unchanged heads. A subsequent pushed batch prepared corrections/selected content for 26 submissions, including new #106/#108/#110/#112/#114, but is still not on master. Claude separately processed #116 and superseded #122 on master. The remaining **22 submissions** are newly reviewed here: **5 ready, 3 selected, 5 returned, 9 superseded**.
+
+This review changes only three shared reference records. No Jules implementation, report file, ledger state, queue, PR status or branch deletion is enacted. “Ready”, “reviewed”, “prepared” and GitHub “closed” do not mean integrated. No unrelated Codex slice is claimed. The review branch is `codex/jules-review-20261105`; the existing integration branch/worktree and all other work are preserved.
+
+Full task/PR links, branch names, exact reviewed SHAs, previous status, verdict and next action for **all 133 Jules PRs**, plus the shared correction branch, are in [the coverage table](jules-coverage-2026-11-05.md). Finding-by-finding evidence and retained contracts are [filed separately](jules-review-followups-2026-11-05.md).
+
+| Group | Coverage / actual state | Next action |
+| --- | --- | --- |
+| Earlier 83 PRs through #84, excluding CI #2 | Previously processed, unchanged tips. Actual selected delivery is established by the 29/30 Oct and 2 Nov records, not ancestry alone. Older returns now have named corrected replacements or explicit rejection/supersession. | Keep closed sources closed; preserve existing qualified delivery and D1–D3. |
+| Prepared 26 submissions | #85–#106 plus #108/#110/#112/#114: 5 ready source contributions, 15 corrected/qualified selections, 6 exclusions/supersessions. Prepared only. | Claude reviews corrected branch `80c105193984e08d74d01f20eb5131689aea8637` and reconciles the current ledger conflict. |
+| Separately processed #116/#122 | #116 report blob matches master, with Claude’s bounded processing record; #122 has an explicit superseding full-review ledger entry. Both PRs closed. | No repeat integration. |
+| Newly ready #124/#128/#129/#131/#132 | Named helper-test changes pass at their exact tips and against current master. | Integrate only named test content; exclude inherited policy paths. |
+| Newly selected #107/#118/#127 | Navigation evidence, bounded UI observations, incremental warning-test cases respectively. | Apply qualifications in the follow-up contract, retaining existing stronger tests and current records. |
+| Newly returned #109/#126/#130/#133/#134 | Failed evidence/scope or independent guard counterexamples below. | Correct only report/tool/test scope; no gameplay/save/balance changes. |
+| Newly superseded #111/#113/#115/#117/#119/#120/#121/#123/#125 | Repeated proposals; rejected unique claims are disposed of in the follow-up contract. | Close as superseded during processing, preserving their original published sequence trailers. No feature is marked delivered. |
+
+## Starting point and reconciliation
+
+Read AGENTS.md, docs/agent-rules.md and CHATGPT.md first, then Keeping this list, efficiency/report processing guidance, the 2 November review/integration, the 3 November review, and the later [prepared batch record](https://github.com/wonderburg7/meadow/blob/80c105193984e08d74d01f20eb5131689aea8637/plans/reference/jules-integration-2026-11-04.md). Current master also contains #116’s gameplay processing (`8dc78d3`) and #122’s supersession (`df903b6`). No date cutoff was applied.
+
+Two GitHub inventories cover **all 134 repository PRs, numbered 1–134**, including **47 open, 87 closed, zero drafts**; #2 is CI work, leaving 133 Jules PRs. Metadata and review/discussion results were retrieved for every Jules PR. All 133 review lists are empty; discussions contain only Jules greetings. There is no old GitHub approval to carry to a newer tip. Every origin/jules branch has a matching PR; no orphan was found. All 104 previously reviewed heads match the recorded full SHA; all 26 prepared-source heads match their preparation record. Final open-PR head/state/draft inventory and refreshed remote master are unchanged.
+
+`python tools/jules_preflight.py --ledger` completed after using the installed Python interpreter instead of the inaccessible WindowsApps alias: **47 unreviewed, 9 returned** remote branches. This is not 47 unexamined submissions: master lacks the prepared batch’s ledger rows, and the tool has no “reviewed, awaiting integration” state. This report supplies the exact review boundary without falsely marking rows merged. Do not repeat an unchanged review merely because that CLI label persists.
+
+Complete merge-base diffs and per-file blobs against master and the prepared batch were saved for all PRs. #109 carries one off-scope workstreams snapshot; #121 carries five off-scope paths including already processed #116 material; #134 carries **27 off-scope paths** alongside its report. #130/#132/#133 additionally inherit three policy paths whose blobs already match master: those are already delivered non-Jules changes, not new Jules policy work. Older #91/#105 exclusions remain as recorded. New numbered/report scope checks and manual standing-task allowlists are distinguished below.
+
+## Actionable findings, ordered by severity
+
+### F1 — P1 integration risk: never import complete snapshots
+
+#134 is an efficiency report with a 28-file complete diff. Its current `scripts/ui_theme.gd` blob predates [master’s PN-1 font-height work at font_px:417](https://github.com/wonderburg7/meadow/blob/197b1d927caad0c6d7b63cd896dbe7190250c24e/scripts/ui_theme.gd#L417): checking out all changed files would overwrite that improvement. Other paths copy CQ-T3 source/coordination work, mostly already present; their presence is not new Jules delivery. #121’s gameplay records and #109’s active-workstream row are likewise outside their task files. Scope checks exit 1 for all three. The complete-diff file lists and exact SHAs are in the coverage table and evidence directory. Take only the named report after correction; preserve master’s queue, ledger, source and workstreams. This is an integration hazard, not evidence that master is currently regressed.
+
+### F2 — P2: #133’s indoor guard accepts broken control flow
+
+[tools/indoor_flower_check.py:114](https://github.com/wonderburg7/meadow/blob/0c8ca494e1af7890713a4dde6b619491f7897090/tools/indoor_flower_check.py#L114) checks helper tokens in raw text; [tools/indoor_flower_check.py:137](https://github.com/wonderburg7/meadow/blob/0c8ca494e1af7890713a4dde6b619491f7897090/tools/indoor_flower_check.py#L137) checks only the first if line, not the early return. Independent actual-source string mutations replacing both guarded returns with `pass`, making `_walk_out_if_indoors` return false indoors, and adding an unguarded final SEEK_FLOWER assignment in set_focus **all return an empty problem list**. These allow indoor foraging to continue or override a safe transition, recreating the coordinate-space pitfall. Its 12 supplied tests pass, but do not prove its advertised invariant. Return the two-file guard for executable, enclosing-control-flow tests; retain autonomous_state and player-driven semantics.
+
+### F3 — P2: #130’s goal guard treats inert strings as conditions
+
+[tools/goal_default_check.py:39](https://github.com/wonderburg7/meadow/blob/0462f3f141320d7e94efec231c085a7b214d4511/tools/goal_default_check.py#L39) and [tools/goal_default_check.py:92](https://github.com/wonderburg7/meadow/blob/0462f3f141320d7e94efec231c085a7b214d4511/tools/goal_default_check.py#L92) search unparsed dictionary text. A bad designation condition using the valid single-quoted cell_count key passes. A note string containing an explicit-true fragment makes an actual explicit-false condition pass; conversely an ordinary hint string containing a bad-looking dictionary raises an error. All are reproduced in-memory. The nine tests pass, including the test named comments_and_strings_ignored, which only exercises a comment. Return for dictionary/string-aware handling, real-stage mutation proof and preserved line locations. This is tooling failure, not a request to change challenge goals.
+
+### F4 — P2: #109/#123 propose an already-existing golden check and overstate schema proof
+
+Current [tests/test_save_roundtrip.py:76](https://github.com/wonderburg7/meadow/blob/197b1d927caad0c6d7b63cd896dbe7190250c24e/tests/test_save_roundtrip.py#L76), GoldenContentsTest.test_every_golden_is_the_current_format, parses each golden and checks its version; the module docstring already separates static contents from Godot round trips. Both reports describe missing offline validation and propose it again. A generic syntactic get/default check also cannot guarantee the right old-save gameplay meaning, or turn the existing additive-field exception into an unconditional no-version-bump rule. Return #109’s report with a bounded, additional contract and negative fixture; close the repeated #123 attempt as superseded. No save implementation or golden recapture is authorised.
+
+### F5 — P2 report evidence: #134’s handoff checker has no demonstrated failing case
+
+The registration requirement in review-contract rule 4 is real; [tools/check_docs.py:1512](https://github.com/wonderburg7/meadow/blob/197b1d927caad0c6d7b63cd896dbe7190250c24e/tools/check_docs.py#L1512), check_review_records, checks disposition tables, not signal cross-references. However #113/#134 name no actual unregistered handoff despite claiming multiple incidents. Their model-maintenance claims have no incident/source evidence and target the archived agent-lifecycle plan. Return #134 with a named record/signal mismatch, runnable failing fixture, current destination and truthful model provenance; supersede #113. Do not silently perform the report’s missing investigation or assign a new checker on that evidence alone.
+
+### F6 — P2 specification risk: #126’s proposed verb validator is incomplete
+
+Current [scenario_actions.gd::_execute:264](https://github.com/wonderburg7/meadow/blob/197b1d927caad0c6d7b63cd896dbe7190250c24e/scripts/scenario_actions.gd#L264) dispatches 32 ordinary verbs; [process:85](https://github.com/wonderburg7/meadow/blob/197b1d927caad0c6d7b63cd896dbe7190250c24e/scripts/scenario_actions.gd#L85) separately handles `assert`, `wait` and `settle`. A static validator derived only from _execute match arms, as proposed, would reject those valid sequence-point actions. The current top-level JSON inventory uses 34 distinct verbs, all in the 35 recognised verbs; no present typo is demonstrated. Proposed comment/disabled/mock allowances are not established schema contracts. Return the report for exact action-schema coverage and supported negative fixtures before assigning its tool. Preserve runtime rejection reporting and sequence semantics.
+
+### F7 — P3: repeated reports inflate the apparent backlog and test work
+
+E16/E28 repeat navigation proposals; E20/E32 repeat bounded prefinish selection and failure-summary proposals; E24 repeats E4/E12; E26 repeats E14. All savings are estimates, not measured agent-context savings. prefinish currently returns no selected tests for bee/main/skills, but an arbitrary first-eight fallback does not establish relevance. Runner failure blocks are under print_lock in run_all; run_pool does not exist. test_func.py is not an existing test module. #127’s six tests overlap integrated #7 except its orphan-warning/dot-backslash additions. Retain the qualified proposals/cases once, with each rejected unique claim’s reason in the follow-up contract.
+
+## Prepared batch and remaining unresolved work
+
+The existing branch `80c105193984e08d74d01f20eb5131689aea8637` contains 32 files with no production GDScript diff: corrected offline guards/tests, qualified audits/review records, reference contracts and ledger preparation. Read its complete changed-file list, corrected guard logic, report qualifications and preparation evidence. Its **103 focused tests pass again** in the disposable checkout; its documentation check passes with historical warnings. This supports its bounded corrections; it does not make its raw source PRs acceptable wholesale or prove every possible GDScript program.
+
+`git merge-tree --write-tree origin/master origin/codex/jules-integrate-20261104` exits 1 with **one conflict, plans/reference/jules-ledger.md**. Current master contains later Claude dispositions; the branch carries prepared rows. No worktree or ref was changed by this dry merge. Claude’s required high-risk full-diff review remains outstanding under CHATGPT.md because the batch is large, now also with a merge conflict. Preserve both sets of accurate rows, mark only actually delivered selections merged at real integration, and retain rejected/superseded outcomes and all original sequence trailers.
+
+The coordinate audit’s broad inventory remains explicitly low-confidence where parents/flow are untraced. Existing parentless/nuptial fallback questions and malformed start-coordinate save observation remain reproduction-gated in their owning records/plans. No newly verified runtime defect follows from those observations. L-39/L-40 are shipped; do not reopen their archived plan for these proposals. RR-12 remains gated on ED-3. D1/D2/D3 are already settled and remain unchanged. **No new decision is required from Dave.** The missing external original text for #1 is the only historical source still unverified; its unchanged empty tip has no new change to assess.
+
+## Checks and limitations
+
+- Refreshed remote refs twice; reconciled every PR, branch tip, prior reviewed tip, complete diff and current/master/prepared content. All 133 PR metadata/review/comment responses succeeded. Repeated GitHub inventory found no changes; master remained 197b1d9.
+- Ran the requested ledger command. Ran --scope with explicit immutable refs for all 14 newly processed reports: #109/#121/#134 fail for their off-scope paths; the other 11 pass. S-1/S-3 do not resolve as numbered scope IDs, so checked their full file lists against standing-task rules manually. No scope claim in a PR body was treated as proof.
+- **73 focused tests in eight submitted suites pass at exact tips, then the same 73 pass against current master** with only their named test/tool files temporarily applied in the disposable checkout: #124 9, #127 6, #128 8, #129 12, #130 9, #131 12, #132 5, #133 12. No skips. #131 includes eight existing methods/four additions. Invocation: Python -m unittest discover -s tests -p <exact filename> -v.
+- Both new guard CLIs pass at tip and against master. Their source checks pass for 109 scripts; all 15 balance checks pass. Independent F2/F3 mutations operate on strings, not edited GDScript. Passing test counts do not override those counterexamples.
+- Prepared branch: a fresh combined **103-test** rerun and documentation check pass. The earlier full verify record remains historical evidence: boot/lint/source/balance/selected-unit stages passed, initial doc gate failed for registration, later doc rerun passed. No claim that its original full command exited zero.
+- Final review-branch tools/check_docs.py exits 0 with existing warnings only. The review changes Markdown only. **Not rerun:** full game/lifecycle suites, Godot boot, real-engine mutation execution, scenario sweeps, visual play, save round trips, performance profiles or the PRs’ claimed complete unit runs. No new game/save/balance implementation is proposed. Linux is unavailable; Windows results only.
+- Initial sandbox attempts were interrupted by blocked Git telemetry/Python alias access; completed external-sandbox reruns and saved logs are the evidence used. No interrupted run is counted as a pass.
+
+Local reproducible evidence is under `C:/Users/dl13860/Documents/Meadow/jules-review-evidence-20261105/`: complete per-PR diffs, inventories, metadata/reviews/comments, per-tip logs, checks.json, probes.json, report-checks.json, batch-checks.json and the corresponding Python harnesses. The essential counterexamples and full reviewed SHAs are in these committed records. Disposable checkouts are removed after clean-status checks; retained harnesses name their original checkout paths and need that path recreated before rerunning.
+
+## Recommended integration order
+
+1. Claude reviews the existing corrected batch once, resolves only its ledger conflict against current master, verifies the reconciled documentation and integrates/pushes that batch. Use its qualified replacements; do not cherry-pick raw returned guards or snapshots. Retain current architecture/gameplay records and D1–D3. Record actual delivery only then.
+2. On a fresh master-based batch, take #124/#128/#129/#132 test files and #131’s incremental methods; fold #127’s incremental cases into the existing warning suite. Preserve newer master tests and exclude copied policy paths. Run focused/combined verification once, then record real delivery and close their source PRs.
+3. Process #107/#118’s selected report evidence once using the durable follow-up contracts and current owners; retain the audited commit/coverage limits in any rota record. Close repeated reports with explicit supersession and original sequences. No new broad sweep is needed.
+4. Return #109/#126/#130/#133/#134 with F1–F6’s exact correction evidence. Wait for new tips or new causal evidence before reviewing those attempts again. No balance tuning, save schema change, per-bee optimisation, validity-guard removal or profiling removal is authorised by this review.
+
+Priority change: none. No queue or existing branch is changed by this review.

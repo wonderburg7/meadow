@@ -1,7 +1,7 @@
 # Alpha Route Evidence -- measure the promised five gates without inventing player understanding
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: AR-6 -- the pacing report's draft targets in one table, matched to product-scope §3 (product review D2 and D5, 5 Nov 2026); then AR-4 -- a scripted Colony Run reaches and records all five gates; it waits for PP-10 (`plans/now/pollination.md`), which prices the gyne route after EV-0 re-sets the calendar (AR-5 shipped 21 Oct 2026) | Dependency: AR-1 → AR-2 → AR-3 → AR-5 built; AR-4 follows PN-11 and EV-0b, then EV-0 and PP-10; AR-6 is startable now | Verified: 2026-11-05
+Status: active | Owner: Dave / Codex | Next: AR-6 -- the pacing report's draft targets in one table, matched to product-scope §3 (product review D2 and D5, 5 Nov 2026); then AR-4 -- a scripted Colony Run reaches and records all five gates; it waits for PP-10 (`plans/now/pollination.md`), which prices the gyne route after EV-0 re-sets the calendar (AR-5 shipped 21 Oct 2026) | Dependency: AR-1 → AR-2 → AR-3 → AR-5 built; AR-4 follows PN-11 → EV-0 → PP-10; AR-6 is startable now | Verified: 2026-11-05
 
 ## Objective
 
@@ -127,6 +127,8 @@ reads `rows[3]["target_day"]`); the `target_day()` function; the winter and
 Gyne-rearing verdicts; the line `Not instrumented: 20m forage/weather crisis;
 90m gyne release.` (AR-4's Proof reads it); any `GameConfig` or `skills.gd`
 value. No pacing run: a draft target needs no sweep (§3).
+
+**Open decisions:** none.
 
 ```queue
 **[Codex] AR-6 -- the pacing report's draft targets in one place, matched to product-scope §3**

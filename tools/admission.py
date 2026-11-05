@@ -9,9 +9,14 @@ An item is `admissible` only when all four tests pass, else `blocked: <reason>`:
 
 1. every dependency it names is archived or merged (a dependency is an id in
    its `## Not in the queue, and why` bullet or its plan section's `**Gate.**`
-   paragraph, unless that clause says it landed or shipped);
+   paragraph, unless that clause says it landed or shipped). A Jules task id
+   ("the Jules S-1 and S-3 branches") never lands as a slice: it waits only
+   while an open `origin/jules/<id>-*` branch changes one of the item's files;
 2. no file in `Files:` is in the other lane, or in an unmerged branch -- local
-   branches, and the open `origin/jules/*` branches `slice.ps1 owner` fetches;
+   branches, and the open `origin/jules/*` branches `slice.ps1 owner` fetches.
+   A branch changes a path only when its tip differs from master's there: one
+   cut before master took the same edit by another route shows that edit in
+   its merge-base diff, yet merging it would change nothing;
 3. its plan section's `**Open decisions:**` line is `none` (a missing line is a
    warning, so plans written before L-33 still pass);
 4. every path in `Files:` exists, or sits in a folder that does so (a missing
@@ -58,6 +63,9 @@ PLAN_LINE = re.compile(r"^\s*-\s*Plan:\s*`([^`]+)`(?:\s*--\s*\"(.+?)\")?", re.MU
 OPEN_DECISIONS = re.compile(r"\*\*Open decisions:?\*\*:?\s*(.*)")
 GATE_PARAGRAPH = re.compile(r"^\*\*Gate\.\*\*([\s\S]*?)(?=^\s*$|\Z)", re.MULTILINE)
 LANDED = re.compile(r"\b(?:landed|shipped)\b", re.IGNORECASE)
+# "the unmerged Jules E-14, E-34 and S-3 marker-reparent branches": the ids
+# after "Jules" are Jules tasks, whose branches are `jules/<id lower>-<topic>`.
+JULES_REF = re.compile(r"\bJules\s+(?P<ids>[A-Z]-\d+(?:\s*(?:,|\band\b|\bor\b)\s*[A-Z]-\d+)*)")
 
 
 @dataclass
@@ -158,10 +166,23 @@ def plan_section(root: Path, plan: str, heading: str) -> str:
     return body[start.start():start.end() + end.start()] if end else body[start.start():]
 
 
+def gate_clauses(text: str, item: Item, section: str) -> list[str]:
+    clauses = [deferral_reason(text, item.slice_id)]
+    return clauses + [match.group(1) for match in GATE_PARAGRAPH.finditer(section)]
+
+
+def jules_ids(text: str, item: Item, section: str) -> set[str]:
+    """The ids its gate names as Jules tasks rather than slices."""
+    found: set[str] = set()
+    for clause in gate_clauses(text, item, section):
+        for match in JULES_REF.finditer(clause):
+            found.update(SLICE_ID.findall(match.group("ids")))
+    return found
+
+
 def dependency_ids(text: str, item: Item, section: str) -> list[str]:
     """Ids this item waits for, minus those whose clause says they landed."""
-    clauses = [deferral_reason(text, item.slice_id)]
-    clauses += [match.group(1) for match in GATE_PARAGRAPH.finditer(section)]
+    clauses = gate_clauses(text, item, section)
     found: list[str] = []
     for clause in clauses:
         for match in SLICE_ID.finditer(clause):
@@ -199,6 +220,25 @@ def merged_ids(root: Path) -> set[str]:
         root, "branch", "--merged", "master", "--format=%(refname:short)")}
 
 
+def branch_changes(root: Path, base: str, branch: str) -> set[str]:
+    """Paths `branch` changed since it left `base` that would still change on merging.
+
+    The merge-base diff alone also lists edits master has since taken by
+    another route: Jules E-34, cut before CQ-T3 landed, carried CQ-T3's 18
+    typed UI scripts byte for byte and so held `scripts/hud.gd` and
+    `tests/source_checks.py` against every slice that named them (5 Nov 2026)."""
+    since_fork = set(git_lines(root, "diff", "--name-only", f"{base}...{branch}"))
+    if not since_fork:
+        return since_fork
+    return since_fork & set(git_lines(root, "diff", "--name-only", base, branch))
+
+
+def jules_branches(root: Path, task: str) -> list[str]:
+    """Open `origin/jules/<task>-*` branches, judged against origin/master."""
+    return git_lines(root, "branch", "-r", "--no-merged", "origin/master", "--list",
+                     f"origin/jules/{task.lower()}-*", "--format=%(refname:short)")
+
+
 def unmerged_branch_files(root: Path, skip: set[str]) -> dict[str, set[str]]:
     """Files changed by every unmerged local branch and open origin/jules/* branch."""
     changed: dict[str, set[str]] = {}
@@ -211,7 +251,7 @@ def unmerged_branch_files(root: Path, skip: set[str]) -> dict[str, set[str]]:
         for branch in git_lines(root, *args):
             if branch in skip or branch.rsplit("/", 1)[-1] in skip:
                 continue
-            changed[branch] = set(git_lines(root, "diff", "--name-only", f"{base}...{branch}"))
+            changed[branch] = branch_changes(root, base, branch)
     return changed
 
 
@@ -222,7 +262,16 @@ def check_item(text: str, root: Path, item: Item, *, branches: dict[str, set[str
     plan, heading = item.plan
     section = plan_section(root, plan, heading)
 
+    jules = jules_ids(text, item, section)
     for dep in dependency_ids(text, item, section):
+        if dep in jules:
+            # With `branches`, the scan below already names any open Jules
+            # branch that still changes one of the files.
+            for branch in jules_branches(root, dep) if branches is None else []:
+                shared = shared_paths(item.files, branch_changes(root, "origin/master", branch))
+                if shared:
+                    verdict.reasons.append(f"Jules {dep}'s open branch {branch} changes {', '.join(shared)}")
+            continue
         if not is_landed(root, dep, merged or set()):
             verdict.reasons.append(f"waits for {dep}, which has not landed")
 

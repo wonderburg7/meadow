@@ -30,33 +30,33 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
    - Proof: `present: scripts/game_config.gd :: var first_crisis_window_open: float = 1080.0`
    - Next after: EV-0 -- one Calendar and events settings group, and winter a week later
 
-2. **[Claude] EV-0b -- one calendar: day numbers and the season's fraction from one place**
-   - Plan: `plans/now/event-director.md` -- "EV-0b -- one calendar: day numbers and the season's fraction from one place"
-   - Files: `scripts/run_calendar.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/world_building.gd`, `tests/ev0b_run_calendar_test.gd`, `tests/test_ev0b_run_calendar.py`
-   - Check: `python -m unittest tests.test_ev0b_run_calendar` passes (`RunCalendar.season_fraction_at` matches the old formula at day 1, mid-season, the last season day, mid-winter and the next spring for 30- and 35-day seasons, winter on and off; no `sim_time` / `seconds_per_day` arithmetic is left in `flower.gd`, `flower_species.gd` or `world_building.gd`); `python -m unittest tests.test_pp4_seed_set tests.test_sf1_founding_flower_mix` still passes; `.\tools\verify.ps1` is green
-   - Proof: `present: scripts/flower_species.gd :: This duplicates Flower.season_fraction()`
-   - Next after: EV-0 -- one Calendar and events settings group, and winter a week later
-
-3. **[Claude] ED-2 -- a run's difficulty, saved**
+2. **[Claude] ED-2 -- a run's difficulty, saved**
    - Plan: `plans/now/difficulty.md` -- "ED-2 -- a run's difficulty, saved"
    - Files: `scripts/session.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed2_difficulty_save_test.gd`, `tests/test_ed2_difficulty_save.py`
    - Check: `python -m unittest tests.test_ed2_difficulty_save` passes (a new run is Standard; Easy set by a headless scenario survives save and restore; a save without the key loads as Standard; the CQ-S0 round-trip goldens are re-captured with the new field); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/session.gd :: difficulty`
    - Next after: ED-2b -- Easy's rules
 
-4. **[Claude] PN-2 -- rename a save in the saves list**
+3. **[Claude] PN-2 -- rename a save in the saves list**
    - Plan: `plans/now/play-notes.md` -- "PN-2 -- rename a save in the saves list"
    - Files: `scripts/saves_panel.gd`, `scripts/save_slots.gd`, `tests/pn2_save_rename_test.gd`, `tests/test_pn2_save_rename.py`
    - Check: `python -m unittest tests.test_pn2_save_rename` passes (rename updates the index name only, survives a reload, refuses empty and duplicate names); `.\tools\verify.ps1` is green. Hands-on: rename a save, quit, restart; the new name shows and it loads
    - Proof: `absent: scripts/save_slots.gd :: func rename(`
    - Next after: PN-3 -- a save remembers whether Goals was open
 
-5. **[Claude] PN-3 -- a save remembers whether Goals was open**
+4. **[Claude] PN-3 -- a save remembers whether Goals was open**
    - Plan: `plans/now/play-notes.md` -- "PN-3 -- a save remembers whether Goals was open"
    - Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/session.gd`, `tests/test_gp1_goals_dropdown.py`, `tests/gp1_goals_dropdown_test.gd`
    - Check: `python -m unittest tests.test_gp1_goals_dropdown` passes with a save round trip of the Goals state and an old save with no key loading as shown; `.\tools\verify.ps1` is green. Hands-on: close Goals, save, load; it is closed (re-run C-150)
    - Proof: `absent: scripts/save_game.gd :: goals_collapsed`
    - Next after: PN-4 -- the queen finishes a cell she was told to build
+
+5. **[Claude] PN-4 -- the queen finishes a cell she was told to build**
+   - Plan: `plans/now/play-notes.md` -- "PN-4 -- the queen finishes a cell she was told to build"
+   - Files: `scripts/bee_survival.gd`, `scripts/orders_zones.gd`, `scripts/bee_building.gd`, `test_scenarios/pn4_queen_build_after_meal.json`, `test_scenarios/pn4_queen_build_from_meadow.json`, `tests/test_pn4_queen_build.py`
+   - Check: `python -m unittest tests.test_pn4_queen_build` passes (both scenarios fail before the fix and finish the cell after it); `python -m unittest tests.test_rr1_queen_builds` still passes; `.\tools\verify.ps1` is green. Hands-on: a Forager queen ordered to build finishes the cell after eating; one ordered from the meadow walks in and builds
+   - Proof: `absent: scripts/orders_zones.gd :: ordered_site`
+   - Next after: PN-5 -- a cell or soil block is clicked by its top face
 
 ### Codex lane
 
@@ -77,59 +77,62 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
    - Proof: `present: scripts/main.gd :: weather_layer.layer = 5`
    - Next after: SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels
 
-3. **[Codex] SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels**
-   - Plan: `plans/now/sprites.md` -- "SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels"
-   - Files: `scripts/input_selection.gd`, `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, `test_scenarios/sp_outline_rim.json`, `tests/test_sp_outline_rim.py`, `tests/sp11_cell_rim_test.gd`, `tests/test_sp11_cell_rim.py`
-   - Check: `python -m unittest tests.test_sp_outline_rim` passes (the `cell_outline_matches_sprite` assertion holds for the selection ring and the tile outline within 1.5 px, and fails when the outline is moved 10 px); `python -m unittest tests.test_sp11_cell_rim` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-   - Proof: `absent: scripts/scenario_actions.gd :: cell_outline_matches_sprite`
-   - Next after: PN-7 -- cell popup and selection text batch
+3. **[Codex] CQ-M6 -- name selection green and caste appearance**
+   - Plan: `plans/now/code-health.md` -- "CQ-M6 -- name selection green and caste appearance"
+   - Files: `scripts/world_draw.gd`, `scripts/bee.gd`, `scripts/death_marker.gd`, `scripts/flower.gd`, `scripts/obstacle.gd`, `scripts/soil_block.gd`, `FUNCTION_MAP.md`
+   - Check: `python -m unittest tests.test_sp9_soil_art tests.test_col9_drones` and `python tools/prefinish.py` pass; rendered selection alphas and caste sizes remain unchanged
+   - Proof: `present: scripts/obstacle.gd :: selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)`
+   - Next after: CQ-M6b -- the cell ring and the selection layer read the selection green
 
-4. **[Codex] PN-7 -- cell popup and selection text batch**
-   - Plan: `plans/now/play-notes-hud.md` -- "PN-7 -- cell popup and selection text batch"
-   - Files: `scripts/hud.gd`, `tests/display_text_golden_test.gd`, `tests/test_pn7_cell_popup.py`
-   - Check: `python -m unittest tests.test_pn7_cell_popup` passes (labels, the sour-nectar gate, Keep empty in the Reserve row, warning dwell at 4x); the display-text golden test is regenerated; `.\tools\verify.ps1` is green. Hands-on: the cell popup reads as above and a warning at 4x lasts about 18 seconds
-   - Proof: `present: scripts/hud.gd :: does not die of old age`
-   - Next after: PN-14 -- text no longer shrinks when unpausing
+4. **[Codex] PN-18 -- the queen discards sour nectar when told to empty a cell**
+   - Plan: `plans/now/play-notes-config.md` -- "PN-18 -- the queen discards sour nectar when told to empty a cell"
+   - Files: `scripts/bee.gd`, `test_scenarios/pn18_queen_empties_sour.json`, `tests/test_pn18_queen_empties_sour.py`
+   - Check: `python -m unittest tests.test_pn18_queen_empties_sour` passes (lone queen, sour cell, no Cleaning: the cell ends empty and the nectar is discarded); `.\tools\verify.ps1` is green. Hands-on: the queen empties a sour cell on command
+   - Proof: `absent: scripts/bee.gd :: PN-18`
+   - Next after: PN-19 -- the soil block's selection ring closes
 
-5. **[Codex] PN-14 -- text no longer shrinks when unpausing**
-   - Plan: `plans/now/play-notes-hud.md` -- "PN-14 -- text no longer shrinks when unpausing"
-   - Files: `scripts/hud.gd`, `scripts/camera_view.gd`, `tests/pn14_pause_font_test.gd`, `tests/test_pn14_pause_font.py`
-   - Check: `python -m unittest tests.test_pn14_pause_font` passes (HUD label font sizes equal before pause and after unpause; failing before the fix); `.\tools\verify.ps1` is green. Hands-on: Space to pause and resume leaves text size alone
-   - Proof: `absent: scripts/hud.gd :: PN-14`
-   - Next after: PN-15 -- a day dial beside "Day N"
+5. **[Codex] PN-19 -- the soil block's selection ring closes**
+   - Plan: `plans/now/play-notes-config.md` -- "PN-19 -- the soil block's selection ring closes"
+   - Files: `scripts/soil_block.gd`, `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`
+   - Check: `python -m unittest tests.test_sp10_soil_depth tests.test_sp9_soil_art` pass with an assertion that the ring is closed; `.\tools\verify.ps1` is green. Hands-on: a selected soil block's outline has no gap
+   - Proof: `present: scripts/soil_block.gd :: selection_ring.add_point(ring_points[0])`
+   - Next after: none -- `plans/now/play-notes-config.md` is complete
 
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **PN-4** (`plans/now/play-notes.md`) -- startable, but the Claude lane is full.
 - **PN-5** (`plans/now/play-notes.md`) -- startable, but the Claude lane is full.
 - **PN-6** (`plans/now/play-notes.md`) -- startable, but the Claude lane is full.
 - **PN-9** (`plans/now/play-notes-config.md`) -- startable, but the Claude lane is full.
 - **PN-12** (`plans/now/play-notes-config.md`) -- startable, but the Claude lane is full.
-- **PN-13** (`plans/now/play-notes-config.md`) -- startable, but the Claude lane is full.
-- **PN-18** (`plans/now/play-notes-config.md`) -- startable, but the Claude lane is full.
-- **PN-19** (`plans/now/play-notes-config.md`) -- startable, but the Claude lane is full.
+- **PN-13** (`plans/now/play-notes-config.md`) -- bee labels switch and a calmer queen flight; waits for the Codex lane's PN-18 and CQ-M6 to release `scripts/bee.gd`.
+- **SP-12** (`plans/now/sprites.md`) -- startable, but the Codex lane is full.
+- **PN-7** (`plans/now/play-notes-hud.md`) -- startable, but the Codex lane is full.
+- **PN-14** (`plans/now/play-notes-hud.md`) -- startable, but the Codex lane is full.
 - **PN-15** (`plans/now/play-notes-hud.md`) -- startable, but the Codex lane is full.
-- **EV-0** (`plans/now/event-director.md`) -- one Calendar and events settings group and a 35-day season (winter on day 36); waits for PN-11, whose crisis window it converts to days, and EV-0b, whose `RunCalendar` it extends.
+- **CQ-R3** (`plans/now/code-health.md`) -- startable, but the Codex lane is full.
+- **EV-0** (`plans/now/event-director.md`) -- one Calendar and events settings group, a new `RunCalendar` and a 35-day season (winter on day 36); waits for PN-11, whose crisis window it converts to days.
+- **EV-0b** (`plans/now/event-director.md`) -- the flowers read EV-0's calendar; waits for EV-0, and for CQ-M6 (Codex lane), which edits `scripts/flower.gd`.
 - **PP-10** (`plans/now/pollination.md`) -- the gyne route keeps its order on the new calendar; waits for EV-0, so the route is checked once, on the new calendar (Dave, 1 Nov 2026).
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for PP-10, which checks the gyne route's order on EV-0's calendar.
 - **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-10 (`plans/now/pollination.md`), which shares `scripts/skills.gd`.
 - **ED-2b** (`plans/now/difficulty.md`) -- Easy's rules: health floors at one, the queen cannot die, brood waits, winter spares; waits for ED-2, which adds the difficulty they read.
 - **ED-3** (`plans/now/difficulty.md`) -- choosing Easy at run start; waits for ED-2b.
 - **CQ-R2** (`plans/now/code-health.md`) -- the first crisis moves out of `scripts/main.gd` into a new event_director.gd (in `scripts/`) as the shared event cycle's first record (`plans/design/event-director.md` decisions 2 and 15), touching the save files; waits for ED-3 alone (Dave, 5 Nov 2026), and its plan section is written as ED-3 nears.
-- **The event director's events** (`plans/now/event-director.md`, EV-1 onward) -- designed 1 Nov 2026 (`plans/design/event-director.md`); wait for CQ-R2, which creates event_director.gd (in `scripts/`), and are specified then.
+- **EV-1 onward** (`plans/now/event-director.md`) -- the event director's events, designed 1 Nov 2026 (`plans/design/event-director.md`); wait for CQ-R2, which creates event_director.gd (in `scripts/`), and are specified then.
 - **RR-12** (`plans/now/run-repairs.md`) -- a loaded run keeps its readout history (Dave, 16 Oct 2026); waits for CQ-R2 (Dave, 5 Nov 2026), which shares `scripts/main.gd` and the save files.
 - **SP-8a** (`plans/now/meadow-terrain.md`) -- the meadow floor drawn in blocks, with everything on it lifted; waits for CQ-R2, which follows ED-3, the end of the alpha chain (Dave, 16 Oct and 5 Nov 2026), and shares `scripts/main.gd` and the save files.
 - **SP-8b** (`plans/now/meadow-terrain.md`) -- height's effects: flight cost, where flowers grow, scouting reach; waits for SP-8a and AR-4, and is cut then.
 - **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices ED-2, ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); CQ-S0's round-trip harness landed 22 Oct 2026.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
 - **CQ-R13** (`plans/now/code-health.md`) -- `main.gd::_ready` into build steps; waits for CQ-R2, which shares `scripts/main.gd`, and then needs its slice specification.
-- **CQ-R3** (`plans/now/code-health.md`) -- bee display text moves into a new bee_readout.gd; waits for PN-13 and PN-18 (`plans/now/play-notes-config.md`), which change the `scripts/bee.gd` text and labels it moves.
-- **CQ-T4** (`plans/now/code-health.md`) -- the remaining scripts and tests typed and `untyped_declaration` made an error; waits for PN-8 and PN-14 (Codex lane), which edit `scripts/colony_panel.gd` and `scripts/camera_view.gd` among its 56 files.
+- **CQ-R4** (`plans/now/code-health.md`) -- `bee.gd::_process` into four helpers, profiled (high); needs its section and block, written by the session that claims CQ-R3 (HP-3 landed 18 Oct 2026).
+- **CQ-T4** (`plans/now/code-health.md`) -- the remaining scripts and tests typed and `untyped_declaration` made an error; waits for the Codex lane's CQ-M5b, CQ-M6, PN-19, PN-8 and PN-14, which hold five of its files.
+- **CQ-L3** (`plans/now/code-health.md`) -- one-off `gdformat` over every `.gd` file, then `--check` joins verify; waits for both lanes to empty.
 - **CQ-M4** (`plans/now/code-health.md`) -- name Challenge level ids; waits for the Claude lane to release `scripts/save_game.gd` and `scripts/saving.gd`.
-- **CQ-M6** (`plans/now/code-health.md`) -- selection green and caste appearance named; waits for PN-5 and PN-6 (Claude lane) to release `scripts/input_selection.gd`.
-- **CQ-M7** (`plans/now/code-health.md`) -- world draw order named; waits for CQ-M6 and then needs its section and block.
+- **CQ-M6b** (`plans/now/code-health.md`) -- the cell ring and the selection layer read the selection green; waits for CQ-M6, and for the Claude lane's PN-5, PN-6 and PN-9, which edit `scripts/input_selection.gd` and `scripts/hive_cell.gd`.
+- **CQ-M7** (`plans/now/code-health.md`) -- world draw order named; waits for CQ-M6b and then needs its section and block.
 - **PN-8** (`plans/now/play-notes-hud.md`) -- Warning history in the Colony window; waits for PN-3 and ED-2 (Claude lane) to release `scripts/session.gd`.
 - **PN-10** (`plans/now/play-notes-hud.md`) -- opening goal text a new player can act on; waits for PN-3 (Claude lane) to release `tests/gp1_goals_dropdown_test.gd`.
 - **PN-16** (`plans/now/play-notes-hud.md`) -- double-click a cell selects every cell of that type; waits for PN-6 (Claude lane), which shares `scripts/input_selection.gd`.

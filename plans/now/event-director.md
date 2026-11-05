@@ -1,7 +1,7 @@
 # Event director -- the run's calendar in one place, then the alpha's pressures
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: EV-0b -- one calendar, startable now; then EV-0 -- the Calendar and events settings group and a 35-day season, after PN-11 and EV-0b | Dependency: EV-0 runs before PP-10 (`plans/now/pollination.md`, Dave 1 Nov 2026); the director's events (EV-1 onward, not yet written) wait for CQ-R2 (`plans/now/code-health.md`), which follows ED-3 (`plans/now/difficulty.md`) alone (Dave, 5 Nov 2026) | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code | Next: EV-0 -- the Calendar and events settings group and a 35-day season, after PN-11; then EV-0b -- the flowers read the same calendar, after EV-0 and CQ-M6 (Codex lane, `flower.gd`) | Dependency: EV-0 runs before PP-10 (`plans/now/pollination.md`, Dave 1 Nov 2026); the director's events (EV-1 onward, not yet written) wait for CQ-R2 (`plans/now/code-health.md`), which follows ED-3 (`plans/now/difficulty.md`) alone (Dave, 5 Nov 2026) | Verified: 2026-11-05
 
 ## Objective
 
@@ -26,11 +26,13 @@ FC-2's first crisis lives in `scripts/main.gd`, "the first crisis".
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| EV-0b | one calendar: day numbers and the season's fraction from one place | `scripts/run_calendar.gd` (new), `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/world_building.gd`, tests | yes | medium |
-| EV-0 | one Calendar and events settings group in days, a read-only timeline row read from `RunCalendar`, and winter on day 36 (a 35-day season) | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/main.gd`, `scripts/season.gd`, `scripts/run_calendar.gd`, tests | no -- after PN-11 (re-pins the first crisis to days 12-15) and EV-0b | medium |
+| EV-0 | one Calendar and events settings group in days, a read-only timeline row read from a new `RunCalendar`, and winter on day 36 (a 35-day season) | `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `scripts/main.gd`, `scripts/season.gd`, `scripts/run_calendar.gd` (new), tests | no -- after PN-11 (re-pins the first crisis to days 12-15) | medium |
+| EV-0b | the flowers read the same calendar: the season's fraction from one place | `scripts/run_calendar.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/world_building.gd`, tests | no -- after EV-0, which creates `RunCalendar`, and CQ-M6 (Codex lane), which edits `flower.gd` | medium |
 
-**Dependencies.** EV-0 follows PN-11 and EV-0b, and precedes PP-10, so
-PP-10 checks the route once, on the new calendar (Dave, 1 Nov 2026). The
+**Dependencies.** EV-0 follows PN-11 and precedes PP-10, so PP-10 checks
+the route once, on the new calendar (Dave, 1 Nov 2026). EV-0b follows EV-0,
+whose `RunCalendar` it extends, and CQ-M6 (`plans/now/code-health.md`, Codex
+lane), which edits `flower.gd`. The
 director's event slices follow CQ-R2, which creates `event_director.gd`
 (new, in `scripts/`) (design decision 2) and follows ED-3 alone (Dave,
 5 Nov 2026, plan review: not RR-12 or SP-8a); they read their days from
@@ -58,7 +60,7 @@ change to `seconds_per_day` silently moves it to a different day.
 **Timings stay adaptable (Dave, 5 Nov 2026, plan review).** Day lengths,
 season lengths and the events on them will change again when timings are
 reviewed. Every day this slice shows or sets is derived from the values it
-depends on through `RunCalendar` (EV-0b), never copied, so changing one value
+depends on through `RunCalendar`, which it creates, never copied, so changing one value
 moves everything that follows from it.
 
 **When done:**
@@ -71,9 +73,10 @@ moves everything that follows from it.
    the seconds PN-11 pinned, so FC-2's scenarios pass unchanged.
 2. A read-only timeline row in that group shows the run the values make:
    first-crisis window, winter start and end, and the post-winter mating
-   window, as day numbers. `RunCalendar` gains `countdown_open_day`,
-   `winter_start_day` and `winter_end_day` for a year and the mating window's
-   days (from `season.gd`'s `MATING_WINDOW_START` and `MATING_WINDOW_END`);
+   window, as day numbers. EV-0 creates `scripts/run_calendar.gd` (`class_name
+   RunCalendar`, static functions reading `GameConfig` and `Session`) with
+   `day_at(sim_time)`, `countdown_open_day`, `winter_start_day` and
+   `winter_end_day` for a year and the mating window's days (from `season.gd`'s `MATING_WINDOW_START` and `MATING_WINDOW_END`);
    the row, `season.gd::_winter_countdown_day` and `main.gd`'s day counter all
    call them instead of their own arithmetic.
 3. Winter starts later (Dave, 1 Nov 2026: winter comes too fast):
@@ -106,8 +109,8 @@ slice's. FC-2's behaviour at the default day length is unchanged.
 
 ## EV-0b -- one calendar: day numbers and the season's fraction from one place
 
-Level: medium. One new static script and three callers moved onto it; no
-behaviour change.
+Level: medium. Three callers moved onto EV-0's `RunCalendar`; no behaviour
+change.
 
 **True now.** The day number and the fraction of the playable season are
 worked out three times: `flower.gd::season_fraction`,
@@ -129,10 +132,9 @@ fraction they are read against one home.
 
 **True afterwards.**
 
-1. New `scripts/run_calendar.gd`, `class_name RunCalendar`, static functions
-   only, reading `GameConfig` and `Session`: `day_at(sim_time: float) ->
-   float` (1-based, fractional) and `season_fraction_at(sim_time: float) ->
-   float` (0 to 1, held at 1 through winter, as today). The year's length
+1. `RunCalendar` (`scripts/run_calendar.gd`, created by EV-0 with
+   `day_at(sim_time)`) gains `season_fraction_at(sim_time: float) -> float`
+   (0 to 1, held at 1 through winter, as today). The year's length
    stays `Session.year_days()`, which it calls.
 2. `flower.gd::season_fraction`, `flower_species.gd::year_fraction_now` and
    `world_building.gd`'s birth fraction call `RunCalendar.season_fraction_at`
@@ -153,11 +155,11 @@ is wanted (`.claude/rules/performance.md`).
 
 **Open decisions:** none.
 
-```queue
+```queue-gated
 **[Claude] EV-0b -- one calendar: day numbers and the season's fraction from one place**
 - Plan: `plans/now/event-director.md` -- "EV-0b -- one calendar: day numbers and the season's fraction from one place"
 - Files: `scripts/run_calendar.gd`, `scripts/flower.gd`, `scripts/flower_species.gd`, `scripts/world_building.gd`, `tests/ev0b_run_calendar_test.gd`, `tests/test_ev0b_run_calendar.py`
 - Check: `python -m unittest tests.test_ev0b_run_calendar` passes (`RunCalendar.season_fraction_at` matches the old formula at day 1, mid-season, the last season day, mid-winter and the next spring for 30- and 35-day seasons, winter on and off; no `sim_time` / `seconds_per_day` arithmetic is left in `flower.gd`, `flower_species.gd` or `world_building.gd`); `python -m unittest tests.test_pp4_seed_set tests.test_sf1_founding_flower_mix` still passes; `.\tools\verify.ps1` is green
 - Proof: `present: scripts/flower_species.gd :: This duplicates Flower.season_fraction()`
-- Next after: EV-0 -- one Calendar and events settings group, and winter a week later
+- Next after: EV-1 -- the first director event (written when CQ-R2 nears)
 ```

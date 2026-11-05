@@ -1,7 +1,7 @@
 # Play notes, config and bee -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PN-11 -- rain later, at the head of the Claude lane (the Jules E-14 and S-3 marker branches closed 5 Nov 2026); PN-9, PN-12, PN-13, PN-18 and PN-19 are startable and wait for room in the lane | Dependency: PN-11 precedes EV-0 (`plans/now/event-director.md`) on the alpha route; the others share `game_config.gd`, `settings_catalogue.gd` or `bee.gd` and run in turn | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code / Codex | Next: PN-11 -- rain later, at the head of the Claude lane (its Jules gates cleared 5 Nov 2026); PN-9 and PN-12 are startable and wait for room; PN-13 waits for the Codex lane to release `bee.gd`; PN-18 and PN-19 are queued in the Codex lane | Dependency: PN-11 precedes EV-0 (`plans/now/event-director.md`) on the alpha route; PN-9, PN-12 and PN-13 share `game_config.gd` or `settings_catalogue.gd` and run in turn | Verified: 2026-11-05
 
 ## Objective
 
@@ -19,17 +19,18 @@ Verified 2026-10-31 by `tools/slice.ps1 owner`; `skill_tree_panel.gd` and
 | PN-11 | rain later: first rain day 10, crisis days 12-15 | `game_config.gd`, fc2 scenarios | yes -- queued; EV-0 follows it | medium |
 | PN-9 | early spring: fast queen building, no souring before day 15 | `game_config.gd`, `settings_catalogue.gd`, `hive_cell.gd` | yes | medium |
 | PN-12 | developer mode buys any skill | `skill_tree_panel.gd`, `settings_catalogue.gd` | yes | low |
-| PN-13 | bee labels switch and a calmer queen flight | `bee.gd`, `game_config.gd`, `settings_catalogue.gd` | yes | low |
-| PN-18 | the queen discards sour nectar when told to empty a cell | `bee.gd` | yes, after PN-13 in queue order | medium |
-| PN-19 | the soil block's selection ring closes | `soil_block.gd` | yes | low |
+| PN-13 | bee labels switch and a calmer queen flight | `bee.gd`, `game_config.gd`, `settings_catalogue.gd` | yes, once the Codex lane releases `bee.gd` | low |
+| PN-18 | the queen discards sour nectar when told to empty a cell | `bee.gd` | yes -- Codex lane (5 Nov 2026) | medium |
+| PN-19 | the soil block's selection ring closes | `soil_block.gd` | yes -- Codex lane (5 Nov 2026) | low |
 
 ## Dependencies
 
 PN-11 runs first: it is on the alpha route, ahead of EV-0
 (`plans/now/event-director.md`). PN-9, PN-12 and PN-13 share `game_config.gd`
 or `settings_catalogue.gd` with it and with each other, so they run in turn;
-PN-13 and PN-18 share `bee.gd`, and CQ-R3 (`plans/now/code-health.md`), which
-moves bee text out of it, follows them. A day setting added after EV-0 lands
+PN-13 shares `bee.gd` with the Codex lane's PN-18, CQ-M6 and CQ-R3
+(`plans/now/code-health.md`) and follows whichever of them is queued; if CQ-R3
+lands first, PN-13 re-checks its label lines against `bee_readout.gd`. A day setting added after EV-0 lands
 goes in its "Calendar and events" group. Do not edit `main.gd`. A slice reads
 its own section and nothing else.
 
@@ -184,7 +185,7 @@ forager's.
 - Files: `scripts/bee.gd`, `scripts/game_config.gd`, `scripts/settings_catalogue.gd`, `tests/test_pn13_bee_labels.py`
 - Check: `python -m unittest tests.test_pn13_bee_labels` passes (the switch hides every bee's label; the queen's amplitude is the factor times the shared one); `.\tools\verify.ps1` is green. Hands-on: labels switch off for all bees and the queen hovers less
 - Proof: `present: scripts/settings_catalogue.gd :: Show forager labels`
-- Next after: PN-18 -- the queen discards sour nectar when told to empty a cell
+- Next after: none -- the last Claude slice in `plans/now/play-notes-config.md`
 ```
 
 ## PN-18 -- the queen discards sour nectar when told to empty a cell
@@ -211,7 +212,7 @@ cell empties.
 **Open decisions:** none.
 
 ```queue
-**[Claude] PN-18 -- the queen discards sour nectar when told to empty a cell**
+**[Codex] PN-18 -- the queen discards sour nectar when told to empty a cell**
 - Plan: `plans/now/play-notes-config.md` -- "PN-18 -- the queen discards sour nectar when told to empty a cell"
 - Files: `scripts/bee.gd`, `test_scenarios/pn18_queen_empties_sour.json`, `tests/test_pn18_queen_empties_sour.py`
 - Check: `python -m unittest tests.test_pn18_queen_empties_sour` passes (lone queen, sour cell, no Cleaning: the cell ends empty and the nectar is discarded); `.\tools\verify.ps1` is green. Hands-on: the queen empties a sour cell on command
@@ -239,7 +240,7 @@ hexagon outline is unbroken all round, including the far right.
 **Open decisions:** none.
 
 ```queue
-**[Claude] PN-19 -- the soil block's selection ring closes**
+**[Codex] PN-19 -- the soil block's selection ring closes**
 - Plan: `plans/now/play-notes-config.md` -- "PN-19 -- the soil block's selection ring closes"
 - Files: `scripts/soil_block.gd`, `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`
 - Check: `python -m unittest tests.test_sp10_soil_depth tests.test_sp9_soil_art` pass with an assertion that the ring is closed; `.\tools\verify.ps1` is green. Hands-on: a selected soil block's outline has no gap

@@ -182,7 +182,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | SP-8a, SP-8b -- the meadow floor drawn in blocks, then height's effects | `plans/now/meadow-terrain.md` |
 | PP-10 -- pollination: the gyne route keeps its order on EV-0's calendar | `plans/now/pollination.md` |
 | RR-12 -- run repairs: a loaded run keeps its readout history | `plans/now/run-repairs.md` |
-| EV-0b, EV-0, then EV-1 onward -- the event director: one calendar, the Calendar and events settings group and a later winter, then the alpha's pressures | `plans/now/event-director.md` (design: `plans/design/event-director.md`) |
+| EV-0, EV-0b, then EV-1 onward -- the event director: the Calendar and events settings group, a later winter and one calendar, then the alpha's pressures | `plans/now/event-director.md` (design: `plans/design/event-director.md`) |
 | SP-12 -- sprites: every comb-cell outline on the cup's rim | `plans/now/sprites.md` |
 | PN-2 to PN-6 -- play notes: renaming saves, Goals saved, the queen's build orders, picking and double-click selection | `plans/now/play-notes.md` |
 | PN-9, PN-11 to PN-13, PN-18, PN-19 -- play notes: early spring, later rain and crisis, developer skills, bee labels, sour nectar, the soil ring | `plans/now/play-notes-config.md` |
