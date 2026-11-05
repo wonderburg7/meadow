@@ -49,3 +49,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/jules-review-20261103` (`codex/jules-review-20261103`) | Review | Assigned Jules review; report only; no integration | Codex | review complete, local | none | `plans/reference/jules-review-2026-11-03.md` |
+| `.worktrees/CQ-M5b` (`codex/CQ-M5b`) | Codex | the last CanvasLayer readers and the bare-layer source check | Codex | in progress | none | `plans/now/code-health.md` CQ-M5b -- the last CanvasLayer readers and the bare-layer source check |
