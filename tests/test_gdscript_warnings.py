@@ -43,6 +43,22 @@ class GDScriptWarningsTest(unittest.TestCase):
         self.assertEqual(gdscript_warnings.as_res_path("scripts/hud.gd"), "res://scripts/hud.gd")
         self.assertEqual(gdscript_warnings.as_res_path("./scripts/hud.gd"), "res://scripts/hud.gd")
         self.assertEqual(gdscript_warnings.as_res_path("scripts\\hud.gd"), "res://scripts/hud.gd")
+        # Folded in from Jules S-1 #127 (incremental cases only).
+        self.assertEqual(gdscript_warnings.as_res_path(".\\scripts\\sub\\tool.gd"), "res://scripts/sub/tool.gd")
+
+    def test_script_warnings_ignores_orphan_warning_line(self):
+        # Folded in from Jules S-1 #127: a WARNING with no GDScript::reload
+        # frame is not a script warning and must not shift the next one.
+        output = (
+            "WARNING: Standalone warning without GDScript reload stack frame\n"
+            "Another irrelevant line\n"
+            "WARNING: The property 'shadow' is shadowed.\n"
+            "   at: GDScript::reload (res://scripts/flower.gd:42)\n"
+        )
+        self.assertEqual(
+            gdscript_warnings.script_warnings(output),
+            [("res://scripts/flower.gd", 42, "The property 'shadow' is shadowed.")],
+        )
 
     def test_main_skips_when_godot_missing(self):
         output = StringIO()

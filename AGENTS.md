@@ -38,9 +38,9 @@ the Claude/Codex slice queue (Dave, 23 Oct 2026):
   push, `python tools/jules_preflight.py --scope` must print no `off` line
   (an old snapshot shows as reverts of files you never touched). Never edit
   that file.
-- **Every other new Jules task is a token-efficiency review** (Dave,
-  2 Nov 2026). `--next` alternates ordinary work and `E-<n>` tasks, including
-  across sessions. Copy its `Jules-Sequence` line into the final commit
+- **Jules regularly runs a token-efficiency review** (Dave, 2 Nov 2026;
+  since 5 Nov only when its topic is due). After an ordinary task `--next`
+  offers an `E-<n>` task when a topic is due, including across sessions. Copy its `Jules-Sequence` line into the final commit
   message and PR description; publish before picking again. For E tasks,
   read `python tools/heading.py plans/reference/jules-efficiency.md
   "Running an efficiency task"` and follow it; change only its named report.
