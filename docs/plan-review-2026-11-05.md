@@ -7,7 +7,7 @@ Reviewed: 43f301b | Since: 1a1f81c | Scope: every live plan's Status and open-sl
 
 | Id | Question | Decision |
 | --- | --- | --- |
-| D1 | Jules E-34 still showed as owning `NEXTSTEPS.md`, `plans/now/code-health.md` and four scripts | Proceed: its ownership is spurious -- its only content not on master is its own report, `docs/jules-efficiency/e-34.md` |
+| D1 | Jules E-34 still showed as owning `NEXTSTEPS.md`, `plans/now/code-health.md` and four scripts | Proceed: its ownership is spurious -- its only content not on master is its own report, docs/jules-efficiency/e-34.md on its branch |
 | D2 | How to fill the Codex lane | The HUD play notes (PN-7, PN-8, PN-10, PN-14 to PN-17) move to the Codex lane |
 | D3 | CQ-R2's gate, which made the alpha's events wait for SP-8a's meadow art | CQ-R2 follows ED-3 alone; RR-12 and SP-8a follow CQ-R2 |
 | D4 | EV-0's winter mechanism (raising the countdown cannot move winter) | `season_length_days` 30 to 35, countdown stays 15. Timings, their dependencies and the relationships between values are made adaptable; bloom curves stay quick and cheap to change |
@@ -21,8 +21,8 @@ Reviewed: 43f301b | Since: 1a1f81c | Scope: every live plan's Status and open-sl
 | F3 -- FR-2 unspecified | Shipped -- FR-2 landed 25 Oct 2026 |
 | F4 -- CQ-M8's proof would hold after shipping | Shipped -- CQ-M8 landed 24-25 Oct 2026 |
 | F5 -- two lanes named CQ-M4 as successor | Shipped, then regrew as a loop (CQ-M4 to CQ-M5b to CQ-M4) -- fixed here (F6) |
-| F6 -- Status lines named shipped slices | Regrew in run-repairs, sprites, code-health, event-director, alpha-route-evidence and forager-recruitment -- fixed here (F11) |
-| F7 -- routing table drift | Regrew: no play-notes rows, five rows naming shipped ids -- fixed here (F12) |
+| F6 -- Status lines named shipped slices | Fixed here (F11) -- it regrew in run-repairs, sprites, code-health, event-director, alpha-route-evidence and forager-recruitment |
+| F7 -- routing table drift | Fixed here (F12) -- it regrew: no play-notes rows, five rows naming shipped ids |
 | F8 -- `code-health.md` over 260 lines, rejected | Rejected again -- still over (582); the split is named in F15 |
 
 ## Findings
@@ -55,7 +55,7 @@ Retain / defer / remove: every open slice **Retain** (PN-2 to PN-6, PN-7 to PN-1
 
 ## Noted, not pursued
 
-- `scripts/game_config.gd:1008` still names `plans/now/tier-two.md` in a comment; the file is in PN-11's `Files:`.
+- `scripts/game_config.gd:1008` still names plans/now/tier-two.md in a comment; the file is in PN-11's `Files:`.
 - FR-3's "own sweep" of the `recruit_*` values, when FR-3 is specified, follows D5: an ordering check, then a bounded sweep only if needed.
 - CQ-M4 (Codex) waits for the save files, which the Claude lane holds almost continuously through ED-3, CQ-R2, RR-12, SP-8a and CQ-S1 onward; re-tagging it Claude is the next review's call.
 - `play-notes-config.md` (270) and `play-notes-hud.md` (274) are just over 260 lines and hold only open slices.
@@ -65,7 +65,7 @@ Retain / defer / remove: every open slice **Retain** (PN-2 to PN-6, PN-7 to PN-1
 
 - Bodies of the gated slices beyond their gates, chains and proofs: HM-1, HM-2, SP-8a, RR-12, CQ-S1, CQ-L3, AR-4, FR-3, PN-8, PN-10, PN-12 to PN-19.
 - Master's tooling changes in 6594ac9 (`tools/admission.py`, `tools/refill_lane.py`, `tools/slice.ps1`) beyond running them.
-- E-34's report, `docs/jules-efficiency/e-34.md`.
+- E-34's report, docs/jules-efficiency/e-34.md on its branch.
 
 ## Patterns deliberately not applied
 
