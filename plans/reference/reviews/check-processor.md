@@ -13,9 +13,7 @@ review writes no record and has no SINCE.
 check Dave has already given a result for in the launcher is not dispatched;
 use his result. First, move each `checks/blocked.md` entry whose unblockers
 have all landed back to `checks/ready/` under its own id, then batch it too:
-`python tools/check_docs.py` names them once L-30 lands; until then, an
-entry whose `Blocked by:` ids all have a `plans/archive/<id>_*.md` file
-(Dave, 16 Oct 2026).
+`python tools/check_docs.py` warns for each one (Dave, 16 Oct 2026).
 
 **Rules that apply:** `plans/reference/check-loop.md`;
 `plans/reference/closeout.md` "Filing a hands-on check"; the header of
