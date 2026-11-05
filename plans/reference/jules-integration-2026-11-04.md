@@ -1,6 +1,6 @@
 # Jules integration and corrections — 4 November 2026
 
-Status: reference | Owner: Dave / Codex | Next: Claude reviews the full diff and integrates this assigned batch | Dependency: required Claude high-risk review plus primary registration of codex-queue-priority-policy | Baseline: 4db007db774f005c684429a1a01838ce0136f143 | Verified: 2026-11-05
+Status: reference | Owner: Dave / Codex | Next: Claude reviews the full diff and integrates this assigned batch | Dependency: required Claude high-risk review/integration | Baseline: 4db007db774f005c684429a1a01838ce0136f143 | Verified: 2026-11-05
 
 Explicitly assigned batch; no queue slice claimed. Work branch `codex/jules-integrate-20261104`, worktree `.worktrees/jules-integrate-20261104`, registered from the primary checkout in `c2b64f6`. The review's final validation note was inspected at `23b336040d7d39d73105d4d07ba10fbe5453b6db`; it is not permission to copy its old snapshot.
 
@@ -166,9 +166,9 @@ verification with an overall failed documentation gate, not a green full command
 No Linux, interactive visual, gameplay-scenario, performance or save round-trip
 result is claimed.
 
-## Concrete unblock and review action
+## Initial administrative blocker and review action
 
-The owner of codex/queue-priority-policy must register its held-open worktree
+The initial required unblock was for the owner of codex/queue-priority-policy to register its held-open worktree
 from the primary checkout, preserving the other staged work. A correct row
 names its actual branch, scope and owner; do not remove the worktree to hide it.
 Then run py -3 tools/check_docs.py in this batch worktree, and the primary
@@ -184,3 +184,21 @@ a durable registration check/workflow correction so later batches do not hit
 the same failure. Do not broaden into efficiency-feature implementation,
 CQ-T3 source, protected APIs or D1–D3 decisions. Report the resulting merge
 and push SHAs, doc-check result, PR outcomes and retained unknowns.
+
+
+## Final documentation rerun — registration resolved
+
+After the independent policy session registered its held-open worktree in the
+canonical primary ledger, py -3 tools/check_docs.py in this batch worktree
+exits 0 with existing warnings only. The registration dependency is resolved;
+no other session's staged work was changed by this batch.
+Final git fetch/ref comparison shows all 26 in-scope heads unchanged, and
+git diff 8dc78d3..HEAD contains no production GDScript changes.
+
+All required verification stages now have passing results at the same
+implementation tree: the complete run plus this successful documentation rerun.
+This does not recast the original full command's exit 1 as exit 0.
+The only remaining dependency is Claude's required large-diff review and
+integration. The prepared content is pushed on codex/jules-integrate-20261104.
+No PR has been closed or marked merged by this batch, and no remote branch
+has been deleted. The worktree is clean after this record is committed.

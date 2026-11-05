@@ -1,7 +1,7 @@
 # Google Jules -- task list and method
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: Jules every task; Claude/Codex only to add or prune a task -->
-Status: reference | Owner: Dave / Claude Code / Codex | Next: J-31 and J-44 to J-53 processed in the assigned integration batch; see plans/reference/jules-integration-2026-11-04.md; prune delivered briefs at the next normal refill | Dependency: required Claude review/integration and primary worktree-registration blocker; see the batch record | Verified: 2026-11-05
+Status: reference | Owner: Dave / Claude Code / Codex | Next: J-31 and J-44 to J-53 processed in the assigned integration batch; see plans/reference/jules-integration-2026-11-04.md; prune delivered briefs at the next normal refill | Dependency: required Claude high-risk review/integration; see the batch record | Verified: 2026-11-05
 
 Jules works from GitHub on a Linux VM, outside the Claude/Codex slice queue.
 Its work is behaviour-preserving tooling: guards that catch a known bug class
