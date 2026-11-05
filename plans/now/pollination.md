@@ -1,7 +1,7 @@
 # Pollination -- Pollinator Points, seed set and the route to Gyne rearing
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PP-10 (PP-11 landed 1 Nov 2026: the reference route owns Pollinator points on every seed and first affords Gyne rearing on days 60.31, 58.10 and 63.01) -- the sweep prices the route so Gyne rearing is first affordable after the first winter (Dave split PP-9, 27 Oct 2026: PP-9 builds the route, PP-10 the sweep; Dave narrowed PP-9 to its headless tools later that day and moved the route to PP-11) | Dependency: PP-6 followed FR-2 (Dave 14 Oct 2026; landed 25 Oct 2026); PP-9 follows PP-6; PP-11 follows PP-9; PP-10 follows PP-11, EV-0 and T2-7b (`plans/now/tier-two.md`, Dave, 5 Nov 2026, product review D4); AR-4 (`plans/now/alpha-route-evidence.md`) and FR-3 wait for PP-10 | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code | Next: PP-10 (PP-11 landed 1 Nov 2026: the reference route owns Pollinator points on every seed and first affords Gyne rearing on days 60.31, 58.10 and 63.01) -- the sweep prices the route so Gyne rearing is first affordable after the first winter (Dave split PP-9, 27 Oct 2026: PP-9 builds the route, PP-10 the sweep; Dave narrowed PP-9 to its headless tools later that day and moved the route to PP-11) | Dependency: PP-6 followed FR-2 (Dave 14 Oct 2026; landed 25 Oct 2026); PP-9 follows PP-6; PP-11 follows PP-9; PP-10 follows PP-11 and EV-0 (T2-7b was withdrawn, Dave, 5 Nov 2026, product review D5); AR-4 (`plans/now/alpha-route-evidence.md`) and FR-3 wait for PP-10 | Verified: 2026-11-05
 
 ## Objective
 
@@ -49,7 +49,7 @@ Verified 10 Oct 2026 against master:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PP-10 | the sweep prices the route so Gyne rearing is first affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, tests | no -- after EV-0 (`plans/now/event-director.md`) and then T2-7b (`plans/now/tier-two.md`); PP-11 landed 1 Nov 2026 | high |
+| PP-10 | the sweep prices the route so Gyne rearing is first affordable after the first winter | `scripts/skills.gd`, `scripts/game_config.gd`, tests | no -- after EV-0 (`plans/now/event-director.md`); PP-11 landed 1 Nov 2026 | medium |
 
 **Dependencies.** PP-1 needs T2-6 owned-able (foraging tier 3 opens only
 once Associative learning is owned) and shares `bee_foraging.gd`, `bee.gd`,
@@ -60,8 +60,7 @@ lane and ran in the Codex lane. PP-5 shares `orders_zones.gd` with PP-3
 and `bee_nursery.gd` with BB-2 and NF-4, both landed 10 Oct 2026. PP-10 balances everything above; T2-7
 (`plans/now/tier-two.md`), which it followed, landed 11 Oct 2026 without moving
 prices. AR-4 (`plans/now/alpha-route-evidence.md`) waits for PP-10. T2-7b, the
-tier-2 price sweep on the same arc, runs before PP-10, so the route PP-10
-prices already pays the final tier-2 prices (Dave, 5 Nov 2026, product review D4). PP-6 followed FR-2
+tier-2 price sweep, was withdrawn (Dave, 5 Nov 2026, product review D5); tier-2 prices stay drafts. PP-6 followed FR-2
 (`plans/now/forager-recruitment.md`, landed 25 Oct 2026), which added Auto
 scouting to the route. PP-9 follows PP-6 and lands the headless tools a
 route needs; PP-11 builds the route with them, which must reach PP-6's probe
@@ -108,6 +107,13 @@ simulation found the meadow at about 250 flowers at the game's own pace
 (see PP-4's table): the sweep should see whether `flower_regrow_seconds`
 holds Pollinator Points back.
 
+**Every timing is a draft (Dave, 5 Nov 2026, product review D5; `plans/design/product-scope.md` §3).** The
+order matters, not the day: PP-10 is done at the first price set whose
+three-seed median makes Gyne rearing affordable after the first winter ends
+and before the second summer's mating window closes. It runs no finer
+tuning, and the 11-day band below is information, not a pass mark. Its
+level drops from high to medium.
+
 Decisions (Dave, 14 Oct 2026):
 
 - **The band is the first 11 days after winter.** The reference run's
@@ -137,17 +143,21 @@ every seed (days 55.50, 52.71, 60.08) and first affords Gyne rearing on days
 60.31, 58.10 and 63.01 (median 60.31); see PP-11's result above. `pacing_gates.py` already prints the
 Gyne-rearing row with its band (`GYNE_AFFORDABLE_AFTER_WINTER_DAYS`).
 
-**The work.** Sweep `scripts/skills.gd` (point awards, the tier-3/4
+**The work.** First run `python tools/pacing_gates.py` once on EV-0's calendar.
+If the median Gyne-rearing day already falls after winter's end and before
+the second summer's mating window closes (on 1 Nov the median, 60.31, did,
+before EV-0 moved winter a week), record the run and change no price.
+Otherwise sweep `scripts/skills.gd` (point awards, the tier-3/4
 recipes, Auto scouting) and `scripts/game_config.gd` (including
 `flower_regrow_seconds`, per PP-4's note above) over 3 seeds of PP-11's
-route until the median `gyne_rearing_affordable` day falls in the band, and
+route until the median `gyne_rearing_affordable` day keeps that order, stopping at the first set that does, and
 record the sweep's table (each trial's values and per-seed days) in this
 section. Change prices and balance values only: PP-11's route stays as it
 landed, and no `config_overrides` entry redefines what is measured. If no
-price in these files can reach the band, stop and escalate to Dave
+price in these files can keep that order, stop and escalate to Dave
 (`docs/agent-rules.md` rule 5) rather than redefine it.
 
-Reasoning level high: a balance sweep that sets a gameplay outcome.
+Reasoning level medium: an ordering check, and at most a bounded sweep (product review D5, 5 Nov 2026; it was high).
 
 **Open decisions:** none
 
@@ -155,7 +165,7 @@ Reasoning level high: a balance sweep that sets a gameplay outcome.
 **[Claude] PP-10 -- the sweep prices the route so Gyne rearing is first affordable after the first winter**
 - Plan: `plans/now/pollination.md` -- "PP-10 -- the sweep prices the route so Gyne rearing is first affordable after the first winter"
 - Files: `scripts/skills.gd`, `scripts/game_config.gd`, `tests/test_pacing_gates.py`
-- Check: over 3 seeds of PP-11's reference Colony Run, `python tools/pacing_gates.py`'s Gyne-rearing row reports a median day from the first winter's end to 11 days after it (days 42 to 52); the sweep's table is recorded in this section; a `PP-10` test in `tests/test_pacing_gates.py` pins the swept values, so a price moved without a fresh sweep fails it; `python -m unittest tests.test_pacing_gates tests.test_pp6_gyne_rearing_affordable` passes; `.\tools\verify.ps1` is green
+- Check: over 3 seeds of PP-11's reference Colony Run, `python tools/pacing_gates.py`'s Gyne-rearing row reports a median day after the first winter's end and before the second summer's mating window closes (the order, not a day: product-scope §3, "Every timing is a draft"); the sweep's table is recorded in this section; a `PP-10` test in `tests/test_pacing_gates.py` pins the swept values, so a price moved without a fresh sweep fails it; `python -m unittest tests.test_pacing_gates tests.test_pp6_gyne_rearing_affordable` passes; `.\tools\verify.ps1` is green
 - Proof: `absent: tests/test_pacing_gates.py :: PP-10`
 - Next after: none -- the pollination plan is complete; AR-4 in `plans/now/alpha-route-evidence.md` then starts in the Codex lane, and FR-3 in `plans/now/forager-recruitment.md` follows
 ```

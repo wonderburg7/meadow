@@ -1,7 +1,7 @@
 # Meadow — product scope and development sequence
 
 <!-- CONTEXT: plan | LAYER: design -->
-Status: selected design, not scheduled | Owner: Dave | Next: the closed alpha's remaining route -- Easy (ED-2, ED-3, `plans/now/difficulty.md`), the crisis and calendar re-pin (PN-11, `plans/now/play-notes-config.md`; EV-0, `plans/now/event-director.md`), the tier-2 then gyne-route price sweeps (T2-7b, `plans/now/tier-two.md`; PP-10, `plans/now/pollination.md`), the event director's alpha events (EV-1 onward, after CQ-R2 and ED-3) and the five-gate evidence (AR-6, then AR-4, `plans/now/alpha-route-evidence.md`); the crisis (FC-2), Work Priorities, short-term goals and the Colony Run definition are built; the goal model's data, the job catalogue/dispatcher and the stable catalogues are `plans/archive/architecture-review_2026-09-24.md`'s C, G and B chains (Dave, 11 Sep 2026) | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-11-05
+Status: selected design, not scheduled | Owner: Dave | Next: the closed alpha's remaining route -- Easy (ED-2, ED-3, `plans/now/difficulty.md`), the crisis and calendar re-pin (PN-11, `plans/now/play-notes-config.md`; EV-0, `plans/now/event-director.md`), the gyne route's price sweep (PP-10, `plans/now/pollination.md`; T2-7b was withdrawn under §3's "Every timing is a draft"), the event director's alpha events (EV-1 onward, after CQ-R2 and ED-3) and the five-gate evidence (AR-6, then AR-4, `plans/now/alpha-route-evidence.md`); the crisis (FC-2), Work Priorities, short-term goals and the Colony Run definition are built; the goal model's data, the job catalogue/dispatcher and the stable catalogues are `plans/archive/architecture-review_2026-09-24.md`'s C, G and B chains (Dave, 11 Sep 2026) | Dependency: current stabilisation and hands-on checks continue independently | Verified: 2026-11-05
 
 This is Meadow's high-level product map. It defines what the game is trying to
 prove, what is essential for the first feedback build, which foundations later
@@ -73,25 +73,39 @@ reaches for them without being told to.
 | About 60 minutes | The colony enters and survives its first winter. |
 | About 90 minutes | After emerging from winter, the colony raises and releases gynes, reaches formal victory and may continue. |
 
-**How the gates are judged (Dave, 14 and 16 Oct 2026; restated on the
-calendar 5 Nov 2026, product review D2).** Each outcome has a day window on
-the run's calendar, and `tools/pacing_gates.py` judges the headless reference
-route against those days, never minutes converted at 1x:
+**Every timing is a draft (Dave, 5 Nov 2026, product review D5).** "Timings
+of when the player gets to different points in the game will be reviewed and
+likely change a lot (across different features of the game), so having
+precise timings for when the player should have different features or
+resources is currently not important and tokens shouldn't be wasted on that
+kind of work. The ordering and sequencing of when things happen is more
+important than the precise timings. All timings should be considered as
+drafts (across the whole game), with the code organised so they can be
+edited and updated quickly and cheaply, as they are likely to change in
+future. Targets should not dictate other components of the game, they are
+secondary and changeable." So: a slice or review checks the order below, not
+a day; no price or balance sweep is run to move a milestone by a few days; a
+timing lives in one named, editable place (a `GameConfig` row or a named
+constant), and when a target and a mechanic disagree, the target moves.
 
-| Outcome | Calendar target | Set by |
-| --- | --- | --- |
-| First worker | by Day 9 (the reference route's median was 8.41 on 5 Nov 2026) | AR-6, `plans/now/alpha-route-evidence.md` |
-| First automation | Days 5 to 8 (first tier-2 purchase around Day 5) | progression.md step 8 |
-| Crisis | warned and met inside Days 12 to 15 | PN-11, `plans/now/play-notes-config.md` |
-| Winter | entered about Day 38, survived on the run's schedule | EV-0, `plans/now/event-director.md` |
-| Gynes, victory | Gyne rearing affordable in the first 11 days after winter; gynes sent in the second summer's mating window | PP-10, `plans/now/pollination.md` |
+**The order the alpha route keeps** (draft days on the default 200-second
+calendar; `tools/pacing_gates.py` reports them as information):
 
-At the default 200-second day the whole arc is about 50 days, near 170
-minutes at 1x. The minutes in the table above are the experience budget of a
-played run that uses fast-forward through quiet stretches, as this section's
-opening says; §13's gate reviews time a played run against them (C-139 for
-the first worker). AR-4 (`plans/now/alpha-route-evidence.md`) records all
-five, the crisis included.
+| Order | Outcome | Draft day | Where the timing lives |
+| --- | --- | --- | --- |
+| 1 | First worker | about Day 9 (5 Nov 2026 median 8.41) | `pacing_gates.py` `FIRST_WORKER_BY_DAY` |
+| 2 | Crisis, warned then met | Days 12 to 15 | `GameConfig.first_crisis_window_*` (PN-11) |
+| 3 | Honey, then the first tier-2 purchase and first automation | about Days 20 to 25, after honey arrives (5 Nov 2026: honey from Days 19-22, tier 2 affordable from Day 27) | `pacing_gates.py` `FIRST_AUTOMATION_DAYS`; prices in `skills.gd` |
+| 4 | Winter entered and survived | about Day 38 | `GameConfig.winter_countdown_days` (EV-0) |
+| 5 | Gyne rearing affordable, gynes sent, victory | after winter, inside the second summer's mating window | prices in `skills.gd` (PP-10) |
+
+Because the crisis now comes before automation, the crisis meets a colony
+without automation; its readiness check still credits an able forager and
+food cover (D5 named this cost when Dave chose it). At 200 seconds a day the arc is about
+50 days, near 170 minutes at 1x; the minutes in the table above are the
+experience budget of a played run using fast-forward, which §13's gate
+reviews check (C-139 for the first worker). AR-4
+(`plans/now/alpha-route-evidence.md`) records the order, the crisis included.
 
 The 20-minute crisis uses the bounded readiness gate accepted for FC-1 in
 `plans/archive/crisis-readiness_2026-10-17.md`: early automation, an able forager and food

@@ -1,7 +1,7 @@
 # Tier-two skills -- step 8: the second ring of the tree, Shiver Cluster and bodies
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: T2-7b -- the tier-2 price sweep T2-7 deferred; it runs after EV-0 and before PP-10 (Dave, 5 Nov 2026, product review D4) and is specified by the product review once Dave answers its D5 (honey before Day 5) | Dependency: T2-7b waits for EV-0 (`plans/now/event-director.md`); PP-10 (`plans/now/pollination.md`) waits for T2-7b | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code | Next: nothing further -- T2-7b, the deferred tier-2 price sweep, was withdrawn (Dave, 5 Nov 2026, product review D5: timings are drafts and the first tier-2 purchase follows the first honey, so no sweep is run); the plan is ready to archive | Dependency: none | Verified: 2026-11-05
 
 ## Objective
 
@@ -35,17 +35,15 @@ What the open slices build on:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| T2-7b | The tier-2 price sweep T2-7 deferred: tier-2 costs set so the arc's first tier-2 purchase lands around day 5 | `scripts/skills.gd`, `plans/design/progression.md`, tests; specified by the product review after D5 | no -- after EV-0 (`plans/now/event-director.md`); before PP-10 | medium |
+| none | T2-7b was withdrawn on 5 Nov 2026 (below) | -- | -- | -- |
 
-**Dependencies.** T2-7b follows EV-0 (`plans/now/event-director.md`) and
-precedes PP-10 (`plans/now/pollination.md`), so the gyne route is priced on
-final tier-2 prices (Dave, 5 Nov 2026, product review D4). The 11 Oct reason for waiting on AR-4 (the arc
-made no honey) no longer holds: PP-11's route reports `first_tier2_day` on
-every seed (5 Nov 2026: days 24.16, 53.02 and 27.22). It prices NF-4's Colony tier-2 node and includes
-BB-2's 15-day unfed-worker rule. FR-2 adds Auto scouting as a third
-Foraging tier-2 node; PP-10 prices it, so T2-7b leaves it alone. Open when
-T2-7b is specified: whether BB-4's Challenge routes are re-checked at the
-new prices.
+**T2-7b withdrawn (Dave, 5 Nov 2026, product review D5).** The sweep was to
+set tier-2 costs so the first purchase landed around day 5. The reference
+route stores no honey before Days 19-22 and every tier-2 recipe names 20-25
+honey, so no price could reach day 5; Dave moved the target to follow the
+first honey and made every timing a draft (`plans/design/product-scope.md`
+§3). Tier-2 amounts in `skills.gd` stay as they are and are edited directly
+when play shows a need.
 
 **Reads.** A slice reads its own section below and the step 8 decisions in
 `plans/design/progression.md` (`python tools/heading.py
@@ -63,4 +61,4 @@ T2-15 shipped 2026-11-02; its specification is `plans/archive/T2-15_2026-11-02.m
 
 ## Not in the queue, and why
 
-- **T2-7b** -- the deferred tier-2 price sweep (first tier-2 purchase around day 5); waits for EV-0 (`plans/now/event-director.md`) and runs before PP-10 (Dave, 5 Nov 2026, product review D4).
+- None: T2-7b was withdrawn (product review D5, 5 Nov 2026).
