@@ -78,6 +78,11 @@ ITEM_HEAD = re.compile(r"^\d+\.\s+\*\*\[(?P<lane>\w+)\]\s+(?P<id>[\w.-]+)\s+--")
 NOT_IN_QUEUE = re.compile(
     r"^## Not in the queue, and why\s*$([\s\S]*?)(?=^## |\Z)", re.MULTILINE
 )
+# A gate no session may clear: Dave's own action or call, a hands-on check, a
+# design pass or an open decision. The gate review never offers to open one.
+HUMAN_GATE = re.compile(
+    r"\b(?:for|until) Dave\b|\bDave to\b|\bhis call\b|\bdesign pass\b|\bhands-on\b|\bdecision\b",
+    re.IGNORECASE)
 
 
 def _sections(text: str) -> tuple[str, list[str], str]:
@@ -357,8 +362,34 @@ def _entry_level(entry: backlog.Entry, root: Path) -> str:
         level = re.search(r"(?im)^(?:\*\*)?Level:(?:\*\*)?\s*(low|medium|high)\b", section)
         if level:
             return level.group(1).lower()
-    row = re.search(rf"(?m)^\|\s*{re.escape(entry.slice_id)}\s*\|[^\n]*\|\s*(low|medium|high)\s*\|", plan)
+    # The last cell may name a model too ("low / haiku" in the play-notes
+    # plans), which hid every one of their slices from borrowing.
+    row = re.search(rf"(?m)^\|\s*{re.escape(entry.slice_id)}\s*\|[^\n]*\|\s*(low|medium|high)\b[^|\n]*\|", plan)
     return row.group(1).lower() if row else ""
+
+
+def successor_ids(text: str, lane: str) -> set[str]:
+    """The slices `lane`'s queued items name as `Next after:`."""
+    found: set[str] = set()
+    for lane_heading, chunk in check_docs.queue_item_chunks(text) or []:
+        match = re.match(r"\*\*\[(\w+)\]", chunk)
+        line = check_docs.NO_SUCCESSOR.search(chunk)
+        if (lane_heading or (match and match.group(1))) == lane and line \
+                and not line.group(1).lower().startswith("none"):
+            found.add(line.group(1).split("--", 1)[0].strip())
+    return found
+
+
+def _held_elsewhere(text: str, lane: str, entries: list[backlog.Entry]) -> tuple[set[str], set[str]]:
+    """Ids and files a block moved into `lane` must avoid: both lanes' queues,
+    and the other lane's named successors, which that lane plans to take next."""
+    other = next(each for each in check_docs.LANES if each != lane)
+    planned = successor_ids(text, other)
+    owned = set().union(*(lane_files(text, each) for each in check_docs.LANES))
+    for entry in entries:
+        if entry.slice_id in planned:
+            owned |= check_docs._item_files(entry.body)
+    return planned, owned
 
 
 def borrowable_blocks(text: str, lane: str, root: Path,
@@ -368,13 +399,14 @@ def borrowable_blocks(text: str, lane: str, root: Path,
     The other lane's queued files matter most: a block moved across must not
     share one with it. Checking only this lane offered SG-3, SP-12 and T2-15
     to a dry Codex lane on 30 Oct 2026 while RR-21, SP-14 and SP-13 held
-    their files."""
+    their files. Its named successors are held the same way, so a lane that
+    borrows never takes the slice the other lane means to start next."""
     queued = {slice_id for _, slice_id in queued_ids(text)}
     deferred = deferred_ids(text)
-    owned = set().union(*(lane_files(text, each) for each in check_docs.LANES))
+    planned, owned = _held_elsewhere(text, lane, entries)
     found: list[dict[str, str]] = []
     for entry in entries:
-        if entry.lane == lane or entry.gated or entry.slice_id in queued | deferred:
+        if entry.lane == lane or entry.gated or entry.slice_id in queued | deferred | planned:
             continue
         level = _entry_level(entry, root)
         if level not in {"low", "medium"} or check_docs._item_files(entry.body) & owned:
@@ -396,20 +428,75 @@ def dry_lane_advice(report: dict, queued: set[str] | None = None) -> list[str]:
     for entry in report["borrowable"]:
         other_lane = next(lane for lane in check_docs.LANES if lane != report["lane"])
         advice.append(f"the {other_lane} backlog holds {entry['id']} "
-                      f"({entry['level']}, {entry['plan']}) that this lane could take "
-                      "if Dave reassigns it")
+                      f"({entry['level']}, {entry['plan']}) that this lane may take: "
+                      f"retag its block [{other_lane}] -> [{report['lane']}] and rerun --top-up")
     return advice
+
+
+def gate_review(text: str, lane: str, root: Path,
+                entries: list[backlog.Entry]) -> list[tuple[backlog.Entry, admission.Verdict]]:
+    """Every gated block `lane` could take, judged against today's queue and branches.
+
+    A `## Not in the queue, and why` line records a gate as it stood when it
+    was written, and nothing rereads it. On 5 Nov 2026 the Codex lane sat
+    empty behind gates naming Jules E-14 and the S-3 marker-reparent branch,
+    both closed, and S-1/S-3 branches that change no script. The review runs
+    admission.py's test, branch scan included: this lane's gated blocks, and
+    the other lane's low- or medium-level ones that `borrowable_blocks` would
+    offer once open. An admissible verdict proves only that no landed id,
+    branch, queued file or open decision still holds it; the recorded reason
+    may name a condition no tool can see (a hands-on check, Dave's art)."""
+    planned, owned = _held_elsewhere(text, lane, entries)
+    chosen = [e for e in entries if e.gated and (e.lane == lane or (
+        e.slice_id not in planned and _entry_level(e, root) in {"low", "medium"}
+        and not check_docs._item_files(e.body) & owned))]
+    if not chosen:
+        return []
+    skip = set(admission.git_lines(root, "branch", "--show-current"))
+    branches = admission.unmerged_branch_files(root, skip)
+    merged = admission.merged_ids(root)
+    return [(entry, admission.check_item(
+        text, root, admission.Item(entry.slice_id, entry.lane, entry.body, False),
+        branches=branches, merged=merged)) for entry in chosen]
+
+
+def gate_review_lines(text: str, lane: str, review: list) -> list[str]:
+    lines: list[str] = []
+    for entry, verdict in review:
+        recorded = gated_reason(text, entry.slice_id)
+        if entry.lane == lane:
+            lines.append(f"gated: {entry.slice_id} ({entry.plan}) -- {recorded}")
+        elif verdict.admissible:
+            lines.append(f"the {entry.lane} backlog's gated {entry.slice_id} ({entry.plan}) -- "
+                         f"{recorded}")
+        else:
+            continue
+        if verdict.admissible and HUMAN_GATE.search(recorded):
+            lines.append("  now: no tool-visible blocker, but its reason waits on Dave, a check or a "
+                         "design pass -- only that clears it; leave the fence")
+        elif verdict.admissible:
+            lines.append("  now: no blocker found -- if what it waits for has happened, open its "
+                         "fence (```queue-gated -> ```queue) and drop its bullet"
+                         + ("" if entry.lane == lane else
+                            f"; this lane may then take it (retag [{entry.lane}] -> [{lane}])")
+                         + ", then rerun --top-up")
+        else:
+            lines.append(f"  now: still {verdict.line()}")
+    return lines
 
 
 def top_up(text: str, lane: str, root: Path, prefer: list[str],
            entries: list[backlog.Entry], log: list[str],
-           closed: set[str] | None = None) -> str:
+           closed: set[str] | None = None, review_gates: bool = False) -> str:
     """Append admissible backlog blocks to `lane` until it holds five.
 
     Best-effort by decision: when the backlog runs out the lane stays short and
     `log` says which candidate was refused for what. `prefer` puts the closing
     slice's named successor first, so the ordinary case reads as the plan
     intended rather than as whatever the file order happened to be.
+    `review_gates` rechecks each gated block it reports (`gate_review`); the
+    command line asks for it, while lookahead callers that discard `log` skip
+    its branch scan.
 
     `closed` holds ids this same run deleted. Ordinarily their block has
     already gone to the archive with the rest of the slice's section, but a
@@ -453,8 +540,12 @@ def top_up(text: str, lane: str, root: Path, prefer: list[str],
         log.extend(f"    {line}" for line in
                    dry_lane_advice(report, {slice_id for _, slice_id in queued_ids(text)}))
         gated = [e for e in entries if e.lane == lane and e.gated]
-        for entry in gated:
-            log.append(f"    gated: {entry.slice_id} ({entry.plan}) -- {gated_reason(text, entry.slice_id)}")
+        if review_gates:
+            log.extend(f"    {line}" for line in
+                       gate_review_lines(text, lane, gate_review(text, lane, root, entries)))
+        else:
+            for entry in gated:
+                log.append(f"    gated: {entry.slice_id} ({entry.plan}) -- {gated_reason(text, entry.slice_id)}")
         if gated:
             log.append("    each is specified and proof-checked already; open its fence from "
                        "```queue-gated to ```queue when its gate clears and the next refill "
@@ -715,7 +806,8 @@ def refill(args: argparse.Namespace, root: Path) -> int:
             for lane in lanes:
                 log.append(f"topping up the {lane} lane:")
                 candidate = top_up(candidate, lane, root, successor, entries, log,
-                                   closed={args.delete} if args.delete else set())
+                                   closed={args.delete} if args.delete else set(),
+                                   review_gates=True)
 
     errors = queue_errors(candidate, root)
     if errors:

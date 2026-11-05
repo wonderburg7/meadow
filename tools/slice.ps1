@@ -936,7 +936,8 @@ function Get-SliceLevel {
         $levelMatch = [regex]::Match($section, '(?i)Level:(?:\*\*)?\s*(low|medium|high)\b')
         if ($levelMatch.Success) { return $levelMatch.Groups[1].Value.ToLower() }
     }
-    $row = [regex]::Match($text, '(?im)^\|\s*' + [regex]::Escape($Candidate.Id) + '\s*\|.*\|\s*(low|medium|high)\s*\|\s*$')
+    # The cell may name a model too: "medium / sonnet" (the play-notes plans).
+    $row = [regex]::Match($text, '(?im)^\|\s*' + [regex]::Escape($Candidate.Id) + '\s*\|.*\|\s*(low|medium|high)\b[^|\n]*\|\s*$')
     if ($row.Success) { return $row.Groups[1].Value.ToLower() }
     return "unstated"
 }
@@ -1079,7 +1080,10 @@ function Get-SlicePreflight {
     $items = Get-NextUpItems -Root $root
     $candidate = $items | Where-Object { $_.Lane -eq $Lane } | Select-Object -First 1
     if (-not $candidate) {
-        throw "no unclaimed [$Lane] item in NEXTSTEPS.md"
+        # An empty lane is a refill, not a stop (5 Nov 2026: the Codex lane sat
+        # empty behind stale gates with no route out of this line).
+        $route = if ($Lane -eq "Codex") { "CHATGPT.md, 'Refilling an empty or gated Codex lane'" } else { "plans/reference/queue-steward.md, 'JOB: refill'" }
+        throw "no unclaimed [$Lane] item in NEXTSTEPS.md -- refill the lane, then start again: python tools/refill_lane.py --top-up --lane $Lane --dry-run reviews every gate ($route)"
     }
 
     Assert-CandidateDefinition -Root $root -Candidate $candidate
@@ -1929,6 +1933,19 @@ function Split-GitText {
     return @($Text -split '\r?\n' | Where-Object { $_ })
 }
 
+function Get-BranchChangedPaths {
+    # Paths $Branch changed since it left $Base that merging it would still
+    # change. The merge-base diff alone also lists edits $Base has since taken
+    # by another route: Jules E-34, cut before CQ-T3 landed, carried CQ-T3's
+    # typed UI scripts byte for byte and "owned" scripts/hud.gd (5 Nov 2026).
+    # tools/admission.py::branch_changes is the same rule.
+    param([string]$Root, [string]$Base, [string]$Branch)
+    $sinceFork = @(Split-GitText (Read-GitText -C $Root diff --name-only "$Base...$Branch"))
+    if (-not $sinceFork) { return @() }
+    $againstTip = @(Split-GitText (Read-GitText -C $Root diff --name-only $Base $Branch))
+    return @($sinceFork | Where-Object { $againstTip -contains $_ })
+}
+
 function Test-OwnedPath {
     # A queue `Files:` entry or a changed file owns a path when they are the
     # same file, or when one is a folder (trailing slash) containing the other.
@@ -1966,7 +1983,7 @@ function Invoke-SliceOwner {
     }
     $branches = @(Split-GitText (Read-GitText -C $root branch --no-merged master "--format=%(refname:short)") | Where-Object { $_ -ne $here })
     foreach ($branch in $branches) {
-        $changed = (Split-GitText (Read-GitText -C $root diff --name-only "master...$branch"))
+        $changed = Get-BranchChangedPaths -Root $root -Base "master" -Branch $branch
         $hits = @($Wanted | Where-Object { $w = $_; @($changed | Where-Object { Test-OwnedPath -Owned $_ -Wanted $w }).Count -gt 0 })
         if ($hits) {
             $last = (Read-GitText -C $root log -1 "--format=%cs %s" $branch).Trim()
@@ -1979,7 +1996,7 @@ function Invoke-SliceOwner {
     $remoteBase = if ((Invoke-GitSilent -C $root rev-parse --verify --quiet origin/master) -eq 0) { "origin/master" } else { "master" }
     $julesBranches = @(Split-GitText (Read-GitText -C $root branch -r --no-merged $remoteBase --list "origin/jules/*" "--format=%(refname:short)"))
     foreach ($branch in $julesBranches) {
-        $changed = (Split-GitText (Read-GitText -C $root diff --name-only "$remoteBase...$branch"))
+        $changed = Get-BranchChangedPaths -Root $root -Base $remoteBase -Branch $branch
         $hits = @($Wanted | Where-Object { $w = $_; @($changed | Where-Object { Test-OwnedPath -Owned $_ -Wanted $w }).Count -gt 0 })
         if ($hits) {
             $last = (Read-GitText -C $root log -1 "--format=%cs %s" $branch).Trim()
