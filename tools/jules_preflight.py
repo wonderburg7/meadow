@@ -7,7 +7,7 @@ owner`. This is that check for Jules, read from `origin` alone:
     python tools/jules_preflight.py <path> [<path> ...] # free or owned
     python tools/jules_preflight.py --scope [J-n|R-x|E-n]   # files this branch changes outside the task
     python tools/jules_preflight.py --queue             # every task's and review's state, and how many are free
-    python tools/jules_preflight.py --ledger            # every unmerged Jules branch: unreviewed, returned, closed
+    python tools/jules_preflight.py --ledger            # every unmerged Jules branch: unreviewed, reviewed, returned, closed
 
 A path is owned when `NEXTSTEPS.md` or a live plan in `plans/now/` names it
 on `origin/master` (a queued or planned slice will edit it), or when an
@@ -41,11 +41,13 @@ The ledger (`plans/reference/jules-ledger.md`, kept by Claude and Codex) says
 what happened to each Jules branch that was not merged as it stood: `merged`
 (integrated another way), `returned` (not merged; the task is free again and
 the row says what to correct) or `closed` (not merged and finished with:
-its findings went elsewhere, or it was rejected). A branch with no row is
-merged when its task has a `J-<n>:` line on master or every file it changes
-already matches master, and otherwise unreviewed. `--ledger` lists them,
-and exits 1 on a stale row: one whose Outcome still says "not on master",
-left by a prepared batch merged without rewriting its rows.
+its findings went elsewhere, or it was rejected) or `reviewed` (checked,
+awaiting integration; its Outcome starts `at <SHA>:`, and it still takes its
+task). A branch with no row is merged when its task has a `J-<n>:` line on
+master or every file it changes already matches master, and otherwise
+unreviewed. `--ledger` lists them, and exits 1 on a `moved` reviewed branch
+(tip no longer the recorded SHA), a `stale` reviewed branch (already on
+master) or a stale row whose Outcome still says "not on master".
 
 `--scope` lists what a pull request would change (`origin/master...ref`, the
 view GitHub shows) and flags every changed file the task's `Files:` line does
@@ -87,7 +89,11 @@ PLANNED = ["NEXTSTEPS.md", "plans/now"]
 BRANCH_PREFIXES = ("origin/claude/", "origin/codex/", "origin/jules/")
 TASK_HEADING = re.compile(r"^###\s+(J-\d+)\s+--\s+(.*?)\s*$")
 BRANCH_TASK = re.compile(r"jules/(j-\d+|r-[a-z]+|e-\d+)(?:-|$)", re.IGNORECASE)
-LEDGER_STATES = ("merged", "returned", "closed")
+LEDGER_STATES = ("merged", "returned", "closed", "reviewed")
+# A `reviewed` row's Outcome starts `at <40-char SHA>:` (optionally after `#<PR> `):
+# the tip the reviewer checked. It is the "reviewed, awaiting integration" state
+# a prepared batch lacked on 4 Nov 2026 (see stale_rows).
+REVIEWED_AT = re.compile(r"^(?:#\d+\s+)?at ([0-9a-f]{40}):")
 LOW_WATER = 10  # free tasks below which the list needs a refill: a session may now take 20 (30 Oct 2026)
 
 
@@ -235,7 +241,8 @@ def owners(
     root: Path, paths: list[str], base: str = BASE, ledger: dict[str, LedgerRow] | None = None
 ) -> dict[str, list[str]]:
     """For each path, why it is owned: a planned mention or an unmerged branch. Empty means free.
-    A Jules branch the ledger has processed (returned or closed) owns nothing."""
+    A Jules branch the ledger has processed (merged, returned or closed) owns nothing;
+    a `reviewed` one still awaits integration and keeps its files."""
     ledger = load_ledger(root, base) if ledger is None else ledger
     found: dict[str, list[str]] = {path: [] for path in paths}
     for path in paths:
@@ -271,11 +278,15 @@ def is_done(root: Path, task: Task, base: str = BASE) -> bool:
 
 
 def unprocessed(name: str, ledger: dict[str, LedgerRow]) -> bool:
-    return name.removeprefix("origin/") not in ledger
+    """No row yet, or a `reviewed` row: the branch still waits for integration,
+    so it keeps its task taken and its files owned."""
+    row = ledger.get(name.removeprefix("origin/"))
+    return row is None or row.state == "reviewed"
 
 
 def is_taken(root: Path, task: Task, base: str = BASE, ledger: dict[str, LedgerRow] | None = None) -> bool:
-    """An open branch for the task that the ledger has not processed (a returned or closed one takes nothing)."""
+    """An open branch for the task that the ledger has not processed or only marks `reviewed`
+    (a merged, returned or closed one takes nothing)."""
     ledger = load_ledger(root, base) if ledger is None else ledger
     return any(
         name.startswith(f"origin/{task.branch_stem}") and unprocessed(name, ledger) for name in open_branches(root, base)
@@ -448,6 +459,9 @@ def jules_branches(root: Path, ledger: dict[str, LedgerRow], base: str = BASE) -
             continue
         name = ref.removeprefix("origin/")
         row = ledger.get(name)
+        if row and row.state == "reviewed":
+            out.append((name, *reviewed_state(root, ref, row, base)))
+            continue
         if row:
             out.append((name, row.state, f"{row.item}, {row.date} by {row.by}: {row.outcome}"))
             continue
@@ -460,6 +474,22 @@ def jules_branches(root: Path, ledger: dict[str, LedgerRow], base: str = BASE) -
             subject = git(root, "log", "-1", "--format=%cs %s", ref).strip()
             out.append((name, "unreviewed", subject))
     return out
+
+
+def reviewed_state(root: Path, ref: str, row: LedgerRow, base: str = BASE) -> tuple[str, str]:
+    """(state, detail) for a `reviewed` row: reviewed, moved (the tip is not the
+    SHA the reviewer recorded, so it needs another look) or stale (every file it
+    changes already matches `base`, so the row should now say merged)."""
+    detail = f"{row.item}, {row.date} by {row.by}: {row.outcome}"
+    found = REVIEWED_AT.match(row.outcome)
+    if not found:
+        return "moved", f"{detail} [no 'at <40-char SHA>:' at the start of the Outcome: record the reviewed tip]"
+    tip = git(root, "rev-parse", ref).strip()
+    if tip != found.group(1):
+        return "moved", f"{detail} [tip is now {tip[:12]}: review the new commits]"
+    if matches_base(root, ref, base):
+        return "stale", f"{detail} [already on {base}: flip the row to merged]"
+    return "reviewed", detail
 
 
 def stale_rows(ledger: dict[str, LedgerRow]) -> list[LedgerRow]:
@@ -477,18 +507,25 @@ def ledger_report(root: Path, base: str = BASE) -> list[str]:
     branches = jules_branches(root, ledger, base)
     lines = [
         f"{state:<10} {name} -- {detail}"
-        for wanted in ("unreviewed", "returned", "closed")
+        for wanted in ("unreviewed", "moved", "stale", "reviewed", "returned", "closed")
         for name, state, detail in branches
         if state == wanted
     ]
     stale = stale_rows(ledger)
     lines += [f"stale      {row.branch} -- says 'not on master' but is on {base}: rewrite it to what landed" for row in stale]
-    counts = {state: sum(1 for _, found, _ in branches if found == state) for state in ("unreviewed", *LEDGER_STATES)}
+    counts = {
+        state: sum(1 for _, found, _ in branches if found == state)
+        for state in ("unreviewed", *LEDGER_STATES, "moved", "stale")
+    }
     lines.append("total      " + ", ".join(f"{count} {state}" for state, count in counts.items()))
     if counts["unreviewed"]:
         lines.append(f"next       process the unreviewed ones, then add a row each to {LEDGER_FILE}")
     if stale:
         lines.append(f"next       correct the {len(stale)} stale row(s) in {LEDGER_FILE} to merged or closed")
+    if counts["moved"]:
+        lines.append(f"next       re-review the {counts['moved']} moved branch(es) and record the new tip in {LEDGER_FILE}")
+    if counts["stale"]:
+        lines.append(f"next       flip the {counts['stale']} reviewed row(s) already on {BASE} to merged")
     return lines
 
 
@@ -567,7 +604,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.ledger:
         report = ledger_report(ROOT)
         print("\n".join(report))
-        return 1 if any(line.startswith("stale") for line in report) else 0
+        return 1 if any(line.startswith(("stale", "moved")) for line in report) else 0
 
     tasks = parse_tasks(git(ROOT, "show", f"{BASE}:{TASK_FILE}")) if (args.next or args.queue) else []
     ledger = load_ledger(ROOT)

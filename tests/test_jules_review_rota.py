@@ -253,11 +253,57 @@ class RepositoryTest(unittest.TestCase):
         self.assertEqual(found, {"jules/j-1-first-5": "unreviewed", "jules/s-1-helpers-7": "merged", "jules/idea-8": "closed"})
         report = preflight.ledger_report(self.root, "origin/master")
         self.assertTrue(report[0].startswith("unreviewed jules/j-1-first-5 -- "))
-        self.assertIn("total      1 unreviewed, 1 merged, 0 returned, 1 closed", report)
+        self.assertIn("total      1 unreviewed, 1 merged, 0 returned, 1 closed, 0 reviewed, 0 moved, 0 stale", report)
         self.assertFalse(any(line.startswith("stale") for line in report))
         self.ledger("| idea | jules/idea-8 | closed | 2026-11-05 | Codex | prepared on a batch branch, not on master |\n")
         report = preflight.ledger_report(self.root, "origin/master")
         self.assertIn("stale      jules/idea-8 -- says 'not on master' but is on origin/master: rewrite it to what landed", report)
+
+    def test_a_reviewed_row_waits_at_its_tip_and_flags_a_moved_or_landed_branch(self):
+        self.push_branch("jules/j-1-first-5", "tools/one.py", "# j-1 reviewed\n")
+        tip = self.git("rev-parse", "origin/jules/j-1-first-5").strip()
+        task = preflight.parse_tasks(TASKS)[0]
+
+        def found() -> tuple[str, list[str]]:
+            ledger = preflight.load_ledger(self.root, "origin/master")
+            state = {name: state for name, state, _ in preflight.jules_branches(self.root, ledger, "origin/master")}
+            return state["jules/j-1-first-5"], preflight.ledger_report(self.root, "origin/master")
+
+        # Reviewed at its tip: not unreviewed, still takes its task and owns its file.
+        self.ledger(f"| J-1 | jules/j-1-first-5 | reviewed | 2026-11-05 | Claude | #7 at {tip}: take tools/one.py |\n")
+        state, report = found()
+        self.assertEqual(state, "reviewed")
+        self.assertIn("total      0 unreviewed, 0 merged, 0 returned, 0 closed, 1 reviewed, 0 moved, 0 stale", report)
+        self.assertFalse(any(line.startswith(("stale", "moved")) for line in report))
+        self.assertEqual(preflight.classify(self.root, [task], "origin/master")[0][1], "taken")
+        self.assertEqual(preflight.owners(self.root, ["tools/one.py"], "origin/master")["tools/one.py"],
+                         ["changed on unmerged origin/jules/j-1-first-5"])
+
+        # The tip moves after review: it needs another look.
+        self.git("checkout", "-q", "jules/j-1-first-5")
+        self.write("tools/one.py", "# j-1 corrected\n")
+        self.commit("J-1 correction")
+        self.git("push", "-q", "origin", "jules/j-1-first-5")
+        self.git("checkout", "-q", "master")
+        self.git("fetch", "-q", "origin")
+        state, report = found()
+        self.assertEqual(state, "moved")
+        self.assertTrue(any(line.startswith("moved      jules/j-1-first-5") and "tip is now" in line for line in report))
+
+        # Re-reviewed at the new tip, then integrated without flipping the row: stale.
+        tip = self.git("rev-parse", "origin/jules/j-1-first-5").strip()
+        self.ledger(f"| J-1 | jules/j-1-first-5 | reviewed | 2026-11-06 | Claude | at {tip}: take tools/one.py |\n")
+        self.assertEqual(found()[0], "reviewed")
+        self.git("checkout", "-q", "origin/jules/j-1-first-5", "--", "tools/one.py")
+        self.commit("take tools/one.py by checkout")
+        self.push_master()
+        state, report = found()
+        self.assertEqual(state, "stale")
+        self.assertTrue(any(line.startswith("stale      jules/j-1-first-5") and "flip the row to merged" in line for line in report))
+
+        # A reviewed row without a recorded SHA cannot prove what was reviewed.
+        self.ledger("| J-1 | jules/j-1-first-5 | reviewed | 2026-11-06 | Claude | looked fine |\n")
+        self.assertEqual(found()[0], "moved")
 
     def test_review_scope_allows_only_its_report(self):
         task = preflight.scope_task(self.root, "R-ALPHA", "origin/master")

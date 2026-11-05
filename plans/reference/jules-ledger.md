@@ -19,8 +19,15 @@ sent back. This table is the missing record. `python tools/jules_preflight.py
 - **closed** -- not merged and finished with: its findings went elsewhere,
   something else superseded it, or it was rejected. A closed task is never
   offered again; a closed review report counts as that review's last run.
+- **reviewed** -- checked and accepted (or partly accepted), not yet
+  integrated. Its Outcome starts `at <40-char SHA>:` (optionally after
+  `#<PR> `), the tip that was reviewed. It still takes its task and owns its
+  files. `--ledger` lists it as **moved** when the branch tip is no longer that
+  SHA (review the new commits) and as **stale** when every file it changes
+  already matches master (flip the row to `merged`); both exit 1.
 
-A branch with a row takes no task and owns no file in the preflight's eyes.
+A branch with a `merged`, `returned` or `closed` row takes no task and owns
+no file in the preflight's eyes.
 
 **Keeping it.** Whoever processes a Jules branch -- Claude, Codex or Dave --
 adds one row at the bottom of the table in the same commit as the merge,
@@ -30,11 +37,16 @@ correct). A branch merged with a `J-<n>:` line needs no row. Jules reads this
 file but never edits it. Prune a row once its branch is deleted from
 `origin`.
 
-A batch prepared on a branch for someone else to review may record its
-rows as "not on master" (4 Nov 2026). Whoever merges it rewrites each
-row to what actually landed -- `merged` for delivered content, `closed`
-for an exclusion -- in the merge commit; `--ledger` lists any row still
-saying "not on master" as `stale` and exits 1.
+**Rows are written on master, never on a batch branch** (5 Nov 2026). A
+reviewer who will not integrate straight away records `reviewed` rows on
+master at once (a docs-only commit, merged and pushed in the same sitting);
+the integrator later adds a `merged` or `closed` row for the same branch (the
+last row wins). A prepared batch branch writes no ledger rows at all, so it
+never conflicts with this file.
+
+Before the `reviewed` state, the 4 Nov batch recorded undelivered rows as
+`closed` with "not on master" in the Outcome. As a fallback `--ledger` still
+lists any row saying "not on master" as `stale` and exits 1.
 
 | Item | Branch | State | Date | By | Outcome |
 | --- | --- | --- | --- | --- | --- |

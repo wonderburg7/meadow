@@ -405,6 +405,11 @@ For Claude, Codex and Dave, not Jules.
   session not merged by a `J-<n>:` line: `returned` with what to correct,
   `closed` with where its findings went, or `merged` for a file taken by
   checkout. A row is what stops the next reviewer opening it again.
+  A review that will not be integrated in the same sitting records a
+  `reviewed` row on master straight away (Outcome `at <40-char SHA>: ...`,
+  docs-only, merged and pushed at once); the integrator flips it to
+  `merged`/`closed`. A prepared batch branch never writes ledger rows
+  (5 Nov 2026: the 4 Nov batch faked 36 rows as `closed`).
 - Number new tasks after the highest id ever used (`git log -E
   --grep="^J-[0-9]+:"` shows used ones); never reuse an id.
 - Delete merged task blocks at the next refill, not per merge. `--next`
