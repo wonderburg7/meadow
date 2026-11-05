@@ -141,9 +141,8 @@ Reviewed: <commit> | Since: <commit or "first run"> | Scope: <what was covered> 
 <!-- LAYER: on-demand -->
 
 The record key is the stem of a review's dated record and the `Record key:`
-line of its file in `plans/reference/reviews/`. Every review except the
-performance review has a record now, so only that one needs a first-run
-baseline: `docs/PERFORMANCE_BASELINE.md`.
+line of its file in `plans/reference/reviews/`. Every review has a record
+now; the performance review still reads `docs/PERFORMANCE_BASELINE.md` first.
 
 | Record key | Review file |
 | --- | --- |

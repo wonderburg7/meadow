@@ -3,7 +3,7 @@
 <!-- CONTEXT: review-prompt | LOAD: only when running this review -->
 Record key: agent-workflow-review
 Reasoning: high
-Watches: tools/slice.ps1 tools/refill_lane.py tools/archive_slice.py tools/prefinish.py tools/session_cost.py plans/archive/agent-lifecycle_2026-11-04.md plans/observations/system-improvement-signals.md plans/workstreams.md plans/reference/closeout.md .claude/agents .claude/skills .agents .claude/settings.json .codex
+Watches: tools/slice.ps1 tools/refill_lane.py tools/archive_slice.py tools/prefinish.py tools/session_cost.py tools/worktree.py tools/guard_hook.py tools/admission.py tools/stop_causes.py plans/observations/system-improvement-signals.md plans/workstreams.md plans/reference/closeout.md .claude/agents .claude/skills .agents .claude/settings.json .codex
 Jules: no -- it reads Claude session transcripts on Dave's machine
 
 **Owns:** how sessions actually run: the lifecycle tooling
@@ -49,8 +49,9 @@ If it has none, run Claude-only and say so.
    owner` reports clear and which have focused validation. Prefer
    enforcement (script, check, permission entry, hook) over prose. When an
    instruction file must change, replace text rather than add it.
-6. **Plan the rest** in `plans/archive/agent-lifecycle_2026-11-04.md`, or a new
-   `plans/now/` file if it does not own the area. For lifecycle work add
+6. **Plan the rest** in the live `plans/now/` file that owns the area, or a
+   new one (the lifecycle plan was archived 4 Nov 2026; never reopen it,
+   contract rule 7). For lifecycle work add
    whichever tests apply: interruption at every durable phase; retry and
    resume; Windows file locks; two lanes active at once; the other lane
    changing shared coordination state; remote ahead and transient push
