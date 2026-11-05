@@ -23,7 +23,7 @@ Reviewed: 43f301b | Since: 1a1f81c | Scope: every live plan's Status and open-sl
 | F5 -- two lanes named CQ-M4 as successor | Shipped, then regrew as a loop (CQ-M4 to CQ-M5b to CQ-M4) -- fixed here (F6) |
 | F6 -- Status lines named shipped slices | Regrew in run-repairs, sprites, code-health, event-director, alpha-route-evidence and forager-recruitment -- fixed here (F11) |
 | F7 -- routing table drift | Regrew: no play-notes rows, five rows naming shipped ids -- fixed here (F12) |
-| F8 -- `code-health.md` over 260 lines, rejected | Still over (582) -- deferred with a named split (F15) |
+| F8 -- `code-health.md` over 260 lines, rejected | Rejected again -- still over (582); the split is named in F15 |
 
 ## Findings
 
@@ -43,7 +43,7 @@ Reviewed: 43f301b | Since: 1a1f81c | Scope: every live plan's Status and open-sl
 | F12 | The routing table had no play-notes rows and named FR-2, ED-1, PP-6, SP-6 and T2-7b | `plans/README.md` "Current routing" | low | Fixed -- one row per live plan, open ids only |
 | F13 | The play-notes tables headed their level column "Level / model", so five queued items showed no level | `check_docs.py` warnings | low | Fixed -- "Level" with the level alone |
 | F14 | Dave's D4 asks that timings stay adaptable and bloom curves cheap to change. Bloom windows are already data (`season_start`/`season_end`, fractions of the season, in `flower_species.gd`), but the season fraction is computed three times | `flower.gd::season_fraction`, `flower_species.gd::year_fraction_now`, `world_building.gd` near line 246 | low | Gated -- EV-0b (medium) moves all three onto `RunCalendar`, after EV-0 and CQ-M6 (`flower.gd`) |
-| F15 | `plans/now/code-health.md` is 582 lines | `check_docs.py` | low | Deferred -- split CQ-S1 to CQ-S5 into their own plan once CQ-M5b and CQ-M6, whose `Plan:` lines are live in the Codex lane, have landed |
+| F15 | `plans/now/code-health.md` is 582 lines | `check_docs.py` | low | Rejected for now -- splitting would rewrite the live `Plan:` lines of CQ-M5b and CQ-M6 in the Codex lane; once both land, CQ-S1 to CQ-S5 move to their own plan |
 
 Retain / defer / remove: every open slice **Retain** (PN-2 to PN-6, PN-7 to PN-19, ED-2, ED-2b, ED-3, EV-0, EV-0b, PP-10, AR-4, AR-6, FR-3, RR-12, SP-8a, SP-8b, SP-12, HM-1, HM-2, CQ-L3, CQ-T4, CQ-S1 to CQ-S5, CQ-M4, CQ-M5b, CQ-M6, CQ-M6b, CQ-M7, CQ-R2 to CQ-R5, CQ-R13); T2-7b left the queue, withdrawn by the product review. Walked as a fresh agent: PN-11 (`game_config.gd:646`, `:662-664`, the three scenarios and two tests exist), ED-2 (proof holds; split), AR-6 (`pacing_gates.py:35-38`, `:62`), CQ-M5b (`main.gd:587`, `hud.gd:242`, `:590`, `:674`, `game_panel.gd:26`); SP-12 against `input_selection.gd:769` and `hive_cell.gd:639`.
 
