@@ -27,6 +27,10 @@ here. A rule both agents need lives here, nowhere else.
 5. **Stop and escalate** rather than deciding when an open question would
    change an architecture/ownership boundary, save compatibility, a gameplay
    outcome or more than one later slice. Give the options and their costs.
+   Choosing the order of already agreed work within an agent's own lane is
+   delegated scheduling, not a design decision requiring escalation. Follow
+   the lane's queue policy; this does not authorise changing those contracts
+   or disrupting another lane.
 
 6. **Before `tools/slice.ps1 finish`, run `python tools/prefinish.py`**
    in the worktree (boot check, source checks, the unit tests naming the
