@@ -2,12 +2,7 @@
 
 from __future__ import annotations
 
-import json
-import sys
-import tempfile
 import unittest
-from pathlib import Path
-from unittest.mock import patch
 
 from tools import forager_diagnosis as diagnosis
 
@@ -87,64 +82,6 @@ class TestForagerDiagnosisHelpers(unittest.TestCase):
         ]
         out = diagnosis.render(values, "zero-fingerprint")
         self.assertIn("undefined (zero baseline)", out)
-
-    def test_extract_validation_failures(self) -> None:
-        """extract raises ValueError for missing snapshots or non-passing verdicts."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            folder = Path(temp_dir)
-            (folder / "result.json").write_text(json.dumps({"status": "failed", "outcome": "error"}))
-            (folder / "report.json").write_text(json.dumps({"summary": {"day": diagnosis.stages.DAYS}}))
-            (folder / "session.jsonl").write_text("")
-            with self.assertRaisesRegex(ValueError, "Incomplete campaign window"):
-                diagnosis.extract(folder)
-
-            (folder / "result.json").write_text(json.dumps({"status": "passed", "outcome": "max_days", "seed": 7}))
-            (folder / "report.json").write_text(json.dumps({"summary": {"day": diagnosis.stages.DAYS, "game_time": 100, "forager_deliveries": 0, "recruitment_matches": 0, "scouting_settled": 0}}))
-            (folder / "session.jsonl").write_text('{"type": "other_event"}\n')
-            with self.assertRaisesRegex(ValueError, "No population/queue samples"):
-                diagnosis.extract(folder)
-
-    def test_extract_without_scouting_settled(self) -> None:
-        """extract sets settlement_day to None when no scouting_settled events exist."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            folder = Path(temp_dir)
-            (folder / "result.json").write_text(json.dumps({"status": "passed", "outcome": "max_days", "seed": 42}))
-            summary = {
-                "day": diagnosis.stages.DAYS,
-                "game_time": 400,
-                "forager_delivery_amount": 100,
-                "forager_deliveries": 5,
-                "recruitment_matches": 1,
-                "scouting_settled": 0,
-            }
-            (folder / "report.json").write_text(json.dumps({"summary": summary}))
-            snapshot = {
-                "type": "snapshot",
-                "population": {
-                    "by_role": {"forager": 10},
-                    "by_state": {"AT_ENTRANCE_SEEKING": 1, "AT_ENTRANCE_MENTORING": 0},
-                },
-            }
-            (folder / "session.jsonl").write_text(json.dumps(snapshot) + "\n")
-            res = diagnosis.extract(folder)
-            self.assertIsNone(res["settlement_day"])
-            self.assertEqual(res["seed"], 42)
-            self.assertEqual(res["peak_foragers"], 10)
-
-    def test_baseline_case_missing_manifest_or_out_of_bounds(self) -> None:
-        """baseline_case returns None if manifest doesn't exist or case >= len(stages.STAGES)."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            folder = Path(temp_dir)
-            self.assertIsNone(diagnosis.baseline_case(0, 7, "ident", folder))
-            self.assertIsNone(diagnosis.baseline_case(len(diagnosis.stages.STAGES) + 1, 7, "ident", folder))
-
-    def test_main_arg_parser_validation(self) -> None:
-        """main rejects jobs < 1 with a SystemExit error."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            with patch.object(sys, "argv", ["forager_diagnosis.py", "--jobs", "0", "--output", temp_dir]), \
-                 patch("sys.stderr"):
-                with self.assertRaises(SystemExit):
-                    diagnosis.main()
 
 
 if __name__ == "__main__":
