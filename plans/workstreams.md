@@ -50,4 +50,3 @@ end-of-slice report states what was merged and what is next.
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/jules-review-20261103` (`codex/jules-review-20261103`) | Review | Assigned Jules review; report only; no integration | Codex | review complete, local | none | `plans/reference/jules-review-2026-11-03.md` |
 | `.worktrees/jules-integrate-20261104` (`codex/jules-integrate-20261104`) | Integration | Assigned Jules review corrections and selected-content integration; no game changes or queue claim | Codex | in progress | none | `plans/reference/jules.md`; its record, plans/reference/jules-integration-2026-11-04.md, lands with the branch |
-| `.worktrees/PN-1` (`claude/PN-1`) | Claude | OpenDyslexic and Silkscreen match Standard's height | Claude | in progress | none | `plans/now/play-notes.md` PN-1 -- OpenDyslexic and Silkscreen match Standard's height |
