@@ -122,7 +122,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | Slice | Outcome | Files it owns (block has the full list) | Startable | Level |
 | --- | --- | --- | --- | --- |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T3 | the 18 free UI scripts typed | those 18, `tests/source_checks.py`, `FUNCTION_MAP.md` | yes, after RR-22 in the Claude lane | low |
 | CQ-T4 | the other 56 scripts and tests typed; `untyped_declaration` becomes an error | those, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | gated -- after CQ-T3, `claude/dave-hands-on-checks-784f2a` and the Jules S-1/S-3 branches | low |
 | CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a, DR-1 | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
@@ -303,50 +302,7 @@ wrapped chain as `. name(` on its own line.
 - Next after: CQ-T3
 ```
 
-## CQ-T3 -- the free UI scripts typed
-
-Level: low -- claude-sonnet-5-5 at low effort. Mechanical: type annotations
-only, no behaviour change.
-
-**True now** (counted 3 Nov 2026 with `tests/source_checks.py::untyped_declarations`
-against `37314ed`). 72 scripts and tests outside `TYPED_FILES` hold 626 untyped
-declarations, so `untyped_declaration=1` in `project.godot` cannot become an
-error in one slice. The 18 UI scripts below hold 289 and no other branch or
-queued slice holds them (RR-22, ahead in this lane, also edits `scripts/hud.gd`
-and lands first, so its new code is typed here once). Five more UI scripts
-(`hud_command_rows`, `colony_panel`, `skill_tree_panel`, `gallerin_panel`,
-`problem_messages`) are changed by the unmerged `claude/dave-hands-on-checks-784f2a`
-and go to CQ-T4.
-
-**When done:**
-
-1. Every declaration `untyped_declarations` flags in `scripts/hud.gd` (115),
-   `debug_panel.gd` (48), `ui_theme.gd` (20), `main_menu.gd` (20),
-   `nursery_panel.gd` (18), `saves_panel.gd` (16), `hud_goal_shelf.gd` (11),
-   `challenge_complete.gd` (8), `ui.gd`, `run_availability_panel.gd` (5 each),
-   `ui_icon.gd`, `game_over.gd`, `foraging_panel.gd` (4 each),
-   `succession_panel.gd` (3), `winter_panel.gd`, `stage_gate.gd`, `perf_plot.gd`
-   and `perf_breakdown.gd` (2 each) carries an explicit type (`:=` where the
-   type is obvious, `-> void` on lambdas).
-2. All 18 are in `TYPED_FILES` in `tests/source_checks.py`.
-3. `python tools/update_function_map.py` has been re-run for the new signatures.
-4. Behaviour and every display string unchanged ("Rules for every slice").
-
-**Why one slice for 20 files.** The work list is `untyped_declarations`'
-output, one line per fix; the worker reads only the flagged lines, not the
-files, and nothing a reviewer must reason about moves. Splitting by file would
-add closeouts without shortening any.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] CQ-T3 -- the free UI scripts typed**
-- Plan: `plans/now/code-health.md` -- "CQ-T3 -- the free UI scripts typed"
-- Files: `scripts/hud.gd`, `scripts/debug_panel.gd`, `scripts/ui_theme.gd`, `scripts/main_menu.gd`, `scripts/nursery_panel.gd`, `scripts/saves_panel.gd`, `scripts/hud_goal_shelf.gd`, `scripts/challenge_complete.gd`, `scripts/ui.gd`, `scripts/run_availability_panel.gd`, `scripts/ui_icon.gd`, `scripts/game_over.gd`, `scripts/foraging_panel.gd`, `scripts/succession_panel.gd`, `scripts/winter_panel.gd`, `scripts/stage_gate.gd`, `scripts/perf_plot.gd`, `scripts/perf_breakdown.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
-- Check: `python tests/source_checks.py` passes with all 18 scripts in `TYPED_FILES`; `python tools/prefinish.py` boots without an `untyped_declaration` warning from them; `.\tools\verify.ps1` is green
-- Proof: `absent: tests/source_checks.py :: "scripts/debug_panel.gd"`
-- Next after: CQ-T4 -- the rest typed; the warning becomes an error
-```
+CQ-T3 shipped 2026-11-05; its specification is `plans/archive/CQ-T3_2026-11-05.md`.
 
 ## CQ-T4 -- the rest typed
 
