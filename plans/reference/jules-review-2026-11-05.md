@@ -1,6 +1,6 @@
 # Jules outstanding-work review — 5 November 2026
 
-Status: reference | Owner: Dave / Codex | Next: integrate ready/selected content in the order below; return the named corrections | Dependency: required Claude review of the existing correction batch | Baseline: 197b1d927caad0c6d7b63cd896dbe7190250c24e | Verified: 2026-11-05
+Status: reference | Owner: Dave / Codex | Next: integrate ready/selected content in the order below; return the named corrections | Dependency: none; the correction batch (step 1 below) is on master, see plans/reference/jules-integration-2026-11-04.md | Baseline: 197b1d927caad0c6d7b63cd896dbe7190250c24e | Verified: 2026-11-05
 
 ## Result
 

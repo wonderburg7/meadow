@@ -130,8 +130,16 @@ jobs:
           HEAD_REF: ${{ github.head_ref }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          if [[ "$HEAD_REF" =~ ^jules/(j-[0-9]+|r-[a-z]+|e-[0-9]+)(-|$) ]]; then
+          if [[ "$HEAD_REF" =~ ^jules/(j-[0-9]+|r-[a-z]+|e-[0-9]+|s-[1-4])(-|$) ]]; then
             python tools/jules_preflight.py --scope "${BASH_REMATCH[1]^^}" --ref "$HEAD_SHA"
           else
-            echo "No numbered task in $HEAD_REF: nothing to check."
+            echo "No numbered or standing task in $HEAD_REF: nothing to check."
           fi
+
+      # Two Jules sessions at once take the same number (E-20 three times,
+      # 5 Nov 2026). Only the later submission fails; corrections on the same
+      # branch, and fresh branches correcting a `returned` one, are exempt.
+      - name: Duplicate Jules-Sequence
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python tools/jules_preflight.py --sequence --ref "$HEAD_SHA"

@@ -77,6 +77,16 @@ class ParsingTest(unittest.TestCase):
         self.assertEqual(preflight.ledger_notes(rows, "j-1"), ["returned 2026-10-30 by Claude (jules/j-1-a): fix the test"])
         self.assertEqual(preflight.ledger_notes(rows, "J-2"), [])
 
+    def test_stale_rows_are_preparation_claims_left_on_master(self):
+        rows = preflight.parse_ledger(
+            LEDGER_HEAD
+            + "| J-1 | jules/j-1-a | closed | 2026-11-05 | Codex | #1: prepared; pending review, not on master. |\n"
+            + "| J-2 | jules/j-2-b | merged | 2026-11-05 | Claude | delivered to master in the batch merge |\n"
+            + "| J-3 | jules/j-3-c | closed | 2026-11-05 | Codex | prepared, Not On Master |\n"
+            + "| J-3 | jules/j-3-c | merged | 2026-11-06 | Claude | delivered |\n"
+        )
+        self.assertEqual([row.branch for row in preflight.stale_rows(rows)], ["jules/j-1-a"])
+
     def test_branch_names_carry_review_ids(self):
         self.assertEqual(preflight.task_for_ref(Path("."), "origin/jules/r-save-1234"), "R-SAVE")
         self.assertEqual(preflight.task_for_ref(Path("."), "jules/r-gameplay"), "R-GAMEPLAY")
@@ -243,7 +253,136 @@ class RepositoryTest(unittest.TestCase):
         self.assertEqual(found, {"jules/j-1-first-5": "unreviewed", "jules/s-1-helpers-7": "merged", "jules/idea-8": "closed"})
         report = preflight.ledger_report(self.root, "origin/master")
         self.assertTrue(report[0].startswith("unreviewed jules/j-1-first-5 -- "))
-        self.assertIn("total      1 unreviewed, 1 merged, 0 returned, 1 closed", report)
+        self.assertIn("total      1 unreviewed, 1 merged, 0 returned, 1 closed, 0 reviewed, 0 moved, 0 stale", report)
+        self.assertFalse(any(line.startswith("stale") for line in report))
+        self.ledger("| idea | jules/idea-8 | closed | 2026-11-05 | Codex | prepared on a batch branch, not on master |\n")
+        report = preflight.ledger_report(self.root, "origin/master")
+        self.assertIn("stale      jules/idea-8 -- says 'not on master' but is on origin/master: rewrite it to what landed", report)
+
+    def test_a_reviewed_row_waits_at_its_tip_and_flags_a_moved_or_landed_branch(self):
+        self.push_branch("jules/j-1-first-5", "tools/one.py", "# j-1 reviewed\n")
+        tip = self.git("rev-parse", "origin/jules/j-1-first-5").strip()
+        task = preflight.parse_tasks(TASKS)[0]
+
+        def found() -> tuple[str, list[str]]:
+            ledger = preflight.load_ledger(self.root, "origin/master")
+            state = {name: state for name, state, _ in preflight.jules_branches(self.root, ledger, "origin/master")}
+            return state["jules/j-1-first-5"], preflight.ledger_report(self.root, "origin/master")
+
+        # Reviewed at its tip: not unreviewed, still takes its task and owns its file.
+        self.ledger(f"| J-1 | jules/j-1-first-5 | reviewed | 2026-11-05 | Claude | #7 at {tip}: take tools/one.py |\n")
+        state, report = found()
+        self.assertEqual(state, "reviewed")
+        self.assertIn("total      0 unreviewed, 0 merged, 0 returned, 0 closed, 1 reviewed, 0 moved, 0 stale", report)
+        self.assertFalse(any(line.startswith(("stale", "moved")) for line in report))
+        self.assertEqual(preflight.classify(self.root, [task], "origin/master")[0][1], "taken")
+        self.assertEqual(preflight.owners(self.root, ["tools/one.py"], "origin/master")["tools/one.py"],
+                         ["changed on unmerged origin/jules/j-1-first-5"])
+
+        # The tip moves after review: it needs another look.
+        self.git("checkout", "-q", "jules/j-1-first-5")
+        self.write("tools/one.py", "# j-1 corrected\n")
+        self.commit("J-1 correction")
+        self.git("push", "-q", "origin", "jules/j-1-first-5")
+        self.git("checkout", "-q", "master")
+        self.git("fetch", "-q", "origin")
+        state, report = found()
+        self.assertEqual(state, "moved")
+        self.assertTrue(any(line.startswith("moved      jules/j-1-first-5") and "tip is now" in line for line in report))
+
+        # Re-reviewed at the new tip, then integrated without flipping the row: stale.
+        tip = self.git("rev-parse", "origin/jules/j-1-first-5").strip()
+        self.ledger(f"| J-1 | jules/j-1-first-5 | reviewed | 2026-11-06 | Claude | at {tip}: take tools/one.py |\n")
+        self.assertEqual(found()[0], "reviewed")
+        self.git("checkout", "-q", "origin/jules/j-1-first-5", "--", "tools/one.py")
+        self.commit("take tools/one.py by checkout")
+        self.push_master()
+        state, report = found()
+        self.assertEqual(state, "stale")
+        self.assertTrue(any(line.startswith("stale      jules/j-1-first-5") and "flip the row to merged" in line for line in report))
+
+        # A reviewed row without a recorded SHA cannot prove what was reviewed.
+        self.ledger("| J-1 | jules/j-1-first-5 | reviewed | 2026-11-06 | Claude | looked fine |\n")
+        self.assertEqual(found()[0], "moved")
+
+    def jules_commit(self, branch: str, files: dict[str, str], message: str, when: str, start: str = "master") -> None:
+        """Commit `files` on `branch` (created from `start` if new) at committer time `when`, and push it."""
+        exists = subprocess.run(["git", "-C", str(self.root), "rev-parse", "--verify", "-q", branch],
+                                capture_output=True).returncode == 0
+        self.git("checkout", "-q", branch) if exists else self.git("checkout", "-q", "-b", branch, start)
+        for path, text in files.items():
+            self.write(path, text)
+        self.git("add", "-A")
+        env = {"GIT_COMMITTER_DATE": when, "GIT_AUTHOR_DATE": when}
+        subprocess.run(["git", "-C", str(self.root), "commit", "-q", "-m", message], check=True,
+                       env={**__import__("os").environ, **env})
+        self.git("push", "-q", "origin", branch)
+        self.git("checkout", "-q", "master")
+        self.git("fetch", "-q", "origin")
+
+    def test_sequence_fails_only_the_later_duplicate(self):
+        trailer = "E-4: report\n\nJules-Sequence: 4 efficiency\n"
+        self.jules_commit("jules/e-4-first", {"docs/jules-efficiency/e-4.md": "# first\n"}, trailer, "2026-11-05T10:00:00")
+        self.jules_commit("jules/e-4-second", {"docs/jules-efficiency/e-4.md": "# second\n"}, trailer, "2026-11-05T10:01:12")
+        self.jules_commit("jules/j-1-other", {"tools/one.py": "# j-1\n"}, "J-1\n\nJules-Sequence: 5 ordinary\n", "2026-11-05T09:00:00")
+
+        def report(ref: str) -> list[str]:
+            return preflight.sequence_report(self.root, f"origin/{ref}", "origin/master")
+
+        self.assertEqual(report("jules/e-4-first"), ["ok    Jules-Sequence: 4 efficiency"])
+        self.assertEqual(report("jules/e-4-second"),
+                         ["dup   Jules-Sequence: 4 efficiency -- duplicate of jules/e-4-first (older): close this PR as a duplicate"])
+        self.assertEqual(report("jules/j-1-other"), ["ok    Jules-Sequence: 5 ordinary"])
+
+        # A correction on the first branch keeps its trailer and stays green.
+        self.jules_commit("jules/e-4-first", {"docs/jules-efficiency/e-4.md": "# first, corrected\n"}, trailer, "2026-11-05T11:00:00")
+        self.assertEqual(report("jules/e-4-first"), ["ok    Jules-Sequence: 4 efficiency"])
+
+        # A correction of a returned submission may come on a fresh branch with the original trailer.
+        self.ledger("| E-4 | jules/e-4-first | returned | 2026-11-05 | Claude | at " + "0" * 40 + ": correct it |\n")
+        self.assertEqual(report("jules/e-4-second"), ["ok    Jules-Sequence: 4 efficiency"])
+
+        self.jules_commit("jules/j-2-none", {"tools/two.py": "# j-2\n"}, "J-2 without a trailer", "2026-11-05T12:00:00")
+        self.assertTrue(report("jules/j-2-none")[0].startswith("note  no Jules-Sequence trailer"))
+
+    def test_standing_task_scopes_have_fixed_shapes(self):
+        self.write("docs/audits/alpha.md", "# Alpha audit\n")
+        self.write("docs/audits/beta.md", "# Beta audit\n")
+        self.commit("audits")
+        self.push_master()
+
+        def scope(task: str, branch: str, files: dict[str, str]) -> list[str]:
+            self.jules_commit(branch, files, f"{task}: change", "2026-11-05T10:00:00")
+            return preflight.standing_scope_report(self.root, task, f"origin/{branch}", "origin/master")
+
+        def fails(lines: list[str]) -> bool:
+            return any(line.startswith(("off", "note")) for line in lines)
+
+        cases = [
+            ("S-1", {"tests/test_one_helpers.py": "# ok\n"}, False),
+            ("S-1", {"tests/test_one_extra_helpers.py": "# suffix ok\n"}, False),
+            ("S-1", {"tests/test_one_helpers.py": "# ok\n", "AGENTS.md": "# inherited\n"}, True),
+            ("S-1", {"tests/test_missing_helpers.py": "# no such tool\n"}, True),
+            ("S-1", {"tests/test_one_helpers.py": "# one\n", "tests/test_two_helpers.py": "# two tools\n"}, True),
+            ("S-2", {"scripts/a.gd": "# trimmed\n"}, False),
+            ("S-2", {"scripts/a.gd": "# trimmed\n", "tools/one.py": "# second file\n"}, True),
+            ("S-2", {"scripts/new.gd": "# added, not existing\n"}, True),
+            ("S-3", {"tools/foo_check.py": "# guard\n", "tests/test_foo_check.py": "# test\n"}, False),
+            ("S-3", {"tools/foo_check.py": "# guard alone\n"}, True),
+            ("S-3", {"tools/foo_check.py": "# guard\n", "tests/test_bar_check.py": "# other name\n"}, True),
+            ("S-3", {"tools/foo_check.py": "# g\n", "tests/test_foo_check.py": "# t\n", "CHATGPT.md": "# x\n"}, True),
+            ("S-4", {"docs/audits/alpha.md": "# Alpha audit, refreshed\n"}, False),
+            ("S-4", {"docs/audits/alpha.md": "# a\n", "docs/audits/beta.md": "# b\n"}, True),
+            ("S-4", {"docs/audits/gamma.md": "# new audit\n"}, True),
+        ]
+        for number, (task, files, should_fail) in enumerate(cases):
+            with self.subTest(task=task, files=sorted(files)):
+                lines = scope(task, f"jules/{task.lower()}-case-{number}", files)
+                self.assertEqual(fails(lines), should_fail, lines)
+
+    def test_branch_names_carry_standing_task_ids(self):
+        self.assertEqual(preflight.task_for_ref(self.root, "origin/jules/s-3-indoor-flower-check-1"), "S-3")
+        self.assertIsNone(preflight.task_for_ref(self.root, "origin/jules/s-9-unknown-1"))
 
     def test_review_scope_allows_only_its_report(self):
         task = preflight.scope_task(self.root, "R-ALPHA", "origin/master")

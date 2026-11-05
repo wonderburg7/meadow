@@ -1,26 +1,41 @@
-# Jules -- alternating token-efficiency tasks
+# Jules -- token-efficiency tasks when a topic is due
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: Jules "Running an efficiency task" when --next prints E-<n>; integrator "Processing an efficiency task" -->
-Status: reference | Owner: Dave / Claude Code / Codex | Next: alternate ordinary work with an efficiency task; retain only improvements with evidence and unchanged quality | Dependency: tools/jules_preflight.py, tools/jules_efficiency.py | Verified: 2026-11-02
+Status: reference | Owner: Dave / Claude Code / Codex | Next: offer an efficiency task only when its topic is due; retain only improvements with evidence and unchanged quality | Dependency: tools/jules_preflight.py, tools/jules_efficiency.py | Verified: 2026-11-05
 
 ## Running an efficiency task
 
 ### Alternation and continuity
 
-Dave's instruction (2 Nov 2026): every other task Jules does reviews how to
-make game-slice implementation, code investigation and game development more
+Dave's instruction (2 Nov 2026): Jules regularly reviews how to make
+game-slice implementation, code investigation and game development more
 token efficient, without losing quality. Optimise the total work Jules,
 Claude, Codex and Dave must do, including review and integration.
+
+Since 5 Nov 2026 (Dave, D-B) an efficiency turn is offered only when a topic
+is **due**, by the rule the R-review rota uses: fixed alternation made every
+other task an E report, the six topics recurred every 12 turns whether or not
+anything had changed, and 9 of the 14 E reports in the 5 Nov review were
+closed as repeats with no measured saving (`plans/reference/jules-review-2026-11-05.md`, F7).
+A topic is due when its previous report has been processed (no open
+`jules/e-*` branch for it without a ledger row), at least 14 days have passed
+since its last run (a report landing on master, or a `closed` ledger row) and
+at least 20 commits have touched its watched paths since
+(`tools/jules_efficiency.py`: `EVERY_DAYS`, `MIN_COMMITS`, `WATCHES`).
 
 - Run one serial Jules sequence for this repository. Before every new task,
   commit and publish the previous PR, run git fetch origin, then
   git switch --detach origin/master, then python tools/jules_preflight.py --next.
   Detaching ensures ownership checks include the previous task's branch.
   It fetches shared refs and prints the next Jules-Sequence line and task.
-- Odd turns are ordinary work: numbered task, due rota review, then standing
-  task. Even turns are E-<number> efficiency tasks and take precedence over
-  all ordinary work. The first new task under this policy is ordinary.
-  Existing PRs without the trailer are historical and do not affect the count.
+- Every turn takes the next number (highest published + 1). The trailer's
+  kind word, not the number's parity, says what the turn was. After an
+  ordinary turn, `--next` offers an `E-<number>` efficiency task for the due
+  topic whose last run is oldest, ahead of all ordinary work; when no topic
+  is due it prints why and gives ordinary work: numbered task, due rota
+  review, then standing task. Never two efficiency turns in a row. Existing
+  trailers (odd ordinary, even efficiency) still parse; PRs without the
+  trailer are historical and do not affect the count.
 - Copy the printed Jules-Sequence line verbatim into the final commit message
   AND PR description. Commit, push and open the PR before picking again.
   Master and fetched jules/* branches preserve the count across sessions;
@@ -33,8 +48,10 @@ Claude, Codex and Dave must do, including review and integration.
   the conflicting commit/branch and number. Do not guess which sequence wins.
 - After each efficiency PR take an ordinary task. No finding is required to
   fill a quota. A sound no-change result still fulfils its efficiency turn.
-  The existing maximum of three audits/reviews per session includes E tasks.
-  If the next turn would exceed that limit, stop; do not skip the E turn.
+  Every E report keeps its `- Focus: <topic>` header line: it is how the
+  rota knows which topic the report ran. The existing maximum of three
+  audits/reviews per session includes E tasks. If the next turn would exceed
+  that limit, stop; do not skip the E turn.
 - When no ordinary task fits, stop. Do not manufacture extra efficiency work.
   Include the last published sequence and next kind in the final report.
 
@@ -113,7 +130,7 @@ commit, branch, exact report path and scope. Rules here specialise Jules's
    focused commands; command results are summaries, never full logs. Name
    unavailable Godot, Windows, transcripts, token telemetry or hands-on checks
    and the exact follow-up when material. Open the PR and continue as the
-   alternation and session limits allow; never merge your own PR.
+   rota and session limits allow; never merge your own PR.
 
 ### Report and recommendation format
 
@@ -179,7 +196,7 @@ For Claude/Codex. This task supplies the investigation; do not repeat it.
    remote branches. For a rejected/closed PR preserve its trailer in the
    ledger-recording commit too: published attempts still consumed their turn.
    Keep only the original trailer for corrections. This is the persistent
-   counter; losing it can reset the alternation in a fresh clone.
+   counter; losing it can reuse a number in a fresh clone.
 4. Review and integrate implementations from ordinary tasks under their
    existing checks. Read the targeted diff and proof, not the entire workflow.
    Record E-<n> and its branch in jules-ledger.md like other report tasks.
