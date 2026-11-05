@@ -141,8 +141,9 @@ Reviewed: <commit> | Since: <commit or "first run"> | Scope: <what was covered> 
 <!-- LAYER: on-demand -->
 
 The record key is the stem of a review's dated record and the `Record key:`
-line of its file in `plans/reference/reviews/`. Every review has a record
-now; the performance review still reads `docs/PERFORMANCE_BASELINE.md` first.
+line of its file in `plans/reference/reviews/`. Every review except the
+Jules programme review (added 5 Nov 2026) has a record; the performance
+review still reads `docs/PERFORMANCE_BASELINE.md` first.
 
 | Record key | Review file |
 | --- | --- |
@@ -156,6 +157,7 @@ now; the performance review still reads `docs/PERFORMANCE_BASELINE.md` first.
 | verification-review | `plans/reference/reviews/verification-review.md` |
 | context-review | `plans/reference/reviews/context-review.md` |
 | agent-workflow-review | `plans/reference/reviews/agent-workflow-review.md` (stage 2; stage 1, `plans/reference/reviews/agent-workflow-codex.md`, writes no record) |
+| jules-programme-review | `plans/reference/reviews/jules-programme-review.md` (until Jules's retirement pass) |
 
 The hands-on check processor (`plans/reference/reviews/check-processor.md`)
 writes no record: the check records and plans are its record, and `python

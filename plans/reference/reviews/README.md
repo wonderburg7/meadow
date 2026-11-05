@@ -51,3 +51,4 @@ is `plans/reference/review-runner.md`.
 | `context-review.md` | Context and instruction surface | medium | R-context |
 | `agent-workflow-codex.md` | Agent workflow, stage 1 (run in Codex) | medium | no |
 | `agent-workflow-review.md` | Agent workflow, stage 2 (Claude) | high | no |
+| `jules-programme-review.md` | Jules programme value and retirement (ends after Jules's 11 Nov 2026 sunset) | medium | no |
