@@ -80,8 +80,11 @@ the triggers.
 
 `NEXTSTEPS.md` and `plans/` are the shared planning and implementation
 records for Claude and Codex. They establish integrated-project priority.
-Codex may propose an assigned queue update on its work branch, but must not
-independently curate the queue or treat unmerged work as completed. In
+Codex may independently select, specify, refill and reorder its own lane's
+unclaimed work on a work branch, following `CHATGPT.md`, "Independent Codex
+queue priorities". Protect other lanes' queued and active work, and disclose
+each priority change and its reason in the slice output. Never treat unmerged
+work as completed. In
 advisory mode, ChatGPT may write only to the Markdown files allowed by
 `CHATGPT.md`.
 
