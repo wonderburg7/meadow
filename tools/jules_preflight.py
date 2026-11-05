@@ -43,7 +43,9 @@ what happened to each Jules branch that was not merged as it stood: `merged`
 the row says what to correct) or `closed` (not merged and finished with:
 its findings went elsewhere, or it was rejected). A branch with no row is
 merged when its task has a `J-<n>:` line on master or every file it changes
-already matches master, and otherwise unreviewed. `--ledger` lists them.
+already matches master, and otherwise unreviewed. `--ledger` lists them,
+and exits 1 on a stale row: one whose Outcome still says "not on master",
+left by a prepared batch merged without rewriting its rows.
 
 `--scope` lists what a pull request would change (`origin/master...ref`, the
 view GitHub shows) and flags every changed file the task's `Files:` line does
@@ -460,18 +462,33 @@ def jules_branches(root: Path, ledger: dict[str, LedgerRow], base: str = BASE) -
     return out
 
 
+def stale_rows(ledger: dict[str, LedgerRow]) -> list[LedgerRow]:
+    """Rows whose Outcome still says their content is not on master.
+
+    A prepared batch's branch may record rows as "pending review, not on
+    master" (the 4 Nov batch did); whoever merges it rewrites each to what
+    actually landed. On master such a row is false by definition, so it names
+    an integration that skipped that rewrite."""
+    return [row for row in ledger.values() if "not on master" in row.outcome.lower()]
+
+
 def ledger_report(root: Path, base: str = BASE) -> list[str]:
-    branches = jules_branches(root, load_ledger(root, base), base)
+    ledger = load_ledger(root, base)
+    branches = jules_branches(root, ledger, base)
     lines = [
         f"{state:<10} {name} -- {detail}"
         for wanted in ("unreviewed", "returned", "closed")
         for name, state, detail in branches
         if state == wanted
     ]
+    stale = stale_rows(ledger)
+    lines += [f"stale      {row.branch} -- says 'not on master' but is on {base}: rewrite it to what landed" for row in stale]
     counts = {state: sum(1 for _, found, _ in branches if found == state) for state in ("unreviewed", *LEDGER_STATES)}
     lines.append("total      " + ", ".join(f"{count} {state}" for state, count in counts.items()))
     if counts["unreviewed"]:
         lines.append(f"next       process the unreviewed ones, then add a row each to {LEDGER_FILE}")
+    if stale:
+        lines.append(f"next       correct the {len(stale)} stale row(s) in {LEDGER_FILE} to merged or closed")
     return lines
 
 
@@ -548,8 +565,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1 if any(line.startswith("off") for line in report) else 0
 
     if args.ledger:
-        print("\n".join(ledger_report(ROOT)))
-        return 0
+        report = ledger_report(ROOT)
+        print("\n".join(report))
+        return 1 if any(line.startswith("stale") for line in report) else 0
 
     tasks = parse_tasks(git(ROOT, "show", f"{BASE}:{TASK_FILE}")) if (args.next or args.queue) else []
     ledger = load_ledger(ROOT)

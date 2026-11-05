@@ -77,6 +77,16 @@ class ParsingTest(unittest.TestCase):
         self.assertEqual(preflight.ledger_notes(rows, "j-1"), ["returned 2026-10-30 by Claude (jules/j-1-a): fix the test"])
         self.assertEqual(preflight.ledger_notes(rows, "J-2"), [])
 
+    def test_stale_rows_are_preparation_claims_left_on_master(self):
+        rows = preflight.parse_ledger(
+            LEDGER_HEAD
+            + "| J-1 | jules/j-1-a | closed | 2026-11-05 | Codex | #1: prepared; pending review, not on master. |\n"
+            + "| J-2 | jules/j-2-b | merged | 2026-11-05 | Claude | delivered to master in the batch merge |\n"
+            + "| J-3 | jules/j-3-c | closed | 2026-11-05 | Codex | prepared, Not On Master |\n"
+            + "| J-3 | jules/j-3-c | merged | 2026-11-06 | Claude | delivered |\n"
+        )
+        self.assertEqual([row.branch for row in preflight.stale_rows(rows)], ["jules/j-1-a"])
+
     def test_branch_names_carry_review_ids(self):
         self.assertEqual(preflight.task_for_ref(Path("."), "origin/jules/r-save-1234"), "R-SAVE")
         self.assertEqual(preflight.task_for_ref(Path("."), "jules/r-gameplay"), "R-GAMEPLAY")
@@ -244,6 +254,10 @@ class RepositoryTest(unittest.TestCase):
         report = preflight.ledger_report(self.root, "origin/master")
         self.assertTrue(report[0].startswith("unreviewed jules/j-1-first-5 -- "))
         self.assertIn("total      1 unreviewed, 1 merged, 0 returned, 1 closed", report)
+        self.assertFalse(any(line.startswith("stale") for line in report))
+        self.ledger("| idea | jules/idea-8 | closed | 2026-11-05 | Codex | prepared on a batch branch, not on master |\n")
+        report = preflight.ledger_report(self.root, "origin/master")
+        self.assertIn("stale      jules/idea-8 -- says 'not on master' but is on origin/master: rewrite it to what landed", report)
 
     def test_review_scope_allows_only_its_report(self):
         task = preflight.scope_task(self.root, "R-ALPHA", "origin/master")
