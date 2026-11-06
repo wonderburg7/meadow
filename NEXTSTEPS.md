@@ -63,19 +63,19 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] PN-18 -- the queen discards sour nectar when told to empty a cell**
-   - Plan: `plans/now/play-notes-config.md` -- "PN-18 -- the queen discards sour nectar when told to empty a cell"
-   - Files: `scripts/bee.gd`, `test_scenarios/pn18_queen_empties_sour.json`, `tests/test_pn18_queen_empties_sour.py`
-   - Check: `python -m unittest tests.test_pn18_queen_empties_sour` passes (lone queen, sour cell, no Cleaning: the cell ends empty and the nectar is discarded); `.\tools\verify.ps1` is green. Hands-on: the queen empties a sour cell on command
-   - Proof: `absent: scripts/bee.gd :: PN-18`
-   - Next after: PN-19 -- the soil block's selection ring closes
-
-2. **[Codex] PN-19 -- the soil block's selection ring closes**
+1. **[Codex] PN-19 -- the soil block's selection ring closes**
    - Plan: `plans/now/play-notes-config.md` -- "PN-19 -- the soil block's selection ring closes"
    - Files: `scripts/soil_block.gd`, `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`
    - Check: `python -m unittest tests.test_sp10_soil_depth tests.test_sp9_soil_art` pass with an assertion that the ring is closed; `.\tools\verify.ps1` is green. Hands-on: a selected soil block's outline has no gap
    - Proof: `present: scripts/soil_block.gd :: selection_ring.add_point(ring_points[0])`
-   - Next after: none -- `plans/now/play-notes-config.md` is complete
+   - Next after: PN-18 -- the queen discards sour nectar when told to empty a cell; recheck the Claude-lane gate before claiming
+
+2. **[Codex] PN-18 -- the queen discards sour nectar when told to empty a cell**
+   - Plan: `plans/now/play-notes-config.md` -- "PN-18 -- the queen discards sour nectar when told to empty a cell"
+   - Files: `scripts/bee.gd`, `test_scenarios/pn18_queen_empties_sour.json`, `tests/test_pn18_queen_empties_sour.py`
+   - Check: `python -m unittest tests.test_pn18_queen_empties_sour` passes (lone queen, sour cell, no Cleaning: the cell ends empty and the nectar is discarded); `.\tools\verify.ps1` is green. Hands-on: the queen empties a sour cell on command
+   - Proof: `absent: scripts/bee.gd :: PN-18`
+   - Next after: CQ-R3 -- bee display text becomes scripts/bee_readout.gd
 
 3. **[Codex] CQ-R3 -- bee display text becomes scripts/bee_readout.gd**
    - Plan: `plans/now/code-health.md` -- "CQ-R3 -- bee display text becomes scripts/bee_readout.gd"
