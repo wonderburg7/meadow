@@ -509,7 +509,9 @@ The direct golden command inherited saved preferences and failed in 19
 cell-label cases on both this branch and primary master `3a46c156`.
 `python tools/run_tests.py --private-user --workers 1 tests.test_display_text_golden`
 passed (1 test, 0 failures); the existing private-user runner isolates the
-saved cell-text preference. Bee strings match throughout; no harness edit needed.
+saved cell-text preference. Dave authorised the harness setup fix in CQ-R3:
+`_cells` explicitly enables contents text during capture, then restores it,
+so direct runs also ignore saved display preferences. Expected strings are unchanged.
 
 **Must not change.** Every string, byte for byte (CQ-R0's harness proves
 it); the order of checks inside each function; the "Rules for every slice".
@@ -528,7 +530,7 @@ an enum not in `bee_enums.gd`, or any golden string changes.
 ```queue
 **[Codex] CQ-R3 -- bee display text becomes scripts/bee_readout.gd**
 - Plan: `plans/now/code-health.md` -- "CQ-R3 -- bee display text becomes scripts/bee_readout.gd"
-- Files: `scripts/bee.gd`, `scripts/bee_readout.gd`, `tests/test_t2_14_idle_reason_pure.py`, `FUNCTION_MAP.md`
+- Files: `scripts/bee.gd`, `scripts/bee_readout.gd`, `tests/test_t2_14_idle_reason_pure.py`, `tests/display_text_golden_test.gd`, `FUNCTION_MAP.md`
 - Check: `python -m unittest tests.test_display_text_golden tests.test_t2_14_idle_reason_pure tests.test_t2_11_comb_cadence` passes with no expected string changed; `.\tools\verify.ps1` is green
 - Proof: `present: scripts/bee.gd :: func _task_line(`
 - Next after: CQ-R4

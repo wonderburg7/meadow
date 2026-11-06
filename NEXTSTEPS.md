@@ -65,7 +65,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 1. **[Codex] CQ-R3 -- bee display text becomes scripts/bee_readout.gd**
    - Plan: `plans/now/code-health.md` -- "CQ-R3 -- bee display text becomes scripts/bee_readout.gd"
-   - Files: `scripts/bee.gd`, `scripts/bee_readout.gd`, `tests/test_t2_14_idle_reason_pure.py`, `FUNCTION_MAP.md`
+   - Files: `scripts/bee.gd`, `scripts/bee_readout.gd`, `tests/test_t2_14_idle_reason_pure.py`, `tests/display_text_golden_test.gd`, `FUNCTION_MAP.md`
    - Check: `python -m unittest tests.test_display_text_golden tests.test_t2_14_idle_reason_pure tests.test_t2_11_comb_cadence` passes with no expected string changed; `.\tools\verify.ps1` is green
    - Proof: `present: scripts/bee.gd :: func _task_line(`
    - Next after: CQ-R4
