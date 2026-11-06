@@ -52,3 +52,4 @@ end-of-slice report states what was merged and what is next.
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/player-experience-review-20261106` (`codex/player-experience-review-20261106`) | Review | Advisory player-experience review; Markdown evidence and recommendations only; no game or queue changes | Codex | in progress | none | `plans/design/product-scope.md` |
 | `.worktrees/CQ-R3` (`codex/CQ-R3`) | Codex | bee display text becomes scripts/bee_readout.gd | Codex | in progress | none | `plans/now/code-health.md` CQ-R3 -- bee display text becomes scripts/bee_readout.gd |
+| `.worktrees/ED-2` (`claude/ED-2`) | Claude | a run's difficulty, saved | Claude | in progress | none | `plans/now/difficulty.md` ED-2 -- a run's difficulty, saved |
