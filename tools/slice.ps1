@@ -1497,6 +1497,17 @@ function Sync-PrimaryMaster {
     $branch = ((git -C $Root rev-parse --abbrev-ref HEAD) | Out-String).Trim()
     if ($branch -ne "master") { return }
 
+    # 6 Nov 2026: a person's `git merge` left master mid-merge (editor opened
+    # for the message, then abandoned). Git refuses a second merge, and the
+    # conflict handler below would then `merge --abort` that merge, throwing
+    # away their staged work. A merge already in progress is never ours:
+    # name it and stop before touching anything.
+    $heldMerge = (Invoke-GitText -C $Root rev-parse -q --verify MERGE_HEAD).Text.Trim()
+    if ($heldMerge) {
+        $heldSubject = (Invoke-GitText -C $Root log -1 --format=%s $heldMerge).Text.Trim()
+        Stop-Slice -Cause "master in the primary checkout is mid-merge of $heldMerge ($heldSubject), started by a person or another session, not by this script" -Fix "in the primary checkout run git status; if the work is wanted run git commit --no-edit, otherwise git merge --abort (never before looking at what is staged), then retry"
+    }
+
     if ((Invoke-GitSilent -c http.sslBackend=openssl -C $Root fetch origin master) -ne 0) {
         [Console]::Error.WriteLine("${Reason}: could not fetch origin; continuing offline")
         return
@@ -1516,7 +1527,8 @@ function Sync-PrimaryMaster {
     $message = "Merge origin/master into master before $Reason"
     if ((Invoke-GitSilent -C $Root merge --no-edit -m $message origin/master) -ne 0) {
         $conflicts = @(git -C $Root diff --name-only --diff-filter=U | ForEach-Object { "$_" })
-        git -C $Root merge --abort | Out-Null
+        # Abort only the merge just attempted, which left conflicts behind.
+        if ($conflicts.Count -gt 0) { git -C $Root merge --abort | Out-Null }
         Stop-Slice -Cause "origin/master conflicts with local master in $($conflicts -join ', ')" -Fix "master is unchanged. In the primary checkout run git pull --no-rebase, resolve $($conflicts -join ', ') (edit, git add, git commit), then retry"
     }
 }
