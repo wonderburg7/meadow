@@ -69,10 +69,24 @@ func _run() -> void:
 			cells.append(child)
 	_check(cells.size() > 0, "a fresh hive has no comb cells")
 
+	var soil_ring_checked := false
 	for block: Variant in blocks:
 		var want: int = Shapes.hex_draw_depth(block.axial)
 		if block.z_index != want:
 			_fail("block at %s has z_index %d, not hex_draw_depth %d" % [block.axial, block.z_index, want])
+		if not soil_ring_checked and is_instance_of(block, _main.SoilBlock):
+			soil_ring_checked = true
+			var ring: Line2D = block.selection_ring
+			_check(ring.closed, "soil selection ring must join its final corner")
+			_check(ring.get_point_count() == 6, "soil selection ring must contain six corners without a repeated endpoint")
+			_check(not ring.z_as_relative, "soil selection ring must use the comb selection layer independently of block depth")
+			if not cells.is_empty():
+				_check(ring.z_index == cells[0].selection_ring.z_index, "soil and comb selection rings must share the same layer")
+			block.set_selected(true)
+			_check(ring.visible, "selected soil must show its ring")
+			block.set_selected(false)
+			_check(not ring.visible, "deselected soil must hide its ring")
+	_check(soil_ring_checked, "a fresh hive has no soil selection ring to test")
 
 	# Screen order: whatever sits lower on screen must draw over whatever
 	# sits higher, for every pair of blocks.

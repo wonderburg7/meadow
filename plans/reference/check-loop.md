@@ -78,13 +78,9 @@ disagree.
    Challenge 1 stage, and two stages later a focus change lands on a bee who
    will never act on it (`plans/archive/CHALLENGE1_2026-09-15.md` Slice 17). The rule was
    written and nothing enforced it, which is why rule 8 below exists.
-6. **Every persistent panel takes its rectangle from `ui_layout.gd`.** No
-   HUD panel file may carry a literal `offset_top`/`offset_left`. Panels
-   that share an edge must be derived from one number, not from two
-   constants that happen to agree today. Enforced in
-   `tests/source_checks.py` since P-2 (2026-09-04); a bare numeric literal
-   there now fails the build unless it reads `UiLayout` or carries a
-   trailing `# fixed-inset` comment.
+6. **Every persistent panel takes its rectangle from `ui_layout.gd`** --
+   the rule and its source check live in `plans/reference/ui-rules.md`
+   "Durable rules".
 
 7. **A repeated failure is a missing instrument, not a missing effort.**
    The second time a check fails for the same reason, stop fixing the

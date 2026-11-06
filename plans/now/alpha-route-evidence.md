@@ -1,7 +1,7 @@
 # Alpha Route Evidence -- measure the promised five gates without inventing player understanding
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: AR-4 -- a scripted Colony Run reaches and records all five gates; it waits for PP-10 (`plans/now/pollination.md`), which prices the gyne route after EV-0 re-sets the calendar (AR-5 shipped 21 Oct 2026) | Dependency: AR-1 → AR-2 → AR-3 → AR-5 built; AR-4 follows PN-11 → EV-0 → PP-10; AR-6 implemented: draft targets centralised and judged targets printed | Verified: 2026-11-05
+Status: active | Owner: Dave / Codex | Next: AR-4 -- a scripted Colony Run reaches and records all five gates; it waits for PP-10 (`plans/now/pollination.md`), which prices the gyne route after EV-0 re-sets the calendar (AR-5 shipped 21 Oct 2026) | Dependency: AR-1 → AR-2 → AR-3 → AR-5 built; AR-4 follows PN-11 → EV-0 → PP-10; AR-6 shipped 5 Nov 2026 | Verified: 2026-11-05
 
 ## Objective
 

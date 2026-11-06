@@ -17,6 +17,7 @@ extends Node2D
 ## it; trees are solid too, since a trunk is a trunk.
 
 const Shapes = preload("res://scripts/shapes.gd")
+const WorldDraw = preload("res://scripts/world_draw.gd")
 
 enum Kind { TREE, RAISED }
 
@@ -55,7 +56,7 @@ func _build_selection_ring() -> void:
 	selection_ring = Line2D.new()
 	_close_loop(selection_ring, Shapes.circle_points(radius * 1.12, 32))
 	selection_ring.width = 4.0
-	selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)
+	selection_ring.default_color = Color(WorldDraw.SELECTION_COLOUR, 0.95)
 	selection_ring.visible = false
 	selection_ring.z_index = 20
 	add_child(selection_ring)

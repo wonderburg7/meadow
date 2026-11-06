@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: SP-12 -- every outline on a comb cell sits on the cup's rim, in the Codex backlog (Dave, 1 Nov 2026), after CQ-M5b | Dependency: none left -- `claude/dave-hands-on-checks-784f2a` merged 4 Nov 2026; SP-12 and the Claude lane's PN-5 and PN-6 share `input_selection.gd`, so whichever is queued first runs first | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code / Codex | Next: SP-12 -- every outline on a comb cell sits on the cup's rim, fifth in the Codex lane (Dave, 1 Nov 2026) | Dependency: none left -- `claude/dave-hands-on-checks-784f2a` merged 4 Nov 2026; SP-12 and the Claude lane's PN-5 and PN-6 share `input_selection.gd`, so whichever is queued first runs first | Verified: 2026-11-05
 
 ## Objective
 
