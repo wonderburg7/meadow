@@ -20,7 +20,6 @@ Verified 2026-10-31 by `tools/slice.ps1 owner`; `skill_tree_panel.gd` and
 | PN-9 | early spring: fast queen building, no souring before day 15 | `game_config.gd`, `settings_catalogue.gd`, `hive_cell.gd` | yes | medium |
 | PN-12 | developer mode buys any skill | `skill_tree_panel.gd`, `settings_catalogue.gd` | yes | low |
 | PN-13 | bee labels switch and a calmer queen flight | `bee.gd`, `game_config.gd`, `settings_catalogue.gd` | yes, once the Codex lane releases `bee.gd` | low |
-| PN-18 | the queen discards sour nectar when told to empty a cell | `bee.gd` | yes -- Codex lane (5 Nov 2026) | medium |
 
 ## Dependencies
 
@@ -187,50 +186,7 @@ forager's.
 - Next after: none -- the last Claude slice in `plans/now/play-notes-config.md`
 ```
 
-## PN-18 -- the queen discards sour nectar when told to empty a cell
-
-**True now.** "Empty this cell" in the HUD runs
-`input_selection::_on_cell_empty_by_bee_requested`, then
-`bee.gd::command_empty_cell`, which sets `evict_requested` and goes to
-`TO_HAUL_SOURCE` with no role or skill check. Dave: the queen should discard
-sour nectar when directed, without being a Comb worker and before Cleaning is
-bought.
-
-**Change.** Write the scenario first: lone queen, a sour cell, no Cleaning,
-"Empty this cell" (pattern: `test_scenarios/rr17_queen_discards_sour_watch.json`,
-which covers the Cleaning route RR-17 fixed, not this command). The haul step
-already discards a fermented load whatever `evict_mode` says
-(`bee_building.gd::builder_go_to_haul_source`: `was_fermented` sends the bee
-to `TO_WASTE_EXIT`; checked 6 Nov 2026 by the plan review), so if the scenario
-fails the cause is earlier: find where the queen leaves `TO_HAUL_SOURCE`
-before she lifts the load, and fix that in `bee.gd`. If the scenario passes on
-unchanged code, land the scenario and test alone and say so in the closeout;
-the hands-on check then confirms Dave's play note no longer reproduces. Setting
-`evict_mode` to "discard" for fermented cells in `command_empty_cell` is the
-fallback only if the load is shown to be moved.
-
-**Invariants.** Sound nectar is still moved, not discarded; a worker's automatic
-Cleaning still needs the skill.
-
-**Acceptance (player seat, and the hands-on check).** With only the queen and a
-sour cell, choose "Empty this cell": she carries the sour nectar out and the
-cell empties.
-
-**Result.** The directed-order scenario passes on unchanged game code; C-180
-checks the reported player experience.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] PN-18 -- the queen discards sour nectar when told to empty a cell**
-- Plan: `plans/now/play-notes-config.md` -- "PN-18 -- the queen discards sour nectar when told to empty a cell"
-- Files: `scripts/bee.gd`, `test_scenarios/pn18_queen_empties_sour.json`, `tests/test_pn18_queen_empties_sour.py`
-- Check: `python -m unittest tests.test_pn18_queen_empties_sour` passes (lone queen, sour cell, no Cleaning: the cell ends empty and the nectar is discarded); `.\tools\verify.ps1` is green. Hands-on: the queen empties a sour cell on command
-- Proof: `absent: scripts/bee.gd :: PN-18`
-- Next after: CQ-R3 -- bee display text becomes scripts/bee_readout.gd
-```
-
-PN-19 shipped 2026-11-06; its specification is `plans/archive/PN-19_2026-11-06.md`.
+PN-18 shipped 2026-11-06; its specification is `plans/archive/PN-18_2026-11-06.md`.
 
 ## Ideas waiting for a design pass
 
