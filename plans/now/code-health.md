@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5b is implemented on its branch; SP-12 follows, and the Codex lane holds CQ-M6 (its Jules gates cleared 5 Nov 2026), with CQ-R3 waiting in its backlog; CQ-M6b waits for the Claude lane's PN-5, PN-6 and PN-9; CQ-M4 for the Claude lane to release the save files; CQ-T4 for integration of CQ-M5b and the Codex lane's CQ-M6, PN-19, PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M6 is implemented on its branch; CQ-M6b waits for integration and the Claude lane's PN-5, PN-6 and PN-9; CQ-R3 remains in the Codex backlog; CQ-M4 waits for the Claude lane to release the save files; CQ-T4 waits for the Codex lane's CQ-M6, PN-19, PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-06
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -450,6 +450,14 @@ CQ-M5a shipped 2026-10-29; its specification is `plans/archive/CQ-M5a_2026-10-29
 CQ-M5b shipped 2026-11-05; its specification is `plans/archive/CQ-M5b_2026-11-05.md`.
 
 ## CQ-M6 -- name selection green and caste appearance
+
+**Implemented on branch (6 Nov 2026).** `world_draw.gd` owns the selection
+green; all five world-object readers retain their alpha. The bee's queen,
+gyne and worker colours and queen size factor are named beside their use,
+with the existing drone constants retained. CQ-M6b remains gated below.
+Validation: the acceptance modules pass through `tools/run_tests.py
+--private-user` (2 ids, 0 failed). The direct unittest run read an empty
+drone brood label; the same test passes with isolated user settings.
 
 **Now.** The same selection-ring green is repeated across world scripts, with
 each site choosing its own alpha. `bee.gd` also holds unnamed caste colours
