@@ -79,6 +79,13 @@ other cells" and "Empty to outside", and Keep empty sits in the Reserve row.
 Without Cleaning, no sour-nectar button. At 4x speed a warning stays about 18
 real seconds.
 
+**Review recommendation (6 Nov 2026; no new play).** The scaled dwell is a
+verified mechanism; its novice impact is unmeasured. In the proposed
+`plans/design/product-scope.md` §13 pass, test noticing and explaining the
+same consequential warning at 1x and 4x, then taking a sensible response.
+Credit existing persistent Why? explanations rather than adding a second
+diagnostic system. Keep this presentation-only; do not pause the simulation.
+
 **Open decisions:** none.
 
 ```queue
@@ -108,6 +115,12 @@ per frame; the list is capped at 10.
 the Colony window: Warning history lists them with day and time. After loading
 a save it is empty.
 
+**Review recommendation (6 Nov 2026).** Test whether a player who missed the
+warning can find it and explain its consequence, not only whether the list
+renders. This complements PN-7's dwell test and the novice pass in
+`plans/design/product-scope.md` §13. Unsaved history is the agreed scope;
+persisting it on return would need a separate product/save decision.
+
 **Open decisions:** none.
 
 ```queue-gated
@@ -134,6 +147,17 @@ asserts the strings and changes with them.
 
 **Acceptance (player seat, and the hands-on check).** Start a Colony Run: the
 first goal tells you what to do, not only what to achieve.
+
+**Review evidence and recommendation (6 Nov 2026; source, not novice play).**
+`colony_milestones.gd` also requires simultaneous nectar >=245 and pollen
+>=155 for First stores; `show_next` displays only the goal string. Later
+milestones are checked independently, so this line can remain after later
+progress. Existing Activity/idle reasons, pollen-eaten /60 and cell progress
+already explain other opening blockers: this is a goal-predictability gap,
+not evidence that laying is impossible. Deliver PN-10's agreed copy scope
+first, then test action and completion predictions in the §13 novice pass in
+`plans/design/product-scope.md`. A criterion/progress display or changed
+definition of First stores is a separate proposal there, not part of PN-10.
 
 **Open decisions:** none.
 

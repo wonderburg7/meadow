@@ -795,6 +795,50 @@ flowchart TD
 Failure at a gate sends work back to the smallest system responsible. It does
 not justify adding unrelated content.
 
+### Proposed novice evidence pass (review recommendation, 6 Nov 2026)
+
+Source/plan inspection and Dave's 30–31 Oct play notes support the following
+priorities; no new game, novice session or retention test was run. These are
+recommendations, not agreed feature additions or queue changes. PN-11 and
+PN-18 were unmerged at this review's baseline (`18358d4`, game source equal to
+initial primary `25eaaa3`). Older inventory prose in §5.3 must be checked
+against source/live slice status before describing a feature as unbuilt.
+
+| Rank | Player outcome and existing owner | Small next action / reopening condition |
+| --- | --- | --- |
+| 1 | Trust a first build order — `plans/now/play-notes.md` PN-4; PN-5/6 separately own picking | First reproduce interrupted/from-meadow orders as PN-4 requires; then observe whether a novice can identify accepted, active or stopped work. No general order/save redesign. |
+| 2 | Know the opening action and completion criterion — `plans/now/play-notes-hud.md` PN-10 | Use its agreed action wording first. `colony_milestones.gd` First stores checks simultaneous 245 nectar/155 pollen but `show_next` does not show that criterion; investigate a truthful display only if confusion remains, under the product choice below. |
+| 3 | Recover and act on pressure information — same plan PN-7/8 | Test warning notice/recovery and a correct causal response at 1x/4x, crediting existing Why?. PN-8 history remains transient and empty after load. |
+| 4 | Wait knowingly through a purposeful opening — `plans/now/play-notes-config.md` PN-9 | Follow its existing simulation-first queen-build/souring change, not a second retiming plan. Separate watching/planning, awaiting a known event, unclear instructions and failed orders; preserve worker/later rates. |
+| 5 | Recognise useful first automation — existing automation gate above and `plans/design/progression.md` | Test a purchase's cost, actual removed repetition and remaining worker-allocation choice. Existing skill-tree prices/blockers/descriptions are counterevidence to missing help. Only if the payoff is missed, propose one factual effect explanation through the current catalogue/UI owner. |
+
+Use a fixed build and 4–6 fresh players with varied management-game
+experience as an exploratory failure-finding pass, not a retention estimate.
+Record prior Challenge exposure and chosen mode; do not pool guided Challenge
+and direct Colony Run openings as equivalent. Observe the queen-to-first-worker
+loop without coaching. At milestones ask what is happening, why, and what
+the player could change; log facilitator interventions, speed use, wrong
+predictions and the player's own reason for waiting. Use reachable prepared
+states for warning/automation questions beyond the opening. Timing targets
+remain drafts; a headless trace alone cannot pass comprehension gates.
+
+**Product question before any extra First stores slice:** is it a reserve
+target or successful first provisioning? Recommended reply: "Keep First
+stores as a reserve threshold; show the requirement" (presentation only,
+current completion/save semantics retained). Alternative: "Make First stores
+recognise successful first provisioning; design the criterion before
+implementation" (changes goal semantics; assess balance, saves and route
+evidence). PN-10 needs neither answer to deliver its existing copy scope.
+Do not add a progress bar or change the condition by implication.
+
+First automation currently records ownership (`colony_milestones.gd`), not
+demonstrated useful work. Test that distinction before asking to change the
+milestone or its saved meaning. No new decision is needed for the observation
+pass or existing PN-4/7/8/9/10 contracts. Named bees/traits/Favourites,
+Challenge 1's daughter greeting and Colony save/checkpoints already exist;
+add attachment, recap or Challenge-resume work only after a specific observed
+failure establishes its value.
+
 ## 14. Parallel non-coding and production streams
 
 ### Relaxing creative stream

@@ -136,6 +136,15 @@ rules are unchanged.
 Forager, order Build cell: she finishes it even after eating. With the queen
 in the meadow, order Build cell: she walks home and builds it.
 
+**Review recommendation (6 Nov 2026; source/record evidence, no new play).**
+Treat this as a first-action trust problem before judging opening pace:
+an abandoned order can look like an unexplained biological wait. The two
+failing-before scenarios remain necessary; the reported symptom and inferred
+cause are not a reproduced defect. In the proposed novice pass in
+`plans/design/product-scope.md` §13, ask whether the order was accepted,
+what the queen is doing and what happens next. Preserve eating/fatigue and
+worker dispatch; a general persistent order queue/save policy is outside PN-4.
+
 **Open decisions:** none.
 
 ```queue
