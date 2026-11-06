@@ -106,7 +106,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **PN-6** (`plans/now/play-notes.md`) -- startable, but the Claude lane is full.
 - **PN-9** (`plans/now/play-notes-config.md`) -- startable, but the Claude lane is full.
 - **PN-13** (`plans/now/play-notes-config.md`) -- bee labels switch and a calmer queen flight; waits for the Codex lane's PN-18 to release `scripts/bee.gd`.
-- **EV-0** (`plans/now/event-director.md`) -- one Calendar and events settings group, a new `RunCalendar` and a 35-day season (winter on day 36); waits for PN-11, whose crisis window it converts to days.
+- **EV-0** (`plans/now/event-director.md`) -- one Calendar and events settings group, a new `RunCalendar` and a 35-day season (winter on day 36); waits for whose crisis window it converts to days.
 - **EV-0b** (`plans/now/event-director.md`) -- the flowers read EV-0's calendar; waits for EV-0, and for CQ-M6 (Codex lane), which edits `scripts/flower.gd`.
 - **PP-10** (`plans/now/pollination.md`) -- the gyne route keeps its order on the new calendar; waits for EV-0, so the route is checked once, on the new calendar (Dave, 1 Nov 2026).
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for PP-10, which checks the gyne route's order on EV-0's calendar.
