@@ -124,10 +124,10 @@ One line each: the id, its plan, and the single thing it waits for.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
 - **CQ-R13** (`plans/now/code-health.md`) -- `main.gd::_ready` into build steps; waits for CQ-R2, which shares `scripts/main.gd`, and then needs its slice specification.
 - **CQ-R4** (`plans/now/code-health.md`) -- `bee.gd::_process` into four helpers, profiled (high); needs its section and block, written by the session that claims CQ-R3 (HP-3 landed 18 Oct 2026).
-- **CQ-T4** (`plans/now/code-health.md`) -- the remaining scripts and tests typed and `untyped_declaration` made an error; waits for the Codex lane's PN-8 and PN-14, which hold five of its files.
+- **CQ-T4** (`plans/now/code-health.md`) -- the remaining scripts and tests typed and `untyped_declaration` made an error; waits for the Codex lane's PN-8 and PN-14, which hold two of its files.
 - **CQ-L3** (`plans/now/code-health.md`) -- one-off `gdformat` over every `.gd` file, then `--check` joins verify; waits for both lanes to empty.
 - **CQ-M4** (`plans/now/code-health.md`) -- name Challenge level ids; waits for the Claude lane to release `scripts/save_game.gd` and `scripts/saving.gd`.
-- **CQ-M6b** (`plans/now/code-health.md`) -- the cell ring and the selection layer read the selection green; waits for and for the Claude lane's PN-5, PN-6 and PN-9, which edit `scripts/input_selection.gd` and `scripts/hive_cell.gd`.
+- **CQ-M6b** (`plans/now/code-health.md`) -- the cell ring and the selection layer read the selection green; waits for the Claude lane's PN-5, PN-6 and PN-9, which edit `scripts/input_selection.gd` and `scripts/hive_cell.gd`.
 - **CQ-M7** (`plans/now/code-health.md`) -- world draw order named; waits for CQ-M6b and then needs its section and block.
 - **PN-8** (`plans/now/play-notes-hud.md`) -- Warning history in the Colony window; waits for PN-3 and ED-2 (Claude lane) to release `scripts/session.gd`.
 - **PN-10** (`plans/now/play-notes-hud.md`) -- opening goal text a new player can act on; waits for PN-3 (Claude lane) to release `tests/gp1_goals_dropdown_test.gd`.

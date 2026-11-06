@@ -1995,6 +1995,20 @@ function Invoke-SliceOwner {
     }
     $remoteBase = if ((Invoke-GitSilent -C $root rev-parse --verify --quiet origin/master) -eq 0) { "origin/master" } else { "master" }
     $julesBranches = @(Split-GitText (Read-GitText -C $root branch -r --no-merged $remoteBase --list "origin/jules/*" "--format=%(refname:short)"))
+    # A branch the Jules ledger has merged, returned or closed owns nothing,
+    # as in tools/jules_preflight.py::owners; a `reviewed` one still waits for
+    # integration. A later row for the same branch replaces an earlier one.
+    $ledgerState = @{}
+    $ledger = Invoke-GitText -C $root show "${remoteBase}:plans/reference/jules-ledger.md"
+    if ($ledger.ExitCode -eq 0) {
+        foreach ($line in ($ledger.Text -split '\r?\n')) {
+            $cells = @($line.Trim().Trim('|').Split('|') | ForEach-Object { $_.Trim() })
+            if ($line.TrimStart().StartsWith('|') -and $cells.Count -ge 6 -and $cells[2].ToLowerInvariant() -in @('merged', 'returned', 'closed', 'reviewed')) {
+                $ledgerState[$cells[1].Trim('`') -replace '^origin/', ''] = $cells[2].ToLowerInvariant()
+            }
+        }
+    }
+    $julesBranches = @($julesBranches | Where-Object { $state = $ledgerState[($_ -replace '^origin/', '')]; -not $state -or $state -eq 'reviewed' })
     foreach ($branch in $julesBranches) {
         $changed = Get-BranchChangedPaths -Root $root -Base $remoteBase -Branch $branch
         $hits = @($Wanted | Where-Object { $w = $_; @($changed | Where-Object { Test-OwnedPath -Owned $_ -Wanted $w }).Count -gt 0 })
