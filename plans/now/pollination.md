@@ -172,4 +172,4 @@ Reasoning level medium: an ordering check, and at most a bounded sweep (product 
 
 ## Not in the queue, and why
 
-- **PP-10** -- the gyne route keeps its order on the new calendar; waits for EV-0 (`plans/now/event-director.md`), and AR-6 (Codex lane) releases `tests/test_pacing_gates.py` first.
+- **PP-10** -- the gyne route keeps its order on the new calendar; waits for EV-0 (`plans/now/event-director.md`).
