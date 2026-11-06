@@ -63,40 +63,40 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] PN-19 -- the soil block's selection ring closes**
-   - Plan: `plans/now/play-notes-config.md` -- "PN-19 -- the soil block's selection ring closes"
-   - Files: `scripts/soil_block.gd`, `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`
-   - Check: `python -m unittest tests.test_sp10_soil_depth tests.test_sp9_soil_art` pass with an assertion that the ring is closed; `.\tools\verify.ps1` is green. Hands-on: a selected soil block's outline has no gap
-   - Proof: `present: scripts/soil_block.gd :: selection_ring.add_point(ring_points[0])`
-   - Next after: PN-18 -- the queen discards sour nectar when told to empty a cell; recheck the Claude-lane gate before claiming
-
-2. **[Codex] PN-18 -- the queen discards sour nectar when told to empty a cell**
+1. **[Codex] PN-18 -- the queen discards sour nectar when told to empty a cell**
    - Plan: `plans/now/play-notes-config.md` -- "PN-18 -- the queen discards sour nectar when told to empty a cell"
    - Files: `scripts/bee.gd`, `test_scenarios/pn18_queen_empties_sour.json`, `tests/test_pn18_queen_empties_sour.py`
    - Check: `python -m unittest tests.test_pn18_queen_empties_sour` passes (lone queen, sour cell, no Cleaning: the cell ends empty and the nectar is discarded); `.\tools\verify.ps1` is green. Hands-on: the queen empties a sour cell on command
    - Proof: `absent: scripts/bee.gd :: PN-18`
    - Next after: CQ-R3 -- bee display text becomes scripts/bee_readout.gd
 
-3. **[Codex] CQ-R3 -- bee display text becomes scripts/bee_readout.gd**
+2. **[Codex] CQ-R3 -- bee display text becomes scripts/bee_readout.gd**
    - Plan: `plans/now/code-health.md` -- "CQ-R3 -- bee display text becomes scripts/bee_readout.gd"
    - Files: `scripts/bee.gd`, `scripts/bee_readout.gd`, `FUNCTION_MAP.md`
    - Check: `python -m unittest tests.test_display_text_golden tests.test_t2_14_idle_reason_pure tests.test_t2_11_comb_cadence` passes with no expected string changed; `.\tools\verify.ps1` is green
    - Proof: `present: scripts/bee.gd :: func _task_line(`
    - Next after: CQ-R4
 
-4. **[Codex] SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels**
+3. **[Codex] SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels**
    - Plan: `plans/now/sprites.md` -- "SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels"
    - Files: `scripts/input_selection.gd`, `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, `test_scenarios/sp_outline_rim.json`, `tests/test_sp_outline_rim.py`, `tests/sp11_cell_rim_test.gd`, `tests/test_sp11_cell_rim.py`
    - Check: `python -m unittest tests.test_sp_outline_rim` passes (the `cell_outline_matches_sprite` assertion holds for the selection ring and the tile outline within 1.5 px, and fails when the outline is moved 10 px); `python -m unittest tests.test_sp11_cell_rim` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
    - Proof: `absent: scripts/scenario_actions.gd :: cell_outline_matches_sprite`
    - Next after: PN-7 -- cell popup and selection text batch
 
-5. **[Codex] PN-7 -- cell popup and selection text batch**
+4. **[Codex] PN-7 -- cell popup and selection text batch**
    - Plan: `plans/now/play-notes-hud.md` -- "PN-7 -- cell popup and selection text batch"
    - Files: `scripts/hud.gd`, `tests/display_text_golden_test.gd`, `tests/test_pn7_cell_popup.py`
    - Check: `python -m unittest tests.test_pn7_cell_popup` passes (labels, the sour-nectar gate, Keep empty in the Reserve row, warning dwell at 4x); the display-text golden test is regenerated; `.\tools\verify.ps1` is green. Hands-on: the cell popup reads as above and a warning at 4x lasts about 18 seconds
    - Proof: `present: scripts/hud.gd :: does not die of old age`
    - Next after: PN-14 -- text no longer shrinks when unpausing
+
+5. **[Codex] PN-14 -- text no longer shrinks when unpausing**
+   - Plan: `plans/now/play-notes-hud.md` -- "PN-14 -- text no longer shrinks when unpausing"
+   - Files: `scripts/hud.gd`, `scripts/camera_view.gd`, `tests/pn14_pause_font_test.gd`, `tests/test_pn14_pause_font.py`
+   - Check: `python -m unittest tests.test_pn14_pause_font` passes (HUD label font sizes equal before pause and after unpause; failing before the fix); `.\tools\verify.ps1` is green. Hands-on: Space to pause and resume leaves text size alone
+   - Proof: `absent: scripts/hud.gd :: PN-14`
+   - Next after: PN-15 -- a day dial beside "Day N"
 
 ## Not in the queue, and why
 
@@ -107,7 +107,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **PN-9** (`plans/now/play-notes-config.md`) -- startable, but the Claude lane is full.
 - **PN-12** (`plans/now/play-notes-config.md`) -- startable, but the Claude lane is full.
 - **PN-13** (`plans/now/play-notes-config.md`) -- bee labels switch and a calmer queen flight; waits for the Codex lane's PN-18 to release `scripts/bee.gd`.
-- **PN-14** (`plans/now/play-notes-hud.md`) -- startable, but the Codex lane is full.
 - **PN-15** (`plans/now/play-notes-hud.md`) -- startable, but the Codex lane is full.
 - **EV-0** (`plans/now/event-director.md`) -- one Calendar and events settings group, a new `RunCalendar` and a 35-day season (winter on day 36); waits for PN-11, whose crisis window it converts to days.
 - **EV-0b** (`plans/now/event-director.md`) -- the flowers read EV-0's calendar; waits for EV-0, and for CQ-M6 (Codex lane), which edits `scripts/flower.gd`.
