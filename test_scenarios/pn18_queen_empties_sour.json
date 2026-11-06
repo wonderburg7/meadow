@@ -1,0 +1,17 @@
+{
+  "cells": 3, "nectar_foragers": 0, "pollen_foragers": 0,
+  "nurses": 0, "builders": 0, "miners": 0, "honey_makers": 0,
+  "weather": false, "disease": false, "rival_hive": false, "winter": false,
+  "random_seed": 5217,
+  "skill_bans": ["skill.hive_mind.cleaning"],
+  "config_overrides": {"seconds_per_day": 20, "nectar_ferment_hours": 12},
+  "actions": [
+    {"do": "set_cell_contents", "cell": {"hex": [0, 0]}, "resource": "nectar", "amount": 60},
+    {"do": "wait", "seconds": 15},
+    {"do": "save_run", "name": "PN18 before"},
+    {"do": "empty_cell", "cell": {"hex": [0, 0]}},
+    {"do": "wait", "seconds": 40},
+    {"do": "save_run", "name": "PN18 done"}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 10}
+}
