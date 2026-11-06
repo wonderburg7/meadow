@@ -320,6 +320,9 @@ func _cells() -> void:
 	var hud: Node = _main.hud
 	var overlays: Array = ["", "contents", "fill", "role", "reserved"]
 	var colour_blind_before: bool = _session.colour_blind_mode
+	var contents_text_before: bool = _session.show_cell_contents_text
+	# Capture the fixture independently of the player's saved display choice.
+	_session.show_cell_contents_text = true
 	for entry: Dictionary in _cell_cases():
 		cell.clear_cell()
 		cell.keep_empty = false
@@ -365,6 +368,7 @@ func _cells() -> void:
 	else:
 		_fail("no unfinished cell to read")
 	_session.colour_blind_mode = colour_blind_before
+	_session.show_cell_contents_text = contents_text_before
 	hud.update_selection([])
 	cell.clear_cell()
 

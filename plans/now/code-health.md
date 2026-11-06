@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: the Codex lane holds CQ-R3 (CQ-M5b and CQ-M6 shipped 5-6 Nov 2026); CQ-M6b waits for the Claude lane's PN-5, PN-6 and PN-9; CQ-M4 for the Claude lane to release the save files; CQ-T4 for the Codex lane's PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-06
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R3 is implemented and awaiting closeout; CQ-R4 has its successor block (CQ-M5b and CQ-M6 shipped 5-6 Nov 2026); CQ-M6b waits for the Claude lane's PN-5, PN-6 and PN-9; CQ-M4 for the Claude lane to release the save files; CQ-T4 for the Codex lane's PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-06
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -132,7 +132,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-M6b | the cell ring and the selection layer read it | `hive_cell.gd`, `input_selection.gd` | after CQ-M6, and the Claude lane's PN-5, PN-6 and PN-9 | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6b | medium |
 | CQ-R2 | first crisis moves into scripts/event_director.gd as the shared cycle's first record (`plans/design/event-director.md` decisions 2, 15 and 16) | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated: after ED-3 alone (Dave, 5 Nov 2026); RR-12 and SP-8a follow it | high |
-| CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `bee_readout.gd` (new), `FUNCTION_MAP.md` | yes -- Codex lane (5 Nov 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
@@ -372,9 +371,7 @@ the worker reads only the flagged lines.
   waits for the Claude lane's PN-5, PN-6 and PN-9, which edit
   `scripts/input_selection.gd` and `scripts/hive_cell.gd`, and for CQ-M6, which
   creates the constant.
-- **CQ-R4** -- `bee.gd::_process` into four helpers, profiled (high); HP-3
-  landed 18 Oct 2026, so it needs only its section and block, written by the
-  session that claims CQ-R3.
+
 
 CQ-M5b and CQ-M6 had waited for the Jules S-1, S-3 and J-14 branches; on
 5 Nov 2026 none was open and changing their files, so both were queued.
@@ -473,56 +470,44 @@ CQ-R15 shipped 2026-11-03; its specification is `plans/archive/CQ-R15_2026-11-03
 
 CQ-R8 shipped 2026-11-03; its specification is `plans/archive/CQ-R8_2026-11-03.md`.
 
-## CQ-R3 -- bee display text becomes scripts/bee_readout.gd
+CQ-R3 shipped 2026-11-06; its specification is `plans/archive/CQ-R3_2026-11-06.md`.
 
-Level: medium. Codex lane, after PN-18 (which shares `bee.gd`); if it lands before PN-13 (`plans/now/play-notes-config.md`, Claude), PN-13 re-checks its label lines against `bee_readout.gd`. Startable since 5 Nov 2026, when no open Jules branch changed `bee.gd` (ED-1 landed 2 Nov 2026; HS-2 and SP-6 1 Nov 2026). D1 (Dave chose this split,
-18 Oct 2026); the modularity review's MOD-03 lands here instead of a
-`BeeView` child node, which D1's settled list rejects.
+## CQ-R4 -- bee process decomposed without changing cadence
 
-**Problem and benefit.** `bee.gd` is held by most bee work (HS-2, SP-6,
-CQ-M6, M7, R4, S4). About 330 lines of it are the selected bee's readout
-text, read only on a HUD refresh, never per frame. Copy changes to that text
-should not hold the simulation file, and simulation work should not have to
-scroll past it.
+Level: high. After CQ-R3; HP-3 landed 18 Oct 2026. Verified 6 Nov 2026
+against CQ-R3's worktree: `bee.gd::_process` still owns the think clocks,
+upkeep, state dispatch and presentation. No new owner or state is needed.
 
-**Boundary (decided).** New `scripts/bee_readout.gd`, `extends RefCounted`,
-static functions taking `bee: Node2D` first, in the `bee_*.gd` helper
-pattern (no state, no node). It takes `idle_reason`, `task_description`,
-`_task_line`, `_idle_backup_note`, `role_name_text`, `architect_mode_name`
-and `carrying_text` (all in `bee.gd`'s "display" section). `bee.gd` keeps a
-one-line public wrapper for each one called from outside it
-(`idle_reason`, `task_description`, `role_name_text`, `carrying_text`,
-`_task_line`, `_idle_backup_note` -- the last two because
-`tests/display_text_golden_test.gd` and `tests/wp2_backup_order_test.gd`
-call them), so `hud.gd`, `world_building.gd` and every test are unchanged.
-`role_letter`, `challenge_vocabulary_limited` and everything from
-`age_days` down stay in `bee.gd`: `role_letter` is on the per-frame label
-path (`_update_label`). Enums come from `bee_enums.gd` as the other helpers
-do. A pure move: the research note's `TASK_LINE_FIXED` table and per-role
-`idle_reason` split are dropped, because they change shape without moving
-any responsibility.
+**True now.** One process function contains these responsibilities, including
+the independent miner dispatch clock and the queen's nuptial-flight ordering.
 
-**Must not change.** Every string, byte for byte (CQ-R0's harness proves
-it); the order of checks inside each function; the "Rules for every slice".
+**When done.** Extract `_advance_think_clock(delta) -> float`,
+`_think_upkeep(think_delta)`, `_step_state(delta)` (including role Perf spans),
+and `_update_presentation(delta)` (label and wander spans) in `bee.gd`.
+Preserve every call, condition, early return, RNG draw and Perf span in its
+current order. Keep age/burn, death return, tipsy decay, nuptial-flight step,
+rain recall and proximity recruitment in their current orchestration order.
+Preserve the independent miner clock's position and cadence. These functions
+run on the existing per-frame or staggered think cadence; no new repeated work.
+Re-header simulation functions currently under display and replace empty
+section headers with a pointer. Keep readout ownership in `bee_readout.gd`.
 
-**Steps.** 1. Confirm on current master that no per-frame path calls a moved
-function (`grep -n` each name in `bee.gd`; only the wrappers and HUD callers
-may remain). 2. Create the helper; move the bodies, replacing `self` reads
-with `bee.`. 3. Leave the wrappers. 4. Re-header: the "display" section's
-simulation functions (`leave_to_found_colony`, `_terrain_speed_factor`,
-`_is_inside_hive`, `_on_tree_entered`) are CQ-R4's re-header, not this
-slice's. 5. `python tools/update_function_map.py`.
+**Checks.** Follow `docs/performance.md`, Repeatability: discard seeding,
+two comparable runs each side using `hp2_idle_nurses_perf.json` and
+`hp1_forager_search_perf.json`; include bee_burn, bee_think and bee_state
+in scratch capture settings. Record section comparisons in
+`docs/PERFORMANCE_BASELINE.md`; no comparable section regression.
+Run equivalence for both fixtures, the display golden and miner cadence
+unit tests, regenerate FUNCTION_MAP, then prefinish and verify.
+Stop for a changed result, cadence, RNG order or performance regression.
 
-**Stop and escalate if** a moved function turns out to run per frame, needs
-an enum not in `bee_enums.gd`, or any golden string changes.
+**Open decisions:** none.
 
 ```queue
-**[Codex] CQ-R3 -- bee display text becomes scripts/bee_readout.gd**
-- Plan: `plans/now/code-health.md` -- "CQ-R3 -- bee display text becomes scripts/bee_readout.gd"
-- Files: `scripts/bee.gd`, `scripts/bee_readout.gd`, `FUNCTION_MAP.md`
-- Check: `python -m unittest tests.test_display_text_golden tests.test_t2_14_idle_reason_pure tests.test_t2_11_comb_cadence` passes with no expected string changed; `.\tools\verify.ps1` is green
-- Proof: `present: scripts/bee.gd :: func _task_line(`
-- Next after: CQ-R4
+**[Codex] CQ-R4 -- bee process decomposed without changing cadence**
+- Plan: `plans/now/code-health.md` -- "CQ-R4 -- bee process decomposed without changing cadence"
+- Files: `scripts/bee.gd`, `FUNCTION_MAP.md`, `docs/PERFORMANCE_BASELINE.md`
+- Check: both named perf fixtures have matching equivalence results and no comparable section regression; display golden and miner cadence tests pass; verify is green
+- Proof: `absent: scripts/bee.gd :: func _advance_think_clock(`
+- Next after: none
 ```
-
-CQ-R16 shipped 2026-11-02; its specification is `plans/archive/CQ-R16_2026-11-02.md`.

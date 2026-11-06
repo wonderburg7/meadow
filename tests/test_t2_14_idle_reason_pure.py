@@ -25,9 +25,11 @@ TIMEOUT_SECONDS = 180
 
 class T214IdleReasonPureTest(unittest.TestCase):
     def test_idle_reason_asks_for_room_and_starts_no_site(self):
-        text = (ROOT / "scripts" / "bee.gd").read_text(encoding="utf-8")
+        bee = (ROOT / "scripts" / "bee.gd").read_text(encoding="utf-8")
+        self.assertIn("return BeeReadout.idle_reason(self)", bee)
+        text = (ROOT / "scripts" / "bee_readout.gd").read_text(encoding="utf-8")
         start = text.index("func idle_reason(")
-        body = text[start:text.index("\nfunc ", start + 1)]
+        body = text[start:text.index("\nstatic func ", start + 1)]
         self.assertIn("hive.has_room_to_build(", body)
         self.assertNotIn("create_next_cell_site(", body)
 
