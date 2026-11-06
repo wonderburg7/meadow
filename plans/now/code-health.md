@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: the Codex lane holds CQ-R3 (CQ-M5b and CQ-M6 shipped 5-6 Nov 2026); CQ-M6b waits for the Claude lane's PN-5, PN-6 and PN-9; CQ-M4 for the Claude lane to release the save files; CQ-T4 for the Codex lane's PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-06
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R3 is implemented but blocked by the pre-existing display golden failure; CQ-R4 has its successor block (CQ-M5b and CQ-M6 shipped 5-6 Nov 2026); CQ-M6b waits for the Claude lane's PN-5, PN-6 and PN-9; CQ-M4 for the Claude lane to release the save files; CQ-T4 for the Codex lane's PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-06
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -372,9 +372,7 @@ the worker reads only the flagged lines.
   waits for the Claude lane's PN-5, PN-6 and PN-9, which edit
   `scripts/input_selection.gd` and `scripts/hive_cell.gd`, and for CQ-M6, which
   creates the constant.
-- **CQ-R4** -- `bee.gd::_process` into four helpers, profiled (high); HP-3
-  landed 18 Oct 2026, so it needs only its section and block, written by the
-  session that claims CQ-R3.
+
 
 CQ-M5b and CQ-M6 had waited for the Jules S-1, S-3 and J-14 branches; on
 5 Nov 2026 none was open and changing their files, so both were queued.
@@ -502,6 +500,18 @@ do. A pure move: the research note's `TASK_LINE_FIXED` table and per-role
 `idle_reason` split are dropped, because they change shape without moving
 any responsibility.
 
+**Implementation evidence (6 Nov 2026).** Extracted all seven functions;
+receiver-normalised executable bodies are identical. Prefinish passed (boot,
+source checks, 31 unit tests); T2-14 passed (2 tests), and both T2-11
+cadence runs passed. Retargeted the T2-14 source guard to the helper, with
+its wrapper assertion retained. No golden fixture was changed.
+The display golden fails in 19 cell-label cases on both this branch and
+primary master `3a46c156`; bee strings match. The cell script, harness and
+fixture have no diff between slice baseline `e260c67` and that master.
+Consequence: full green acceptance is blocked by a baseline mismatch.
+Next action: diagnose the cell golden setup/fixture mismatch without changing
+bee strings, then rerun acceptance and close out CQ-R3.
+
 **Must not change.** Every string, byte for byte (CQ-R0's harness proves
 it); the order of checks inside each function; the "Rules for every slice".
 
@@ -519,10 +529,50 @@ an enum not in `bee_enums.gd`, or any golden string changes.
 ```queue
 **[Codex] CQ-R3 -- bee display text becomes scripts/bee_readout.gd**
 - Plan: `plans/now/code-health.md` -- "CQ-R3 -- bee display text becomes scripts/bee_readout.gd"
-- Files: `scripts/bee.gd`, `scripts/bee_readout.gd`, `FUNCTION_MAP.md`
+- Files: `scripts/bee.gd`, `scripts/bee_readout.gd`, `tests/test_t2_14_idle_reason_pure.py`, `FUNCTION_MAP.md`
 - Check: `python -m unittest tests.test_display_text_golden tests.test_t2_14_idle_reason_pure tests.test_t2_11_comb_cadence` passes with no expected string changed; `.\tools\verify.ps1` is green
 - Proof: `present: scripts/bee.gd :: func _task_line(`
 - Next after: CQ-R4
 ```
 
 CQ-R16 shipped 2026-11-02; its specification is `plans/archive/CQ-R16_2026-11-02.md`.
+
+## CQ-R4 -- bee process decomposed without changing cadence
+
+Level: high. After CQ-R3; HP-3 landed 18 Oct 2026. Verified 6 Nov 2026
+against CQ-R3's worktree: `bee.gd::_process` still owns the think clocks,
+upkeep, state dispatch and presentation. No new owner or state is needed.
+
+**True now.** One process function contains these responsibilities, including
+the independent miner dispatch clock and the queen's nuptial-flight ordering.
+
+**When done.** Extract `_advance_think_clock(delta) -> float`,
+`_think_upkeep(think_delta)`, `_step_state(delta)` (including role Perf spans),
+and `_update_presentation(delta)` (label and wander spans) in `bee.gd`.
+Preserve every call, condition, early return, RNG draw and Perf span in its
+current order. Keep age/burn, death return, tipsy decay, nuptial-flight step,
+rain recall and proximity recruitment in their current orchestration order.
+Preserve the independent miner clock's position and cadence. These functions
+run on the existing per-frame or staggered think cadence; no new repeated work.
+Re-header simulation functions currently under display and replace empty
+section headers with a pointer. Keep readout ownership in `bee_readout.gd`.
+
+**Checks.** Follow `docs/performance.md`, Repeatability: discard seeding,
+two comparable runs each side using `hp2_idle_nurses_perf.json` and
+`hp1_forager_search_perf.json`; include bee_burn, bee_think and bee_state
+in scratch capture settings. Record section comparisons in
+`docs/PERFORMANCE_BASELINE.md`; no comparable section regression.
+Run equivalence for both fixtures, the display golden and miner cadence
+unit tests, regenerate FUNCTION_MAP, then prefinish and verify.
+Stop for a changed result, cadence, RNG order or performance regression.
+
+**Open decisions:** none.
+
+```queue
+**[Codex] CQ-R4 -- bee process decomposed without changing cadence**
+- Plan: `plans/now/code-health.md` -- "CQ-R4 -- bee process decomposed without changing cadence"
+- Files: `scripts/bee.gd`, `FUNCTION_MAP.md`, `docs/PERFORMANCE_BASELINE.md`
+- Check: both named perf fixtures have matching equivalence results and no comparable section regression; display golden and miner cadence tests pass; verify is green
+- Proof: `absent: scripts/bee.gd :: func _advance_think_clock(`
+- Next after: none
+```
