@@ -94,7 +94,7 @@ the archived plan is never reopened or extended.
 
 <!-- LAYER: durable-rules -->
 
-Twelve rules, the first ten added 11 and 17 Sep 2026 by reviews of every active plan. They cover
+Thirteen rules, the first ten added 11 and 17 Sep 2026 by reviews of every active plan. They cover
 what that review found missing; everything else about plan shape is the
 schema above, `.claude/rules/documentation.md` for the lifecycle,
 `plans/reference/check-loop.md` for acceptance wording, and `CLAUDE.md`
@@ -171,11 +171,19 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
    timing in one named, editable place; and when a target and a mechanic
    disagree, move the target. Added 5 Nov 2026 by the product review (D5).
 
+13. **A slice that changes what the player reads names the file that builds
+   it.** A readout, panel, popup, hint or Why? entry the section promises
+   puts the script that builds that text on its `Files:` line, found by
+   grepping for the current text. COL-11 (`hud.gd`, 2161b5f), T2-2
+   (`challenge_stages.gd`, c183d02) and FC-2 (`colony_diagnostics.gd`,
+   `guidance_catalogue.gd`, 52ab216) each widened their files mid-slice.
+   Added 6 Nov 2026 by the plan review.
+
 ## Current routing
 
 | If the queue names | Read |
 | --- | --- |
-| AR-6, AR-4 -- alpha-route evidence: the pacing report's draft targets, then a scripted Colony Run records all five gates | `plans/now/alpha-route-evidence.md` |
+| AR-4 -- alpha-route evidence: a scripted Colony Run records all five gates | `plans/now/alpha-route-evidence.md` |
 | ED-2, ED-3 -- difficulty: Easy's rules, then choosing Easy at run start | `plans/now/difficulty.md` |
 | FR-3 -- forager recruitment: Auto-recruitment switched on by ownership | `plans/now/forager-recruitment.md` |
 | HM-1, HM-2 -- Dave's meadow hives and top-bar menu icons | `plans/now/hive-and-menu-art.md` |
@@ -190,6 +198,7 @@ rule 4 for reasoning levels. Do not restate any of those here or in a plan.
 | CQ-L3 to CQ-R13 -- code health: format and typing passes, entities owning their save fields, named data, splits by responsibility | `plans/now/code-health.md` (research: `docs/code-health-research-2026-10-18.md`) |
 | Progression/skills design | `plans/design/progression.md` |
 | Product scope, alpha/beta gates (the Colony Run definition itself is `plans/archive/colony-run_2026-10-08.md`) | `plans/design/product-scope.md` |
+| UI, theme, layout or accessibility rules | `plans/reference/ui-rules.md` (reference only -- no open slice) |
 | Check format, acceptance wording, developer triggers | `plans/reference/check-loop.md` (reference only -- no open slice) |
 | Colony diagnostics (derived colony-state facts) | `plans/reference/colony-diagnostics.md` (reference only -- no open slice) |
 | A measured hot-path or restore issue | `plans/reference/technical-audit.md` (candidate B is measurement-gated; no open slice) |
@@ -247,10 +256,8 @@ move the execution record to `plans/archive/`, and rewrite `NEXTSTEPS.md`.
 10. An outline that must sit on a sprite is measured off that sprite and
     recorded as a named const, never re-derived from a shape that looks
     similar -- `plans/archive/HIVE_COMB_2026-09-12.md` Slice 9.
-11. Every persistent HUD panel takes its rectangle from `ui_layout.gd`. Two
-    panels that share an edge derive from one number; a literal `offset_top`
-    in a panel file is how the same overlap keeps coming back
-    (`plans/reference/check-loop.md` P-2).
+11. Every persistent HUD panel takes its rectangle from `ui_layout.gd`
+    (`plans/reference/ui-rules.md` "Durable rules").
 12. A queue item's `Proof:` line is the check for "does the behaviour already
     exist" (`tools/check_docs.py`, `.claude/rules/documentation.md`).
     X3/UI-P-2 cost a queue slot and a worktree because nobody opened

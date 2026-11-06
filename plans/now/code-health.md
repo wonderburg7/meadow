@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5b is implemented on its branch; SP-12 follows, and the Codex lane holds CQ-M6 (its Jules gates cleared 5 Nov 2026), with CQ-R3 waiting in its backlog; CQ-M6b waits for the Claude lane's PN-5, PN-6 and PN-9; CQ-M4 for the Claude lane to release the save files; CQ-T4 for integration of CQ-M5b and the Codex lane's CQ-M6, PN-19, PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code / Codex | Next: the Codex lane holds CQ-M6 and CQ-R3 (CQ-M5b shipped 5 Nov 2026); CQ-M6b waits for the Claude lane's PN-5, PN-6 and PN-9; CQ-M4 for the Claude lane to release the save files; CQ-T4 for the Codex lane's CQ-M6, PN-19, PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-06
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -122,7 +122,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | Slice | Outcome | Files it owns (block has the full list) | Startable | Level |
 | --- | --- | --- | --- | --- |
 | CQ-L3 | one-off `gdformat`; `--check` joins verify | every tracked `.gd` | gated: CQ-L2 and both lanes empty | medium |
-| CQ-T4 | the other 56 scripts and tests typed; `untyped_declaration` becomes an error | those, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | gated -- after CQ-M5b, CQ-M6, PN-19, PN-8 and PN-14 in the Codex lane (its Jules gates cleared 5 Nov 2026) | low |
+| CQ-T4 | the other 56 scripts and tests typed; `untyped_declaration` becomes an error | those, `project.godot`, `tests/source_checks.py`, `FUNCTION_MAP.md` | gated -- after CQ-M6, PN-19, PN-8 and PN-14 in the Codex lane (its Jules gates cleared 5 Nov 2026) | low |
 | CQ-S1 | Flower owns its save fields | `flower.gd`, `save_game.gd`, `saving.gd` | gated: ED-3, RR-12, SP-8a | high |
 | CQ-S2 | HiveCell owns its save fields | `hive_cell.gd`, `save_game.gd`, `saving.gd` | after CQ-S1 | high |
 | CQ-S3 | Hive (keep-clear, tier credit, bodies) and SoilBlock marks | `hive.gd`, `soil_block.gd`, save files | after CQ-S2 | high |
@@ -132,7 +132,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | `world_draw.gd` (new) and 5 world scripts | yes (5 Nov 2026) | low |
 | CQ-M6b | the cell ring and the selection layer read it | `hive_cell.gd`, `input_selection.gd` | after CQ-M6, and the Claude lane's PN-5, PN-6 and PN-9 | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6b | medium |
-| CQ-R2 | first crisis moves into scripts/event_director.gd as the shared cycle's first record (`plans/design/event-director.md` decisions 2 and 15) | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated: after ED-3 alone (Dave, 5 Nov 2026); RR-12 and SP-8a follow it | high |
+| CQ-R2 | first crisis moves into scripts/event_director.gd as the shared cycle's first record (`plans/design/event-director.md` decisions 2, 15 and 16) | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated: after ED-3 alone (Dave, 5 Nov 2026); RR-12 and SP-8a follow it | high |
 | CQ-R3 | bee display text becomes scripts/bee_readout.gd | `bee.gd`, `bee_readout.gd` (new), `FUNCTION_MAP.md` | yes -- Codex lane (5 Nov 2026) | medium |
 | CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
@@ -316,8 +316,8 @@ after CQ-T3's 18 files were typed). 56 scripts and tests outside `TYPED_FILES` h
 untyped declarations. `claude/dave-hands-on-checks-784f2a`, which changed five of the
 UI scripts, merged 4 Nov 2026. No open Jules branch changes these files (rechecked
 5 Nov 2026: E-14 and the S-3 marker-reparent branch are closed, and E-34's copies of
-them equal master's). It waits for the Codex lane's CQ-M5b, CQ-M6, PN-19, PN-8 and
-PN-14, which hold `tests/source_checks.py`, `scripts/obstacle.gd`,
+them equal master's). It waits for the Codex lane's CQ-M6, PN-19, PN-8 and
+PN-14, which hold `scripts/obstacle.gd`,
 `scripts/soil_block.gd`, `scripts/colony_panel.gd` and `scripts/camera_view.gd`.
 
 **When done:**
@@ -365,8 +365,8 @@ the worker reads only the flagged lines.
   without that evidence; the source audit reports remain unaccepted.
 
 - **CQ-T4** -- the remaining 56 scripts and tests typed and `untyped_declaration`
-  made an error; waits for the Codex lane's CQ-M5b, CQ-M6, PN-19, PN-8 and PN-14,
-  which hold `tests/source_checks.py`, `scripts/obstacle.gd`, `scripts/soil_block.gd`,
+  made an error; waits for the Codex lane's CQ-M6, PN-19, PN-8 and PN-14,
+  which hold `scripts/obstacle.gd`, `scripts/soil_block.gd`,
   `scripts/colony_panel.gd` and `scripts/camera_view.gd` (its Jules gates cleared
   5 Nov 2026). Its section is `## CQ-T4 -- the rest typed`.
 - **CQ-M4** -- deferred until the Claude lane releases `scripts/save_game.gd`

@@ -197,10 +197,18 @@ forager's.
 sour nectar when directed, without being a Comb worker and before Cleaning is
 bought.
 
-**Change.** Verify what happens to a sour load first. If it is moved rather
-than thrown away, set the cell's `evict_mode` to "discard" for fermented cells
-in `command_empty_cell`. Scenario: lone queen, a sour cell, no Cleaning
-(pattern: `test_scenarios/rr17_queen_discards_sour_watch.json`).
+**Change.** Write the scenario first: lone queen, a sour cell, no Cleaning,
+"Empty this cell" (pattern: `test_scenarios/rr17_queen_discards_sour_watch.json`,
+which covers the Cleaning route RR-17 fixed, not this command). The haul step
+already discards a fermented load whatever `evict_mode` says
+(`bee_building.gd::builder_go_to_haul_source`: `was_fermented` sends the bee
+to `TO_WASTE_EXIT`; checked 6 Nov 2026 by the plan review), so if the scenario
+fails the cause is earlier: find where the queen leaves `TO_HAUL_SOURCE`
+before she lifts the load, and fix that in `bee.gd`. If the scenario passes on
+unchanged code, land the scenario and test alone and say so in the closeout;
+the hands-on check then confirms Dave's play note no longer reproduces. Setting
+`evict_mode` to "discard" for fermented cells in `command_empty_cell` is the
+fallback only if the load is shown to be moved.
 
 **Invariants.** Sound nectar is still moved, not discarded; a worker's automatic
 Cleaning still needs the skill.
