@@ -87,6 +87,8 @@ func _restore(data: Dictionary) -> void:
 	Session.winter_ends_day = float(session_state.get("winter_ends_day", 0.0))
 	Session.gynes_released = int(session_state.get("gynes_released", 0))
 	Session.crab_spider_preferred_species = str(session_state.get("crab_spider_species", ""))
+	# ED-2: anything but "easy" -- a missing key included -- is Standard.
+	Session.difficulty = Session.DIFFICULTY_EASY if str(session_state.get("difficulty", "")) == Session.DIFFICULTY_EASY else Session.DIFFICULTY_STANDARD
 	# WP-2, additive: a save without a default order loads decision 3's.
 	Session.set_backup_order_default(session_state.get("backup_order_default", Session.DEFAULT_BACKUP_ORDER))
 	Session.forget_backup_order_seeding()
