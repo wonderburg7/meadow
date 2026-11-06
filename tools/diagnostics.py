@@ -39,8 +39,13 @@ def log_path(root: str | Path | None = None) -> Path | None:
 
     `root` is tried first and the process's own directory second: a hook is
     handed a working directory by its host, and a form git cannot resolve
-    would otherwise drop the event silently.
+    would otherwise drop the event silently. `MEADOW_DIAGNOSTICS_LOG` names
+    another file instead, so a test's events stay out of the shared log (135
+    of 138 guard refusals logged by 6 Nov 2026 came from tests/test_guard_hook.py).
     """
+    override = os.environ.get("MEADOW_DIAGNOSTICS_LOG")
+    if override:
+        return Path(override)
     for candidate in ([root] if root else []) + [Path.cwd()]:
         try:
             candidate = Path(candidate)

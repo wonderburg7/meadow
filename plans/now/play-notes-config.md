@@ -1,7 +1,7 @@
 # Play notes, config and bee -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: PN-11 -- rain later, at the head of the Claude lane (its Jules gates cleared 5 Nov 2026); PN-9 and PN-12 are startable and wait for room; PN-13 waits for the Codex lane to release `bee.gd`; PN-18 and PN-19 are queued in the Codex lane | Dependency: PN-11 precedes EV-0 (`plans/now/event-director.md`) on the alpha route; PN-9, PN-12 and PN-13 share `game_config.gd` or `settings_catalogue.gd` and run in turn | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code / Codex | Next: PN-11 -- rain later, at the head of the Claude lane (its Jules gates cleared 5 Nov 2026); PN-9 and PN-12 are startable and wait for room; PN-13 waits for the Codex lane to release `bee.gd`; PN-18 follows only after its Claude-lane gate is rechecked (Dave, 6 Nov 2026); C-179 awaits visual confirmation of PN-19 | Dependency: PN-11 precedes EV-0 (`plans/now/event-director.md`) on the alpha route; PN-9, PN-12 and PN-13 share `game_config.gd` or `settings_catalogue.gd` and run in turn | Verified: 2026-11-05
 
 ## Objective
 
@@ -21,7 +21,6 @@ Verified 2026-10-31 by `tools/slice.ps1 owner`; `skill_tree_panel.gd` and
 | PN-12 | developer mode buys any skill | `skill_tree_panel.gd`, `settings_catalogue.gd` | yes | low |
 | PN-13 | bee labels switch and a calmer queen flight | `bee.gd`, `game_config.gd`, `settings_catalogue.gd` | yes, once the Codex lane releases `bee.gd` | low |
 | PN-18 | the queen discards sour nectar when told to empty a cell | `bee.gd` | yes -- Codex lane (5 Nov 2026) | medium |
-| PN-19 | the soil block's selection ring closes | `soil_block.gd` | yes -- Codex lane (5 Nov 2026) | low |
 
 ## Dependencies
 
@@ -197,10 +196,18 @@ forager's.
 sour nectar when directed, without being a Comb worker and before Cleaning is
 bought.
 
-**Change.** Verify what happens to a sour load first. If it is moved rather
-than thrown away, set the cell's `evict_mode` to "discard" for fermented cells
-in `command_empty_cell`. Scenario: lone queen, a sour cell, no Cleaning
-(pattern: `test_scenarios/rr17_queen_discards_sour_watch.json`).
+**Change.** Write the scenario first: lone queen, a sour cell, no Cleaning,
+"Empty this cell" (pattern: `test_scenarios/rr17_queen_discards_sour_watch.json`,
+which covers the Cleaning route RR-17 fixed, not this command). The haul step
+already discards a fermented load whatever `evict_mode` says
+(`bee_building.gd::builder_go_to_haul_source`: `was_fermented` sends the bee
+to `TO_WASTE_EXIT`; checked 6 Nov 2026 by the plan review), so if the scenario
+fails the cause is earlier: find where the queen leaves `TO_HAUL_SOURCE`
+before she lifts the load, and fix that in `bee.gd`. If the scenario passes on
+unchanged code, land the scenario and test alone and say so in the closeout;
+the hands-on check then confirms Dave's play note no longer reproduces. Setting
+`evict_mode` to "discard" for fermented cells in `command_empty_cell` is the
+fallback only if the load is shown to be moved.
 
 **Invariants.** Sound nectar is still moved, not discarded; a worker's automatic
 Cleaning still needs the skill.
@@ -217,36 +224,10 @@ cell empties.
 - Files: `scripts/bee.gd`, `test_scenarios/pn18_queen_empties_sour.json`, `tests/test_pn18_queen_empties_sour.py`
 - Check: `python -m unittest tests.test_pn18_queen_empties_sour` passes (lone queen, sour cell, no Cleaning: the cell ends empty and the nectar is discarded); `.\tools\verify.ps1` is green. Hands-on: the queen empties a sour cell on command
 - Proof: `absent: scripts/bee.gd :: PN-18`
-- Next after: PN-19 -- the soil block's selection ring closes
+- Next after: CQ-R3 -- bee display text becomes scripts/bee_readout.gd
 ```
 
-## PN-19 -- the soil block's selection ring closes
-
-**True now.** C-147 comment: "there is a little gap in the hexagon on the far
-right side" of a selected soil block. `soil_block.gd::_ready` builds the ring
-from `hexagon_points` and closes it with `selection_ring.add_point(ring_points[0])`
-and default Line2D joints.
-
-**Change.** Set the ring `closed = true` and drop the repeated first point, and
-give it the same selection-ring z treatment `hive_cell.gd` got on this branch
-(`SELECTION_RING_Z`).
-
-**Invariants.** The ring's colour, width and visibility rules are unchanged.
-Tests: `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`.
-
-**Acceptance (player seat, and the hands-on check).** Select a soil block: its
-hexagon outline is unbroken all round, including the far right.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] PN-19 -- the soil block's selection ring closes**
-- Plan: `plans/now/play-notes-config.md` -- "PN-19 -- the soil block's selection ring closes"
-- Files: `scripts/soil_block.gd`, `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`
-- Check: `python -m unittest tests.test_sp10_soil_depth tests.test_sp9_soil_art` pass with an assertion that the ring is closed; `.\tools\verify.ps1` is green. Hands-on: a selected soil block's outline has no gap
-- Proof: `present: scripts/soil_block.gd :: selection_ring.add_point(ring_points[0])`
-- Next after: none -- `plans/now/play-notes-config.md` is complete
-```
+PN-19 shipped 2026-11-06; its specification is `plans/archive/PN-19_2026-11-06.md`.
 
 ## Ideas waiting for a design pass
 

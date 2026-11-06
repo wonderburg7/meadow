@@ -33,8 +33,7 @@ and `colony_milestones.gd`) and grep on this branch.
 ## Dependencies
 
 - **Lane (Dave, 5 Nov 2026, plan review).** These slices run in the Codex
-  lane, so `hud.gd` is that lane's while they are queued. CQ-M5b
-  (`plans/now/code-health.md`, Codex) edits it first; HM-2
+  lane, so `hud.gd` is that lane's while they are queued. HM-2
   (`plans/now/hive-and-menu-art.md`) and CQ-R2 (`plans/now/code-health.md`),
   Claude slices that also edit it, follow them.
 - Same-file slices run in turn: PN-7, PN-14, PN-15, PN-8 and PN-10 touch
