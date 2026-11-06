@@ -51,5 +51,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PN-11` (`claude/PN-11`) | Claude | rain later: first rain on day 10, crisis days 12-15 | Claude | in progress | none | `plans/now/play-notes-config.md` PN-11 -- rain later: first rain on day 10, crisis days 12-15 |
-| `.worktrees/PN-18` (`codex/PN-18`) | Codex | the queen discards sour nectar when told to empty a cell | Codex | in progress | none | `plans/now/play-notes-config.md` PN-18 -- the queen discards sour nectar when told to empty a cell |
 | `.worktrees/player-experience-review-20261106` (`codex/player-experience-review-20261106`) | Review | Advisory player-experience review; Markdown evidence and recommendations only; no game or queue changes | Codex | in progress | none | `plans/design/product-scope.md` |
