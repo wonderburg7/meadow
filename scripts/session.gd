@@ -126,6 +126,12 @@ var year_has_winter: bool = true
 ## Gynes that have left to found colonies of their own. This is the
 ## score: the whole point of a season is how many you get away.
 var gynes_released: int = 0
+## ED-2: this run's difficulty, DIFFICULTY_STANDARD or DIFFICULTY_EASY.
+## Reset with the run and saved; a save without it loads as Standard.
+## Nothing reads it until ED-2b.
+const DIFFICULTY_STANDARD := "standard"
+const DIFFICULTY_EASY := "easy"
+var difficulty: String = DIFFICULTY_STANDARD
 
 # --- crab spiders (see CRAB_SPIDER_PLAN.md) ------------------------
 ## Which flower species this run's crab spiders are hunting on. Rolled
@@ -399,6 +405,7 @@ func reset_run_state() -> void:
 	winter_starts_day = 0.0
 	winter_ends_day = 0.0
 	gynes_released = 0
+	difficulty = DIFFICULTY_STANDARD
 	crab_spider_preferred_species = ""
 	rain_intensity = 0.0
 	control_groups.clear()

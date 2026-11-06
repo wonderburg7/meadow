@@ -128,6 +128,8 @@ static func save(world: Node2D, path: String = SAVE_PATH) -> bool:
 			"winter_here": Session.winter_here,
 			"winter_ends_day": Session.winter_ends_day,
 			"gynes_released": Session.gynes_released,
+			# ED-2, additive: an older save has none and loads as Standard.
+			"difficulty": Session.difficulty,
 			"crab_spider_species": Session.crab_spider_preferred_species,
 			# WP-2, additive: the colony's default backup order. An older
 			# save has none and loads Session.DEFAULT_BACKUP_ORDER.

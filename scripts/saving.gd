@@ -86,6 +86,12 @@ func _restore(data: Dictionary) -> void:
 	Session.winter_here = bool(session_state.get("winter_here", false))
 	Session.winter_ends_day = float(session_state.get("winter_ends_day", 0.0))
 	Session.gynes_released = int(session_state.get("gynes_released", 0))
+	# ED-2, additive: a save without a difficulty, or with one this build
+	# does not know, loads as Standard.
+	var saved_difficulty := str(session_state.get("difficulty", Session.DIFFICULTY_STANDARD))
+	if saved_difficulty not in [Session.DIFFICULTY_STANDARD, Session.DIFFICULTY_EASY]:
+		saved_difficulty = Session.DIFFICULTY_STANDARD
+	Session.difficulty = saved_difficulty
 	Session.crab_spider_preferred_species = str(session_state.get("crab_spider_species", ""))
 	# WP-2, additive: a save without a default order loads decision 3's.
 	Session.set_backup_order_default(session_state.get("backup_order_default", Session.DEFAULT_BACKUP_ORDER))
