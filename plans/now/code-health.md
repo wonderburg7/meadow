@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R3 is implemented but blocked by the pre-existing display golden failure; CQ-R4 has its successor block (CQ-M5b and CQ-M6 shipped 5-6 Nov 2026); CQ-M6b waits for the Claude lane's PN-5, PN-6 and PN-9; CQ-M4 for the Claude lane to release the save files; CQ-T4 for the Codex lane's PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-06
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R3 is implemented and awaiting closeout; CQ-R4 has its successor block (CQ-M5b and CQ-M6 shipped 5-6 Nov 2026); CQ-M6b waits for the Claude lane's PN-5, PN-6 and PN-9; CQ-M4 for the Claude lane to release the save files; CQ-T4 for the Codex lane's PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-06
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -502,15 +502,14 @@ any responsibility.
 
 **Implementation evidence (6 Nov 2026).** Extracted all seven functions;
 receiver-normalised executable bodies are identical. Prefinish passed (boot,
-source checks, 31 unit tests); T2-14 passed (2 tests), and both T2-11
+source checks, 39 unit tests); T2-14 passed (2 tests), and both T2-11
 cadence runs passed. Retargeted the T2-14 source guard to the helper, with
 its wrapper assertion retained. No golden fixture was changed.
-The display golden fails in 19 cell-label cases on both this branch and
-primary master `3a46c156`; bee strings match. The cell script, harness and
-fixture have no diff between slice baseline `e260c67` and that master.
-Consequence: full green acceptance is blocked by a baseline mismatch.
-Next action: diagnose the cell golden setup/fixture mismatch without changing
-bee strings, then rerun acceptance and close out CQ-R3.
+The direct golden command inherited saved preferences and failed in 19
+cell-label cases on both this branch and primary master `3a46c156`.
+`python tools/run_tests.py --private-user --workers 1 tests.test_display_text_golden`
+passed (1 test, 0 failures); the existing private-user runner isolates the
+saved cell-text preference. Bee strings match throughout; no harness edit needed.
 
 **Must not change.** Every string, byte for byte (CQ-R0's harness proves
 it); the order of checks inside each function; the "Rules for every slice".
