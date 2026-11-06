@@ -21,7 +21,6 @@ Verified 2026-10-31 by `tools/slice.ps1 owner`; `skill_tree_panel.gd` and
 | PN-12 | developer mode buys any skill | `skill_tree_panel.gd`, `settings_catalogue.gd` | yes | low |
 | PN-13 | bee labels switch and a calmer queen flight | `bee.gd`, `game_config.gd`, `settings_catalogue.gd` | yes, once the Codex lane releases `bee.gd` | low |
 | PN-18 | the queen discards sour nectar when told to empty a cell | `bee.gd` | yes -- Codex lane (5 Nov 2026) | medium |
-| PN-19 | the soil block's selection ring closes | `soil_block.gd` | yes -- Codex lane (5 Nov 2026) | low |
 
 ## Dependencies
 
@@ -220,38 +219,7 @@ cell empties.
 - Next after: CQ-R3 -- bee display text becomes scripts/bee_readout.gd
 ```
 
-## PN-19 -- the soil block's selection ring closes
-
-**True now.** C-147 comment: "there is a little gap in the hexagon on the far
-right side" of a selected soil block. `soil_block.gd::_ready` builds the ring
-from `hexagon_points` and closes it with `selection_ring.add_point(ring_points[0])`
-and default Line2D joints.
-
-**Change.** Set the ring `closed = true` and drop the repeated first point, and
-give it the same selection-ring z treatment `hive_cell.gd` got on this branch
-(`SELECTION_RING_Z`).
-
-**Invariants.** The ring's colour, width and visibility rules are unchanged.
-Tests: `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`.
-
-**Acceptance (player seat, and the hands-on check).** Select a soil block: its
-hexagon outline is unbroken all round, including the far right.
-
-**Implemented (6 Nov 2026).** The soil ring has six corners joined by
-`Line2D.closed` and uses the comb selection layer independently of block depth.
-The SP-10 headless test failed before the fix and passes after it; both named
-Python suites pass (13 tests). Visual confirmation is C-179.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] PN-19 -- the soil block's selection ring closes**
-- Plan: `plans/now/play-notes-config.md` -- "PN-19 -- the soil block's selection ring closes"
-- Files: `scripts/soil_block.gd`, `tests/sp10_soil_depth_test.gd`, `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`
-- Check: `python -m unittest tests.test_sp10_soil_depth tests.test_sp9_soil_art` pass with an assertion that the ring is closed; `.\tools\verify.ps1` is green. Hands-on: a selected soil block's outline has no gap
-- Proof: `present: scripts/soil_block.gd :: selection_ring.add_point(ring_points[0])`
-- Next after: PN-18 -- the queen discards sour nectar when told to empty a cell; recheck the Claude-lane gate before claiming
-```
+PN-19 shipped 2026-11-06; its specification is `plans/archive/PN-19_2026-11-06.md`.
 
 ## Ideas waiting for a design pass
 
