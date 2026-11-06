@@ -11,6 +11,7 @@ extends Polygon2D
 ## holes in them.
 
 const Shapes = preload("res://scripts/shapes.gd")
+const WorldDraw = preload("res://scripts/world_draw.gd")
 const SpriteCatalogue = preload("res://scripts/sprite_catalogue.gd")
 
 const SOIL_COLOR := Color(0.30, 0.22, 0.12)
@@ -97,7 +98,7 @@ func _ready() -> void:
 		selection_ring.add_point(p)
 	selection_ring.add_point(ring_points[0])
 	selection_ring.width = 2.5
-	selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)
+	selection_ring.default_color = Color(WorldDraw.SELECTION_COLOUR, 0.95)
 	selection_ring.visible = false
 	add_child(selection_ring)
 

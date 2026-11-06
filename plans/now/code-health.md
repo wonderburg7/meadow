@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5b is implemented on its branch; SP-12 follows, and the Codex lane holds CQ-M6 (its Jules gates cleared 5 Nov 2026), with CQ-R3 waiting in its backlog; CQ-M6b waits for the Claude lane's PN-5, PN-6 and PN-9; CQ-M4 for the Claude lane to release the save files; CQ-T4 for integration of CQ-M5b and the Codex lane's CQ-M6, PN-19, PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M6 is implemented on its branch; CQ-M6b waits for integration and the Claude lane's PN-5, PN-6 and PN-9; CQ-R3 remains in the Codex backlog; CQ-M4 waits for the Claude lane to release the save files; CQ-T4 waits for the Codex lane's CQ-M6, PN-19, PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-06
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -129,7 +129,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | gated: the Claude lane holds `save_game.gd` and `saving.gd` | medium |
-| CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | `world_draw.gd` (new) and 5 world scripts | yes (5 Nov 2026) | low |
 | CQ-M6b | the cell ring and the selection layer read it | `hive_cell.gd`, `input_selection.gd` | after CQ-M6, and the Claude lane's PN-5, PN-6 and PN-9 | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6b | medium |
 | CQ-R2 | first crisis moves into scripts/event_director.gd as the shared cycle's first record (`plans/design/event-director.md` decisions 2 and 15) | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated: after ED-3 alone (Dave, 5 Nov 2026); RR-12 and SP-8a follow it | high |
@@ -449,40 +448,7 @@ CQ-M5a shipped 2026-10-29; its specification is `plans/archive/CQ-M5a_2026-10-29
 
 CQ-M5b shipped 2026-11-05; its specification is `plans/archive/CQ-M5b_2026-11-05.md`.
 
-## CQ-M6 -- name selection green and caste appearance
-
-**Now.** The same selection-ring green is repeated across world scripts, with
-each site choosing its own alpha. `bee.gd` also holds unnamed caste colours
-and a queen size factor. The D2 classification and research record identify
-these as presentation constants; `scripts/obstacle.gd` still assigns
-`Color(0.2, 1.0, 0.4, 0.95)` to its selection ring on master (verified
-26 Oct 2026). The Claude lane owns none of the files listed below, as checked
-with `tools/slice.ps1 owner` on 26 Oct 2026.
-
-**When done.** Add a leaf `scripts/world_draw.gd` with `SELECTION_COLOUR`
-and use it at the world-object selection rings -- `bee.gd`, `death_marker.gd`,
-`flower.gd`, `obstacle.gd` and `soil_block.gd` -- while preserving each site's
-alpha. Name the caste colours and `QUEEN_SIZE_FACTOR` beside their present use
-in `bee.gd`. Keep the rendered colours, sizes, display strings, RNG calls and
-simulation outcomes unchanged. Extend the existing owner; do not add a new
-drawing service. Regenerate `FUNCTION_MAP.md` if a mapped function changes.
-Reasoning: **low**.
-
-**Split (5 Nov 2026).** The cell ring (`hive_cell.gd:503`) and the drag box and
-order marker (`input_selection.gd:685`, `:686`, `:784`, `:785`) are CQ-M6b:
-the Claude lane's PN-5 and PN-6 hold `input_selection.gd`, and PN-9, that
-lane's next slice, edits `hive_cell.gd`.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] CQ-M6 -- name selection green and caste appearance**
-- Plan: `plans/now/code-health.md` -- "CQ-M6 -- name selection green and caste appearance"
-- Files: `scripts/world_draw.gd`, `scripts/bee.gd`, `scripts/death_marker.gd`, `scripts/flower.gd`, `scripts/obstacle.gd`, `scripts/soil_block.gd`, `FUNCTION_MAP.md`
-- Check: `python -m unittest tests.test_sp9_soil_art tests.test_col9_drones` and `python tools/prefinish.py` pass; rendered selection alphas and caste sizes remain unchanged
-- Proof: `present: scripts/obstacle.gd :: selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)`
-- Next after: CQ-M6b -- the cell ring and the selection layer read the selection green
-```
+CQ-M6 shipped 2026-11-06; its specification is `plans/archive/CQ-M6_2026-11-06.md`.
 
 ## CQ-M6b -- the cell ring and the selection layer read the selection green
 
