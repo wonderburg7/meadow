@@ -4,7 +4,7 @@
 Record key: gameplay-review
 Reasoning: high
 Watches: scripts test_scenarios docs/known-pitfalls.md checks .claude/rules/simulation.md GAME_MODEL.md
-Jules: R-gameplay | priority 1 | every 7 days | min 20 commits
+Jules: R-gameplay | priority 1 | every 4 days | min 20 commits
 
 **Owns:** behavioural correctness across simulation systems: rules that
 disagree between layers; state that leaks, or is not reset, across a

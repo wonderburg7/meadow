@@ -1,7 +1,7 @@
 # Google Jules -- task list and method
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: Jules every task; Claude/Codex only to add or prune a task -->
-Status: reference | Owner: Dave / Claude Code / Codex | Next: J-31 and J-44 to J-53 processed in the assigned integration batch; see plans/reference/jules-integration-2026-11-04.md; prune delivered briefs at the next normal refill | Dependency: none; the batch is on master (its record's final section) | Verified: 2026-11-05
+Status: reference | Owner: Dave / Claude Code / Codex | Next: Jules stops on 11 Nov 2026; J-54 to J-58 and the pulled-forward R-verification, R-context and R-gameplay sweeps are its last work ("Last week" below); process their PRs, then retire this list | Dependency: none | Verified: 2026-11-06
 
 Jules works from GitHub on a Linux VM, outside the Claude/Codex slice queue.
 Its work is behaviour-preserving tooling: guards that catch a known bug class
@@ -37,6 +37,29 @@ when one of its six topics is due (5 Nov 2026; before then every other task
 was one). The persistent sequence, the due rule, the exact review method and
 the integration contract live in `plans/reference/jules-efficiency.md`;
 `--next` routes each turn.
+
+## Last week (until 11 Nov 2026)
+
+Jules stops on 11 Nov 2026 (Dave, 6 Nov). On 6 Nov the list was empty and
+every rota review rested until after that date, so Jules was spending its
+last turns on S-1 tests of guards a week old. Its remaining turns go, in
+this order, to:
+
+1. J-54 to J-58 below: the two returned guards (a returned branch nobody
+   corrects by 11 Nov is lost), two sweeps, one test correction.
+2. Three rota reviews pulled forward by shortening `every` to 4 days on
+   their `Jules:` lines (6 Nov): R-verification and R-context (due 6 Nov;
+   69 and 38 commits on their watched paths since their 2 Nov records) and
+   R-gameplay (due 9 Nov, so it sweeps the most commits). R-save, R-ui and
+   R-architecture stay quiet (2, 5 and 5 commits). A sweep Jules does
+   before 11 Nov is one Claude does not pay for after it.
+3. Standing tasks, as before.
+
+A session stops after three audits/reviews, so this takes at least two
+sessions: paste the starting prompt again as soon as one stops on that
+limit, without waiting for its PRs to be merged (`--next` skips taken
+work). After 11 Nov the `every` values matter to no one; whoever retires
+this list sets them back (7, 10 and 14 days) or removes the `Jules:` lines.
 
 ## Starting prompt (Dave pastes this into Jules)
 
@@ -220,96 +243,45 @@ it, like `tools/heading.py`.
 
 ## Tasks
 
-### J-31 -- Audit: hive and meadow coordinate spaces
+Ordered for Jules's last week (it stops on 11 Nov 2026): the two returned
+guards first, since a returned Jules branch nobody corrects by then is lost
+work; then the two sweeps that cost Claude a whole code-base read and Jules
+nothing; then one cheap test correction. `--next` takes them in this order.
 
-- Files: docs/audits/coordinate-spaces.md (new)
+### J-54 -- Make the indoor-flower guard prove enclosing control flow
+
+- Files: tools/indoor_flower_check.py (new), tests/test_indoor_flower_check.py (new)
 - After: none
-- Why: `docs/known-pitfalls.md` § "Simulation and behaviour" has three
-  coordinate-space entries (`hive_root` and `meadow_root` at different
-  origins; a bee under `hive_root` in hive-local coordinates; a marker
-  reparented by some branches and not others). Each was found by eye in
-  play, not by a check (27 Oct 2026).
-- Do: read every `.gd` under `scripts/` that names `hive_root`,
-  `meadow_root`, `global_position`, `to_global`, `to_local` or
-  `reparent`/`add_child` of a bee, flower or marker. For every expression
-  that compares, subtracts, measures `distance_to` between, or assigns one
-  node's position to another, record both nodes' parents as far as the
-  code shows them and whether the two values are in the same space.
-  Classify each site: same space, converted correctly, mixed (a finding),
-  or cannot tell from the source (Confidence low). List every place a node
-  moves between `hive_root` and `meadow_root` and whether its position is
-  converted at the move. Candidate Jules tasks are source checks for any
-  mixed shape a regex can catch; if none can, say so.
+- Why: `docs/known-pitfalls.md` § "Simulation and behaviour" (a forager idling indoors dispatched to flower-seeking where she stood). PR #133 was returned on 5 Nov (`plans/reference/jules-review-2026-11-05.md` F2): its guard passed three mutations that recreate the bug.
+- Do: Use PR #133 only as a starting point for the two named files; drop every other path it carries, including `tests/source_checks.py` and its `ui_theme.gd`/`winter_panel.gd` snapshot. Parse executable code, ignoring comments and strings. Require each indoor check's early return to sit inside its guarding `if`, not merely that helper names appear in the text. Each of these mutations to current source must make the guard fail, with a test for each: both guarded returns replaced by `pass`; `bee_foraging.gd::_walk_out_if_indoors` returning false while indoors; an unguarded final `SEEK_FLOWER` assignment appended to `bee.gd::set_focus`. Pass on current scripts. A nonexistent requested input exits non-zero. Preserve `autonomous_state` and player-driven semantics. No GDScript edits.
 
-### J-44 -- Make the JSON-number guard track numeric values and loop scope
+### J-55 -- Make the goal-default guard parse dictionaries and strings
 
-- Files: tools/json_number_check.py (new), tests/test_json_number_check.py (new)
+- Files: tools/goal_default_check.py (new), tests/test_goal_default_check.py (new)
 - After: none
-- Why: PR #72 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
-- Do: Use the rejected PR only as a starting point for its two named files. Accept string-array membership; expire taint at loop/function boundaries; do not infer numeric provenance merely from a variable name. Detect the documented raw numeric .get lookup before integer-array membership, or narrow the scanner contract explicitly. Test positive string/reused-loop-variable cases and negative raw-number cases. Pass on current scripts and mutation-prove the supported numeric-coercion failure. No GDScript or save edits.
+- Why: `docs/known-pitfalls.md` § "Checks and rules that pass without proving anything", "A goal that asks 'is any of them X' passes on the one that was always X". PR #130 was returned on 5 Nov (`plans/reference/jules-review-2026-11-05.md` F3): it searched unparsed dictionary text.
+- Do: Use PR #130 only as a starting point for the two named files; drop `AGENTS.md`, `CHATGPT.md` and `docs/agent-rules.md`. Parse stage condition dictionaries key by key, so text inside a string literal never counts as a key or condition. A bad condition written with single-quoted `'cell_count'` must fail. A note string containing an explicit-true fragment must not make an explicit-false condition pass. A hint string containing a bad-looking dictionary must not raise. Mutation-prove on a real stage in current `scripts/challenge_stages.gd`, naming the stage by what it asks the player to do. Report each problem with its `path:line`. Pass on current scripts. No challenge goal edits.
 
-### J-45 -- Make the navigation-bound guard prove the reach expression
+### J-56 -- Audit: restrictions stated in comments but missing from predicates
 
-- Files: tools/nav_reach_check.py (new), tests/test_nav_reach_check.py (new)
+- Files: docs/audits/comment-predicates.md (new)
 - After: none
-- Why: PR #75 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
-- Do: Keep a two-file standalone guard. Check that navigation and chamber construction use the same exclusive outer bound, including arithmetic in reach, not merely three field-name substrings. Mutating current reach by adding + 1, subtracting rock rings, omitting a term or widening the range stop must each fail; ordinary formatting changes must pass. Do not edit navigation, GameConfig or game tests.
+- Why: `docs/known-pitfalls.md` § "Checks and rules that pass without proving anything", "A restriction that lives in the comment and not in the predicate": three incidents, each found by Dave in play (`challenge_runner.gd::discards_overflow` destroyed the queen's nectar at every stage). Only a reader can compare intent with a predicate, so this is a whole-code-base sweep (6 Nov 2026).
+- Do: Read every `.gd` under `scripts/`. List every comment (doc comment or `#` line) attached to a function, branch or call site that names a narrower case than code could test: a Challenge or stage, a role or caste, a bee state, a resource, or the words only, except, unless, never, first, second. For each, record the comment's claim and what the predicate actually tests. Classify each site: matches; narrowed by another route (cite where); wider than the comment (a finding); cannot tell from the source (Confidence low). Every finding cites both the comment line and the predicate line at the audited commit. Under "For Claude or Codex", say for each finding whether the comment or the code looks like the intended rule, as inference; never decide it. Candidate Jules tasks: only a source check for a shape a token-level check can prove; if none can, say so.
 
-### J-46 -- Make the obstacle-commitment guard respect conditional nesting
+### J-57 -- Audit: Challenge stage goals against the object and choice they name
 
-- Files: tools/skirt_commitment_check.py (new), tests/test_skirt_commitment_check.py (new)
+- Files: docs/audits/challenge-goals.md (new)
 - After: none
-- Why: PR #76 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
-- Do: Keep the two-file standalone guard. A skirt_obstacle clear must be inside the debounce conditional, not merely after a comparison token. Starting from current bee_movement.gd, move the clear outside the inner condition and leave pass inside it: the guard must fail. Reject a single-frame threshold within the supported shape; accept intentional navigation resets. Ignore comments/strings and pass on current scripts. No steering or cadence edits.
+- Why: `docs/known-pitfalls.md`, "A goal that asks 'is any of them X' passes on the one that was always X": stage 1.13's check accepted any designated cell, so the stage cleared in the frame it opened and the whole pollen arc went unseen. A goal's text, condition and the earlier stages' state are in three files; checking every stage is a sweep (6 Nov 2026).
+- Do: For every stage in `scripts/challenge_stages.gd`, record what it asks the player to do (as `docs/challenge-stages.md` words it) and the condition that clears it, traced through `scripts/conditions.gd` and `scripts/challenge_runner.gd`. Classify each stage: checks the object its text names; checks any object where the text names one (a finding); can already be true when the stage opens, from an automatic default or an earlier stage's state (a finding: name that behaviour or stage); cannot tell (Confidence low). Every finding cites the goal and the predicate `path:line`. Never give a stage id bare: say what it asks. No goal edits; a fix is a finding.
 
-### J-47 -- Keep one executable-code marker-reparenting guard
+### J-58 -- Test only the pure helpers of forager_diagnosis
 
-- Files: tools/marker_reparent_check.py (new), tests/test_marker_reparent_check.py (new)
+- Files: tests/test_forager_diagnosis_helpers.py (new)
 - After: none
-- Why: PR #79 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
-- Do: Use only the two named files from PR #79, retaining visit-point coverage; discard its entire unrelated snapshot. Parse executable code rather than comments/strings. Commenting out the real central reparent must fail, as must missing parent assignment, uncovered marker stages, wrong ordering and branch-local reparenting. Check both marker functions. A nonexistent requested input file must exit non-zero. Pass on current challenge_runner.gd. Do not import PR #77 or change game source.
-
-### J-48 -- Make the drained-flower guard prove rejection and cooldown updates
-
-- Files: tools/drained_flower_exclusion_check.py (new), tests/test_drained_flower_exclusion_check.py (new)
-- After: none
-- Why: PR #84 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
-- Do: Keep the two-file standalone guard. Require an executable rejecting cooldown predicate outside the relaxed-search condition and an actual cooldown update on collection completion. Changing the current cooldown return false to return true, removing the rejection or replacing the assignment with a read/comment must each fail. Ignore strings/comments, preserve normal formatting and pass on current bee_foraging.gd. No foraging, simulation, settings or save edits.
-
-### J-49 -- Make run-scenario helper tests portable to Windows
-
-- Files: tests/test_run_scenario_helpers.py (new)
-- After: none
-- Why: PR #82 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
-- Do: Take only this test file from PR #82. Build all four terminal-line expected paths from str(result_path), preserving the platform-native formatting contract; never change the production helper to meet POSIX-only expectations. Run python -m unittest tests.test_run_scenario_helpers without a tests-directory PYTHONPATH on Windows and Linux, or state honestly which host was unavailable. Keep all nine tests meaningful.
-
-### J-50 -- Fail closed on missing variable-shadow guard inputs
-
-- Files: tools/variable_shadow_check.py, tests/test_variable_shadow_check.py
-- After: none
-- Why: PR #71 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
-- Do: The accepted guard skips explicit nonexistent files and prints success. Return non-zero with the missing path when any requested input does not exist; do not silently report a scan succeeded. Add an isolated CLI regression for a missing path and retain the existing supported-class tests and add a real-tree invocation to the unit suite so ordinary verification executes the standalone scan. Keep the explicit class/property coverage boundary; no Godot or inheritance-system expansion.
-
-### J-51 -- Correct the gameplay review without changing gameplay
-
-- Files: docs/jules-reviews/gameplay-review-2026-10-30.md (new)
-- After: none
-- Why: PR #55 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
-- Do: Redo the report from a fresh current master under plans/reference/jules-reviews.md, preserving truthful provenance. Recognise the documented BS-9 queen exception; separate role and secondary-job transitions; supply a reachable causal reproduction before calling retained cargo a defect. Explain why _return_bee_bread does not return a primary honey maker load. Death-food recovery is a gameplay decision, not a Jules fix. Use existing runnable test modules and true Proof predicates. Give every prior finding a verified disposition; no source, balance or save edits.
-
-### J-52 -- Correct the UI review evidence and runnable coverage recommendation
-
-- Files: docs/jules-reviews/ui-review-2026-10-30.md (new)
-- After: none
-- Why: PR #59 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
-- Do: Redo the report under plans/reference/jules-reviews.md. Quote the existing distinct weather-state text as non-colour information; do not prescribe badges without a demonstrated accessibility defect. Treat More-panel child-rectangle coverage as an observation unless a scenario proves a fault. Any proposed assertion must have a concrete scenario/test that executes it. Separate skipped Python wrappers, real engine geometry assertions and actual rendered hands-on evidence; claim none that did not run. Refresh historical follow-through and propose no gameplay or UI-source edits.
-
-### J-53 -- Correct the architecture review protected-API and task claims
-
-- Files: docs/jules-reviews/architecture-review-2026-10-30.md (new)
-- After: none
-- Why: PR #60 and plans/reference/jules-review-2026-11-02.md give the exact evidence; the 2 Nov integration records the source disposition.
-- Do: Redo the report under plans/reference/jules-reviews.md. Retain the explicit reservation of adaptation/for_sector APIs in plans/design/progression.md and plans/reference/jules.md; record a required product decision instead of authorising removal. Recognise is_mastered as separately removed in the 2 Nov integration. Distinguish uncalled observations from safe deletion and respect current file owners. Do not reuse delivered J-43. Record positive catalogue/extraction observations without manufacturing tasks. No implementation, balance, ownership-boundary or save edits.
+- Why: S-1. PR #135 was returned on 5 Nov (`plans/reference/jules-ledger.md`): its `extract`, `baseline_case` and `main` tests read result, report, session and manifest files and run the CLI, which are not pure helpers.
+- Do: Use PR #135's file as a starting point. Keep tests of `tools/forager_diagnosis.py`'s `CASES`, `scenario`, `paired_changes` and `render` only. Drop every `test_extract_*`, `test_baseline_case_*` and `test_main_*` test. Each test asserts a value. The module docstring claims only what a test in the file shows.
 
 ### Not tasks yet
 
@@ -333,7 +305,10 @@ CI also fails a pull request whose `Jules-Sequence` number an older open
   list its top-level `def`s and keep those no file in `tests/` names
   (`git grep -c -w <name> -- tests`). Write a new tests/test_NAME_helpers.py
   for the pure ones, tests only; a tool with no free test file name is
-  `owned`, so pick another.
+  `owned`, so pick another. Skip a tool added in the last 14 days (`git log
+  --diff-filter=A --since="14 days ago" -- tools/NAME.py`): it arrived with
+  its own tests. On 5-6 Nov all eight S-1 branches tested tools added on
+  5 Nov, two of them the same `worktree.py` helpers.
 - **S-2 -- Remove dead code.** One function from `python tools/uncalled.py`,
   in a file the preflight says is free, whose name `git grep -n -w <name> --
   plans docs ROADMAP.md DESIGN_BACKLOG.md` does not find (a plan may be

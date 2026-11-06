@@ -4,7 +4,7 @@
 Record key: verification-review
 Reasoning: medium
 Watches: tools/verify.ps1 tools/run_tests.py tools/prefinish.py tools/check_docs.py tools/run_scenario.py tools/run_headless.ps1 tools/pacing_gates.py tools/equivalence.py tools/build_alpha.ps1 tests test_scenarios export_presets.cfg plans/reference/check-runner.md .claude/agents
-Jules: R-verification | priority 3 | every 10 days | min 20 commits
+Jules: R-verification | priority 3 | every 4 days | min 20 commits
 
 **Owns:** the instruments that prove the game works: `tools/verify.ps1` and
 `tools/run_tests.py` (stages, parallel workers, which tests a change reaches);

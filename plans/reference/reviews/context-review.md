@@ -4,7 +4,7 @@
 Record key: context-review
 Reasoning: medium
 Watches: CLAUDE.md AGENTS.md CHATGPT.md README.md GAME_MODEL.md FUNCTION_MAP.md docs/agent-rules.md .claude/rules .claude/output-styles .claude/settings.json .claude/agents .claude/skills .agents .codex plans/reference/reviews
-Jules: R-context | priority 6 | every 14 days | min 20 commits
+Jules: R-context | priority 6 | every 4 days | min 20 commits
 
 **Owns:** everything an agent loads, or is routed to, that is not a plan:
 `CLAUDE.md`, `AGENTS.md`, `CHATGPT.md`, `docs/agent-rules.md` (the rules both
