@@ -16,6 +16,7 @@ extends Node2D
 ## handling and hud.gd's show_object_summary.
 
 const Shapes = preload("res://scripts/shapes.gd")
+const WorldDraw = preload("res://scripts/world_draw.gd")
 const CLICK_RADIUS := 10.0
 
 var age_seconds: float = 0.0
@@ -48,7 +49,7 @@ func _ready() -> void:
 	selection_ring.points = Shapes.circle_points(8.0, 16)
 	selection_ring.closed = true
 	selection_ring.width = 2.5
-	selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)
+	selection_ring.default_color = Color(WorldDraw.SELECTION_COLOUR, 0.95)
 	selection_ring.visible = false
 	selection_ring.z_index = 10
 	add_child(selection_ring)

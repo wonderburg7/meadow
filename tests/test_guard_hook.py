@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -29,6 +30,9 @@ class GuardHookTest(unittest.TestCase):
     def run_hook(self, command: str, cwd: str | None = None) -> tuple[int, dict]:
         payload = {"cwd": cwd or str(ROOT), "session_id": "guard-test", "tool_input": {"command": command}}
         with tempfile.TemporaryDirectory() as directory:
+            # The hook's refusals go to a log of the test's own, not the
+            # shared meadow-diagnostics.jsonl that --events reads.
+            log = Path(directory) / "diagnostics.jsonl"
             result = subprocess.run(
                 [sys.executable, str(HOOK)],
                 input=json.dumps(payload),
@@ -36,8 +40,11 @@ class GuardHookTest(unittest.TestCase):
                 text=True,
                 cwd=directory,
                 timeout=10,
+                env={**os.environ, "MEADOW_DIAGNOSTICS_LOG": str(log)},
             )
-        output = json.loads(result.stdout) if result.stdout else {}
+            output = json.loads(result.stdout) if result.stdout else {}
+            if output:
+                self.assertIn('"guard-test"', log.read_text(encoding="utf-8"))
         return result.returncode, output
 
     def assert_denied(self, command: str, expected: str, cwd: str | None = None) -> None:
