@@ -50,6 +50,7 @@ signal rain_changed(raining: bool)
 
 # --- preloads and boot constants ----------------------------------
 const Bee = preload("res://scripts/bee.gd")
+const CanvasLayers = preload("res://scripts/canvas_layers.gd")
 const Roles = preload("res://scripts/roles.gd")
 const Hive = preload("res://scripts/hive.gd")
 const Flower = preload("res://scripts/flower.gd")
@@ -584,7 +585,7 @@ func _ready() -> void:
 	# A wash of grey-blue over the meadow while it's raining. Drawn on its
 	# own layer beneath the HUD so it tints the world, not the panels.
 	var weather_layer := CanvasLayer.new()
-	weather_layer.layer = 5
+	weather_layer.layer = CanvasLayers.WEATHER
 	add_child(weather_layer)
 	rain_overlay = ColorRect.new()
 	rain_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)

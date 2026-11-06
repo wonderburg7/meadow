@@ -460,6 +460,26 @@ class TwoLaneCloseoutTest(unittest.TestCase):
         self.assertFalse(worktree_a.exists())
         self.assertFalse(self.branch_exists("claude/A-1"))
 
+    def test_start_stops_on_a_half_finished_merge_and_keeps_it(self):
+        # 6 Nov 2026: a person's `git merge` left master mid-merge; start
+        # must name it and stop, never abort the staged work.
+        self.write_two_lane_queue()
+        subprocess.run(["git", "checkout", "-q", "-b", "side"], cwd=self.root, capture_output=True, text=True)
+        self.commit_local("side.txt", "side\n", "side commit")
+        subprocess.run(["git", "checkout", "-q", "master"], cwd=self.root, capture_output=True, text=True)
+        self.commit_local("main.txt", "main\n", "main commit")
+        subprocess.run(["git", "merge", "--no-commit", "--no-ff", "side"], cwd=self.root, capture_output=True, text=True)
+        self.assertTrue(self.git_out("rev-parse", "-q", "--verify", "MERGE_HEAD"))
+        self.push_remote_commit("unrelated.txt", "unrelated change\n")
+
+        started = self.run_slice("start", "-Lane", "Claude")
+
+        combined = started.stdout + started.stderr
+        self.assertNotEqual(0, started.returncode, combined)
+        self.assertIn("mid-merge", combined)
+        self.assertTrue(self.git_out("rev-parse", "-q", "--verify", "MERGE_HEAD"))
+        self.assertIn("side.txt", self.git_out("diff", "--cached", "--name-only"))
+
     def test_dirty_coordination_file_refuses_before_the_merge(self):
         self.write_two_lane_queue()
         self.assertEqual(0, self.run_slice("start", "-Lane", "Claude").returncode)

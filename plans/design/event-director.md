@@ -120,6 +120,16 @@ shared foundation; this file is that design pass for the closed alpha.
     about four files (`event_director.gd`, `game_config.gd`,
     `settings_catalogue.gd`, `guidance_catalogue.gd`) plus tests, against
     the ten FC-2 touched (`docs/architecture-review-2026-11-04.md` F1).
+16. **Later events save under one `director` key (Dave, 6 Nov 2026, save
+    review).** Every director event after the first crisis is saved as its
+    record, keyed by event id, inside one additive top-level `director` key;
+    `first_crisis` keeps its own key and shape. No format bump and no
+    migration: a save without `director` loads with no later director
+    events (decision 12). Restore converts whole-number days and seconds
+    back to ints, as `save_game.gd::_whole_numbers_as_ints` does for the
+    scenario level. Folding the first crisis in under format 8 was declined:
+    a migration, its Python mirror and re-captured goldens for no player
+    difference (`docs/save-review-2026-11-06.md`).
 
 ## Open questions
 

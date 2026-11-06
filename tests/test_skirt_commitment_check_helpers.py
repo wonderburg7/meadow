@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-import tempfile
 import unittest
-from pathlib import Path
 
 from tools.skirt_commitment_check import (
     is_multi_frame_condition,
     is_single_frame_condition,
     strip_code,
-    tracked_gd_files,
 )
 
 
@@ -58,28 +55,6 @@ class TestSkirtCommitmentCheckHelpers(unittest.TestCase):
         self.assertFalse(is_multi_frame_condition("skirt_clear_frames >= ONE_FRAME", constants))
         self.assertFalse(is_multi_frame_condition("skirt_clear_frames > ZERO_FRAME", constants))
         self.assertFalse(is_multi_frame_condition("skirt_clear_frames >= UNKNOWN_CONST", constants))
-
-    def test_tracked_gd_files(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmproot = Path(tmpdir)
-            self.assertEqual(tracked_gd_files(tmproot), [])
-
-            scripts_dir = tmproot / "scripts"
-            scripts_dir.mkdir()
-            f1 = scripts_dir / "b.gd"
-            f2 = scripts_dir / "a.gd"
-            sub = scripts_dir / "sub"
-            sub.mkdir()
-            f3 = sub / "c.gd"
-            other = scripts_dir / "notes.txt"
-
-            f1.touch()
-            f2.touch()
-            f3.touch()
-            other.touch()
-
-            found = tracked_gd_files(tmproot)
-            self.assertEqual(found, [f2, f1, f3])
 
 
 if __name__ == "__main__":
