@@ -34,6 +34,7 @@ const ROLE_PERF_SECTIONS = BeeEnums.ROLE_PERF_SECTIONS
 
 const SpriteCatalogue = preload("res://scripts/sprite_catalogue.gd")
 const Shapes = preload("res://scripts/shapes.gd")
+const WorldDraw = preload("res://scripts/world_draw.gd")
 const Roles = preload("res://scripts/roles.gd")
 const Levels = preload("res://scripts/levels.gd")
 const BeeIdentity = preload("res://scripts/bee_identity.gd")
@@ -875,7 +876,7 @@ func _build_visuals() -> void:
 func _build_status_rings(outline_radius: float) -> void:
 	selection_ring = Polygon2D.new()
 	selection_ring.polygon = Shapes.circle_points(outline_radius + 4.0)
-	selection_ring.color = Color(0.2, 1.0, 0.4, 0.85)
+	selection_ring.color = Color(WorldDraw.SELECTION_COLOUR, 0.85)
 	selection_ring.visible = false
 	visual_root.add_child(selection_ring)
 
@@ -975,10 +976,12 @@ func _build_heading_markers(outline_radius: float) -> void:
 	label.add_theme_font_size_override("font_size", 12)
 	visual_root.add_child(label)
 
+const QUEEN_SIZE_FACTOR := 1.55
+
 ## How much bigger than a worker this bee is drawn.
 func _caste_size_factor() -> float:
 	if is_queen:
-		return 1.55
+		return QUEEN_SIZE_FACTOR
 	if is_gyne:
 		return GameConfig.gyne_size_factor
 	if is_drone:
@@ -1208,14 +1211,18 @@ func _default_state_for_role() -> int:
 		_:
 			return State.SEEK_FLOWER
 
+const QUEEN_COLOUR := Color(0.95, 0.45, 0.75)
+const GYNE_COLOUR := Color(1.0, 0.62, 0.35)   # between a worker's yellow and the queen's pink
+const WORKER_COLOUR := Color(1.0, 0.85, 0.1)
+
 func _base_colour() -> Color:
 	if is_queen:
-		return Color(0.95, 0.45, 0.75)
+		return QUEEN_COLOUR
 	if is_gyne:
-		return Color(1.0, 0.62, 0.35)   # between a worker's yellow and the queen's pink
+		return GYNE_COLOUR
 	if is_drone:
 		return DRONE_COLOUR
-	return Color(1.0, 0.85, 0.1)
+	return WORKER_COLOUR
 
 ## The role colour with this bee's individual brightness jitter applied
 ## -- a nudge, not a hue shift, so role stays identifiable at a glance

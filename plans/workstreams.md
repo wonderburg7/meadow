@@ -51,4 +51,3 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PN-11` (`claude/PN-11`) | Claude | rain later: first rain on day 10, crisis days 12-15 | Claude | in progress | none | `plans/now/play-notes-config.md` PN-11 -- rain later: first rain on day 10, crisis days 12-15 |
-| `.worktrees/CQ-M6` (`codex/CQ-M6`) | Codex | name selection green and caste appearance | Codex | in progress | none | `plans/now/code-health.md` CQ-M6 -- name selection green and caste appearance |

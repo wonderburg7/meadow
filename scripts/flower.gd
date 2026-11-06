@@ -8,6 +8,7 @@ extends Polygon2D
 ## flower_species.gd for the full roster.
 
 const Shapes = preload("res://scripts/shapes.gd")
+const WorldDraw = preload("res://scripts/world_draw.gd")
 const CrabSpider = preload("res://scripts/crab_spider.gd")
 const FlowerSpecies = preload("res://scripts/flower_species.gd")
 
@@ -141,7 +142,7 @@ func _build_flower_visuals() -> void:
 	selection_ring.points = Shapes.circle_points(24.0, 28)
 	selection_ring.closed = true
 	selection_ring.width = 3.5
-	selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)
+	selection_ring.default_color = Color(WorldDraw.SELECTION_COLOUR, 0.95)
 	selection_ring.visible = false
 	selection_ring.z_index = 10
 	add_child(selection_ring)

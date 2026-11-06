@@ -38,6 +38,7 @@ Signals triage (since 16 Oct): fixed 1 (returned Jules branch owns files, F1); r
 - `--events` reports `guard_refusal=1529` while the log holds 138 such rows; the count likely spans more than the shared log (inference, unchecked).
 - `review_due.py agent-workflow-review` printed "handoffs: none untriaged" with six untriaged entries in the intake: it matches only entries that name a review.
 - The 135 `guard-test` rows already in the shared log stay until it is rotated.
+- The 6 Nov gate rewrite for CQ-M6 left "waits for and for the Claude lane's PN-5" on CQ-M6b's `NEXTSTEPS.md` line, a second shape of the fragment L-30 fixed; corrected by hand. Reopen on a third.
 
 ## Not reviewed
 
