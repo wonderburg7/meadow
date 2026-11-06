@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R3 is implemented and awaiting closeout; CQ-R4 has its successor block (CQ-M5b and CQ-M6 shipped 5-6 Nov 2026); CQ-M6b waits for the Claude lane's PN-5, PN-6 and PN-9; CQ-M4 for the Claude lane to release the save files; CQ-T4 for the Codex lane's PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-06
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-R3 shipped 6 Nov 2026; CQ-R4 has its successor block and waits for the Jules S-1 branch to release bee.gd (CQ-M5b and CQ-M6 shipped 5-6 Nov 2026); CQ-M6b waits for the Claude lane's PN-5, PN-6 and PN-9; CQ-M4 for the Claude lane to release the save files; CQ-T4 for the Codex lane's PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-06
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -132,7 +132,7 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-M6b | the cell ring and the selection layer read it | `hive_cell.gd`, `input_selection.gd` | after CQ-M6, and the Claude lane's PN-5, PN-6 and PN-9 | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6b | medium |
 | CQ-R2 | first crisis moves into scripts/event_director.gd as the shared cycle's first record (`plans/design/event-director.md` decisions 2, 15 and 16) | `main.gd`, save files, `colony_diagnostics.gd`, `scenario_actions.gd`, `hud.gd` | gated: after ED-3 alone (Dave, 5 Nov 2026); RR-12 and SP-8a follow it | high |
-| CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | after HP-3 | high |
+| CQ-R4 | `bee.gd::_process` into four helpers, profiled | `bee.gd` | gated: Jules S-1 branch holds `bee.gd` (HP-3 landed) | high |
 | CQ-R5 | `hive_cell.gd::_refresh`/`_ready` decomposed, profiled | `hive_cell.gd`, new hive-view perf fixture | yes (CQ-R0 landed 21 Oct 2026) | high |
 | CQ-R13 | `main.gd::_ready` into build steps | `main.gd` | after CQ-R2 (CQ-R1 landed 21 Oct 2026) | medium |
 
@@ -503,7 +503,11 @@ Stop for a changed result, cadence, RNG order or performance regression.
 
 **Open decisions:** none.
 
-```queue
+**Gate:** the open Jules branch `origin/jules/s-1-jules-preflight-helpers-5003130817358154397`
+still changes `scripts/bee.gd` (`tools/slice.ps1 owner`, 6 Nov 2026).
+Wait for it to merge or close before admitting CQ-R4.
+
+```queue-gated
 **[Codex] CQ-R4 -- bee process decomposed without changing cadence**
 - Plan: `plans/now/code-health.md` -- "CQ-R4 -- bee process decomposed without changing cadence"
 - Files: `scripts/bee.gd`, `FUNCTION_MAP.md`, `docs/PERFORMANCE_BASELINE.md`

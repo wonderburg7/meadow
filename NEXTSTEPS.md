@@ -114,7 +114,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices ED-2, ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); CQ-S0's round-trip harness landed 22 Oct 2026.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
 - **CQ-R13** (`plans/now/code-health.md`) -- `main.gd::_ready` into build steps; waits for CQ-R2, which shares `scripts/main.gd`, and then needs its slice specification.
-- **CQ-R4** (`plans/now/code-health.md`) -- `bee.gd::_process` into four helpers, profiled (high); needs its section and block, written by the session that claims CQ-R3 (HP-3 landed 18 Oct 2026).
+- **CQ-R4** (`plans/now/code-health.md`) -- its section and block are ready after CQ-R3; waits for the open Jules branch `origin/jules/s-1-jules-preflight-helpers-5003130817358154397` to release `scripts/bee.gd` (ownership check, 6 Nov 2026).
 - **CQ-T4** (`plans/now/code-health.md`) -- the remaining scripts and tests typed and `untyped_declaration` made an error; waits for the Codex lane's PN-8 and PN-14, which hold two of its files.
 - **CQ-L3** (`plans/now/code-health.md`) -- one-off `gdformat` over every `.gd` file, then `--check` joins verify; waits for both lanes to empty.
 - **CQ-M4** (`plans/now/code-health.md`) -- name Challenge level ids; waits for the Claude lane to release `scripts/save_game.gd` and `scripts/saving.gd`.
