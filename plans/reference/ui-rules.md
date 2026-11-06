@@ -1,7 +1,7 @@
 # UI rules -- panels, layout, theme and accessibility
 
 <!-- CONTEXT: reference | LAYER: reference | LOAD: for a UI, theme, layout or accessibility change -->
-Status: reference | Owner: Dave / Claude Code | Next: nothing -- revise a rule when a UI slice shows it is wrong | Dependency: none | Verified: 2026-10-07
+Status: reference | Owner: Dave / Claude Code | Next: nothing -- revise a rule when a UI slice shows it is wrong | Dependency: none | Verified: 2026-11-06
 
 The durable rules of the UI plan, kept live when the plan itself was archived
 on completion (`plans/archive/ui_2026-09-20.md`, which the `Read` tool cannot
@@ -68,7 +68,12 @@ route leads to a file a session can read. The rule text is unchanged. The pointe
   `plans/archive/HC-14_2026-09-10.md`) wired it through
   `ui_panel_layout.gd::apply()` like every other panel. A new persistent
   panel that sizes or positions itself outside this path is the same mistake
-  repeating, not a new one.
+  repeating, not a new one. No HUD panel file carries a literal
+  `offset_top`/`offset_left`, and panels that share an edge derive from one
+  number, not two constants that agree today: `tests/source_checks.py` fails
+  a bare numeric literal there unless it reads `UiLayout` or carries a
+  trailing `# fixed-inset` comment (P-2, 4 Sep 2026; moved here from
+  `plans/reference/check-loop.md` rule 6 by the plan review, 6 Nov 2026).
 - Accessibility settings must work before a run when a menu exposes them, and
   use the existing `Session`/profile preference path.
 - A visual/UI slice requires a targeted hands-on check even when static checks

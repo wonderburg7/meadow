@@ -2,6 +2,7 @@
 
 Static checks on the scripts that set z_index, then runs
 tests/sp10_soil_depth_test.gd in a headless Godot.
+PN-19 also checks that soil selection rings close and share the comb ring layer.
 
 Requires a real Godot executable -- the headless run skips where none is installed.
 

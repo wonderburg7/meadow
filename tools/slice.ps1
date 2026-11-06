@@ -1497,6 +1497,17 @@ function Sync-PrimaryMaster {
     $branch = ((git -C $Root rev-parse --abbrev-ref HEAD) | Out-String).Trim()
     if ($branch -ne "master") { return }
 
+    # 6 Nov 2026: a person's `git merge` left master mid-merge (editor opened
+    # for the message, then abandoned). Git refuses a second merge, and the
+    # conflict handler below would then `merge --abort` that merge, throwing
+    # away their staged work. A merge already in progress is never ours:
+    # name it and stop before touching anything.
+    $heldMerge = (Invoke-GitText -C $Root rev-parse -q --verify MERGE_HEAD).Text.Trim()
+    if ($heldMerge) {
+        $heldSubject = (Invoke-GitText -C $Root log -1 --format=%s $heldMerge).Text.Trim()
+        Stop-Slice -Cause "master in the primary checkout is mid-merge of $heldMerge ($heldSubject), started by a person or another session, not by this script" -Fix "in the primary checkout run git status; if the work is wanted run git commit --no-edit, otherwise git merge --abort (never before looking at what is staged), then retry"
+    }
+
     if ((Invoke-GitSilent -c http.sslBackend=openssl -C $Root fetch origin master) -ne 0) {
         [Console]::Error.WriteLine("${Reason}: could not fetch origin; continuing offline")
         return
@@ -1516,7 +1527,8 @@ function Sync-PrimaryMaster {
     $message = "Merge origin/master into master before $Reason"
     if ((Invoke-GitSilent -C $Root merge --no-edit -m $message origin/master) -ne 0) {
         $conflicts = @(git -C $Root diff --name-only --diff-filter=U | ForEach-Object { "$_" })
-        git -C $Root merge --abort | Out-Null
+        # Abort only the merge just attempted, which left conflicts behind.
+        if ($conflicts.Count -gt 0) { git -C $Root merge --abort | Out-Null }
         Stop-Slice -Cause "origin/master conflicts with local master in $($conflicts -join ', ')" -Fix "master is unchanged. In the primary checkout run git pull --no-rebase, resolve $($conflicts -join ', ') (edit, git add, git commit), then retry"
     }
 }
@@ -1995,6 +2007,20 @@ function Invoke-SliceOwner {
     }
     $remoteBase = if ((Invoke-GitSilent -C $root rev-parse --verify --quiet origin/master) -eq 0) { "origin/master" } else { "master" }
     $julesBranches = @(Split-GitText (Read-GitText -C $root branch -r --no-merged $remoteBase --list "origin/jules/*" "--format=%(refname:short)"))
+    # A branch the Jules ledger has merged, returned or closed owns nothing,
+    # as in tools/jules_preflight.py::owners; a `reviewed` one still waits for
+    # integration. A later row for the same branch replaces an earlier one.
+    $ledgerState = @{}
+    $ledger = Invoke-GitText -C $root show "${remoteBase}:plans/reference/jules-ledger.md"
+    if ($ledger.ExitCode -eq 0) {
+        foreach ($line in ($ledger.Text -split '\r?\n')) {
+            $cells = @($line.Trim().Trim('|').Split('|') | ForEach-Object { $_.Trim() })
+            if ($line.TrimStart().StartsWith('|') -and $cells.Count -ge 6 -and $cells[2].ToLowerInvariant() -in @('merged', 'returned', 'closed', 'reviewed')) {
+                $ledgerState[$cells[1].Trim('`') -replace '^origin/', ''] = $cells[2].ToLowerInvariant()
+            }
+        }
+    }
+    $julesBranches = @($julesBranches | Where-Object { $state = $ledgerState[($_ -replace '^origin/', '')]; -not $state -or $state -eq 'reviewed' })
     foreach ($branch in $julesBranches) {
         $changed = Get-BranchChangedPaths -Root $root -Base $remoteBase -Branch $branch
         $hits = @($Wanted | Where-Object { $w = $_; @($changed | Where-Object { Test-OwnedPath -Owned $_ -Wanted $w }).Count -gt 0 })
