@@ -9,6 +9,7 @@ extends CanvasLayer
 ## simulation wiring stays readable.
 
 const UI = preload("res://scripts/ui.gd")
+const CanvasLayers = preload("res://scripts/canvas_layers.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 const Bee = preload("res://scripts/bee.gd")
 const Roles = preload("res://scripts/roles.gd")
@@ -239,7 +240,6 @@ var main: Node2D
 ## This is intentionally an overlay rather than another persistent panel.
 ## Its CanvasLayer is above Dr Gallerin (layer 15), so an arrow which has
 ## been routed around a panel cannot then be drawn underneath that panel.
-const MARKER_ARROW_LAYER := 16
 const MARKER_ARROW_RADIUS := 18.0
 const MARKER_ARROW_EDGE_INSET := 24.0
 const MARKER_ARROW_HYSTERESIS := 2.0
@@ -587,7 +587,7 @@ var pending_type: String = ""
 
 func _ready() -> void:
 	process_mode = PROCESS_MODE_ALWAYS
-	layer = 9
+	layer = CanvasLayers.HUD
 	# Deferred: main is still adding its own children while this runs.
 	# Built by main.gd before the menu's early return (RR-2); this only
 	# lets it follow the corner and bottom row now that they exist.
@@ -671,7 +671,7 @@ func _on_viewport_size_changed() -> void:
 func _build_stage_marker_arrow() -> void:
 	marker_arrow_overlay = CanvasLayer.new()
 	marker_arrow_overlay.name = "stage_marker_arrow_overlay"
-	marker_arrow_overlay.layer = MARKER_ARROW_LAYER
+	marker_arrow_overlay.layer = CanvasLayers.MARKER_ARROWS
 	marker_arrow_overlay.process_mode = PROCESS_MODE_ALWAYS
 	add_child(marker_arrow_overlay)
 
