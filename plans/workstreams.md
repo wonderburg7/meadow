@@ -52,3 +52,4 @@ end-of-slice report states what was merged and what is next.
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/PN-11` (`claude/PN-11`) | Claude | rain later: first rain on day 10, crisis days 12-15 | Claude | in progress | none | `plans/now/play-notes-config.md` PN-11 -- rain later: first rain on day 10, crisis days 12-15 |
 | `.worktrees/player-experience-review-20261106` (`codex/player-experience-review-20261106`) | Review | Advisory player-experience review; Markdown evidence and recommendations only; no game or queue changes | Codex | in progress | none | `plans/design/product-scope.md` |
+| `.worktrees/CQ-R3` (`codex/CQ-R3`) | Codex | bee display text becomes scripts/bee_readout.gd | Codex | in progress | none | `plans/now/code-health.md` CQ-R3 -- bee display text becomes scripts/bee_readout.gd |
