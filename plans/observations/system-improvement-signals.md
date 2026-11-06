@@ -156,7 +156,10 @@ explicit request from Dave.
   pointer into a denied file.
 - Candidate direction: Hypothesis — the plan and queue review replaces the
   two restatements with pointers and repoints the three references.
-- Disposition: untriaged (read by the agent-workflow review, 16 Oct 2026: the plan review's lane)
+- Disposition: fixed by the plan review, 6 Nov 2026 (`docs/plan-review-2026-11-06.md` F1): guardrail 11 and
+  check-loop rule 6 are pointers, the source-check sentence moved to `plans/reference/ui-rules.md`, and the
+  routing table has a row for it. `progression.md`'s four mentions cite where 2026-08 decisions were made and
+  stay (history, read with `git show HEAD:`).
 
 ### 2026-10-07 — `session_cost.py` keeps a second copy of the level-to-model rule with no parity test
 
@@ -635,7 +638,9 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- a writing rule (a section that changes
   what a readout, panel or window shows lists the file that builds it), or a
   `check_docs.py` heuristic on "readout"/"panel" with no UI file listed.
-- Disposition: untriaged (read by the agent-workflow review, 16 Oct 2026: a plan-writing rule, the plan review's lane)
+- Disposition: fixed by the plan review, 6 Nov 2026 (`docs/plan-review-2026-11-06.md` F2): it recurred in T2-2
+  (c183d02) and FC-2 (52ab216), so it is `plans/README.md` "Writing or editing a plan" rule 13. No
+  `check_docs.py` heuristic: a keyword match would warn on most UI slices.
 
 ### 2026-10-07 — workers settle open gameplay points themselves
 
@@ -920,7 +925,7 @@ explicit request from Dave.
 - Hypothesis: mechanically reconcile inventory coverage and audit metadata
   before review, then require semantic counterexamples for enforcement and
   defect claims. Keep these separate from the existing file-scope check.
-- Disposition: untriaged. The reports remain unaccepted; four bounded
+- Disposition: untriaged (read by the agent-workflow review, 6 Nov 2026: the Jules programme review's lane). The reports remain unaccepted; four bounded
   follow-ups were salvaged into the Jules task list without their false
   conclusions.
 
@@ -931,7 +936,7 @@ explicit request from Dave.
 - Evidence: `plans/reference/jules-integration-2026-10-30.md` records the reviewer’s exact reasons and file/section follow-ups for every report; `plans/reference/jules-integration-2026-10-29.md` supplies the earlier source-based correction criteria.
 - Consequence: importing the reports or their candidates would preserve false claims and admit unsupported implementation work. No candidate was admitted.
 - Hypothesis: require corrected reports to demonstrate each disputed predicate or contract against their named source revision before resubmission. This grants no authority to change runtime code or workflow policy.
-- Disposition: untriaged; Jules must correct J-29–J-39 and `docs/audits/workflow-token-savings.md`. Existing save-persistence decisions remain in `plans/now/run-repairs.md`, “Not in the queue, and why”.
+- Disposition: untriaged (read by the agent-workflow review, 6 Nov 2026: the Jules programme review's lane); Jules must correct J-29–J-39 and `docs/audits/workflow-token-savings.md`. Existing save-persistence decisions remain in `plans/now/run-repairs.md`, “Not in the queue, and why”.
 
 ### 2026-10-30 — standalone test imports hid a verifier failure
 
@@ -940,7 +945,7 @@ explicit request from Dave.
 - Evidence: `python -m unittest tests.test_godot_helper_contracts` raises `ModuleNotFoundError: test_challenge2_checks`; named-test bisect found `544e18e`, reverted by `db64a09`.
 - Consequence: an apparently green review can introduce a failing module into full verification.
 - Hypothesis: rerun an imported test module through the verifier’s normal import path before accepting it. Jules must correct `tests/test_godot_helper_contracts.py` imports and demonstrate that invocation before resubmission.
-- Disposition: untriaged; J-42 remains in `plans/reference/jules.md`. No workflow change is included.
+- Disposition: untriaged (read by the agent-workflow review, 6 Nov 2026: the Jules programme review's lane); J-42 remains in `plans/reference/jules.md`. No workflow change is included.
 
 ### 2026-10-30 — a reverted Jules task still appears completed
 
@@ -949,7 +954,7 @@ explicit request from Dave.
 - Evidence: the task block remains in `plans/reference/jules.md`, while `python tools/jules_preflight.py --queue` reports only the eleven audit tasks and zero free tasks. The current J-42 SEND BACK decision is in `plans/reference/jules-integration-2026-10-30.md`.
 - Consequence: a later reviewer or Jules session may skip work that was removed from master.
 - Hypothesis: completion detection should distinguish retained task work from reverted history, with a temporary-repository fixture proving both states.
-- Disposition: untriaged; no completion-detector change is included.
+- Disposition: untriaged (read by the agent-workflow review, 6 Nov 2026: the Jules programme review's lane); no completion-detector change is included.
 
 ### 2026-11-04 — Jules's R-gameplay sweep samples nine scripts instead of everything changed
 
@@ -969,7 +974,7 @@ explicit request from Dave.
 - Candidate direction: Hypothesis — have `jules_preflight.py` (or the
   processing step) compare the report's swept files with the owned files
   changed since `SINCE`, and return a report that leaves most of them out.
-- Disposition: untriaged
+- Disposition: untriaged (read by the agent-workflow review, 6 Nov 2026: the Jules programme review's lane)
 - Recurrence (5 Nov 2026): the R-architecture report of 4 Nov shows reading
   evidence for 8 of 86 changed watched files; its findings come from
   `tools/uncalled.py`. Closed unmerged: a full Claude sweep of the same
@@ -994,6 +999,9 @@ explicit request from Dave.
 - Candidate direction: Hypothesis — one additive `director` key holding the
   records by id, `first_crisis` unchanged, settled before CQ-R2's section is
   written.
+- Disposition: decided by Dave in the save review, 6 Nov 2026 (`docs/save-review-2026-11-06.md` S1): one
+  additive `director` key, `first_crisis` unchanged, no format bump; `plans/design/event-director.md`
+  decision 16.
 
 ### 2026-11-05 — a returned Jules branch still holds its files for `slice.ps1 owner`
 
@@ -1017,4 +1025,24 @@ explicit request from Dave.
 - Candidate direction: Hypothesis — have `owner` skip a branch whose latest
   ledger row is `returned` or `closed`, as `jules_preflight.py` does, or
   close a returned branch once its correction task is filed.
-- Disposition: untriaged
+- Disposition: fixed by the agent-workflow review, 6 Nov 2026 (`docs/agent-workflow-review-2026-11-06.md` F1):
+  `owner` reads the ledger at origin/master and skips a merged, returned or closed branch; test
+  `test_owner_skips_a_jules_branch_the_ledger_has_processed`.
+
+### 2026-11-06 — Codex's lifecycle runs pick the WindowsApps python.exe alias, which its sandbox cannot start
+
+- Source: agent-workflow review (`docs/agent-workflow-review-2026-11-06.md`, Hand-offs)
+- Area: Codex environment / `tools/verify.ps1::Resolve-Python`
+- Signal: 12 Codex-lane stops in 21 days (6 `start` preflights, 6 `finish`
+  archive steps) read "Program 'python.exe' failed to run ... WindowsApps\python.exe
+  ... The file cannot be accessed by the system"; 4 fell in the last 7 days.
+  No Claude-lane stop has this cause.
+- Evidence: `python tools/session_cost.py --days 21 --stops` (preflight causes);
+  `meadow-slice-stops.jsonl` rows with `WindowsApps` are all `lane: Codex`.
+  `Resolve-Python` returns the first `python` on PATH, which is the Store
+  alias stub when it comes first.
+- Consequence: a Codex start or closeout stops and is retried by hand.
+- Candidate direction: Hypothesis — `Resolve-Python` passes over a
+  `\Microsoft\WindowsApps\` candidate when a later one (or the bundle search)
+  finds a real interpreter; confirm in `codex sandbox -P meadow` first.
+- Disposition: untriaged (agent-workflow review stage 1, the Codex side)

@@ -50,5 +50,4 @@ end-of-slice report states what was merged and what is next.
 
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.worktrees/CQ-M5b` (`codex/CQ-M5b`) | Codex | the last CanvasLayer readers and the bare-layer source check | Codex | in progress | none | `plans/now/code-health.md` CQ-M5b -- the last CanvasLayer readers and the bare-layer source check |
 | `.worktrees/PN-11` (`claude/PN-11`) | Claude | rain later: first rain on day 10, crisis days 12-15 | Claude | in progress | none | `plans/now/play-notes-config.md` PN-11 -- rain later: first rain on day 10, crisis days 12-15 |

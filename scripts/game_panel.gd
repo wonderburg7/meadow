@@ -11,6 +11,7 @@ extends CanvasLayer
 ## "left_window"; the Gallerin bubble deliberately does not.
 
 const UiLayout = preload("res://scripts/ui_layout.gd")
+const PanelLayers = preload("res://scripts/canvas_layers.gd")
 const UiPanelLayout = preload("res://scripts/ui_panel_layout.gd")
 const UiTheme = preload("res://scripts/ui_theme.gd")
 
@@ -23,7 +24,7 @@ var scroll_container: ScrollContainer
 var window_key: String = ""
 
 ## Call first in _ready(). `group` is the panel's own legacy group name.
-func setup_layer(key: String, group: String, layer_value: int = 11) -> void:
+func setup_layer(key: String, group: String, layer_value: int = PanelLayers.PANEL) -> void:
 	process_mode = PROCESS_MODE_ALWAYS
 	layer = layer_value
 	window_key = key
