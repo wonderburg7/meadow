@@ -14,6 +14,9 @@ const Shapes = preload("res://scripts/shapes.gd")
 const WorldDraw = preload("res://scripts/world_draw.gd")
 const SpriteCatalogue = preload("res://scripts/sprite_catalogue.gd")
 
+## Keep selection outlines above the hive, as on comb cells.
+const SELECTION_RING_Z := 40
+
 const SOIL_COLOR := Color(0.30, 0.22, 0.12)
 
 ## HS-2. Hard soil: greyer than ordinary soil (OKLab 0.083 away) yet apart from
@@ -96,10 +99,12 @@ func _ready() -> void:
 	var ring_points := Shapes.hexagon_points(block_size, squashed)
 	for p in ring_points:
 		selection_ring.add_point(p)
-	selection_ring.add_point(ring_points[0])
+	selection_ring.closed = true
 	selection_ring.width = 2.5
 	selection_ring.default_color = Color(WorldDraw.SELECTION_COLOUR, 0.95)
 	selection_ring.visible = false
+	selection_ring.z_as_relative = false
+	selection_ring.z_index = SELECTION_RING_Z
 	add_child(selection_ring)
 
 	progress_label = Label.new()

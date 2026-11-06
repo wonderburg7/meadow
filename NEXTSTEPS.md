@@ -65,7 +65,7 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 1. **[Codex] PN-19 -- the soil block's selection ring closes**
    - Plan: `plans/now/play-notes-config.md` -- "PN-19 -- the soil block's selection ring closes"
-   - Files: `scripts/soil_block.gd`, `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`
+   - Files: `scripts/soil_block.gd`, `tests/sp10_soil_depth_test.gd`, `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`
    - Check: `python -m unittest tests.test_sp10_soil_depth tests.test_sp9_soil_art` pass with an assertion that the ring is closed; `.\tools\verify.ps1` is green. Hands-on: a selected soil block's outline has no gap
    - Proof: `present: scripts/soil_block.gd :: selection_ring.add_point(ring_points[0])`
    - Next after: PN-18 -- the queen discards sour nectar when told to empty a cell; recheck the Claude-lane gate before claiming

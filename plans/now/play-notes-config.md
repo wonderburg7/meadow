@@ -1,7 +1,7 @@
 # Play notes, config and bee -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: PN-11 -- rain later, at the head of the Claude lane (its Jules gates cleared 5 Nov 2026); PN-9 and PN-12 are startable and wait for room; PN-13 waits for the Codex lane to release `bee.gd`; PN-19 leads the Codex lane ahead of PN-18 (Dave requested independent work while Claude-lane work gates the previous next slice, 6 Nov 2026) | Dependency: PN-11 precedes EV-0 (`plans/now/event-director.md`) on the alpha route; PN-9, PN-12 and PN-13 share `game_config.gd` or `settings_catalogue.gd` and run in turn | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code / Codex | Next: PN-11 -- rain later, at the head of the Claude lane (its Jules gates cleared 5 Nov 2026); PN-9 and PN-12 are startable and wait for room; PN-13 waits for the Codex lane to release `bee.gd`; PN-18 follows only after its Claude-lane gate is rechecked (Dave, 6 Nov 2026); C-179 awaits visual confirmation of PN-19 | Dependency: PN-11 precedes EV-0 (`plans/now/event-director.md`) on the alpha route; PN-9, PN-12 and PN-13 share `game_config.gd` or `settings_catalogue.gd` and run in turn | Verified: 2026-11-05
 
 ## Objective
 
@@ -237,12 +237,17 @@ Tests: `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`.
 **Acceptance (player seat, and the hands-on check).** Select a soil block: its
 hexagon outline is unbroken all round, including the far right.
 
+**Implemented (6 Nov 2026).** The soil ring has six corners joined by
+`Line2D.closed` and uses the comb selection layer independently of block depth.
+The SP-10 headless test failed before the fix and passes after it; both named
+Python suites pass (13 tests). Visual confirmation is C-179.
+
 **Open decisions:** none.
 
 ```queue
 **[Codex] PN-19 -- the soil block's selection ring closes**
 - Plan: `plans/now/play-notes-config.md` -- "PN-19 -- the soil block's selection ring closes"
-- Files: `scripts/soil_block.gd`, `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`
+- Files: `scripts/soil_block.gd`, `tests/sp10_soil_depth_test.gd`, `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`
 - Check: `python -m unittest tests.test_sp10_soil_depth tests.test_sp9_soil_art` pass with an assertion that the ring is closed; `.\tools\verify.ps1` is green. Hands-on: a selected soil block's outline has no gap
 - Proof: `present: scripts/soil_block.gd :: selection_ring.add_point(ring_points[0])`
 - Next after: PN-18 -- the queen discards sour nectar when told to empty a cell; recheck the Claude-lane gate before claiming
