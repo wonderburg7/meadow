@@ -55,7 +55,7 @@ GAME_CONFIG = ROOT / "scripts" / "game_config.gd"
 # GameConfig's defaults, which neither fixture overrides.
 RAIN_FORAGE_LIMIT = 0.5
 RAIN_MAX_SECONDS = 130.0
-# The 20-minute experience gate, in seconds of run time.
+# The 20-minute experience gate, in seconds of run time; the window opens after it (PN-11).
 EXPERIENCE_GATE = 1200.0
 # One frame at the fixtures' time_scale under the runner's --fixed-fps 30.
 FRAME = 4.0 / 30.0 + 1e-6
@@ -125,8 +125,8 @@ class CrisisRunChecks:
         self.assertEqual(len(warnings), 1, "the warning was posted %d times" % len(warnings))
         warning = warnings[0]
         self.assertEqual(warning["path"], self.path)
-        self.assertLessEqual(warning["window_open"], EXPERIENCE_GATE)
-        self.assertGreaterEqual(warning["window_close"], EXPERIENCE_GATE)
+        self.assertGreaterEqual(warning["window_open"], EXPERIENCE_GATE)
+        self.assertGreater(warning["window_close"], warning["window_open"])
         self.assertGreaterEqual(warning["t"], warning["window_open"])
         self.assertLessEqual(warning["t"], warning["cutoff"] + FRAME)
         self.assertTrue(warning["checkpoint_written"], "no checkpoint before the crisis")
@@ -360,7 +360,7 @@ class CrisisSettingsSaveTest(unittest.TestCase):
                 kind, rest = line[4:].split(" ", 1)
                 key, value = rest.rsplit(" ", 1)
                 seen[(kind, key)] = value
-        defaults = {"first_crisis_window_open": 1080.0, "first_crisis_window_close": 1500.0,
+        defaults = {"first_crisis_window_open": 2200.0, "first_crisis_window_close": 3000.0,
                     "first_crisis_warning_lead": 120.0, "first_crisis_check_seconds": 1.0}
         changed = {"first_crisis_window_open": 900.0, "first_crisis_window_close": 1320.0,
                    "first_crisis_warning_lead": 90.0, "first_crisis_check_seconds": 2.0}
@@ -398,7 +398,7 @@ class CrisisSourceTest(unittest.TestCase):
         # GameConfig owns the window, the lead and the readiness tick (Dave,
         # 17 Oct 2026); main.gd keeps no copy of them.
         config = GAME_CONFIG.read_text(encoding="utf-8")
-        for name, value in (("first_crisis_window_open", "1080.0"), ("first_crisis_window_close", "1500.0"),
+        for name, value in (("first_crisis_window_open", "2200.0"), ("first_crisis_window_close", "3000.0"),
                             ("first_crisis_warning_lead", "120.0"), ("first_crisis_check_seconds", "1.0")):
             self.assertIn("var %s: float = %s" % (name, value), config)
         for stale in ("FIRST_CRISIS_WINDOW_OPEN", "FIRST_CRISIS_WINDOW_CLOSE",

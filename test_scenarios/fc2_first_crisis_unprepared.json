@@ -5,7 +5,7 @@
   "winter": true,
   "disease": false,
   "time_scale": 4,
-  "cells": 8,
+  "cells": 12,
   "nectar_foragers": 0,
   "pollen_foragers": 0,
   "nurses": 3,
@@ -14,7 +14,7 @@
   "honey_makers": 0,
   "queen_laying_backup": "nurse",
   "stop": {
-    "max_days": 10
+    "max_days": 19
   },
   "actions": [
     {
@@ -91,6 +91,38 @@
       "do": "set_cell_contents",
       "cell": {
         "built_index": 7
+      },
+      "resource": "nectar",
+      "amount": 200.0
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 8
+      },
+      "resource": "nectar",
+      "amount": 200.0
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 9
+      },
+      "resource": "nectar",
+      "amount": 200.0
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 10
+      },
+      "resource": "nectar",
+      "amount": 200.0
+    },
+    {
+      "do": "set_cell_contents",
+      "cell": {
+        "built_index": 11
       },
       "resource": "nectar",
       "amount": 200.0

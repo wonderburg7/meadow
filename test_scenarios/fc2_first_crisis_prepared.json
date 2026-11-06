@@ -14,7 +14,7 @@
   "honey_makers": 0,
   "queen_laying_backup": "nurse",
   "stop": {
-    "max_days": 10
+    "max_days": 17
   },
   "actions": [
     {

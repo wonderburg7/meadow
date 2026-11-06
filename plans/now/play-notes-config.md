@@ -16,7 +16,6 @@ Verified 2026-10-31 by `tools/slice.ps1 owner`; `skill_tree_panel.gd` and
 
 | Id | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PN-11 | rain later: first rain day 10, crisis days 12-15 | `game_config.gd`, fc2 scenarios | yes -- queued; EV-0 follows it | medium |
 | PN-9 | early spring: fast queen building, no souring before day 15 | `game_config.gd`, `settings_catalogue.gd`, `hive_cell.gd` | yes | medium |
 | PN-12 | developer mode buys any skill | `skill_tree_panel.gd`, `settings_catalogue.gd` | yes | low |
 | PN-13 | bee labels switch and a calmer queen flight | `bee.gd`, `game_config.gd`, `settings_catalogue.gd` | yes, once the Codex lane releases `bee.gd` | low |
@@ -87,39 +86,7 @@ C-141 and C-151.
 - Next after: PN-12 -- developer mode buys any skill
 ```
 
-## PN-11 -- rain later: first rain on day 10, crisis days 12-15
-
-**True now.** `GameConfig.rain_free_days = 2.0` (RR-21; the gate is in
-`main.gd`, SG-3's file, read only here). `first_crisis_window_open = 1080` and
-`first_crisis_window_close = 1500` seconds (`main.gd`: day = 1 + sim_time /
-200 s, so Day 6 to Day 8); `first_crisis_warning_lead = 120`.
-
-**Change (Dave, 31 Oct 2026: "ordinary rain from day 10. Crisis window moves
-to days 12-15").** `rain_free_days = 9.0` (first rain on day 10),
-`first_crisis_window_open = 2200` (start of Day 12), `first_crisis_window_close
-= 3000` (end of Day 15); product review, 5 Nov 2026: not 1980/2700 (a 180 s day). Re-pin `test_scenarios/fc2_first_crisis_prepared.json`,
-`fc2_first_crisis_unprepared.json` and RR-18's C-140 skip save.
-
-**Balance change: simulate first (rule 2).** Run both fc2 scenarios before
-editing and after, and record the onset day each logs; the prepared run must
-still survive the crisis and the unprepared one must still be hurt by it.
-
-**Invariants.** `main.gd` is not edited. Tests: `tests/test_rr21_rain_free_days.py`,
-`tests/test_fc2_first_crisis.py`.
-
-**Acceptance (player seat, and the hands-on check).** Play to day 10: the first
-rain falls then, not before; the first crisis warning arrives in days 12-15.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] PN-11 -- rain later: first rain on day 10, crisis days 12-15**
-- Plan: `plans/now/play-notes-config.md` -- "PN-11 -- rain later: first rain on day 10, crisis days 12-15"
-- Files: `scripts/game_config.gd`, `test_scenarios/fc2_first_crisis_prepared.json`, `test_scenarios/fc2_first_crisis_unprepared.json`, `test_scenarios/c140_first_crisis_warned.json`, `tests/test_rr21_rain_free_days.py`, `tests/test_fc2_first_crisis.py`
-- Check: `python -m unittest tests.test_rr21_rain_free_days tests.test_fc2_first_crisis` pass with the new days; the fc2 onset days before and after are recorded; `.\tools\verify.ps1` is green
-- Proof: `present: scripts/game_config.gd :: var first_crisis_window_open: float = 1080.0`
-- Next after: EV-0 -- one Calendar and events settings group, and winter a week later
-```
+PN-11 shipped 2026-11-06; its specification is `plans/archive/PN-11_2026-11-06.md`.
 
 ## PN-12 -- developer mode buys any skill
 

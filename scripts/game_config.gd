@@ -643,7 +643,7 @@ var weather_on: bool = false
 var rain_chance_per_day: float = 0.45
 ## RR-21: ordinary random rain is not rolled before this many game days. The
 ## first crisis and any scenario that starts rain itself are unaffected.
-var rain_free_days: float = 2.0
+var rain_free_days: float = 9.0
 var rain_min_seconds: float = 40.0
 var rain_max_seconds: float = 130.0
 var rain_nectar_dilution: float = 0.6   # share of nectar value lost at full intensity
@@ -651,7 +651,7 @@ var rain_flight_burn_factor: float = 2.2
 var rain_forage_limit: float = 0.5      # intensity above which foragers stay home
 ## FC-2 (plans/now/crisis-readiness.md): the Colony Run's first crisis, one
 ## announced heavy-rain episode, in seconds of run time (Session.sim_time).
-## The window holds the 20-minute experience gate (1200 s); a ready colony is
+## The window (Days 12-15, PN-11) opens after the 20-minute experience gate (1200 s); a ready colony is
 ## warned as soon as it qualifies inside the window and rained on a lead
 ## later, and one that has not qualified by close - lead is warned there and
 ## rained on at close. The lead lets a worker reassigned at the warning finish
@@ -659,8 +659,8 @@ var rain_forage_limit: float = 0.5      # intensity above which foragers stay ho
 ## test_scenarios/fc2_first_crisis_*.json runs). main.gd::_advance_first_crisis
 ## reads readiness once every first_crisis_check_seconds while it is pending
 ## inside the window. Moved here from main.gd constants (Dave, 17 Oct 2026).
-var first_crisis_window_open: float = 1080.0
-var first_crisis_window_close: float = 1500.0
+var first_crisis_window_open: float = 2200.0
+var first_crisis_window_close: float = 3000.0
 var first_crisis_warning_lead: float = 120.0
 var first_crisis_check_seconds: float = 1.0
 

@@ -23,40 +23,40 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] PN-11 -- rain later: first rain on day 10, crisis days 12-15**
-   - Plan: `plans/now/play-notes-config.md` -- "PN-11 -- rain later: first rain on day 10, crisis days 12-15"
-   - Files: `scripts/game_config.gd`, `test_scenarios/fc2_first_crisis_prepared.json`, `test_scenarios/fc2_first_crisis_unprepared.json`, `test_scenarios/c140_first_crisis_warned.json`, `tests/test_rr21_rain_free_days.py`, `tests/test_fc2_first_crisis.py`
-   - Check: `python -m unittest tests.test_rr21_rain_free_days tests.test_fc2_first_crisis` pass with the new days; the fc2 onset days before and after are recorded; `.\tools\verify.ps1` is green
-   - Proof: `present: scripts/game_config.gd :: var first_crisis_window_open: float = 1080.0`
-   - Next after: EV-0 -- one Calendar and events settings group, and winter a week later
-
-2. **[Claude] ED-2 -- a run's difficulty, saved**
+1. **[Claude] ED-2 -- a run's difficulty, saved**
    - Plan: `plans/now/difficulty.md` -- "ED-2 -- a run's difficulty, saved"
    - Files: `scripts/session.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed2_difficulty_save_test.gd`, `tests/test_ed2_difficulty_save.py`
    - Check: `python -m unittest tests.test_ed2_difficulty_save` passes (a new run is Standard; Easy set by a headless scenario survives save and restore; a save without the key loads as Standard; the CQ-S0 round-trip goldens are re-captured with the new field); `.\tools\verify.ps1` is green
    - Proof: `absent: scripts/session.gd :: difficulty`
    - Next after: ED-2b -- Easy's rules
 
-3. **[Claude] PN-2 -- rename a save in the saves list**
+2. **[Claude] PN-2 -- rename a save in the saves list**
    - Plan: `plans/now/play-notes.md` -- "PN-2 -- rename a save in the saves list"
    - Files: `scripts/saves_panel.gd`, `scripts/save_slots.gd`, `tests/pn2_save_rename_test.gd`, `tests/test_pn2_save_rename.py`
    - Check: `python -m unittest tests.test_pn2_save_rename` passes (rename updates the index name only, survives a reload, refuses empty and duplicate names); `.\tools\verify.ps1` is green. Hands-on: rename a save, quit, restart; the new name shows and it loads
    - Proof: `absent: scripts/save_slots.gd :: func rename(`
    - Next after: PN-3 -- a save remembers whether Goals was open
 
-4. **[Claude] PN-3 -- a save remembers whether Goals was open**
+3. **[Claude] PN-3 -- a save remembers whether Goals was open**
    - Plan: `plans/now/play-notes.md` -- "PN-3 -- a save remembers whether Goals was open"
    - Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/session.gd`, `tests/test_gp1_goals_dropdown.py`, `tests/gp1_goals_dropdown_test.gd`
    - Check: `python -m unittest tests.test_gp1_goals_dropdown` passes with a save round trip of the Goals state and an old save with no key loading as shown; `.\tools\verify.ps1` is green. Hands-on: close Goals, save, load; it is closed (re-run C-150)
    - Proof: `absent: scripts/save_game.gd :: goals_collapsed`
    - Next after: PN-4 -- the queen finishes a cell she was told to build
 
-5. **[Claude] PN-4 -- the queen finishes a cell she was told to build**
+4. **[Claude] PN-4 -- the queen finishes a cell she was told to build**
    - Plan: `plans/now/play-notes.md` -- "PN-4 -- the queen finishes a cell she was told to build"
    - Files: `scripts/bee_survival.gd`, `scripts/orders_zones.gd`, `scripts/bee_building.gd`, `test_scenarios/pn4_queen_build_after_meal.json`, `test_scenarios/pn4_queen_build_from_meadow.json`, `tests/test_pn4_queen_build.py`
    - Check: `python -m unittest tests.test_pn4_queen_build` passes (both scenarios fail before the fix and finish the cell after it); `python -m unittest tests.test_rr1_queen_builds` still passes; `.\tools\verify.ps1` is green. Hands-on: a Forager queen ordered to build finishes the cell after eating; one ordered from the meadow walks in and builds
    - Proof: `absent: scripts/orders_zones.gd :: ordered_site`
    - Next after: PN-5 -- a cell or soil block is clicked by its top face
+
+5. **[Claude] PN-12 -- developer mode buys any skill**
+   - Plan: `plans/now/play-notes-config.md` -- "PN-12 -- developer mode buys any skill"
+   - Files: `scripts/skill_tree_panel.gd`, `scripts/settings_catalogue.gd`, `tests/test_pn12_developer_skills.py`
+   - Check: `python -m unittest tests.test_pn12_developer_skills` passes (a blocked skill is buyable only with developer mode on, free); `.\tools\verify.ps1` is green. Hands-on: developer mode lets an unaffordable skill be bought
+   - Proof: `present: scripts/settings_catalogue.gd :: Changes nothing about how a run plays`
+   - Next after: PN-13 -- bee labels switch and a calmer queen flight
 
 ### Codex lane
 
@@ -105,7 +105,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **PN-5** (`plans/now/play-notes.md`) -- startable, but the Claude lane is full.
 - **PN-6** (`plans/now/play-notes.md`) -- startable, but the Claude lane is full.
 - **PN-9** (`plans/now/play-notes-config.md`) -- startable, but the Claude lane is full.
-- **PN-12** (`plans/now/play-notes-config.md`) -- startable, but the Claude lane is full.
 - **PN-13** (`plans/now/play-notes-config.md`) -- bee labels switch and a calmer queen flight; waits for the Codex lane's PN-18 to release `scripts/bee.gd`.
 - **EV-0** (`plans/now/event-director.md`) -- one Calendar and events settings group, a new `RunCalendar` and a 35-day season (winter on day 36); waits for PN-11, whose crisis window it converts to days.
 - **EV-0b** (`plans/now/event-director.md`) -- the flowers read EV-0's calendar; waits for EV-0, and for CQ-M6 (Codex lane), which edits `scripts/flower.gd`.
