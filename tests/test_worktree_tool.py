@@ -83,7 +83,7 @@ class WorktreeToolTest(unittest.TestCase):
         self.assertIn(row, self.ledger())
         self.assertIn(row, self.remote_ledger())
         self.assertTrue((self.root / ".worktrees/review-1").is_dir())
-        self.assertIn(str((self.root / ".worktrees/review-1").resolve()), self.git("worktree", "list"))
+        self.assertIn((self.root / ".worktrees/review-1").resolve().as_posix(), self.git("worktree", "list"))
         message = self.git("log", "-1", "--format=%B")
         self.assertTrue(message.startswith("Register the review-1 worktree in the ledger"))
         self.assertIn("Co-Authored-By: Claude Test <claude@example.com>", message)

@@ -327,6 +327,18 @@ def check_gameconfig_writes(name, code, problems):
             )
 
 
+def check_canvas_layer_literals(name, code, problems):
+    """Canvas-layer numbers belong only to canvas_layers.gd (CQ-M5b)."""
+    if name == "canvas_layers.gd":
+        return
+    for i, line in enumerate(code, 1):
+        if re.search(r"\blayer\s*=(?!=)\s*[+-]?\d+\s*$", line):
+            problems.append(
+                "%s:%d  assigns a bare canvas layer; read canvas_layers.gd: %s"
+                % (name, i, line.strip()[:80])
+            )
+
+
 def check_conditions_read_only(name, code, problems):
     if name != "conditions.gd":
         return
@@ -3557,6 +3569,7 @@ def main():
         check_declarations(name, code, problems)
         check_duplicates(name, code, problems)
         check_gameconfig_writes(name, code, problems)
+        check_canvas_layer_literals(name, code, problems)
         check_conditions_read_only(name, code, problems)
         check_offset_rect_literals(name, lines, problems)
         check_panel_custom_min_size(name, code, problems)

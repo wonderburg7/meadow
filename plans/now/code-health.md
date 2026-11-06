@@ -1,5 +1,5 @@
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: the Codex lane holds CQ-M5b and CQ-M6 (their Jules gates cleared 5 Nov 2026), and CQ-R3 waits in its backlog; CQ-M6b waits for the Claude lane's PN-5, PN-6 and PN-9; CQ-M4 for the Claude lane to release the save files; CQ-T4 for the Codex lane's CQ-M5b, CQ-M6, PN-19, PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code / Codex | Next: CQ-M5b is implemented on its branch; SP-12 follows, and the Codex lane holds CQ-M6 (its Jules gates cleared 5 Nov 2026), with CQ-R3 waiting in its backlog; CQ-M6b waits for the Claude lane's PN-5, PN-6 and PN-9; CQ-M4 for the Claude lane to release the save files; CQ-T4 for integration of CQ-M5b and the Codex lane's CQ-M6, PN-19, PN-8 and PN-14; CQ-R2 follows ED-3 alone (Dave, 5 Nov 2026), and CQ-S1 to CQ-S5 follow ED-3, RR-12 and SP-8a; CQ-L3 waits for both lanes to empty | Dependency: the rest is in "Dependencies" | Verified: 2026-11-05
 
 # Code health -- lint, types, save ownership, data and responsibility splits
 
@@ -129,7 +129,6 @@ Recorded once here; a slice may restate one in a sentence and point back.
 | CQ-S4 | Bee owns its save fields (absorbs `saving.gd::_restore_bees`) | `bee.gd`, save files | after CQ-S3 | high |
 | CQ-S5 | five `save_data`/`restore` pairs renamed; comment closeout | 5 modules, save files, `main.gd`, tests | after CQ-S4 | high |
 | CQ-M4 | Challenge level ids named in `levels.gd` | `levels.gd` + 7 readers | gated: the Claude lane holds `save_game.gd` and `saving.gd` | medium |
-| CQ-M5b | `hud.gd`, `main.gd`, `game_panel.gd` read it; a source check forbids a bare `layer = <int>` | those three, `tests/source_checks.py` | yes -- queued (Codex) | low |
 | CQ-M6 | selection green and caste look named (scripts/world_draw.gd) | `world_draw.gd` (new) and 5 world scripts | yes (5 Nov 2026) | low |
 | CQ-M6b | the cell ring and the selection layer read it | `hive_cell.gd`, `input_selection.gd` | after CQ-M6, and the Claude lane's PN-5, PN-6 and PN-9 | low |
 | CQ-M7 | world z-order named in `world_draw.gd` | 13 world scripts | after CQ-M6b | medium |
@@ -448,24 +447,7 @@ CQ-R6 shipped 2026-10-28; its specification is `plans/archive/CQ-R6_2026-10-28.m
 
 CQ-M5a shipped 2026-10-29; its specification is `plans/archive/CQ-M5a_2026-10-29.md`.
 
-## CQ-M5b -- the last CanvasLayer readers and the bare-layer source check
-
-**When CQ-M5a has landed and its gates clear.** `hud.gd` (HUD 9 and
-`MARKER_ARROW_LAYER`, which goes), `main.gd` (the weather layer) and
-`game_panel.gd::setup_layer`'s default read `scripts/canvas_layers.gd`, and
-`tests/source_checks.py` fails any `layer = <integer>` assignment in
-`scripts/` outside `canvas_layers.gd`. Integers unchanged; regenerate
-`FUNCTION_MAP.md`. Re-verify the line numbers when
-claiming (J-14 has gone, 5 Nov 2026). Reasoning: **low**. **Open decisions:** none.
-
-```queue
-**[Codex] CQ-M5b -- the last CanvasLayer readers and the bare-layer source check**
-- Plan: `plans/now/code-health.md` -- "CQ-M5b -- the last CanvasLayer readers and the bare-layer source check"
-- Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/game_panel.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
-- Check: `python tests/source_checks.py` passes and fails on a planted `layer = 3` in a scratch copy of `scripts/hud.gd`; `python -m unittest tests.test_layout_regression` and `python tools/prefinish.py` pass
-- Proof: `present: scripts/main.gd :: weather_layer.layer = 5`
-- Next after: SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels
-```
+CQ-M5b shipped 2026-11-05; its specification is `plans/archive/CQ-M5b_2026-11-05.md`.
 
 ## CQ-M6 -- name selection green and caste appearance
 

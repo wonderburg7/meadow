@@ -63,40 +63,40 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] CQ-M5b -- the last CanvasLayer readers and the bare-layer source check**
-   - Plan: `plans/now/code-health.md` -- "CQ-M5b -- the last CanvasLayer readers and the bare-layer source check"
-   - Files: `scripts/hud.gd`, `scripts/main.gd`, `scripts/game_panel.gd`, `tests/source_checks.py`, `FUNCTION_MAP.md`
-   - Check: `python tests/source_checks.py` passes and fails on a planted `layer = 3` in a scratch copy of `scripts/hud.gd`; `python -m unittest tests.test_layout_regression` and `python tools/prefinish.py` pass
-   - Proof: `present: scripts/main.gd :: weather_layer.layer = 5`
-   - Next after: SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels
-
-2. **[Codex] CQ-M6 -- name selection green and caste appearance**
+1. **[Codex] CQ-M6 -- name selection green and caste appearance**
    - Plan: `plans/now/code-health.md` -- "CQ-M6 -- name selection green and caste appearance"
    - Files: `scripts/world_draw.gd`, `scripts/bee.gd`, `scripts/death_marker.gd`, `scripts/flower.gd`, `scripts/obstacle.gd`, `scripts/soil_block.gd`, `FUNCTION_MAP.md`
    - Check: `python -m unittest tests.test_sp9_soil_art tests.test_col9_drones` and `python tools/prefinish.py` pass; rendered selection alphas and caste sizes remain unchanged
    - Proof: `present: scripts/obstacle.gd :: selection_ring.default_color = Color(0.2, 1.0, 0.4, 0.95)`
    - Next after: CQ-M6b -- the cell ring and the selection layer read the selection green
 
-3. **[Codex] PN-18 -- the queen discards sour nectar when told to empty a cell**
+2. **[Codex] PN-18 -- the queen discards sour nectar when told to empty a cell**
    - Plan: `plans/now/play-notes-config.md` -- "PN-18 -- the queen discards sour nectar when told to empty a cell"
    - Files: `scripts/bee.gd`, `test_scenarios/pn18_queen_empties_sour.json`, `tests/test_pn18_queen_empties_sour.py`
    - Check: `python -m unittest tests.test_pn18_queen_empties_sour` passes (lone queen, sour cell, no Cleaning: the cell ends empty and the nectar is discarded); `.\tools\verify.ps1` is green. Hands-on: the queen empties a sour cell on command
    - Proof: `absent: scripts/bee.gd :: PN-18`
    - Next after: PN-19 -- the soil block's selection ring closes
 
-4. **[Codex] PN-19 -- the soil block's selection ring closes**
+3. **[Codex] PN-19 -- the soil block's selection ring closes**
    - Plan: `plans/now/play-notes-config.md` -- "PN-19 -- the soil block's selection ring closes"
    - Files: `scripts/soil_block.gd`, `tests/test_sp10_soil_depth.py`, `tests/test_sp9_soil_art.py`
    - Check: `python -m unittest tests.test_sp10_soil_depth tests.test_sp9_soil_art` pass with an assertion that the ring is closed; `.\tools\verify.ps1` is green. Hands-on: a selected soil block's outline has no gap
    - Proof: `present: scripts/soil_block.gd :: selection_ring.add_point(ring_points[0])`
    - Next after: none -- `plans/now/play-notes-config.md` is complete
 
-5. **[Codex] CQ-R3 -- bee display text becomes scripts/bee_readout.gd**
+4. **[Codex] CQ-R3 -- bee display text becomes scripts/bee_readout.gd**
    - Plan: `plans/now/code-health.md` -- "CQ-R3 -- bee display text becomes scripts/bee_readout.gd"
    - Files: `scripts/bee.gd`, `scripts/bee_readout.gd`, `FUNCTION_MAP.md`
    - Check: `python -m unittest tests.test_display_text_golden tests.test_t2_14_idle_reason_pure tests.test_t2_11_comb_cadence` passes with no expected string changed; `.\tools\verify.ps1` is green
    - Proof: `present: scripts/bee.gd :: func _task_line(`
    - Next after: CQ-R4
+
+5. **[Codex] SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels**
+   - Plan: `plans/now/sprites.md` -- "SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels"
+   - Files: `scripts/input_selection.gd`, `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, `test_scenarios/sp_outline_rim.json`, `tests/test_sp_outline_rim.py`, `tests/sp11_cell_rim_test.gd`, `tests/test_sp11_cell_rim.py`
+   - Check: `python -m unittest tests.test_sp_outline_rim` passes (the `cell_outline_matches_sprite` assertion holds for the selection ring and the tile outline within 1.5 px, and fails when the outline is moved 10 px); `python -m unittest tests.test_sp11_cell_rim` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
+   - Proof: `absent: scripts/scenario_actions.gd :: cell_outline_matches_sprite`
+   - Next after: PN-7 -- cell popup and selection text batch
 
 ## Not in the queue, and why
 
@@ -107,7 +107,6 @@ One line each: the id, its plan, and the single thing it waits for.
 - **PN-9** (`plans/now/play-notes-config.md`) -- startable, but the Claude lane is full.
 - **PN-12** (`plans/now/play-notes-config.md`) -- startable, but the Claude lane is full.
 - **PN-13** (`plans/now/play-notes-config.md`) -- bee labels switch and a calmer queen flight; waits for the Codex lane's PN-18 and CQ-M6 to release `scripts/bee.gd`.
-- **SP-12** (`plans/now/sprites.md`) -- startable, but the Codex lane is full.
 - **PN-7** (`plans/now/play-notes-hud.md`) -- startable, but the Codex lane is full.
 - **PN-14** (`plans/now/play-notes-hud.md`) -- startable, but the Codex lane is full.
 - **PN-15** (`plans/now/play-notes-hud.md`) -- startable, but the Codex lane is full.
