@@ -1,7 +1,7 @@
 # Play notes, config and bee -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: PN-11 -- rain later, at the head of the Claude lane (its Jules gates cleared 5 Nov 2026); PN-9 and PN-12 are startable and wait for room; PN-13 waits for the Codex lane to release `bee.gd`; PN-18 follows only after its Claude-lane gate is rechecked (Dave, 6 Nov 2026); C-179 awaits visual confirmation of PN-19 | Dependency: PN-11 precedes EV-0 (`plans/now/event-director.md`) on the alpha route; PN-9, PN-12 and PN-13 share `game_config.gd` or `settings_catalogue.gd` and run in turn | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code / Codex | Next: PN-11 -- rain later, at the head of the Claude lane; PN-9 and PN-12 wait for room; PN-13 waits for the Codex lane to release `bee.gd`; C-179 and C-180 await player checks | Dependency: PN-11 precedes EV-0 (`plans/now/event-director.md`) on the alpha route; PN-9, PN-12 and PN-13 share `game_config.gd` or `settings_catalogue.gd` and run in turn | Verified: 2026-11-06
 
 ## Objective
 
@@ -215,6 +215,9 @@ Cleaning still needs the skill.
 **Acceptance (player seat, and the hands-on check).** With only the queen and a
 sour cell, choose "Empty this cell": she carries the sour nectar out and the
 cell empties.
+
+**Result.** The directed-order scenario passes on unchanged game code; C-180
+checks the reported player experience.
 
 **Open decisions:** none.
 
