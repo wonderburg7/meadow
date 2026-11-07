@@ -316,7 +316,7 @@ it, like `tools/heading.py`.
 - Files: tools/check_scenarios.py (new), tests/test_check_scenarios.py (new)
 - After: none
 - Why: E30-2 in docs/jules-efficiency/e-30.md (#126, accepted 6 Nov 2026 with the qualification at its top): a misspelt `"do"` verb in `test_scenarios/*.json` is only reported once Godot runs the scenario.
-- Do: Derive the recognised verb set from `scripts/scenario_actions.gd` each run: the string match arms of `_execute` plus the sequence verbs `process` handles (`assert`, `wait`, `settle`); never hard-code the list. Walk every action dictionary in every `test_scenarios/**/*.json` (top level and nested). Fail with file and action index for an unknown verb, a missing `"do"`, or a non-string `"do"`. Allow no comment, disabled or mock bypass. Add `--list` to print the derived verbs, one per line. Pass on current master with zero findings. Tests: the real tree passes; a temporary fixture with `mine_queue`, one with no `"do"` and one with a numeric `"do"` each fail; the derived set includes `assert`, `wait`, `settle` and `set_bee_stats`; the derived set's size equals the `_execute` arm count plus three, as a computed figure, not a literal. No change to `scripts/` or any scenario file.
+- Do: Derive the recognised verb set from `scripts/scenario_actions.gd` each run: the string match arms of `_execute` plus the sequence verbs `run_pending` handles (`assert`, `wait`, `settle`); never hard-code the list. Walk every action dictionary in every `test_scenarios/**/*.json` (top level and nested). Fail with file and action index for an unknown verb, a missing `"do"`, or a non-string `"do"`. Allow no comment, disabled or mock bypass. Add `--list` to print the derived verbs, one per line. Pass on current master with zero findings. Tests: the real tree passes; a temporary fixture with `mine_queue`, one with no `"do"` and one with a numeric `"do"` each fail; the derived set includes `assert`, `wait`, `settle` and `set_bee_stats`; the derived set's size equals the `_execute` arm count plus three, as a computed figure, not a literal. No change to `scripts/` or any scenario file.
 
 ### Not tasks yet
 
@@ -364,6 +364,14 @@ If no standing task fits either, say so and stop. Do not look for other work.
 ## Keeping this list
 
 For Claude, Codex and Dave, not Jules.
+
+- **Reconcile actual remote tips, including closed PRs.** Before trusting an
+  old ledger disposition, compare every surviving `origin/jules/*` ref SHA
+  with its recorded review SHA and GitHub PR head. `--ledger` detects moved
+  tips only for `reviewed` rows, not `merged`/`closed`; a closed PR's head can
+  remain frozen while Jules repurposes its branch. Review that new tip's
+  delta separately, preserve its sequence, and record the actual SHA and
+  superseding task without undoing an earlier selected-file integration.
 
 - **Alternation is mandatory.** Preserve every published `Jules-Sequence`
   trailer in integration/ledger commits before deleting a Jules branch,
