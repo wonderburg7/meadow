@@ -23,13 +23,6 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] PN-12 -- developer mode buys any skill**
-   - Plan: `plans/now/play-notes-config.md` -- "PN-12 -- developer mode buys any skill"
-   - Files: `scripts/skill_tree_panel.gd`, `scripts/settings_catalogue.gd`, `tests/test_pn12_developer_skills.py`
-   - Check: `python -m unittest tests.test_pn12_developer_skills` passes (a blocked skill is buyable only with developer mode on, free); `.\tools\verify.ps1` is green. Hands-on: developer mode lets an unaffordable skill be bought
-   - Proof: `present: scripts/settings_catalogue.gd :: Changes nothing about how a run plays`
-   - Next after: PN-13 -- bee labels switch and a calmer queen flight
-
 ### Codex lane
 
 Up to five items, worked top to bottom. No file here may appear in the Claude
