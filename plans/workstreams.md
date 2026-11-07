@@ -52,4 +52,3 @@ end-of-slice report states what was merged and what is next.
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/player-experience-review-20261106` (`codex/player-experience-review-20261106`) | Review | Advisory player-experience review; Markdown evidence and recommendations only; no game or queue changes | Codex | in progress | none | `plans/design/product-scope.md` |
 | `.worktrees/PN-3` (`claude/PN-3`) | Claude | a save remembers whether Goals was open | Claude | in progress | none | `plans/now/play-notes.md` PN-3 -- a save remembers whether Goals was open |
-| `.worktrees/PN-7` (`codex/PN-7`) | Codex | cell popup and selection text batch | Codex | in progress | none | `plans/now/play-notes-hud.md` PN-7 -- cell popup and selection text batch |
