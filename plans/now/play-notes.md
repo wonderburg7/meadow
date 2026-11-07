@@ -1,7 +1,7 @@
 # Play notes -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PN-3 and PN-4 in the Claude lane (PN-2 landed), behind PN-11 and ED-2 on the alpha route; PN-5 and PN-6 are startable and wait for room | Dependency: PN-3 follows ED-2 (`plans/now/difficulty.md`), which edits the same save files; PN-16 (`plans/now/play-notes-hud.md`, Codex) follows PN-6 | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code | Next: PN-4 in the Claude lane (PN-2 and PN-3 landed; PN-3's hands-on check is C-182); PN-5 and PN-6 are startable and wait for room | Dependency: PN-16 (`plans/now/play-notes-hud.md`, Codex) follows PN-6 | Verified: 2026-11-05
 
 ## Objective
 
