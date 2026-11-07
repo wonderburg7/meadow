@@ -109,4 +109,5 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-181 -- comb outlines follow the cup rim](ready/C-181.md)
 - [C-182 -- PN-3: close Goals, save, load -- it is still closed; open, save, load -- open](ready/C-182.md)
 - [C-183 -- The queen finishes a cell she was told to build](ready/C-183.md)
+- [C-184 -- Day dial sweeps and pauses beside Day N](ready/C-184.md)
 - [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)
