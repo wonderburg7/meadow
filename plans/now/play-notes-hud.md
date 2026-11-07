@@ -1,7 +1,7 @@
 # Play notes, HUD side -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: PN-15 -- a day dial beside "Day N" | Dependency: all seven share `hud.gd` or `input_selection.gd` and run in turn; PN-8 and PN-10 wait for the Claude lane's PN-3 and ED-2 to release `session.gd` and the Goals test; PN-16 waits for PN-6 (`plans/now/play-notes.md`) | Verified: 2026-11-05
+Status: active | Owner: Dave / Codex | Next: PN-8 -- Warning history in the Colony window (gated on PN-3 and ED-2) | Dependency: all seven share `hud.gd` or `input_selection.gd` and run in turn; PN-8 and PN-10 wait for the Claude lane's PN-3 and ED-2 to release `session.gd` and the Goals test; PN-16 waits for PN-6 (`plans/now/play-notes.md`) | Verified: 2026-11-05
 
 ## Objective
 

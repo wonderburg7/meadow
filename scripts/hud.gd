@@ -26,6 +26,7 @@ const Stages = preload("res://scripts/challenge_stages.gd")
 const BeeNursery = preload("res://scripts/bee_nursery.gd")
 const ColonyPanel = preload("res://scripts/colony_panel.gd")
 const HudGoalShelf = preload("res://scripts/hud_goal_shelf.gd")
+const HudDayDial = preload("res://scripts/hud_day_dial.gd")
 
 # --- signals ------------------------------------------------------
 signal role_requested(role_name: String)
@@ -2735,6 +2736,14 @@ func _rebuild_corner_labels() -> void:
 		# variations, so it scales directly instead.
 		label.add_theme_font_size_override("font_size", UiTheme.font_px(CORNER_SIZES.get(key, 12)))
 		corner_column.add_child(label)
+		if key == "day":
+			var dial := HudDayDial.new()
+			var first_line := text.get_slice("\n", 0)
+			var font := label.get_theme_font("font")
+			var font_size := label.get_theme_font_size("font_size")
+			dial.position.x = font.get_string_size(first_line, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + 4.0
+			label.custom_minimum_size.x = maxf(label.get_minimum_size().x, dial.position.x + dial.custom_minimum_size.x)
+			label.add_child(dial)
 
 ## One clickable problem line plus its dismiss button, added to the corner.
 func _add_signal_row(entry: Array) -> void:
