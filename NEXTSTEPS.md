@@ -88,9 +88,9 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
 One line each: the id, its plan, and the single thing it waits for.
 
-- **PN-5** (`plans/now/play-notes.md`) -- startable, but the Claude lane is full.
-- **PN-6** (`plans/now/play-notes.md`) -- startable, but the Claude lane is full.
-- **PN-9** (`plans/now/play-notes-config.md`) -- startable, but the Claude lane is full.
+- **PN-5** (`plans/now/play-notes.md`) -- waits for the Codex lane's SP-12 to release `scripts/input_selection.gd`.
+- **PN-6** (`plans/now/play-notes.md`) -- waits for the Codex lane's SP-12 to release `scripts/input_selection.gd`.
+- **PN-9** (`plans/now/play-notes-config.md`) -- waits for the Codex lane's SP-12 to release `scripts/hive_cell.gd`.
 - **PN-13** (`plans/now/play-notes-config.md`) -- bee labels switch and a calmer queen flight; waits for the Codex lane's PN-18 to release `scripts/bee.gd`.
 - **EV-0** (`plans/now/event-director.md`) -- one Calendar and events settings group, a new `RunCalendar` and a 35-day season (winter on day 36); waits for whose crisis window it converts to days.
 - **EV-0b** (`plans/now/event-director.md`) -- the flowers read EV-0's calendar; waits for EV-0, and for CQ-M6 (Codex lane), which edits `scripts/flower.gd`.
