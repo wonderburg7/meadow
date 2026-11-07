@@ -7,37 +7,37 @@ here. A rule both agents need lives here, nowhere else.
 ## Rules that apply without being requested
 
 1. **Context-efficient:** a file read early is re-sent on every later request;
-   at ~90 requests a 6K-token read costs ~500K. Read the routed section
-   (`python tools/heading.py <file> "<heading>"`) or the routed function
-   (`python tools/func.py <file> <function> [<function> ...]`), not the file;
-   never a folder.
-   Do not search `_backups/`. When `tools/slice.ps1` stops, its "stopped"
-   block is the diagnosis; don't read the script. When a test fails, run
-   that one test and read only its function.
+  at ~90 requests a 6K-token read costs ~500K. Read the routed section
+  (`python tools/heading.py <file> "<heading>"`) or the routed function
+  (`python tools/func.py <file> <function> [<function> ...]`), not the file;
+  never a folder.
+  Do not search `_backups/`. When `tools/slice.ps1` stops, its "stopped"
+  block is the diagnosis; don't read the script. When a test fails, run
+  that one test and read only its function.
 2. **Architecturally right:** role data lives in `scripts/roles.gd`;
-   a script splits by responsibility, never by size; `GameConfig` owns balance values (a balance value is a GameConfig field with a settings row; a structural constant is a named const in its owning file); `Session` owns run/UI state;
-   presentation never gates simulation; balance changes are simulated first.
+  a script splits by responsibility, never by size; `GameConfig` owns balance values (a balance value is a GameConfig field with a settings row; a structural constant is a named const in its owning file); `Session` owns run/UI state;
+  presentation never gates simulation; balance changes are simulated first.
 3. **Processing-efficient:** profile a per-frame/per-bee path before changing
-   it; count calls and population before adding an index or cache.
+  it; count calls and population before adding an index or cache.
 4. **Cheap execution:** take the reasoning level the slice's plan states --
-   low for one-file mechanical work, medium for bounded work with an
-   acceptance check, high only for ownership boundaries, save migrations,
-   event ordering, hot paths, ambiguous bugs or multi-slice planning.
-   Escalating past it is as much a mistake as ignoring it.
+  low for one-file mechanical work, medium for bounded work with an
+  acceptance check, high only for ownership boundaries, save migrations,
+  event ordering, hot paths, ambiguous bugs or multi-slice planning.
+  Escalating past it is as much a mistake as ignoring it.
 5. **Stop and escalate** rather than deciding when an open question would
-   change an architecture/ownership boundary, save compatibility, a gameplay
-   outcome or more than one later slice. Give the options and their costs.
-   Choosing the order of already agreed work within an agent's own lane is
-   delegated scheduling, not a design decision requiring escalation. Follow
-   the lane's queue policy; this does not authorise changing those contracts
-   or disrupting another lane.
+  change an architecture/ownership boundary, save compatibility, a gameplay
+  outcome or more than one later slice. Give the options and their costs.
+  Choosing the order of already agreed work within an agent's own lane is
+  delegated scheduling, not a design decision requiring escalation. Follow
+  the lane's queue policy; this does not authorise changing those contracts
+  or disrupting another lane.
 
 6. **Before `tools/slice.ps1 finish`, run `python tools/prefinish.py`**
-   in the worktree (boot check, source checks, the unit tests naming the
-   files you changed). A line or stop cause saying "not a code fault" is
-   the Godot import cache: change no code, run the Fix command it names.
-   Run it and `tools/verify.ps1` as `tools/...` from inside the worktree,
-   never `../../tools/...`: each tests the checkout it lives in.
+  in the worktree (boot check, source checks, the unit tests naming the
+  files you changed). A line or stop cause saying "not a code fault" is
+  the Godot import cache: change no code, run the Fix command it names.
+  Run it and `tools/verify.ps1` as `tools/...` from inside the worktree,
+  never `../../tools/...`: each tests the checkout it lives in.
 
 ## Working style
 
@@ -61,21 +61,28 @@ here. A rule both agents need lives here, nowhere else.
 
 ## Output
 
-Token-lean output (Dave, 5 Nov 2026). The same text is Claude Code's
-`terse` output style (`.claude/output-styles/terse.md`); change both together.
+Chat output is only what Dave acts on (Dave, 7 Nov 2026; tightens the
+5 Nov rules). The same text is Claude Code's `terse` output style
+(`.claude/output-styles/terse.md`); change both together.
 
-- Be extremely concise: no filler, intros or closing summaries.
-- Don't explain code, logic or syntax unless Dave asks, or a decision
-  needs the context.
-- Keep prose to what Dave must act on or decide.
-- **Still flag** assumptions, risks and omissions Dave may have missed:
-  one line each, under a `Risks:` or `Assumed:` label.
-- **Evidence trail:** back each claim of fact or pass with its source
-  in a few words (file:line, command and result, check id); mark
-  inference as such. Never claim a check that wasn't run.
-- **Follow-up prompts:** when wrapping up, if you recommend a further
-  session for a specific action (beyond `Start it with`), give it as a
-  copy-paste block: the prompt, then `Model: <model>` and
-  `Effort: <low|medium|high>` chosen by rule 4.
-- Kept in full: the End-of-slice report, choices put to Dave (rule 5),
-  and the Working style rules on what to type and where to run it.
+A reply holds only these, each in its shortest form:
+
+- **The finish report:** the End-of-slice report, or the report a skill
+  names (run-queue, run-reviews, plan-ahead), as specified there.
+- **A decision for Dave** (rule 5): the question, the options and each
+  one's cost in a line, and only the context needed to choose.
+- **Something Dave must do:** what, where (file and place, or shell and
+  directory) and the exact text to type, per Working style. Work for
+  another session is a copy-paste prompt block, then
+  `Model: <model>` and `Effort: <low|medium|high>` chosen by rule 4.
+
+Nothing else goes in the chat: no progress narration, plans of what you are
+about to do, explanations, summaries of what changed, evidence, or risk and
+assumption lists. Their record is elsewhere: the commit message carries what
+changed, why, and any risk or assumption taken; `verify.ps1`, `finish` and
+`checks/` carry the passes; the plan section carries open questions that
+need no answer now. A risk reaches the chat only as a decision or a to-do.
+
+With none of these to give, end in one line (`Done: <commit> on <branch>.`).
+Never repeat what a report or the app's wrap-up box already shows. Never
+claim a check that wasn't run.

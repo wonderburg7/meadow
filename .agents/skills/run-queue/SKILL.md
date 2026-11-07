@@ -105,7 +105,7 @@ while one is active.
      a JSON list of findings, each `{file, line, bug, scenario}`, or `[]`."
      Don't read the diff yourself as well. A correctness finding inside the
      slice's files goes back to the worker (`followup_task`) once; anything
-     else goes in the trial note. Skip this for a `low` slice.
+     else is dropped unless it argues for a brief or skill change. Skip this for a `low` slice.
    - If the stat looks wrong, read the full diff of the code files (not the
      docs) and check it against `proof`.
    - Spot-check one claim from the worker's `check_run` by rerunning that
@@ -214,8 +214,7 @@ plan reading.
 For each slice: the end-of-slice block from `CLAUDE.md` § "End-of-slice
 report" (`finish` prints most of it; fill in `Connectors: active now` from
 your own tool list), or the high-risk hand-off block, plus the worker's
-reasoning level and any reviews or retries. For each refill: the plan it
-came from (the steward's `note`), the ids it added, and why that slice came
-next. Include the steward's cleared gates. Then a
-one-paragraph trial note covering what the worker got wrong, where you had
-to step in, and any change the worker brief or this skill needs.
+reasoning level, retries and review fixes in one line. For each refill,
+one line: the ids added and the plan they came from. Each change the worker
+brief or this skill needs, one line, as a decision for Dave; no trial note
+otherwise (`docs/agent-rules.md` "Output").

@@ -90,10 +90,11 @@ header.
    specifications live in plans, not in the record. Work on a branch, run
    `python tools/check_docs.py` (and `.\tools\verify.ps1` if code changed),
    and merge as `plans/reference/closeout.md` describes.
-9. **Report in chat, in at most about 15 lines:** the count for each
-   disposition; decisions still needed; slices added (id, plan, level);
-   hand-offs; the record's path. Do not repeat the record's tables. If you
-   name a next slice, add `CLAUDE.md`'s `Next model` and `Toggle` lines.
+9. **Report in chat, in at most about 5 lines** (`docs/agent-rules.md`
+   "Output"): the count for each disposition, slice ids added, the
+   record's path, and each decision still needed. Hand-offs and tables stay
+   in the record. If you name a next slice, add `CLAUDE.md`'s `Next model`
+   and `Toggle` lines.
 10. **Fix the prompt you ran.** If a step in your review file named a path,
     tool, flag or rule that no longer holds, correct that file on the same
     branch and say so in the record's "Noted, not pursued".
