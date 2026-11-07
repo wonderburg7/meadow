@@ -365,6 +365,14 @@ If no standing task fits either, say so and stop. Do not look for other work.
 
 For Claude, Codex and Dave, not Jules.
 
+- **Reconcile actual remote tips, including closed PRs.** Before trusting an
+  old ledger disposition, compare every surviving `origin/jules/*` ref SHA
+  with its recorded review SHA and GitHub PR head. `--ledger` detects moved
+  tips only for `reviewed` rows, not `merged`/`closed`; a closed PR's head can
+  remain frozen while Jules repurposes its branch. Review that new tip's
+  delta separately, preserve its sequence, and record the actual SHA and
+  superseding task without undoing an earlier selected-file integration.
+
 - **Alternation is mandatory.** Preserve every published `Jules-Sequence`
   trailer in integration/ledger commits before deleting a Jules branch,
   including rejected/closed PRs. Do not renumber corrections. E reports
