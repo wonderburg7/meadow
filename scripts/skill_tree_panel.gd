@@ -194,6 +194,8 @@ func _rebuild() -> void:
 			state = STATE_OWNED
 		else:
 			var blocker: String = progression.purchase_blocker(skill.id, stores)
+			if _developer_waives(blocker):
+				blocker = ""
 			if blocker == "":
 				state = STATE_AFFORDABLE
 			else:
@@ -277,6 +279,12 @@ func _stores() -> Dictionary:
 		stores[Skills.POLLINATOR_POINTS] = float(main.pollination.points)
 	return stores
 
+## PN-12: with developer mode on, a cost or prerequisite block does not stop a buy.
+func _developer_waives(blocker: String) -> bool:
+	return Session.developer_mode \
+		and (blocker == Progression.BLOCK_COST or blocker == Progression.BLOCK_PREREQUISITES)
+
+
 ## AP-4: buys one skill. Who owns the stores (the plan's escalation): the
 ## comb does, as it always has -- hive.gd's cells hold them and hive.take()
 ## is how anything removes them. No second owner is invented here.
@@ -290,6 +298,14 @@ func buy_skill(skill_id: String) -> bool:
 		return false
 	var before := _stores()
 	var stores := before.duplicate()
+	# PN-12: developer mode grants a skill cost- or prerequisite-blocked, free.
+	if _developer_waives(progression.purchase_blocker(skill_id, stores)):
+		progression.grant_temporary(skill_id)
+		Availability.invalidate()
+		main.hud.refresh_role_gating()
+		main.hud.show_warning("%s granted (developer mode)." % Skills.label_for(skill_id))
+		_rebuild()
+		return true
 	if not progression.purchase(skill_id, stores):
 		main.hud.show_warning("The colony cannot buy that right now.")
 		_rebuild()

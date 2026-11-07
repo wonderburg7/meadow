@@ -1378,7 +1378,7 @@ const TUNABLES := [
 		"persist": "player",
 		"key": "developer_mode", "label": "Developer mode", "toggle": true,
 		"category": "Interface",
-		"tip": "Unlocks the developer-only tables and readouts as they are added. Off by default and kept between sessions. Changes nothing about how a run plays.",
+		"tip": "Unlocks the developer-only tables and readouts as they are added. Also lets you buy any skill in the skill tree for free, ignoring its cost and prerequisites. Off by default and kept between sessions.",
 	},
 	{
 		"persist": "none",
