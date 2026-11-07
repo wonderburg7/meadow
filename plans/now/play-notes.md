@@ -27,7 +27,6 @@ to put nectar" warning; Dr Gallerin's bubble behaviour; drones skipped by
 
 | Id | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PN-2 | rename a save in the saves list | `saves_panel.gd`, `save_slots.gd` | yes -- queued | medium |
 | PN-3 | a save remembers whether Goals was open | `save_game.gd`, `saving.gd`, `session.gd` | yes -- queued after ED-2 | high |
 | PN-4 | the queen finishes a cell she was told to build | `bee_survival.gd`, `orders_zones.gd`, `bee_building.gd` | yes -- queued | high |
 | PN-5 | a cell or soil block is clicked by its top face | `input_selection.gd` | yes | medium |
@@ -45,36 +44,7 @@ goldens after ED-2's. A slice reads its own section and nothing else.
 
 PN-1 shipped 2026-11-05; its specification is `plans/archive/PN-1_2026-11-05.md`.
 
-## PN-2 -- rename a save in the saves list
-
-**True now.** Saves are `<slug>.json`; the slug comes from
-`SaveSlots.slugify(name)`. `index.json` holds each slug's display name, day
-and `saved_at`. `saves_panel.gd::_rebuild` reads `entry["name"]`;
-`save_slots.gd::_entry` writes it. There is no rename.
-
-**Change.** A Rename button on each saves row opens a `LineEdit`; confirming
-calls a new `SaveSlots.rename(slug, name)` that updates only the index entry's
-name, written atomically (the `si3_atomic_write_test.gd` pattern). The slug and
-file do not change; `Session.run_name` follows on the next load. Check the
-collision rule in `fresh_run_name` so a rename cannot duplicate another name.
-
-**Invariants.** The save file itself is untouched; an empty or duplicate name
-is refused with a short message; Escape cancels.
-
-**Acceptance (player seat, and the hands-on check).** In the saves list,
-rename a save, quit and restart the game: the new name shows in the list and
-the save loads.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] PN-2 -- rename a save in the saves list**
-- Plan: `plans/now/play-notes.md` -- "PN-2 -- rename a save in the saves list"
-- Files: `scripts/saves_panel.gd`, `scripts/save_slots.gd`, `tests/pn2_save_rename_test.gd`, `tests/test_pn2_save_rename.py`
-- Check: `python -m unittest tests.test_pn2_save_rename` passes (rename updates the index name only, survives a reload, refuses empty and duplicate names); `.\tools\verify.ps1` is green. Hands-on: rename a save, quit, restart; the new name shows and it loads
-- Proof: `absent: scripts/save_slots.gd :: func rename(`
-- Next after: PN-3 -- a save remembers whether Goals was open
-```
+PN-2 shipped 2026-11-07; its specification is `plans/archive/PN-2_2026-11-07.md`.
 
 ## PN-3 -- a save remembers whether Goals was open
 
