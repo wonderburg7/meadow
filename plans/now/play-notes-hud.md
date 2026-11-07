@@ -1,7 +1,7 @@
 # Play notes, HUD side -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: PN-14 -- text no longer shrinks when unpausing, then PN-15 | Dependency: all seven share `hud.gd` or `input_selection.gd` and run in turn; PN-8 and PN-10 wait for the Claude lane's PN-3 and ED-2 to release `session.gd` and the Goals test; PN-16 waits for PN-6 (`plans/now/play-notes.md`) | Verified: 2026-11-05
+Status: active | Owner: Dave / Codex | Next: PN-15 -- a day dial beside "Day N" | Dependency: all seven share `hud.gd` or `input_selection.gd` and run in turn; PN-8 and PN-10 wait for the Claude lane's PN-3 and ED-2 to release `session.gd` and the Goals test; PN-16 waits for PN-6 (`plans/now/play-notes.md`) | Verified: 2026-11-05
 
 ## Objective
 
@@ -22,7 +22,6 @@ and `colony_milestones.gd`) and grep on this branch.
 
 | Id | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PN-14 | text no longer shrinks when unpausing | `hud.gd`, `camera_view.gd` | yes | high |
 | PN-15 | a day dial beside "Day N" | new `hud_day_dial.gd`, `hud.gd` | yes | medium |
 | PN-8 | Warning history in the Colony window | `hud.gd`, `colony_panel.gd`, `session.gd` | after PN-3 and ED-2 (Claude lane) release `session.gd` | medium |
 | PN-10 | opening goal text a new player can act on | `colony_milestones.gd` | after PN-3 (Claude lane) releases `tests/gp1_goals_dropdown_test.gd` | low |
@@ -103,37 +102,7 @@ first goal tells you what to do, not only what to achieve.
 - Next after: PN-16 -- double-click a cell selects all of its type
 ```
 
-## PN-14 -- text no longer shrinks when unpausing
-
-**True now (cause unknown).** Dave: "when pressing space to pause, the text
-shrinks when unpausing". Space goes `input_selection.gd` to
-`camera_view.gd::_toggle_pause`, then `_refresh_speed_display` (shows
-`hud.pause_label`, theme variation "Heading", calls `hud.set_speed_display`).
-Suspects: `hud.gd::_corner_signature` / `_rebuild_corner_labels` rebuilding
-corner labels with `UiTheme.font_px(CORNER_SIZES)`; the fps and speed text; the
-speed buttons' pressed state.
-
-**Change.** Reproduce first: a headless test records the font sizes of the HUD
-labels before pausing and after unpausing, and fails. Then fix the cause, and
-leave a `PN-14` comment at the fix.
-
-**Invariants.** Pause and unpause behaviour is unchanged; no per-frame rebuild
-is added (`.claude/rules/performance.md`). If the cause is outside these files,
-stop and say so.
-
-**Acceptance (player seat, and the hands-on check).** Press Space to pause and
-again to resume: no text changes size.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] PN-14 -- text no longer shrinks when unpausing**
-- Plan: `plans/now/play-notes-hud.md` -- "PN-14 -- text no longer shrinks when unpausing"
-- Files: `scripts/hud.gd`, `scripts/camera_view.gd`, `tests/pn14_pause_font_test.gd`, `tests/test_pn14_pause_font.py`
-- Check: `python -m unittest tests.test_pn14_pause_font` passes (HUD label font sizes equal before pause and after unpause; failing before the fix); `.\tools\verify.ps1` is green. Hands-on: Space to pause and resume leaves text size alone
-- Proof: `absent: scripts/hud.gd :: PN-14`
-- Next after: PN-15 -- a day dial beside "Day N"
-```
+PN-14 shipped 2026-11-07; its specification is `plans/archive/PN-14_2026-11-07.md`.
 
 ## PN-15 -- a day dial beside "Day N"
 
