@@ -1,7 +1,7 @@
 # Play notes, HUD side -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: PN-7 -- the cell popup and selection text batch, in the Codex backlog behind SP-12 (Dave, 5 Nov 2026, plan review: the HUD play notes move to Codex), then PN-14 and PN-15 | Dependency: all seven share `hud.gd` or `input_selection.gd` and run in turn; PN-8 and PN-10 wait for the Claude lane's PN-3 and ED-2 to release `session.gd` and the Goals test; PN-16 waits for PN-6 (`plans/now/play-notes.md`) | Verified: 2026-11-05
+Status: active | Owner: Dave / Codex | Next: PN-14 -- text no longer shrinks when unpausing, then PN-15 | Dependency: all seven share `hud.gd` or `input_selection.gd` and run in turn; PN-8 and PN-10 wait for the Claude lane's PN-3 and ED-2 to release `session.gd` and the Goals test; PN-16 waits for PN-6 (`plans/now/play-notes.md`) | Verified: 2026-11-05
 
 ## Objective
 
@@ -22,7 +22,6 @@ and `colony_milestones.gd`) and grep on this branch.
 
 | Id | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PN-7 | cell popup wording, Empty controls, a warning box that stays | `hud.gd` | yes | medium |
 | PN-14 | text no longer shrinks when unpausing | `hud.gd`, `camera_view.gd` | yes | high |
 | PN-15 | a day dial beside "Day N" | new `hud_day_dial.gd`, `hud.gd` | yes | medium |
 | PN-8 | Warning history in the Colony window | `hud.gd`, `colony_panel.gd`, `session.gd` | after PN-3 and ED-2 (Claude lane) release `session.gd` | medium |
@@ -46,49 +45,7 @@ and `colony_milestones.gd`) and grep on this branch.
 - CQ-T4 (`plans/now/code-health.md`) types `colony_panel.gd` and
   `camera_view.gd` after PN-8 and PN-14 have landed.
 
-## PN-7 -- cell popup and selection text batch
-
-**True now.** `hud.gd::_selection_identity_text` appends "(does not die of old
-age)" to a bee's Age line. `_build_empty_controls` offers "To another cell"
-and "Discard outside"; `clear_fermented_btn` ("Discard all sour nectar") shows
-whenever `active_cell.is_fermented()` (set in `_refresh_cell_popup`). The
-Reserve for row (`_build_cell_group`) lacks Keep empty, which is a separate
-"Leave empty" checkbox. `show_warning` uses `WARNING_SECONDS = 18.0`,
-decremented by scaled `_delta` in `_process`, so it lasts about 4.5 s at 4x
-speed (C-140: "it disappears quickly (particularly at high speed) and there's no
-way to bring it back").
-
-**Change.**
-- Remove "   (does not die of old age)".
-- Rename "To another cell" to "Empty to other cells" and "Discard outside" to
-  "Empty to outside".
-- Show "Discard all sour nectar" only when the run owns both
-  `skill.hive_mind.cleaning` and `Skills.FERMENTATION_SENSE`.
-- "Keep empty" joins the Reserve for row, emitting
-  `cell_keep_empty_requested(cell, true)`; fold the "Leave empty" checkbox into
-  it. Do not add an `Availability.UI_GATES` key.
-- The warning box dwells 18 real seconds: divide by `Engine.time_scale` or use a
-  real-time clock.
-
-**Invariants.** `tests/display_text_golden_test.gd` and its fixture may change;
-update them in the slice. Simulation is untouched.
-
-**Acceptance (player seat, and the hands-on check).** Select a bee: the Age line
-has no old-age remark. Open an empty cell's popup: the buttons read "Empty to
-other cells" and "Empty to outside", and Keep empty sits in the Reserve row.
-Without Cleaning, no sour-nectar button. At 4x speed a warning stays about 18
-real seconds.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] PN-7 -- cell popup and selection text batch**
-- Plan: `plans/now/play-notes-hud.md` -- "PN-7 -- cell popup and selection text batch"
-- Files: `scripts/hud.gd`, `tests/display_text_golden_test.gd`, `tests/test_pn7_cell_popup.py`
-- Check: `python -m unittest tests.test_pn7_cell_popup` passes (labels, the sour-nectar gate, Keep empty in the Reserve row, warning dwell at 4x); the display-text golden test is regenerated; `.\tools\verify.ps1` is green. Hands-on: the cell popup reads as above and a warning at 4x lasts about 18 seconds
-- Proof: `present: scripts/hud.gd :: does not die of old age`
-- Next after: PN-14 -- text no longer shrinks when unpausing
-```
+PN-7 shipped 2026-11-07; its specification is `plans/archive/PN-7_2026-11-07.md`.
 
 ## PN-8 -- Warning history in the Colony window
 
