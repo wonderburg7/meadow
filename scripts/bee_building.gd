@@ -102,6 +102,16 @@ static func builder_go_to_site(bee: Node2D, delta: float) -> void:
 		bee.target_cell = null
 		bee.state = State.BUILD_IDLE
 		return
+	# PN-4: the site is in the hive's own coordinates, so from the meadow
+	# she flies to the entrance and goes in first (as TO_HIVE does) rather
+	# than building it from a meadow point that happens to match.
+	if not bee._is_inside_hive():
+		BeeMovement.move_towards(bee, bee.hive.position, delta)
+		if bee.world != null and bee.position.distance_to(bee.hive.position) < bee.arrive_distance:
+			bee.world.move_bee_into_hive(bee)
+			bee.path_points.clear()   # any route held is from an earlier visit
+			BeeMovement.clear_navigation_state(bee)
+		return
 	# Stands at one of the cell's six walls rather than its centre, so a
 	# builder (the queen included, in Challenge 1) doesn't sit on top of
 	# the comb she's forming and hide it from view while it's drawn.

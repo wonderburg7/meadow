@@ -2,8 +2,9 @@ extends Node
 ## The nursery zone, comb overlays, cell designation and restocking
 ## orders, role/mode assignment, and one step of undo for designation.
 ## Split out of main.gd 14 Aug 2026 -- see MAIN_SPLIT_PLAN.md. Holds no
-## state beyond `_designation_undo`, which nothing outside this file
-## touches; reads and writes main's fields through the `main` reference.
+## state beyond `_designation_undo` and the queen's `ordered_site`, which
+## nothing outside this file writes; reads and writes main's fields through
+## the `main` reference.
 
 var main: Node2D
 
@@ -12,6 +13,13 @@ const BeeNursery = preload("res://scripts/bee_nursery.gd")
 ## One step of undo for cell designation. Records what each cell was
 ## before the change.
 var _designation_undo: Array = []
+
+## PN-4: the site the queen was last told to build. A meal takes her off
+## it (bee_survival.gd::begin_feeding_self overwrites target_cell), so it
+## is kept here until the cell is finished, another build order replaces
+## it, or she breaks off to eat from some other errand. One queen, one site.
+## Not saved: a restored run starts with no order outstanding.
+var ordered_site: Node2D = null
 
 ## RR-1: the queen's own build, the same in every run. Checks the hex, makes the
 ## cell site, and sends her to it. Returns the site, or null when she cannot.
@@ -29,7 +37,30 @@ func queen_build_at(hex: Vector2i) -> Node2D:
 			return null
 	main.queen.target_cell = site
 	main.queen.state = main.Bee.State.TO_BUILD_SITE
+	ordered_site = site
 	return site
+
+## PN-4: called as a bee breaks off to eat. The queen's order is kept over
+## the meal only when she was still on it.
+func note_meal_break(bee: Node2D) -> void:
+	if bee != main.queen or ordered_site == null:
+		return
+	var on_order: bool = bee.target_cell == ordered_site and (
+		bee.state == main.Bee.State.TO_BUILD_SITE or bee.state == main.Bee.State.BUILDING)
+	if not on_order:
+		ordered_site = null
+
+## PN-4: after her meal, sends the queen back to the site she was told to
+## build if it still needs building. Returns whether she went.
+func resume_ordered_build(bee: Node2D) -> bool:
+	if bee != main.queen or ordered_site == null:
+		return false
+	if not is_instance_valid(ordered_site) or ordered_site.is_built:
+		ordered_site = null
+		return false
+	bee.target_cell = ordered_site
+	bee.state = main.Bee.State.TO_BUILD_SITE
+	return true
 
 func _apply_zone_glow() -> void:
 	var showing: bool = main.nursery_panel.is_open() and main.in_hive_view

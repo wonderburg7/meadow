@@ -1,0 +1,24 @@
+{
+  "run_type": "colony",
+  "random_seed": 20261107,
+  "cells": 1,
+  "nectar_foragers": 0,
+  "pollen_foragers": 0,
+  "nurses": 0,
+  "builders": 0,
+  "miners": 0,
+  "honey_makers": 0,
+  "winter": true,
+  "actions": [
+    {"do": "set_cell_contents", "cell": {"built_index": 0}, "resource": "nectar", "amount": 40},
+    {"do": "assign_role", "target": {"queen": true}, "role": "forager"},
+    {"do": "set_config", "key": "hunger_threshold", "value": 0.9},
+    {"do": "select_bees", "target": {"queen": true}},
+    {"do": "request_placement_tool", "tool": "queen_build_cell"},
+    {"do": "click_world", "comb_hex": [1, 0]},
+    {"do": "assert", "within_seconds": 120, "condition": {"bee_states": {"target": {"queen": true}, "in": ["BUILDING"], "mode": "any"}}},
+    {"do": "assert", "within_seconds": 300, "condition": {"bee_states": {"target": {"queen": true}, "in": ["FEEDING"], "mode": "any"}}},
+    {"do": "assert", "within_seconds": 300, "condition": {"built_cells_at_least": 2}}
+  ],
+  "stop": {"when_actions_resolved": true, "max_days": 4}
+}
