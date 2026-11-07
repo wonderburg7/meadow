@@ -1,7 +1,7 @@
 # Play notes -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PN-4 in the Claude lane (PN-2 and PN-3 landed; PN-3's hands-on check is C-182); PN-5 and PN-6 are startable and wait for room | Dependency: PN-16 (`plans/now/play-notes-hud.md`, Codex) follows PN-6 | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code | Next: PN-5 in the Claude lane (PN-2, PN-3 and PN-4 landed; their hands-on checks are C-182 and C-183); PN-6 is startable and waits for room | Dependency: PN-16 (`plans/now/play-notes-hud.md`, Codex) follows PN-6 | Verified: 2026-11-07
 
 ## Objective
 
@@ -27,7 +27,6 @@ to put nectar" warning; Dr Gallerin's bubble behaviour; drones skipped by
 
 | Id | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PN-4 | the queen finishes a cell she was told to build | `bee_survival.gd`, `orders_zones.gd`, `bee_building.gd` | yes -- queued | high |
 | PN-5 | a cell or soil block is clicked by its top face | `input_selection.gd` | yes | medium |
 | PN-6 | double-click selects bees of the same role | `input_selection.gd` | after PN-5 | low |
 
@@ -47,44 +46,7 @@ PN-2 shipped 2026-11-07; its specification is `plans/archive/PN-2_2026-11-07.md`
 
 PN-3 shipped 2026-11-07; its specification is `plans/archive/PN-3_2026-11-07.md`.
 
-## PN-4 -- the queen finishes a cell she was told to build
-
-**True now (inferred, not yet reproduced).** Dave: "I ask queen to build a
-cell, but at the time she is assigned a different role (e.g. forager), she
-starts building it but eventually changes back", and the queen "got stuck
-outside 'Building a new cell'" when asked from the meadow.
-`orders_zones.gd::queen_build_at` only sets `target_cell` and `TO_BUILD_SITE`;
-`bee_survival.gd::begin_feeding_self` overwrites `target_cell`, and
-`after_feeding` returns to `_default_state_for_role()`, forgetting the site.
-Outdoors, `bee_building.gd::builder_go_to_site` moves straight at the cell with
-no hive-entrance leg; the stall watchdog sets `BUILD_IDLE`, which a
-non-builder role never leaves.
-
-**Change.** First reproduce both in test scenarios (a Forager queen who must
-eat mid-build; a queen ordered to build while outside). Then remember the
-ordered site across a meal (a field `ordered_site` on the bee, cleared on
-arrival or a new order), or re-issue it through the `manual_build_hex` queue
-(`bee_building.gd::create_cell_site_at`); and when not inside the hive, route
-via the entrance (`TO_HIVE` first) before heading for the site.
-
-**Invariants.** Other roles' builders are unchanged; no `bee.gd` edit (if one
-is unavoidable, stop: HS-2 and SP-6 own it). The queen's eating and fatigue
-rules are unchanged.
-
-**Acceptance (player seat, and the hands-on check).** With the queen set to
-Forager, order Build cell: she finishes it even after eating. With the queen
-in the meadow, order Build cell: she walks home and builds it.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] PN-4 -- the queen finishes a cell she was told to build**
-- Plan: `plans/now/play-notes.md` -- "PN-4 -- the queen finishes a cell she was told to build"
-- Files: `scripts/bee_survival.gd`, `scripts/orders_zones.gd`, `scripts/bee_building.gd`, `test_scenarios/pn4_queen_build_after_meal.json`, `test_scenarios/pn4_queen_build_from_meadow.json`, `tests/test_pn4_queen_build.py`
-- Check: `python -m unittest tests.test_pn4_queen_build` passes (both scenarios fail before the fix and finish the cell after it); `python -m unittest tests.test_rr1_queen_builds` still passes; `.\tools\verify.ps1` is green. Hands-on: a Forager queen ordered to build finishes the cell after eating; one ordered from the meadow walks in and builds
-- Proof: `absent: scripts/orders_zones.gd :: ordered_site`
-- Next after: PN-5 -- a cell or soil block is clicked by its top face
-```
+PN-4 shipped 2026-11-07; its specification is `plans/archive/PN-4_2026-11-07.md`.
 
 ## PN-5 -- a cell or soil block is clicked by its top face
 

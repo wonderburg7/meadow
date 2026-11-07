@@ -23,14 +23,7 @@ short and says which candidate it refused and why.
 Up to five items, worked top to bottom. No file here may appear in the Codex
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 
-1. **[Claude] PN-4 -- the queen finishes a cell she was told to build**
-   - Plan: `plans/now/play-notes.md` -- "PN-4 -- the queen finishes a cell she was told to build"
-   - Files: `scripts/bee_survival.gd`, `scripts/orders_zones.gd`, `scripts/bee_building.gd`, `test_scenarios/pn4_queen_build_after_meal.json`, `test_scenarios/pn4_queen_build_from_meadow.json`, `tests/test_pn4_queen_build.py`
-   - Check: `python -m unittest tests.test_pn4_queen_build` passes (both scenarios fail before the fix and finish the cell after it); `python -m unittest tests.test_rr1_queen_builds` still passes; `.\tools\verify.ps1` is green. Hands-on: a Forager queen ordered to build finishes the cell after eating; one ordered from the meadow walks in and builds
-   - Proof: `absent: scripts/orders_zones.gd :: ordered_site`
-   - Next after: PN-5 -- a cell or soil block is clicked by its top face
-
-2. **[Claude] PN-12 -- developer mode buys any skill**
+1. **[Claude] PN-12 -- developer mode buys any skill**
    - Plan: `plans/now/play-notes-config.md` -- "PN-12 -- developer mode buys any skill"
    - Files: `scripts/skill_tree_panel.gd`, `scripts/settings_catalogue.gd`, `tests/test_pn12_developer_skills.py`
    - Check: `python -m unittest tests.test_pn12_developer_skills` passes (a blocked skill is buyable only with developer mode on, free); `.\tools\verify.ps1` is green. Hands-on: developer mode lets an unaffordable skill be bought
