@@ -66,7 +66,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
 - **CQ-R13** (`plans/now/code-health.md`) -- `main.gd::_ready` into build steps; waits for CQ-R2, which shares `scripts/main.gd`, and then needs its slice specification.
 - **CQ-R4** (`plans/now/code-health.md`) -- its section and block are ready after CQ-R3; waits for the open Jules branch `origin/jules/s-1-jules-preflight-helpers-5003130817358154397` to release `scripts/bee.gd` (ownership check, 6 Nov 2026).
-- **CQ-T4** (`plans/now/code-health.md`) -- the remaining scripts and tests typed and `untyped_declaration` made an error; waits for the Codex lane's PN-8 and PN-14, which hold two of its files.
+- **CQ-T4** (`plans/now/code-health.md`) -- the remaining scripts and tests typed and `untyped_declaration` made an error; waits for the Codex lane's PN-8 and which hold two of its files.
 - **CQ-L3** (`plans/now/code-health.md`) -- one-off `gdformat` over every `.gd` file, then `--check` joins verify; waits for both lanes to empty.
 - **CQ-M4** (`plans/now/code-health.md`) -- name Challenge level ids; waits for the Claude lane to release `scripts/save_game.gd` and `scripts/saving.gd`.
 - **CQ-M6b** (`plans/now/code-health.md`) -- the cell ring and the selection layer read the selection green; waits for the Claude lane's PN-5, PN-6 and PN-9, which edit `scripts/input_selection.gd` and `scripts/hive_cell.gd`.
