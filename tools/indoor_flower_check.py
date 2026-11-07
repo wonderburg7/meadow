@@ -71,7 +71,12 @@ def strip_code(text: str) -> str:
 
 
 def _extract_func_body(lines: list[str], func_name: str) -> tuple[int, list[str]]:
-    """Extract (start_line_no, body_lines) for a function in GDScript lines."""
+    """Extract (start_line_no, body_lines) for a function in GDScript lines.
+
+    Blank and comment-only lines never end the body, whatever their indent: a
+    column-zero comment inside a function would otherwise hide every line
+    after it (jules-review-2026-11-07 F6).
+    """
     in_func = False
     func_indent = -1
     body_lines: list[str] = []
@@ -80,7 +85,7 @@ def _extract_func_body(lines: list[str], func_name: str) -> tuple[int, list[str]
     for line_no, raw_line in enumerate(lines, 1):
         stripped = strip_code_line(raw_line)
         if in_func:
-            if not raw_line.strip():
+            if not stripped.strip():
                 body_lines.append(raw_line)
                 continue
             indent = len(raw_line) - len(raw_line.lstrip())
