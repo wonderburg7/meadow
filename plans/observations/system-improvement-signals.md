@@ -735,9 +735,9 @@ explicit request from Dave.
   needs a clean boot check before full engine tests. The earlier
   superseded disposition covered the worktree-blocking failure only.
 
-### 2026-10-15 — `plans/now/sprites.md` is over its soft limit (from the verification review)
+### 2026-10-15 — `plans/archive/sprites_2026-11-07.md` is over its soft limit (from the verification review)
 
-- Signal: `tools/check_docs.py` warns "plans/now/sprites.md: 326 lines (soft
+- Signal: `tools/check_docs.py` warns "plans/archive/sprites_2026-11-07.md: 326 lines (soft
   limit 260) -- check it is not holding delivered slices", and "plans/reference/check-loop.md:
   verification date is 36 days old". Both warnings print on every verify run.
 - Evidence: `python tools/check_docs.py | grep WARNING`, 15 Oct 2026.
@@ -745,7 +745,7 @@ explicit request from Dave.
 - Candidate direction: Hypothesis -- plan review archives delivered sprite
   slices and re-verifies check-loop.md.
 - Disposition: superseded -- fixed by the 15 Oct 2026 plan review
-  (`docs/plan-review-2026-10-15.md`): `plans/now/sprites.md` is 167 lines,
+  (`docs/plan-review-2026-10-15.md`): `plans/archive/sprites_2026-11-07.md` is 167 lines,
   the meadow floor moved to `plans/now/meadow-terrain.md`, and
   `plans/reference/check-loop.md` was re-verified.
 

@@ -28,7 +28,7 @@ Reviewed: 0be134c | Since: b9854e5 | Scope: a full verify.ps1 run and the diagno
 
 ## Hand-offs
 
-- **Plan review.** `check_docs.py` warns that `plans/now/sprites.md` is 326 lines (soft limit 260) and `check-loop.md` is 36 days past verification. Signal log: "2026-10-15 — `plans/now/sprites.md` is over its soft limit".
+- **Plan review.** `check_docs.py` warns that `plans/archive/sprites_2026-11-07.md` is 326 lines (soft limit 260) and `check-loop.md` is 36 days past verification. Signal log: "2026-10-15 — `plans/archive/sprites_2026-11-07.md` is over its soft limit".
 
 ## Noted, not pursued
 

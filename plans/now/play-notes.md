@@ -36,7 +36,7 @@ to put nectar" warning; Dr Gallerin's bubble behaviour; drones skipped by
 
 PN-6 follows PN-5, and PN-16 (`plans/now/play-notes-hud.md`, Codex lane)
 follows PN-6: all three edit `scripts/input_selection.gd`, as SP-12
-(`plans/now/sprites.md`) and CQ-M6b (`plans/now/code-health.md`), both Codex,
+(`plans/archive/sprites_2026-11-07.md`) and CQ-M6b (`plans/now/code-health.md`), both Codex,
 do: whichever is queued first runs first.
 PN-3 follows ED-2 (`plans/now/difficulty.md`) in the Claude lane; both edit
 `save_game.gd`, `saving.gd` and `session.gd`, so PN-3 re-captures the CQ-S0

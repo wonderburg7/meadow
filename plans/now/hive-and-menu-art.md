@@ -1,14 +1,14 @@
 # Hive and menu art -- Dave's meadow hives and top-bar icons in the game
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: HM-1 waits for Dave to fit the large hive's art on its canvas; HM-2 is specified and waits for Dave to queue it (his call, 13 Oct 2026) | Dependency: the sprite exporter and table (`plans/now/sprites.md`, SP-2); HM-1 shares `scripts/hive.gd` and `scripts/rival_hive.gd` with SP-8a | Verified: 2026-10-13
+Status: active | Owner: Dave / Claude Code | Next: HM-1 waits for Dave to fit the large hive's art on its canvas; HM-2 is specified and waits for Dave to queue it (his call, 13 Oct 2026) | Dependency: the sprite exporter and table (`plans/archive/sprites_2026-11-07.md`, SP-2); HM-1 shares `scripts/hive.gd` and `scripts/rival_hive.gd` with SP-8a | Verified: 2026-10-13
 
 ## Objective
 
 Dave drew two meadow hives and five top-bar icons on 10 Oct 2026. They are
 committed with `unexported` rows in `assets/sprites/SPRITES.md`. This plan
 puts them on screen. Scale, file conventions and the exporter route are in
-`plans/design/pixel-art.md` and `plans/now/sprites.md`; this plan does not
+`plans/design/pixel-art.md` and `plans/archive/sprites_2026-11-07.md`; this plan does not
 repeat them.
 
 ## Decisions (Dave, 13 Oct 2026)

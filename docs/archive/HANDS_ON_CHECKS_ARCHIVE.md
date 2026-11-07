@@ -37,7 +37,7 @@ changes.
 
 Runner: dave
 
-Owner: `plans/now/sprites.md`
+Owner: `plans/archive/sprites_2026-11-07.md`
 
 Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
 
@@ -51,7 +51,7 @@ If it fails, the skep's offset or size in scripts/hive.gd or scripts/rival_hive.
 
 Runner: dave
 
-Owner: `plans/now/sprites.md`
+Owner: `plans/archive/sprites_2026-11-07.md`
 
 Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
 
@@ -191,7 +191,7 @@ If it fails, the door offset `HIVE_SKEP_DOOR` in `scripts/hive.gd` is reopened (
 
 Runner: dave
 
-Owner: `plans/now/sprites.md`
+Owner: `plans/archive/sprites_2026-11-07.md`
 
 Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass.
 
@@ -219,7 +219,7 @@ If it fails, the lift in `scripts/soil_block.gd::_refresh_art` (`SIDE_HEIGHT_PX`
 
 Runner: dave -- whether the ring sits on the art is a visual judgement (C-134 failed on the comb's version of this)
 
-Owner: `plans/now/sprites.md`
+Owner: `plans/archive/sprites_2026-11-07.md`
 
 Confirmed 30 Oct 2026: Dave, 30 Oct 2026: pass, with a follow-up comment handled in that day's check batch.
 
@@ -358,7 +358,7 @@ If it fails, SP-10 reopens: the depth formula `Shapes.hex_draw_depth` or where `
 
 Runner: opus -- a fine visual judgement of overlapping art across the whole wall
 
-Owner: `plans/now/sprites.md`
+Owner: `plans/archive/sprites_2026-11-07.md`
 
 ### C-135 -- A miner on Dig on its own starts digging by itself once Automation is bought
 
@@ -477,7 +477,7 @@ If it fails, SP-4 reopens: the level bounds in assets/sprites/SPRITES.md or the 
 
 Runner: dave
 
-Owner: `plans/now/sprites.md`
+Owner: `plans/archive/sprites_2026-11-07.md`
 
 Confirmed 14 Oct 2026: run by Dave: nectar and pollen cells show fill levels that rise (pass); fermented nectar looks paler and murkier than fresh (pass). The selection-ring condition failed (it should trace the cup's flat rim, not the whole shape) and is re-filed as C-134 for SP-11.
 
@@ -670,7 +670,7 @@ If it fails, SP-1's shader or the cell sprite scale needs another pass (`assets/
 
 Runner: dave -- shimmer and seams while zooming are motion, invisible in stills
 
-Owner: `plans/now/sprites.md`
+Owner: `plans/archive/sprites_2026-11-07.md`
 
 Confirmed 11 Oct 2026: run by Dave (11 Oct 2026): C-100 pass, C-101 pass (sonnet had covered scale 2 in Munro and Silkscreen and the wheel zoom; Dave covered the rest), C-120 pass, C-121 pass
 
@@ -684,7 +684,7 @@ If it fails, the offending colour is retuned in scripts/hive_cell.gd and tests/t
 
 Runner: dave -- 'told apart at a glance' is a perceptual colour judgement
 
-Owner: `plans/now/sprites.md`
+Owner: `plans/archive/sprites_2026-11-07.md`
 
 Confirmed 11 Oct 2026: run by Dave (11 Oct 2026): C-100 pass, C-101 pass (sonnet had covered scale 2 in Munro and Silkscreen and the wheel zoom; Dave covered the rest), C-120 pass, C-121 pass
 

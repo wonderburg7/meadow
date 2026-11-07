@@ -106,4 +106,5 @@ C-<n> pass | fails: <what I saw> | comment: <anything else>
 - [C-178 -- Narrow a crowd by n, youngest and oldest](ready/C-178.md)
 - [C-179 -- PN-19: soil selection ring closes](ready/C-179.md)
 - [C-180 -- PN-18: the queen empties sour nectar on command](ready/C-180.md)
+- [C-181 -- comb outlines follow the cup rim](ready/C-181.md)
 - [C-84 -- Challenge 2's last stage shows what is still short](ready/C-84.md)
