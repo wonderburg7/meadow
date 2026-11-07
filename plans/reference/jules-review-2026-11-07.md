@@ -96,3 +96,5 @@ Limitations: no hands-on play, rendered UI QA or performance profiling was neede
 Selected tests and records were actually merged and pushed to master in **f60d52fac2fa74ec93fa190bed02bdce5fa72e42**; source test commit **1903b9e0e545de22042fd424a8e726e5509e0b2f**, followed by reference-only late-tip review **955c6ab**. This closeout adds exact-tip ledger rows only after that delivery.
 
 Closed after checking each still matched its reviewed PR tip: **#109, #126, #130, #133, #135, #146, #148, #149, #150, #151, #152, #154, #156, #157, #158**. The ten repurposed closed PRs stay closed; no late content is marked delivered. **#134, #145, #147, #153, #155 remain open and returned.** All remote branches were preserved; only this session's temporary worktrees are removed during closeout. No PR comments/messages were sent. Every discovered item has a disposition; no product/save/architecture decision is pending.
+
+Final authoritative primary-checkout ledger check after publication: **0 unreviewed, 38 merged, 5 returned, 37 closed, 0 reviewed/moved/stale**. The open-PR list is exactly #134/#145/#147/#153/#155 at the reviewed SHAs; no draft or unassigned Jules PR remains.
