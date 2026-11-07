@@ -5,6 +5,7 @@ extends Node
 ## gesture state; reads and writes shared fields through the `main` reference.
 
 var main: Node2D
+var _cached_cup_rim: PackedVector2Array = PackedVector2Array()
 var dragging: bool = false
 var drag_start: Vector2 = Vector2.ZERO
 var drag_current: Vector2 = Vector2.ZERO
@@ -767,13 +768,20 @@ func _draw_order_chain(bee: Node2D, points: Array, colour: Color) -> void:
 		previous = point
 
 func _draw_tile_outline(centre: Vector2, colour: Color, width: float, dashed: bool) -> void:
-	var corners: PackedVector2Array = main.Shapes.hexagon_points(GameConfig.hive_cell_size + 1.0, Session.use_sprite_hex_grid)
+	var corners: PackedVector2Array = tile_outline_points()
 	for i: int in range(6):
 		if dashed and i % 2 == 1:
 			continue
 		main.selection_layer.draw_line(
 			centre + corners[i], centre + corners[(i + 1) % 6], colour, width
 		)
+
+func tile_outline_points() -> PackedVector2Array:
+	if not Session.use_cell_sprites:
+		return main.Shapes.hexagon_points(GameConfig.hive_cell_size + 1.0, Session.use_sprite_hex_grid)
+	if _cached_cup_rim.is_empty():
+		_cached_cup_rim = main.hive.HiveCell.rim_points(PixelSprite.hive_scale())
+	return _cached_cup_rim
 
 func _tile_centre(hex: Vector2i) -> Vector2:
 	return main.hive_root.to_global(

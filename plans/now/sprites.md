@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: SP-12 -- every outline on a comb cell sits on the cup's rim, fifth in the Codex lane (Dave, 1 Nov 2026) | Dependency: none left -- `claude/dave-hands-on-checks-784f2a` merged 4 Nov 2026; SP-12 and the Claude lane's PN-5 and PN-6 share `input_selection.gd`, so whichever is queued first runs first | Verified: 2026-11-05
+Status: complete | Owner: Dave / Claude Code / Codex | Next: None -- plan complete | Dependency: none | Verified: 2026-11-07
 
 ## Objective
 
@@ -39,6 +39,8 @@ builds them and does not restate them.
    the pixels square at any zoom (SP-1).
 
 ## Current state
+
+Follow-up: C-181 in `checks/ready.md` checks the comb outlines by eye.
 
 Verified 15 Oct 2026 against master `b5e6751`. SP-1 to SP-5, SP-7, SP-9 and
 SP-10 have landed: the comb is drawn from Dave's cell art through the
@@ -128,6 +130,10 @@ is off. `python -m unittest tests.test_sp11_cell_rim` still passes. No per-frame
 cost is added: the rim points are built once and cached.
 
 **Open decisions:** none.
+
+**Rim measurement (Dave, 7 Nov 2026).** Compare the opaque rim region of
+the empty frame, excluding the lower cup wall, rather than the whole sprite.
+The visual follow-up is C-181.
 
 ```queue
 **[Codex] SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels**
