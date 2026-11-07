@@ -190,6 +190,23 @@ func set_focus(type: String) -> void:
         problems = check_bee_focus(broken)
         self.assertTrue(any("is not enclosed in 'if not _is_inside_hive():'" in p for p in problems))
 
+    def test_real_set_focus_seek_flower_after_column_zero_comment_fails(self) -> None:
+        """F6 (jules-review-2026-11-07): a column-zero comment must not end set_focus."""
+        source = (Path(__file__).resolve().parent.parent / "scripts" / "bee.gd").read_text(encoding="utf-8")
+        tail = "\t\tstate = State.IN_HIVE_TO_EXIT\n\t_update_label()\n\t_update_role_marker()\n"
+        self.assertEqual(source.count(tail), 1, "mutation anchor missing from the real set_focus")
+        self.assertEqual(check_bee_focus(source), [])
+        mutated = source.replace(tail, tail + "# column-zero note\n\tstate = State.SEEK_FLOWER\n", 1)
+        expected_line = source[: source.index(tail) + len(tail)].count("\n") + 2
+        problems = check_bee_focus(mutated)
+        self.assertEqual(
+            problems,
+            [
+                f"scripts/bee.gd:{expected_line}: assignment 'state = State.SEEK_FLOWER' "
+                "is not enclosed in 'if not _is_inside_hive():'"
+            ],
+        )
+
     def test_set_focus_missing_indoor_exit_fails(self) -> None:
         broken = """\
 func set_focus(type: String) -> void:
