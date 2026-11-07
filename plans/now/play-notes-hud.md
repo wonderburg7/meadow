@@ -1,7 +1,7 @@
 # Play notes, HUD side -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: PN-14 -- text no longer shrinks when unpausing, then PN-15 | Dependency: all seven share `hud.gd` or `input_selection.gd` and run in turn; PN-8 and PN-10 wait for the Claude lane's PN-3 and ED-2 to release `session.gd` and the Goals test; PN-16 waits for PN-6 (`plans/now/play-notes.md`) | Verified: 2026-11-05
+Status: active | Owner: Dave / Codex | Next: PN-15 -- a day dial beside "Day N" | Dependency: all seven share `hud.gd` or `input_selection.gd` and run in turn; PN-8 and PN-10 wait for the Claude lane's PN-3 and ED-2 to release `session.gd` and the Goals test; PN-16 waits for PN-6 (`plans/now/play-notes.md`) | Verified: 2026-11-05
 
 ## Objective
 
@@ -104,6 +104,8 @@ first goal tells you what to do, not only what to achieve.
 ```
 
 ## PN-14 -- text no longer shrinks when unpausing
+
+**Outcome (7 Nov 2026).** Dave reports the text no longer shrinks. A headless Space pause/resume check, including a corner rebuild, found the day, stores and FPS font sizes unchanged. The original failure could not be reproduced; no runtime fix was made. The regression test records the current behaviour, but was not observed failing before a fix. Reopen if the symptom returns, recording the affected text and appearance settings.
 
 **True now (cause unknown).** Dave: "when pressing space to pause, the text
 shrinks when unpausing". Space goes `input_selection.gd` to
