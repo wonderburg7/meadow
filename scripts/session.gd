@@ -149,7 +149,8 @@ var pinned_stats: Array = ["day", "stores", "signals"]
 
 ## GP-1: whether the Colony Run's Goals drop-down (hud.gd) is folded up to
 ## its header. An interface preference, remembered across runs; a new
-## profile starts expanded.
+## profile starts expanded. PN-3: a save carries it too, and a load puts
+## the save's value back (saving.gd::_restore).
 var goals_collapsed: bool = false
 
 ## Gates perf.gd's instrumentation. Kept in sync with whether "fps" is
@@ -417,7 +418,7 @@ func reset_run_state() -> void:
 	pending_skill_policy = {}
 	# Two display preferences that a new run always starts from the default
 	# of, whatever the last run left: the Problems star on and the goals
-	# list shown. A load does not come through here, so it keeps its own.
+	# list shown. A load does not come through here: it takes the save's.
 	if not pinned_stats.has("signals"):
 		pinned_stats.append("signals")
 	goals_collapsed = false

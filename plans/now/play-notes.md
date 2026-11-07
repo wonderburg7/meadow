@@ -1,7 +1,7 @@
 # Play notes -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code | Next: PN-3 and PN-4 in the Claude lane (PN-2 landed), behind PN-11 and ED-2 on the alpha route; PN-5 and PN-6 are startable and wait for room | Dependency: PN-3 follows ED-2 (`plans/now/difficulty.md`), which edits the same save files; PN-16 (`plans/now/play-notes-hud.md`, Codex) follows PN-6 | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code | Next: PN-4 in the Claude lane (PN-2 and PN-3 landed; PN-3's hands-on check is C-182); PN-5 and PN-6 are startable and wait for room | Dependency: PN-16 (`plans/now/play-notes-hud.md`, Codex) follows PN-6 | Verified: 2026-11-05
 
 ## Objective
 
@@ -27,7 +27,6 @@ to put nectar" warning; Dr Gallerin's bubble behaviour; drones skipped by
 
 | Id | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PN-3 | a save remembers whether Goals was open | `save_game.gd`, `saving.gd`, `session.gd` | yes -- queued after ED-2 | high |
 | PN-4 | the queen finishes a cell she was told to build | `bee_survival.gd`, `orders_zones.gd`, `bee_building.gd` | yes -- queued | high |
 | PN-5 | a cell or soil block is clicked by its top face | `input_selection.gd` | yes | medium |
 | PN-6 | double-click selects bees of the same role | `input_selection.gd` | after PN-5 | low |
@@ -46,37 +45,7 @@ PN-1 shipped 2026-11-05; its specification is `plans/archive/PN-1_2026-11-05.md`
 
 PN-2 shipped 2026-11-07; its specification is `plans/archive/PN-2_2026-11-07.md`.
 
-## PN-3 -- a save remembers whether Goals was open
-
-**True now.** `Session.goals_collapsed` (`scripts/session.gd`) is a profile
-preference written by `hud.gd::_on_goals_button_pressed`; `reset_run_state`
-sets it false on a new run (done today). `scripts/save_game.gd` does not
-mention it. `tests/gp1_goals_dropdown_test.gd` covers the profile round trip.
-
-**Change (Dave, 31 Oct 2026: "Yes, store it in the save").** One optional save
-key, `goals_collapsed`, written on save and applied on load following
-`save_game.gd`'s `apply_settings` pattern; a missing key means shown. Do not
-edit `hud.gd`: the HUD already reads `Session.goals_collapsed` when it
-rebuilds, and a load rebuilds it. If that proves untrue, stop and note a
-HUD-plan slice rather than editing the file.
-
-**Invariants.** An old save loads unchanged (no version bump, the key is
-optional); the profile preference still works for a new run.
-
-**Acceptance (player seat, and the hands-on check).** Close the Goals list,
-save, load that save: Goals is closed. Open it, save, load: open. Re-run C-150
-after it.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] PN-3 -- a save remembers whether Goals was open**
-- Plan: `plans/now/play-notes.md` -- "PN-3 -- a save remembers whether Goals was open"
-- Files: `scripts/save_game.gd`, `scripts/saving.gd`, `scripts/session.gd`, `tests/test_gp1_goals_dropdown.py`, `tests/gp1_goals_dropdown_test.gd`
-- Check: `python -m unittest tests.test_gp1_goals_dropdown` passes with a save round trip of the Goals state and an old save with no key loading as shown; `.\tools\verify.ps1` is green. Hands-on: close Goals, save, load; it is closed (re-run C-150)
-- Proof: `absent: scripts/save_game.gd :: goals_collapsed`
-- Next after: PN-4 -- the queen finishes a cell she was told to build
-```
+PN-3 shipped 2026-11-07; its specification is `plans/archive/PN-3_2026-11-07.md`.
 
 ## PN-4 -- the queen finishes a cell she was told to build
 
