@@ -72,7 +72,6 @@ Verified 12 Oct 2026 against master `06bd26c`:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| ED-2 | A run's difficulty, saved: `Session.difficulty`, Standard for old saves | `scripts/session.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed2_difficulty_save_test.gd`, `tests/test_ed2_difficulty_save.py` | yes -- queued | medium |
 | ED-2b | Easy's rules: health floors at one, the queen cannot die, brood waits, winter spares | `scripts/bee_survival.gd`, `scripts/bee_nursery.gd`, `scripts/season.gd`, `scripts/crab_spider.gd`, `tests/ed2_easy_rules_test.gd`, `tests/test_ed2_easy_rules.py` | no -- after ED-2 | high |
 | ED-3 | Choosing Easy: the Colony Run tile, Relaxed and Custom, and the Saves window | `scripts/main_menu.gd`, `scripts/scenario_presets.gd`, `scripts/main.gd`, `scripts/levels.gd`, `scripts/saves_panel.gd`, `tests/test_ed3_difficulty_choice.py` | no -- after ED-2b | medium |
 
@@ -99,27 +98,7 @@ ED-1b shipped 2026-11-03; its specification is `plans/archive/ED-1b_2026-11-03.m
 
 ED-1c shipped 2026-11-04; its specification is `plans/archive/ED-1c_2026-11-04.md`.
 
-## ED-2 -- a run's difficulty, saved
-
-<!-- LAYER: immediate-task -->
-
-Level: medium. One run-state field and its save; no rule reads it yet.
-
-**Change.** `Session` gains the run's difficulty, `"standard"` or
-`"easy"`, reset with the run and saved; a save without it loads as
-Standard. Nothing reads it until ED-2b, and nothing sets Easy except a
-headless scenario until ED-3. ED-2 was cut in two on 5 Nov 2026 (plan
-review: nine files against a budget of eight), along the seam between the
-saved field and the rules that read it, as ED-1 was cut in three.
-
-```queue
-**[Claude] ED-2 -- a run's difficulty, saved**
-- Plan: `plans/now/difficulty.md` -- "ED-2 -- a run's difficulty, saved"
-- Files: `scripts/session.gd`, `scripts/save_game.gd`, `scripts/saving.gd`, `tests/ed2_difficulty_save_test.gd`, `tests/test_ed2_difficulty_save.py`
-- Check: `python -m unittest tests.test_ed2_difficulty_save` passes (a new run is Standard; Easy set by a headless scenario survives save and restore; a save without the key loads as Standard; the CQ-S0 round-trip goldens are re-captured with the new field); `.\tools\verify.ps1` is green
-- Proof: `absent: scripts/session.gd :: difficulty`
-- Next after: ED-2b -- Easy's rules
-```
+ED-2 shipped 2026-11-07; its specification is `plans/archive/ED-2_2026-11-07.md`.
 
 ## ED-2b -- Easy's rules
 

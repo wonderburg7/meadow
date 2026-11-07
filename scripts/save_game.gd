@@ -132,6 +132,12 @@ static func save(world: Node2D, path: String = SAVE_PATH) -> bool:
 			# WP-2, additive: the colony's default backup order. An older
 			# save has none and loads Session.DEFAULT_BACKUP_ORDER.
 			"backup_order_default": Session.backup_order_default.duplicate(),
+			# ED-2, additive: the run's difficulty. An older save has none
+			# and loads Standard.
+			"difficulty": Session.difficulty,
+			# PN-3, additive: whether the Goals drop-down was folded up. An
+			# older save has none and loads with Goals shown.
+			"goals_collapsed": Session.goals_collapsed,
 		},
 		"cells": _cells_data(world),
 		"soil": _soil_data(world),

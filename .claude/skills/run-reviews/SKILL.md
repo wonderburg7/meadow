@@ -103,16 +103,12 @@ Remove each finished worktree and its merged branch from a subshell in
 `ROOT`: `git worktree remove .claude/worktrees/review-<key>` and
 `git branch -d <branch>`. Leave a failed one in place and name it.
 
-Then report:
+Then report only this (`docs/agent-rules.md` "Output"):
 
-- one line per review: key, runner model, dispositions, slices added (id,
-  plan, level), decisions asked and Dave's answers, record path; and any
+- one line per review: key, dispositions, slice ids added, record path; a
   failure with its branch;
-- hand-offs that went to the signals file rather than to a batch review;
-- `(cd <ROOT> && python tools/review_due.py)` again, so the reviews just run
-  show `quiet`;
-- a one-paragraph trial note: where a runner went wrong, where you stepped
-  in, any change the runner brief or this skill needs;
-- the newest row of `python tools/session_cost.py --coordinator --days 1`.
+- each change the runner brief or this skill needs, one line, as a
+  decision for Dave.
 
+The record path, the signals file and `tools/review_due.py` hold the rest.
 If you name a next slice, add `CLAUDE.md`'s `Next model` and `Toggle` lines.

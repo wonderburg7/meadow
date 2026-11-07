@@ -165,13 +165,11 @@ work branch with a plain-language message; merge and clean up per
 
 ## 6. Report
 
-End with:
+End with only this (`docs/agent-rules.md` "Output"; the decisions are
+already in the plan files and the ranked table was shown in step 2):
 
-- The ranked table from step 2, with each row's new stage.
-- Decisions recorded: one line each -- decision, file and heading.
-- Still open: each deferred question, what it blocks, and where it is
-  written.
-- Queue effect: what entered each lane or the gated list.
+- Still open: each deferred question and what it blocks, one line each.
+- Queue effect: the ids that entered each lane or the gated list.
 - The hand-off lines CLAUDE.md requires whenever a next slice is named:
   `Next slice`, `Next model`, `Toggle` (from `tools/slice.ps1 doctor`'s
   `advice`), plus `Connectors: active now` from your own tool list.

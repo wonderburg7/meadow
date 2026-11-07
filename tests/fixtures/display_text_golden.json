@@ -2981,5 +2981,6 @@
 	"hud.selection.nurse_idle.activity": "Now: looking for brood work\nNo brood to look after. Nothing has been laid, or it has all emerged.",
 	"hud.selection.nurse_idle.energy": "Energy 100%  Health 100%\nCarrying: nothing",
 	"hud.selection.queen.activity": "Now: looking for pollen to eat\nPollen eaten: 2 / 60 needed for an egg",
-	"hud.selection.queen.energy": "Energy 100%  Health 100%\nCarrying: nothing"
+	"hud.selection.queen.energy": "Energy 100%  Health 100%\nCarrying: nothing",
+	"hud.selection.queen.identity": "Queen  — Laying\nAge: 0.7 days"
 }

@@ -1,12 +1,12 @@
 # Pixel art -- scale, sizes and conventions for every sprite
 
 <!-- CONTEXT: plan | LAYER: design -->
-Status: agreed art direction, built by `plans/now/sprites.md` | Owner: Dave | Next: Dave draws against the size tables below; the SP-2 exporter enforces the conventions | Dependency: none | Verified: 2026-10-30
+Status: agreed art direction, built by `plans/archive/sprites_2026-11-07.md` | Owner: Dave | Next: Dave draws against the size tables below; the SP-2 exporter enforces the conventions | Dependency: none | Verified: 2026-10-30
 
 What any new sprite must match so the game keeps one pixel style. Dave
 reads the size tables when drawing in Resprite. A session reads the
 conventions when adding a sprite. The slices that build all this are in
-`plans/now/sprites.md`.
+`plans/archive/sprites_2026-11-07.md`.
 
 <!-- LAYER: durable-rules -->
 

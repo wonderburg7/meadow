@@ -200,7 +200,8 @@ func _bee_role_and_carrying() -> void:
 
 ## The selection panel's activity and energy labels for single bees, and the
 ## count line for a multiple selection. Identity, age and trait lines hold a
-## bee id, a name, an age and a roll, so they are left out.
+## bee id, a name, an age and a roll, so they are left out, except for
+## the deterministic queen identity.
 func _hud_selection() -> void:
 	var hud: Node = _main.hud
 	var configs: Array = [
@@ -217,6 +218,9 @@ func _hud_selection() -> void:
 		hud.update_selection([bee])
 		_out["hud.selection.%s.activity" % config.name] = hud.activity_label.text
 		_out["hud.selection.%s.energy" % config.name] = hud.energy_label.text
+		if config.name == "queen":
+			bee.bee_name = ""
+			_out["hud.selection.queen.identity"] = hud._selection_identity_text(bee)
 	hud.update_selection(bees.slice(0, 2))
 	_out["hud.selection.multiple.identity"] = hud.identity_label.text
 	hud.update_selection([])

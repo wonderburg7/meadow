@@ -1,14 +1,14 @@
 # Meadow terrain -- the meadow floor in stacked blocks, then height's effects
 
 <!-- CONTEXT: plan | LAYER: active -->
-Status: active | Owner: Dave / Claude Code | Next: SP-8a -- the meadow floor drawn in blocks, with everything on it lifted, gated until CQ-R2 (`plans/now/code-health.md`) has landed, which follows ED-3, the end of the alpha chain (Dave, 16 Oct 2026; CQ-R2's place, 5 Nov 2026); then SP-8b, height's effects, cut after SP-8a and AR-4 | Dependency: CQ-R2, which edits `scripts/main.gd` and the save files SP-8a also edits; the block art is exported (`plans/now/sprites.md`, SP-2 and SP-9 landed) | Verified: 2026-11-05
+Status: active | Owner: Dave / Claude Code | Next: SP-8a -- the meadow floor drawn in blocks, with everything on it lifted, gated until CQ-R2 (`plans/now/code-health.md`) has landed, which follows ED-3, the end of the alpha chain (Dave, 16 Oct 2026; CQ-R2's place, 5 Nov 2026); then SP-8b, height's effects, cut after SP-8a and AR-4 | Dependency: CQ-R2, which edits `scripts/main.gd` and the save files SP-8a also edits; the block art is exported (`plans/archive/sprites_2026-11-07.md`, SP-2 and SP-9 landed) | Verified: 2026-11-05
 
 ## Objective
 
 Dave drew full and half-height grass and soil blocks (10-11 Oct 2026) and
 decided on 12 Oct 2026 that the meadow floor is built from them, with height
 as simulation state. This plan builds that floor. It split from
-`plans/now/sprites.md` on 15 Oct 2026 (plan review), which keeps the comb
+`plans/archive/sprites_2026-11-07.md` on 15 Oct 2026 (plan review), which keeps the comb
 and bee art; the slice ids stay SP-8 and SP-8a.
 
 ## Current state

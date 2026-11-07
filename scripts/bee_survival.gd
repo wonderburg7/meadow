@@ -239,6 +239,9 @@ static func should_go_and_eat(bee: Node2D) -> bool:
 
 
 static func begin_feeding_self(bee: Node2D) -> void:
+	var orders: Variant = _queen_orders(bee)
+	if orders != null:
+		orders.note_meal_break(bee)
 	BeeForaging.release_cell_slot(bee)
 	bee.target_cell = bee.hive.find_food_cell()
 	bee.state = State.TO_FEED_CELL
@@ -332,6 +335,10 @@ static func go_tipsy(bee: Node2D) -> void:
 static func after_feeding(bee: Node2D) -> void:
 	BeeForaging.release_cell_slot(bee)
 	bee.target_cell = null
+	# PN-4: a queen told to build goes back to the site, whatever her role.
+	var orders: Variant = _queen_orders(bee)
+	if orders != null and orders.resume_ordered_build(bee):
+		return
 	if BeeStatus.works_indoors(bee) or bee.role == Role.IDLE:
 		# indoor roles pick their own job back up; sending one down the
 		# forager's deposit path would have it filing away whatever it
@@ -342,6 +349,14 @@ static func after_feeding(bee: Node2D) -> void:
 		bee.state = State.IN_HIVE_TO_CELL
 	else:
 		bee.state = State.IN_HIVE_TO_EXIT
+
+
+## PN-4: orders_zones.gd, which holds the queen's build order, or null for
+## any other bee (or a bee with no world wired up).
+static func _queen_orders(bee: Node2D) -> Variant:
+	if not bee.is_queen or bee.world == null:
+		return null
+	return bee.world.get("orders_zones")
 
 
 
@@ -455,6 +470,10 @@ static func current_goal(bee: Node2D) -> Vector2:
 		State.MOVE_TO_POINT:
 			return bee.move_target
 		State.TO_BUILD_SITE:
+			# PN-4: from the meadow she is flying to the entrance first
+			# (bee_building.gd::builder_go_to_site).
+			if not bee._is_inside_hive():
+				return bee.hive.position
 			if bee.target_cell != null and is_instance_valid(bee.target_cell):
 				return bee.target_cell.slot_position(0)
 			return Vector2(INF, INF)

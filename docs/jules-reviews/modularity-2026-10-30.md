@@ -257,7 +257,7 @@ Key Architectural Boundaries & Ownership:
 - Downstream Impacts & Context Updates:
   - Affected Consumers: `hive.gd`, `world_building.gd` bee spawning loops, `input_selection.gd` selection drawing.
   - Affected Tests: `tests/test_forager_behaviour.py`, `tests/test_sp2_sprites.py`, `tests/balance_tests.py`.
-  - Documentation & Agent Context: Update `FUNCTION_MAP.md` mapping for `bee_view.gd`; update `plans/now/sprites.md`.
+  - Documentation & Agent Context: Update `FUNCTION_MAP.md` mapping for `bee_view.gd`; update `plans/archive/sprites_2026-11-07.md`.
   - Persistence/Saves: Must preserve `bee.gd` `to_dict()` and `from_dict()` fields (`bee_id`, `role`, `energy`, `age_days`).
 - Open decisions: none.
 

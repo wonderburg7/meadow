@@ -12,6 +12,8 @@ extends SceneTree
 ##   stays inside the viewport at ui_layout.gd's MIN_SUPPORTED_WIDTH;
 ## - the collapsed state is a profile preference and comes back from a
 ##   profile's data;
+## - PN-3: a save carries the collapsed state and a restore puts it back on
+##   the shelf; a save without the key restores with Goals shown;
 ## - a Challenge's shelf (set_challenge_goal) has no Goals button or long-term line.
 ##
 ## Run by tests/test_gp1_goals_dropdown.py (with APPDATA pointed at a temp
@@ -49,6 +51,7 @@ func _process(_delta: float) -> bool:
 			if _frame - _phase_frame >= LAYOUT_FRAMES:
 				_check_collapsed()
 				_check_inside("collapsed")
+				_check_save_round_trip()
 				_check_profile_and_challenge()
 				_phase = "done"
 	if _phase == "done":
@@ -185,6 +188,34 @@ func _check_collapsed() -> void:
 		"collapsed, the Goals button is missing or still pressed")
 	_check(not hud.goals.long_term_goal_label.visible and not hud.goals.current_goal_label.visible
 		and not hud.goals.completed_goal_label.visible, "collapsed, goal lines still show")
+
+
+## PN-3: saved collapsed, a restore over an expanded shelf folds it again;
+## saved expanded, it opens; an old save with no key opens it.
+func _check_save_round_trip() -> void:
+	var hud: CanvasLayer = _main.hud
+	var save_game: GDScript = load("res://scripts/save_game.gd")
+	var path := "user://pn3_goals_round_trip.json"
+	for collapsed: bool in [true, false]:
+		_session.goals_collapsed = collapsed
+		_check(save_game.save(_main, path), "the save could not be written")
+		var data: Dictionary = save_game.read(path)
+		_check(data.get("session", {}).get("goals_collapsed") == collapsed,
+			"the save holds goals_collapsed %s, not %s" % [data.get("session", {}).get("goals_collapsed"), collapsed])
+		_session.goals_collapsed = not collapsed
+		hud.goals.apply_collapsed()
+		_main.saving._restore(data)
+		_check(_session.goals_collapsed == collapsed, "saved collapsed %s, the restore left %s" % [collapsed, _session.goals_collapsed])
+		_check(hud.goals.long_term_goal_label.visible != collapsed,
+			"saved collapsed %s, the restored shelf's long-term line visible is %s" % [collapsed, hud.goals.long_term_goal_label.visible])
+		if collapsed:
+			data["session"].erase("goals_collapsed")
+			_main.saving._restore(data)
+			_check(not _session.goals_collapsed and hud.goals.long_term_goal_label.visible,
+				"an old save with no goals_collapsed did not restore Goals shown")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	_session.goals_collapsed = true
+	hud.goals.apply_collapsed()
 
 
 func _check_profile_and_challenge() -> void:

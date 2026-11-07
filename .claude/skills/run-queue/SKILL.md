@@ -84,7 +84,8 @@ sitting in a `.worktrees/` directory:
      a run's context (8 Oct 2026). A low slice is reviewed too, because
      its worker is Haiku and a cheap tier is only cheap when checked.
      A correctness finding with `in_slice: true` goes back to the worker
-     (SendMessage) once; anything else goes in the trial note. The
+     (SendMessage) once; anything else is dropped unless it argues for a
+     brief or skill change (Final report). The
      reviewer's reply is one step of this loop, not the end of your turn:
      carry straight on (a run on 1 Oct stopped after a review and left
      L-16 unfinished for six hours).
@@ -162,13 +163,13 @@ stays here: it is three commands and needs no plan reading.
 
 ## Final report
 
-For each slice: the CLAUDE.md end-of-slice block, plus the worker type used
-and any reviews or retries. For a low slice, say whether the Haiku worker
-needed a retry or a review fix: that is the evidence for keeping it on
-Haiku or moving it back to Sonnet. For each refill: the plan it came from (the steward's `note`), the
-ids it added, and why that slice came next. Then a one-paragraph trial note covering what
-the worker got wrong, where you had to step in, and any change the worker
-brief or this skill needs. Fill in `Connectors: active now` from your own
-tool list. Then run
-`python tools/session_cost.py --coordinator --days 1` and paste the newest row
-(this session's), so the trial note carries its own number.
+Only this, per `docs/agent-rules.md` "Output":
+
+- For each slice: the CLAUDE.md end-of-slice block (fill in
+  `Connectors: active now` from your own tool list), plus one line
+  `Worker: <type>, retries <n>, review fixes <n>` -- for a low slice, the
+  evidence for keeping it on Haiku.
+- For each refill, one line: the ids added and the plan they came from.
+- Each change the worker brief or this skill needs, one line, as a
+  decision for Dave. No trial note otherwise; `python tools/session_cost.py
+  --coordinator` reads the run's cost from the transcript when wanted.

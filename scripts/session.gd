@@ -102,6 +102,13 @@ var run_developer_changes: bool = false
 ## it, so the next new run reads that file again.
 var pending_skill_policy: Dictionary = {}
 
+## ED-2: the run's difficulty, "standard" or "easy". Saved in the save's
+## session block; a save without it loads as Standard. Nothing reads it
+## until ED-2b, and only a headless scenario sets Easy until ED-3.
+const DIFFICULTY_STANDARD := "standard"
+const DIFFICULTY_EASY := "easy"
+var difficulty: String = DIFFICULTY_STANDARD
+
 ## Called once per run start by main.gd's run_definition.
 func record_run_skill_policy(grants: Array, bans: Array, developer_changes: bool) -> void:
 	run_skill_grants = grants.duplicate()
@@ -142,7 +149,8 @@ var pinned_stats: Array = ["day", "stores", "signals"]
 
 ## GP-1: whether the Colony Run's Goals drop-down (hud.gd) is folded up to
 ## its header. An interface preference, remembered across runs; a new
-## profile starts expanded.
+## profile starts expanded. PN-3: a save carries it too, and a load puts
+## the save's value back (saving.gd::_restore).
 var goals_collapsed: bool = false
 
 ## Gates perf.gd's instrumentation. Kept in sync with whether "fps" is
@@ -393,6 +401,7 @@ func year_days() -> float:
 	return season_days + maxf(1.0, GameConfig.winter_length_days)
 
 func reset_run_state() -> void:
+	difficulty = DIFFICULTY_STANDARD
 	sim_time = 0.0
 	winter_coming = false
 	winter_here = false
@@ -409,7 +418,7 @@ func reset_run_state() -> void:
 	pending_skill_policy = {}
 	# Two display preferences that a new run always starts from the default
 	# of, whatever the last run left: the Problems star on and the goals
-	# list shown. A load does not come through here, so it keeps its own.
+	# list shown. A load does not come through here: it takes the save's.
 	if not pinned_stats.has("signals"):
 		pinned_stats.append("signals")
 	goals_collapsed = false

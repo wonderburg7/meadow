@@ -23,6 +23,10 @@ static var _run_named: bool = false
 var list_box: VBoxContainer
 var name_row: VBoxContainer
 var name_edit: LineEdit
+## PN-2: the rename row, shown under the list header for one slot at a time.
+var rename_row: HBoxContainer
+var rename_edit: LineEdit
+var _rename_slug: String = ""
 ## Hidden on the main menu, where there is no run of the player's to save.
 var save_run_btn: Button
 
@@ -73,6 +77,20 @@ func _ready() -> void:
 	var confirm_btn := _button("Save")
 	confirm_btn.pressed.connect(_on_name_confirmed)
 	edit_row.add_child(confirm_btn)
+
+	rename_row = HBoxContainer.new()
+	rename_row.visible = false
+	column.add_child(rename_row)
+	rename_edit = LineEdit.new()
+	rename_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rename_edit.custom_minimum_size = Vector2(240, 0)
+	rename_edit.max_length = 40
+	rename_edit.text_submitted.connect(func(_text: Variant) -> void: _on_rename_confirmed())
+	rename_edit.gui_input.connect(_on_rename_input)
+	rename_row.add_child(rename_edit)
+	var rename_ok := _button("Rename")
+	rename_ok.pressed.connect(_on_rename_confirmed)
+	rename_row.add_child(rename_ok)
 
 	column.add_child(HSeparator.new())
 	list_box = VBoxContainer.new()
@@ -133,6 +151,7 @@ func _confirm(title: String, text: String, ok_text: String, cancel_text: String,
 ## ordinary GamePanel layer.
 func open() -> void:
 	name_row.visible = false
+	rename_row.visible = false
 	_apply_menu_context()
 	_rebuild()
 	super.open()
@@ -218,6 +237,9 @@ func _rebuild() -> void:
 			var load_btn := _button("Load")
 			load_btn.pressed.connect(func() -> void: _load(SaveSlots.slot_path(slug), display_name))
 			row.add_child(load_btn)
+		var rename_btn := _button("Rename")
+		rename_btn.pressed.connect(func() -> void: _on_rename_pressed(slug, display_name))
+		row.add_child(rename_btn)
 		var delete_btn := _button("Delete")
 		delete_btn.pressed.connect(func() -> void: _on_delete_pressed(slug, display_name))
 		row.add_child(delete_btn)
@@ -276,6 +298,32 @@ func _on_delete_pressed(slug: String, display_name: String) -> void:
 
 func _delete(slug: String) -> void:
 	SaveSlots.delete(slug)
+	_rebuild()
+
+# --- renaming (PN-2) ------------------------------------------------
+
+func _on_rename_pressed(slug: String, display_name: String) -> void:
+	_rename_slug = slug
+	rename_edit.text = display_name
+	rename_row.visible = true
+	rename_edit.grab_focus()
+	rename_edit.select_all()
+
+## Escape cancels the rename without closing the window.
+func _on_rename_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		rename_row.visible = false
+		rename_edit.accept_event()
+
+func _on_rename_confirmed() -> void:
+	var problem := SaveSlots.rename(_rename_slug, rename_edit.text)
+	if problem != "":
+		_warn(problem)
+		return
+	# Keeps a later save of the open run from writing the old name back.
+	if SaveSlots.slugify(Session.run_name) == _rename_slug:
+		Session.run_name = rename_edit.text.strip_edges()
+	rename_row.visible = false
 	_rebuild()
 
 # --- helpers --------------------------------------------------------

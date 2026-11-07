@@ -4,7 +4,8 @@ Runs tests/gp1_goals_dropdown_test.gd in a headless Godot: the shelf shows a
 Goals header, the long-term line for each phase and the next milestone;
 collapsed it shows the header alone; expanded and collapsed it stays inside
 the viewport at the minimum supported width; the collapsed state is a profile
-preference; a Challenge's shelf is unchanged.
+preference, and a save carries it (PN-3: a restore puts it back; a save
+without the key restores Goals shown); a Challenge's shelf is unchanged.
 
 APPDATA is pointed at a temp folder so the header's save_preferences never
 writes the player's own profile.
