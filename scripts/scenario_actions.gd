@@ -277,6 +277,8 @@ static func _execute(main: Node2D, action: Dictionary) -> void:
 			_do_request_placement_tool(main, action)
 		"click_world":
 			_do_click_world(main, action)
+		"hover_build_site":
+			_do_hover_build_site(main)
 		"set_config":
 			_do_set_config(main, action)
 		"hatch_role":
@@ -808,6 +810,19 @@ static func _do_click_world(main: Node2D, action: Dictionary) -> void:
 	main.input_selection.drag_current = point
 	main.input_selection._finish_drag(false)
 	_log("click_world", str(action), "accepted", "")
+
+## Move the pointer to a buildable comb tile, exercising the build hover path.
+static func _do_hover_build_site(main: Node2D) -> void:
+	for q: int in range(-10, 11):
+		for r: int in range(-10, 11):
+			var hex := Vector2i(q, r)
+			if main.hive.can_build_on(hex):
+				var world: Vector2 = main.input_selection._tile_centre(hex)
+				main.get_viewport().warp_mouse(main.get_viewport().get_canvas_transform() * world)
+				main.selection_layer.queue_redraw()
+				_log("hover_build_site", str(hex), "accepted", "")
+				return
+	_log("hover_build_site", "", "rejected", "no buildable tile")
 
 ## Calls the settings catalogue's apply_setting -- the same
 ## setting-plus-cascade function the settings-window checkbox handler
@@ -1389,6 +1404,8 @@ static func _do_assert(main: Node2D, action: Dictionary) -> bool:
 	return false
 
 static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> Dictionary:
+	if condition.has("cell_outline_matches_sprite"):
+		return _check_cell_outline_matches_sprite(main, condition["cell_outline_matches_sprite"])
 	if condition.has("panel_texture_contrast"):
 		return _check_panel_texture_contrast(condition)
 	if condition.has("panel"):
@@ -1430,6 +1447,46 @@ static func _evaluate_assert_condition(main: Node2D, condition: Dictionary) -> D
 	if _when_met(main, condition):
 		return {"ok": true, "reason": ""}
 	return {"ok": false, "reason": "condition not met" + _queen_summary(main, condition)}
+
+## Compare the rim region of the empty frame, excluding the lower cup wall.
+## Coordinates in the sheet include the one-pixel gutter.
+static func _check_cell_outline_matches_sprite(main: Node2D, spec: Dictionary) -> Dictionary:
+	var cell: Node2D = _resolve_cell_ref(main, spec.get("cell", {"built_index": 0}))
+	if cell == null or not Session.use_cell_sprites:
+		return {"ok": false, "reason": "cell or cell art unavailable"}
+	var image: Image = cell.EMPTY_TEXTURE.get_image()
+	var frame_size := Vector2i(image.get_width() / cell.empty_sprite.hframes, image.get_height() / cell.empty_sprite.vframes)
+	var low := Vector2i(frame_size.x, frame_size.y)
+	var high := Vector2i.ZERO
+	for y: int in range(0, 22):
+		for x: int in range(frame_size.x):
+			if image.get_pixel(x, y).a > 0.0:
+				low = Vector2i(mini(low.x, x), mini(low.y, y))
+				high = Vector2i(maxi(high.x, x + 1), maxi(high.y, y + 1))
+	if low.x >= high.x or low.y >= high.y:
+		return {"ok": false, "reason": "empty rim region"}
+	var sprite: Sprite2D = cell.empty_sprite
+	var origin: Vector2 = -Vector2(frame_size) * 0.5 + sprite.offset
+	var expected := Rect2((origin + Vector2(low)) * sprite.scale + sprite.position, Vector2(high - low) * sprite.scale)
+	var ring := _outline_bounds(cell.selection_ring.points)
+	var tile := _outline_bounds(main.input_selection.tile_outline_points())
+	var tolerance: float = float(spec.get("tol_px", 1.5))
+	var ok := _outline_bounds_match(expected, ring, tolerance) and _outline_bounds_match(expected, tile, tolerance)
+	return {"ok": ok, "reason": "rim %s, selection %s, tile %s" % [expected, ring, tile]}
+
+static func _outline_bounds(points: PackedVector2Array) -> Rect2:
+	if points.is_empty():
+		return Rect2()
+	var bounds := Rect2(points[0], Vector2.ZERO)
+	for p: Vector2 in points:
+		bounds = bounds.expand(p)
+	return bounds
+
+static func _outline_bounds_match(expected: Rect2, actual: Rect2, tolerance: float) -> bool:
+	return absf(expected.position.x - actual.position.x) <= tolerance \
+		and absf(expected.position.y - actual.position.y) <= tolerance \
+		and absf(expected.end.x - actual.end.x) <= tolerance \
+		and absf(expected.end.y - actual.end.y) <= tolerance
 
 ## FR-4: {"bee_states": {"target": <bee selector>, "in": [names]} or
 ## "not_in": [names], "mode": "all" (default) | "any"} -- the matched bees'

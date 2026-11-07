@@ -50,13 +50,26 @@ func _boot() -> void:
 func _run() -> void:
 	var cell: Polygon2D = _make_cell(true)
 	_check(cell.EMPTY_RIM.size() == 6, "EMPTY_RIM has %d points, not six" % cell.EMPTY_RIM.size())
+	var actions: Script = load("res://scripts/scenario_actions.gd")
+	var bounds: Rect2 = actions._outline_bounds(cell.selection_ring.points)
+	_check(actions._outline_bounds_match(bounds, bounds, 1.5), "matching bounds rejected")
+	_check(not actions._outline_bounds_match(bounds, Rect2(bounds.position + Vector2(0, 10), bounds.size), 1.5), "10 px displacement accepted")
+	var spec := {"cell": {"built_index": 0}, "tol_px": 1.5}
+	_check(actions._check_cell_outline_matches_sprite(_main, spec).ok, "sprite assertion rejected aligned outlines")
+	var original: PackedVector2Array = _main.input_selection.tile_outline_points().duplicate()
+	var displaced := original.duplicate()
+	for i: int in displaced.size():
+		displaced[i] += Vector2(0, 10)
+	_main.input_selection._cached_cup_rim = displaced
+	_check(not actions._check_cell_outline_matches_sprite(_main, spec).ok, "sprite assertion accepted displaced outline")
+	_main.input_selection._cached_cup_rim = original
 	# With the art on, every colour ring traces the rim at the selection
 	# ring's size, so a cell never shows a large ring and a small one.
 	var rings := {
-		"selection_ring": cell.cell_size + 2.0,
-		"designation_ring": cell.cell_size + 2.0,
-		"zone_halo": cell.cell_size + 2.0,
-		"zone_glow": cell.cell_size + 2.0,
+		"selection_ring": cell.cell_size,
+		"designation_ring": cell.cell_size,
+		"zone_halo": cell.cell_size,
+		"zone_glow": cell.cell_size,
 		"outline": cell.cell_size,
 	}
 	for ring_name: Variant in rings:

@@ -1,7 +1,7 @@
 # Sprites -- pixel art in the comb and the meadow, and one cheap way to add more
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Claude Code / Codex | Next: SP-12 -- every outline on a comb cell sits on the cup's rim, fifth in the Codex lane (Dave, 1 Nov 2026) | Dependency: none left -- `claude/dave-hands-on-checks-784f2a` merged 4 Nov 2026; SP-12 and the Claude lane's PN-5 and PN-6 share `input_selection.gd`, so whichever is queued first runs first | Verified: 2026-11-05
+Status: complete | Owner: Dave / Claude Code / Codex | Next: None -- plan complete | Dependency: none | Verified: 2026-11-07
 
 ## Objective
 
@@ -40,6 +40,8 @@ builds them and does not restate them.
 
 ## Current state
 
+Follow-up: C-181 in `checks/ready.md` checks the comb outlines by eye.
+
 Verified 15 Oct 2026 against master `b5e6751`. SP-1 to SP-5, SP-7, SP-9 and
 SP-10 have landed: the comb is drawn from Dave's cell art through the
 sharp-pixel shader, the skep stands in the meadow, and hive soil is drawn
@@ -65,7 +67,6 @@ from the art in front-over-back order. What the open slices build on:
 
 | Slice | What it does | Files it owns | Startable | Level |
 | --- | --- | --- | --- | --- |
-| SP-12 | every outline on a comb cell sits on the cup's rim, proved by a new pixel assertion | `scripts/input_selection.gd`, `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, tests | yes -- Codex backlog | medium |
 
 **Dependencies.** SP-12 shares `scripts/input_selection.gd` with PN-5 and PN-6
 (`plans/now/play-notes.md`), PN-16 and PN-17 (`plans/now/play-notes-hud.md`) and
@@ -80,67 +81,7 @@ SP-11 shipped 2026-10-15; its specification is `plans/archive/SP-11_2026-10-15.m
 
 SP-6 shipped 2026-11-01; its specification is `plans/archive/SP-6_2026-11-01.md`.
 
-## SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels
-
-Level: medium.
-
-**Lane (Dave, 1 Nov 2026).** SP-12 runs in the Codex lane. FR-4, which was to
-follow it there, landed in the Claude lane on 5 Nov 2026 and added the
-`bee_states` assertion and `set_bee_stats` verb to `scripts/scenario_actions.gd`;
-the new condition goes beside them.
-
-**True now.** C-125 and then C-134 failed on the same misfit: the keep-clear,
-build-hover and order-chain outlines sit about 10 px below the cup's rim.
-`input_selection.gd::_draw_tile_outline` draws a flat
-`Shapes.hexagon_points(hive_cell_size + 1)` on `_tile_centre`, the floor
-centre. The cup's rim centre sits about 9 art px x 1.1875 (about 10.7 px)
-above the floor centre (`EMPTY_FLOOR_MID_Y` 22, rim centre y 13).
-`EMPTY_RIM` in `hive_cell.gd` has an x extent of 1..32, which centres on 16.5
-and not 16: probably measured with the sheet's 1 px gutter included. Nothing
-checks an outline against the drawn pixels, which is why the same fault came
-back.
-
-**When done:**
-
-1. `EMPTY_RIM` is re-measured against the cup frame's opaque pixels and
-   centres on the frame's own centre (16), with the gutter excluded.
-2. `hive_cell.gd` exposes a static rim-points helper, mapped to local space by
-   `_silhouette_point_to_local`. With `Session.use_cell_sprites` on,
-   `_draw_tile_outline` draws that rim polygon, not the flat hexagon, and
-   exposes the points it draws through one function that returns them.
-   With the cell art off it draws exactly what it draws today.
-3. The instrument, because this is the second failure: a new assert condition
-   `cell_outline_matches_sprite` with a `tol_px` field in
-   `scenario_actions.gd::_evaluate_assert_condition` (assertion checks
-   section). It compares the opaque-pixel bounding box of the cup frame (read
-   from the empty sprite's texture image data, mapped by the sprite's scale and
-   offset) with the bounding box of the selection ring and of the points
-   `_draw_tile_outline` returns, and passes when each edge is within `tol_px`.
-4. `test_scenarios/sp_outline_rim.json` selects a cell, hovers a build site and
-   starts an order chain with cell art on, then asserts the condition at
-   `tol_px` 1.5; `tests/test_sp_outline_rim.py` runs it.
-5. Dave's hands-on check is filed at closeout (click-driven, visual): hover,
-   keep-clear and an order chain on a comb cell, each outline on the cup's rim.
-   It is reachable in under five minutes from a fresh hive, so no skip save.
-
-**Invariants.** Presentation only. The flat hexagon is unchanged when cell art
-is off. `python -m unittest tests.test_sp11_cell_rim` still passes. No per-frame
-cost is added: the rim points are built once and cached.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels**
-- Plan: `plans/now/sprites.md` -- "SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels"
-- Files: `scripts/input_selection.gd`, `scripts/hive_cell.gd`, `scripts/scenario_actions.gd`, `test_scenarios/sp_outline_rim.json`, `tests/test_sp_outline_rim.py`, `tests/sp11_cell_rim_test.gd`, `tests/test_sp11_cell_rim.py`
-- Check: `python -m unittest tests.test_sp_outline_rim` passes (the `cell_outline_matches_sprite` assertion holds for the selection ring and the tile outline within 1.5 px, and fails when the outline is moved 10 px); `python -m unittest tests.test_sp11_cell_rim` passes; `.\tools\verify.ps1` is green; Dave's hands-on check is filed
-- Proof: `absent: scripts/scenario_actions.gd :: cell_outline_matches_sprite`
-- Next after: PN-7 -- cell popup and selection text batch
-```
-
-SP-13 shipped 2026-10-30; its specification is `plans/archive/SP-13_2026-10-30.md`.
-
-SP-14 shipped 2026-10-30; its specification is `plans/archive/SP-14_2026-10-30.md`.
+SP-12 shipped 2026-11-07; its specification is `plans/archive/SP-12_2026-11-07.md`.
 
 ## Read on demand
 

@@ -107,13 +107,12 @@ const EMPTY_SPRITE_SCALE_NUDGE := 1.0
 ## The cup's rim -- the bright outline round the top face of the empty
 ## frame -- in the frame's own pixel space (outer pixel edges). Measured
 ## 14 Oct 2026 off frame 0 of wax_cell_nectar_sheet.png by printing its
-## pixels as a grid: top y 5 (x 9..26), bottom y 21 (x 8..26), left x 1 and
-## right x 32 at y 13. A flat-topped hexagon, which every ring on the cell
-## traces. Re-measure this if the cup layer of wax_cell_nectar.aseprite is
-## redrawn.
+## pixel edges in the 32 px frame, excluding the sheet's one-pixel gutter.
+## The rim spans x 0..32 and y 4..21; the cup wall extends below it.
+## Re-measure if the cup layer of wax_cell_nectar.aseprite is redrawn.
 const EMPTY_RIM: Array = [
-	Vector2(9.0, 5.0), Vector2(26.0, 5.0), Vector2(32.0, 13.0),
-	Vector2(26.0, 21.0), Vector2(8.0, 21.0), Vector2(1.0, 13.0),
+	Vector2(8.0, 4.0), Vector2(25.0, 4.0), Vector2(32.0, 12.0),
+	Vector2(25.0, 21.0), Vector2(7.0, 21.0), Vector2(0.0, 12.0),
 ]
 
 ## SP-3. Nectar is the sprite lime (187, 248, 36), exactly.
@@ -637,11 +636,20 @@ func _set_outline_points(line: Line2D, size: float) -> void:
 ## `_ready()` uses to place `empty_sprite` -- so a ring built from this can
 ## never drift away from the sprite it is meant to trace.
 func _silhouette_point_to_local(p: Vector2) -> Vector2:
-	var s: float = empty_scale * EMPTY_SPRITE_SCALE_NUDGE
+	return silhouette_point_to_local(p, empty_scale)
+
+static func silhouette_point_to_local(p: Vector2, sprite_scale: float) -> Vector2:
+	var s: float = sprite_scale * EMPTY_SPRITE_SCALE_NUDGE
 	return Vector2(
 		(p.x - EMPTY_FRAME_SIZE.x * 0.5) * s,
 		(p.y - EMPTY_FLOOR_MID_Y) * s + EMPTY_SPRITE_Y_NUDGE
 	)
+
+static func rim_points(sprite_scale: float) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for p: Vector2 in EMPTY_RIM:
+		points.append(silhouette_point_to_local(p, sprite_scale))
+	return points
 
 ## With cell art on every ring traces the cup's rim (EMPTY_RIM), scaled
 ## about the rim's own centre so the larger zone rings stay centred on it.
@@ -681,16 +689,16 @@ func _apply_outline_points(line: Line2D, size: float) -> void:
 ## ring's size (one ring per cell, not a large and a small one); without
 ## art the original offsets keep the rings apart.
 func _designation_ring_size() -> float:
-	return cell_size + 2.0 if Session.use_cell_sprites else cell_size - 3.0
+	return cell_size if Session.use_cell_sprites else cell_size - 3.0
 
 func _zone_halo_size() -> float:
-	return cell_size + 2.0 if Session.use_cell_sprites else cell_size + 6.0
+	return cell_size if Session.use_cell_sprites else cell_size + 6.0
 
 func _zone_glow_size() -> float:
-	return cell_size + 2.0 if Session.use_cell_sprites else cell_size + 4.0
+	return cell_size if Session.use_cell_sprites else cell_size + 4.0
 
 func _set_selection_ring_points() -> void:
-	_apply_outline_points(selection_ring, cell_size + 2.0)
+	_apply_outline_points(selection_ring, cell_size if Session.use_cell_sprites else cell_size + 2.0)
 
 # --- per-frame update ---------------------------------------------
 
