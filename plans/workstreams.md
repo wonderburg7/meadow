@@ -52,3 +52,4 @@ end-of-slice report states what was merged and what is next.
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/player-experience-review-20261106` (`codex/player-experience-review-20261106`) | Review | Advisory player-experience review; Markdown evidence and recommendations only; no game or queue changes | Codex | in progress | none | `plans/design/product-scope.md` |
 | `.worktrees/PN-15` (`codex/PN-15`) | Codex | a day dial beside "Day N" | Codex | in progress | none | `plans/now/play-notes-hud.md` PN-15 -- a day dial beside "Day N |
+| `.worktrees/PN-12` (`claude/PN-12`) | Claude | developer mode buys any skill | Claude | in progress | none | `plans/now/play-notes-config.md` PN-12 -- developer mode buys any skill |
