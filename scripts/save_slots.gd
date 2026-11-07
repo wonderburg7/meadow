@@ -148,6 +148,25 @@ static func delete(slug: String) -> void:
 	index["slots"].erase(slug)
 	_write_index(index)
 
+## PN-2: changes the display name of an existing slot in the index and nothing
+## else; the slug and the save files stay put. Returns "" on success, else a
+## short message for the player: empty name, no such slot, or a name whose
+## slug another slot already uses.
+static func rename(slug: String, new_name: String) -> String:
+	var run_name := new_name.strip_edges()
+	if run_name == "":
+		return "A save needs a name."
+	var index := _read_index()
+	var slots: Dictionary = index["slots"]
+	if not slots.has(slug):
+		return "That save no longer exists."
+	var new_slug := slugify(run_name)
+	if new_slug != slug and slots.has(new_slug):
+		return "There is already a save called \"%s\"." % str(slots[new_slug].get("name", new_slug))
+	slots[slug]["name"] = run_name
+	_write_index(index)
+	return ""
+
 ## Headless scenario runs: points the catalogue at SCRATCH_ROOT and empties
 ## it, so each run starts from no saves and never touches the player's.
 ## tools/run_scenario.py launches every run with a user:// of its own
