@@ -17,7 +17,6 @@ Verified 2026-10-31 by `tools/slice.ps1 owner`; `skill_tree_panel.gd` and
 | Id | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
 | PN-9 | early spring: fast queen building, no souring before day 15 | `game_config.gd`, `settings_catalogue.gd`, `hive_cell.gd` | yes | medium |
-| PN-12 | developer mode buys any skill | `skill_tree_panel.gd`, `settings_catalogue.gd` | yes | low |
 | PN-13 | bee labels switch and a calmer queen flight | `bee.gd`, `game_config.gd`, `settings_catalogue.gd` | yes, once the Codex lane releases `bee.gd` | low |
 
 ## Dependencies
@@ -88,35 +87,7 @@ C-141 and C-151.
 
 PN-11 shipped 2026-11-06; its specification is `plans/archive/PN-11_2026-11-06.md`.
 
-## PN-12 -- developer mode buys any skill
-
-**True now.** `Session.developer_mode` exists (`settings_catalogue.gd`,
-`player_profile.gd`) and only shows developer readouts; its tip says it
-"Changes nothing about how a run plays".
-
-**Change.** In `skill_tree_panel.gd::_rebuild` treat `BLOCK_COST` and
-`BLOCK_PREREQUISITES` as buyable when developer mode is on; in `buy_skill`
-grant through the progression grant call (grep `progression.gd` for `grant`)
-and skip the spend. Reword the developer-mode tip so it no longer claims to
-change nothing.
-
-**Invariants.** Off by default; with it off, every cost and prerequisite
-behaves as now; a granted skill is saved like a bought one.
-
-**Acceptance (player seat, and the hands-on check).** Turn Developer mode on in
-Settings: a skill you cannot afford or lack the prerequisite for can be
-bought, costing nothing. Turn it off: it cannot.
-
-**Open decisions:** none.
-
-```queue
-**[Claude] PN-12 -- developer mode buys any skill**
-- Plan: `plans/now/play-notes-config.md` -- "PN-12 -- developer mode buys any skill"
-- Files: `scripts/skill_tree_panel.gd`, `scripts/settings_catalogue.gd`, `tests/test_pn12_developer_skills.py`
-- Check: `python -m unittest tests.test_pn12_developer_skills` passes (a blocked skill is buyable only with developer mode on, free); `.\tools\verify.ps1` is green. Hands-on: developer mode lets an unaffordable skill be bought
-- Proof: `present: scripts/settings_catalogue.gd :: Changes nothing about how a run plays`
-- Next after: PN-13 -- bee labels switch and a calmer queen flight
-```
+PN-12 shipped 2026-11-07; its specification is `plans/archive/PN-12_2026-11-07.md`.
 
 ## PN-13 -- bee labels switch and a calmer queen flight
 
