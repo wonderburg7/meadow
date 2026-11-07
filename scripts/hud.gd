@@ -1574,6 +1574,25 @@ func _build_cell_group(parent: VBoxContainer) -> void:
 	for entry: Variant in DESIGNATION_BUTTONS:
 		_add_designation_button(row, entry)
 
+	# This has to write straight through to the cell. It used to be read
+	# back from the cell every frame by _refresh_cell_popup while only
+	# being applied when one of the buttons above was pressed -- so
+	# ticking it was undone a frame later and it looked like the option
+	# could not be selected at all.
+	var keep_row := row
+	keep_empty_box = CheckBox.new()
+	_style_button(keep_empty_box)
+	keep_empty_box.text = "Keep empty"
+	keep_empty_box.theme_type_variation = "Small"
+	keep_empty_box.toggled.connect(func(pressed: bool) -> void:
+		if active_cell and is_instance_valid(active_cell):
+			cell_keep_empty_requested.emit(active_cell, pressed)
+			_refresh_cell_popup()
+	)
+	keep_row.add_child(keep_empty_box)
+	keep_row.add_child(_info("On: the cell refuses every deposit once it's been cleared, so it stays free. This is what stops a crowd of foragers cramming nectar into the last spare pot and leaving nowhere for pollen or eggs. Reserving the cell for a resource later clears this again. Off: the cell goes back to taking whatever arrives first."))
+
+
 	_build_priority_controls(_build_cell_action_column(cell_primary_columns, "Priority"))
 	_build_raises_controls(_build_cell_action_column(cell_primary_columns, "Raises"))
 
@@ -1832,14 +1851,14 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 
 	var move_btn := Button.new()
 	_style_button(move_btn)
-	move_btn.text = "To another cell"
+	move_btn.text = "Empty to other cells"
 	move_btn.theme_type_variation = "Small"
 	move_btn.pressed.connect(func() -> void: _request_empty("move"))
 	empty_row.add_child(_with_info(move_btn, "A builder comes and carries the contents to another cell with room for them. Fermented nectar is always thrown out instead. If nothing anywhere has room, the load is lost -- so keep an eye on how full the comb is."))
 
 	var discard_btn := Button.new()
 	_style_button(discard_btn)
-	discard_btn.text = "Discard outside"
+	discard_btn.text = "Empty to outside"
 	discard_btn.theme_type_variation = "Small"
 	discard_btn.pressed.connect(func() -> void: _request_empty("discard"))
 	empty_row.add_child(_with_info(discard_btn, "Throw the contents out of the hive. Quicker than moving them, but everything in the cell is gone."))
@@ -1870,24 +1889,6 @@ func _build_empty_controls(column: VBoxContainer) -> void:
 	)
 	empty_row.add_child(_with_info(empty_by_bee_btn, "The selected bee carries the contents out herself, right now -- no comb worker needed and no change to her role."))
 
-	# This has to write straight through to the cell. It used to be read
-	# back from the cell every frame by _refresh_cell_popup while only
-	# being applied when one of the buttons above was pressed -- so
-	# ticking it was undone a frame later and it looked like the option
-	# could not be selected at all.
-	var keep_row := HBoxContainer.new()
-	column.add_child(keep_row)
-	keep_empty_box = CheckBox.new()
-	_style_button(keep_empty_box)
-	keep_empty_box.text = "Leave empty"
-	keep_empty_box.theme_type_variation = "Small"
-	keep_empty_box.toggled.connect(func(pressed: bool) -> void:
-		if active_cell and is_instance_valid(active_cell):
-			cell_keep_empty_requested.emit(active_cell, pressed)
-			_refresh_cell_popup()
-	)
-	keep_row.add_child(keep_empty_box)
-	keep_row.add_child(_info("On: the cell refuses every deposit once it's been cleared, so it stays free. This is what stops a crowd of foragers cramming nectar into the last spare pot and leaving nowhere for pollen or eggs. Reserving the cell for a resource later clears this again. Off: the cell goes back to taking whatever arrives first."))
 
 ## A dropdown for a role that has more than one way to start.
 ## The trailing ellipsis is the whole tell that this is a menu and not a
@@ -2275,7 +2276,9 @@ func _refresh_cell_popup() -> void:
 	empty_by_bee_btn.visible = active_cell.content_type != "" \
 		and active_cell.content_type != "brood" and active_cell.content_type != "corpse"
 
-	clear_fermented_btn.visible = active_cell.is_fermented()
+	clear_fermented_btn.visible = active_cell.is_fermented() and Session.progression != null \
+		and Session.progression.is_owned("skill.hive_mind.cleaning") \
+		and Session.progression.is_owned("skill.colony.fermentation_sense")
 
 	# reflect the cell's own state without re-firing the signals
 	keep_empty_box.set_pressed_no_signal(active_cell.keep_empty)
@@ -2361,7 +2364,7 @@ func _process(_delta: float) -> void:
 	Perf.begin("hud")
 	_update_stage_marker_arrow()
 	if warning_panel.visible:
-		warning_timer -= _delta
+		warning_timer -= _delta / maxf(Engine.time_scale, 0.001)
 		if warning_timer <= 0.0:
 			if not _pending_warning.is_empty():
 				_show_warning_now(_pending_warning.get("text", ""), _pending_warning.get("severity", SEVERITY_INFO))
@@ -2966,7 +2969,7 @@ func _selection_identity_text(b: Variant) -> String:
 	if b.bee_name != "":
 		identity = "%s%s\n%s" % ["★ " if b.is_favourite else "", b.bee_name, identity]
 	if b.is_queen:
-		identity += "\nAge: %.1f days   (does not die of old age)" % b.age_days()
+		identity += "\nAge: %.1f days" % b.age_days()
 	else:
 		identity += "\nAge: %.1f days   Left: %.1f days" % [b.age_days(), b.days_remaining()]
 	return identity
