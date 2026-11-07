@@ -49,21 +49,14 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] PN-7 -- cell popup and selection text batch**
-   - Plan: `plans/now/play-notes-hud.md` -- "PN-7 -- cell popup and selection text batch"
-   - Files: `scripts/hud.gd`, `tests/display_text_golden_test.gd`, `tests/test_pn7_cell_popup.py`
-   - Check: `python -m unittest tests.test_pn7_cell_popup` passes (labels, the sour-nectar gate, Keep empty in the Reserve row, warning dwell at 4x); the display-text golden test is regenerated; `.\tools\verify.ps1` is green. Hands-on: the cell popup reads as above and a warning at 4x lasts about 18 seconds
-   - Proof: `present: scripts/hud.gd :: does not die of old age`
-   - Next after: PN-14 -- text no longer shrinks when unpausing
-
-2. **[Codex] PN-14 -- text no longer shrinks when unpausing**
+1. **[Codex] PN-14 -- text no longer shrinks when unpausing**
    - Plan: `plans/now/play-notes-hud.md` -- "PN-14 -- text no longer shrinks when unpausing"
    - Files: `scripts/hud.gd`, `scripts/camera_view.gd`, `tests/pn14_pause_font_test.gd`, `tests/test_pn14_pause_font.py`
    - Check: `python -m unittest tests.test_pn14_pause_font` passes (HUD label font sizes equal before pause and after unpause; failing before the fix); `.\tools\verify.ps1` is green. Hands-on: Space to pause and resume leaves text size alone
    - Proof: `absent: scripts/hud.gd :: PN-14`
    - Next after: PN-15 -- a day dial beside "Day N"
 
-3. **[Codex] PN-15 -- a day dial beside "Day N"**
+2. **[Codex] PN-15 -- a day dial beside "Day N"**
    - Plan: `plans/now/play-notes-hud.md` -- "PN-15 -- a day dial beside "Day N""
    - Files: `scripts/hud_day_dial.gd`, `scripts/hud.gd`, `tests/test_pn15_day_dial.py`
    - Check: `python -m unittest tests.test_pn15_day_dial` passes (hand fraction matches the time of day; corner signature unchanged); `.\tools\verify.ps1` is green. Hands-on: the dial hand sweeps through the day
