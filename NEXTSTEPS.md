@@ -97,14 +97,14 @@ One line each: the id, its plan, and the single thing it waits for.
 - **PP-10** (`plans/now/pollination.md`) -- the gyne route keeps its order on the new calendar; waits for EV-0, so the route is checked once, on the new calendar (Dave, 1 Nov 2026).
 - **AR-4** (`plans/now/alpha-route-evidence.md`) -- a scripted Colony Run reaches and records all five gates; waits for PP-10, which checks the gyne route's order on EV-0's calendar.
 - **FR-3** (`plans/now/forager-recruitment.md`) -- owning Auto-recruitment switches it on, passing species with Adaptive constancy; waits for PP-10 (`plans/now/pollination.md`), which shares `scripts/skills.gd`.
-- **ED-2b** (`plans/now/difficulty.md`) -- Easy's rules: health floors at one, the queen cannot die, brood waits, winter spares; waits for ED-2, which adds the difficulty they read.
+- **ED-2b** (`plans/now/difficulty.md`) -- Easy's rules: health floors at one, the queen cannot die, brood waits, winter spares; waits for which adds the difficulty they read.
 - **ED-3** (`plans/now/difficulty.md`) -- choosing Easy at run start; waits for ED-2b.
 - **CQ-R2** (`plans/now/code-health.md`) -- the first crisis moves out of `scripts/main.gd` into a new event_director.gd (in `scripts/`) as the shared event cycle's first record (`plans/design/event-director.md` decisions 2 and 15), touching the save files; waits for ED-3 alone (Dave, 5 Nov 2026), and its plan section is written as ED-3 nears.
 - **EV-1 onward** (`plans/now/event-director.md`) -- the event director's events, designed 1 Nov 2026 (`plans/design/event-director.md`); wait for CQ-R2, which creates event_director.gd (in `scripts/`), and are specified then.
 - **RR-12** (`plans/now/run-repairs.md`) -- a loaded run keeps its readout history (Dave, 16 Oct 2026); waits for CQ-R2 (Dave, 5 Nov 2026), which shares `scripts/main.gd` and the save files.
 - **SP-8a** (`plans/now/meadow-terrain.md`) -- the meadow floor drawn in blocks, with everything on it lifted; waits for CQ-R2, which follows ED-3, the end of the alpha chain (Dave, 16 Oct and 5 Nov 2026), and shares `scripts/main.gd` and the save files.
 - **SP-8b** (`plans/now/meadow-terrain.md`) -- height's effects: flight cost, where flowers grow, scouting reach; waits for SP-8a and AR-4, and is cut then.
-- **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices ED-2, ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); CQ-S0's round-trip harness landed 22 Oct 2026.
+- **CQ-S1** (`plans/now/code-health.md`) -- Flower owns its save fields, the first entity to own its `to_save()`/`from_save()`; waits for the save slices ED-3, RR-12 and SP-8a (Dave, 18 Oct 2026); CQ-S0's round-trip harness landed 22 Oct 2026.
 - **CQ-S2** (`plans/now/code-health.md`) -- HiveCell owns its save fields; waits for CQ-S1, which sets the `to_save()`/`from_save()` pattern and shares the save files.
 - **CQ-R13** (`plans/now/code-health.md`) -- `main.gd::_ready` into build steps; waits for CQ-R2, which shares `scripts/main.gd`, and then needs its slice specification.
 - **CQ-R4** (`plans/now/code-health.md`) -- its section and block are ready after CQ-R3; waits for the open Jules branch `origin/jules/s-1-jules-preflight-helpers-5003130817358154397` to release `scripts/bee.gd` (ownership check, 6 Nov 2026).
@@ -113,7 +113,7 @@ One line each: the id, its plan, and the single thing it waits for.
 - **CQ-M4** (`plans/now/code-health.md`) -- name Challenge level ids; waits for the Claude lane to release `scripts/save_game.gd` and `scripts/saving.gd`.
 - **CQ-M6b** (`plans/now/code-health.md`) -- the cell ring and the selection layer read the selection green; waits for the Claude lane's PN-5, PN-6 and PN-9, which edit `scripts/input_selection.gd` and `scripts/hive_cell.gd`.
 - **CQ-M7** (`plans/now/code-health.md`) -- world draw order named; waits for CQ-M6b and then needs its section and block.
-- **PN-8** (`plans/now/play-notes-hud.md`) -- Warning history in the Colony window; waits for PN-3 and ED-2 (Claude lane) to release `scripts/session.gd`.
+- **PN-8** (`plans/now/play-notes-hud.md`) -- Warning history in the Colony window; waits for PN-3 (Claude lane) to release `scripts/session.gd`.
 - **PN-10** (`plans/now/play-notes-hud.md`) -- opening goal text a new player can act on; waits for PN-3 (Claude lane) to release `tests/gp1_goals_dropdown_test.gd`.
 - **PN-16** (`plans/now/play-notes-hud.md`) -- double-click a cell selects every cell of that type; waits for PN-6 (Claude lane), which shares `scripts/input_selection.gd`.
 - **PN-17** (`plans/now/play-notes-hud.md`) -- Shift queues build and dig orders; waits for PN-16, which shares `scripts/input_selection.gd`.

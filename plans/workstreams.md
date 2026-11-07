@@ -51,5 +51,4 @@ end-of-slice report states what was merged and what is next.
 | Worktree path (branch) | Lane | Scope | Owner | Status | Depends on | Plan / slice |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.worktrees/player-experience-review-20261106` (`codex/player-experience-review-20261106`) | Review | Advisory player-experience review; Markdown evidence and recommendations only; no game or queue changes | Codex | in progress | none | `plans/design/product-scope.md` |
-| `.worktrees/ED-2` (`claude/ED-2`) | Claude | a run's difficulty, saved | Claude | in progress | none | `plans/now/difficulty.md` ED-2 -- a run's difficulty, saved |
 | `.worktrees/SP-12` (`codex/SP-12`) | Codex | every outline on a comb cell sits on the cup's rim, proved against the drawn pixels | Codex | in progress | none | `plans/now/sprites.md` SP-12 -- every outline on a comb cell sits on the cup's rim, proved against the drawn pixels |
