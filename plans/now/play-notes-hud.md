@@ -1,7 +1,7 @@
 # Play notes, HUD side -- follow-ups from Dave's 30 Oct 2026 hands-on pass
 
 <!-- CONTEXT: plan | LAYER: immediate-task -->
-Status: active | Owner: Dave / Codex | Next: PN-15 -- a day dial beside "Day N" | Dependency: all seven share `hud.gd` or `input_selection.gd` and run in turn; PN-8 and PN-10 wait for the Claude lane's PN-3 and ED-2 to release `session.gd` and the Goals test; PN-16 waits for PN-6 (`plans/now/play-notes.md`) | Verified: 2026-11-05
+Status: active | Owner: Dave / Codex | Next: PN-8 -- Warning history in the Colony window (gated on PN-3 and ED-2) | Dependency: all seven share `hud.gd` or `input_selection.gd` and run in turn; PN-8 and PN-10 wait for the Claude lane's PN-3 and ED-2 to release `session.gd` and the Goals test; PN-16 waits for PN-6 (`plans/now/play-notes.md`) | Verified: 2026-11-05
 
 ## Objective
 
@@ -22,7 +22,6 @@ and `colony_milestones.gd`) and grep on this branch.
 
 | Id | Outcome | Files | Startable | Level |
 | --- | --- | --- | --- | --- |
-| PN-15 | a day dial beside "Day N" | new `hud_day_dial.gd`, `hud.gd` | yes | medium |
 | PN-8 | Warning history in the Colony window | `hud.gd`, `colony_panel.gd`, `session.gd` | after PN-3 and ED-2 (Claude lane) release `session.gd` | medium |
 | PN-10 | opening goal text a new player can act on | `colony_milestones.gd` | after PN-3 (Claude lane) releases `tests/gp1_goals_dropdown_test.gd` | low |
 | PN-16 | double-click a cell selects all of its type | `input_selection.gd`, `hud.gd` | after PN-6 (Claude lane) | medium |
@@ -104,34 +103,7 @@ first goal tells you what to do, not only what to achieve.
 
 PN-14 shipped 2026-11-07; its specification is `plans/archive/PN-14_2026-11-07.md`.
 
-## PN-15 -- a day dial beside "Day N"
-
-**True now.** `hud.gd::update_day` builds the day text. Nothing shows the time
-through the day.
-
-**Change.** A new `scripts/hud_day_dial.gd`, a small Control drawing the upper
-half of a semicircle with `draw_arc` and a hand at
-`fposmod(Session.sim_time, GameConfig.seconds_per_day) / seconds_per_day`.
-Redraw each tick with `queue_redraw` only while visible, without changing
-`hud.gd::_corner_signature`, so no corner rebuild per frame
-(`.claude/rules/performance.md`). Hud places it beside the day text.
-
-**Invariants.** Presentation only; nothing in the simulation reads it.
-
-**Acceptance (player seat, and the hands-on check).** Beside "Day N" a
-half-dial hand sweeps once a day, left at dawn to right at dusk, and stops
-when paused.
-
-**Open decisions:** none.
-
-```queue
-**[Codex] PN-15 -- a day dial beside "Day N"**
-- Plan: `plans/now/play-notes-hud.md` -- "PN-15 -- a day dial beside "Day N""
-- Files: `scripts/hud_day_dial.gd`, `scripts/hud.gd`, `tests/test_pn15_day_dial.py`
-- Check: `python -m unittest tests.test_pn15_day_dial` passes (hand fraction matches the time of day; corner signature unchanged); `.\tools\verify.ps1` is green. Hands-on: the dial hand sweeps through the day
-- Proof: `absent: scripts/hud.gd :: HudDayDial`
-- Next after: PN-8 -- Warning history in the Colony window
-```
+PN-15 shipped 2026-11-07; its specification is `plans/archive/PN-15_2026-11-07.md`.
 
 ## PN-16 -- double-click a cell selects all of its type
 
