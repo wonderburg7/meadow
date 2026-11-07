@@ -35,13 +35,6 @@ lane. Refilled by `python tools/refill_lane.py --top-up --lane Claude`.
 Up to five items, worked top to bottom. No file here may appear in the Claude
 lane. Refilled by `python tools/refill_lane.py --top-up --lane Codex`.
 
-1. **[Codex] PN-15 -- a day dial beside "Day N"**
-   - Plan: `plans/now/play-notes-hud.md` -- "PN-15 -- a day dial beside "Day N""
-   - Files: `scripts/hud_day_dial.gd`, `scripts/hud.gd`, `tests/test_pn15_day_dial.py`
-   - Check: `python -m unittest tests.test_pn15_day_dial` passes (hand fraction matches the time of day; corner signature unchanged); `.\tools\verify.ps1` is green. Hands-on: the dial hand sweeps through the day
-   - Proof: `absent: scripts/hud.gd :: HudDayDial`
-   - Next after: PN-8 -- Warning history in the Colony window
-
 ## Not in the queue, and why
 
 One line each: the id, its plan, and the single thing it waits for.
