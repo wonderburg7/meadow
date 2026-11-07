@@ -89,6 +89,11 @@ func _restore(data: Dictionary) -> void:
 	Session.crab_spider_preferred_species = str(session_state.get("crab_spider_species", ""))
 	# ED-2: anything but "easy" -- a missing key included -- is Standard.
 	Session.difficulty = Session.DIFFICULTY_EASY if str(session_state.get("difficulty", "")) == Session.DIFFICULTY_EASY else Session.DIFFICULTY_STANDARD
+	# PN-3: the save's Goals drop-down state wins over the profile's; a save
+	# without the key loads with Goals shown. The shelf redraws from it now,
+	# as an in-place restore builds no new HUD.
+	Session.goals_collapsed = bool(session_state.get("goals_collapsed", false))
+	main.hud.goals.apply_collapsed()
 	# WP-2, additive: a save without a default order loads decision 3's.
 	Session.set_backup_order_default(session_state.get("backup_order_default", Session.DEFAULT_BACKUP_ORDER))
 	Session.forget_backup_order_seeding()
