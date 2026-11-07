@@ -1,10 +1,10 @@
 # Outstanding Jules review — 7 November 2026
 
-Status: reference | Owner: Dave / Codex | Next: complete selected-test integration, then record actual delivery and closures | Dependency: plans/reference/jules-coverage-2026-11-07.md | Verified: 2026-11-07
+Status: reference | Owner: Dave / Codex | Next: re-review #134/#145/#147/#153/#155 only after correction; retain the F6 guard reopening criterion | Dependency: plans/reference/jules-coverage-2026-11-07.md | Verified: 2026-11-07
 
 ## Result and scope
 
-The older work has already been checked. Reconciliation found **14 new submissions**, **four still-open PRs already integrated**, **one still-open final rejection**, and **one unchanged returned report**. Every one of the 20 open items and ten moved closed branches has a disposition in the [complete 157-item coverage table](jules-coverage-2026-11-07.md). Across those 30 reviewed items: two ready, six selected-content integrations, five returns, seventeen closures/superseded items. Ready/selected describes review acceptance; it does not by itself mean delivered.
+The older work has already been checked. Reconciliation found **14 new submissions**, **four still-open PRs already integrated**, **one still-open final rejection**, and **one unchanged returned report**. Every one of the 20 open items and ten moved closed branches has a disposition in the [complete 157-item coverage table](jules-coverage-2026-11-07.md). Across those 30 reviewed items: two ready, six selected-content integrations, five returns, seventeen closures/superseded items. The eight ready/selected submissions have now delivered only their named eligible tests to master in **f60d52f**; the five returns remain open.
 
 Read AGENTS.md, docs/agent-rules.md and CHATGPT.md first; this was Dave's assigned review, with no unrelated queue claim. Refreshed origin with prune, enumerated every GitHub PR including drafts and closed items, fetched all PR heads, and ran jules_preflight --ledger. Used the 5 November review/coverage/follow-up records and actual integrations 7a3e836, 3c0121f and **7736d79 (6 November)** as the starting point. All 137 closed/merged PR snapshots match prior records, but comparing remote refs found ten newer branch tips hidden behind those snapshots. Those ten were reviewed separately; only 127 unchanged closed/merged items reuse the old review unchanged. The 80 live remote Jules branches all map to PRs. GitHub has zero submitted review objects across all 158 PRs; discussion and repository records supply the review history. No arbitrary age cutoff was used. PR #1's old external audit text remains unavailable; its unchanged empty tip has no new content to review.
 
@@ -93,4 +93,6 @@ Limitations: no hands-on play, rendered UI QA or performance profiling was neede
 
 ## Publication
 
-Selected test batch: prepared on codex/jules-review-20261107; not yet claimed integrated. Ledger rows are deliberately absent from this preparation branch. Final delivery, actual PR states and full verification will be recorded only after they are observed.
+Selected tests and records were actually merged and pushed to master in **f60d52fac2fa74ec93fa190bed02bdce5fa72e42**; source test commit **1903b9e0e545de22042fd424a8e726e5509e0b2f**, followed by reference-only late-tip review **955c6ab**. This closeout adds exact-tip ledger rows only after that delivery.
+
+Closed after checking each still matched its reviewed PR tip: **#109, #126, #130, #133, #135, #146, #148, #149, #150, #151, #152, #154, #156, #157, #158**. The ten repurposed closed PRs stay closed; no late content is marked delivered. **#134, #145, #147, #153, #155 remain open and returned.** All remote branches were preserved; only this session's temporary worktrees are removed during closeout. No PR comments/messages were sent. Every discovered item has a disposition; no product/save/architecture decision is pending.
